@@ -34,7 +34,7 @@ class AzureCloudProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.aci = None  # type: t.Optional[AnsibleCoreCI]
+        self.aci: t.Optional[AnsibleCoreCI] = None
 
         self.uses_config = True
 

@@ -21,15 +21,15 @@ class Metadata:
     """Metadata object for passing data to delegated tests."""
     def __init__(self):
         """Initialize metadata."""
-        self.changes = {}  # type: t.Dict[str, t.Tuple[t.Tuple[int, int], ...]]
-        self.cloud_config = None  # type: t.Optional[t.Dict[str, t.Dict[str, t.Union[int, str, bool]]]]
-        self.change_description = None  # type: t.Optional[ChangeDescription]
-        self.ci_provider = None  # type: t.Optional[str]
+        self.changes: t.Dict[str, t.Tuple[t.Tuple[int, int], ...]] = {}
+        self.cloud_config: t.Optional[t.Dict[str, t.Dict[str, t.Union[int, str, bool]]]] = None
+        self.change_description: t.Optional[ChangeDescription] = None
+        self.ci_provider: t.Optional[str] = None
 
     def populate_changes(self, diff: t.Optional[t.List[str]]) -> None:
         """Populate the changeset using the given diff."""
         patches = parse_diff(diff)
-        patches = sorted(patches, key=lambda k: k.new.path)  # type: t.List[FileDiff]
+        patches: t.List[FileDiff] = sorted(patches, key=lambda k: k.new.path)
 
         self.changes = dict((patch.new.path, tuple(patch.new.ranges)) for patch in patches)
 
@@ -83,12 +83,12 @@ class Metadata:
 class ChangeDescription:
     """Description of changes."""
     def __init__(self):
-        self.command = ''  # type: str
-        self.changed_paths = []  # type: t.List[str]
-        self.deleted_paths = []  # type: t.List[str]
-        self.regular_command_targets = {}  # type: t.Dict[str, t.List[str]]
-        self.focused_command_targets = {}  # type: t.Dict[str, t.List[str]]
-        self.no_integration_paths = []  # type: t.List[str]
+        self.command: str = ''
+        self.changed_paths: t.List[str] = []
+        self.deleted_paths: t.List[str] = []
+        self.regular_command_targets: t.Dict[str, t.List[str]] = {}
+        self.focused_command_targets: t.Dict[str, t.List[str]] = {}
+        self.no_integration_paths: t.List[str] = []
 
     @property
     def targets(self) -> t.Optional[t.List[str]]:

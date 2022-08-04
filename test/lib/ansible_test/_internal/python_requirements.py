@@ -122,15 +122,15 @@ class PipBootstrap(PipCommand):
 
 
 def install_requirements(
-        args,  # type: EnvironmentConfig
-        python,  # type: PythonConfig
-        ansible=False,  # type: bool
-        command=False,  # type: bool
-        coverage=False,  # type: bool
-        virtualenv=False,  # type: bool
-        controller=True,  # type: bool
-        connection=None,  # type: t.Optional[Connection]
-):  # type: (...) -> None
+        args: EnvironmentConfig,
+        python: PythonConfig,
+        ansible: bool = False,
+        command: bool = False,
+        coverage: bool = False,
+        virtualenv: bool = False,
+        controller: bool = True,
+        connection: t.Optional[Connection] = None,
+) -> None:
     """Install requirements for the given Python using the specified arguments."""
     create_result_directories(args)
 
@@ -197,18 +197,18 @@ def collect_bootstrap(python: PythonConfig) -> t.List[PipCommand]:
 
 
 def collect_requirements(
-        python,  # type: PythonConfig
-        controller,  # type: bool
-        ansible,  # type: bool
-        cryptography,  # type: bool
-        coverage,  # type: bool
-        virtualenv,  # type: bool
-        minimize,  # type: bool
-        command,  # type: t.Optional[str]
-        sanity,  # type: t.Optional[str]
-):  # type: (...) -> t.List[PipCommand]
+        python: PythonConfig,
+        controller: bool,
+        ansible: bool,
+        cryptography: bool,
+        coverage: bool,
+        virtualenv: bool,
+        minimize: bool,
+        command: t.Optional[str],
+        sanity: t.Optional[str],
+) -> t.List[PipCommand]:
     """Collect requirements for the given Python using the specified arguments."""
-    commands = []  # type: t.List[PipCommand]
+    commands: t.List[PipCommand] = []
 
     if virtualenv:
         # sanity tests on Python 2.x install virtualenv when it is too old or is not already installed and the `--requirements` option is given
@@ -252,11 +252,11 @@ def collect_requirements(
 
 
 def run_pip(
-        args,  # type: EnvironmentConfig
-        python,  # type: PythonConfig
-        commands,  # type: t.List[PipCommand]
-        connection,  # type: t.Optional[Connection]
-):  # type: (...) -> None
+        args: EnvironmentConfig,
+        python: PythonConfig,
+        commands: t.List[PipCommand],
+        connection: t.Optional[Connection],
+) -> None:
     """Run the specified pip commands for the given Python, and optionally the specified host."""
     connection = connection or LocalConnection(args)
     script = prepare_pip_script(commands)
@@ -280,12 +280,12 @@ def run_pip(
 
 
 def collect_general_install(
-    command=None,  # type: t.Optional[str]
-    ansible=False,  # type: bool
-):  # type: (...) -> t.List[PipInstall]
+    command: t.Optional[str] = None,
+    ansible: bool = False,
+) -> t.List[PipInstall]:
     """Return details necessary for the specified general-purpose pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     if ansible:
         path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'ansible.txt')
@@ -305,8 +305,8 @@ def collect_package_install(packages: t.List[str], constraints: bool = True) -> 
 
 def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
     """Return the details necessary for the specified sanity pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', f'sanity.{sanity}.txt')
     requirements_paths.append((ANSIBLE_TEST_DATA_ROOT, path))
@@ -320,8 +320,8 @@ def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
 
 def collect_units_install() -> t.List[PipInstall]:
     """Return details necessary for the specified units pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     path = os.path.join(data_context().content.unit_path, 'requirements.txt')
     requirements_paths.append((data_context().content.root, path))
@@ -334,8 +334,8 @@ def collect_units_install() -> t.List[PipInstall]:
 
 def collect_integration_install(command: str, controller: bool) -> t.List[PipInstall]:
     """Return details necessary for the specified integration pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     # Support for prefixed files was added to ansible-test in ansible-core 2.12 when split controller/target testing was implemented.
     # Previous versions of ansible-test only recognize non-prefixed files.
@@ -367,10 +367,10 @@ def collect_integration_install(command: str, controller: bool) -> t.List[PipIns
 
 
 def collect_install(
-        requirements_paths,  # type: t.List[t.Tuple[str, str]]
-        constraints_paths,  # type: t.List[t.Tuple[str, str]]
-        packages=None,  # type: t.Optional[t.List[str]]
-        constraints=True,  # type: bool
+        requirements_paths: t.List[t.Tuple[str, str]],
+        constraints_paths: t.List[t.Tuple[str, str]],
+        packages: t.Optional[t.List[str]] = None,
+        constraints: bool = True,
 ) -> t.List[PipInstall]:
     """Build a pip install list from the given requirements, constraints and packages."""
     # listing content constraints first gives them priority over constraints provided by ansible-test

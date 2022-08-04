@@ -159,18 +159,18 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for host profiles."""
     def __init__(self,
                  *,
-                 args,  # type: EnvironmentConfig
-                 config,  # type: THostConfig
-                 targets,  # type: t.Optional[t.List[HostConfig]]
-                 ):  # type: (...) -> None
+                 args: EnvironmentConfig,
+                 config: THostConfig,
+                 targets: t.Optional[t.List[HostConfig]],
+                 ) -> None:
         self.args = args
         self.config = config
         self.controller = bool(targets)
         self.targets = targets or []
 
-        self.state = {}  # type: t.Dict[str, t.Any]
+        self.state: t.Dict[str, t.Any] = {}
         """State that must be persisted across delegation."""
-        self.cache = {}  # type: t.Dict[str, t.Any]
+        self.cache: t.Dict[str, t.Any] = {}
         """Cache that must not be persisted across delegation."""
 
     def provision(self) -> None:
@@ -572,7 +572,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         )
 
         if settings.user == 'root':
-            become = None  # type: t.Optional[Become]
+            become: t.Optional[Become] = None
         elif self.config.become:
             become = SUPPORTED_BECOME_METHODS[self.config.become]()
         else:
@@ -755,10 +755,10 @@ def get_config_profile_type_map() -> t.Dict[t.Type[HostConfig], t.Type[HostProfi
 
 
 def create_host_profile(
-        args,  # type: EnvironmentConfig
-        config,  # type: HostConfig
-        controller,  # type: bool
-):  # type: (...) -> HostProfile
+        args: EnvironmentConfig,
+        config: HostConfig,
+        controller: bool,
+) -> HostProfile:
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]
     profile = profile_type(args=args, config=config, targets=args.targets if controller else None)

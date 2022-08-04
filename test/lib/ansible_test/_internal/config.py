@@ -70,19 +70,19 @@ class EnvironmentConfig(CommonConfig):
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
-        self.host_settings = args.host_settings  # type: HostSettings
-        self.host_path = args.host_path  # type: t.Optional[str]
-        self.containers = args.containers  # type: t.Optional[str]
-        self.pypi_proxy = args.pypi_proxy  # type: bool
-        self.pypi_endpoint = args.pypi_endpoint  # type: t.Optional[str]
+        self.host_settings: HostSettings = args.host_settings
+        self.host_path: t.Optional[str] = args.host_path
+        self.containers: t.Optional[str] = args.containers
+        self.pypi_proxy: bool = args.pypi_proxy
+        self.pypi_endpoint: t.Optional[str] = args.pypi_endpoint
 
         # Populated by content_config.get_content_config on the origin.
         # Serialized and passed to delegated instances to avoid parsing a second time.
-        self.content_config = None  # type: t.Optional[ContentConfig]
+        self.content_config: t.Optional[ContentConfig] = None
 
         # Set by check_controller_python once HostState has been created by prepare_profiles.
         # This is here for convenience, to avoid needing to pass HostState to some functions which already have access to EnvironmentConfig.
-        self.controller_python = None  # type: t.Optional[PythonConfig]
+        self.controller_python: t.Optional[PythonConfig] = None
         """
         The Python interpreter used by the controller.
         Only available after delegation has been performed or skipped (if delegation is not required).
@@ -98,18 +98,18 @@ class EnvironmentConfig(CommonConfig):
                 or bool(verify_sys_executable(self.controller.python.path))
             )
 
-        self.docker_network = args.docker_network  # type: t.Optional[str]
-        self.docker_terminate = args.docker_terminate  # type: t.Optional[TerminateMode]
+        self.docker_network: t.Optional[str] = args.docker_network
+        self.docker_terminate: t.Optional[TerminateMode] = args.docker_terminate
 
-        self.remote_endpoint = args.remote_endpoint  # type: t.Optional[str]
-        self.remote_stage = args.remote_stage  # type: t.Optional[str]
-        self.remote_terminate = args.remote_terminate  # type: t.Optional[TerminateMode]
+        self.remote_endpoint: t.Optional[str] = args.remote_endpoint
+        self.remote_stage: t.Optional[str] = args.remote_stage
+        self.remote_terminate: t.Optional[TerminateMode] = args.remote_terminate
 
-        self.prime_containers = args.prime_containers  # type: bool
+        self.prime_containers: bool = args.prime_containers
 
-        self.requirements = args.requirements  # type: bool
+        self.requirements: bool = args.requirements
 
-        self.delegate_args = []  # type: t.List[str]
+        self.delegate_args: t.List[str] = []
 
         def host_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the host files to the payload file list."""
@@ -196,28 +196,28 @@ class TestConfig(EnvironmentConfig):
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
-        self.coverage = args.coverage  # type: bool
-        self.coverage_check = args.coverage_check  # type: bool
-        self.include = args.include or []  # type: t.List[str]
-        self.exclude = args.exclude or []  # type: t.List[str]
-        self.require = args.require or []  # type: t.List[str]
+        self.coverage: bool = args.coverage
+        self.coverage_check: bool = args.coverage_check
+        self.include: t.List[str] = args.include or []
+        self.exclude: t.List[str] = args.exclude or []
+        self.require: t.List[str] = args.require or []
 
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: t.List[str]
-        self.base_branch = args.base_branch  # type: str
+        self.changed: bool = args.changed
+        self.tracked: bool = args.tracked
+        self.untracked: bool = args.untracked
+        self.committed: bool = args.committed
+        self.staged: bool = args.staged
+        self.unstaged: bool = args.unstaged
+        self.changed_from: str = args.changed_from
+        self.changed_path: t.List[str] = args.changed_path
+        self.base_branch: str = args.base_branch
 
-        self.lint = getattr(args, 'lint', False)  # type: bool
-        self.junit = getattr(args, 'junit', False)  # type: bool
-        self.failure_ok = getattr(args, 'failure_ok', False)  # type: bool
+        self.lint: bool = getattr(args, 'lint', False)
+        self.junit: bool = getattr(args, 'junit', False)
+        self.failure_ok: bool = getattr(args, 'failure_ok', False)
 
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None  # type: t.Optional[str]
+        self.metadata_path: t.Optional[str] = None
 
         if self.coverage_check:
             self.coverage = True
@@ -237,11 +237,11 @@ class ShellConfig(EnvironmentConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'shell')
 
-        self.cmd = args.cmd  # type: t.List[str]
-        self.raw = args.raw  # type: bool
+        self.cmd: t.List[str] = args.cmd
+        self.raw: bool = args.raw
         self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
         self.interactive = sys.stdin.isatty() and not args.cmd  # delegation should only be interactive when stdin is a TTY and no command was given
-        self.export = args.export  # type: t.Optional[str]
+        self.export: t.Optional[str] = args.export
         self.display_stderr = True
 
 
@@ -250,13 +250,13 @@ class SanityConfig(TestConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'sanity')
 
-        self.test = args.test  # type: t.List[str]
-        self.skip_test = args.skip_test  # type: t.List[str]
-        self.list_tests = args.list_tests  # type: bool
-        self.allow_disabled = args.allow_disabled  # type: bool
-        self.enable_optional_errors = args.enable_optional_errors  # type: bool
-        self.keep_git = args.keep_git  # type: bool
-        self.prime_venvs = args.prime_venvs  # type: bool
+        self.test: t.List[str] = args.test
+        self.skip_test: t.List[str] = args.skip_test
+        self.list_tests: bool = args.list_tests
+        self.allow_disabled: bool = args.allow_disabled
+        self.enable_optional_errors: bool = args.enable_optional_errors
+        self.keep_git: bool = args.keep_git
+        self.prime_venvs: bool = args.prime_venvs
 
         self.display_stderr = self.lint or self.list_tests
 
@@ -275,25 +275,25 @@ class IntegrationConfig(TestConfig):
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
-        self.start_at = args.start_at  # type: str
-        self.start_at_task = args.start_at_task  # type: str
-        self.allow_destructive = args.allow_destructive  # type: bool
-        self.allow_root = args.allow_root  # type: bool
-        self.allow_disabled = args.allow_disabled  # type: bool
-        self.allow_unstable = args.allow_unstable  # type: bool
-        self.allow_unstable_changed = args.allow_unstable_changed  # type: bool
-        self.allow_unsupported = args.allow_unsupported  # type: bool
-        self.retry_on_error = args.retry_on_error  # type: bool
-        self.continue_on_error = args.continue_on_error  # type: bool
-        self.debug_strategy = args.debug_strategy  # type: bool
-        self.changed_all_target = args.changed_all_target  # type: str
-        self.changed_all_mode = args.changed_all_mode  # type: str
-        self.list_targets = args.list_targets  # type: bool
+        self.start_at: str = args.start_at
+        self.start_at_task: str = args.start_at_task
+        self.allow_destructive: bool = args.allow_destructive
+        self.allow_root: bool = args.allow_root
+        self.allow_disabled: bool = args.allow_disabled
+        self.allow_unstable: bool = args.allow_unstable
+        self.allow_unstable_changed: bool = args.allow_unstable_changed
+        self.allow_unsupported: bool = args.allow_unsupported
+        self.retry_on_error: bool = args.retry_on_error
+        self.continue_on_error: bool = args.continue_on_error
+        self.debug_strategy: bool = args.debug_strategy
+        self.changed_all_target: str = args.changed_all_target
+        self.changed_all_mode: str = args.changed_all_mode
+        self.list_targets: bool = args.list_targets
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
-        self.no_temp_workdir = args.no_temp_workdir  # type: bool
-        self.no_temp_unicode = args.no_temp_unicode  # type: bool
+        self.no_temp_workdir: bool = args.no_temp_workdir
+        self.no_temp_unicode: bool = args.no_temp_unicode
 
         if self.list_targets:
             self.explain = True
@@ -331,7 +331,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'network-integration')
 
-        self.testcase = args.testcase  # type: str
+        self.testcase: str = args.testcase
 
 
 class UnitsConfig(TestConfig):
@@ -339,10 +339,10 @@ class UnitsConfig(TestConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'units')
 
-        self.collect_only = args.collect_only  # type: bool
-        self.num_workers = args.num_workers  # type: int
+        self.collect_only: bool = args.collect_only
+        self.num_workers: int = args.num_workers
 
-        self.requirements_mode = getattr(args, 'requirements_mode', '')  # type: str
+        self.requirements_mode: str = getattr(args, 'requirements_mode', '')
 
         if self.requirements_mode == 'only':
             self.requirements = True

@@ -117,7 +117,7 @@ class DockerParser(PairParser):
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
-        value = super().parse(state)  # type: DockerConfig
+        value: DockerConfig = super().parse(state)
 
         if not value.python and not get_docker_pythons(value.name, self.controller, True):
             raise ParserError(f'Python version required for docker image: {value.name}')
@@ -159,7 +159,7 @@ class PosixRemoteParser(PairParser):
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
-        value = super().parse(state)  # type: PosixRemoteConfig
+        value: PosixRemoteConfig = super().parse(state)
 
         if not value.python and not get_remote_pythons(value.name, self.controller, True):
             raise ParserError(f'Python version required for remote: {value.name}')

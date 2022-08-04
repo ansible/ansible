@@ -35,7 +35,7 @@ def get_powershell_module_utils_imports(powershell_targets: t.List[TestTarget]) 
     for target in powershell_targets:
         imports_by_target_path[target.path] = extract_powershell_module_utils_imports(target.path, module_utils)
 
-    imports = {module_util: set() for module_util in module_utils}  # type: t.Dict[str, t.Set[str]]
+    imports: t.Dict[str, t.Set[str]] = {module_util: set() for module_util in module_utils}
 
     for target_path, modules in imports_by_target_path.items():
         for module_util in modules:

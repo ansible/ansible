@@ -18,8 +18,8 @@ from .....environments import (
 
 def do_missing(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `coverage analyze targets missing` command."""
     parser = subparsers.add_parser(

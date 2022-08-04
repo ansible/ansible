@@ -59,8 +59,8 @@ def get_cloud_plugins() -> t.Tuple[t.Dict[str, t.Type[CloudProvider]], t.Dict[st
     """Import cloud plugins and load them into the plugin dictionaries."""
     import_plugins('commands/integration/cloud')
 
-    providers = {}  # type: t.Dict[str, t.Type[CloudProvider]]
-    environments = {}  # type: t.Dict[str, t.Type[CloudEnvironment]]
+    providers: t.Dict[str, t.Type[CloudProvider]] = {}
+    environments: t.Dict[str, t.Type[CloudEnvironment]] = {}
 
     load_plugins(CloudProvider, providers)
     load_plugins(CloudEnvironment, environments)
@@ -134,7 +134,7 @@ def cloud_filter(args, targets):  # type: (IntegrationConfig, t.Tuple[Integratio
     if args.metadata.cloud_config is not None:
         return []  # cloud filter already performed prior to delegation
 
-    exclude = []  # type: t.List[str]
+    exclude: t.List[str] = []
 
     for provider in get_cloud_providers(args, targets):
         provider.filter(targets, exclude)
@@ -378,10 +378,10 @@ class CloudEnvironment(CloudBase):
 class CloudEnvironmentConfig:
     """Configuration for the environment."""
     def __init__(self,
-                 env_vars=None,  # type: t.Optional[t.Dict[str, str]]
-                 ansible_vars=None,  # type: t.Optional[t.Dict[str, t.Any]]
-                 module_defaults=None,  # type: t.Optional[t.Dict[str, t.Dict[str, t.Any]]]
-                 callback_plugins=None,  # type: t.Optional[t.List[str]]
+                 env_vars: t.Optional[t.Dict[str, str]] = None,
+                 ansible_vars: t.Optional[t.Dict[str, t.Any]] = None,
+                 module_defaults: t.Optional[t.Dict[str, t.Dict[str, t.Any]]] = None,
+                 callback_plugins: t.Optional[t.List[str]] = None,
                  ):
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars

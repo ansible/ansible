@@ -69,8 +69,8 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
 
         collection_layouts = data_context().create_collection_layouts()
 
-        content_files = []  # type: t.List[t.Tuple[str, str]]
-        extra_files = []  # type: t.List[t.Tuple[str, str]]
+        content_files: t.List[t.Tuple[str, str]] = []
+        extra_files: t.List[t.Tuple[str, str]] = []
 
         for layout in collection_layouts:
             if layout == data_context().content:

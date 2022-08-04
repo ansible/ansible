@@ -161,12 +161,12 @@ def get_python_modules() -> t.Dict[str, str]:
 
 
 def enumerate_python_arcs(
-        path,  # type: str
-        coverage,  # type: coverage_module
-        modules,  # type: t.Dict[str, str]
-        collection_search_re,  # type: t.Optional[t.Pattern]
-        collection_sub_re,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]
+        path: str,
+        coverage: coverage_module,
+        modules: t.Dict[str, str],
+        collection_search_re: t.Optional[t.Pattern],
+        collection_sub_re: t.Optional[t.Pattern],
+) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]:
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -238,10 +238,10 @@ def read_python_coverage_legacy(path: str) -> PythonArcs:
 
 
 def enumerate_powershell_lines(
-        path,  # type: str
-        collection_search_re,  # type: t.Optional[t.Pattern]
-        collection_sub_re,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]
+        path: str,
+        collection_search_re: t.Optional[t.Pattern],
+        collection_sub_re: t.Optional[t.Pattern],
+) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]:
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -277,11 +277,11 @@ def enumerate_powershell_lines(
 
 
 def sanitize_filename(
-        filename,  # type: str
-        modules=None,  # type: t.Optional[t.Dict[str, str]]
-        collection_search_re=None,  # type: t.Optional[t.Pattern]
-        collection_sub_re=None,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Optional[str]
+        filename: str,
+        modules: t.Optional[t.Dict[str, str]] = None,
+        collection_search_re: t.Optional[t.Pattern] = None,
+        collection_sub_re: t.Optional[t.Pattern] = None,
+) -> t.Optional[str]:
     """Convert the given code coverage path to a local absolute path and return its, or None if the path is not valid."""
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = data_context().content.root + '/'
@@ -346,7 +346,7 @@ class PathChecker:
     def __init__(self, args: CoverageConfig, collection_search_re: t.Optional[t.Pattern] = None) -> None:
         self.args = args
         self.collection_search_re = collection_search_re
-        self.invalid_paths = []  # type: t.List[str]
+        self.invalid_paths: t.List[str] = []
         self.invalid_path_chars = 0
 
     def check_path(self, path: str) -> bool:

@@ -146,14 +146,14 @@ class LegacyHostOptions:
     @staticmethod
     def purge_args(args: t.List[str]) -> t.List[str]:
         """Purge legacy host options from the given command line arguments."""
-        fields = dataclasses.fields(LegacyHostOptions)  # type: t.Tuple[dataclasses.Field, ...]
-        filters = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}  # type: t.Dict[str, int]
+        fields: t.Tuple[dataclasses.Field, ...] = dataclasses.fields(LegacyHostOptions)
+        filters: t.Dict[str, int] = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}
 
         return filter_args(args, filters)
 
     def get_options_used(self) -> t.Tuple[str, ...]:
         """Return a tuple of the command line options used."""
-        fields = dataclasses.fields(self)  # type: t.Tuple[dataclasses.Field, ...]
+        fields: t.Tuple[dataclasses.Field, ...] = dataclasses.fields(self)
         options = tuple(sorted(get_option_name(field.name) for field in fields if getattr(self, field.name)))
         return options
 
@@ -190,10 +190,10 @@ class TargetMode(enum.Enum):
 
 
 def convert_legacy_args(
-        argv,  # type: t.List[str]
-        args,  # type: t.Union[argparse.Namespace, types.SimpleNamespace]
-        mode,  # type: TargetMode
-):  # type: (...) -> HostSettings
+        argv: t.List[str],
+        args: t.Union[argparse.Namespace, types.SimpleNamespace],
+        mode: TargetMode,
+) -> HostSettings:
     """Convert pre-split host arguments in the given namespace to their split counterparts."""
     old_options = LegacyHostOptions.create(args)
     old_options.purge_namespace(args)
@@ -261,10 +261,10 @@ def convert_legacy_args(
 
 
 def controller_targets(
-        mode,  # type: TargetMode
-        options,  # type: LegacyHostOptions
-        controller,  # type: ControllerHostConfig
-):  # type: (...) -> t.List[HostConfig]
+        mode: TargetMode,
+        options: LegacyHostOptions,
+        controller: ControllerHostConfig,
+) -> t.List[HostConfig]:
     """Return the configuration for controller targets."""
     python = native_python(options)
 
@@ -287,9 +287,9 @@ def native_python(options: LegacyHostOptions) -> t.Optional[NativePythonConfig]:
 
 
 def get_legacy_host_config(
-        mode,  # type: TargetMode
-        options,  # type: LegacyHostOptions
-):  # type: (...) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
+        mode: TargetMode,
+        options: LegacyHostOptions,
+) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]:
     """
     Returns controller and target host configs derived from the provided legacy host options.
     The goal is to match the original behavior, by using non-split testing whenever possible.
@@ -300,7 +300,7 @@ def get_legacy_host_config(
     docker_fallback = 'default'
     remote_fallback = get_fallback_remote_controller()
 
-    controller_fallback = None  # type: t.Optional[t.Tuple[str, str, FallbackReason]]
+    controller_fallback: t.Optional[t.Tuple[str, str, FallbackReason]] = None
 
     controller: t.Optional[ControllerHostConfig]
     targets: t.List[HostConfig]
@@ -453,10 +453,10 @@ def get_legacy_host_config(
 
 
 def handle_non_posix_targets(
-    mode,  # type: TargetMode
-    options,  # type: LegacyHostOptions
-    targets,  # type: t.List[HostConfig]
-):  # type: (...) -> t.List[HostConfig]
+    mode: TargetMode,
+    options: LegacyHostOptions,
+    targets: t.List[HostConfig],
+) -> t.List[HostConfig]:
     """Return a list of non-POSIX targets if the target mode is non-POSIX."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
         if options.windows:
@@ -486,9 +486,9 @@ def handle_non_posix_targets(
 
 
 def default_targets(
-    mode,  # type: TargetMode
-    controller,  # type: ControllerHostConfig
-):  # type: (...) -> t.List[HostConfig]
+    mode: TargetMode,
+    controller: ControllerHostConfig,
+) -> t.List[HostConfig]:
     """Return a list of default targets for the given target mode."""
     targets: t.List[HostConfig]
 

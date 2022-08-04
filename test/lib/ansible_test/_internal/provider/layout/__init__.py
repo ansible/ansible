@@ -18,9 +18,9 @@ from .. import (
 class Layout:
     """Description of content locations and helper methods to access content."""
     def __init__(self,
-                 root,  # type: str
-                 paths,  # type: t.List[str]
-                 ):  # type: (...) -> None
+                 root: str,
+                 paths: t.List[str],
+                 ) -> None:
         self.root = root
 
         self.__paths = paths  # contains both file paths and symlinked directory paths (ending with os.path.sep)
@@ -75,24 +75,24 @@ class Layout:
 class ContentLayout(Layout):
     """Information about the current Ansible content being tested."""
     def __init__(self,
-                 root,  # type: str
-                 paths,  # type: t.List[str]
-                 plugin_paths,  # type: t.Dict[str, str]
-                 collection,  # type: t.Optional[CollectionDetail]
-                 test_path,  # type: str
-                 results_path,  # type: str
-                 sanity_path,  # type: str
-                 sanity_messages,  # type: t.Optional[LayoutMessages]
-                 integration_path,  # type: str
-                 integration_targets_path,  # type: str
-                 integration_vars_path,  # type: str
-                 integration_messages,  # type: t.Optional[LayoutMessages]
-                 unit_path,  # type: str
-                 unit_module_path,  # type: str
-                 unit_module_utils_path,  # type: str
-                 unit_messages,  # type: t.Optional[LayoutMessages]
-                 unsupported=False,  # type: bool
-                 ):  # type: (...) -> None
+                 root: str,
+                 paths: t.List[str],
+                 plugin_paths: t.Dict[str, str],
+                 collection: t.Optional[CollectionDetail],
+                 test_path: str,
+                 results_path: str,
+                 sanity_path: str,
+                 sanity_messages: t.Optional[LayoutMessages],
+                 integration_path: str,
+                 integration_targets_path: str,
+                 integration_vars_path: str,
+                 integration_messages: t.Optional[LayoutMessages],
+                 unit_path: str,
+                 unit_module_path: str,
+                 unit_module_utils_path: str,
+                 unit_messages: t.Optional[LayoutMessages],
+                 unsupported: bool = False,
+                 ) -> None:
         super().__init__(root, paths)
 
         self.plugin_paths = plugin_paths
@@ -151,18 +151,18 @@ class ContentLayout(Layout):
 class LayoutMessages:
     """Messages generated during layout creation that should be deferred for later display."""
     def __init__(self):
-        self.info = []  # type: t.List[str]
-        self.warning = []  # type: t.List[str]
-        self.error = []  # type: t.List[str]
+        self.info: t.List[str] = []
+        self.warning: t.List[str] = []
+        self.error: t.List[str] = []
 
 
 class CollectionDetail:
     """Details about the layout of the current collection."""
     def __init__(self,
-                 name,  # type: str
-                 namespace,  # type: str
-                 root,  # type: str
-                 ):  # type: (...) -> None
+                 name: str,
+                 namespace: str,
+                 root: str,
+                 ) -> None:
         self.name = name
         self.namespace = namespace
         self.root = root
@@ -206,7 +206,7 @@ class LayoutProvider(PathProvider):
 
 def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]:
     """Return a filesystem tree from the given list of paths."""
-    tree = {}, []  # type: t.Tuple[t.Dict[str, t.Any], t.List[str]]
+    tree: t.Tuple[t.Dict[str, t.Any], t.List[str]] = {}, []
 
     for path in paths:
         parts = path.split(os.path.sep)
