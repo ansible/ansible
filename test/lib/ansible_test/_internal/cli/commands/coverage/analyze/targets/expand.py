@@ -22,11 +22,11 @@ def do_expand(
         completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `coverage analyze targets expand` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'expand',
         parents=[parent],
         help='expand target names from integers in aggregated coverage',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_analyze_targets_expand,

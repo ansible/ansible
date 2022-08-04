@@ -243,7 +243,7 @@ def get_container_database(args: EnvironmentConfig) -> ContainerDatabase:
 
 class ContainerAccess:
     """Information needed for one test host to access a single container supporting tests."""
-    def __init__(self, host_ip, names, ports, forwards):  # type: (str, t.List[str], t.Optional[t.List[int]], t.Optional[t.Dict[int, int]]) -> None
+    def __init__(self, host_ip: str, names: t.List[str], ports: t.Optional[t.List[int]], forwards: t.Optional[t.Dict[int, int]]) -> None:
         # if forwards is set
         #   this is where forwards are sent (it is the host that provides an indirect connection to the containers on alternate ports)
         #   /etc/hosts uses 127.0.0.1 (since port redirection will be used)
@@ -270,7 +270,7 @@ class ContainerAccess:
         return ports
 
     @staticmethod
-    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> ContainerAccess
+    def from_dict(data: t.Dict[str, t.Any]) -> ContainerAccess:
         """Return a ContainerAccess instance from the given dict."""
         forwards = data.get('forwards')
 
@@ -302,11 +302,11 @@ class ContainerAccess:
 
 class ContainerDatabase:
     """Database of running containers used to support tests."""
-    def __init__(self, data):  # type: (t.Dict[str, t.Dict[str, t.Dict[str, ContainerAccess]]]) -> None
+    def __init__(self, data: t.Dict[str, t.Dict[str, t.Dict[str, ContainerAccess]]]) -> None:
         self.data = data
 
     @staticmethod
-    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> ContainerDatabase
+    def from_dict(data: t.Dict[str, t.Any]) -> ContainerDatabase:
         """Return a ContainerDatabase instance from the given dict."""
         return ContainerDatabase(dict((access_name,
                                        dict((context_name,
@@ -632,7 +632,7 @@ class SupportContainer:
         self.published_ports = published_ports
 
 
-def wait_for_file(args,  # type: EnvironmentConfig
+def wait_for_file(args: EnvironmentConfig,
                   container_name: str,
                   path: str,
                   sleep: int,
@@ -666,7 +666,7 @@ def cleanup_containers(args: EnvironmentConfig) -> None:
             display.notice('Remember to run `docker rm -f %s` when finished testing.' % container.name)
 
 
-def create_hosts_entries(context):  # type: (t.Dict[str, ContainerAccess]) -> t.List[str]
+def create_hosts_entries(context: t.Dict[str, ContainerAccess]) -> t.List[str]:
     """Return hosts entries for the specified context."""
     entries = []
     unique_id = uuid.uuid4()
@@ -724,7 +724,7 @@ def create_container_hooks(
     return pre_target, post_target
 
 
-def create_managed_contexts(control_contexts):  # type: (t.Dict[str, t.Dict[str, ContainerAccess]]) -> t.Dict[str, t.Dict[str, ContainerAccess]]
+def create_managed_contexts(control_contexts: t.Dict[str, t.Dict[str, ContainerAccess]]) -> t.Dict[str, t.Dict[str, ContainerAccess]]:
     """Create managed contexts from the given control contexts."""
     managed_contexts: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
 

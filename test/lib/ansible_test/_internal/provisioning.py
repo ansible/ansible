@@ -174,7 +174,7 @@ def cleanup_profiles(host_state: HostState) -> None:
         profile.deprovision()
 
 
-def dispatch_jobs(jobs):  # type: (t.List[t.Tuple[HostProfile, WrappedThread]]) -> None
+def dispatch_jobs(jobs: t.List[t.Tuple[HostProfile, WrappedThread]]) -> None:
     """Run the given profile job threads and wait for them to complete."""
     for profile, thread in jobs:
         thread.daemon = True

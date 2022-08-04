@@ -34,7 +34,7 @@ def do_integration(
     parser = argparse.ArgumentParser(
         add_help=False,
         parents=[parent],
-    )  # type: argparse.ArgumentParser
+    )
 
     do_posix_integration(subparsers, parser, add_integration_common, completer)
     do_network_integration(subparsers, parser, add_integration_common, completer)

@@ -116,7 +116,7 @@ class Inventory:
     extra_groups: t.Optional[t.Dict[str, t.List[str]]] = None
 
     @staticmethod
-    def create_single_host(name, variables):  # type: (str, t.Dict[str, t.Union[str, int]]) -> Inventory
+    def create_single_host(name: str, variables: t.Dict[str, t.Union[str, int]]) -> Inventory:
         """Return an inventory instance created from the given hostname and variables."""
         return Inventory(host_groups=dict(all={name: variables}))
 
@@ -245,7 +245,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
         return self.state.get('core_ci')
 
     @core_ci_state.setter
-    def core_ci_state(self, value):  # type: (t.Dict[str, str]) -> None
+    def core_ci_state(self, value: t.Dict[str, str]) -> None:
         """The saved Ansible Core CI state."""
         self.state['core_ci'] = value
 
@@ -462,7 +462,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
 
-        variables = dict(
+        variables: t.Dict[str, t.Optional[t.Union[str, int]]] = dict(
             ansible_connection=self.config.connection,
             ansible_pipelining='yes',
             ansible_host=connection.hostname,
@@ -470,7 +470,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
-        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
+        )
 
         return variables
 
@@ -684,7 +684,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
 
-        variables = dict(
+        variables: t.Dict[str, t.Optional[t.Union[str, int]]] = dict(
             ansible_connection='winrm',
             ansible_pipelining='yes',
             ansible_winrm_server_cert_validation='ignore',
@@ -693,7 +693,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
             ansible_user=connection.username,
             ansible_password=connection.password,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
-        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
+        )
 
         # HACK: force 2016 to use NTLM + HTTP message encryption
         if self.config.version == '2016':

@@ -144,7 +144,7 @@ def set_timeout(args: EnvConfig) -> None:
         os.remove(TIMEOUT_PATH)
 
 
-def show_dict(data, verbose, root_verbosity=0, path=None):  # type: (t.Dict[str, t.Any], t.Dict[str, int], int, t.Optional[t.List[str]]) -> None
+def show_dict(data: t.Dict[str, t.Any], verbose: t.Dict[str, int], root_verbosity: int = 0, path: t.Optional[t.List[str]] = None) -> None:
     """Show a dict with varying levels of verbosity."""
     path = path if path else []
 

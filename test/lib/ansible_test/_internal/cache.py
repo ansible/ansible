@@ -15,14 +15,14 @@ class CommonCache:
     def __init__(self, args: CommonConfig) -> None:
         self.args = args
 
-    def get(self, key, factory):  # type: (str, t.Callable[[], TValue]) -> TValue
+    def get(self, key: str, factory: t.Callable[[], TValue]) -> TValue:
         """Return the value from the cache identified by the given key, using the specified factory method if it is not found."""
         if key not in self.args.cache:
             self.args.cache[key] = factory()
 
         return self.args.cache[key]
 
-    def get_with_args(self, key, factory):  # type: (str, t.Callable[[CommonConfig], TValue]) -> TValue
+    def get_with_args(self, key: str, factory: t.Callable[[CommonConfig], TValue]) -> TValue:
         """Return the value from the cache identified by the given key, using the specified factory method (which accepts args) if it is not found."""
         if key not in self.args.cache:
             self.args.cache[key] = factory(self.args)

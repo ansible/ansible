@@ -25,11 +25,11 @@ def do_shell(
         completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `shell` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'shell',
         parents=[parent],
         help='open an interactive shell',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_shell,

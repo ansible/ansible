@@ -254,7 +254,7 @@ def vso_add_attachment(file_type: str, file_name: str, path: str) -> None:
     vso('task.addattachment', dict(type=file_type, name=file_name), path)
 
 
-def vso(name, data, message):  # type: (str, t.Dict[str, str], str) -> None
+def vso(name: str, data: t.Dict[str, str], message: str) -> None:
     """
     Write a logging command for the Azure Pipelines agent to process.
     See: https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash

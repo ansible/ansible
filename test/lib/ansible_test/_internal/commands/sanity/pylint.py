@@ -107,7 +107,7 @@ class PylintTest(SanitySingleVersion):
         contexts = []
         remaining_paths = set(paths)
 
-        def add_context(available_paths, context_name, context_filter):  # type: (t.Set[str], str, t.Callable[[str], bool]) -> None
+        def add_context(available_paths: t.Set[str], context_name: str, context_filter: t.Callable[[str], bool]) -> None:
             """Add the specified context to the context list, consuming available paths that match the given context filter."""
             filtered_paths = set(p for p in available_paths if context_filter(p))
             contexts.append((context_name, sorted(filtered_paths)))

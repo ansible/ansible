@@ -223,7 +223,7 @@ def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]
     return tree
 
 
-def get_tree_item(tree, parts):  # type: (t.Tuple[t.Dict[str, t.Any], t.List[str]], t.List[str]) -> t.Optional[t.Tuple[t.Dict[str, t.Any], t.List[str]]]
+def get_tree_item(tree: t.Tuple[t.Dict[str, t.Any], t.List[str]], parts: t.List[str]) -> t.Optional[t.Tuple[t.Dict[str, t.Any], t.List[str]]]:
     """Return the portion of the tree found under the path given by parts, or None if it does not exist."""
     root = tree
 

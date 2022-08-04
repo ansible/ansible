@@ -370,7 +370,7 @@ class ContainerNotFoundError(DockerError):
 
 class DockerInspect:
     """The results of `docker inspect` for a single container."""
-    def __init__(self, args, inspection):  # type: (EnvironmentConfig, t.Dict[str, t.Any]) -> None
+    def __init__(self, args: EnvironmentConfig, inspection: t.Dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
 

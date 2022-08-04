@@ -287,7 +287,7 @@ def add_environments_python(
 def add_environments_host(
         environments_parser: argparse.ArgumentParser,
         controller_mode: ControllerMode,
-        target_mode  # type: TargetMode
+        target_mode: TargetMode,
 ) -> None:
     """Add environment arguments for the given host and argument modes."""
     environments_exclusive_group: argparse.ArgumentParser = environments_parser.add_mutually_exclusive_group()  # type: ignore[assignment]  # real type private

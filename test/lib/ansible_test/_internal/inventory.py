@@ -141,7 +141,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: t.L
 
         ssh = connections[0]
 
-        testhost = dict(
+        testhost: t.Dict[str, t.Optional[t.Union[str, int]]] = dict(
             ansible_connection='ssh',
             ansible_pipelining='yes',
             ansible_python_interpreter=ssh.settings.python_interpreter,
@@ -149,7 +149,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: t.L
             ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
             ansible_ssh_private_key_file=ssh.settings.identity_file,
-        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
+        )
 
         if ssh.become:
             testhost.update(

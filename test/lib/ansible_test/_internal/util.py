@@ -141,7 +141,7 @@ def is_valid_identifier(value: str) -> bool:
     return value.isidentifier() and not keyword.iskeyword(value)
 
 
-def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
+def cache(func: t.Callable[[], TValue]) -> t.Callable[[], TValue]:
     """Enforce exclusive access on a decorated function and cache the result."""
     storage: t.Dict[None, TValue] = {}
     sentinel = object()
@@ -211,7 +211,7 @@ def detect_architecture(python: str) -> t.Optional[str]:
     return architecture
 
 
-def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.List[str]
+def filter_args(args: t.List[str], filters: t.Dict[str, int]) -> t.List[str]:
     """Return a filtered version of the given command line arguments."""
     remaining = 0
     result = []
@@ -254,12 +254,12 @@ def read_lines_without_comments(path: str, remove_blank_lines: bool = False, opt
     return lines
 
 
-def exclude_none_values(data):  # type: (t.Dict[TKey, t.Optional[TValue]]) -> t.Dict[TKey, TValue]
+def exclude_none_values(data: t.Dict[TKey, t.Optional[TValue]]) -> t.Dict[TKey, TValue]:
     """Return the provided dictionary with any None values excluded."""
     return dict((key, value) for key, value in data.items() if value is not None)
 
 
-def find_executable(executable, cwd=None, path=None, required=True):  # type: (str, t.Optional[str], t.Optional[str], t.Union[bool, str]) -> t.Optional[str]
+def find_executable(executable: str, cwd: t.Optional[str] = None, path: t.Optional[str] = None, required: t.Union[bool, str] = True) -> t.Optional[str]:
     """
     Find the specified executable and return the full path, or None if it could not be found.
     If required is True an exception will be raised if the executable is not found.
@@ -1017,7 +1017,7 @@ def str_to_version(version: str) -> t.Tuple[int, ...]:
     return tuple(int(n) for n in version.split('.'))
 
 
-def version_to_str(version):  # type: (t.Tuple[int, ...]) -> str
+def version_to_str(version: t.Tuple[int, ...]) -> str:
     """Return a version string from a version tuple."""
     return '.'.join(str(n) for n in version)
 
@@ -1044,7 +1044,7 @@ def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
         load_module(module_path, name)
 
 
-def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C]]) -> None
+def load_plugins(base_type: t.Type[C], database: t.Dict[str, t.Type[C]]) -> None:
     """
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
