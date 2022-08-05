@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import shlex
-import typing as t
 
 from .util import (
     get_subclasses,

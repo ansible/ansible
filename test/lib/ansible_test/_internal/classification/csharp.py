@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import re
-import typing as t
 
 from ..io import (
     open_text_file,

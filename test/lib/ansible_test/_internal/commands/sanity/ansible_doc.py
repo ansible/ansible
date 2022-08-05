@@ -4,7 +4,6 @@ from __future__ import annotations
 import collections
 import os
 import re
-import typing as t
 
 from . import (
     DOCUMENTABLE_PLUGINS,

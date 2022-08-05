@@ -1,6 +1,7 @@
 """Classes for storing and processing test results."""
 from __future__ import annotations
 
+import collections.abc as c
 import datetime
 import re
 import typing as t

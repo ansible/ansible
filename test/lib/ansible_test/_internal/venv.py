@@ -1,6 +1,7 @@
 """Virtual environment management."""
 from __future__ import annotations
 
+import collections.abc as c
 import json
 import os
 import pathlib

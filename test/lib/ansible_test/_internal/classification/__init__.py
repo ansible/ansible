@@ -156,8 +156,8 @@ def categorize_changes(args: TestConfig, paths: list[str], verbose_command: t.Op
         if any(target == 'all' for target in targets):
             commands[command] = {'all'}
 
-    sorted_commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
-    focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
+    sorted_commands = dict((cmd, sorted(targets)) for cmd, targets in commands.items() if targets)
+    focused_commands = dict((cmd, sorted(targets)) for cmd, targets in focused_commands.items())
 
     for command, targets in sorted_commands.items():
         if targets == ['all']:

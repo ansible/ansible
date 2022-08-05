@@ -1,8 +1,8 @@
 """Sanity test for proper import exception handling."""
 from __future__ import annotations
 
+import collections.abc as c
 import os
-import typing as t
 
 from . import (
     SanityMultipleVersion,

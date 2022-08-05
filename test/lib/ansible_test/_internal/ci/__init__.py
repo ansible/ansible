@@ -88,7 +88,7 @@ def get_ci_provider() -> CIProvider:
 
     import_plugins('ci')
 
-    candidates = sorted(get_subclasses(CIProvider), key=lambda c: (c.priority, c.__name__))
+    candidates = sorted(get_subclasses(CIProvider), key=lambda subclass: (subclass.priority, subclass.__name__))
 
     for candidate in candidates:
         if candidate.is_supported():

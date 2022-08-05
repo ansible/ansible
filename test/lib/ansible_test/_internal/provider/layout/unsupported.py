@@ -1,8 +1,6 @@
 """Layout provider for an unsupported directory layout."""
 from __future__ import annotations
 
-import typing as t
-
 from . import (
     ContentLayout,
     LayoutProvider,

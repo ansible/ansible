@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import abc
+import collections.abc as c
 import errno
 import enum
 import fcntl
@@ -463,7 +464,7 @@ def raw_command(
 
     try:
         try:
-            cmd_bytes = [to_bytes(c) for c in cmd]
+            cmd_bytes = [to_bytes(arg) for arg in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
             process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
         except OSError as ex:

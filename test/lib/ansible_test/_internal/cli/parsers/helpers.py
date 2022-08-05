@@ -1,8 +1,6 @@
 """Helper functions for composite parsers."""
 from __future__ import annotations
 
-import typing as t
-
 from ...constants import (
     CONTROLLER_PYTHON_VERSIONS,
     SUPPORTED_PYTHON_VERSIONS,

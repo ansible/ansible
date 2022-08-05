@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import typing as t
 
 from ..target import (
     find_target_completion,

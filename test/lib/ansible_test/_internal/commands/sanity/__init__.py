@@ -9,6 +9,7 @@ import os
 import pathlib
 import re
 import collections
+import collections.abc as c
 import typing as t
 
 from ...constants import (

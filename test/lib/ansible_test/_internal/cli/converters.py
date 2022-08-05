@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import typing as t
 
 
 def key_value_type(value: str) -> tuple[str, str]:

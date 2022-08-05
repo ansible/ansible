@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import collections
+import collections.abc as c
 import enum
 import os
 import re

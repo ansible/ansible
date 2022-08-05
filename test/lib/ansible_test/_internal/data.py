@@ -1,6 +1,7 @@
 """Context information for the current invocation of ansible-test."""
 from __future__ import annotations
 
+import collections.abc as c
 import dataclasses
 import os
 import typing as t

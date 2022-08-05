@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import atexit
+import collections.abc as c
 import dataclasses
 import functools
 import itertools

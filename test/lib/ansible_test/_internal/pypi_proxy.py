@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import atexit
 import os
-import typing as t
 import urllib.parse
 
 from .io import (

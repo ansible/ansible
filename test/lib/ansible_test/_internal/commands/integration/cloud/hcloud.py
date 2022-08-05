@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import configparser
-import typing as t
 
 from ....util import (
     display,

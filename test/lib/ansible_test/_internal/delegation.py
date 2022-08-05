@@ -1,6 +1,7 @@
 """Delegate test execution to another environment."""
 from __future__ import annotations
 
+import collections.abc as c
 import contextlib
 import json
 import os

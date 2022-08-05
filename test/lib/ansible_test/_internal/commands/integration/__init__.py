@@ -1,6 +1,7 @@
 """Ansible integration test infrastructure."""
 from __future__ import annotations
 
+import collections.abc as c
 import contextlib
 import datetime
 import json

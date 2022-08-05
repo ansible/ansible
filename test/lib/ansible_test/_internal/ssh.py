@@ -179,7 +179,7 @@ def run_ssh_command(
     cmd_show = shlex.join(cmd)
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
-    cmd_bytes = [to_bytes(c) for c in cmd]
+    cmd_bytes = [to_bytes(arg) for arg in cmd]
     env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
 
     if args.explain:
