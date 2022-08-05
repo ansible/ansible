@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - fix package selection to include /etc/apt/preferences(.d) (https://github.com/ansible/ansible/issues/77969)
