@@ -4,7 +4,6 @@ from __future__ import annotations
 import collections
 import os
 import re
-import typing as t
 
 from . import (
     DOCUMENTABLE_PLUGINS,
@@ -49,7 +48,7 @@ from ...host_configs import (
 
 class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
-    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type in DOCUMENTABLE_PLUGINS]
 
@@ -64,8 +63,8 @@ class AnsibleDocTest(SanitySingleVersion):
 
         paths = [target.path for target in targets.include]
 
-        doc_targets: t.Dict[str, t.List[str]] = collections.defaultdict(list)
-        target_paths: t.Dict[str, t.Dict[str, str]] = collections.defaultdict(dict)
+        doc_targets: dict[str, list[str]] = collections.defaultdict(list)
+        target_paths: dict[str, dict[str, str]] = collections.defaultdict(dict)
 
         remap_types = dict(
             modules='module',
@@ -84,7 +83,7 @@ class AnsibleDocTest(SanitySingleVersion):
                 target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_file_path
 
         env = ansible_environment(args, color=False)
-        error_messages: t.List[SanityMessage] = []
+        error_messages: list[SanityMessage] = []
 
         for doc_type in sorted(doc_targets):
             for format_option in [None, '--json']:

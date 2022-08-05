@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import collections.abc as c
 import typing as t
 
 from ....commands.coverage.combine import (
@@ -20,7 +21,7 @@ from ...environments import (
 def do_combine(
         subparsers,
         parent: argparse.ArgumentParser,
-        add_coverage_common: t.Callable[[argparse.ArgumentParser], None],
+        add_coverage_common: c.Callable[[argparse.ArgumentParser], None],
         completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for the `coverage combine` command."""

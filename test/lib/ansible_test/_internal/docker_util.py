@@ -287,8 +287,8 @@ def docker_cp_to(args: EnvironmentConfig, container_id: str, src: str, dst: str)
 def docker_run(
         args: EnvironmentConfig,
         image: str,
-        options: t.Optional[t.List[str]],
-        cmd: t.Optional[t.List[str]] = None,
+        options: t.Optional[list[str]],
+        cmd: t.Optional[list[str]] = None,
         create_only: bool = False,
 ) -> str:
     """Run a container using the given docker image."""
@@ -327,7 +327,7 @@ def docker_run(
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args: EnvironmentConfig, container_id: str, options: t.Optional[t.List[str]] = None) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+def docker_start(args: EnvironmentConfig, container_id: str, options: t.Optional[list[str]] = None) -> tuple[t.Optional[str], t.Optional[str]]:
     """
     Start a docker container by name or ID
     """
@@ -370,7 +370,7 @@ class ContainerNotFoundError(DockerError):
 
 class DockerInspect:
     """The results of `docker inspect` for a single container."""
-    def __init__(self, args: EnvironmentConfig, inspection: t.Dict[str, t.Any]) -> None:
+    def __init__(self, args: EnvironmentConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
 
@@ -382,29 +382,29 @@ class DockerInspect:
         return self.inspection['Id']
 
     @property
-    def network_settings(self) -> t.Dict[str, t.Any]:
+    def network_settings(self) -> dict[str, t.Any]:
         """Return a dictionary of the container network settings."""
         return self.inspection['NetworkSettings']
 
     @property
-    def state(self) -> t.Dict[str, t.Any]:
+    def state(self) -> dict[str, t.Any]:
         """Return a dictionary of the container state."""
         return self.inspection['State']
 
     @property
-    def config(self) -> t.Dict[str, t.Any]:
+    def config(self) -> dict[str, t.Any]:
         """Return a dictionary of the container configuration."""
         return self.inspection['Config']
 
     # nested properties
 
     @property
-    def ports(self) -> t.Dict[str, t.List[t.Dict[str, str]]]:
+    def ports(self) -> dict[str, list[dict[str, str]]]:
         """Return a dictionary of ports the container has published."""
         return self.network_settings['Ports']
 
     @property
-    def networks(self) -> t.Optional[t.Dict[str, t.Dict[str, t.Any]]]:
+    def networks(self) -> t.Optional[dict[str, dict[str, t.Any]]]:
         """Return a dictionary of the networks the container is attached to, or None if running under podman, which does not support networks."""
         return self.network_settings.get('Networks')
 
@@ -414,7 +414,7 @@ class DockerInspect:
         return self.state['Running']
 
     @property
-    def env(self) -> t.List[str]:
+    def env(self) -> list[str]:
         """Return a list of the environment variables used to create the container."""
         return self.config['Env']
 
@@ -425,15 +425,15 @@ class DockerInspect:
 
     # functions
 
-    def env_dict(self) -> t.Dict[str, str]:
+    def env_dict(self) -> dict[str, str]:
         """Return a dictionary of the environment variables used to create the container."""
         return dict((item[0], item[1]) for item in [e.split('=', 1) for e in self.env])
 
-    def get_tcp_port(self, port: int) -> t.Optional[t.List[t.Dict[str, str]]]:
+    def get_tcp_port(self, port: int) -> t.Optional[list[dict[str, str]]]:
         """Return a list of the endpoints published by the container for the specified TCP port, or None if it is not published."""
         return self.ports.get('%d/tcp' % port)
 
-    def get_network_names(self) -> t.Optional[t.List[str]]:
+    def get_network_names(self) -> t.Optional[list[str]]:
         """Return a list of the network names the container is attached to."""
         if self.networks is None:
             return None
@@ -511,15 +511,15 @@ def docker_image_exists(args: EnvironmentConfig, image: str) -> bool:
 def docker_exec(
         args: EnvironmentConfig,
         container_id: str,
-        cmd: t.List[str],
+        cmd: list[str],
         capture: bool,
-        options: t.Optional[t.List[str]] = None,
+        options: t.Optional[list[str]] = None,
         stdin: t.Optional[t.IO[bytes]] = None,
         stdout: t.Optional[t.IO[bytes]] = None,
         interactive: bool = False,
         output_stream: t.Optional[OutputStream] = None,
         data: t.Optional[str] = None,
-) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Execute the given command in the specified container."""
     if not options:
         options = []
@@ -531,13 +531,13 @@ def docker_exec(
                           output_stream=output_stream, data=data)
 
 
-def docker_info(args: CommonConfig) -> t.Dict[str, t.Any]:
+def docker_info(args: CommonConfig) -> dict[str, t.Any]:
     """Return a dictionary containing details from the `docker info` command."""
     stdout, _dummy = docker_command(args, ['info', '--format', '{{json .}}'], capture=True, always=True)
     return json.loads(stdout)
 
 
-def docker_version(args: CommonConfig) -> t.Dict[str, t.Any]:
+def docker_version(args: CommonConfig) -> dict[str, t.Any]:
     """Return a dictionary containing details from the `docker version` command."""
     stdout, _dummy = docker_command(args, ['version', '--format', '{{json .}}'], capture=True, always=True)
     return json.loads(stdout)
@@ -545,7 +545,7 @@ def docker_version(args: CommonConfig) -> t.Dict[str, t.Any]:
 
 def docker_command(
         args: CommonConfig,
-        cmd: t.List[str],
+        cmd: list[str],
         capture: bool,
         stdin: t.Optional[t.IO[bytes]] = None,
         stdout: t.Optional[t.IO[bytes]] = None,
@@ -553,7 +553,7 @@ def docker_command(
         output_stream: t.Optional[OutputStream] = None,
         always: bool = False,
         data: t.Optional[str] = None,
-) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified docker command."""
     env = docker_environment()
     command = [require_docker().command]
@@ -565,7 +565,7 @@ def docker_command(
                        output_stream=output_stream, data=data)
 
 
-def docker_environment() -> t.Dict[str, str]:
+def docker_environment() -> dict[str, str]:
     """Return a dictionary of docker related environment variables found in the current environment."""
     env = common_environment()
     env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_') or key.startswith('CONTAINER_')))

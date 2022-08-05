@@ -39,11 +39,11 @@ class HttpClient:
         """Perform an HTTP DELETE and return the response."""
         return self.request('DELETE', url)
 
-    def put(self, url: str, data: t.Optional[str] = None, headers: t.Optional[t.Dict[str, str]] = None) -> HttpResponse:
+    def put(self, url: str, data: t.Optional[str] = None, headers: t.Optional[dict[str, str]] = None) -> HttpResponse:
         """Perform an HTTP PUT and return the response."""
         return self.request('PUT', url, data, headers)
 
-    def request(self, method: str, url: str, data: t.Optional[str] = None, headers: t.Optional[t.Dict[str, str]] = None) -> HttpResponse:
+    def request(self, method: str, url: str, data: t.Optional[str] = None, headers: t.Optional[dict[str, str]] = None) -> HttpResponse:
         """Perform an HTTP request and return the response."""
         cmd = ['curl', '-s', '-S', '-i', '-X', method]
 

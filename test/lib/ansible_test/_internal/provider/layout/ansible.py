@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import typing as t
 
 from . import (
     ContentLayout,
@@ -17,7 +16,7 @@ class AnsibleLayout(LayoutProvider):
         """Return True if the given path is a content root for this provider."""
         return os.path.exists(os.path.join(path, 'setup.py')) and os.path.exists(os.path.join(path, 'bin/ansible-test'))
 
-    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
+    def create(self, root: str, paths: list[str]) -> ContentLayout:
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, os.path.join('lib/ansible/plugins', p)) for p in self.PLUGIN_TYPES)
 

@@ -1,6 +1,7 @@
 """Classes for storing and processing test results."""
 from __future__ import annotations
 
+import collections.abc as c
 import datetime
 import re
 import typing as t
@@ -27,7 +28,7 @@ from .config import (
 from . import junit_xml
 
 
-def calculate_best_confidence(choices: t.Tuple[t.Tuple[str, int], ...], metadata: Metadata) -> int:
+def calculate_best_confidence(choices: tuple[tuple[str, int], ...], metadata: Metadata) -> int:
     """Return the best confidence value available from the given choices and metadata."""
     best_confidence = 0
 
@@ -219,7 +220,7 @@ class TestFailure(TestResult):
             command: str,
             test: str,
             python_version: t.Optional[str] = None,
-            messages: t.Optional[t.Sequence[TestMessage]] = None,
+            messages: t.Optional[c.Sequence[TestMessage]] = None,
             summary: t.Optional[str] = None,
     ):
         super().__init__(command, test, python_version)
@@ -441,7 +442,7 @@ class TestMessage:
         return self.__message
 
     @property
-    def tuple(self) -> t.Tuple[str, int, int, str, t.Optional[str], str]:
+    def tuple(self) -> tuple[str, int, int, str, t.Optional[str], str]:
         """Return a tuple with all the immutable values of this test message."""
         return self.__path, self.__line, self.__column, self.__level, self.__code, self.__message
 

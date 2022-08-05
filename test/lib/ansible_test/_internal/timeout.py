@@ -35,7 +35,7 @@ from .test import (
 )
 
 
-def get_timeout() -> t.Optional[t.Dict[str, t.Any]]:
+def get_timeout() -> t.Optional[dict[str, t.Any]]:
     """Return details about the currently set timeout, if any, otherwise return None."""
     if not os.path.exists(TIMEOUT_PATH):
         return None

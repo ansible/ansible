@@ -128,8 +128,8 @@ def command_units(args: UnitsConfig) -> None:
     if not paths:
         raise AllTargetsSkipped()
 
-    targets = t.cast(t.List[PosixConfig], args.targets)
-    target_versions: t.Dict[str, PosixConfig] = {target.python.version: target for target in targets}
+    targets = t.cast(list[PosixConfig], args.targets)
+    target_versions: dict[str, PosixConfig] = {target.python.version: target for target in targets}
     skipped_versions = args.host_settings.skipped_python_versions
     warn_versions = []
 
@@ -221,7 +221,7 @@ def command_units(args: UnitsConfig) -> None:
             display.warning("Skipping unit tests on Python %s because it could not be found." % version)
             continue
 
-        target_profiles: t.Dict[str, PosixProfile] = {profile.config.python.version: profile for profile in host_state.targets(PosixProfile)}
+        target_profiles: dict[str, PosixProfile] = {profile.config.python.version: profile for profile in host_state.targets(PosixProfile)}
         target_profile = target_profiles[version]
 
         final_candidates = [(test_context, target_profile.python, paths, env) for test_context, paths, env in test_candidates]

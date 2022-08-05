@@ -87,7 +87,7 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         self.inventory_path = inventory_path
         self.profiles = self.get_profiles()
 
-    def get_profiles(self) -> t.List[HostProfile]:
+    def get_profiles(self) -> list[HostProfile]:
         """Return a list of profiles relevant for this handler."""
         profile_type = get_generic_type(type(self), HostConfig)
         profiles = [profile for profile in self.host_state.target_profiles if isinstance(profile.config, profile_type)]
@@ -112,10 +112,10 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         """Create inventory, if needed."""
 
     @abc.abstractmethod
-    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
+    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
-    def run_playbook(self, playbook: str, variables: t.Dict[str, str]) -> None:
+    def run_playbook(self, playbook: str, variables: dict[str, str]) -> None:
         """Run the specified playbook using the current inventory."""
         self.create_inventory()
         run_playbook(self.args, self.inventory_path, playbook, capture=False, variables=variables)
@@ -129,7 +129,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         # Common temporary directory used on all POSIX hosts that will be created world writeable.
         self.common_temp_path = f'/tmp/ansible-test-{generate_name()}'
 
-    def get_profiles(self) -> t.List[HostProfile]:
+    def get_profiles(self) -> list[HostProfile]:
         """Return a list of profiles relevant for this handler."""
         profiles = super().get_profiles()
         profiles = [profile for profile in profiles if not isinstance(profile, ControllerProfile) or
@@ -221,7 +221,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
         self.run_playbook('posix_coverage_teardown.yml', self.get_playbook_variables())
 
-    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
+    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
         # Enable code coverage collection on Ansible modules (both local and remote).
@@ -247,7 +247,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         """Create inventory."""
         create_posix_inventory(self.args, self.inventory_path, self.host_state.target_profiles)
 
-    def get_playbook_variables(self) -> t.Dict[str, str]:
+    def get_playbook_variables(self) -> dict[str, str]:
         """Return a dictionary of variables for setup and teardown of POSIX coverage."""
         return dict(
             common_temp_dir=self.common_temp_path,
@@ -306,7 +306,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
 
                         coverage_zip.extract(item, ResultType.COVERAGE.path)
 
-    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
+    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
         # Include the command, target and platform marker so the remote host can create a filename with that info.
@@ -324,7 +324,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
         """Create inventory."""
         create_windows_inventory(self.args, self.inventory_path, self.host_state.target_profiles)
 
-    def get_playbook_variables(self) -> t.Dict[str, str]:
+    def get_playbook_variables(self) -> dict[str, str]:
         """Return a dictionary of variables for setup and teardown of Windows coverage."""
         return dict(
             remote_temp_path=self.remote_temp_path,
@@ -364,7 +364,7 @@ class CoverageManager:
         for handler in self.handlers:
             handler.teardown()
 
-    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
+    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
         if not self.args.coverage or 'non_local/' in aliases:
             return {}
@@ -378,7 +378,7 @@ class CoverageManager:
 
 
 @cache
-def get_config_handler_type_map() -> t.Dict[t.Type[HostConfig], t.Type[CoverageHandler]]:
+def get_config_handler_type_map() -> dict[t.Type[HostConfig], t.Type[CoverageHandler]]:
     """Create and return a mapping of HostConfig types to CoverageHandler types."""
     return get_type_map(CoverageHandler, HostConfig)
 

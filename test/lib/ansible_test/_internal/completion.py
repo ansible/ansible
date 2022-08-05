@@ -42,7 +42,7 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of POSIX environments."""
     @property
     @abc.abstractmethod
-    def supported_pythons(self) -> t.List[str]:
+    def supported_pythons(self) -> list[str]:
         """Return a list of the supported Python versions."""
 
     @abc.abstractmethod
@@ -68,7 +68,7 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
     python_dir: str = '/usr/bin'
 
     @property
-    def supported_pythons(self) -> t.List[str]:
+    def supported_pythons(self) -> list[str]:
         """Return a list of the supported Python versions."""
         versions = self.python.split(',') if self.python else []
         versions = [version for version in versions if version in SUPPORTED_PYTHON_VERSIONS]
@@ -196,7 +196,7 @@ class WindowsRemoteCompletionConfig(RemoteCompletionConfig):
 TCompletionConfig = t.TypeVar('TCompletionConfig', bound=CompletionConfig)
 
 
-def load_completion(name: str, completion_type: t.Type[TCompletionConfig]) -> t.Dict[str, TCompletionConfig]:
+def load_completion(name: str, completion_type: t.Type[TCompletionConfig]) -> dict[str, TCompletionConfig]:
     """Load the named completion entries, returning them in dictionary form using the specified completion type."""
     lines = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
 
@@ -216,7 +216,7 @@ def load_completion(name: str, completion_type: t.Type[TCompletionConfig]) -> t.
     return completion
 
 
-def parse_completion_entry(value: str) -> t.Tuple[str, t.Dict[str, str]]:
+def parse_completion_entry(value: str) -> tuple[str, dict[str, str]]:
     """Parse the given completion entry, returning the entry name and a dictionary of key/value settings."""
     values = value.split()
 
@@ -227,10 +227,10 @@ def parse_completion_entry(value: str) -> t.Tuple[str, t.Dict[str, str]]:
 
 
 def filter_completion(
-        completion: t.Dict[str, TCompletionConfig],
+        completion: dict[str, TCompletionConfig],
         controller_only: bool = False,
         include_defaults: bool = False,
-) -> t.Dict[str, TCompletionConfig]:
+) -> dict[str, TCompletionConfig]:
     """Return the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
     if controller_only:
         completion = {name: config for name, config in completion.items() if isinstance(config, PosixCompletionConfig) and config.controller_supported}
@@ -242,24 +242,24 @@ def filter_completion(
 
 
 @cache
-def docker_completion() -> t.Dict[str, DockerCompletionConfig]:
+def docker_completion() -> dict[str, DockerCompletionConfig]:
     """Return docker completion entries."""
     return load_completion('docker', DockerCompletionConfig)
 
 
 @cache
-def remote_completion() -> t.Dict[str, PosixRemoteCompletionConfig]:
+def remote_completion() -> dict[str, PosixRemoteCompletionConfig]:
     """Return remote completion entries."""
     return load_completion('remote', PosixRemoteCompletionConfig)
 
 
 @cache
-def windows_completion() -> t.Dict[str, WindowsRemoteCompletionConfig]:
+def windows_completion() -> dict[str, WindowsRemoteCompletionConfig]:
     """Return windows completion entries."""
     return load_completion('windows', WindowsRemoteCompletionConfig)
 
 
 @cache
-def network_completion() -> t.Dict[str, NetworkRemoteCompletionConfig]:
+def network_completion() -> dict[str, NetworkRemoteCompletionConfig]:
     """Return network completion entries."""
     return load_completion('network', NetworkRemoteCompletionConfig)

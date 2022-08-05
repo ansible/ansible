@@ -67,7 +67,7 @@ def command_coverage_analyze_targets_missing(args: CoverageAnalyzeTargetsMissing
 
 def find_gaps(
         from_data: IndexedPoints,
-        from_index: t.List[str],
+        from_index: list[str],
         to_data: IndexedPoints,
         target_indexes: TargetIndexes,
         only_exists: bool,
@@ -92,9 +92,9 @@ def find_gaps(
 
 def find_missing(
         from_data: IndexedPoints,
-        from_index: t.List[str],
+        from_index: list[str],
         to_data: IndexedPoints,
-        to_index: t.List[str],
+        to_index: list[str],
         target_indexes: TargetIndexes,
         only_exists: bool,
 ) -> IndexedPoints:

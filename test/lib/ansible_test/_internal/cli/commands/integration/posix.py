@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import collections.abc as c
 import typing as t
 
 from ....commands.integration.posix import (
@@ -27,7 +28,7 @@ from ...environments import (
 def do_posix_integration(
         subparsers,
         parent: argparse.ArgumentParser,
-        add_integration_common: t.Callable[[argparse.ArgumentParser], None],
+        add_integration_common: c.Callable[[argparse.ArgumentParser], None],
         completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `integration` command."""

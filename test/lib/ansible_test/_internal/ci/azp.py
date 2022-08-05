@@ -80,7 +80,7 @@ class AzurePipelines(CIProvider):
 
         return base_branch or ''
 
-    def detect_changes(self, args: TestConfig) -> t.Optional[t.List[str]]:
+    def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
         result = AzurePipelinesChanges(args)
 
@@ -106,7 +106,7 @@ class AzurePipelines(CIProvider):
         """Return True if Ansible Core CI is supported."""
         return True
 
-    def prepare_core_ci_auth(self) -> t.Dict[str, t.Any]:
+    def prepare_core_ci_auth(self) -> dict[str, t.Any]:
         """Return authentication details for Ansible Core CI."""
         try:
             request = dict(
@@ -126,7 +126,7 @@ class AzurePipelines(CIProvider):
 
         return auth
 
-    def get_git_details(self, args: CommonConfig) -> t.Optional[t.Dict[str, t.Any]]:
+    def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
         changes = AzurePipelinesChanges(args)
 
@@ -213,7 +213,7 @@ class AzurePipelinesChanges:
             self.paths = None  # act as though change detection not enabled, do not filter targets
             self.diff = []
 
-    def get_successful_merge_run_commits(self) -> t.Set[str]:
+    def get_successful_merge_run_commits(self) -> set[str]:
         """Return a set of recent successsful merge commits from Azure Pipelines."""
         parameters = dict(
             maxBuildsPerDefinition=100,  # max 5000
@@ -241,7 +241,7 @@ class AzurePipelinesChanges:
 
         return commits
 
-    def get_last_successful_commit(self, commits: t.Set[str]) -> t.Optional[str]:
+    def get_last_successful_commit(self, commits: set[str]) -> t.Optional[str]:
         """Return the last successful commit from git history that is found in the given commit list, or None."""
         commit_history = self.git.get_rev_list(max_count=100)
         ordered_successful_commits = [commit for commit in commit_history if commit in commits]
@@ -254,7 +254,7 @@ def vso_add_attachment(file_type: str, file_name: str, path: str) -> None:
     vso('task.addattachment', dict(type=file_type, name=file_name), path)
 
 
-def vso(name: str, data: t.Dict[str, str], message: str) -> None:
+def vso(name: str, data: dict[str, str], message: str) -> None:
     """
     Write a logging command for the Azure Pipelines agent to process.
     See: https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash

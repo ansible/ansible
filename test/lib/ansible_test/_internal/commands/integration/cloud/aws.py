@@ -42,7 +42,7 @@ class AwsCloudProvider(CloudProvider):
 
         self.uses_config = True
 
-    def filter(self, targets: t.Tuple[IntegrationTarget, ...], exclude: t.List[str]) -> None:
+    def filter(self, targets: tuple[IntegrationTarget, ...], exclude: list[str]) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         aci = self._create_ansible_core_ci()
 
@@ -102,7 +102,7 @@ class AwsCloudEnvironment(CloudEnvironment):
         parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
-        ansible_vars: t.Dict[str, t.Any] = dict(
+        ansible_vars: dict[str, t.Any] = dict(
             resource_prefix=self.resource_prefix,
             tiny_prefix=uuid.uuid4().hex[0:12]
         )

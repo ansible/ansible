@@ -67,7 +67,7 @@ class MypyTest(SanityMultipleVersion):
         'lib/ansible/module_utils/compat/_selectors2.py',
     )
 
-    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and target.path not in self.vendored_paths and (
                 target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
@@ -111,7 +111,7 @@ class MypyTest(SanityMultipleVersion):
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
         )
 
-        unfiltered_messages: t.List[SanityMessage] = []
+        unfiltered_messages: list[SanityMessage] = []
 
         for context in contexts:
             if python.version not in context.python_versions:
@@ -174,8 +174,8 @@ class MypyTest(SanityMultipleVersion):
             virtualenv_python: VirtualPythonConfig,
             python: PythonConfig,
             context: MyPyContext,
-            paths: t.List[str],
-    ) -> t.List[SanityMessage]:
+            paths: list[str],
+    ) -> list[SanityMessage]:
         """Run mypy tests for the specified context."""
         context_paths = [path for path in paths if any(is_subdir(path, match_path) for match_path in context.paths)]
 
@@ -260,5 +260,5 @@ class MypyTest(SanityMultipleVersion):
 class MyPyContext:
     """Context details for a single run of mypy."""
     name: str
-    paths: t.List[str]
-    python_versions: t.Tuple[str, ...]
+    paths: list[str]
+    python_versions: tuple[str, ...]

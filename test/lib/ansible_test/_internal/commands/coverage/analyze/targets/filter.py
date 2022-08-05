@@ -1,6 +1,7 @@
 """Filter an aggregated coverage file, keeping only the specified targets."""
 from __future__ import annotations
 
+import collections.abc as c
 import re
 import typing as t
 
@@ -34,8 +35,8 @@ class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
 
         self.input_file: str = args.input_file
         self.output_file: str = args.output_file
-        self.include_targets: t.List[str] = args.include_targets
-        self.exclude_targets: t.List[str] = args.exclude_targets
+        self.include_targets: list[str] = args.include_targets
+        self.exclude_targets: list[str] = args.exclude_targets
         self.include_path: t.Optional[str] = args.include_path
         self.exclude_path: t.Optional[str] = args.exclude_path
 
@@ -92,8 +93,8 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
 def filter_data(
         data: NamedPoints,
-        path_filter_func: t.Callable[[str], bool],
-        target_filter_func: t.Callable[[t.Set[str]], t.Set[str]],
+        path_filter_func: c.Callable[[str], bool],
+        target_filter_func: c.Callable[[set[str]], set[str]],
 ) -> NamedPoints:
     """Filter the data set using the specified filter function."""
     result: NamedPoints = {}

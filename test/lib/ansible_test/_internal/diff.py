@@ -11,7 +11,7 @@ from .util import (
 )
 
 
-def parse_diff(lines: t.List[str]) -> t.List[FileDiff]:
+def parse_diff(lines: list[str]) -> list[FileDiff]:
     """Parse the given diff lines and return a list of FileDiff objects representing the changes of each file."""
     return DiffParser(lines).files
 
@@ -21,7 +21,7 @@ class FileDiff:
     def __init__(self, old_path: str, new_path: str) -> None:
         self.old = DiffSide(old_path, new=False)
         self.new = DiffSide(new_path, new=True)
-        self.headers: t.List[str] = []
+        self.headers: list[str] = []
         self.binary = False
 
     def append_header(self, line: str) -> None:
@@ -43,9 +43,9 @@ class DiffSide:
         self.eof_newline = True
         self.exists = True
 
-        self.lines: t.List[t.Tuple[int, str]] = []
-        self.lines_and_context: t.List[t.Tuple[int, str]] = []
-        self.ranges: t.List[t.Tuple[int, int]] = []
+        self.lines: list[tuple[int, str]] = []
+        self.lines_and_context: list[tuple[int, str]] = []
+        self.ranges: list[tuple[int, int]] = []
 
         self._next_line_number = 0
         self._lines_remaining = 0
@@ -97,7 +97,7 @@ class DiffSide:
         """True if the diff is complete, otherwise False."""
         return self._lines_remaining == 0
 
-    def format_lines(self, context: bool = True) -> t.List[str]:
+    def format_lines(self, context: bool = True) -> list[str]:
         """Format the diff and return a list of lines, optionally including context."""
         if context:
             lines = self.lines_and_context
@@ -109,9 +109,9 @@ class DiffSide:
 
 class DiffParser:
     """Parse diff lines."""
-    def __init__(self, lines: t.List[str]) -> None:
+    def __init__(self, lines: list[str]) -> None:
         self.lines = lines
-        self.files: t.List[FileDiff] = []
+        self.files: list[FileDiff] = []
 
         self.action = self.process_start
         self.line_number = 0

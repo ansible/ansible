@@ -31,7 +31,7 @@ class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.input_files: t.List[str] = args.input_file
+        self.input_files: list[str] = args.input_file
         self.output_file: str = args.output_file
 
 
@@ -59,7 +59,7 @@ def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombine
 
 def merge_indexes(
         source_data: IndexedPoints,
-        source_index: t.List[str],
+        source_index: list[str],
         combined_data: IndexedPoints,
         combined_index: TargetIndexes,
 ) -> None:

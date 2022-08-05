@@ -78,7 +78,7 @@ class PipUnavailableError(ApplicationError):
 class PipCommand:
     """Base class for pip commands."""""
 
-    def serialize(self) -> t.Tuple[str, t.Dict[str, t.Any]]:
+    def serialize(self) -> tuple[str, dict[str, t.Any]]:
         """Return a serialized representation of this command."""
         name = type(self).__name__[3:].lower()
         return name, self.__dict__
@@ -87,9 +87,9 @@ class PipCommand:
 @dataclasses.dataclass(frozen=True)
 class PipInstall(PipCommand):
     """Details required to perform a pip install."""
-    requirements: t.List[t.Tuple[str, str]]
-    constraints: t.List[t.Tuple[str, str]]
-    packages: t.List[str]
+    requirements: list[tuple[str, str]]
+    constraints: list[tuple[str, str]]
+    packages: list[str]
 
     def has_package(self, name: str) -> bool:
         """Return True if the specified package will be installed, otherwise False."""
@@ -102,7 +102,7 @@ class PipInstall(PipCommand):
 @dataclasses.dataclass(frozen=True)
 class PipUninstall(PipCommand):
     """Details required to perform a pip uninstall."""
-    packages: t.List[str]
+    packages: list[str]
     ignore_errors: bool
 
 
@@ -115,7 +115,7 @@ class PipVersion(PipCommand):
 class PipBootstrap(PipCommand):
     """Details required to bootstrap pip."""
     pip_version: str
-    packages: t.List[str]
+    packages: list[str]
 
 
 # Entry Points
@@ -182,7 +182,7 @@ def install_requirements(
         check_pyyaml(python)
 
 
-def collect_bootstrap(python: PythonConfig) -> t.List[PipCommand]:
+def collect_bootstrap(python: PythonConfig) -> list[PipCommand]:
     """Return the details necessary to bootstrap pip into an empty virtual environment."""
     infrastructure_packages = get_venv_packages(python)
     pip_version = infrastructure_packages['pip']
@@ -206,9 +206,9 @@ def collect_requirements(
         minimize: bool,
         command: t.Optional[str],
         sanity: t.Optional[str],
-) -> t.List[PipCommand]:
+) -> list[PipCommand]:
     """Collect requirements for the given Python using the specified arguments."""
-    commands: t.List[PipCommand] = []
+    commands: list[PipCommand] = []
 
     if virtualenv:
         # sanity tests on Python 2.x install virtualenv when it is too old or is not already installed and the `--requirements` option is given
@@ -254,7 +254,7 @@ def collect_requirements(
 def run_pip(
         args: EnvironmentConfig,
         python: PythonConfig,
-        commands: t.List[PipCommand],
+        commands: list[PipCommand],
         connection: t.Optional[Connection],
 ) -> None:
     """Run the specified pip commands for the given Python, and optionally the specified host."""
@@ -282,10 +282,10 @@ def run_pip(
 def collect_general_install(
     command: t.Optional[str] = None,
     ansible: bool = False,
-) -> t.List[PipInstall]:
+) -> list[PipInstall]:
     """Return details necessary for the specified general-purpose pip install(s)."""
-    requirements_paths: t.List[t.Tuple[str, str]] = []
-    constraints_paths: t.List[t.Tuple[str, str]] = []
+    requirements_paths: list[tuple[str, str]] = []
+    constraints_paths: list[tuple[str, str]] = []
 
     if ansible:
         path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'ansible.txt')
@@ -298,15 +298,15 @@ def collect_general_install(
     return collect_install(requirements_paths, constraints_paths)
 
 
-def collect_package_install(packages: t.List[str], constraints: bool = True) -> t.List[PipInstall]:
+def collect_package_install(packages: list[str], constraints: bool = True) -> list[PipInstall]:
     """Return the details necessary to install the specified packages."""
     return collect_install([], [], packages, constraints=constraints)
 
 
-def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
+def collect_sanity_install(sanity: str) -> list[PipInstall]:
     """Return the details necessary for the specified sanity pip install(s)."""
-    requirements_paths: t.List[t.Tuple[str, str]] = []
-    constraints_paths: t.List[t.Tuple[str, str]] = []
+    requirements_paths: list[tuple[str, str]] = []
+    constraints_paths: list[tuple[str, str]] = []
 
     path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', f'sanity.{sanity}.txt')
     requirements_paths.append((ANSIBLE_TEST_DATA_ROOT, path))
@@ -318,10 +318,10 @@ def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
     return collect_install(requirements_paths, constraints_paths, constraints=False)
 
 
-def collect_units_install() -> t.List[PipInstall]:
+def collect_units_install() -> list[PipInstall]:
     """Return details necessary for the specified units pip install(s)."""
-    requirements_paths: t.List[t.Tuple[str, str]] = []
-    constraints_paths: t.List[t.Tuple[str, str]] = []
+    requirements_paths: list[tuple[str, str]] = []
+    constraints_paths: list[tuple[str, str]] = []
 
     path = os.path.join(data_context().content.unit_path, 'requirements.txt')
     requirements_paths.append((data_context().content.root, path))
@@ -332,10 +332,10 @@ def collect_units_install() -> t.List[PipInstall]:
     return collect_install(requirements_paths, constraints_paths)
 
 
-def collect_integration_install(command: str, controller: bool) -> t.List[PipInstall]:
+def collect_integration_install(command: str, controller: bool) -> list[PipInstall]:
     """Return details necessary for the specified integration pip install(s)."""
-    requirements_paths: t.List[t.Tuple[str, str]] = []
-    constraints_paths: t.List[t.Tuple[str, str]] = []
+    requirements_paths: list[tuple[str, str]] = []
+    constraints_paths: list[tuple[str, str]] = []
 
     # Support for prefixed files was added to ansible-test in ansible-core 2.12 when split controller/target testing was implemented.
     # Previous versions of ansible-test only recognize non-prefixed files.
@@ -367,11 +367,11 @@ def collect_integration_install(command: str, controller: bool) -> t.List[PipIns
 
 
 def collect_install(
-        requirements_paths: t.List[t.Tuple[str, str]],
-        constraints_paths: t.List[t.Tuple[str, str]],
-        packages: t.Optional[t.List[str]] = None,
+        requirements_paths: list[tuple[str, str]],
+        constraints_paths: list[tuple[str, str]],
+        packages: t.Optional[list[str]] = None,
         constraints: bool = True,
-) -> t.List[PipInstall]:
+) -> list[PipInstall]:
     """Build a pip install list from the given requirements, constraints and packages."""
     # listing content constraints first gives them priority over constraints provided by ansible-test
     constraints_paths = list(constraints_paths)
@@ -395,7 +395,7 @@ def collect_install(
     return installs
 
 
-def collect_uninstall(packages: t.List[str], ignore_errors: bool = False) -> t.List[PipUninstall]:
+def collect_uninstall(packages: list[str], ignore_errors: bool = False) -> list[PipUninstall]:
     """Return the details necessary for the specified pip uninstall."""
     uninstall = PipUninstall(
         packages=packages,
@@ -408,7 +408,7 @@ def collect_uninstall(packages: t.List[str], ignore_errors: bool = False) -> t.L
 # Support
 
 
-def get_venv_packages(python: PythonConfig) -> t.Dict[str, str]:
+def get_venv_packages(python: PythonConfig) -> dict[str, str]:
     """Return a dictionary of Python packages needed for a consistent virtual environment specific to the given Python version."""
 
     # NOTE: This same information is needed for building the base-test-container image.
@@ -464,7 +464,7 @@ def requirements_allowed(args: EnvironmentConfig, controller: bool) -> bool:
     return target.is_managed or target.python.is_managed
 
 
-def prepare_pip_script(commands: t.List[PipCommand]) -> str:
+def prepare_pip_script(commands: list[PipCommand]) -> str:
     """Generate a Python script to perform the requested pip commands."""
     data = [command.serialize() for command in commands]
 
@@ -504,7 +504,7 @@ def is_cryptography_available(python: str) -> bool:
     return True
 
 
-def get_cryptography_requirements(python: PythonConfig) -> t.List[str]:
+def get_cryptography_requirements(python: PythonConfig) -> list[str]:
     """
     Return the correct cryptography and pyopenssl requirements for the given python version.
     The version of cryptography installed depends on the python version and openssl version.
@@ -534,7 +534,7 @@ def get_cryptography_requirements(python: PythonConfig) -> t.List[str]:
     return requirements
 
 
-def get_openssl_version(python: PythonConfig) -> t.Optional[t.Tuple[int, ...]]:
+def get_openssl_version(python: PythonConfig) -> t.Optional[tuple[int, ...]]:
     """Return the openssl version."""
     if not python.version.startswith('2.'):
         # OpenSSL version checking only works on Python 3.x.

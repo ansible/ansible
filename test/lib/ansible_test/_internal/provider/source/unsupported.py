@@ -1,8 +1,6 @@
 """Source provider to use when the layout is unsupported."""
 from __future__ import annotations
 
-import typing as t
-
 from . import (
     SourceProvider,
 )
@@ -17,6 +15,6 @@ class UnsupportedSource(SourceProvider):
         """Return True if the given path is a content root for this provider."""
         return False
 
-    def get_paths(self, path: str) -> t.List[str]:
+    def get_paths(self, path: str) -> list[str]:
         """Return the list of available content paths under the given path."""
         return []

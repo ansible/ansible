@@ -160,7 +160,7 @@ def add_composite_environment_options(
         completer: CompositeActionCompletionFinder,
         controller_mode: ControllerMode,
         target_mode: TargetMode,
-) -> t.List[t.Type[CompositeAction]]:
+) -> list[t.Type[CompositeAction]]:
     """Add composite options for controlling the test environment."""
     composite_parser = t.cast(argparse.ArgumentParser, parser.add_argument_group(
         title='composite environment arguments (mutually exclusive with "environment arguments" above)'))
@@ -170,7 +170,7 @@ def add_composite_environment_options(
         help=argparse.SUPPRESS,
     )
 
-    action_types: t.List[t.Type[CompositeAction]] = []
+    action_types: list[t.Type[CompositeAction]] = []
 
     def register_action_type(action_type: t.Type[CompositeAction]) -> t.Type[CompositeAction]:
         """Register the provided composite action type and return it."""
@@ -263,7 +263,7 @@ def add_environments_python(
         target_mode: TargetMode,
 ) -> None:
     """Add environment arguments to control the Python version(s) used."""
-    python_versions: t.Tuple[str, ...]
+    python_versions: tuple[str, ...]
 
     if target_mode.has_python:
         python_versions = SUPPORTED_PYTHON_VERSIONS
@@ -544,24 +544,24 @@ def add_environment_remote(
     )
 
 
-def complete_remote_stage(prefix: str, **_) -> t.List[str]:
+def complete_remote_stage(prefix: str, **_) -> list[str]:
     """Return a list of supported stages matching the given prefix."""
     return [stage for stage in ('prod', 'dev') if stage.startswith(prefix)]
 
 
-def complete_windows(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
+def complete_windows(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
     """Return a list of supported Windows versions matching the given prefix, excluding versions already parsed from the command line."""
     return [i for i in get_windows_version_choices() if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
 
-def complete_network_platform(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
+def complete_network_platform(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
     """Return a list of supported network platforms matching the given prefix, excluding platforms already parsed from the command line."""
     images = sorted(filter_completion(network_completion()))
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
 
-def complete_network_platform_collection(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
+def complete_network_platform_collection(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
     """Return a list of supported network platforms matching the given prefix, excluding collection platforms already parsed from the command line."""
     left = prefix.split('=')[0]
     images = sorted(set(image.platform for image in filter_completion(network_completion()).values()))
@@ -569,7 +569,7 @@ def complete_network_platform_collection(prefix: str, parsed_args: argparse.Name
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_collection or i not in [x[0] for x in parsed_args.platform_collection])]
 
 
-def complete_network_platform_connection(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
+def complete_network_platform_connection(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
     """Return a list of supported network platforms matching the given prefix, excluding connection platforms already parsed from the command line."""
     left = prefix.split('=')[0]
     images = sorted(set(image.platform for image in filter_completion(network_completion()).values()))
@@ -577,16 +577,16 @@ def complete_network_platform_connection(prefix: str, parsed_args: argparse.Name
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_connection or i not in [x[0] for x in parsed_args.platform_connection])]
 
 
-def get_remote_platform_choices(controller: bool = False) -> t.List[str]:
+def get_remote_platform_choices(controller: bool = False) -> list[str]:
     """Return a list of supported remote platforms matching the given prefix."""
     return sorted(filter_completion(remote_completion(), controller_only=controller))
 
 
-def get_windows_platform_choices() -> t.List[str]:
+def get_windows_platform_choices() -> list[str]:
     """Return a list of supported Windows versions matching the given prefix."""
     return sorted(f'windows/{windows.version}' for windows in filter_completion(windows_completion()).values())
 
 
-def get_windows_version_choices() -> t.List[str]:
+def get_windows_version_choices() -> list[str]:
     """Return a list of supported Windows versions."""
     return sorted(windows.version for windows in filter_completion(windows_completion()).values())

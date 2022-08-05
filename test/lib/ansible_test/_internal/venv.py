@@ -1,6 +1,7 @@
 """Virtual environment management."""
 from __future__ import annotations
 
+import collections.abc as c
 import json
 import os
 import pathlib
@@ -129,7 +130,7 @@ def create_virtual_environment(args: EnvironmentConfig,
     return False
 
 
-def iterate_real_pythons(version: str) -> t.Iterable[str]:
+def iterate_real_pythons(version: str) -> c.Iterable[str]:
     """
     Iterate through available real python interpreters of the requested version.
     The current interpreter will be checked and then the path will be searched.
@@ -245,7 +246,7 @@ def run_virtualenv(args: EnvironmentConfig,
     return True
 
 
-def get_virtualenv_version(args: EnvironmentConfig, python: str) -> t.Optional[t.Tuple[int, ...]]:
+def get_virtualenv_version(args: EnvironmentConfig, python: str) -> t.Optional[tuple[int, ...]]:
     """Get the virtualenv version for the given python interpreter, if available, otherwise return None."""
     try:
         cache = get_virtualenv_version.cache  # type: ignore[attr-defined]

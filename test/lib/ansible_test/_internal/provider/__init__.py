@@ -11,13 +11,13 @@ from ..util import (
 )
 
 
-def get_path_provider_classes(provider_type: t.Type[TPathProvider]) -> t.List[t.Type[TPathProvider]]:
+def get_path_provider_classes(provider_type: t.Type[TPathProvider]) -> list[t.Type[TPathProvider]]:
     """Return a list of path provider classes of the given type."""
-    return sorted(get_subclasses(provider_type), key=lambda c: (c.priority, c.__name__))
+    return sorted(get_subclasses(provider_type), key=lambda subclass: (subclass.priority, subclass.__name__))
 
 
 def find_path_provider(provider_type: t.Type[TPathProvider],
-                       provider_classes: t.List[t.Type[TPathProvider]],
+                       provider_classes: list[t.Type[TPathProvider]],
                        path: str,
                        walk: bool,
                        ) -> TPathProvider:

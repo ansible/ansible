@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import time
-import typing as t
 
 from xml.etree.ElementTree import (
     Comment,
@@ -76,7 +75,7 @@ def _generate_powershell_xml(coverage_file: str) -> Element:
     content_root = data_context().content.root
     is_ansible = data_context().content.is_ansible
 
-    packages: t.Dict[str, t.Dict[str, t.Dict[str, int]]] = {}
+    packages: dict[str, dict[str, dict[str, int]]] = {}
     for path, results in coverage_info.items():
         filename = os.path.splitext(os.path.basename(path))[0]
 
@@ -131,7 +130,7 @@ def _generate_powershell_xml(coverage_file: str) -> Element:
     return elem_coverage
 
 
-def _add_cobertura_package(packages: Element, package_name: str, package_data: t.Dict[str, t.Dict[str, int]]) -> t.Tuple[int, int]:
+def _add_cobertura_package(packages: Element, package_name: str, package_data: dict[str, dict[str, int]]) -> tuple[int, int]:
     """Add a package element to the given packages element."""
     elem_package = SubElement(packages, 'package')
     elem_classes = SubElement(elem_package, 'classes')

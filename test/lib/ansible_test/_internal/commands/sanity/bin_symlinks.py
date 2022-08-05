@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import typing as t
 
 from . import (
     SanityVersionNeutral,
@@ -56,7 +55,7 @@ class BinSymlinksTest(SanityVersionNeutral):
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)
 
-        errors: t.List[t.Tuple[str, str]] = []
+        errors: list[tuple[str, str]] = []
 
         symlink_map_path = os.path.relpath(symlink_map_full_path, data_context().content.root)
 
