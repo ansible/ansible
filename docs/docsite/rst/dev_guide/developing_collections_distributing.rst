@@ -6,16 +6,16 @@ Distributing collections
 
 A collection is a distribution format for Ansible content. A typical collection contains modules and other plugins that address a set of related use cases. For example, a collection might automate administering a particular database. A collection can also contain roles and playbooks.
 
-To distribute your collection and allow others to use it, you can publish your collection on one or more distribution servers. Distribution servers include:
+To distribute your collection and allow others to use it, you can publish your collection on one or more :term:`distribution server`. Distribution servers include:
 
-================================= ========================================================
+================================= ===================================================================
 Distribution server               Collections accepted
-================================= ========================================================
+================================= ===================================================================
 Ansible Galaxy                    All collections
-:term:`self-hosted Galaxy`        All collections
-Red Hat Automation Hub            Only collections certified by Red Hat
+:term:`Pulp 3 Galaxy`             All collections, supports signed collections
+Red Hat Automation Hub            Only collections certified by Red Hat, supports signed collections
 Privately hosted Automation Hub   Collections authorized by the owners
-================================= ========================================================
+================================= ===================================================================
 
 Distributing collections involves four major steps:
 
@@ -186,9 +186,9 @@ For more information on the :file:`galaxy.yml` file, see :ref:`collections_galax
 Signing a collection
 --------------------------
 
-You can include a GnuPG signature with your collection on a self-hosted Galaxy server. See `Enabling collection signing <https://galaxyng.netlify.app/config/collection_signing/>`_ for details.
+You can include a GnuPG signature with your collection on a :term:`Pulp 3 Galaxy` server. See `Enabling collection signing <https://galaxyng.netlify.app/config/collection_signing/>`_ for details.
 
-You can also manually generate detached signatures for a collection using the ``gpg`` CLI using the following step. This step assume you have generated a GPG private key, but do not cover this process.
+You can manually generate detached signatures for a collection using the ``gpg`` CLI using the following step. This step assume you have generated a GPG private key, but do not cover this process.
 
 .. code-block:: bash
 

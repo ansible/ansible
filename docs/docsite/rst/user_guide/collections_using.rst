@@ -35,14 +35,14 @@ Installing collections with ``ansible-galaxy``
 Installing collections with signature verification
 ---------------------------------------------------
 
-If a collection has been signed by a :term:`self-hosted Galaxy` server, the server will provide ASCII armored, detached signatures to verify the authenticity of the ``MANIFEST.json`` before using it to verify the collection's contents. This option is not available on community Galaxy.
+If a collection has been signed by a :term:`distribution server`, the server will provide ASCII armored, detached signatures to verify the authenticity of the ``MANIFEST.json`` before using it to verify the collection's contents. This option is not available on all distribution servers. See :ref:`distributing_collections` for a table listing which servers support collection signing.
 
 To use signature verification for signed collections:
 
 1. :ref:`Configured a GnuPG keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or provide the path to the keyring with the ``--keyring`` option when you install the signed collection.
    
 
-2. Import the public key from the self-hosted Galaxy server into that keyring.
+2. Import the public key from the distribution server into that keyring.
    
    .. code-block:: bash
 
@@ -60,13 +60,13 @@ To use signature verification for signed collections:
 4. Optionally, verify the signature at any point after installation to prove the collection has not been tampered with. See :ref:`verify_signed_collections` for details.
 
 
-You can also include signatures in addition to those provided by the self-hosted Galaxy server. Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with these additional signatures. Supplemental signatures should be provided as URIs.
+You can also include signatures in addition to those provided by the distribution server. Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with these additional signatures. Supplemental signatures should be provided as URIs.
 
 .. code-block:: bash
 
    ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --keyring ~/.ansible/pubring.kbx
 
-GnuPG verification only occurs for collections installed from a self-hosted Galaxy server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
+GnuPG verification only occurs for collections installed from a distribution server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
 
 You can also include additional signatures in the collection ``requirements.yml`` file under the ``signatures`` key.
 
@@ -92,7 +92,7 @@ By default, verification is considered successful if a minimum of 1 signature su
 
 Certain GnuPG errors can be ignored with ``--ignore-signature-status-code`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` should be a list, and ``--ignore-signature-status-code`` can be provided multiple times to ignore multiple additional error status codes.
 
-This example requires any signatures provided by the self-hosted Galaxy server to verify the collection except if they fail due to NO_PUBKEY:
+This example requires any signatures provided by the distribution server to verify the collection except if they fail due to NO_PUBKEY:
 
 .. code-block:: bash
 
@@ -350,7 +350,7 @@ Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`
 Verifying signed collections
 -----------------------------
 
-If a collection has been signed by a :term:`self-hosted Galaxy` server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on community Galaxy. See :ref:`installing_signed_collections` for how to verify a signed collection when you install it.
+If a collection has been signed by a :term:`distribution server`, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. TThis option is not available on all distribution servers. See :ref:`distributing_collections` for a table listing which servers support collection signing. See :ref:`installing_signed_collections` for how to verify a signed collection when you install it.
 
 To verify a signed installed collection:
 
@@ -371,7 +371,7 @@ Optionally, you can verify a collection signature with a ``requirements.yml`` fi
 
    ansible-galaxy collection verify -r requirements.yml --keyring ~/.ansible/pubring.kbx
 
-When a collection is installed from a self-hosted Galaxy server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the self-hosted Galaxy server again when the ``--offline`` option is provided.
+When a collection is installed from a distribution server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the distribution server again when the ``--offline`` option is provided.
 
 .. code-block:: bash
 

@@ -33,7 +33,7 @@ when a term comes up on the mailing list.
         Name used starting with 2.11. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. Contains the command-line tools and the code for basic features and functions, such as copying module code to managed nodes. The ``ansible-core`` package includes a few modules and plugins and allows you to add others by installing collections.
 
     Ansible Galaxy
-        An `online resource <galaxy.ansible.com>`_ for finding and sharing Ansible community content, somtimes referred to as community Galaxy. Also, the command-line utility that lets users install individual Ansible Collections, for example ``ansible-galaxy collection install community.crypto``.
+        An `online distribution server <galaxy.ansible.com>`_ for finding and sharing Ansible community content, somtimes referred to as community Galaxy. Also, the command-line utility that lets users install individual Ansible Collections, for example ``ansible-galaxy collection install community.crypto``.
 
     Async
         Refers to a task that is configured to run in the background rather
@@ -107,6 +107,9 @@ when a term comes up on the mailing list.
         A ``--diff`` flag can be passed to Ansible to show what changed on
         modules that support it. You can combine it with ``--check`` to get a
         good 'dry run'.  File diffs are normally in unified diff format.
+
+    Distribution server
+        A server, such as Ansible Galaxy or Red Hat Automation Hub where you can distribute your collections and allow others to access these collections. See :ref:`distributing_collections` for a list of distribution server types. Some Ansible features are only available on certain distribution servers.
 
     Executor
         A core software component of Ansible that is the power behind
@@ -386,6 +389,10 @@ when a term comes up on the mailing list.
         git on a crontab and then managing the machine locally, using the
         :term:`local connection` plugin.
 
+    Pulp 3 Galaxy
+        A self-hosted distribution server based on the `GalaxyNG codebase <https://galaxyng.netlify.app/>`_, based on Pulp version 3. Use it to find and share your own curated set of content. You can access your content with the ``ansible-galaxy collection`` command.
+
+
     Push Mode
         Push mode is the default mode of Ansible. In fact, it's not really
         a mode at all -- it's just how Ansible works when you aren't thinking
@@ -434,9 +441,6 @@ when a term comes up on the mailing list.
         that you must opt-in to.  OS configuration (such as making sure config
         files are correct) does not typically have to use the rolling update
         model, but can do so if desired.
-
-    self-hosted Galaxy
-        An on-premises version of the `GalaxyNG codebase <https://galaxyng.netlify.app/>`_ to find and share your own curated set of content. You can access your content with the ``ansible-galaxy collection`` command.
 
     Serial
         .. seealso::
