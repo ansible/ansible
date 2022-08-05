@@ -1,6 +1,7 @@
 """Delegate test execution to another environment."""
 from __future__ import annotations
 
+import collections.abc as c
 import contextlib
 import json
 import os
@@ -78,7 +79,7 @@ from .content_config import (
 
 
 @contextlib.contextmanager
-def delegation_context(args: EnvironmentConfig, host_state: HostState) -> t.Iterator[None]:
+def delegation_context(args: EnvironmentConfig, host_state: HostState) -> c.Iterator[None]:
     """Context manager for serialized host state during delegation."""
     make_dirs(ResultType.TMP.path)
 
@@ -99,7 +100,7 @@ def delegation_context(args: EnvironmentConfig, host_state: HostState) -> t.Iter
             args.host_path = None
 
 
-def delegate(args: CommonConfig, host_state: HostState, exclude: t.List[str], require: t.List[str]) -> None:
+def delegate(args: CommonConfig, host_state: HostState, exclude: list[str], require: list[str]) -> None:
     """Delegate execution of ansible-test to another environment."""
     assert isinstance(args, EnvironmentConfig)
 
@@ -121,7 +122,7 @@ def delegate(args: CommonConfig, host_state: HostState, exclude: t.List[str], re
             delegate_command(args, host_state, exclude, require)
 
 
-def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: t.List[str], require: t.List[str]) -> None:
+def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: list[str], require: list[str]) -> None:
     """Delegate execution based on the provided host state."""
     con = host_state.controller_profile.get_origin_controller_connection()
     working_directory = host_state.controller_profile.get_working_directory()
@@ -258,9 +259,9 @@ def generate_command(
         python: PythonConfig,
         ansible_bin_path: str,
         content_root: str,
-        exclude: t.List[str],
-        require: t.List[str],
-) -> t.List[str]:
+        exclude: list[str],
+        require: list[str],
+) -> list[str]:
     """Generate the command necessary to delegate ansible-test."""
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
     cmd = [python.path] + cmd
@@ -307,10 +308,10 @@ def generate_command(
 
 def filter_options(
         args: EnvironmentConfig,
-        argv: t.List[str],
-        exclude: t.List[str],
-        require: t.List[str],
-) -> t.Iterable[str]:
+        argv: list[str],
+        exclude: list[str],
+        require: list[str],
+) -> c.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
         ('--docker-no-pull', 0, False),

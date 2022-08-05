@@ -66,7 +66,7 @@ class Local(CIProvider):
         """Return the base branch or an empty string."""
         return ''
 
-    def detect_changes(self, args: TestConfig) -> t.Optional[t.List[str]]:
+    def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
         result = LocalChanges(args)
 
@@ -121,7 +121,7 @@ class Local(CIProvider):
         path = self._get_aci_key_path()
         return os.path.exists(path)
 
-    def prepare_core_ci_auth(self) -> t.Dict[str, t.Any]:
+    def prepare_core_ci_auth(self) -> dict[str, t.Any]:
         """Return authentication details for Ansible Core CI."""
         path = self._get_aci_key_path()
         auth_key = read_text_file(path).strip()
@@ -137,7 +137,7 @@ class Local(CIProvider):
 
         return auth
 
-    def get_git_details(self, args: CommonConfig) -> t.Optional[t.Dict[str, t.Any]]:
+    def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
         return None  # not yet implemented for local
 

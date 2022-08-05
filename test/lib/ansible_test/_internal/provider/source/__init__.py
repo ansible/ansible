@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import abc
-import typing as t
 
 from .. import (
     PathProvider,
@@ -12,5 +11,5 @@ from .. import (
 class SourceProvider(PathProvider):
     """Base class for source providers."""
     @abc.abstractmethod
-    def get_paths(self, path: str) -> t.List[str]:
+    def get_paths(self, path: str) -> list[str]:
         """Return the list of available content paths under the given path."""

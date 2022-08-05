@@ -141,13 +141,13 @@ def get_sqlite_schema_version(path: str) -> int:
 def cover_python(
         args: TestConfig,
         python: PythonConfig,
-        cmd: t.List[str],
+        cmd: list[str],
         target_name: str,
-        env: t.Dict[str, str],
+        env: dict[str, str],
         capture: bool,
         data: t.Optional[str] = None,
         cwd: t.Optional[str] = None,
-) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a command while collecting Python code coverage."""
     if args.coverage:
         env.update(get_coverage_environment(args, target_name, python.version))
@@ -175,7 +175,7 @@ def get_coverage_environment(
         args: TestConfig,
         target_name: str,
         version: str,
-) -> t.Dict[str, str]:
+) -> dict[str, str]:
     """Return environment variables needed to collect code coverage."""
     # unit tests, sanity tests and other special cases (localhost only)
     # config is in a temporary directory

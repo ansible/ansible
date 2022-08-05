@@ -29,7 +29,7 @@ VIRTUAL_PACKAGES = {
 }
 
 
-def get_python_module_utils_imports(compile_targets: t.List[TestTarget]) -> t.Dict[str, t.Set[str]]:
+def get_python_module_utils_imports(compile_targets: list[TestTarget]) -> dict[str, set[str]]:
     """Return a dictionary of module_utils names mapped to sets of python file paths."""
     module_utils = enumerate_module_utils()
 
@@ -41,7 +41,7 @@ def get_python_module_utils_imports(compile_targets: t.List[TestTarget]) -> t.Di
     for target in compile_targets:
         imports_by_target_path[target.path] = extract_python_module_utils_imports(target.path, module_utils)
 
-    def recurse_import(import_name: str, depth: int = 0, seen: t.Optional[t.Set[str]] = None) -> t.Set[str]:
+    def recurse_import(import_name: str, depth: int = 0, seen: t.Optional[set[str]] = None) -> set[str]:
         """Recursively expand module_utils imports from module_utils files."""
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
@@ -102,7 +102,7 @@ def get_python_module_utils_imports(compile_targets: t.List[TestTarget]) -> t.Di
                         display.info('%s inherits import %s via %s' % (target_path, module_util_import, module_util), verbosity=6)
                         modules.add(module_util_import)
 
-    imports: t.Dict[str, t.Set[str]] = {module_util: set() for module_util in module_utils | virtual_utils}
+    imports: dict[str, set[str]] = {module_util: set() for module_util in module_utils | virtual_utils}
 
     for target_path, modules in imports_by_target_path.items():
         for module_util in modules:
@@ -163,7 +163,7 @@ def enumerate_module_utils():
     return set(module_utils)
 
 
-def extract_python_module_utils_imports(path: str, module_utils: t.Set[str]) -> t.Set[str]:
+def extract_python_module_utils_imports(path: str, module_utils: set[str]) -> set[str]:
     """Return a list of module_utils imports found in the specified source file."""
     # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
     # See: https://www.python.org/dev/peps/pep-0263
@@ -233,10 +233,10 @@ def relative_to_absolute(name: str, level: int, module: str, path: str, lineno: 
 
 class ModuleUtilFinder(ast.NodeVisitor):
     """AST visitor to find valid module_utils imports."""
-    def __init__(self, path: str, module_utils: t.Set[str]) -> None:
+    def __init__(self, path: str, module_utils: set[str]) -> None:
         self.path = path
         self.module_utils = module_utils
-        self.imports: t.Set[str] = set()
+        self.imports: set[str] = set()
 
         # implicitly import parent package
 
@@ -325,7 +325,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
         # This error should be detected by unit or integration tests.
         display.warning('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))
 
-    def add_imports(self, names: t.List[str], line_no: int) -> None:
+    def add_imports(self, names: list[str], line_no: int) -> None:
         """Add the given import names if they are module_utils imports."""
         for name in names:
             if self.is_module_util_name(name):

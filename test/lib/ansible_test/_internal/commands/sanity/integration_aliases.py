@@ -106,8 +106,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def __init__(self):
         super().__init__()
 
-        self._ci_config: t.Dict[str, t.Any] = {}
-        self._ci_test_groups: t.Dict[str, t.List[int]] = {}
+        self._ci_config: dict[str, t.Any] = {}
+        self._ci_test_groups: dict[str, list[int]] = {}
 
     @property
     def can_ignore(self) -> bool:
@@ -119,7 +119,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def load_ci_config(self, python: PythonConfig) -> t.Dict[str, t.Any]:
+    def load_ci_config(self, python: PythonConfig) -> dict[str, t.Any]:
         """Load and return the CI YAML configuration."""
         if not self._ci_config:
             self._ci_config = self.load_yaml(python, self.CI_YML)
@@ -127,10 +127,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return self._ci_config
 
     @property
-    def ci_test_groups(self) -> t.Dict[str, t.List[int]]:
+    def ci_test_groups(self) -> dict[str, list[int]]:
         """Return a dictionary of CI test names and their group(s)."""
         if not self._ci_test_groups:
-            test_groups: t.Dict[str, t.Set[int]] = {}
+            test_groups: dict[str, set[int]] = {}
 
             for stage in self._ci_config['stages']:
                 for job in stage['jobs']:
@@ -197,7 +197,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return alias
 
-    def load_yaml(self, python: PythonConfig, path: str) -> t.Dict[str, t.Any]:
+    def load_yaml(self, python: PythonConfig, path: str) -> dict[str, t.Any]:
         """Load the specified YAML file and return the contents."""
         yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
         return json.loads(raw_command([python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
@@ -232,7 +232,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def check_posix_targets(self, args: SanityConfig) -> t.List[SanityMessage]:
+    def check_posix_targets(self, args: SanityConfig) -> list[SanityMessage]:
         """Check POSIX integration test targets and return messages with any issues found."""
         posix_targets = tuple(walk_posix_integration_targets())
 
@@ -321,10 +321,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     def check_ci_group(
             self,
-            targets: t.Tuple[CompletionTarget, ...],
+            targets: tuple[CompletionTarget, ...],
             find: str,
-            find_incidental: t.Optional[t.List[str]] = None,
-    ) -> t.List[SanityMessage]:
+            find_incidental: t.Optional[list[str]] = None,
+    ) -> list[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
         supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))
@@ -399,7 +399,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         results.comments += comments
         results.labels.update(labels)
 
-    def format_comment(self, template: str, targets: t.List[str]) -> t.Optional[str]:
+    def format_comment(self, template: str, targets: list[str]) -> t.Optional[str]:
         """Format and return a comment based on the given template and targets, or None if there are no targets."""
         if not targets:
             return None
@@ -419,5 +419,5 @@ class IntegrationAliasesTest(SanitySingleVersion):
 @dataclasses.dataclass
 class Results:
     """Check results."""
-    comments: t.List[str]
-    labels: t.Dict[str, bool]
+    comments: list[str]
+    labels: dict[str, bool]

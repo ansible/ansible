@@ -65,7 +65,7 @@ class CIProvider(metaclass=abc.ABCMeta):
         """Return the base branch or an empty string."""
 
     @abc.abstractmethod
-    def detect_changes(self, args: TestConfig) -> t.Optional[t.List[str]]:
+    def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
 
     @abc.abstractmethod
@@ -73,11 +73,11 @@ class CIProvider(metaclass=abc.ABCMeta):
         """Return True if Ansible Core CI is supported."""
 
     @abc.abstractmethod
-    def prepare_core_ci_auth(self) -> t.Dict[str, t.Any]:
+    def prepare_core_ci_auth(self) -> dict[str, t.Any]:
         """Return authentication details for Ansible Core CI."""
 
     @abc.abstractmethod
-    def get_git_details(self, args: CommonConfig) -> t.Optional[t.Dict[str, t.Any]]:
+    def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
 
 
@@ -88,7 +88,7 @@ def get_ci_provider() -> CIProvider:
 
     import_plugins('ci')
 
-    candidates = sorted(get_subclasses(CIProvider), key=lambda c: (c.priority, c.__name__))
+    candidates = sorted(get_subclasses(CIProvider), key=lambda subclass: (subclass.priority, subclass.__name__))
 
     for candidate in candidates:
         if candidate.is_supported():
@@ -103,7 +103,7 @@ def get_ci_provider() -> CIProvider:
 
 class AuthHelper(metaclass=abc.ABCMeta):
     """Public key based authentication helper for Ansible Core CI."""
-    def sign_request(self, request: t.Dict[str, t.Any]) -> None:
+    def sign_request(self, request: dict[str, t.Any]) -> None:
         """Sign the given auth request and make the public key available."""
         payload_bytes = to_bytes(json.dumps(request, sort_keys=True))
         signature_raw_bytes = self.sign_bytes(payload_bytes)

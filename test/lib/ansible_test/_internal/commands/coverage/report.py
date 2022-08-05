@@ -81,7 +81,7 @@ def _generate_powershell_output_report(args: CoverageReportConfig, coverage_file
             continue
 
         stmts = len(hit_info)
-        miss = len([c for c in hit_info.values() if c == 0])
+        miss = len([hit for hit in hit_info.values() if hit == 0])
 
         name_padding = max(name_padding, len(filename) + 3)
 

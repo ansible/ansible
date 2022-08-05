@@ -1,8 +1,8 @@
 """Sanity test for proper import exception handling."""
 from __future__ import annotations
 
+import collections.abc as c
 import os
-import typing as t
 
 from . import (
     SanityMultipleVersion,
@@ -73,7 +73,7 @@ from ...venv import (
 )
 
 
-def _get_module_test(module_restrictions: bool) -> t.Callable[[str], bool]:
+def _get_module_test(module_restrictions: bool) -> c.Callable[[str], bool]:
     """Create a predicate which tests whether a path can be used by modules or not."""
     module_path = data_context().content.module_path
     module_utils_path = data_context().content.module_utils_path
@@ -84,7 +84,7 @@ def _get_module_test(module_restrictions: bool) -> t.Callable[[str], bool]:
 
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
-    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if data_context().content.is_ansible:
             # all of ansible-core must pass the import test, not just plugins/modules

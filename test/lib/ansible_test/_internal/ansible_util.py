@@ -52,7 +52,7 @@ from .host_configs import (
 )
 
 
-def parse_inventory(args: EnvironmentConfig, inventory_path: str) -> t.Dict[str, t.Any]:
+def parse_inventory(args: EnvironmentConfig, inventory_path: str) -> dict[str, t.Any]:
     """Return a dict parsed from the given inventory file."""
     cmd = ['ansible-inventory', '-i', inventory_path, '--list']
     env = ansible_environment(args)
@@ -60,7 +60,7 @@ def parse_inventory(args: EnvironmentConfig, inventory_path: str) -> t.Dict[str,
     return inventory
 
 
-def get_hosts(inventory: t.Dict[str, t.Any], group_name: str) -> t.Dict[str, t.Dict[str, t.Any]]:
+def get_hosts(inventory: dict[str, t.Any], group_name: str) -> dict[str, dict[str, t.Any]]:
     """Return a dict of hosts from the specified group in the given inventory."""
     hostvars = inventory.get('_meta', {}).get('hostvars', {})
     group = inventory.get(group_name, {})
@@ -69,7 +69,7 @@ def get_hosts(inventory: t.Dict[str, t.Any], group_name: str) -> t.Dict[str, t.D
     return hosts
 
 
-def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: t.Optional[str] = None) -> t.Dict[str, str]:
+def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: t.Optional[str] = None) -> dict[str, str]:
     """Return a dictionary of environment variables to use when running Ansible commands."""
     env = common_environment()
     path = env['PATH']
@@ -138,7 +138,7 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
     return env
 
 
-def configure_plugin_paths(args: CommonConfig) -> t.Dict[str, str]:
+def configure_plugin_paths(args: CommonConfig) -> dict[str, str]:
     """Return environment variables with paths to plugins relevant for the current command."""
     if not isinstance(args, IntegrationConfig):
         return {}
@@ -283,7 +283,7 @@ def run_playbook(
         inventory_path: str,
         playbook: str,
         capture: bool,
-        variables: t.Optional[t.Dict[str, t.Any]] = None,
+        variables: t.Optional[dict[str, t.Any]] = None,
 ) -> None:
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)

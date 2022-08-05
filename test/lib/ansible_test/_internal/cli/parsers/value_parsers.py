@@ -1,6 +1,7 @@
 """Composite argument value parsers used by other parsers."""
 from __future__ import annotations
 
+import collections.abc as c
 import typing as t
 
 from ...host_configs import (
@@ -60,7 +61,7 @@ class PythonParser(Parser):
     The origin host and unknown environments assume all relevant Python versions are available.
     """
     def __init__(self,
-                 versions: t.Sequence[str],
+                 versions: c.Sequence[str],
                  *,
                  allow_default: bool,
                  allow_venv: bool,
@@ -133,7 +134,7 @@ class PythonParser(Parser):
 
 class PlatformParser(ChoicesParser):
     """Composite argument parser for "{platform}/{version}" formatted choices."""
-    def __init__(self, choices: t.List[str]) -> None:
+    def __init__(self, choices: list[str]) -> None:
         super().__init__(choices, conditions=MatchConditions.CHOICE | MatchConditions.ANY)
 
     def parse(self, state: ParserState) -> t.Any:

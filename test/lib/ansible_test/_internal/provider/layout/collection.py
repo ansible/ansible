@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import typing as t
 
 from . import (
     ContentLayout,
@@ -26,7 +25,7 @@ class CollectionLayout(LayoutProvider):
 
         return False
 
-    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
+    def create(self, root: str, paths: list[str]) -> ContentLayout:
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, os.path.join('plugins', p)) for p in self.PLUGIN_TYPES)
 
@@ -77,7 +76,7 @@ class CollectionLayout(LayoutProvider):
                              )
 
     @staticmethod
-    def __check_test_path(paths: t.List[str], messages: LayoutMessages) -> None:
+    def __check_test_path(paths: list[str], messages: LayoutMessages) -> None:
         modern_test_path = 'tests/'
         modern_test_path_found = any(path.startswith(modern_test_path) for path in paths)
         legacy_test_path = 'test/'
@@ -89,7 +88,7 @@ class CollectionLayout(LayoutProvider):
             messages.warning.append('Ignoring tests in "%s" that should be in "%s".' % (legacy_test_path, modern_test_path))
 
     @staticmethod
-    def __check_integration_path(paths: t.List[str], messages: LayoutMessages) -> str:
+    def __check_integration_path(paths: list[str], messages: LayoutMessages) -> str:
         modern_integration_path = 'roles/test/'
         modern_integration_path_found = any(path.startswith(modern_integration_path) for path in paths)
         legacy_integration_path = 'tests/integration/targets/'
@@ -111,7 +110,7 @@ class CollectionLayout(LayoutProvider):
         return integration_targets_path
 
     @staticmethod
-    def __check_unit_path(paths: t.List[str], messages: LayoutMessages) -> None:
+    def __check_unit_path(paths: list[str], messages: LayoutMessages) -> None:
         modern_unit_path = 'tests/unit/'
         modern_unit_path_found = any(path.startswith(modern_unit_path) for path in paths)
         legacy_unit_path = 'tests/units/'  # test/units/ will be covered by the warnings for test/ vs tests/

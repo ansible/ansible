@@ -54,11 +54,11 @@ from ..data import (
 FOCUSED_TARGET = '__focused__'
 
 
-def categorize_changes(args: TestConfig, paths: t.List[str], verbose_command: t.Optional[str] = None) -> ChangeDescription:
+def categorize_changes(args: TestConfig, paths: list[str], verbose_command: t.Optional[str] = None) -> ChangeDescription:
     """Categorize the given list of changed paths and return a description of the changes."""
     mapper = PathMapper(args)
 
-    commands: t.Dict[str, t.Set[str]] = {
+    commands: dict[str, set[str]] = {
         'sanity': set(),
         'units': set(),
         'integration': set(),
@@ -68,10 +68,10 @@ def categorize_changes(args: TestConfig, paths: t.List[str], verbose_command: t.
 
     focused_commands = collections.defaultdict(set)
 
-    deleted_paths: t.Set[str] = set()
-    original_paths: t.Set[str] = set()
-    additional_paths: t.Set[str] = set()
-    no_integration_paths: t.Set[str] = set()
+    deleted_paths: set[str] = set()
+    original_paths: set[str] = set()
+    additional_paths: set[str] = set()
+    no_integration_paths: set[str] = set()
 
     for path in paths:
         if not os.path.exists(path):
@@ -156,8 +156,8 @@ def categorize_changes(args: TestConfig, paths: t.List[str], verbose_command: t.
         if any(target == 'all' for target in targets):
             commands[command] = {'all'}
 
-    sorted_commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
-    focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
+    sorted_commands = dict((cmd, sorted(targets)) for cmd, targets in commands.items() if targets)
+    focused_commands = dict((cmd, sorted(targets)) for cmd, targets in focused_commands.items())
 
     for command, targets in sorted_commands.items():
         if targets == ['all']:
@@ -206,11 +206,11 @@ class PathMapper:
         self.prefixes = load_integration_prefixes()
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
-        self.python_module_utils_imports: t.Dict[str, t.Set[str]] = {}  # populated on first use to reduce overhead when not needed
-        self.powershell_module_utils_imports: t.Dict[str, t.Set[str]] = {}  # populated on first use to reduce overhead when not needed
-        self.csharp_module_utils_imports: t.Dict[str, t.Set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.python_module_utils_imports: dict[str, set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports: dict[str, set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports: dict[str, set[str]] = {}  # populated on first use to reduce overhead when not needed
 
-        self.paths_to_dependent_targets: t.Dict[str, t.Set[IntegrationTarget]] = {}
+        self.paths_to_dependent_targets: dict[str, set[IntegrationTarget]] = {}
 
         for target in self.integration_targets:
             for path in target.needs_file:
@@ -219,7 +219,7 @@ class PathMapper:
 
                 self.paths_to_dependent_targets[path].add(target)
 
-    def get_dependent_paths(self, path: str) -> t.List[str]:
+    def get_dependent_paths(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path, recursively expanding dependent paths as well."""
         unprocessed_paths = set(self.get_dependent_paths_non_recursive(path))
         paths = set()
@@ -238,7 +238,7 @@ class PathMapper:
 
         return sorted(paths)
 
-    def get_dependent_paths_non_recursive(self, path: str) -> t.List[str]:
+    def get_dependent_paths_non_recursive(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path, including dependent integration test target paths."""
         paths = self.get_dependent_paths_internal(path)
         paths += [target.path + '/' for target in self.paths_to_dependent_targets.get(path, set())]
@@ -246,7 +246,7 @@ class PathMapper:
 
         return paths
 
-    def get_dependent_paths_internal(self, path: str) -> t.List[str]:
+    def get_dependent_paths_internal(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path."""
         ext = os.path.splitext(os.path.split(path)[1])[1]
 
@@ -265,7 +265,7 @@ class PathMapper:
 
         return []
 
-    def get_python_module_utils_usage(self, path: str) -> t.List[str]:
+    def get_python_module_utils_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is a Python module_utils file."""
         if not self.python_module_utils_imports:
             display.info('Analyzing python module_utils imports...')
@@ -278,7 +278,7 @@ class PathMapper:
 
         return sorted(self.python_module_utils_imports[name])
 
-    def get_powershell_module_utils_usage(self, path: str) -> t.List[str]:
+    def get_powershell_module_utils_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is a PowerShell module_utils file."""
         if not self.powershell_module_utils_imports:
             display.info('Analyzing powershell module_utils imports...')
@@ -291,7 +291,7 @@ class PathMapper:
 
         return sorted(self.powershell_module_utils_imports[name])
 
-    def get_csharp_module_utils_usage(self, path: str) -> t.List[str]:
+    def get_csharp_module_utils_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is a C# module_utils file."""
         if not self.csharp_module_utils_imports:
             display.info('Analyzing C# module_utils imports...')
@@ -304,7 +304,7 @@ class PathMapper:
 
         return sorted(self.csharp_module_utils_imports[name])
 
-    def get_integration_target_usage(self, path: str) -> t.List[str]:
+    def get_integration_target_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is an integration target file."""
         target_name = path.split('/')[3]
         dependents = [os.path.join(data_context().content.integration_targets_path, target) + os.path.sep
@@ -312,7 +312,7 @@ class PathMapper:
 
         return dependents
 
-    def classify(self, path: str) -> t.Optional[t.Dict[str, str]]:
+    def classify(self, path: str) -> t.Optional[dict[str, str]]:
         """Classify the given path and return an optional dictionary of the results."""
         result = self._classify(path)
 
@@ -326,7 +326,7 @@ class PathMapper:
 
         return result
 
-    def _classify(self, path: str) -> t.Optional[t.Dict[str, str]]:
+    def _classify(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path."""
         if data_context().content.is_ansible:
             return self._classify_ansible(path)
@@ -336,13 +336,13 @@ class PathMapper:
 
         return None
 
-    def _classify_common(self, path: str) -> t.Optional[t.Dict[str, str]]:
+    def _classify_common(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules common to all layouts."""
         dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal: t.Dict[str, str] = {}
+        minimal: dict[str, str] = {}
 
         if os.path.sep not in path:
             if filename in (
@@ -621,7 +621,7 @@ class PathMapper:
 
         return None
 
-    def _classify_collection(self, path: str) -> t.Optional[t.Dict[str, str]]:
+    def _classify_collection(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules specific to collections."""
         result = self._classify_common(path)
 
@@ -631,7 +631,7 @@ class PathMapper:
         filename = os.path.basename(path)
         dummy, ext = os.path.splitext(filename)
 
-        minimal: t.Dict[str, str] = {}
+        minimal: dict[str, str] = {}
 
         if path.startswith('changelogs/'):
             return minimal
@@ -659,7 +659,7 @@ class PathMapper:
 
         return None
 
-    def _classify_ansible(self, path: str) -> t.Optional[t.Dict[str, str]]:
+    def _classify_ansible(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules specific to Ansible."""
         if path.startswith('test/units/compat/'):
             return {
@@ -675,7 +675,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal: t.Dict[str, str] = {}
+        minimal: dict[str, str] = {}
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
@@ -850,7 +850,7 @@ class PathMapper:
 
         return None  # unknown, will result in fall-back to run all tests
 
-    def _simple_plugin_tests(self, plugin_type: str, plugin_name: str) -> t.Dict[str, t.Optional[str]]:
+    def _simple_plugin_tests(self, plugin_type: str, plugin_name: str) -> dict[str, t.Optional[str]]:
         """
         Return tests for the given plugin type and plugin name.
         This function is useful for plugin types which do not require special processing.
@@ -876,7 +876,7 @@ class PathMapper:
         )
 
 
-def all_tests(args: TestConfig, force: bool = False) -> t.Dict[str, str]:
+def all_tests(args: TestConfig, force: bool = False) -> dict[str, str]:
     """Return the targets for each test command when all tests should be run."""
     if force:
         integration_all_target = 'all'

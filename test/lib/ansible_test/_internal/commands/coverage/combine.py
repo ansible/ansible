@@ -1,6 +1,7 @@
 """Combine code coverage files."""
 from __future__ import annotations
 
+import collections.abc as c
 import os
 import json
 import typing as t
@@ -69,7 +70,7 @@ def command_coverage_combine(args: CoverageCombineConfig) -> None:
     combine_coverage_files(args, host_state)
 
 
-def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -> t.List[str]:
+def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -> list[str]:
     """Combine coverage and return a list of the resulting files."""
     if args.delegate:
         if isinstance(args.controller, (DockerConfig, RemoteConfig)):
@@ -81,7 +82,7 @@ def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -
 
             pairs = [(path, os.path.relpath(path, data_context().content.root)) for path in exported_paths]
 
-            def coverage_callback(files: t.List[t.Tuple[str, str]]) -> None:
+            def coverage_callback(files: list[tuple[str, str]]) -> None:
                 """Add the coverage files to the payload file list."""
                 display.info('Including %d exported coverage file(s) in payload.' % len(pairs), verbosity=1)
                 files.extend(pairs)
@@ -107,7 +108,7 @@ class ExportedCoverageDataNotFound(ApplicationError):
             'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path)
 
 
-def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> t.List[str]:
+def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> list[str]:
     """Combine Python coverage files and return a list of the output files."""
     coverage = initialize_coverage(args, host_state)
 
@@ -188,7 +189,7 @@ def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: Ho
     return sorted(output_files)
 
 
-def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> t.List[str]:
+def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> list[str]:
     """Combine PowerShell coverage files and return a list of the output files."""
     coverage_files = get_powershell_coverage_files()
 
@@ -262,7 +263,7 @@ def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> t.List[
     return sorted(output_files)
 
 
-def _get_coverage_targets(args: CoverageCombineConfig, walk_func: t.Callable) -> t.List[t.Tuple[str, int]]:
+def _get_coverage_targets(args: CoverageCombineConfig, walk_func: c.Callable) -> list[tuple[str, int]]:
     """Return a list of files to cover and the number of lines in each file, using the given function as the source of the files."""
     sources = []
 
@@ -284,7 +285,7 @@ def _get_coverage_targets(args: CoverageCombineConfig, walk_func: t.Callable) ->
 def _build_stub_groups(
         args: CoverageCombineConfig,
         sources: list[tuple[str, int]],
-        default_stub_value: t.Callable[[list[str]], dict[str, TValue]],
+        default_stub_value: c.Callable[[list[str]], dict[str, TValue]],
 ) -> dict[str, dict[str, TValue]]:
     """
     Split the given list of sources with line counts into groups, maintaining a maximum line count for each group.
@@ -353,7 +354,7 @@ class CoverageCombineConfig(CoverageConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.group_by: t.FrozenSet[str] = frozenset(args.group_by) if args.group_by else frozenset()
+        self.group_by: frozenset[str] = frozenset(args.group_by) if args.group_by else frozenset()
         self.all: bool = args.all
         self.stub: bool = args.stub
 

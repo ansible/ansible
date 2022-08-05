@@ -53,7 +53,7 @@ from .base_argument_parsers import (
 
 class OriginControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is not supported."""
-    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
+    def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return dict(
             origin=OriginParser(),
@@ -71,9 +71,9 @@ class OriginControllerParser(ControllerNamespaceParser, TypeParser):
 
 class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is supported."""
-    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
+    def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
-        parsers: t.Dict[str, Parser] = dict(
+        parsers: dict[str, Parser] = dict(
             origin=OriginParser(),
             docker=DockerParser(controller=True),
         )
@@ -97,9 +97,9 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
 
 class PosixTargetParser(TargetNamespaceParser, TypeParser):
     """Composite argument parser for a POSIX target."""
-    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
+    def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
-        parsers: t.Dict[str, Parser] = dict(
+        parsers: dict[str, Parser] = dict(
             controller=ControllerParser(),
             docker=DockerParser(controller=False),
         )
@@ -132,17 +132,17 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
         """True if inventory is allowed, otherwise False."""
         return True
 
-    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
+    def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers(state.root_namespace.targets)
 
-    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
+    def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers([])
 
-    def get_internal_parsers(self, targets: t.List[WindowsConfig]) -> t.Dict[str, Parser]:
+    def get_internal_parsers(self, targets: list[WindowsConfig]) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
-        parsers: t.Dict[str, Parser] = {}
+        parsers: dict[str, Parser] = {}
 
         if self.allow_inventory and not targets:
             parsers.update(
@@ -174,17 +174,17 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
         """True if inventory is allowed, otherwise False."""
         return True
 
-    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
+    def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers(state.root_namespace.targets)
 
-    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
+    def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers([])
 
-    def get_internal_parsers(self, targets: t.List[NetworkConfig]) -> t.Dict[str, Parser]:
+    def get_internal_parsers(self, targets: list[NetworkConfig]) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
-        parsers: t.Dict[str, Parser] = {}
+        parsers: dict[str, Parser] = {}
 
         if self.allow_inventory and not targets:
             parsers.update(

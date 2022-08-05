@@ -1,6 +1,7 @@
 """Analyze integration test target code coverage."""
 from __future__ import annotations
 
+import collections.abc as c
 import os
 import typing as t
 
@@ -18,20 +19,20 @@ from .. import (
     CoverageAnalyzeConfig,
 )
 
-TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
-NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
-IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
-Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
-Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
-TargetIndexes = t.Dict[str, int]
-TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
+TargetKey = t.TypeVar('TargetKey', int, tuple[int, int])
+NamedPoints = dict[str, dict[TargetKey, set[str]]]
+IndexedPoints = dict[str, dict[TargetKey, set[int]]]
+Arcs = dict[str, dict[tuple[int, int], set[int]]]
+Lines = dict[str, dict[int, set[int]]]
+TargetIndexes = dict[str, int]
+TargetSetIndexes = dict[frozenset[int], int]
 
 
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
     """Configuration for the `coverage analyze targets` command."""
 
 
-def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> t.Dict[str, t.Any]:
+def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> dict[str, t.Any]:
     """Condense target indexes, arcs and lines into a compact report."""
     set_indexes: TargetSetIndexes = {}
     arc_refs = dict((path, dict((format_arc(arc), get_target_set_index(indexes, set_indexes)) for arc, indexes in data.items())) for path, data in arcs.items())
@@ -47,13 +48,13 @@ def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> t.Di
     return report
 
 
-def load_report(report: t.Dict[str, t.Any]) -> t.Tuple[t.List[str], Arcs, Lines]:
+def load_report(report: dict[str, t.Any]) -> tuple[list[str], Arcs, Lines]:
     """Extract target indexes, arcs and lines from an existing report."""
     try:
-        target_indexes: t.List[str] = report['targets']
-        target_sets: t.List[t.List[int]] = report['target_sets']
-        arc_data: t.Dict[str, t.Dict[str, int]] = report['arcs']
-        line_data: t.Dict[str, t.Dict[int, int]] = report['lines']
+        target_indexes: list[str] = report['targets']
+        target_sets: list[list[int]] = report['target_sets']
+        arc_data: dict[str, dict[str, int]] = report['arcs']
+        line_data: dict[str, dict[int, int]] = report['lines']
     except KeyError as ex:
         raise ApplicationError('Document is missing key "%s".' % ex.args)
     except TypeError:
@@ -65,7 +66,7 @@ def load_report(report: t.Dict[str, t.Any]) -> t.Tuple[t.List[str], Arcs, Lines]
     return target_indexes, arcs, lines
 
 
-def read_report(path: str) -> t.Tuple[t.List[str], Arcs, Lines]:
+def read_report(path: str) -> tuple[list[str], Arcs, Lines]:
     """Read a JSON report from disk."""
     try:
         report = read_json_file(path)
@@ -78,7 +79,7 @@ def read_report(path: str) -> t.Tuple[t.List[str], Arcs, Lines]:
         raise ApplicationError('File "%s" is not an aggregated coverage data file. %s' % (path, ex))
 
 
-def write_report(args: CoverageAnalyzeTargetsConfig, report: t.Dict[str, t.Any], path: str) -> None:
+def write_report(args: CoverageAnalyzeTargetsConfig, report: dict[str, t.Any], path: str) -> None:
     """Write a JSON report to disk."""
     if args.explain:
         return
@@ -95,18 +96,18 @@ def format_line(value: int) -> str:
     return str(value)  # putting this in a function keeps both pylint and mypy happy
 
 
-def format_arc(value: t.Tuple[int, int]) -> str:
+def format_arc(value: tuple[int, int]) -> str:
     """Format an arc tuple as a string."""
     return '%d:%d' % value
 
 
-def parse_arc(value: str) -> t.Tuple[int, int]:
+def parse_arc(value: str) -> tuple[int, int]:
     """Parse an arc string into a tuple."""
     first, last = tuple(map(int, value.split(':')))
     return first, last
 
 
-def get_target_set_index(data: t.Set[int], target_set_indexes: TargetSetIndexes) -> int:
+def get_target_set_index(data: set[int], target_set_indexes: TargetSetIndexes) -> int:
     """Find or add the target set in the result set and return the target set index."""
     return target_set_indexes.setdefault(frozenset(data), len(target_set_indexes))
 
@@ -118,11 +119,11 @@ def get_target_index(name: str, target_indexes: TargetIndexes) -> int:
 
 def expand_indexes(
         source_data: IndexedPoints,
-        source_index: t.List[str],
-        format_func: t.Callable[[TargetKey], str],
+        source_index: list[str],
+        format_func: c.Callable[[TargetKey], str],
 ) -> NamedPoints:
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
-    combined_data: t.Dict[str, t.Dict[t.Any, t.Set[str]]] = {}
+    combined_data: dict[str, dict[t.Any, set[str]]] = {}
 
     for covered_path, covered_points in source_data.items():
         combined_points = combined_data.setdefault(covered_path, {})

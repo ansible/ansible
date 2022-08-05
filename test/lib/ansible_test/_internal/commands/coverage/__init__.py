@@ -1,6 +1,7 @@
 """Common logic for the coverage subcommand."""
 from __future__ import annotations
 
+import collections.abc as c
 import errno
 import json
 import os
@@ -93,7 +94,7 @@ def initialize_coverage(args: CoverageConfig, host_state: HostState) -> coverage
     return coverage
 
 
-def run_coverage(args: CoverageConfig, host_state: HostState, output_file: str, command: str, cmd: t.List[str]) -> None:
+def run_coverage(args: CoverageConfig, host_state: HostState, output_file: str, command: str, cmd: list[str]) -> None:
     """Run the coverage cli tool with the specified options."""
     env = common_environment()
     env.update(dict(COVERAGE_FILE=output_file))
@@ -112,22 +113,22 @@ def run_coverage(args: CoverageConfig, host_state: HostState, output_file: str, 
         display.warning(stderr)
 
 
-def get_all_coverage_files() -> t.List[str]:
+def get_all_coverage_files() -> list[str]:
     """Return a list of all coverage file paths."""
     return get_python_coverage_files() + get_powershell_coverage_files()
 
 
-def get_python_coverage_files(path: t.Optional[str] = None) -> t.List[str]:
+def get_python_coverage_files(path: t.Optional[str] = None) -> list[str]:
     """Return the list of Python coverage file paths."""
     return get_coverage_files('python', path)
 
 
-def get_powershell_coverage_files(path: t.Optional[str] = None) -> t.List[str]:
+def get_powershell_coverage_files(path: t.Optional[str] = None) -> list[str]:
     """Return the list of PowerShell coverage file paths."""
     return get_coverage_files('powershell', path)
 
 
-def get_coverage_files(language: str, path: t.Optional[str] = None) -> t.List[str]:
+def get_coverage_files(language: str, path: t.Optional[str] = None) -> list[str]:
     """Return the list of coverage file paths for the given language."""
     coverage_dir = path or ResultType.COVERAGE.path
 
@@ -143,7 +144,7 @@ def get_coverage_files(language: str, path: t.Optional[str] = None) -> t.List[st
     return coverage_files
 
 
-def get_collection_path_regexes() -> t.Tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]:
+def get_collection_path_regexes() -> tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]:
     """Return a pair of regexes used for identifying and manipulating collection paths."""
     if data_context().content.collection:
         collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
@@ -155,7 +156,7 @@ def get_collection_path_regexes() -> t.Tuple[t.Optional[t.Pattern], t.Optional[t
     return collection_search_re, collection_sub_re
 
 
-def get_python_modules() -> t.Dict[str, str]:
+def get_python_modules() -> dict[str, str]:
     """Return a dictionary of Ansible module names and their paths."""
     return dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
@@ -163,10 +164,10 @@ def get_python_modules() -> t.Dict[str, str]:
 def enumerate_python_arcs(
         path: str,
         coverage: coverage_module,
-        modules: t.Dict[str, str],
+        modules: dict[str, str],
         collection_search_re: t.Optional[t.Pattern],
         collection_sub_re: t.Optional[t.Pattern],
-) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]:
+) -> c.Generator[tuple[str, set[tuple[int, int]]], None, None]:
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -192,7 +193,7 @@ def enumerate_python_arcs(
         yield filename, set(arcs)
 
 
-PythonArcs = t.Dict[str, t.List[t.Tuple[int, int]]]
+PythonArcs = dict[str, list[tuple[int, int]]]
 """Python coverage arcs."""
 
 
@@ -241,7 +242,7 @@ def enumerate_powershell_lines(
         path: str,
         collection_search_re: t.Optional[t.Pattern],
         collection_sub_re: t.Optional[t.Pattern],
-) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]:
+) -> c.Generator[tuple[str, dict[int, int]], None, None]:
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -278,7 +279,7 @@ def enumerate_powershell_lines(
 
 def sanitize_filename(
         filename: str,
-        modules: t.Optional[t.Dict[str, str]] = None,
+        modules: t.Optional[dict[str, str]] = None,
         collection_search_re: t.Optional[t.Pattern] = None,
         collection_sub_re: t.Optional[t.Pattern] = None,
 ) -> t.Optional[str]:
@@ -346,7 +347,7 @@ class PathChecker:
     def __init__(self, args: CoverageConfig, collection_search_re: t.Optional[t.Pattern] = None) -> None:
         self.args = args
         self.collection_search_re = collection_search_re
-        self.invalid_paths: t.List[str] = []
+        self.invalid_paths: list[str] = []
         self.invalid_path_chars = 0
 
     def check_path(self, path: str) -> bool:
