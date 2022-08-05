@@ -19,7 +19,7 @@ class Layout:
     """Description of content locations and helper methods to access content."""
     def __init__(self,
                  root: str,
-                 paths: t.List[str],
+                 paths: list[str],
                  ) -> None:
         self.root = root
 
@@ -28,14 +28,14 @@ class Layout:
         self.__paths_tree = paths_to_tree(self.__paths)
         self.__files_tree = paths_to_tree(self.__files)
 
-    def all_files(self, include_symlinked_directories: bool = False) -> t.List[str]:
+    def all_files(self, include_symlinked_directories: bool = False) -> list[str]:
         """Return a list of all file paths."""
         if include_symlinked_directories:
             return self.__paths
 
         return self.__files
 
-    def walk_files(self, directory: str, include_symlinked_directories: bool = False) -> t.List[str]:
+    def walk_files(self, directory: str, include_symlinked_directories: bool = False) -> list[str]:
         """Return a list of file paths found recursively under the given directory."""
         if include_symlinked_directories:
             tree = self.__paths_tree
@@ -59,13 +59,13 @@ class Layout:
 
         return files
 
-    def get_dirs(self, directory: str) -> t.List[str]:
+    def get_dirs(self, directory: str) -> list[str]:
         """Return a list directory paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
         return [os.path.join(directory, key) for key in item[0].keys()] if item else []
 
-    def get_files(self, directory: str) -> t.List[str]:
+    def get_files(self, directory: str) -> list[str]:
         """Return a list of file paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
@@ -76,8 +76,8 @@ class ContentLayout(Layout):
     """Information about the current Ansible content being tested."""
     def __init__(self,
                  root: str,
-                 paths: t.List[str],
-                 plugin_paths: t.Dict[str, str],
+                 paths: list[str],
+                 plugin_paths: dict[str, str],
                  collection: t.Optional[CollectionDetail],
                  test_path: str,
                  results_path: str,
@@ -151,9 +151,9 @@ class ContentLayout(Layout):
 class LayoutMessages:
     """Messages generated during layout creation that should be deferred for later display."""
     def __init__(self):
-        self.info: t.List[str] = []
-        self.warning: t.List[str] = []
-        self.error: t.List[str] = []
+        self.info: list[str] = []
+        self.warning: list[str] = []
+        self.error: list[str] = []
 
 
 class CollectionDetail:
@@ -200,13 +200,13 @@ class LayoutProvider(PathProvider):
     )
 
     @abc.abstractmethod
-    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
+    def create(self, root: str, paths: list[str]) -> ContentLayout:
         """Create a layout using the given root and paths."""
 
 
-def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]:
+def paths_to_tree(paths: list[str]) -> tuple[dict[str, t.Any], list[str]]:
     """Return a filesystem tree from the given list of paths."""
-    tree: t.Tuple[t.Dict[str, t.Any], t.List[str]] = {}, []
+    tree: tuple[dict[str, t.Any], list[str]] = {}, []
 
     for path in paths:
         parts = path.split(os.path.sep)
@@ -223,7 +223,7 @@ def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]
     return tree
 
 
-def get_tree_item(tree: t.Tuple[t.Dict[str, t.Any], t.List[str]], parts: t.List[str]) -> t.Optional[t.Tuple[t.Dict[str, t.Any], t.List[str]]]:
+def get_tree_item(tree: tuple[dict[str, t.Any], list[str]], parts: list[str]) -> t.Optional[tuple[dict[str, t.Any], list[str]]]:
     """Return the portion of the tree found under the path given by parts, or None if it does not exist."""
     root = tree
 

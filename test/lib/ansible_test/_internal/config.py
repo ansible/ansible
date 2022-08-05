@@ -109,9 +109,9 @@ class EnvironmentConfig(CommonConfig):
 
         self.requirements: bool = args.requirements
 
-        self.delegate_args: t.List[str] = []
+        self.delegate_args: list[str] = []
 
-        def host_callback(files: t.List[t.Tuple[str, str]]) -> None:
+        def host_callback(files: list[tuple[str, str]]) -> None:
             """Add the host files to the payload file list."""
             config = self
 
@@ -138,7 +138,7 @@ class EnvironmentConfig(CommonConfig):
         return self.host_settings.controller
 
     @property
-    def targets(self) -> t.List[HostConfig]:
+    def targets(self) -> list[HostConfig]:
         """Host configuration for the targets."""
         return self.host_settings.targets
 
@@ -159,7 +159,7 @@ class EnvironmentConfig(CommonConfig):
 
         return target
 
-    def only_targets(self, target_type: t.Type[THostConfig]) -> t.List[THostConfig]:
+    def only_targets(self, target_type: t.Type[THostConfig]) -> list[THostConfig]:
         """
         Return a list of target host configurations.
         Requires that there are one or more targets, all the specified type.
@@ -169,7 +169,7 @@ class EnvironmentConfig(CommonConfig):
 
         assert type_guard(self.targets, target_type)
 
-        return t.cast(t.List[THostConfig], self.targets)
+        return t.cast(list[THostConfig], self.targets)
 
     @property
     def target_type(self) -> t.Type[HostConfig]:
@@ -198,9 +198,9 @@ class TestConfig(EnvironmentConfig):
 
         self.coverage: bool = args.coverage
         self.coverage_check: bool = args.coverage_check
-        self.include: t.List[str] = args.include or []
-        self.exclude: t.List[str] = args.exclude or []
-        self.require: t.List[str] = args.require or []
+        self.include: list[str] = args.include or []
+        self.exclude: list[str] = args.exclude or []
+        self.require: list[str] = args.require or []
 
         self.changed: bool = args.changed
         self.tracked: bool = args.tracked
@@ -209,7 +209,7 @@ class TestConfig(EnvironmentConfig):
         self.staged: bool = args.staged
         self.unstaged: bool = args.unstaged
         self.changed_from: str = args.changed_from
-        self.changed_path: t.List[str] = args.changed_path
+        self.changed_path: list[str] = args.changed_path
         self.base_branch: str = args.base_branch
 
         self.lint: bool = getattr(args, 'lint', False)
@@ -222,7 +222,7 @@ class TestConfig(EnvironmentConfig):
         if self.coverage_check:
             self.coverage = True
 
-        def metadata_callback(files: t.List[t.Tuple[str, str]]) -> None:
+        def metadata_callback(files: list[tuple[str, str]]) -> None:
             """Add the metadata file to the payload file list."""
             config = self
 
@@ -237,7 +237,7 @@ class ShellConfig(EnvironmentConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'shell')
 
-        self.cmd: t.List[str] = args.cmd
+        self.cmd: list[str] = args.cmd
         self.raw: bool = args.raw
         self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
         self.interactive = sys.stdin.isatty() and not args.cmd  # delegation should only be interactive when stdin is a TTY and no command was given
@@ -250,8 +250,8 @@ class SanityConfig(TestConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'sanity')
 
-        self.test: t.List[str] = args.test
-        self.skip_test: t.List[str] = args.skip_test
+        self.test: list[str] = args.test
+        self.skip_test: list[str] = args.skip_test
         self.list_tests: bool = args.list_tests
         self.allow_disabled: bool = args.allow_disabled
         self.enable_optional_errors: bool = args.enable_optional_errors
@@ -261,7 +261,7 @@ class SanityConfig(TestConfig):
         self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
-            def git_callback(files: t.List[t.Tuple[str, str]]) -> None:
+            def git_callback(files: list[tuple[str, str]]) -> None:
                 """Add files from the content root .git directory to the payload file list."""
                 for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
                     paths = [os.path.join(dirpath, filename) for filename in filenames]

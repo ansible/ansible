@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import collections.abc as c
 import os
 import typing as t
 
@@ -36,7 +37,7 @@ from ...completers import (
 def do_network_integration(
         subparsers,
         parent: argparse.ArgumentParser,
-        add_integration_common: t.Callable[[argparse.ArgumentParser], None],
+        add_integration_common: c.Callable[[argparse.ArgumentParser], None],
         completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `network-integration` command."""
@@ -64,7 +65,7 @@ def do_network_integration(
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NETWORK_INTEGRATION)  # network-integration
 
 
-def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
+def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
     """Return a list of test cases matching the given prefix if only one target was parsed from the command line, otherwise return an empty list."""
     testcases = []
 

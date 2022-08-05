@@ -90,7 +90,7 @@ def command_shell(args: ShellConfig) -> None:
         return
 
     if isinstance(con, SshConnection) and args.raw:
-        cmd: t.List[str] = []
+        cmd: list[str] = []
     elif isinstance(target_profile, PosixProfile):
         cmd = []
 

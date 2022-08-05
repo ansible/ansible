@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import abc
+import collections.abc as c
 import contextlib
 import dataclasses
 import enum
@@ -44,7 +45,7 @@ class CompletionSuccess(Completion):
     list_mode: bool
     consumed: str
     continuation: str
-    matches: t.List[str] = dataclasses.field(default_factory=list)
+    matches: list[str] = dataclasses.field(default_factory=list)
 
     @property
     def preserve(self) -> bool:
@@ -55,7 +56,7 @@ class CompletionSuccess(Completion):
         return len(self.matches) > 1 and self.list_mode
 
     @property
-    def completions(self) -> t.List[str]:
+    def completions(self) -> list[str]:
         """List of completion values to return to argcomplete."""
         completions = self.matches
         continuation = '' if self.list_mode else self.continuation
@@ -93,16 +94,16 @@ class ParserState:
     mode: ParserMode
     remainder: str = ''
     consumed: str = ''
-    boundaries: t.List[ParserBoundary] = dataclasses.field(default_factory=list)
-    namespaces: t.List[t.Any] = dataclasses.field(default_factory=list)
-    parts: t.List[str] = dataclasses.field(default_factory=list)
+    boundaries: list[ParserBoundary] = dataclasses.field(default_factory=list)
+    namespaces: list[t.Any] = dataclasses.field(default_factory=list)
+    parts: list[str] = dataclasses.field(default_factory=list)
 
     @property
     def incomplete(self) -> bool:
         """True if parsing is incomplete (unparsed input remains), otherwise False."""
         return self.remainder is not None
 
-    def match(self, value: str, choices: t.List[str]) -> bool:
+    def match(self, value: str, choices: list[str]) -> bool:
         """Return True if the given value matches the provided choices, taking into account parsing boundaries, otherwise return False."""
         if self.current_boundary:
             delimiters, delimiter = self.current_boundary.delimiters, self.current_boundary.match
@@ -173,7 +174,7 @@ class ParserState:
         self.namespaces.append(namespace)
 
     @contextlib.contextmanager
-    def delimit(self, delimiters: str, required: bool = True) -> t.Iterator[ParserBoundary]:
+    def delimit(self, delimiters: str, required: bool = True) -> c.Iterator[ParserBoundary]:
         """Context manager for delimiting parsing of input."""
         boundary = ParserBoundary(delimiters=delimiters, required=required)
 
@@ -191,7 +192,7 @@ class ParserState:
 @dataclasses.dataclass
 class DocumentationState:
     """State of the composite argument parser's generated documentation."""
-    sections: t.Dict[str, str] = dataclasses.field(default_factory=dict)
+    sections: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 class Parser(metaclass=abc.ABCMeta):
@@ -221,7 +222,7 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
         self.conditions = conditions
 
     @abc.abstractmethod
-    def get_choices(self, value: str) -> t.List[str]:
+    def get_choices(self, value: str) -> list[str]:
         """Return a list of valid choices based on the given input value."""
 
     def no_completion_match(self, value: str) -> CompletionUnavailable:  # pylint: disable=unused-argument
@@ -272,12 +273,12 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
 
 class ChoicesParser(DynamicChoicesParser):
     """Composite argument parser which relies on a static list of choices."""
-    def __init__(self, choices: t.List[str], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
+    def __init__(self, choices: list[str], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
         self.choices = choices
 
         super().__init__(conditions=conditions)
 
-    def get_choices(self, value: str) -> t.List[str]:
+    def get_choices(self, value: str) -> list[str]:
         """Return a list of valid choices based on the given input value."""
         return self.choices
 
@@ -295,7 +296,7 @@ class IntegerParser(DynamicChoicesParser):
 
         super().__init__()
 
-    def get_choices(self, value: str) -> t.List[str]:
+    def get_choices(self, value: str) -> list[str]:
         """Return a list of valid choices based on the given input value."""
         if not value:
             numbers = list(range(1, 10))
@@ -365,12 +366,12 @@ class RelativePathNameParser(DynamicChoicesParser):
     """Composite argument parser for relative path names."""
     RELATIVE_NAMES = ['.', '..']
 
-    def __init__(self, choices: t.List[str]) -> None:
+    def __init__(self, choices: list[str]) -> None:
         self.choices = choices
 
         super().__init__()
 
-    def get_choices(self, value: str) -> t.List[str]:
+    def get_choices(self, value: str) -> list[str]:
         """Return a list of valid choices based on the given input value."""
         choices = list(self.choices)
 
@@ -399,7 +400,7 @@ class FileParser(Parser):
                     directory = path or '.'
 
                     try:
-                        with os.scandir(directory) as scan:  # type: t.Iterator[os.DirEntry]
+                        with os.scandir(directory) as scan:  # type: c.Iterator[os.DirEntry]
                             choices = [f'{item.name}{PATH_DELIMITER}' if item.is_dir() else item.name for item in scan]
                     except OSError:
                         choices = []
@@ -497,7 +498,7 @@ class NamespaceWrappedParser(NamespaceParser):
 class KeyValueParser(Parser, metaclass=abc.ABCMeta):
     """Base class for key/value composite argument parsers."""
     @abc.abstractmethod
-    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
+    def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of key names and value parsers."""
 
     def parse(self, state: ParserState) -> t.Any:
@@ -561,12 +562,12 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
 
 class TypeParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers which parse a type name, a colon and then parse results based on the type given by the type name."""
-    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:  # pylint: disable=unused-argument
+    def get_parsers(self, state: ParserState) -> dict[str, Parser]:  # pylint: disable=unused-argument
         """Return a dictionary of type names and type parsers."""
         return self.get_stateless_parsers()
 
     @abc.abstractmethod
-    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
+    def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
 
     def parse(self, state: ParserState) -> t.Any:

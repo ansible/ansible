@@ -47,9 +47,9 @@ class SshProcess:
     """Wrapper around an SSH process."""
     def __init__(self, process: t.Optional[subprocess.Popen]) -> None:
         self._process = process
-        self.pending_forwards: t.Optional[t.List[t.Tuple[str, int]]] = None
+        self.pending_forwards: t.Optional[list[tuple[str, int]]] = None
 
-        self.forwards: t.Dict[t.Tuple[str, int], int] = {}
+        self.forwards: dict[tuple[str, int], int] = {}
 
     def terminate(self) -> None:
         """Terminate the SSH process."""
@@ -69,9 +69,9 @@ class SshProcess:
 
         self._process.wait()
 
-    def collect_port_forwards(self) -> t.Dict[t.Tuple[str, int], int]:
+    def collect_port_forwards(self) -> dict[tuple[str, int], int]:
         """Collect port assignments for dynamic SSH port forwards."""
-        errors: t.List[str] = []
+        errors: list[str] = []
 
         display.info('Collecting %d SSH port forward(s).' % len(self.pending_forwards), verbosity=2)
 
@@ -121,10 +121,10 @@ class SshProcess:
 
 def create_ssh_command(
         ssh: SshConnectionDetail,
-        options: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
-        cli_args: t.List[str] = None,
+        options: t.Optional[dict[str, t.Union[str, int]]] = None,
+        cli_args: list[str] = None,
         command: t.Optional[str] = None,
-) -> t.List[str]:
+) -> list[str]:
     """Create an SSH command using the specified options."""
     cmd = [
         'ssh',
@@ -168,8 +168,8 @@ def create_ssh_command(
 def run_ssh_command(
         args: EnvironmentConfig,
         ssh: SshConnectionDetail,
-        options: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
-        cli_args: t.List[str] = None,
+        options: t.Optional[dict[str, t.Union[str, int]]] = None,
+        cli_args: list[str] = None,
         command: t.Optional[str] = None,
 ) -> SshProcess:
     """Run the specified SSH command, returning the created SshProcess instance created."""
@@ -179,7 +179,7 @@ def run_ssh_command(
     cmd_show = shlex.join(cmd)
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
-    cmd_bytes = [to_bytes(c) for c in cmd]
+    cmd_bytes = [to_bytes(arg) for arg in cmd]
     env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
 
     if args.explain:
@@ -194,13 +194,13 @@ def run_ssh_command(
 def create_ssh_port_forwards(
         args: EnvironmentConfig,
         ssh: SshConnectionDetail,
-        forwards: t.List[t.Tuple[str, int]],
+        forwards: list[tuple[str, int]],
 ) -> SshProcess:
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
     Port bindings will be automatically assigned by SSH and must be collected with a subsequent call to collect_port_forwards.
     """
-    options: t.Dict[str, t.Union[str, int]] = dict(
+    options: dict[str, t.Union[str, int]] = dict(
         LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward
     )
 
@@ -218,10 +218,10 @@ def create_ssh_port_forwards(
 def create_ssh_port_redirects(
         args: EnvironmentConfig,
         ssh: SshConnectionDetail,
-        redirects: t.List[t.Tuple[int, str, int]],
+        redirects: list[tuple[int, str, int]],
 ) -> SshProcess:
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
-    options: t.Dict[str, t.Union[str, int]] = {}
+    options: dict[str, t.Union[str, int]] = {}
     cli_args = []
 
     for bind_port, target_host, target_port in redirects:
@@ -232,7 +232,7 @@ def create_ssh_port_redirects(
     return process
 
 
-def generate_ssh_inventory(ssh_connections: t.List[SshConnectionDetail]) -> str:
+def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
     """Return an inventory file in JSON format, created from the provided SSH connection details."""
     inventory = dict(
         all=dict(

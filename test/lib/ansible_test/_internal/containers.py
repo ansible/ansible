@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import atexit
+import collections.abc as c
 import contextlib
 import enum
 import json
@@ -81,7 +82,7 @@ from .connections import (
 )
 
 # information about support containers provisioned by the current ansible-test instance
-support_containers: t.Dict[str, ContainerDescriptor] = {}
+support_containers: dict[str, ContainerDescriptor] = {}
 support_containers_mutex = threading.Lock()
 
 
@@ -104,14 +105,14 @@ def run_support_container(
         context: str,
         image: str,
         name: str,
-        ports: t.List[int],
-        aliases: t.Optional[t.List[str]] = None,
+        ports: list[int],
+        aliases: t.Optional[list[str]] = None,
         start: bool = True,
         allow_existing: bool = False,
         cleanup: t.Optional[CleanupMode] = None,
-        cmd: t.Optional[t.List[str]] = None,
-        env: t.Optional[t.Dict[str, str]] = None,
-        options: t.Optional[t.List[str]] = None,
+        cmd: t.Optional[list[str]] = None,
+        env: t.Optional[dict[str, str]] = None,
+        options: t.Optional[list[str]] = None,
         publish_ports: bool = True,
 ) -> t.Optional[ContainerDescriptor]:
     """
@@ -243,7 +244,7 @@ def get_container_database(args: EnvironmentConfig) -> ContainerDatabase:
 
 class ContainerAccess:
     """Information needed for one test host to access a single container supporting tests."""
-    def __init__(self, host_ip: str, names: t.List[str], ports: t.Optional[t.List[int]], forwards: t.Optional[t.Dict[int, int]]) -> None:
+    def __init__(self, host_ip: str, names: list[str], ports: t.Optional[list[int]], forwards: t.Optional[dict[int, int]]) -> None:
         # if forwards is set
         #   this is where forwards are sent (it is the host that provides an indirect connection to the containers on alternate ports)
         #   /etc/hosts uses 127.0.0.1 (since port redirection will be used)
@@ -260,7 +261,7 @@ class ContainerAccess:
         # port redirections to create through host_ip -- if not set, no port redirections will be used
         self.forwards = forwards
 
-    def port_map(self) -> t.List[t.Tuple[int, int]]:
+    def port_map(self) -> list[tuple[int, int]]:
         """Return a port map for accessing this container."""
         if self.forwards:
             ports = list(self.forwards.items())
@@ -270,7 +271,7 @@ class ContainerAccess:
         return ports
 
     @staticmethod
-    def from_dict(data: t.Dict[str, t.Any]) -> ContainerAccess:
+    def from_dict(data: dict[str, t.Any]) -> ContainerAccess:
         """Return a ContainerAccess instance from the given dict."""
         forwards = data.get('forwards')
 
@@ -284,9 +285,9 @@ class ContainerAccess:
             forwards=forwards,
         )
 
-    def to_dict(self) -> t.Dict[str, t.Any]:
+    def to_dict(self) -> dict[str, t.Any]:
         """Return a dict of the current instance."""
-        value: t.Dict[str, t.Any] = dict(
+        value: dict[str, t.Any] = dict(
             host_ip=self.host_ip,
             names=self.names,
         )
@@ -302,11 +303,11 @@ class ContainerAccess:
 
 class ContainerDatabase:
     """Database of running containers used to support tests."""
-    def __init__(self, data: t.Dict[str, t.Dict[str, t.Dict[str, ContainerAccess]]]) -> None:
+    def __init__(self, data: dict[str, dict[str, dict[str, ContainerAccess]]]) -> None:
         self.data = data
 
     @staticmethod
-    def from_dict(data: t.Dict[str, t.Any]) -> ContainerDatabase:
+    def from_dict(data: dict[str, t.Any]) -> ContainerDatabase:
         """Return a ContainerDatabase instance from the given dict."""
         return ContainerDatabase(dict((access_name,
                                        dict((context_name,
@@ -315,7 +316,7 @@ class ContainerDatabase:
                                             for context_name, containers in contexts.items()))
                                       for access_name, contexts in data.items()))
 
-    def to_dict(self) -> t.Dict[str, t.Any]:
+    def to_dict(self) -> dict[str, t.Any]:
         """Return a dict of the current instance."""
         return dict((access_name,
                      dict((context_name,
@@ -344,9 +345,9 @@ def root_ssh(ssh: SshConnection) -> SshConnectionDetail:
 
 def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Create and return a container database with information necessary for all test hosts to make use of relevant support containers."""
-    origin: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
-    control: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
-    managed: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
+    origin: dict[str, dict[str, ContainerAccess]] = {}
+    control: dict[str, dict[str, ContainerAccess]] = {}
+    managed: dict[str, dict[str, ContainerAccess]] = {}
 
     for name, container in support_containers.items():
         if container.details.published_ports:
@@ -461,7 +462,7 @@ class SupportContainerContext:
 def support_container_context(
         args: EnvironmentConfig,
         ssh: t.Optional[SshConnectionDetail],
-) -> t.Iterator[t.Optional[ContainerDatabase]]:
+) -> c.Iterator[t.Optional[ContainerDatabase]]:
     """Create a context manager for integration tests that use support containers."""
     if not isinstance(args, (IntegrationConfig, UnitsConfig, SanityConfig, ShellConfig)):
         yield None  # containers are only needed for commands that have targets (hosts or pythons)
@@ -492,7 +493,7 @@ def create_support_container_context(
     revised = ContainerDatabase(containers.data.copy())
     source = revised.data.pop(HostType.origin, None)
 
-    container_map: t.Dict[t.Tuple[str, int], t.Tuple[str, str, int]] = {}
+    container_map: dict[tuple[str, int], tuple[str, str, int]] = {}
 
     if host_type not in revised.data:
         if not source:
@@ -518,7 +519,7 @@ def create_support_container_context(
 
     try:
         port_forwards = process.collect_port_forwards()
-        contexts: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
+        contexts: dict[str, dict[str, ContainerAccess]] = {}
 
         for forward, forwarded_port in port_forwards.items():
             access_host, access_port = forward
@@ -548,13 +549,13 @@ class ContainerDescriptor:
                  context: str,
                  name: str,
                  container_id: str,
-                 ports: t.List[int],
-                 aliases: t.List[str],
+                 ports: list[int],
+                 aliases: list[str],
                  publish_ports: bool,
                  running: bool,
                  existing: bool,
                  cleanup: CleanupMode,
-                 env: t.Optional[t.Dict[str, str]],
+                 env: t.Optional[dict[str, str]],
                  ) -> None:
         self.image = image
         self.context = context
@@ -625,7 +626,7 @@ class SupportContainer:
     def __init__(self,
                  container: DockerInspect,
                  container_ip: str,
-                 published_ports: t.Dict[int, int],
+                 published_ports: dict[int, int],
                  ) -> None:
         self.container = container
         self.container_ip = container_ip
@@ -637,7 +638,7 @@ def wait_for_file(args: EnvironmentConfig,
                   path: str,
                   sleep: int,
                   tries: int,
-                  check: t.Optional[t.Callable[[str], bool]] = None,
+                  check: t.Optional[c.Callable[[str], bool]] = None,
                   ) -> str:
     """Wait for the specified file to become available in the requested container and return its contents."""
     display.info('Waiting for container "%s" to provide file: %s' % (container_name, path))
@@ -666,7 +667,7 @@ def cleanup_containers(args: EnvironmentConfig) -> None:
             display.notice('Remember to run `docker rm -f %s` when finished testing.' % container.name)
 
 
-def create_hosts_entries(context: t.Dict[str, ContainerAccess]) -> t.List[str]:
+def create_hosts_entries(context: dict[str, ContainerAccess]) -> list[str]:
     """Return hosts entries for the specified context."""
     entries = []
     unique_id = uuid.uuid4()
@@ -685,9 +686,9 @@ def create_hosts_entries(context: t.Dict[str, ContainerAccess]) -> t.List[str]:
 
 def create_container_hooks(
         args: IntegrationConfig,
-        control_connections: t.List[SshConnectionDetail],
-        managed_connections: t.Optional[t.List[SshConnectionDetail]],
-) -> t.Tuple[t.Optional[t.Callable[[IntegrationTarget], None]], t.Optional[t.Callable[[IntegrationTarget], None]]]:
+        control_connections: list[SshConnectionDetail],
+        managed_connections: t.Optional[list[SshConnectionDetail]],
+) -> tuple[t.Optional[c.Callable[[IntegrationTarget], None]], t.Optional[c.Callable[[IntegrationTarget], None]]]:
     """Return pre and post target callbacks for enabling and disabling container access for each test target."""
     containers = get_container_database(args)
 
@@ -706,8 +707,8 @@ def create_container_hooks(
         else:
             managed_type = 'posix'
 
-        control_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]] = {}
-        managed_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]] = {}
+        control_state: dict[str, tuple[list[str], list[SshProcess]]] = {}
+        managed_state: dict[str, tuple[list[str], list[SshProcess]]] = {}
 
         def pre_target(target):
             """Configure hosts for SSH port forwarding required by the specified target."""
@@ -724,9 +725,9 @@ def create_container_hooks(
     return pre_target, post_target
 
 
-def create_managed_contexts(control_contexts: t.Dict[str, t.Dict[str, ContainerAccess]]) -> t.Dict[str, t.Dict[str, ContainerAccess]]:
+def create_managed_contexts(control_contexts: dict[str, dict[str, ContainerAccess]]) -> dict[str, dict[str, ContainerAccess]]:
     """Create managed contexts from the given control contexts."""
-    managed_contexts: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
+    managed_contexts: dict[str, dict[str, ContainerAccess]] = {}
 
     for context_name, control_context in control_contexts.items():
         managed_context = managed_contexts[context_name] = {}
@@ -739,12 +740,12 @@ def create_managed_contexts(control_contexts: t.Dict[str, t.Dict[str, ContainerA
 
 def forward_ssh_ports(
         args: IntegrationConfig,
-        ssh_connections: t.Optional[t.List[SshConnectionDetail]],
+        ssh_connections: t.Optional[list[SshConnectionDetail]],
         playbook: str,
-        target_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]],
+        target_state: dict[str, tuple[list[str], list[SshProcess]]],
         target: IntegrationTarget,
         host_type: str,
-        contexts: t.Dict[str, t.Dict[str, ContainerAccess]],
+        contexts: dict[str, dict[str, ContainerAccess]],
 ) -> None:
     """Configure port forwarding using SSH and write hosts file entries."""
     if ssh_connections is None:
@@ -768,7 +769,7 @@ def forward_ssh_ports(
 
         raise Exception('The %s host was not pre-configured for container access and SSH forwarding is not available.' % host_type)
 
-    redirects: t.List[t.Tuple[int, str, int]] = []
+    redirects: list[tuple[int, str, int]] = []
     messages = []
 
     for container_name, container in test_context.items():
@@ -796,7 +797,7 @@ def forward_ssh_ports(
     with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
         run_playbook(args, inventory_path, playbook, capture=False, variables=dict(hosts_entries=hosts_entries))
 
-    ssh_processes: t.List[SshProcess] = []
+    ssh_processes: list[SshProcess] = []
 
     if redirects:
         for ssh in ssh_connections:
@@ -810,9 +811,9 @@ def forward_ssh_ports(
 
 def cleanup_ssh_ports(
         args: IntegrationConfig,
-        ssh_connections: t.List[SshConnectionDetail],
+        ssh_connections: list[SshConnectionDetail],
         playbook: str,
-        target_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]],
+        target_state: dict[str, tuple[list[str], list[SshProcess]]],
         target: IntegrationTarget,
         host_type: str,
 ) -> None:

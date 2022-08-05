@@ -144,7 +144,7 @@ def set_timeout(args: EnvConfig) -> None:
         os.remove(TIMEOUT_PATH)
 
 
-def show_dict(data: t.Dict[str, t.Any], verbose: t.Dict[str, int], root_verbosity: int = 0, path: t.Optional[t.List[str]] = None) -> None:
+def show_dict(data: dict[str, t.Any], verbose: dict[str, int], root_verbosity: int = 0, path: t.Optional[list[str]] = None) -> None:
     """Show a dict with varying levels of verbosity."""
     path = path if path else []
 
@@ -166,7 +166,7 @@ def show_dict(data: t.Dict[str, t.Any], verbose: t.Dict[str, int], root_verbosit
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_docker_details(args: EnvConfig) -> t.Dict[str, t.Any]:
+def get_docker_details(args: EnvConfig) -> dict[str, t.Any]:
     """Return details about docker."""
     docker = get_docker_command()
 

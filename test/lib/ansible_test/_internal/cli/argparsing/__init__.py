@@ -37,7 +37,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.registered_completions: t.Optional[t.List[str]] = None
+        self.registered_completions: t.Optional[list[str]] = None
 
     def completer(
             self,
@@ -45,7 +45,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
             action: argparse.Action,
             parsed_args: argparse.Namespace,
             **kwargs,
-    ) -> t.List[str]:
+    ) -> list[str]:
         """
         Return a list of completions for the specified prefix and action.
         Use this as the completer function for argcomplete.
@@ -67,7 +67,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
             prefix: str,
             action: argparse.Action,
             parsed_args: argparse.Namespace,
-    ) -> t.List[str]:
+    ) -> list[str]:
         """
         Return a list of completions for the specified prefix and action.
         Called by the complete function.
@@ -86,7 +86,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
 
 class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     """Base class for actions that parse composite arguments."""
-    documentation_state: t.Dict[t.Type[CompositeAction], DocumentationState] = {}
+    documentation_state: dict[t.Type[CompositeAction], DocumentationState] = {}
 
     def __init__(
             self,
@@ -139,7 +139,7 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
             prefix: str,
             action: argparse.Action,
             parsed_args: argparse.Namespace,
-    ) -> t.List[str]:
+    ) -> list[str]:
         """Return a list of completions appropriate for the given prefix and action, taking into account the arguments that have already been parsed."""
         assert isinstance(action, CompositeAction)
 

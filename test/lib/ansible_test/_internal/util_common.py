@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import atexit
+import collections.abc as c
 import contextlib
 import json
 import os
@@ -58,7 +59,7 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-CHECK_YAML_VERSIONS: t.Dict[str, t.Any] = {}
+CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 
 class ShellScriptTemplate:
@@ -66,7 +67,7 @@ class ShellScriptTemplate:
     def __init__(self, template: str) -> None:
         self.template = template
 
-    def substitute(self, **kwargs: t.Union[str, t.List[str]]) -> str:
+    def substitute(self, **kwargs: t.Union[str, list[str]]) -> str:
         """Return a string templated with the given arguments."""
         kvp = dict((k, self.quote(v)) for k, v in kwargs.items())
         pattern = re.compile(r'#{(?P<name>[^}]+)}')
@@ -74,7 +75,7 @@ class ShellScriptTemplate:
         return value
 
     @staticmethod
-    def quote(value: t.Union[str, t.List[str]]) -> str:
+    def quote(value: t.Union[str, list[str]]) -> str:
         """Return a shell quoted version of the given value."""
         if isinstance(value, list):
             return shlex.quote(' '.join(value))
@@ -142,7 +143,7 @@ class CommonConfig:
 
         self.session_name = generate_name()
 
-        self.cache: t.Dict[str, t.Any] = {}
+        self.cache: dict[str, t.Any] = {}
 
     def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
@@ -197,7 +198,7 @@ def process_scoped_temporary_directory(args: CommonConfig, prefix: t.Optional[st
 
 
 @contextlib.contextmanager
-def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory: t.Optional[str], content: str) -> t.Iterator[str]:
+def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory: t.Optional[str], content: str) -> c.Iterator[str]:
     """Context manager for a named temporary file."""
     if args.explain:
         yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
@@ -211,7 +212,7 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
 
 def write_json_test_results(category: ResultType,
                             name: str,
-                            content: t.Union[t.List[t.Any], t.Dict[str, t.Any]],
+                            content: t.Union[list[t.Any], dict[str, t.Any]],
                             formatted: bool = True,
                             encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
                             ) -> None:
@@ -370,13 +371,13 @@ def cleanup_python_paths():
 def intercept_python(
         args: CommonConfig,
         python: PythonConfig,
-        cmd: t.List[str],
-        env: t.Dict[str, str],
+        cmd: list[str],
+        env: dict[str, str],
         capture: bool,
         data: t.Optional[str] = None,
         cwd: t.Optional[str] = None,
         always: bool = False,
-) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """
     Run a command while intercepting invocations of Python to control the version used.
     If the specified Python is an ansible-test managed virtual environment, it will be added to PATH to activate it.
@@ -401,9 +402,9 @@ def intercept_python(
 
 def run_command(
         args: CommonConfig,
-        cmd: t.Iterable[str],
+        cmd: c.Iterable[str],
         capture: bool,
-        env: t.Optional[t.Dict[str, str]] = None,
+        env: t.Optional[dict[str, str]] = None,
         data: t.Optional[str] = None,
         cwd: t.Optional[str] = None,
         always: bool = False,
@@ -413,8 +414,8 @@ def run_command(
         output_stream: t.Optional[OutputStream] = None,
         cmd_verbosity: int = 1,
         str_errors: str = 'strict',
-        error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
-) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,

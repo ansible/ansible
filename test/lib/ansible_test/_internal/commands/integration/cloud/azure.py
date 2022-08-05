@@ -38,7 +38,7 @@ class AzureCloudProvider(CloudProvider):
 
         self.uses_config = True
 
-    def filter(self, targets: t.Tuple[IntegrationTarget, ...], exclude: t.List[str]) -> None:
+    def filter(self, targets: tuple[IntegrationTarget, ...], exclude: list[str]) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         aci = self._create_ansible_core_ci()
 
@@ -127,7 +127,7 @@ class AzureCloudEnvironment(CloudEnvironment):
             display.notice('If %s failed due to permissions, the test policy may need to be updated.' % target.name)
 
 
-def get_config(config_path: str) -> t.Dict[str, str]:
+def get_config(config_path: str) -> dict[str, str]:
     """Return a configuration dictionary parsed from the given configuration path."""
     parser = configparser.ConfigParser()
     parser.read(config_path)

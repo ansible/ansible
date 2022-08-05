@@ -50,7 +50,7 @@ class OriginCompletionConfig(PosixCompletionConfig):
         super().__init__(name='origin')
 
     @property
-    def supported_pythons(self) -> t.List[str]:
+    def supported_pythons(self) -> list[str]:
         """Return a list of the supported Python versions."""
         current_version = version_to_str(sys.version_info[:2])
         versions = [version for version in SUPPORTED_PYTHON_VERSIONS if version == current_version] + \
@@ -106,7 +106,7 @@ class PythonConfig(metaclass=abc.ABCMeta):
     path: t.Optional[str] = None
 
     @property
-    def tuple(self) -> t.Tuple[int, ...]:
+    def tuple(self) -> tuple[int, ...]:
         """Return the Python version as a tuple."""
         return str_to_version(self.version)
 
@@ -198,7 +198,7 @@ class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
 class ControllerHostConfig(PosixConfig, metaclass=abc.ABCMeta):
     """Base class for host configurations which support the controller."""
     @abc.abstractmethod
-    def get_default_targets(self, context: HostContext) -> t.List[ControllerConfig]:
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
 
 
@@ -291,7 +291,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
             placeholder=True,
         )
 
-    def get_default_targets(self, context: HostContext) -> t.List[ControllerConfig]:
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         if self.name in filter_completion(docker_completion()):
             defaults = self.get_defaults(context)
@@ -342,7 +342,7 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
             placeholder=True,
         )
 
-    def get_default_targets(self, context: HostContext) -> t.List[ControllerConfig]:
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         if self.name in filter_completion(remote_completion()):
             defaults = self.get_defaults(context)
@@ -424,7 +424,7 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
         """Return the default settings."""
         return OriginCompletionConfig()
 
-    def get_default_targets(self, context: HostContext) -> t.List[ControllerConfig]:
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in get_available_python_versions().items()]
 
@@ -486,9 +486,9 @@ class FallbackDetail:
 class HostSettings:
     """Host settings for the controller and targets."""
     controller: ControllerHostConfig
-    targets: t.List[HostConfig]
-    skipped_python_versions: t.List[str]
-    filtered_args: t.List[str]
+    targets: list[HostConfig]
+    skipped_python_versions: list[str]
+    filtered_args: list[str]
     controller_fallback: t.Optional[FallbackDetail]
 
     def serialize(self, path: str) -> None:

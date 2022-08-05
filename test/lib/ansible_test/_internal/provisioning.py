@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import atexit
+import collections.abc as c
 import dataclasses
 import functools
 import itertools
@@ -54,10 +55,10 @@ class PrimeContainers(ApplicationError):
 class HostState:
     """State of hosts and profiles to be passed to ansible-test during delegation."""
     controller_profile: ControllerHostProfile
-    target_profiles: t.List[HostProfile]
+    target_profiles: list[HostProfile]
 
     @property
-    def profiles(self) -> t.List[HostProfile]:
+    def profiles(self) -> list[HostProfile]:
         """Return all the profiles as a list."""
         return [t.cast(HostProfile, self.controller_profile)] + self.target_profiles
 
@@ -79,26 +80,26 @@ class HostState:
 
         return host_state
 
-    def get_controller_target_connections(self) -> t.List[SshConnection]:
+    def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing all target hosts from the controller."""
         return list(itertools.chain.from_iterable([target.get_controller_target_connections() for
                                                    target in self.target_profiles if isinstance(target, SshTargetHostProfile)]))
 
-    def targets(self, profile_type: t.Type[THostProfile]) -> t.List[THostProfile]:
+    def targets(self, profile_type: t.Type[THostProfile]) -> list[THostProfile]:
         """The list of target(s), verified to be of the specified type."""
         if not self.target_profiles:
             raise Exception('No target profiles found.')
 
         assert type_guard(self.target_profiles, profile_type)
 
-        return t.cast(t.List[THostProfile], self.target_profiles)
+        return t.cast(list[THostProfile], self.target_profiles)
 
 
 def prepare_profiles(
         args: TEnvironmentConfig,
         targets_use_pypi: bool = False,
         skip_setup: bool = False,
-        requirements: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]] = None,
+        requirements: t.Optional[c.Callable[[TEnvironmentConfig, HostState], None]] = None,
 ) -> HostState:
     """
     Create new profiles, or load existing ones, and return them.
@@ -174,7 +175,7 @@ def cleanup_profiles(host_state: HostState) -> None:
         profile.deprovision()
 
 
-def dispatch_jobs(jobs: t.List[t.Tuple[HostProfile, WrappedThread]]) -> None:
+def dispatch_jobs(jobs: list[tuple[HostProfile, WrappedThread]]) -> None:
     """Run the given profile job threads and wait for them to complete."""
     for profile, thread in jobs:
         thread.daemon = True

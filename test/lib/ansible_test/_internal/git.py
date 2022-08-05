@@ -16,19 +16,19 @@ class Git:
         self.git = 'git'
         self.root = root
 
-    def get_diff(self, args: t.List[str], git_options: t.Optional[t.List[str]] = None) -> t.List[str]:
+    def get_diff(self, args: list[str], git_options: t.Optional[list[str]] = None) -> list[str]:
         """Run `git diff` and return the result as a list."""
         cmd = ['diff'] + args
         if git_options is None:
             git_options = ['-c', 'core.quotePath=']
         return self.run_git_split(git_options + cmd, '\n', str_errors='replace')
 
-    def get_diff_names(self, args: t.List[str]) -> t.List[str]:
+    def get_diff_names(self, args: list[str]) -> list[str]:
         """Return a list of file names from the `git diff` command."""
         cmd = ['diff', '--name-only', '--no-renames', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_submodule_paths(self) -> t.List[str]:
+    def get_submodule_paths(self) -> list[str]:
         """Return a list of submodule paths recursively."""
         cmd = ['submodule', 'status', '--recursive']
         output = self.run_git_split(cmd, '\n')
@@ -45,12 +45,12 @@ class Git:
 
         return submodule_paths
 
-    def get_file_names(self, args: t.List[str]) -> t.List[str]:
+    def get_file_names(self, args: list[str]) -> list[str]:
         """Return a list of file names from the `git ls-files` command."""
         cmd = ['ls-files', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_branches(self) -> t.List[str]:
+    def get_branches(self) -> list[str]:
         """Return the list of branches."""
         cmd = ['for-each-ref', 'refs/heads/', '--format', '%(refname:strip=2)']
         return self.run_git_split(cmd)
@@ -60,7 +60,7 @@ class Git:
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()
 
-    def get_rev_list(self, commits: t.Optional[t.List[str]] = None, max_count: t.Optional[int] = None) -> t.List[str]:
+    def get_rev_list(self, commits: t.Optional[list[str]] = None, max_count: t.Optional[int] = None) -> list[str]:
         """Return the list of results from the `git rev-list` command."""
         cmd = ['rev-list']
 
@@ -88,7 +88,7 @@ class Git:
         except SubprocessError:
             return False
 
-    def run_git_split(self, cmd: t.List[str], separator: t.Optional[str] = None, str_errors: str = 'strict') -> t.List[str]:
+    def run_git_split(self, cmd: list[str], separator: t.Optional[str] = None, str_errors: str = 'strict') -> list[str]:
         """Run the given `git` command and return the results as a list."""
         output = self.run_git(cmd, str_errors=str_errors).strip(separator)
 
@@ -97,6 +97,6 @@ class Git:
 
         return output.split(separator)
 
-    def run_git(self, cmd: t.List[str], str_errors: str = 'strict') -> str:
+    def run_git(self, cmd: list[str], str_errors: str = 'strict') -> str:
         """Run the given `git` command and return the results as a string."""
         return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]

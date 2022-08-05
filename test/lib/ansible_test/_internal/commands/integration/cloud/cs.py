@@ -129,7 +129,7 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_credentials(self, container_name: str) -> t.Dict[str, t.Any]:
+    def _get_credentials(self, container_name: str) -> dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
         def check(value):
             """Return True if the given configuration is valid JSON, otherwise return False."""

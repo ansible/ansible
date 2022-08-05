@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import collections.abc as c
 import dataclasses
 import enum
 import os
@@ -55,7 +56,7 @@ from ..data import (
 )
 
 
-def filter_python(version: t.Optional[str], versions: t.Optional[t.Sequence[str]]) -> t.Optional[str]:
+def filter_python(version: t.Optional[str], versions: t.Optional[c.Sequence[str]]) -> t.Optional[str]:
     """If a Python version is given and is in the given version list, return that Python version, otherwise return None."""
     return version if version in versions else None
 
@@ -120,10 +121,10 @@ class LegacyHostOptions:
     docker_privileged: t.Optional[bool] = None
     docker_seccomp: t.Optional[str] = None
     docker_memory: t.Optional[int] = None
-    windows: t.Optional[t.List[str]] = None
-    platform: t.Optional[t.List[str]] = None
-    platform_collection: t.Optional[t.List[t.Tuple[str, str]]] = None
-    platform_connection: t.Optional[t.List[t.Tuple[str, str]]] = None
+    windows: t.Optional[list[str]] = None
+    platform: t.Optional[list[str]] = None
+    platform_collection: t.Optional[list[tuple[str, str]]] = None
+    platform_connection: t.Optional[list[tuple[str, str]]] = None
     inventory: t.Optional[str] = None
 
     @staticmethod
@@ -144,16 +145,16 @@ class LegacyHostOptions:
                 delattr(namespace, field.name)
 
     @staticmethod
-    def purge_args(args: t.List[str]) -> t.List[str]:
+    def purge_args(args: list[str]) -> list[str]:
         """Purge legacy host options from the given command line arguments."""
-        fields: t.Tuple[dataclasses.Field, ...] = dataclasses.fields(LegacyHostOptions)
-        filters: t.Dict[str, int] = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}
+        fields: tuple[dataclasses.Field, ...] = dataclasses.fields(LegacyHostOptions)
+        filters: dict[str, int] = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}
 
         return filter_args(args, filters)
 
-    def get_options_used(self) -> t.Tuple[str, ...]:
+    def get_options_used(self) -> tuple[str, ...]:
         """Return a tuple of the command line options used."""
-        fields: t.Tuple[dataclasses.Field, ...] = dataclasses.fields(self)
+        fields: tuple[dataclasses.Field, ...] = dataclasses.fields(self)
         options = tuple(sorted(get_option_name(field.name) for field in fields if getattr(self, field.name)))
         return options
 
@@ -190,7 +191,7 @@ class TargetMode(enum.Enum):
 
 
 def convert_legacy_args(
-        argv: t.List[str],
+        argv: list[str],
         args: t.Union[argparse.Namespace, types.SimpleNamespace],
         mode: TargetMode,
 ) -> HostSettings:
@@ -241,7 +242,7 @@ def convert_legacy_args(
     args.targets = targets
 
     if used_default_pythons:
-        control_targets = t.cast(t.List[ControllerConfig], targets)
+        control_targets = t.cast(list[ControllerConfig], targets)
         skipped_python_versions = sorted_versions(list(set(SUPPORTED_PYTHON_VERSIONS) - {target.python.version for target in control_targets}))
     else:
         skipped_python_versions = []
@@ -264,11 +265,11 @@ def controller_targets(
         mode: TargetMode,
         options: LegacyHostOptions,
         controller: ControllerHostConfig,
-) -> t.List[HostConfig]:
+) -> list[HostConfig]:
     """Return the configuration for controller targets."""
     python = native_python(options)
 
-    targets: t.List[HostConfig]
+    targets: list[HostConfig]
 
     if python:
         targets = [ControllerConfig(python=python)]
@@ -289,7 +290,7 @@ def native_python(options: LegacyHostOptions) -> t.Optional[NativePythonConfig]:
 def get_legacy_host_config(
         mode: TargetMode,
         options: LegacyHostOptions,
-) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]:
+) -> tuple[ControllerHostConfig, list[HostConfig], t.Optional[FallbackDetail]]:
     """
     Returns controller and target host configs derived from the provided legacy host options.
     The goal is to match the original behavior, by using non-split testing whenever possible.
@@ -300,10 +301,10 @@ def get_legacy_host_config(
     docker_fallback = 'default'
     remote_fallback = get_fallback_remote_controller()
 
-    controller_fallback: t.Optional[t.Tuple[str, str, FallbackReason]] = None
+    controller_fallback: t.Optional[tuple[str, str, FallbackReason]] = None
 
     controller: t.Optional[ControllerHostConfig]
-    targets: t.List[HostConfig]
+    targets: list[HostConfig]
 
     if options.venv:
         if controller_python(options.python) or not options.python:
@@ -327,7 +328,7 @@ def get_legacy_host_config(
                 targets = [ControllerConfig(python=VirtualPythonConfig(version=target.python.version, path=target.python.path,
                                                                        system_site_packages=options.venv_system_site_packages)) for target in control_targets]
             else:
-                targets = t.cast(t.List[HostConfig], control_targets)
+                targets = t.cast(list[HostConfig], control_targets)
         else:
             targets = [ControllerConfig(python=VirtualPythonConfig(version=options.python or 'default',
                                                                    system_site_packages=options.venv_system_site_packages))]
@@ -455,8 +456,8 @@ def get_legacy_host_config(
 def handle_non_posix_targets(
     mode: TargetMode,
     options: LegacyHostOptions,
-    targets: t.List[HostConfig],
-) -> t.List[HostConfig]:
+    targets: list[HostConfig],
+) -> list[HostConfig]:
     """Return a list of non-POSIX targets if the target mode is non-POSIX."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
         if options.windows:
@@ -478,7 +479,7 @@ def handle_non_posix_targets(
                     if entry.platform == platform:
                         entry.connection = connection
 
-            targets = t.cast(t.List[HostConfig], network_targets)
+            targets = t.cast(list[HostConfig], network_targets)
         else:
             targets = [NetworkInventoryConfig(path=options.inventory)]
 
@@ -488,16 +489,16 @@ def handle_non_posix_targets(
 def default_targets(
     mode: TargetMode,
     controller: ControllerHostConfig,
-) -> t.List[HostConfig]:
+) -> list[HostConfig]:
     """Return a list of default targets for the given target mode."""
-    targets: t.List[HostConfig]
+    targets: list[HostConfig]
 
     if mode == TargetMode.WINDOWS_INTEGRATION:
         targets = [WindowsInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.winrm')))]
     elif mode == TargetMode.NETWORK_INTEGRATION:
         targets = [NetworkInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.networking')))]
     elif mode.multiple_pythons:
-        targets = t.cast(t.List[HostConfig], controller.get_default_targets(HostContext(controller_config=controller)))
+        targets = t.cast(list[HostConfig], controller.get_default_targets(HostContext(controller_config=controller)))
     else:
         targets = [ControllerConfig()]
 

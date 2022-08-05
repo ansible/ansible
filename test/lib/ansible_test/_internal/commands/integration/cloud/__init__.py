@@ -55,12 +55,12 @@ from ....docker_util import (
 
 
 @cache
-def get_cloud_plugins() -> t.Tuple[t.Dict[str, t.Type[CloudProvider]], t.Dict[str, t.Type[CloudEnvironment]]]:
+def get_cloud_plugins() -> tuple[dict[str, t.Type[CloudProvider]], dict[str, t.Type[CloudEnvironment]]]:
     """Import cloud plugins and load them into the plugin dictionaries."""
     import_plugins('commands/integration/cloud')
 
-    providers: t.Dict[str, t.Type[CloudProvider]] = {}
-    environments: t.Dict[str, t.Type[CloudEnvironment]] = {}
+    providers: dict[str, t.Type[CloudProvider]] = {}
+    environments: dict[str, t.Type[CloudEnvironment]] = {}
 
     load_plugins(CloudProvider, providers)
     load_plugins(CloudEnvironment, environments)
@@ -69,18 +69,18 @@ def get_cloud_plugins() -> t.Tuple[t.Dict[str, t.Type[CloudProvider]], t.Dict[st
 
 
 @cache
-def get_provider_plugins() -> t.Dict[str, t.Type[CloudProvider]]:
+def get_provider_plugins() -> dict[str, t.Type[CloudProvider]]:
     """Return a dictionary of the available cloud provider plugins."""
     return get_cloud_plugins()[0]
 
 
 @cache
-def get_environment_plugins() -> t.Dict[str, t.Type[CloudEnvironment]]:
+def get_environment_plugins() -> dict[str, t.Type[CloudEnvironment]]:
     """Return a dictionary of the available cloud environment plugins."""
     return get_cloud_plugins()[1]
 
 
-def get_cloud_platforms(args: TestConfig, targets: t.Optional[t.Tuple[IntegrationTarget, ...]] = None) -> t.List[str]:
+def get_cloud_platforms(args: TestConfig, targets: t.Optional[tuple[IntegrationTarget, ...]] = None) -> list[str]:
     """Return cloud platform names for the specified targets."""
     if isinstance(args, IntegrationConfig):
         if args.list_targets:
@@ -114,7 +114,7 @@ def get_cloud_platform(target: IntegrationTarget) -> t.Optional[str]:
     raise ApplicationError('Target %s aliases contains multiple cloud platforms: %s' % (target.name, ', '.join(sorted(cloud_platforms))))
 
 
-def get_cloud_providers(args: IntegrationConfig, targets: t.Optional[t.Tuple[IntegrationTarget, ...]] = None) -> t.List[CloudProvider]:
+def get_cloud_providers(args: IntegrationConfig, targets: t.Optional[tuple[IntegrationTarget, ...]] = None) -> list[CloudProvider]:
     """Return a list of cloud providers for the given targets."""
     return [get_provider_plugins()[p](args) for p in get_cloud_platforms(args, targets)]
 
@@ -129,12 +129,12 @@ def get_cloud_environment(args: IntegrationConfig, target: IntegrationTarget) ->
     return get_environment_plugins()[cloud_platform](args)
 
 
-def cloud_filter(args: IntegrationConfig, targets: t.Tuple[IntegrationTarget, ...]) -> t.List[str]:
+def cloud_filter(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) -> list[str]:
     """Return a list of target names to exclude based on the given targets."""
     if args.metadata.cloud_config is not None:
         return []  # cloud filter already performed prior to delegation
 
-    exclude: t.List[str] = []
+    exclude: list[str] = []
 
     for provider in get_cloud_providers(args, targets):
         provider.filter(targets, exclude)
@@ -142,7 +142,7 @@ def cloud_filter(args: IntegrationConfig, targets: t.Tuple[IntegrationTarget, ..
     return exclude
 
 
-def cloud_init(args: IntegrationConfig, targets: t.Tuple[IntegrationTarget, ...]) -> None:
+def cloud_init(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) -> None:
     """Initialize cloud plugins for the given targets."""
     if args.metadata.cloud_config is not None:
         return  # cloud configuration already established prior to delegation
@@ -189,7 +189,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         self.args = args
         self.platform = self.__module__.rsplit('.', 1)[-1]
 
-        def config_callback(files: t.List[t.Tuple[str, str]]) -> None:
+        def config_callback(files: list[tuple[str, str]]) -> None:
             """Add the config file to the payload file list."""
             if self.platform not in self.args.metadata.cloud_config:
                 return  # platform was initialized, but not used -- such as being skipped due to all tests being disabled
@@ -270,7 +270,7 @@ class CloudProvider(CloudBase):
         self.uses_config = False
         self.uses_docker = False
 
-    def filter(self, targets: t.Tuple[IntegrationTarget, ...], exclude: t.List[str]) -> None:
+    def filter(self, targets: tuple[IntegrationTarget, ...], exclude: list[str]) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         if not self.uses_docker and not self.uses_config:
             return
@@ -345,7 +345,7 @@ class CloudProvider(CloudBase):
         return config
 
     @staticmethod
-    def _populate_config_template(template: str, values: t.Dict[str, str]) -> str:
+    def _populate_config_template(template: str, values: dict[str, str]) -> str:
         """Populate and return the given template with the provided values."""
         for key in sorted(values):
             value = values[key]
@@ -378,10 +378,10 @@ class CloudEnvironment(CloudBase):
 class CloudEnvironmentConfig:
     """Configuration for the environment."""
     def __init__(self,
-                 env_vars: t.Optional[t.Dict[str, str]] = None,
-                 ansible_vars: t.Optional[t.Dict[str, t.Any]] = None,
-                 module_defaults: t.Optional[t.Dict[str, t.Dict[str, t.Any]]] = None,
-                 callback_plugins: t.Optional[t.List[str]] = None,
+                 env_vars: t.Optional[dict[str, str]] = None,
+                 ansible_vars: t.Optional[dict[str, t.Any]] = None,
+                 module_defaults: t.Optional[dict[str, dict[str, t.Any]]] = None,
+                 callback_plugins: t.Optional[list[str]] = None,
                  ):
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import configparser
-import typing as t
 
 from ....util import (
     display,
@@ -35,7 +34,7 @@ class HcloudCloudProvider(CloudProvider):
 
         self.uses_config = True
 
-    def filter(self, targets: t.Tuple[IntegrationTarget, ...], exclude: t.List[str]) -> None:
+    def filter(self, targets: tuple[IntegrationTarget, ...], exclude: list[str]) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         aci = self._create_ansible_core_ci()
 
