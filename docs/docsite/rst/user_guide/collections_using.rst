@@ -7,7 +7,7 @@ Using collections
 
 Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. As modules move from the core Ansible repository into collections, the module documentation will move to the :ref:`collections pages <list_of_collections>`.
 
-You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_ or a `self-hosted Galaxy server <https://galaxyng.netlify.app/>`_.
+You can install and use collections through a distribution server, such as `Ansible Galaxy <https://galaxy.ansible.com>`_ or a `Pulp 3 Galaxy server <https://galaxyng.netlify.app/>`_.
 
 * For details on how to *develop* collections see :ref:`developing_collections`.
 * For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
@@ -350,7 +350,7 @@ Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`
 Verifying signed collections
 -----------------------------
 
-If a collection has been signed by a :term:`distribution server`, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. TThis option is not available on all distribution servers. See :ref:`distributing_collections` for a table listing which servers support collection signing. See :ref:`installing_signed_collections` for how to verify a signed collection when you install it.
+If a collection has been signed by a :term:`distribution server`, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on all distribution servers. See :ref:`distributing_collections` for a table listing which servers support collection signing. See :ref:`installing_signed_collections` for how to verify a signed collection when you install it.
 
 To verify a signed installed collection:
 
