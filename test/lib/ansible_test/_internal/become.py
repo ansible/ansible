@@ -23,7 +23,7 @@ class Become(metaclass=abc.ABCMeta):
         """The name of the Ansible become plugin that is equivalent to this."""
 
     @abc.abstractmethod
-    def prepare_command(self, command: t.List[str]) -> t.List[str]:
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
 
 
@@ -34,7 +34,7 @@ class Doas(Become):
         """The name of the Ansible become plugin that is equivalent to this."""
         raise NotImplementedError('Ansible has no built-in doas become plugin.')
 
-    def prepare_command(self, command: t.List[str]) -> t.List[str]:
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['doas', '-n']
 
@@ -66,7 +66,7 @@ class Su(Become):
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'su'
 
-    def prepare_command(self, command: t.List[str]) -> t.List[str]:
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['su', '-l', 'root']
 
@@ -96,7 +96,7 @@ class Sudo(Become):
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'sudo'
 
-    def prepare_command(self, command: t.List[str]) -> t.List[str]:
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['sudo', '-in']
 

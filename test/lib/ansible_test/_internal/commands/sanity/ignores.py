@@ -39,7 +39,7 @@ class IgnoresTest(SanityVersionNeutral):
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         sanity_ignore = SanityIgnoreParser.load(args)
 
-        messages: t.List[SanityMessage] = []
+        messages: list[SanityMessage] = []
 
         # parse errors
 

@@ -69,8 +69,8 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
 
         collection_layouts = data_context().create_collection_layouts()
 
-        content_files: t.List[t.Tuple[str, str]] = []
-        extra_files: t.List[t.Tuple[str, str]] = []
+        content_files: list[tuple[str, str]] = []
+        extra_files: list[tuple[str, str]] = []
 
         for layout in collection_layouts:
             if layout == data_context().content:
@@ -117,7 +117,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
     display.info('Created a %d byte payload archive containing %d files in %d seconds.' % (payload_size_bytes, len(files), duration), verbosity=1)
 
 
-def create_temporary_bin_files(args: CommonConfig) -> t.Tuple[t.Tuple[str, str], ...]:
+def create_temporary_bin_files(args: CommonConfig) -> tuple[tuple[str, str], ...]:
     """Create a temporary ansible bin directory populated using the symlink map."""
     if args.explain:
         temp_path = '/tmp/ansible-tmp-bin'

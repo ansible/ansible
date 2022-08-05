@@ -18,7 +18,7 @@ class InstalledSource(SourceProvider):
         """Return True if the given path is a content root for this provider."""
         return False
 
-    def get_paths(self, path: str) -> t.List[str]:
+    def get_paths(self, path: str) -> list[str]:
         """Return the list of available content paths under the given path."""
         paths = []
 

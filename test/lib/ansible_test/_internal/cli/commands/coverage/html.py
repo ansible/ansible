@@ -20,7 +20,7 @@ from ...environments import (
 def do_html(
         subparsers,
         parent: argparse.ArgumentParser,
-        add_coverage_common: t.Callable[[argparse.ArgumentParser], None],
+        add_coverage_common: c.Callable[[argparse.ArgumentParser], None],
         completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for the `coverage html` command."""

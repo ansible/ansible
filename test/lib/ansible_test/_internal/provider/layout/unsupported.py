@@ -18,7 +18,7 @@ class UnsupportedLayout(LayoutProvider):
         """Return True if the given path is a content root for this provider."""
         return False
 
-    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
+    def create(self, root: str, paths: list[str]) -> ContentLayout:
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, p) for p in self.PLUGIN_TYPES)
 

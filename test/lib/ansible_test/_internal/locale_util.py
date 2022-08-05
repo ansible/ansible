@@ -25,7 +25,7 @@ class LocaleError(SystemExit):
         super().__init__(f'ERROR: {message}')
 
 
-def configure_locale() -> t.Tuple[str, t.Optional[str]]:
+def configure_locale() -> tuple[str, t.Optional[str]]:
     """Configure the locale, returning the selected locale and an optional warning."""
 
     if (fs_encoding := sys.getfilesystemencoding()).lower() != 'utf-8':

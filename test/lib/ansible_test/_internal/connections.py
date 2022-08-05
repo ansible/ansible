@@ -45,14 +45,14 @@ class Connection(metaclass=abc.ABCMeta):
     """Base class for connecting to a host."""
     @abc.abstractmethod
     def run(self,
-            command: t.List[str],
+            command: list[str],
             capture: bool,
             interactive: bool = False,
             data: t.Optional[str] = None,
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+            ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
 
     def extract_archive(self,
@@ -93,14 +93,14 @@ class LocalConnection(Connection):
         self.args = args
 
     def run(self,
-            command: t.List[str],
+            command: list[str],
             capture: bool,
             interactive: bool = False,
             data: t.Optional[str] = None,
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+            ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         return run_command(
             args=self.args,
@@ -135,14 +135,14 @@ class SshConnection(Connection):
             self.options.extend(['-o', f'{ssh_option}={ssh_options[ssh_option]}'])
 
     def run(self,
-            command: t.List[str],
+            command: list[str],
             capture: bool,
             interactive: bool = False,
             data: t.Optional[str] = None,
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+            ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         options = list(self.options)
 
@@ -217,14 +217,14 @@ class DockerConnection(Connection):
         self.user: t.Optional[str] = user
 
     def run(self,
-            command: t.List[str],
+            command: list[str],
             capture: bool,
             interactive: bool = False,
             data: t.Optional[str] = None,
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+            ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         options = []
 
