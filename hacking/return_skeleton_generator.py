@@ -90,7 +90,7 @@ def main(args):
     data = json.load(src, strict=False)
     docs = get_all_items(data)
     if 'invocation' in docs:
-        del(docs['invocation'])
+        del docs['invocation']
     print(yaml.safe_dump(docs, default_flow_style=False))
 
 

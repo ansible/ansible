@@ -1069,7 +1069,7 @@ class TaskExecutor:
             task_keys['password'] = self._play_context.password
 
         # Prevent task retries from overriding connection retries
-        del(task_keys['retries'])
+        del task_keys['retries']
 
         # set options with 'templated vars' specific to this plugin and dependent ones
         self._connection.set_options(task_keys=task_keys, var_options=options)

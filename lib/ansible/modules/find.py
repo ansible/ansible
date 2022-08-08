@@ -468,7 +468,7 @@ def main():
                         depth = int(fsname.count(os.path.sep)) - int(wpath.count(os.path.sep)) + 1
                         if depth > params['depth']:
                             # Empty the list used by os.walk to avoid traversing deeper unnecessarily
-                            del(dirs[:])
+                            del dirs[:]
                             continue
                     if os.path.basename(fsname).startswith('.') and not params['hidden']:
                         continue
