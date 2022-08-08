@@ -250,6 +250,9 @@ class StrategyModule(StrategyBase):
                         else:
                             is_handler = isinstance(included_file._task, Handler)
                             new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
+
+                        # let PlayIterator know about any new handlers included via include_role or
+                        # import_role within include_role/include_taks
                         iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
                     except AnsibleParserError:
                         raise
