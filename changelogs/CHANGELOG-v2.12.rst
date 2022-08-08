@@ -5,6 +5,29 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-08-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - An improved error message is shown when the download of a pip bootstrap script fails. The download now uses ``urllib2`` instead of ``urllib`` on Python 2.
+
+Bugfixes
+--------
+
+- ansible-connection - decrypt vaulted parameters before sending over the socket, as vault secrets are not available on the other side.
+- ansible-galaxy - fix setting the cache for paginated responses from Galaxy NG/AH (https://github.com/ansible/ansible/issues/77911).
+- ansible-test - Delegation now properly handles arguments given after ``--`` on the command line.
+- file backed cache plugins now handle concurrent access by making atomic updates to the files.
+
 v2.12.7
 =======
 
