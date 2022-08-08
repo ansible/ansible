@@ -21,4 +21,4 @@ class CallbackModule(CallbackBase):
 
     def __getattr__(self, name):
         if name.startswith('v2_'):
-            return(lambda *args, **kwargs: self._display.display(name))
+            return lambda *args, **kwargs: self._display.display(name)
