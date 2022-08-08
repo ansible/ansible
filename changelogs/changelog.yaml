@@ -1528,3 +1528,32 @@ releases:
     - plugin-loader-deterministic-fuzzy-match.yml
     - v2.12.7rc1_summary.yaml
     release_date: '2022-06-13'
+  2.12.8rc1:
+    changes:
+      bugfixes:
+      - ansible-connection - decrypt vaulted parameters before sending over the socket,
+        as vault secrets are not available on the other side.
+      - ansible-galaxy - fix setting the cache for paginated responses from Galaxy
+        NG/AH (https://github.com/ansible/ansible/issues/77911).
+      - ansible-test - Delegation now properly handles arguments given after ``--``
+        on the command line.
+      - file backed cache plugins now handle concurrent access by making atomic updates
+        to the files.
+      minor_changes:
+      - ansible-test - An improved error message is shown when the download of a pip
+        bootstrap script fails. The download now uses ``urllib2`` instead of ``urllib``
+        on Python 2.
+      release_summary: '| Release Date: 2022-08-08
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - 78325-ansible-galaxy-fix-caching-paginated-responses-from-v3-servers.yml
+    - ansible-connection_decode.yml
+    - ansible-test-filter-options.yml
+    - ansible-test-pip-bootstrap.yml
+    - atomic_cache_files.yml
+    - v2.12.8rc1_summary.yaml
+    release_date: '2022-08-08'
