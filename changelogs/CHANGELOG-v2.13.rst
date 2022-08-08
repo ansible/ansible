@@ -5,6 +5,39 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-08-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Avoid 'unreachable' error when chmod on AIX has 255 as return code.
+- Fix PluginLoader to mimic Python import machinery by adding module to sys.modules before exec
+- Fix dnf module documentation to indicate that comparison operators for package version require spaces around them (https://github.com/ansible/ansible/issues/78295)
+- ansible-connection - decrypt vaulted parameters before sending over the socket, as vault secrets are not available on the other side.
+- ansible-galaxy - Fix reinitializing the whole collection directory with ``ansible-galaxy collection init ns.coll --force``. Now directories and files that are not included in the collection skeleton will be removed.
+- ansible-galaxy - do not require mandatory keys in the ``galaxy.yml`` of source collections when listing them (https://github.com/ansible/ansible/issues/70180).
+- ansible-galaxy - fix listing collections that contains metadata but the namespace or name are not strings.
+- ansible-galaxy - fix setting the cache for paginated responses from Galaxy NG/AH (https://github.com/ansible/ansible/issues/77911).
+- ansible-test - Delegation for commands which generate output for programmatic consumption no longer redirect all output to stdout. The affected commands and options are ``shell``, ``sanity --lint``, ``sanity --list-tests``, ``integration --list-targets``, ``coverage analyze``
+- ansible-test - Delegation now properly handles arguments given after ``--`` on the command line.
+- ansible-test - Test configuration for collections is now parsed only once, prior to delegation. Fixes issue: https://github.com/ansible/ansible/issues/78334
+- ansible-test - The ``shell`` command no longer redirects all output to stdout when running a provided command. Any command output written to stderr will be mixed with the stderr output from ansible-test.
+- ansible-test - The ``shell`` command no longer requests a TTY when using delegation unless an interactive shell is being used. An interactive shell is the default behavior when no command is given to pass to the shell.
+- dnf - fix output parsing on systems with ``LANGUAGE`` set to a language other than English (https://github.com/ansible/ansible/issues/78193)
+- if a config setting prevents running ansible it should at least show it's "origin".
+- prevent type annotation shim failures from causing runtime failures (https://github.com/ansible/ansible/pull/77860)
+- template module/lookup - fix ``convert_data`` option that was effectively always set to True for Jinja macros (https://github.com/ansible/ansible/issues/78141)
+- uri - properly use uri parameter use_proxy (https://github.com/ansible/ansible/issues/58632)
+- yum - fix traceback when ``releasever`` is specified with ``latest`` (https://github.com/ansible/ansible/issues/78058)
+
 v2.13.2
 =======
 
