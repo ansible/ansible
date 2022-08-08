@@ -25,7 +25,7 @@ However, the three types of code do not use the same string strategy. If you're 
 Minimum version of Python 3.x and Python 2.x
 ============================================
 
-See :ref:`Control Node Requirements <control_node_requirements>` and `Managed Node Requirements <:ref:managed-node-requirements>`_ for the
+See :ref:`Control Node Requirements <control_node_requirements>` and :ref:`Managed Node Requirements <managed_node_requirements>` for the
 specific versions supported.
 
 Your custom modules can support any version of Python (or other languages) you want, but the above are the requirements for the code contributed to the Ansible project.
