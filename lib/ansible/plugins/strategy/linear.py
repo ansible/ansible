@@ -49,6 +49,8 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
+    noop_task = None
+
     def _replace_with_noop(self, target):
         if self.noop_task is None:
             raise AnsibleAssertionError('strategy.linear.StrategyModule.noop_task is None, need Task()')
@@ -62,7 +64,7 @@ class StrategyModule(StrategyBase):
         return result
 
     def _create_noop_block_from(self, original_block, parent):
-        noop_block = original_block.__class__(parent_block=parent)
+        noop_block = Block(parent_block=parent)
         noop_block.block = self._replace_with_noop(original_block.block)
         noop_block.always = self._replace_with_noop(original_block.always)
         noop_block.rescue = self._replace_with_noop(original_block.rescue)
