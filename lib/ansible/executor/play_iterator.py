@@ -426,8 +426,7 @@ class PlayIterator:
                     state.handlers = self.handlers
                     state.update_handlers = False
 
-                if (state.fail_state != FailedStates.NONE and not self._play.force_handlers and
-                        state.pre_flushing_run_state not in (IteratingStates.RESCUE, IteratingStates.ALWAYS)):
+                if state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
                     state.run_state = IteratingStates.COMPLETE
                 else:
                     while True:
