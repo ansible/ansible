@@ -540,6 +540,8 @@ Ansible ad hoc command is the easiest option:
 .. code-block:: shell-session
 
     ansible all -i localhost, -m debug -a "msg={{ 'mypassword' | password_hash('sha512', 'mysecretsalt') }}"
+    
+.. note:: Due to differences in the underlying tooling this method will, with identical input, generate different passwords on MacOS and Linux! 
 
 The ``mkpasswd`` utility that is available on most Linux systems is also a great option:
 
