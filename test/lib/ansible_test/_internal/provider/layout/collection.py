@@ -72,7 +72,7 @@ class CollectionLayout(LayoutProvider):
                              unit_module_path='tests/unit/plugins/modules',
                              unit_module_utils_path='tests/unit/plugins/module_utils',
                              unit_messages=unit_messages,
-                             unsupported=not(is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
+                             unsupported=not (is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
                              )
 
     @staticmethod
