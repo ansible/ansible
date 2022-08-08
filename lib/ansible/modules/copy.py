@@ -469,7 +469,7 @@ def copy_left_only(src, dest, module):
             b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
 
             if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is True:
-                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not(local_follow))
+                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
                 chown_recursive(b_dest_item_path, module)
 
             if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is False:
@@ -497,7 +497,7 @@ def copy_left_only(src, dest, module):
                     module.set_group_if_different(b_dest_item_path, group, False)
 
             if not os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path):
-                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not(local_follow))
+                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
                 chown_recursive(b_dest_item_path, module)
 
             changed = True
@@ -766,7 +766,7 @@ def main():
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
                 b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
                 if not module.check_mode:
-                    shutil.copytree(b_src, b_dest, symlinks=not(local_follow))
+                    shutil.copytree(b_src, b_dest, symlinks=not local_follow)
                 chown_recursive(dest, module)
                 changed = True
 
@@ -775,7 +775,7 @@ def main():
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
                 b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
                 if not module.check_mode and not os.path.exists(b_dest):
-                    shutil.copytree(b_src, b_dest, symlinks=not(local_follow))
+                    shutil.copytree(b_src, b_dest, symlinks=not local_follow)
                     changed = True
                     chown_recursive(dest, module)
                 if module.check_mode and not os.path.exists(b_dest):

@@ -286,7 +286,7 @@ class ActionModule(ActionBase):
         finally:
             # cleanup and save some information
             # restore the old settings for the duped stdin stdin_fd
-            if not(None in (stdin_fd, old_settings)) and isatty(stdin_fd):
+            if not (None in (stdin_fd, old_settings)) and isatty(stdin_fd):
                 termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
