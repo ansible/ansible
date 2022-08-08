@@ -875,7 +875,7 @@ class PluginLoader:
             except TypeError as e:
                 if "abstract" in e.args[0]:
                     # Abstract Base Class or incomplete plugin, don't load
-                    display.v('Returning not found on "%s" as it has abstract methods and is not a working plugin' % name)
+                    display.v('Returning not found on "%s" as it has unimplemented abstract methods; %s' % (name, to_native(e)))
                     return get_with_context_result(None, plugin_load_context)
                 raise
 
