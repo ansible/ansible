@@ -172,6 +172,28 @@ class StrategyModule(StrategyBase):
             display.debug("done advancing hosts to next task")
             return rvals
 
+        if num_handlers:
+            display.debug("advancing hosts in HANDLERS")
+            lowest_handler = min((
+                s.cur_handlers_task for h, (s, t) in host_tasks_to_run
+                if s.run_state == IteratingStates.HANDLERS
+            ))
+            rvals = []
+            for host in hosts:
+                host_state_task = host_tasks.get(host.name)
+                if host_state_task is None:
+                    continue
+                (state, task) = host_state_task
+                if task is None:
+                    continue
+                if state.cur_handlers_task == lowest_handler and state.run_state == IteratingStates.HANDLERS:
+                    iterator.set_state_for_host(host.name, state)
+                    rvals.append((host, task))
+                else:
+                    rvals.append((host, noop_task))
+            display.debug("done advancing hosts to next task")
+            return rvals
+
         # if any hosts are in SETUP, return the setup task
         # while all other hosts get a noop
         if num_setups:
@@ -195,28 +217,6 @@ class StrategyModule(StrategyBase):
         if num_always:
             display.debug("advancing hosts in ALWAYS")
             return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
-
-        if num_handlers:
-            display.debug("advancing hosts in HANDLERS")
-            lowest_handler = min((
-                s.cur_handlers_task for h, (s, t) in host_tasks_to_run
-                if s.run_state == IteratingStates.HANDLERS
-            ))
-            rvals = []
-            for host in hosts:
-                host_state_task = host_tasks.get(host.name)
-                if host_state_task is None:
-                    continue
-                (state, task) = host_state_task
-                if task is None:
-                    continue
-                if state.cur_handlers_task == lowest_handler and state.run_state == IteratingStates.HANDLERS:
-                    iterator.set_state_for_host(host.name, state)
-                    rvals.append((host, task))
-                else:
-                    rvals.append((host, noop_task))
-            display.debug("done advancing hosts to next task")
-            return rvals
 
         # at this point, everything must be IteratingStates.COMPLETE, so we
         # return None for all hosts in the list
