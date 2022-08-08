@@ -465,9 +465,6 @@ class PlayIterator:
                     state.run_state = IteratingStates.RESCUE
                 elif state._blocks[state.cur_block].always:
                     state.run_state = IteratingStates.ALWAYS
-                elif self._play.force_handlers:
-                    state.run_state = IteratingStates.HANDLERS
-                    state.pre_flushing_run_state = IteratingStates.COMPLETE
                 else:
                     state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.RESCUE:
@@ -477,9 +474,6 @@ class PlayIterator:
                 state.fail_state |= FailedStates.RESCUE
                 if state._blocks[state.cur_block].always:
                     state.run_state = IteratingStates.ALWAYS
-                elif self._play.force_handlers:
-                    state.run_state = IteratingStates.HANDLERS
-                    state.pre_flushing_run_state = IteratingStates.COMPLETE
                 else:
                     state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.ALWAYS:
@@ -487,11 +481,7 @@ class PlayIterator:
                 state.always_child_state = self._set_failed_state(state.always_child_state)
             else:
                 state.fail_state |= FailedStates.ALWAYS
-                if self._play.force_handlers:
-                    state.run_state = IteratingStates.HANDLERS
-                    state.pre_flushing_run_state = IteratingStates.COMPLETE
-                else:
-                    state.run_state = IteratingStates.COMPLETE
+                state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.HANDLERS:
             state.fail_state |= IteratingStates.HANDLERS
             state.run_state = IteratingStates.COMPLETE

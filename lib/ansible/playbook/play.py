@@ -300,6 +300,27 @@ class Play(Base, Taggable, CollectionSearch):
             task.implicit = True
 
         block_list = []
+        if self.force_handlers:
+            if self.pre_tasks:
+                b = Block(play=self)
+                b.block = self.pre_tasks
+                b.always = [flush_block]
+                block_list.append(b)
+
+            tasks = self._compile_roles() + self.tasks
+            if tasks:
+                b = Block(play=self)
+                b.block = tasks
+                b.always = [flush_block]
+                block_list.append(b)
+
+            if self.post_tasks:
+                b = Block(play=self)
+                b.block = self.post_tasks
+                b.always = [flush_block]
+                block_list.append(b)
+
+            return block_list
 
         block_list.extend(self.pre_tasks)
         block_list.append(flush_block)
