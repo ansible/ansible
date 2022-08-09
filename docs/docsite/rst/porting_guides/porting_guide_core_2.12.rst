@@ -44,7 +44,7 @@ Playbook
 Python Interpreter Discovery
 ============================
 
-The default value of ``INTERPRETER_PYTHON_FALLBACK`` changed to ``auto``. The list of Python interpreters in ``INTERPRETER_PYTHON_FALLBACK`` changed to prefer Python 3 over Python 2. The combination of these two changes means the new default behavior is to quietly prefer Python 3 over Python 2 on remote hosts. Previously a deprecation warning was issued in situations where interpreter discovery would have used Python 3 but the interpreter was set to ``/usr/bin/python``.
+The default value of ``INTERPRETER_PYTHON`` changed to ``auto``. The list of Python interpreters in ``INTERPRETER_PYTHON_FALLBACK`` changed to prefer Python 3 over Python 2. The combination of these two changes means the new default behavior is to quietly prefer Python 3 over Python 2 on remote hosts. Previously a deprecation warning was issued in situations where interpreter discovery would have used Python 3 but the interpreter was set to ``/usr/bin/python``.
 
 ``INTERPRETER_PYTHON_FALLBACK`` can be changed from the default list of interpreters by setting the ``ansible_interpreter_python_fallback`` variable.
 
