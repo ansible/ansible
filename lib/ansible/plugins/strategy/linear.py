@@ -48,6 +48,8 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
+    in_handlers = False
+
     def _get_next_task_lockstep(self, hosts, iterator):
         '''
         Returns a list of (host, task) tuples, where the task may
@@ -69,25 +71,42 @@ class StrategyModule(StrategyBase):
         if not state_task_per_host:
             return [(h, None) for h in hosts]
 
-        task_uuids = [t._uuid for s, t in state_task_per_host.values()]
-        while True:
-            try:
-                cur_task = iterator.all_tasks[iterator.cur_task]
-            except IndexError:
-                # pick up any tasks left after clear_host_errors
-                iterator.cur_task = 0
-            else:
-                iterator.cur_task += 1
-                if cur_task._uuid in task_uuids:
-                    break
+        if self.in_handlers:
+            if not any(filter(
+                lambda rs: rs == IteratingStates.HANDLERS,
+                (s.run_state for s, _ in state_task_per_host.values()))
+            ):
+                self.in_handlers = False
+
+        if self.in_handlers:
+            lowest_cur_handler = min(
+                s.cur_handlers_task for s, t in state_task_per_host.values()
+                if s.run_state == IteratingStates.HANDLERS
+            )
+        else:
+            task_uuids = [t._uuid for s, t in state_task_per_host.values()]
+            while True:
+                try:
+                    cur_task = iterator.all_tasks[iterator.cur_task]
+                except IndexError:
+                    # pick up any tasks left after clear_host_errors
+                    iterator.cur_task = 0
+                else:
+                    iterator.cur_task += 1
+                    if cur_task._uuid in task_uuids:
+                        break
 
         host_tasks = []
         for host, (state, task) in state_task_per_host.items():
-            if cur_task._uuid == task._uuid:
+            if (self.in_handlers and lowest_cur_handler == state.cur_handlers_task) or (not self.in_handlers and cur_task._uuid == task._uuid):
                 iterator.set_state_for_host(host.name, state)
                 host_tasks.append((host, task))
             else:
                 host_tasks.append((host, noop_task))
+
+        if not self.in_handlers and cur_task.action == 'meta' and cur_task.args.get('_raw_params') == 'flush_handlers':
+            self.in_handlers = True
+
         return host_tasks
 
     def run(self, iterator, play_context):
@@ -278,11 +297,11 @@ class StrategyModule(StrategyBase):
                                     final_block = new_block.filter_tagged_tasks(task_vars)
                                     display.debug("done filtering new block on tags")
 
-                                for host in hosts_left:
-                                    if host in included_file._hosts:
-                                        all_blocks[host].append(final_block)
+                                    included_tasks.extend(final_block.get_tasks())
 
-                                included_tasks.extend(final_block.get_tasks())
+                                for host in hosts_left:
+                                    if host in included_file._hosts or is_handler:
+                                        all_blocks[host].append(final_block)
 
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:

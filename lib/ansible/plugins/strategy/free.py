@@ -278,7 +278,7 @@ class StrategyModule(StrategyBase):
                                                                         _hosts_all=self._hosts_cache_all)
                             final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
-                            if host in included_file._hosts:
+                            if host in included_file._hosts or is_handler:
                                 all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
 
