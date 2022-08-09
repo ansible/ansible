@@ -22,16 +22,18 @@ A user can then install your collection on their systems.
 Creating a collection skeleton
 ==============================
 
-To start a new collection:
+To start a new collection, run the following command in your collections directory:
 
 .. code-block:: bash
 
-    collection_dir#> ansible-galaxy collection init my_namespace.my_collection
+    ansible_collections#> ansible-galaxy collection init my_namespace.my_collection
 
 .. note::
 
 	Both the namespace and collection names use the same strict set of requirements. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for those requirements.
 
+It will create the structure ``[my_namespace]/[my_collection]/[collection skeleton]``.
+.. hint:: If Git is used for version control, the corresponding repository should be initialized in the collection directory.
 Once the skeleton exists, you can populate the directories with the content you want inside the collection. See `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org to get a better idea of what you can place inside a collection.
 
 Reference: the ``ansible-galaxy collection`` command
