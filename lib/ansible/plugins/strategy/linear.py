@@ -32,10 +32,9 @@ DOCUMENTATION = '''
 '''
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
-from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
@@ -49,179 +48,47 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
-    noop_task = None
-
-    def _replace_with_noop(self, target):
-        if self.noop_task is None:
-            raise AnsibleAssertionError('strategy.linear.StrategyModule.noop_task is None, need Task()')
-
-        result = []
-        for el in target:
-            if isinstance(el, Task):
-                result.append(self.noop_task)
-            elif isinstance(el, Block):
-                result.append(self._create_noop_block_from(el, el._parent))
-        return result
-
-    def _create_noop_block_from(self, original_block, parent):
-        noop_block = Block(parent_block=parent)
-        noop_block.block = self._replace_with_noop(original_block.block)
-        noop_block.always = self._replace_with_noop(original_block.always)
-        noop_block.rescue = self._replace_with_noop(original_block.rescue)
-
-        return noop_block
-
-    def _prepare_and_create_noop_block_from(self, original_block, parent, iterator):
-        self.noop_task = Task()
-        self.noop_task.action = 'meta'
-        self.noop_task.args['_raw_params'] = 'noop'
-        self.noop_task.implicit = True
-        self.noop_task.set_loader(iterator._play._loader)
-
-        return self._create_noop_block_from(original_block, parent)
-
     def _get_next_task_lockstep(self, hosts, iterator):
         '''
         Returns a list of (host, task) tuples, where the task may
         be a noop task to keep the iterator in lock step across
         all hosts.
         '''
-
         noop_task = Task()
         noop_task.action = 'meta'
         noop_task.args['_raw_params'] = 'noop'
         noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 
-        host_tasks = {}
-        display.debug("building list of next tasks for hosts")
+        state_task_per_host = {}
         for host in hosts:
-            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
-        display.debug("done building task lists")
+            state, task = iterator.get_next_task_for_host(host, peek=True)
+            if task is not None:
+                state_task_per_host[host] = state, task
 
-        num_setups = 0
-        num_tasks = 0
-        num_rescue = 0
-        num_always = 0
-        num_handlers = 0
+        if not state_task_per_host:
+            return [(h, None) for h in hosts]
 
-        display.debug("counting tasks in each state of execution")
-        host_tasks_to_run = [(host, state_task)
-                             for host, state_task in host_tasks.items()
-                             if state_task and state_task[1]]
-
-        if host_tasks_to_run:
+        task_uuids = [t._uuid for s, t in state_task_per_host.values()]
+        while True:
             try:
-                lowest_cur_block = min(
-                    (iterator.get_active_state(s).cur_block for h, (s, t) in host_tasks_to_run
-                     if s.run_state != IteratingStates.COMPLETE))
-            except ValueError:
-                lowest_cur_block = None
-        else:
-            # empty host_tasks_to_run will just run till the end of the function
-            # without ever touching lowest_cur_block
-            lowest_cur_block = None
+                cur_task = iterator.all_tasks[iterator.cur_task]
+            except IndexError:
+                # pick up any tasks left after clear_host_errors
+                iterator.cur_task = 0
+            else:
+                iterator.cur_task += 1
+                if cur_task._uuid in task_uuids:
+                    break
 
-        for (k, v) in host_tasks_to_run:
-            (s, t) = v
-
-            s = iterator.get_active_state(s)
-            if s.cur_block > lowest_cur_block:
-                # Not the current block, ignore it
-                continue
-
-            if s.run_state == IteratingStates.SETUP:
-                num_setups += 1
-            elif s.run_state == IteratingStates.TASKS:
-                num_tasks += 1
-            elif s.run_state == IteratingStates.RESCUE:
-                num_rescue += 1
-            elif s.run_state == IteratingStates.ALWAYS:
-                num_always += 1
-            elif s.run_state == IteratingStates.HANDLERS:
-                num_handlers += 1
-        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
-                                                                                                                                                  num_tasks,
-                                                                                                                                                  num_rescue,
-                                                                                                                                                  num_always))
-
-        def _advance_selected_hosts(hosts, cur_block, cur_state):
-            '''
-            This helper returns the task for all hosts in the requested
-            state, otherwise they get a noop dummy task. This also advances
-            the state of the host, since the given states are determined
-            while using peek=True.
-            '''
-            # we return the values in the order they were originally
-            # specified in the given hosts array
-            rvals = []
-            display.debug("starting to advance hosts")
-            for host in hosts:
-                host_state_task = host_tasks.get(host.name)
-                if host_state_task is None:
-                    continue
-                (state, task) = host_state_task
-                s = iterator.get_active_state(state)
-                if task is None:
-                    continue
-                if s.run_state == cur_state and s.cur_block == cur_block:
-                    iterator.set_state_for_host(host.name, state)
-                    rvals.append((host, task))
-                else:
-                    rvals.append((host, noop_task))
-            display.debug("done advancing hosts to next task")
-            return rvals
-
-        if num_handlers:
-            display.debug("advancing hosts in HANDLERS")
-            lowest_handler = min((
-                s.cur_handlers_task for h, (s, t) in host_tasks_to_run
-                if s.run_state == IteratingStates.HANDLERS
-            ))
-            rvals = []
-            for host in hosts:
-                host_state_task = host_tasks.get(host.name)
-                if host_state_task is None:
-                    continue
-                (state, task) = host_state_task
-                if task is None:
-                    continue
-                if state.cur_handlers_task == lowest_handler and state.run_state == IteratingStates.HANDLERS:
-                    iterator.set_state_for_host(host.name, state)
-                    rvals.append((host, task))
-                else:
-                    rvals.append((host, noop_task))
-            display.debug("done advancing hosts to next task")
-            return rvals
-
-        # if any hosts are in SETUP, return the setup task
-        # while all other hosts get a noop
-        if num_setups:
-            display.debug("advancing hosts in SETUP")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.SETUP)
-
-        # if any hosts are in TASKS, return the next normal
-        # task for these hosts, while all other hosts get a noop
-        if num_tasks:
-            display.debug("advancing hosts in TASKS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.TASKS)
-
-        # if any hosts are in RESCUE, return the next rescue
-        # task for these hosts, while all other hosts get a noop
-        if num_rescue:
-            display.debug("advancing hosts in RESCUE")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.RESCUE)
-
-        # if any hosts are in ALWAYS, return the next always
-        # task for these hosts, while all other hosts get a noop
-        if num_always:
-            display.debug("advancing hosts in ALWAYS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
-
-        # at this point, everything must be IteratingStates.COMPLETE, so we
-        # return None for all hosts in the list
-        display.debug("all hosts are done, so returning None's for all hosts")
-        return [(host, None) for host in hosts]
+        host_tasks = []
+        for host, (state, task) in state_task_per_host.items():
+            if cur_task._uuid == task._uuid:
+                iterator.set_state_for_host(host.name, state)
+                host_tasks.append((host, task))
+            else:
+                host_tasks.append((host, noop_task))
+        return host_tasks
 
     def run(self, iterator, play_context):
         '''
@@ -371,10 +238,9 @@ class StrategyModule(StrategyBase):
                     display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
+                    included_tasks = []
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
-                        # included hosts get the task list while those excluded get an equal-length
-                        # list of noop tasks, to make sure that they continue running in lock-step
                         is_handler = False
                         try:
                             if included_file._is_role:
@@ -412,13 +278,12 @@ class StrategyModule(StrategyBase):
                                     final_block = new_block.filter_tagged_tasks(task_vars)
                                     display.debug("done filtering new block on tags")
 
-                                noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
-
                                 for host in hosts_left:
                                     if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
-                                    else:
-                                        all_blocks[host].append(noop_block)
+
+                                included_tasks.extend(final_block.get_tasks())
+
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
@@ -438,6 +303,8 @@ class StrategyModule(StrategyBase):
 
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
+
+                    iterator.all_tasks[iterator.cur_task:iterator.cur_task] = included_tasks
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")

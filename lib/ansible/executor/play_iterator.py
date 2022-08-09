@@ -178,11 +178,13 @@ class PlayIterator:
 
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
+        self.all_tasks = setup_block.get_tasks()
 
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(all_vars)
             if new_block.has_tasks():
                 self._blocks.append(new_block)
+                self.all_tasks.extend(new_block.get_tasks())
 
         self.handlers = [h for b in self._play.handlers for h in b.block]
 
@@ -217,6 +219,7 @@ class PlayIterator:
             play_context.start_at_task = None
 
         self.end_play = False
+        self.cur_task = 0
 
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,
