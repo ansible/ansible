@@ -36,7 +36,7 @@ options:
 
   list:
     description:
-      - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. 
+      - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks.
         Use M(ansible.builtin.package_facts) instead.
     type: str
 
