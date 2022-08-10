@@ -1,0 +1,2 @@
+bugfixes: 
+  - file - setting attributes of symbolic links or files that are hard linked no longer fails when the link target is unspecified (https://github.com/ansible/ansible/issues/76142).
