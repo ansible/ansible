@@ -501,9 +501,12 @@ class GalaxyCLI(CLI):
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
-            role_file_re = re.compile(r'--role-file($|=)')
+
+            r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
+            contains_r = bool([a for a in self._raw_args if r_re.match(a)])
+            role_file_re = re.compile(r'--role-file($|=)')  # --role-file foo, --role-file=foo
             contains_role_file = bool([a for a in self._raw_args if role_file_re.match(a)])
-            if self._implicit_role and ('-r' in self._raw_args or contains_role_file):
+            if self._implicit_role and (contains_r or contains_role_file):
                 # Any collections in the requirements files will also be installed
                 install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
                                             help='The keyring used during collection signature verification')
