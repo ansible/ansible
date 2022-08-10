@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime
 import re
+import typing as t
 
 import astroid
 
@@ -144,18 +145,6 @@ class AnsibleDeprecatedChecker(BaseChecker):
         }),
     )
 
-    def __init__(self, *args, **kwargs):
-        self.collection_version = None
-        self.collection_name = None
-        super().__init__(*args, **kwargs)
-
-    def set_option(self, optname, value, action=None, optdict=None):
-        super().set_option(optname, value, action, optdict)
-        if optname == 'collection-version' and value is not None:
-            self.collection_version = SemanticVersion(self.config.collection_version)
-        if optname == 'collection-name' and value is not None:
-            self.collection_name = self.config.collection_name
-
     def _check_date(self, node, date):
         if not isinstance(date, str):
             self.add_message('ansible-invalid-deprecated-date', node=node, args=(date,))
@@ -204,6 +193,16 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     self.add_message('removal-version-must-be-major', node=node, args=(version,))
             except ValueError:
                 self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
+
+    @property
+    def collection_name(self) -> t.Optional[str]:
+        """Return the collection name, or None if ansible-core is being tested."""
+        return self.config.collection_name
+
+    @property
+    def collection_version(self) -> t.Optional[SemanticVersion]:
+        """Return the collection version, or None if ansible-core is being tested."""
+        return SemanticVersion(self.config.collection_version) if self.config.collection_version is not None else None
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
