@@ -959,6 +959,7 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator.get_active_state(iterator.get_state_for_host(host.name)).fail_state = FailedStates.NONE
+                    iterator.get_state_for_host(host.name).fail_state = FailedStates.NONE
                 msg = "cleared host errors"
             else:
                 skipped = True
