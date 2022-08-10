@@ -287,7 +287,7 @@
       - "hlink_result.changed == False"
 
 - name: Change mode on a hard link
-  file: src={{output_file}} dest={{remote_tmp_dir_test}}/hard.txt mode=0701
+  file: dest={{remote_tmp_dir_test}}/hard.txt mode=0701
   register: file6_mode_change
 
 - name: verify that the hard link was touched
