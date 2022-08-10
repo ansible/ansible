@@ -537,7 +537,7 @@ class PlayIterator:
 
         if state.tasks_child_state is not None:
             self._clear_state_errors(state.tasks_child_state)
-        if state.rescue_child_state is not None:
+        elif state.rescue_child_state is not None:
             self._clear_state_errors(state.rescue_child_state)
         elif state.always_child_state is not None:
             self._clear_state_errors(state.always_child_state)
