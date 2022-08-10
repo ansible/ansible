@@ -426,7 +426,7 @@ class PlayIterator:
                 if state.update_handlers:
                     # reset handlers for HostState since handlers from include_tasks
                     # might be there from previous flush
-                    state.handlers = self.handlers
+                    state.handlers = self.handlers[:]
                     state.update_handlers = False
 
                 if state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
@@ -507,6 +507,8 @@ class PlayIterator:
         elif state.run_state == IteratingStates.RESCUE and self._check_failed_state(state.rescue_child_state):
             return True
         elif state.run_state == IteratingStates.ALWAYS and self._check_failed_state(state.always_child_state):
+            return True
+        elif state.run_state == IteratingStates.HANDLERS and state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
             return True
         elif state.fail_state != FailedStates.NONE:
             if state.run_state == IteratingStates.RESCUE and state.fail_state & FailedStates.RESCUE == 0:
