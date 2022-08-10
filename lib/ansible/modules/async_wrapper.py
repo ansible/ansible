@@ -136,7 +136,6 @@ def _make_temp_dir(path):
 
 def jwrite(info):
 
-    global job_path
     jobfile = job_path + ".tmp"
     tjob = open(jobfile, "w")
     try:
