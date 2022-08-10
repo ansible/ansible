@@ -467,8 +467,9 @@ def write_file(module, dest, content, resp):
     """
     Create temp file and write content to dest file only if content changed
     """
+    fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
+
     try:
-        fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
         with os.fdopen(fd, 'wb') as f:
             if isinstance(content, binary_type):
                 f.write(content)
