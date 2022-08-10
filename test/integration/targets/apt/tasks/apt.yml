@@ -112,7 +112,7 @@
 - name: verify update_cache
   assert:
     that:
-      - apt_update_cache_1_check_mode is change
+      - apt_update_cache_1_check_mode is changed
       - apt_update_cache_1 is changed
       - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
