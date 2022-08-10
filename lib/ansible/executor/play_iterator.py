@@ -529,6 +529,19 @@ class PlayIterator:
         s = self.get_host_state(host)
         return self._check_failed_state(s)
 
+    def clear_host_errors(self, host):
+        self._clear_state_errors(self.get_state_for_host(host.name))
+
+    def _clear_state_errors(self, state):
+        state.fail_state = FailedStates.NONE
+
+        if state.tasks_child_state is not None:
+            self._clear_state_errors(state.tasks_child_state)
+        if state.rescue_child_state is not None:
+            self._clear_state_errors(state.rescue_child_state)
+        elif state.always_child_state is not None:
+            self._clear_state_errors(state.always_child_state)
+
     def get_active_state(self, state):
         '''
         Finds the active state, recursively if necessary when there are child states.
