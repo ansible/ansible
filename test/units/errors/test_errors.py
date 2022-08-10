@@ -37,12 +37,12 @@ class TestErrors(unittest.TestCase):
     def test_basic_error(self):
         e = AnsibleError(self.message)
         self.assertEqual(e.message, self.message)
-        self.assertEqual(e.__repr__(), self.message)
+        self.assertEqual(repr(e), self.message)
 
     def test_basic_unicode_error(self):
         e = AnsibleError(self.unicode_message)
         self.assertEqual(e.message, self.unicode_message)
-        self.assertEqual(e.__repr__(), self.unicode_message)
+        self.assertEqual(repr(e), self.unicode_message)
 
     @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_kv(self, mock_method):
