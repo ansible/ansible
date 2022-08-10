@@ -248,6 +248,10 @@ class Connection(ConnectionBase):
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self.get_option('remote_password')
 
+        if self.get_option('_extras')['ansible_winrm_realm'] and '@' not in self.get_option('remote_user'):
+	        if 'ansible_winrm_realm' in self.get_option('_extras') and '@' not in self.get_option('remote_user'):
+                self._winrm_user = self.get_option('remote_user') + '@' + self.get_option('_extras')['ansible_winrm_realm']   
+
         self._winrm_port = self.get_option('port')
 
         self._winrm_scheme = self.get_option('scheme')
