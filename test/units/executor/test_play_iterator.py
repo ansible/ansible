@@ -37,11 +37,11 @@ class TestPlayIterator(unittest.TestCase):
         hs.tasks_child_state = HostState(blocks=[0])
         hs.rescue_child_state = HostState(blocks=[1])
         hs.always_child_state = HostState(blocks=[2])
-        hs.__repr__()
+        repr(hs)
         hs.run_state = 100
-        hs.__repr__()
+        repr(hs)
         hs.fail_state = 15
-        hs.__repr__()
+        repr(hs)
 
         for i in range(0, 10):
             hs.cur_block = i
