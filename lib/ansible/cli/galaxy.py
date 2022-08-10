@@ -1346,7 +1346,16 @@ class GalaxyCLI(CLI):
         ignore_errors = context.CLIARGS['ignore_errors']
         no_deps = context.CLIARGS['no_deps']
         force_with_deps = context.CLIARGS['force_with_deps']
-        disable_gpg_verify = context.CLIARGS['disable_gpg_verify']
+        try:
+            disable_gpg_verify = context.CLIARGS['disable_gpg_verify']
+        except KeyError:
+            if self._implicit_role:
+                raise AnsibleError(
+                    'Unable to properly parse command line arguments. Please use "ansible-galaxy collection install" '
+                    'instead of "ansible-galaxy install".'
+                )
+            raise
+
         # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
         allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
         upgrade = context.CLIARGS.get('upgrade', False)
