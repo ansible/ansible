@@ -197,7 +197,7 @@
       allow_unauthenticated: yes
 
   - name: mark foobar as auto for next test
-    shell: sudo apt-mark auto foobar
+    shell: apt-mark auto foobar
 
   - name: Install foobar (marked as manual) (check mode)
     apt:
