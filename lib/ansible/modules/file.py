@@ -43,8 +43,8 @@ options:
     - If C(touch) (new in 1.4), an empty file will be created if the file does not
       exist, while an existing file or directory will receive updated file access and
       modification times (similar to the way C(touch) works from the command line).
+    - Default is the current state of the file if it exists, C(directory) if C(recurse=yes), or C(file) otherwise.
     type: str
-    default: file
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
@@ -689,7 +689,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
-        if follow:
+        if follow and os.path.exists(b_path):
             # use the current target of the link as the source
             src = to_native(os.readlink(b_path), errors='strict')
             b_src = to_bytes(src, errors='surrogate_or_strict')
@@ -700,9 +700,14 @@ def ensure_symlink(path, src, follow, force, timestamps):
         b_relpath = os.path.dirname(b_path)
         relpath = to_native(b_relpath, errors='strict')
 
-    absrc = os.path.join(relpath, src)
+    # If src is None that means we are expecting to update an existing link.
+    if src is None:
+        absrc = None
+    else:
+        absrc = os.path.join(relpath, src)
+
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-    if not force and not os.path.exists(b_absrc):
+    if not force and src is not None and not os.path.exists(b_absrc):
         raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
                                                  ' really want to create the link: %s' % absrc,
                                           'path': path, 'src': src})
@@ -726,13 +731,16 @@ def ensure_symlink(path, src, follow, force, timestamps):
     changed = False
 
     if prev_state in ('hard', 'file', 'directory', 'absent'):
+        if src is None:
+            raise AnsibleModuleError(results={'msg': 'src is required for creating new symlinks'})
         changed = True
     elif prev_state == 'link':
-        b_old_src = os.readlink(b_path)
-        if b_old_src != b_src:
-            diff['before']['src'] = to_native(b_old_src, errors='strict')
-            diff['after']['src'] = src
-            changed = True
+        if src is not None:
+            b_old_src = os.readlink(b_path)
+            if b_old_src != b_src:
+                diff['before']['src'] = to_native(b_old_src, errors='strict')
+                diff['after']['src'] = src
+                changed = True
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 
@@ -793,10 +801,12 @@ def ensure_hardlink(path, src, follow, force, timestamps):
 
     # src is the source of a hardlink.  We require it if we are creating a new hardlink.
     # We require path in the argument_spec so we know it is present at this point.
-    if src is None:
+    if prev_state != 'hard' and src is None:
         raise AnsibleModuleError(results={'msg': 'src is required for creating new hardlinks'})
 
-    if not os.path.exists(b_src):
+    # Even if the link already exists, if src was specified it needs to exist.
+    # The inode number will be compared to ensure the link has the correct target.
+    if src is not None and not os.path.exists(b_src):
         raise AnsibleModuleError(results={'msg': 'src does not exist', 'dest': path, 'src': src})
 
     diff = initial_diff(path, 'hard', prev_state)
@@ -811,7 +821,7 @@ def ensure_hardlink(path, src, follow, force, timestamps):
             diff['after']['src'] = src
             changed = True
     elif prev_state == 'hard':
-        if not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+        if src is not None and not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
             changed = True
             if not force:
                 raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
