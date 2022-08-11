@@ -495,7 +495,12 @@ class PlayIterator:
                 state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.HANDLERS:
             state.fail_state |= FailedStates.HANDLERS
-            state.run_state = IteratingStates.COMPLETE
+            if state._blocks[state.cur_block].rescue:
+                state.run_state = IteratingStates.RESCUE
+            elif state._blocks[state.cur_block].always:
+                state.run_state = IteratingStates.ALWAYS
+            else:
+                state.run_state = IteratingStates.COMPLETE
         return state
 
     def mark_host_failed(self, host):
