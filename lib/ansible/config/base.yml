@@ -940,7 +940,7 @@ DEFAULT_NULL_REPRESENTATION:
   env: [{name: ANSIBLE_NULL_REPRESENTATION}]
   ini:
   - {key: null_representation, section: defaults}
-  type: none
+  type: raw
 DEFAULT_POLL_INTERVAL:
   name: Async poll interval
   default: 15
