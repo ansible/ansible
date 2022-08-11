@@ -123,10 +123,12 @@ from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
+from ansible.utils.sentinel import Sentinel
 
 
 display = Display()
@@ -461,7 +463,7 @@ def build_collection(u_collection_path, u_output_path, force):
         collection_meta['namespace'],  # type: ignore[arg-type]
         collection_meta['name'],  # type: ignore[arg-type]
         collection_meta['build_ignore'],  # type: ignore[arg-type]
-        collection_meta.get('manifest_directives') or [],  # type: ignore[arg-type]
+        collection_meta.get('manifest_directives', Sentinel),  # type: ignore[arg-type]
     )
 
     artifact_tarball_file_name = '{ns!s}-{name!s}-{ver!s}.tar.gz'.format(
@@ -1046,19 +1048,25 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
     # type: (bytes, str, str, list[str], list[str]) -> FilesManifestType
     # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
     # patterns can be extended by the build_ignore key in galaxy.yml
-    if ignore_patterns and manifest_directives:
+    if ignore_patterns and manifest_directives is not Sentinel:
         raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
 
-    if manifest_directives and not HAS_DISTLIB:
+    if manifest_directives is not Sentinel and not HAS_DISTLIB:
         raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
 
-    if manifest_directives:
+    if manifest_directives is not Sentinel:
         return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives)
 
     return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives):
+    if manifest_directives is Sentinel or manifest_directives is None:
+        manifest_directives = []
+
+    if not is_sequence(manifest_directives):
+        raise AnsibleError(f'manifest_directives must be a list, got: {manifest_directives.__class__.__name__}')
+
     directives = [
         'include meta/*.yml',
         'include *.txt *.md *.rst COPYING LICENSE',
@@ -1523,7 +1531,7 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
         b_collection_path,
         collection_meta['namespace'], collection_meta['name'],
         collection_meta['build_ignore'],
-        collection_meta.get('manifest_directives') or [],
+        collection_meta.get('manifest_directives', Sentinel),
     )
 
     collection_output_path = _build_collection_dir(
