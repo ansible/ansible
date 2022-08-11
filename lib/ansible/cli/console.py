@@ -153,9 +153,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def list_modules(self):
         return list_plugins('module', self.collections)
 
-    def default(self, arg, forceshell=False):
+    def default(self, line, forceshell=False):
         """ actually runs modules """
-        if arg.startswith("#"):
+        if line.startswith("#"):
             return False
 
         if not self.cwd:
@@ -164,10 +164,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         # defaults
         module = 'shell'
-        module_args = arg
+        module_args = line
 
         if forceshell is not True:
-            possible_module, *possible_args = arg.split()
+            possible_module, *possible_args = line.split()
             if module_loader.find_plugin(possible_module):
                 # we found module!
                 module = possible_module
