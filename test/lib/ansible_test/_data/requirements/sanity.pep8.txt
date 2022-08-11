@@ -1,2 +1,2 @@
 # edit "sanity.pep8.in" and generate with: hacking/update-sanity-requirements.py --test pep8
-pycodestyle==2.8.0
+pycodestyle==2.9.1

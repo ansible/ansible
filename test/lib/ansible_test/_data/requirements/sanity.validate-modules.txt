@@ -1,5 +1,5 @@
 # edit "sanity.validate-modules.in" and generate with: hacking/update-sanity-requirements.py --test validate-modules
-Jinja2==3.0.3
-MarkupSafe==2.0.1
+Jinja2==3.1.2
+MarkupSafe==2.1.1
 PyYAML==6.0
-voluptuous==0.12.2
+voluptuous==0.13.1

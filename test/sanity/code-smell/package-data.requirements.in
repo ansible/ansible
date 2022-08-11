@@ -2,6 +2,6 @@ docutils < 0.18  # match version required by sphinx in the docs-build sanity tes
 jinja2
 pyyaml  # ansible-core requirement
 resolvelib < 0.9.0
-rstcheck
+rstcheck < 4  # match version used in other sanity tests
 straight.plugin
 antsibull-changelog

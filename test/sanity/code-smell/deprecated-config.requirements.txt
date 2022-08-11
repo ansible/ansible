@@ -1,4 +1,4 @@
 # edit "deprecated-config.requirements.in" and generate with: hacking/update-sanity-requirements.py --test deprecated-config
-Jinja2==3.0.3
-MarkupSafe==2.0.1
+Jinja2==3.1.2
+MarkupSafe==2.1.1
 PyYAML==6.0
