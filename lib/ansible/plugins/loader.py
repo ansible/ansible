@@ -873,8 +873,8 @@ class PluginLoader:
                 obj = instance
             except TypeError as e:
                 if "abstract" in e.args[0]:
-                    # Abstract Base Class.  The found plugin file does not
-                    # fully implement the defined interface.
+                    # Abstract Base Class or incomplete plugin, don't load
+                    display.v('Returning not found on "%s" as it has unimplemented abstract methods; %s' % (name, to_native(e)))
                     return get_with_context_result(None, plugin_load_context)
                 raise
 
