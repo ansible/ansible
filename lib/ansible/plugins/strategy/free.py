@@ -175,7 +175,7 @@ class StrategyModule(StrategyBase):
                             # we don't care if it just shows the raw name
                             display.debug("templating failed for some reason", host=host_name)
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        run_once = task.get_validated_value('run_once', task._run_once, task.run_once, templar) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:
                             if action and getattr(action, 'BYPASS_HOST_LOOP', False):
                                 raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
