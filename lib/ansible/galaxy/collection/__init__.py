@@ -1046,8 +1046,6 @@ def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
 
 def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives):
     # type: (bytes, str, str, list[str], list[str]) -> FilesManifestType
-    # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
-    # patterns can be extended by the build_ignore key in galaxy.yml
     if ignore_patterns and manifest_directives is not Sentinel:
         raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
 
@@ -1061,6 +1059,7 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives):
+    # type: (bytes, str, str, list[str]) -> FilesManifestType
     if manifest_directives is Sentinel or manifest_directives is None:
         manifest_directives = []
 
@@ -1136,6 +1135,9 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
 
 
 def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns):
+    # type: (bytes, str, str, list[str]) -> FilesManifestType
+    # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
+    # patterns can be extended by the build_ignore key in galaxy.yml
     b_ignore_patterns = [
         b'MANIFEST.json',
         b'FILES.json',
