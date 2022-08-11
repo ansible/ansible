@@ -787,7 +787,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         status = True
         data = dict(changed=False)
 
-    if not build_dep:
+    if not build_dep and not m.check_mode:
         mark_installed_manually(m, package_names)
 
     return (status, data)
@@ -1310,7 +1310,8 @@ def main():
 
                     for retry in range(update_cache_retries):
                         try:
-                            cache.update()
+                            if not module.check_mode:
+                                cache.update()
                             break
                         except apt.cache.FetchFailedException as e:
                             err = to_native(e)
@@ -1325,7 +1326,7 @@ def main():
 
                     cache.open(progress=None)
                     mtimestamp, post_cache_update_time = get_updated_cache_time()
-                    if updated_cache_time != post_cache_update_time:
+                    if module.check_mode or updated_cache_time != post_cache_update_time:
                         updated_cache = True
                     updated_cache_time = post_cache_update_time
 
