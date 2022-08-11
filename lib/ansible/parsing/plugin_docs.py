@@ -26,7 +26,6 @@ string_to_vars = {
 
 def _var2string(value):
     ''' reverse lookup of the dict above '''
-    global string_to_vars
     for k, v in string_to_vars.items():
         if v == value:
             return k
@@ -40,7 +39,6 @@ def _init_doc_dict():
 def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
     ''' Read docs from 'sidecar' yaml file doc for a plugin '''
 
-    global string_to_vars
     data = _init_doc_dict()
     file_data = {}
 
@@ -117,7 +115,6 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
     """
 
     data = _init_doc_dict()
-    global string_to_vars
 
     try:
         with open(filename, 'rb') as b_module_data:

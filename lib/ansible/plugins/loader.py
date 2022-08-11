@@ -599,7 +599,6 @@ class PluginLoader:
         plugin_load_context.redirect_list.append(name)
         plugin_load_context.resolved = False
 
-        global _PLUGIN_FILTERS
         if name in _PLUGIN_FILTERS[self.package]:
             plugin_load_context.exit_reason = '{0} matched a defined plugin filter'.format(name)
             return plugin_load_context
@@ -928,8 +927,6 @@ class PluginLoader:
         #
         #     Move _dedupe to be a class attribute, CUSTOM_DEDUPE, with subclasses for filters and
         #     tests setting it to True
-
-        global _PLUGIN_FILTERS
 
         dedupe = kwargs.pop('_dedupe', True)
         path_only = kwargs.pop('path_only', False)
