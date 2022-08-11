@@ -80,8 +80,9 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                             else:
                                 raise AnsibleError('how did you get here?')
 
+                            added = False
+
                             try:
-                                added = False
                                 if path not in ploader._extra_dirs:
                                     ploader.add_directory(path)
                                     added = True

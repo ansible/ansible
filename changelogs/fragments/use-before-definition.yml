@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix potential, but unlikely, cases of variable use before definition.
