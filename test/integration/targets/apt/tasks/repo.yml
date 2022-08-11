@@ -196,6 +196,42 @@
       name: foobar=1.0.0
       allow_unauthenticated: yes
 
+  - name: mark foobar as auto for next test
+    shell: apt-mark auto foobar
+
+  - name: Install foobar (marked as manual) (check mode)
+    apt:
+      name: foobar=1.0.1
+      allow_unauthenticated: yes
+    check_mode: yes
+    register: manual_foobar_install_check_mode
+
+  - name: check foobar was not marked as manually installed by check mode
+    shell: apt-mark showmanual | grep foobar
+    ignore_errors: yes
+    register: showmanual
+
+  - assert:
+      that:
+        - manual_foobar_install_check_mode.changed
+        - "'foobar' not in showmanual.stdout"
+
+  - name: Install foobar (marked as manual)
+    apt:
+      name: foobar=1.0.1
+      allow_unauthenticated: yes
+    register: manual_foobar_install
+
+  - name: check foobar was marked as manually installed
+    shell: apt-mark showmanual | grep foobar
+    ignore_errors: yes
+    register: showmanual
+
+  - assert:
+      that:
+        - manual_foobar_install.changed
+        - "'foobar' in showmanual.stdout"
+
   - name: Upgrade foobar to a version which does not depend on foo, autoremove should remove foo
     apt:
       upgrade: dist
