@@ -920,7 +920,10 @@ class StrategyBase:
         skipped = False
         msg = ''
         skip_reason = '%s conditional evaluated to False' % meta_action
-        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+        if isinstance(task, Handler):
+            self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+        else:
+            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
 
         # These don't support "when" conditionals
         if meta_action in ('noop', 'refresh_inventory', 'reset_connection') and task.when:
