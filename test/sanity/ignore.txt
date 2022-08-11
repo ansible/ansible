@@ -105,6 +105,8 @@ lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
 lib/ansible/playbook/base.py pylint:disallowed-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/helpers.py pylint:disallowed-name
+lib/ansible/playbook/playbook_include.py pylint:arguments-renamed
+lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
@@ -131,7 +133,6 @@ test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/un
 test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
-test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util3.py pylint:relative-beyond-top-level
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
@@ -175,6 +176,7 @@ test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-lit
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py pylint:use-a-generator
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/netconf/netconf.py pylint:used-before-assignment
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/network.py pylint:consider-using-dict-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
@@ -186,6 +188,7 @@ test/support/network-integration/collections/ansible_collections/cisco/ios/plugi
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:disallowed-name
+test/support/windows-integration/plugins/action/win_copy.py pylint:used-before-assignment
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/module_utils/WebRequest.psm1 pslint!skip
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/modules/win_uri.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip

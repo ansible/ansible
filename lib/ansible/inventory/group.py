@@ -100,7 +100,7 @@ class Group:
         return result
 
     def deserialize(self, data):
-        self.__init__()
+        self.__init__()  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)

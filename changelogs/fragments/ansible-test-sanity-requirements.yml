@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update pinned sanity test requirements for all tests.

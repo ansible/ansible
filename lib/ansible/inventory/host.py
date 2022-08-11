@@ -72,7 +72,7 @@ class Host:
         )
 
     def deserialize(self, data):
-        self.__init__(gen_uuid=False)
+        self.__init__(gen_uuid=False)  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
 
         self.name = data.get('name')
         self.vars = data.get('vars', dict())

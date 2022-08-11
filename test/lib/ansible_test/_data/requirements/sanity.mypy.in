@@ -1,4 +1,4 @@
-mypy[python2]
+mypy[python2] != 0.971  # regression in 0.971 (see https://github.com/python/mypy/pull/13223)
 packaging  # type stubs not published separately
 types-backports
 types-jinja2
