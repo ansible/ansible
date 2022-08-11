@@ -1034,11 +1034,11 @@ def _make_manifest():
     }
 
 
-def _make_entry(name, ftype, chksum_type=None, chksum=None):
+def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
     return {
         'name': name,
         'ftype': ftype,
-        'chksum_type': chksum_type,
+        'chksum_type': chksum_type if chksum else None,
         f'chksum_{chksum_type}': chksum,
         'format': MANIFEST_FORMAT
     }
