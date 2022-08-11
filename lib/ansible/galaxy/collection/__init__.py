@@ -1592,10 +1592,13 @@ def _resolve_depenency_map(
         raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")
     if not HAS_PACKAGING:
         raise AnsibleError("Failed to import packaging, check that a supported version is installed")
+
+    req = None
+
     try:
         dist = distribution('ansible-core')
     except Exception:
-        req = None
+        pass
     else:
         req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
     finally:

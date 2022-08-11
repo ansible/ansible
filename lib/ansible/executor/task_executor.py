@@ -745,8 +745,9 @@ class TaskExecutor:
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
             if 'skipped' not in result:
+                condname = 'changed'
+
                 try:
-                    condname = 'changed'
                     _evaluate_changed_when_result(result)
                     condname = 'failed'
                     _evaluate_failed_when_result(result)

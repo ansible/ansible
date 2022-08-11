@@ -179,6 +179,7 @@ try:
     from winrm.protocol import Protocol
     import requests.exceptions
     HAS_WINRM = True
+    WINRM_IMPORT_ERR = None
 except ImportError as e:
     HAS_WINRM = False
     WINRM_IMPORT_ERR = e
@@ -186,6 +187,7 @@ except ImportError as e:
 try:
     import xmltodict
     HAS_XMLTODICT = True
+    XMLTODICT_IMPORT_ERR = None
 except ImportError as e:
     HAS_XMLTODICT = False
     XMLTODICT_IMPORT_ERR = e
