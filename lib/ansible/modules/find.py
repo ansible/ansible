@@ -291,9 +291,9 @@ def agefilter(st, now, age, timestamp):
     '''filter files older than age'''
     if age is None:
         return True
-    elif age >= 0 and now - st.__getattribute__("st_%s" % timestamp) >= abs(age):
+    elif age >= 0 and now - getattr(st, "st_%s" % timestamp) >= abs(age):
         return True
-    elif age < 0 and now - st.__getattribute__("st_%s" % timestamp) <= abs(age):
+    elif age < 0 and now - getattr(st, "st_%s" % timestamp) <= abs(age):
         return True
     return False
 
