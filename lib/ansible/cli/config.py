@@ -36,7 +36,7 @@ display = Display()
 
 
 def yaml_dump(data, default_flow_style=True):
-    return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style)
+    return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style="''")
 
 
 def get_constants():
@@ -299,9 +299,13 @@ class ConfigCLI(CLI):
 
                 # TODO: might need quoting and value coercion depending on type
                 if subkey == 'env':
+                    if entry.startswith('_ANSIBLE_'):
+                        continue
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(prefix + to_text(yaml_dump({entry: default}, default_flow_style=False), errors='surrogate_or_strict'))
+                    if entry.startswith('_ansible_'):
+                        continue
+                    data.append(prefix + '%s: %s' % (entry, to_text(yaml_dump(default), errors='surrogate_or_strict')))
                 data.append('')
 
         return data

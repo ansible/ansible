@@ -1,0 +1,3 @@
+bugfixes:
+  - "`ansible-config init -f vars` will now use shorthand format"
+  - ansible-configi init should now skip internal reserved config entries
