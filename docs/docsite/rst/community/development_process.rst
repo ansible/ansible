@@ -45,7 +45,7 @@ Here's an overview of the PR lifecycle:
 * Contributor addresses any feedback from reviewers
 * Developers, maintainers, community re-review
 * PR merged or closed
-* PR `backported <backport_process>`_ to one or more ``stable-X.Y`` branches (optional, bugfixes only)
+* PR :ref:`backported <backport_process>` to one or more ``stable-X.Y`` branches (optional, bugfixes only)
 
 Automated PR review: ansibullbot
 --------------------------------
