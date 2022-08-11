@@ -48,7 +48,11 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
-    in_handlers = False
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # used for the lockstep to indicate to run handlers
+        self._in_handlers = False
 
     def _get_next_task_lockstep(self, hosts, iterator):
         '''
@@ -71,14 +75,13 @@ class StrategyModule(StrategyBase):
         if not state_task_per_host:
             return [(h, None) for h in hosts]
 
-        if self.in_handlers:
-            if not any(filter(
-                lambda rs: rs == IteratingStates.HANDLERS,
-                (s.run_state for s, _ in state_task_per_host.values()))
-            ):
-                self.in_handlers = False
+        if self._in_handlers and not any(filter(
+            lambda rs: rs == IteratingStates.HANDLERS,
+            (s.run_state for s, _ in state_task_per_host.values()))
+        ):
+            self._in_handlers = False
 
-        if self.in_handlers:
+        if self._in_handlers:
             lowest_cur_handler = min(
                 s.cur_handlers_task for s, t in state_task_per_host.values()
                 if s.run_state == IteratingStates.HANDLERS
@@ -98,14 +101,19 @@ class StrategyModule(StrategyBase):
 
         host_tasks = []
         for host, (state, task) in state_task_per_host.items():
-            if (self.in_handlers and lowest_cur_handler == state.cur_handlers_task) or (not self.in_handlers and cur_task._uuid == task._uuid):
+            if ((self._in_handlers and lowest_cur_handler == state.cur_handlers_task) or
+                    (not self._in_handlers and cur_task._uuid == task._uuid)):
                 iterator.set_state_for_host(host.name, state)
                 host_tasks.append((host, task))
             else:
                 host_tasks.append((host, noop_task))
 
-        if not self.in_handlers and cur_task.action == 'meta' and cur_task.args.get('_raw_params') == 'flush_handlers':
-            self.in_handlers = True
+        # once hosts synchronize on 'flush_handlers' lockstep enters
+        # '_in_handlers' phase where handlers are run instead of tasks
+        # until at least one host is in IteratingStates.HANDLERS
+        if (not self._in_handlers and cur_task.action == 'meta' and
+                cur_task.args.get('_raw_params') == 'flush_handlers'):
+            self._in_handlers = True
 
         return host_tasks
 
@@ -283,8 +291,6 @@ class StrategyModule(StrategyBase):
                                 if is_handler:
                                     for task in new_block.block:
                                         task.notified_hosts = included_file._hosts[:]
-                                    # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
-                                    #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                                     final_block = new_block
                                 else:
                                     task_vars = self._variable_manager.get_vars(
@@ -300,6 +306,10 @@ class StrategyModule(StrategyBase):
                                     included_tasks.extend(final_block.get_tasks())
 
                                 for host in hosts_left:
+                                    # handlers are included regardless of _hosts so noop
+                                    # tasks do not have to be created for lockstep,
+                                    # not notified handlers are then simply skipped
+                                    # in the PlayIterator
                                     if host in included_file._hosts or is_handler:
                                         all_blocks[host].append(final_block)
 

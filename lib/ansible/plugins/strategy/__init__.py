@@ -37,7 +37,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
 from ansible.executor import action_write_locks
-from ansible.executor.play_iterator import IteratingStates, FailedStates
+from ansible.executor.play_iterator import IteratingStates
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend
@@ -778,7 +778,7 @@ class StrategyBase:
 
             # remove host from handler's notification list
             if isinstance(original_task, Handler):
-                for handler in filter(lambda x: x._uuid == original_task._uuid, (h for b in iterator._play.handlers for h in b.block)):
+                for handler in (h for b in iterator._play.handlers for h in b.block if h._uuid == original_task._uuid):
                     handler.notified_hosts = [h for h in handler.notified_hosts if h != original_host]
 
             if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:

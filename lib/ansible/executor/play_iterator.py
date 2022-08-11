@@ -80,7 +80,7 @@ class HostState:
         return "HostState(%r)" % self._blocks
 
     def __str__(self):
-        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handlers=%d run_state=%s, fail_state=%s, "
+        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handlers=%d, run_state=%s, fail_state=%s, "
                 "pre_flushing_run_state=%s, update_handlers=%s, pending_setup=%s, "
                 "tasks child state? (%s), rescue child state? (%s), always child state? (%s), "
                 "did rescue? %s, did start at task? %s" % (
@@ -178,6 +178,9 @@ class PlayIterator:
 
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
+
+        # keep flatten (no blocks) list of all tasks from the play
+        # used for the lockstep mechanism in the linear strategy
         self.all_tasks = setup_block.get_tasks()
 
         for block in self._play.compile():
@@ -186,6 +189,11 @@ class PlayIterator:
                 self._blocks.append(new_block)
                 self.all_tasks.extend(new_block.get_tasks())
 
+        # keep list of all handlers, it is copied into each HostState
+        # at the beginning of IteratingStates.HANDLERS
+        # the copy happens at each flush in order to restore the original
+        # list and remove any included handlers that might not be notified
+        # at the particular flush
         self.handlers = [h for b in self._play.handlers for h in b.block]
 
         self._host_states = {}
@@ -532,7 +540,7 @@ class PlayIterator:
     def clear_host_errors(self, host):
         self._clear_state_errors(self.get_state_for_host(host.name))
 
-    def _clear_state_errors(self, state):
+    def _clear_state_errors(self, state: HostState) -> None:
         state.fail_state = FailedStates.NONE
 
         if state.tasks_child_state is not None:
@@ -617,7 +625,7 @@ class PlayIterator:
     def host_states(self):
         return self._host_states
 
-    def get_state_for_host(self, hostname: str) -> None:
+    def get_state_for_host(self, hostname: str) -> HostState:
         return self._host_states[hostname]
 
     def set_state_for_host(self, hostname: str, state: HostState) -> None:

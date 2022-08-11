@@ -35,7 +35,6 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.play_iterator import IteratingStates
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
@@ -269,16 +268,17 @@ class StrategyModule(StrategyBase):
                         if is_handler:
                             for task in new_block.block:
                                 task.notified_hosts = included_file._hosts[:]
-                            # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
-                            #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                             final_block = new_block
                         else:
-                            task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
-                                                                        _hosts=self._hosts_cache,
-                                                                        _hosts_all=self._hosts_cache_all)
+                            task_vars = self._variable_manager.get_vars(
+                                play=iterator._play,
+                                task=new_block.get_first_parent_include(),
+                                _hosts=self._hosts_cache,
+                                _hosts_all=self._hosts_cache_all,
+                            )
                             final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
-                            if host in included_file._hosts or is_handler:
+                            if host in included_file._hosts:
                                 all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
 
