@@ -467,22 +467,21 @@ def write_file(module, dest, content, resp):
     """
     Create temp file and write content to dest file only if content changed
     """
-    fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
+
+    tmpsrc = None
 
     try:
+        fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
         with os.fdopen(fd, 'wb') as f:
             if isinstance(content, binary_type):
                 f.write(content)
             else:
                 shutil.copyfileobj(content, f)
     except Exception as e:
-        if os.path.exists(tmpsrc):
+        if tmpsrc and os.path.exists(tmpsrc):
             os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
         module.fail_json(msg=msg, **resp)
-
-    checksum_src = None
-    checksum_dest = None
 
     checksum_src = module.sha1(tmpsrc)
     checksum_dest = module.sha1(dest)
