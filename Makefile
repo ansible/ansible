@@ -114,6 +114,7 @@ python:
 install:
 	$(PYTHON) setup.py install
 
+.PHONY: install_manpages
 install_manpages:
 	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
@@ -147,8 +148,10 @@ generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
 	$(PYTHON) $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
+.PHONY: docs
 docs: generate_rst
 	$(MAKE) $(MANPAGES)
 
+.PHONY: version
 version:
 	@echo $(VERSION)
