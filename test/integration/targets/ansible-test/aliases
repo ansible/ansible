@@ -1,5 +1,1 @@
-shippable/posix/group3  # runs in the distro test containers
-shippable/generic/group1  # runs in the default test container
-context/controller
-needs/target/collection
-destructive  # adds and then removes packages into lib/ansible/_vendor/
+hidden
