@@ -501,7 +501,12 @@ class GalaxyCLI(CLI):
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
-            if self._implicit_role and ('-r' in self._raw_args or '--role-file' in self._raw_args):
+
+            r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
+            contains_r = bool([a for a in self._raw_args if r_re.match(a)])
+            role_file_re = re.compile(r'--role-file($|=)')  # --role-file foo, --role-file=foo
+            contains_role_file = bool([a for a in self._raw_args if role_file_re.match(a)])
+            if self._implicit_role and (contains_r or contains_role_file):
                 # Any collections in the requirements files will also be installed
                 install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
                                             help='The keyring used during collection signature verification')
@@ -1344,7 +1349,16 @@ class GalaxyCLI(CLI):
         ignore_errors = context.CLIARGS['ignore_errors']
         no_deps = context.CLIARGS['no_deps']
         force_with_deps = context.CLIARGS['force_with_deps']
-        disable_gpg_verify = context.CLIARGS['disable_gpg_verify']
+        try:
+            disable_gpg_verify = context.CLIARGS['disable_gpg_verify']
+        except KeyError:
+            if self._implicit_role:
+                raise AnsibleError(
+                    'Unable to properly parse command line arguments. Please use "ansible-galaxy collection install" '
+                    'instead of "ansible-galaxy install".'
+                )
+            raise
+
         # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
         allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
         upgrade = context.CLIARGS.get('upgrade', False)
