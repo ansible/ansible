@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-console - Renamed the first argument of ``ConsoleCLI.default`` from ``arg`` to ``line`` to match the first
+                      argument of the same method on the base class ``Cmd``.
