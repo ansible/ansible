@@ -486,7 +486,7 @@ class PlayIterator:
                 state.fail_state |= FailedStates.ALWAYS
                 state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.HANDLERS:
-            state.fail_state |= IteratingStates.HANDLERS
+            state.fail_state |= FailedStates.HANDLERS
             state.run_state = IteratingStates.COMPLETE
         return state
 
