@@ -54,12 +54,6 @@ from collections import namedtuple
 import importlib.util
 import importlib.machinery
 
-# if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
-
 display = Display()
 
 ModuleUtilsProcessEntry = namedtuple('ModuleUtilsProcessEntry', ['name_parts', 'is_ambiguous', 'has_redirected_child', 'is_optional'])
