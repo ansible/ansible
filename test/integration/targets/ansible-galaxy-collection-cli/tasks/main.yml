@@ -1,21 +1,34 @@
-- set_fact:
-    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+- block:
+    - name: Install distlib
+      pip:
+        name: distlib
+        state: present
+      register: distlib
 
-- name: Build collection
-  command: ansible-galaxy collection build --output-path '{{ output_dir }}'
-  args:
-    chdir: '{{ role_path }}/files/test_manifest_collection'
+    - set_fact:
+        output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 
-- name: Get artifact contents
-  command: tar tzf '{{ output_dir }}/ns-col-1.0.0.tar.gz'
-  register: artifact_contents
+    - name: Build collection
+      command: ansible-galaxy collection build --output-path '{{ output_dir }}'
+      args:
+        chdir: '{{ role_path }}/files/test_manifest_collection'
 
-- debug:
-    var: artifact_contents.stdout_lines|sort
+    - name: Get artifact contents
+      command: tar tzf '{{ output_dir }}/ns-col-1.0.0.tar.gz'
+      register: artifact_contents
 
-- debug:
-    var: lookup('file', 'expected.txt').splitlines()|sort
+    - debug:
+        var: artifact_contents.stdout_lines|sort
 
-- assert:
-    that:
-      - artifact_contents.stdout_lines|sort == lookup('file', 'expected.txt').splitlines()|sort
+    - debug:
+        var: lookup('file', 'expected.txt').splitlines()|sort
+
+    - assert:
+        that:
+          - artifact_contents.stdout_lines|sort == lookup('file', 'expected.txt').splitlines()|sort
+  always:
+    - name: Uninstall distlib
+      pip:
+        name: distlib
+        state: absent
+      when: distlib is changed
