@@ -435,6 +435,9 @@ class FieldAttributeBase:
 
         # return to default if ommited
         if omit_value is not None and value == omit_value:
+            # TODO: this ends up returning the default value for keyword, but shouild we
+            # setattr to default/Sentinel and then call .get agian to force 'inheritance resolution'?
+            # and make 'omit' equivalent to never had stated the keyword vs resetting to default?
             if callable(attribute.default):
                 value = attribute.default()
             else:
