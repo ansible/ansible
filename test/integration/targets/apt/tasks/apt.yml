@@ -83,11 +83,25 @@
       - apt_install_fnmatch is changed
       - apt_uninstall_fnmatch is changed
 
+- name: Test update_cache 1 (check mode)
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_1_check_mode
+  check_mode: true
+
 - name: Test update_cache 1
   apt:
     update_cache: true
     cache_valid_time: 10
   register: apt_update_cache_1
+
+- name: Test update_cache 2 (check mode)
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_2_check_mode
+  check_mode: true
 
 - name: Test update_cache 2
   apt:
@@ -98,7 +112,9 @@
 - name: verify update_cache
   assert:
     that:
+      - apt_update_cache_1_check_mode is changed
       - apt_update_cache_1 is changed
+      - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
 
 - name: uninstall apt bindings with apt again
