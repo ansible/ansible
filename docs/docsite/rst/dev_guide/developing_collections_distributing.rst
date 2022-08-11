@@ -146,10 +146,17 @@ This command builds a tarball of the collection in the current directory, which 
 
 You can upload your tarball to one or more distribution servers. You can also distribute your collection locally by copying the tarball to install your collection directly on target systems.
 
+
 .. _ignoring_files_and_folders_collections:
 
 Ignoring files and folders
 --------------------------
+
+
+.. _build_ignore:
+
+Include all, with explicit ignores
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default the build step includes all the files in the collection directory in the tarball except for the following:
 
@@ -179,6 +186,62 @@ For more information on the :file:`galaxy.yml` file, see :ref:`collections_galax
 
 .. note::
      The ``build_ignore`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.10 or newer.
+
+
+.. _manifest_directives:
+
+Manifest Directives
+^^^^^^^^^^^^^^^^^^^
+
+With the 2.14 release, the ``galaxy.yml`` file now supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
+
+By default, the ``MANIFEST.in`` style directives would exclude all files by default, but there are default directives in place. Those default directives are described below. To see the directives in use during build, pass ``-vvv`` with the ``ansible-galaxy collection build`` command.
+
+.. code-block::
+
+   include meta/*.yml
+   include *.txt *.md *.rst COPYING LICENSE
+   recursive-include tests **
+   recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt
+   recursive-include roles **.yml **.yaml **.json **.j2
+   recursive-include playbooks **.yml **.yaml **.json
+   recursive-include changelogs **.yml **.yaml
+   recursive-include plugins/action **.py
+   recursive-include plugins/become **.py **.yml **.yaml
+   recursive-include plugins/cache **.py **.yml **.yaml
+   recursive-include plugins/callback **.py **.yml **.yaml
+   recursive-include plugins/cliconf **.py **.yml **.yaml
+   recursive-include plugins/connection **.py **.yml **.yaml
+   recursive-include plugins/doc_fragments **.py
+   recursive-include plugins/filter **.py **.yml **.yaml
+   recursive-include plugins/httpapi **.py **.yml **.yaml
+   recursive-include plugins/inventory **.py **.yml **.yaml
+   recursive-include plugins/lookup **.py **.yml **.yaml
+   recursive-include plugins/netconf **.py **.yml **.yaml
+   recursive-include plugins/shell **.py **.yml **.yaml
+   recursive-include plugins/strategy **.py **.yml **.yaml
+   recursive-include plugins/terminal **.py
+   recursive-include plugins/test **.py **.yml **.yaml
+   recursive-include plugins/vars **.py **.yml **.yaml
+   recursive-include plugins/modules **.py **.ps1 **.yml **.yaml
+   recursive-include plugins/module_utils **.py **.ps1
+   # manifest_directives from galaxy.yml inserted here
+   exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json <namespace>-<name>-*.tar.gz
+   recursive-exclude tests/output **
+   global-exclude /.* /__pycache__
+
+.. note::
+   ``<namespace>-<name>-*.tar.gz`` is expanded with the actual ``namespace`` and ``name``.
+
+The ``manifest_directives`` supplied in ``galaxy.yml`` are inserted after the default includes, and before the default excludes.
+
+To enable the use of mainfest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the ``galaxy.yml`` file, ensuring to remove the use of ``build_ignore``.
+
+.. note::
+   The use of ``manifest_directives`` requires installing the optional ``distlib`` Python dependency.
+
+.. note::
+   The ``manifest_directives`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
 
 
 .. _signing_collections:
