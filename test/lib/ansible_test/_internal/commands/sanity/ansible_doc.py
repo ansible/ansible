@@ -64,7 +64,6 @@ class AnsibleDocTest(SanitySingleVersion):
         paths = [target.path for target in targets.include]
 
         doc_targets: dict[str, list[str]] = collections.defaultdict(list)
-        target_paths: dict[str, dict[str, str]] = collections.defaultdict(dict)
 
         remap_types = dict(
             modules='module',
@@ -74,13 +73,15 @@ class AnsibleDocTest(SanitySingleVersion):
             plugin_type = remap_types.get(plugin_type, plugin_type)
 
             for plugin_file_path in [target.name for target in targets.include if is_subdir(target.path, plugin_path)]:
-                plugin_name = os.path.splitext(os.path.basename(plugin_file_path))[0]
+                plugin_parts = os.path.relpath(plugin_file_path, plugin_path).split(os.path.sep)
+                plugin_name = os.path.splitext(plugin_parts[-1])[0]
 
                 if plugin_name.startswith('_'):
                     plugin_name = plugin_name[1:]
 
-                doc_targets[plugin_type].append(data_context().content.prefix + plugin_name)
-                target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_file_path
+                plugin_fqcn = data_context().content.prefix + '.'.join(plugin_parts[:-1] + [plugin_name])
+
+                doc_targets[plugin_type].append(plugin_fqcn)
 
         env = ansible_environment(args, color=False)
         error_messages: list[SanityMessage] = []
