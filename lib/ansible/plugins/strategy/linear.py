@@ -32,7 +32,7 @@ DOCUMENTATION = '''
 '''
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
 from ansible.playbook.handler import Handler
@@ -88,16 +88,23 @@ class StrategyModule(StrategyBase):
             )
         else:
             task_uuids = [t._uuid for s, t in state_task_per_host.values()]
-            while True:
+            _loop_cnt = 0
+            while _loop_cnt <= 1:
                 try:
                     cur_task = iterator.all_tasks[iterator.cur_task]
                 except IndexError:
                     # pick up any tasks left after clear_host_errors
                     iterator.cur_task = 0
+                    _loop_cnt += 1
                 else:
                     iterator.cur_task += 1
                     if cur_task._uuid in task_uuids:
                         break
+            else:
+                # prevent infinite loop
+                raise AnsibleAssertionError(
+                    'BUG: There seems to be a mismatch between tasks in PlayIterator and HostStates.'
+                )
 
         host_tasks = []
         for host, (state, task) in state_task_per_host.items():
