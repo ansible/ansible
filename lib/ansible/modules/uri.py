@@ -212,7 +212,7 @@ options:
       - When set to False, .netrc credentials are ignored
     type: bool
     default: true
-    version_added: '2.13'
+    version_added: '2.14'
 extends_documentation_fragment:
   - action_common_attributes
   - files
