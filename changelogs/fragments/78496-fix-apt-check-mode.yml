@@ -1,0 +1,3 @@
+bugfixes:
+  - apt - don't actually update the cache in check mode with update_cache=true.
+  - apt - don't mark existing packages as manually installed in check mode (https://github.com/ansible/ansible/issues/66413).
