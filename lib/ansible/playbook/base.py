@@ -504,7 +504,7 @@ class FieldAttributeBase:
         # Run the post-validator if present. These methods are responsible for
         # using the given templar to template the values, if required.
         method = getattr(self, '_post_validate_%s' % name, None)
-        if method is None:
+        if method is not None:
             value = method(attribute, getattr(self, name), templar)
         elif attribute.isa == 'class':
             # these always get templated on post_validate
