@@ -709,15 +709,6 @@ To determine if a keyword requires ``{{ }}`` or even supports templating, use ``
 this will return documentation on the keyword including a ``template`` field with the values ``explicit`` (requires ``{{ }}``),
 ``implicit`` (assumes ``{{ }}``, so no needed) or ``static`` (no templating supported, all characters will be interpreted literally)
 
-.. _why_no_wheel:
-
-Why don't you ship ansible in wheel format (or other packaging format) ?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-In most cases it has to do with maintainability. There are many ways to ship software and we do not have
-the resources to release Ansible on every platform.
-In some cases there are technical issues. For example, our dependencies are not present on Python Wheels.
-
 .. _ansible_host_delegated:
 
 How do I get the original ansible_host when I delegate a task?
