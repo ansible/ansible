@@ -47,6 +47,10 @@ from .provisioning import (
     PrimeContainers,
 )
 
+from .config import (
+    TestConfig,
+)
+
 
 def main(cli_args: t.Optional[list[str]] = None) -> None:
     """Main program function."""
@@ -60,7 +64,7 @@ def main(cli_args: t.Optional[list[str]] = None) -> None:
         display.color = config.color
         display.fd = sys.stderr if config.display_stderr else sys.stdout
         configure_timeout(config)
-        report_locale()
+        report_locale(isinstance(config, TestConfig) and not config.delegate)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
 
