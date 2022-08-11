@@ -1052,11 +1052,10 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
     if manifest_directives and not HAS_DISTLIB:
         raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
 
-    # TODO: This should be swapped, left for initial testing
-    if ignore_patterns:
-        return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
+    if manifest_directives:
+        return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives)
 
-    return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives)
+    return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives):
