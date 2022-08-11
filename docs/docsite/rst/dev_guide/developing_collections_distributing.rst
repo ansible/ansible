@@ -152,6 +152,8 @@ You can upload your tarball to one or more distribution servers. You can also di
 Ignoring files and folders
 --------------------------
 
+For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
+
 
 .. _build_ignore:
 
@@ -182,8 +184,6 @@ For example, to exclude the :file:`sensitive` folder within the ``playbooks`` fo
      - playbooks/sensitive
      - '*.tar.gz'
 
-For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
-
 .. note::
      The ``build_ignore`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.10 or newer.
 
@@ -193,7 +193,15 @@ For more information on the :file:`galaxy.yml` file, see :ref:`collections_galax
 Manifest Directives
 ^^^^^^^^^^^^^^^^^^^
 
-With the 2.14 release, the ``galaxy.yml`` file now supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
+With the 2.14 release, the :file:`galaxy.yml` file now supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
+
+For example to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives, set the following in your :file:`galaxy.yml` file:
+
+.. code-block:: yaml
+
+   manifest_directives:
+     - recursive-exclude playbooks/sensitive **
+     - exclude *.tar.gz
 
 By default, the ``MANIFEST.in`` style directives would exclude all files by default, but there are default directives in place. Those default directives are described below. To see the directives in use during build, pass ``-vvv`` with the ``ansible-galaxy collection build`` command.
 
@@ -233,9 +241,9 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
 .. note::
    ``<namespace>-<name>-*.tar.gz`` is expanded with the actual ``namespace`` and ``name``.
 
-The ``manifest_directives`` supplied in ``galaxy.yml`` are inserted after the default includes, and before the default excludes.
+The ``manifest_directives`` supplied in :file:`galaxy.yml` are inserted after the default includes, and before the default excludes.
 
-To enable the use of mainfest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the ``galaxy.yml`` file, ensuring to remove the use of ``build_ignore``.
+To enable the use of mainfest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
 
 .. note::
    The use of ``manifest_directives`` requires installing the optional ``distlib`` Python dependency.
