@@ -362,10 +362,7 @@ class FieldAttributeBase:
         # Resolve extended groups last, after caching the group in case they recursively refer to each other
         for include_group in include_groups:
             if not AnsibleCollectionRef.is_valid_fqcr(include_group):
-                include_group_collection = collection_name
                 include_group = collection_name + '.' + include_group
-            else:
-                include_group_collection = '.'.join(include_group.split('.')[0:2])
 
             dummy, group_actions = self._resolve_group(include_group, mandatory=False)
 
@@ -430,6 +427,25 @@ class FieldAttributeBase:
 
         return new_me
 
+    def get_keyword_value(self, name, templar, fail_on_undefined=True):
+
+        omit_value = templar.available_variables.get('omit')
+        attribute = self.fattributes.get(name)
+        value = self._get_value(name, templar, fail_on_undefined=fail_on_undefined)
+
+        # return to default if ommited
+        if omit_value is not None and value == omit_value:
+            if callable(attribute.default):
+                value = attribute.default()
+            else:
+                value = attribute.default
+
+        # go through general validation to ensure we get correct 'type'
+        if value is not None:
+            value = self.get_validated_value(name, attribute, value, templar)
+
+        return value
+
     def get_validated_value(self, name, attribute, value, templar):
         if attribute.isa == 'string':
             value = to_text(value)
@@ -481,6 +497,24 @@ class FieldAttributeBase:
             value.post_validate(templar=templar)
         return value
 
+    def _get_value(self, name, templar, fail_on_undefined=True):
+
+        attribute = self.fattributes.get(name)
+
+        # Run the post-validator if present. These methods are responsible for
+        # using the given templar to template the values, if required.
+        method = getattr(self, '_post_validate_%s' % name, None)
+        if method is None:
+            value = method(attribute, getattr(self, name), templar)
+        elif attribute.isa == 'class':
+            # these always get templated on post_validate
+            value = getattr(self, name)
+        else:
+            # if the attribute contains a variable, template it now
+            value = templar.template(getattr(self, name), fail_on_undefined=fail_on_undefined)
+
+        return value
+
     def post_validate(self, templar):
         '''
         we can't tell that everything is of the right type until we have
@@ -513,16 +547,7 @@ class FieldAttributeBase:
                 continue
 
             try:
-                # Run the post-validator if present. These methods are responsible for
-                # using the given templar to template the values, if required.
-                method = getattr(self, '_post_validate_%s' % name, None)
-                if method:
-                    value = method(attribute, getattr(self, name), templar)
-                elif attribute.isa == 'class':
-                    value = getattr(self, name)
-                else:
-                    # if the attribute contains a variable, template it now
-                    value = templar.template(getattr(self, name))
+                value = self._get_value(name, templar)
 
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
