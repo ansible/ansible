@@ -210,10 +210,11 @@ class PlayIterator:
         return self._host_states[host.name].copy()
 
     def cache_block_tasks(self, block):
-        # now a noop, we've changed the way we do caching and finding of
-        # original task entries, but just in case any 3rd party strategies
-        # are using this we're leaving it here for now
-        return
+        display.deprecated(
+            'PlayIterator.cache_block_tasks is now noop due to the changes '
+            'in the way tasks are cached and is deprecated.',
+            version=2.16
+        )
 
     def get_next_task_for_host(self, host, peek=False):
 
@@ -502,7 +503,11 @@ class PlayIterator:
         return False
 
     def get_original_task(self, host, task):
-        # now a noop because we've changed the way we do caching
+        display.deprecated(
+            'PlayIterator.get_original_task is now noop due to the changes '
+            'in the way tasks are cached and is deprecated.',
+            version=2.16
+        )
         return (None, None)
 
     def _insert_tasks_into_state(self, state, task_list):
