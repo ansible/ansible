@@ -212,7 +212,7 @@ def daemonize(module, cmd):
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll():
-                for out in fds:
+                for out in list(fds):
                     if out in rfd:
                         data = os.read(out.fileno(), chunk)
                         if not data:

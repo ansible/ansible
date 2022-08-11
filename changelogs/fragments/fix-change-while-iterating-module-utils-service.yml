@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils.service - daemonize - Avoid modifying the list of file descriptors while iterating over it.
