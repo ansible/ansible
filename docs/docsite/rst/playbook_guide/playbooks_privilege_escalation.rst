@@ -377,7 +377,7 @@ Ansible still supports ``enable`` mode with ``connection: local`` for legacy net
            authorize: yes
            auth_pass: " {{ secret_auth_pass }}"
 
-We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
+We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` documentation for details.
 
 .. _become_windows:
 
