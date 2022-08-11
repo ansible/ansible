@@ -1,4 +1,4 @@
 # The test-constraints sanity test verifies this file, but changes must be made manually to keep it in up-to-date.
 virtualenv == 16.7.12 ; python_version < '3'
-coverage == 6.4.2 ; python_version >= '3.7' and python_version <= '3.11'
+coverage == 6.4.3 ; python_version >= '3.7' and python_version <= '3.11'
 coverage == 4.5.4 ; python_version >= '2.6' and python_version <= '3.6'
