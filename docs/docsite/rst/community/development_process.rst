@@ -339,7 +339,7 @@ We do **not** backport features.
 .. code-block:: shell
 
        git fetch upstream
-       git checkout -b backport/2.12/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.13
+       git checkout -b backport/2.13/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.13
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:
 
