@@ -611,6 +611,9 @@ class IntegrationTarget(CompletionTarget):
         groups += [a for a in static_aliases if a not in modules]
         groups += ['module/%s' % m for m in self.modules]
 
+        if data_context().content.is_ansible and (self.name == 'ansible-test' or self.name.startswith('ansible-test-')):
+            groups.append('ansible-test')
+
         if not self.modules:
             groups.append('non_module')
 
