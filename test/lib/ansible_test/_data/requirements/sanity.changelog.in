@@ -1,2 +1,3 @@
+rstcheck < 4  # match version used in other sanity tests
 antsibull-changelog
 docutils < 0.18  # match version required by sphinx in the docs-build sanity test

@@ -626,13 +626,13 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                 if ":" not in pkgname_pattern:
                     # Filter the multiarch packages from the cache only once
                     try:
-                        pkg_name_cache = _non_multiarch
+                        pkg_name_cache = _non_multiarch  # pylint: disable=used-before-assignment
                     except NameError:
                         pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
                 else:
                     # Create a cache of pkg_names including multiarch only once
                     try:
-                        pkg_name_cache = _all_pkg_names
+                        pkg_name_cache = _all_pkg_names  # pylint: disable=used-before-assignment
                     except NameError:
                         pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
 
