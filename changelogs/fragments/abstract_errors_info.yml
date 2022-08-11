@@ -1,0 +1,3 @@
+bugfixes:
+  - plugin loader, now when skipping a plugin due to an abstract method error we provide that in 'verbose' mode instead of totally obscuring the error.
+    The current implementation assumed only the base classes would trigger this and failed to consider 'in development' plugins.
