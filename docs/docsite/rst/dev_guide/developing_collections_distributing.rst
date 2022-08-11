@@ -214,25 +214,23 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
    recursive-include roles **.yml **.yaml **.json **.j2
    recursive-include playbooks **.yml **.yaml **.json
    recursive-include changelogs **.yml **.yaml
-   recursive-include plugins/action **.py
-   recursive-include plugins/become **.py **.yml **.yaml
-   recursive-include plugins/cache **.py **.yml **.yaml
-   recursive-include plugins/callback **.py **.yml **.yaml
-   recursive-include plugins/cliconf **.py **.yml **.yaml
-   recursive-include plugins/connection **.py **.yml **.yaml
-   recursive-include plugins/doc_fragments **.py
-   recursive-include plugins/filter **.py **.yml **.yaml
-   recursive-include plugins/httpapi **.py **.yml **.yaml
-   recursive-include plugins/inventory **.py **.yml **.yaml
-   recursive-include plugins/lookup **.py **.yml **.yaml
-   recursive-include plugins/netconf **.py **.yml **.yaml
-   recursive-include plugins/shell **.py **.yml **.yaml
-   recursive-include plugins/strategy **.py **.yml **.yaml
-   recursive-include plugins/terminal **.py
-   recursive-include plugins/test **.py **.yml **.yaml
-   recursive-include plugins/vars **.py **.yml **.yaml
-   recursive-include plugins/modules **.py **.ps1 **.yml **.yaml
-   recursive-include plugins/module_utils **.py **.ps1 **.psm1 **.cs
+   recursive-include plugins */**.py
+   recursive-include plugins/become **.yml **.yaml
+   recursive-include plugins/cache **.yml **.yaml
+   recursive-include plugins/callback **.yml **.yaml
+   recursive-include plugins/cliconf **.yml **.yaml
+   recursive-include plugins/connection **.yml **.yaml
+   recursive-include plugins/filter **.yml **.yaml
+   recursive-include plugins/httpapi **.yml **.yaml
+   recursive-include plugins/inventory **.yml **.yaml
+   recursive-include plugins/lookup **.yml **.yaml
+   recursive-include plugins/netconf **.yml **.yaml
+   recursive-include plugins/shell **.yml **.yaml
+   recursive-include plugins/strategy **.yml **.yaml
+   recursive-include plugins/test **.yml **.yaml
+   recursive-include plugins/vars **.yml **.yaml
+   recursive-include plugins/modules **.ps1 **.yml **.yaml
+   recursive-include plugins/module_utils **.ps1 **.psm1 **.cs
    # manifest_directives from galaxy.yml inserted here
    exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json <namespace>-<name>-*.tar.gz
    recursive-exclude tests/output **

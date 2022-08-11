@@ -1074,6 +1074,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
         'recursive-include roles **.yml **.yaml **.json **.j2',
         'recursive-include playbooks **.yml **.yaml **.json',
         'recursive-include changelogs **.yml **.yaml',
+        'recursive-include plugins */**.py',
     ]
 
     plugins = set(l.package.split('.')[-1] for d, l in get_all_plugin_loaders())
@@ -1082,16 +1083,12 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
             continue
         elif plugin in C.DOCUMENTABLE_PLUGINS:
             directives.append(
-                f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
-            )
-        else:
-            directives.append(
-                f'recursive-include plugins/{plugin} **.py'
+                f'recursive-include plugins/{plugin} **.yml **.yaml'
             )
 
     directives.extend([
-        'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml',
-        'recursive-include plugins/module_utils **.py **.ps1 **.psm1 **.cs',
+        'recursive-include plugins/modules **.ps1 **.yml **.yaml',
+        'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs',
     ])
 
     directives.extend(manifest_directives)
