@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Fix change detection for ansible-test's own integration tests.
