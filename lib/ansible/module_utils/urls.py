@@ -1329,7 +1329,8 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None):
+             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
+             use_netrc=True):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1369,6 +1370,7 @@ class Request:
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
         :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
+        :kwarg use_netrc: (optional) Boolean determining whether to use credentials from /home/$USER/.netrc file
         :returns: HTTPResponse. Added in Ansible 2.9
         """
 
@@ -1454,7 +1456,7 @@ class Request:
             elif username and force_basic_auth:
                 headers["Authorization"] = basic_auth_header(username, password)
 
-            else:
+            elif use_netrc:
                 try:
                     rc = netrc.netrc(os.environ.get('NETRC'))
                     login = rc.authenticators(parsed.hostname)
@@ -1639,7 +1641,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True):
+             unredirected_headers=None, decompress=True, use_netrc=True):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1652,7 +1654,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers, decompress=decompress)
+                          unredirected_headers=unredirected_headers, decompress=decompress,
+                          use_netrc=use_netrc)
 
 
 def prepare_multipart(fields):
@@ -1803,7 +1806,7 @@ def url_argument_spec():
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
-              decompress=True):
+              decompress=True, use_netrc=True):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1823,6 +1826,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg cookies: (optional) CookieJar object to send with the request
     :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
     :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
+    :kwarg boolean use_netrc: (optional) If False: Ignores login and password in /home/$USER/.netrc file (Default: True)
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status >= 400)
@@ -1886,7 +1890,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
-                     decompress=decompress)
+                     decompress=decompress, use_netrc=use_netrc)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
