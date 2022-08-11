@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-galaxy - Fix detection of ``--role-file`` in arguments for implicit role invocation
+  (https://github.com/ansible/ansible/issues/78204)

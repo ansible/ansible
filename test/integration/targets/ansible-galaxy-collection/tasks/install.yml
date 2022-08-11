@@ -425,6 +425,15 @@
     - (install_req_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_req_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
 
+- name: Test deviations on -r and --role-file without collection or role sub command
+  command: '{{ cmd }}'
+  loop:
+    - ansible-galaxy install -vr '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}' -vv
+    - ansible-galaxy install --role-file '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}' -vvv
+    - ansible-galaxy install --role-file='{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}' -vvv
+  loop_control:
+    loop_var: cmd
+
 - name: uninstall collections for next requirements file test
   file:
     path: '{{ galaxy_dir }}/ansible_collections/{{ collection }}/name'
