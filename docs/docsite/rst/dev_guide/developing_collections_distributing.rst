@@ -232,7 +232,7 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
    recursive-include plugins/test **.py **.yml **.yaml
    recursive-include plugins/vars **.py **.yml **.yaml
    recursive-include plugins/modules **.py **.ps1 **.yml **.yaml
-   recursive-include plugins/module_utils **.py **.ps1
+   recursive-include plugins/module_utils **.py **.ps1 **.psm1 **.cs
    # manifest_directives from galaxy.yml inserted here
    exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json <namespace>-<name>-*.tar.gz
    recursive-exclude tests/output **
