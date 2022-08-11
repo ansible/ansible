@@ -657,12 +657,12 @@ def common_environment():
     return env
 
 
-def report_locale() -> None:
+def report_locale(show_warning: bool) -> None:
     """Report the configured locale and the locale warning, if applicable."""
 
     display.info(f'Configured locale: {CONFIGURED_LOCALE}', verbosity=1)
 
-    if LOCALE_WARNING:
+    if LOCALE_WARNING and show_warning:
         display.warning(LOCALE_WARNING)
 
 
