@@ -156,7 +156,7 @@ class StrategyModule(StrategyBase):
                             action = None
 
                         try:
-                            task.name = to_text(task.get_keyword_value('name', templar, fail_on_undefined=False), nonstring='empty')
+                            task.name = to_text(task.get_keyword_value('name', templar), nonstring='empty')
                             display.debug("done templating", host=host_name)
                         except Exception:
                             # just ignore any errors during task name templating,

@@ -427,11 +427,11 @@ class FieldAttributeBase:
 
         return new_me
 
-    def get_keyword_value(self, name, templar, fail_on_undefined=True):
+    def get_keyword_value(self, name, templar):
 
         omit_value = templar.available_variables.get('omit')
         attribute = self.fattributes.get(name)
-        value = self._get_value(name, templar, fail_on_undefined=fail_on_undefined)
+        value = self._get_value(name, templar)
 
         # return to default if ommited
         if omit_value is not None and value == omit_value:
@@ -500,7 +500,7 @@ class FieldAttributeBase:
             value.post_validate(templar=templar)
         return value
 
-    def _get_value(self, name, templar, fail_on_undefined=True):
+    def _get_value(self, name, templar):
 
         attribute = self.fattributes.get(name)
 
@@ -509,13 +509,22 @@ class FieldAttributeBase:
         method = getattr(self, '_post_validate_%s' % name, None)
         if method is not None:
             value = method(attribute, getattr(self, name), templar)
-        elif attribute.isa == 'class':
-            # these always get templated on post_validate
-            value = getattr(self, name)
         else:
-            # if the attribute contains a variable, template it now
-            value = templar.template(getattr(self, name), fail_on_undefined=fail_on_undefined)
+            value = getattr(self, name)
 
+            # these always get templated on post_validate
+            if attribute.isa != 'class':
+                # if the attribute contains a variable, template it now
+                try:
+                    value = templar.template(getattr(self, name))
+                except (AnsibleUndefinedVariable, UndefinedError) as e:
+                    # TODO: see note in similar code in post_validate
+                    if templar._fail_on_undefined_errors and name != 'name':
+                        if name == 'args':
+                            msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                        else:
+                            msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                        raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
         return value
 
     def post_validate(self, templar):

@@ -227,7 +227,7 @@ class StrategyModule(StrategyBase):
                             display.debug("done copying, going to template now")
                             try:
                                 # we normally dont task attributes but this prevents a copy of full task and we restore below
-                                task.name = to_text(task.get_keyword_value('name', templar, fail_on_undefined=False), nonstring='empty')
+                                task.name = to_text(task.get_keyword_value('name', templar), nonstring='empty')
                                 display.debug("done templating")
                             except Exception:
                                 # just ignore any errors during task name templating,
