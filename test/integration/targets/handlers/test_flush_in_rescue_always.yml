@@ -11,9 +11,17 @@
 
         - meta: flush_handlers
 
+        - set_fact:
+            was_in_rescue: true
+
         - name: EXPECTED_FAILURE
           fail:
       always:
+        - assert:
+            that:
+              - hostvars['A']['was_in_rescue']|default(false)
+            success_msg: lockstep works
+
         - command: echo
           notify: handler_always
 

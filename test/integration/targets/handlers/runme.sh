@@ -156,5 +156,6 @@ ansible-playbook test_skip_flush.yml -i inventory.handlers "$@" 2>&1 | tee out.t
 ansible-playbook test_flush_in_rescue_always.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran in rescue')" = "1" ]
 [ "$(grep out.txt -ce 'handler ran in always')" = "2" ]
+[ "$(grep out.txt -ce 'lockstep works')" = "2" ]
 
 ansible-playbook test_handlers_infinite_loop.yml -i inventory.handlers "$@" 2>&1
