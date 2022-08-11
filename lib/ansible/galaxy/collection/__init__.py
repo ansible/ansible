@@ -120,6 +120,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate, Requirement, _is_installed_collection_dir,
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
+from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump
@@ -1063,17 +1064,25 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
         'include meta/*.yml',
         'include *.txt *.md *.rst COPYING LICENSE',
         'recursive-include tests **',
-        'recursive-include docs **',
-        'recursive-include roles **',
-        'recursive-include playbooks **',
+        'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt',
+        'recursive-include roles **.yml **.yaml **.json **.j2',
+        'recursive-include playbooks **.yml **.yaml **.json',
         'recursive-include changelogs **.yml **.yaml',
     ]
-    for plugin in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection', 'doc_fragments',
-                   'filter', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'strategy',
-                   'terminal', 'test', 'vars']:
-        directives.append(
-            f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
-        )
+
+    plugins = set(l.package.split('.')[-1] for d, l in get_all_plugin_loaders())
+    for plugin in sorted(plugins):
+        if plugin in ('modules', 'module_utils'):
+            continue
+        elif plugin in C.DOCUMENTABLE_PLUGINS:
+            directives.append(
+                f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
+            )
+        else:
+            directives.append(
+                f'recursive-include plugins/{plugin} **.py'
+            )
+
     directives.extend([
         'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml',
         'recursive-include plugins/module_utils **.py **.ps1',
