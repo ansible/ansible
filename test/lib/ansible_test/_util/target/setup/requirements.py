@@ -296,7 +296,7 @@ def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]
     if 'b' not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
-    return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with
+    return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with,unspecified-encoding
 
 
 def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]

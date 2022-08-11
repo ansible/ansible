@@ -869,7 +869,7 @@ class PluginLoader:
                 # or get options from config), so update the object before using the constructor
                 instance = object.__new__(obj)
                 self._update_object(instance, name, path, redirected_names)
-                obj.__init__(instance, *args, **kwargs)
+                obj.__init__(instance, *args, **kwargs)  # pylint: disable=unnecessary-dunder-call
                 obj = instance
             except TypeError as e:
                 if "abstract" in e.args[0]:
