@@ -114,6 +114,7 @@ def run_module():
     # part where your module will do what it needs to do)
     if module.params['config'].lower() == 'auto':
         # subprocess.run(["semgrep scan --config auto"])
+        # subprocess.run(["semgrep scan --config auto"])
         subprocess.run(["echo","auto type is selected."])
 
     # use whatever logic you need to determine whether or not this module
