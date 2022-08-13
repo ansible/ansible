@@ -1295,6 +1295,7 @@ class TestIptables(ModuleTestCase):
                 "uid_owner": null,
                 "wait": null
             }]
+        )
 
     def test_picker_save(self):
         """Test save string from picker definitions and dependency"""
