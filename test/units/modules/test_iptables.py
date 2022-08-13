@@ -1233,7 +1233,7 @@ class TestIptables(ModuleTestCase):
                 self.assertEqual(result.exception.args[0]['msg'], "Chain or flush parameter " +
                     "or picker_includes and picker_definitions must be specified")
 
-    def test_append_return(self)
+    def test_append_return(self):
         """Test save str function"""
         set_module_args({
             "do":"add",
