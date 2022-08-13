@@ -7,22 +7,21 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 DOCUMENTATION = r'''
 ---
 module: iptables
 short_description: Modify iptables rules
-version_added: "2.0"
+version_added: "3.0"
 author:
+- Shawn Wilson (@ag4ve) <srwilson@ioswitch.dev)
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 - Sébastien DA ROCHA (@sebastiendarocha)
 description:
   - C(iptables) is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
-  - This module does not handle the saving and/or loading of rules, but rather
-    only manipulates the current rules that are present in memory. This is the
-    same as the behaviour of the C(iptables) and C(ip6tables) command which
-    this module uses internally.
+  - This module is a simple setter for an iptables policy data structure and
+    way to compile that structure into an iptables-save string to save and/or
+    load into kernel space.
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -32,15 +31,22 @@ attributes:
     platform:
         platforms: linux
 notes:
-  - This module just deals with individual rules. If you need advanced
-    chaining of rules the recommended way is to template the iptables restore
-    file.
+  - This module deals with compiling iptables policies from iptables rules.
+    One off iptables manipulation can be dangerous, but is also slow.
 options:
+  do:
+    description:
+      - The action to take:
+      - C(run) implements the firewall (from a save state variable and/or from parameters)
+      - C(add) adds information to a save state variable to implement later
+      - C(save) parse picker_definitions and add data from rules passed from picker_includes to the
+        save state variable
+    type: str
+    choice: [ run, add, save ]
+    default: run
   table:
     description:
       - This option specifies the packet matching table which the command should operate on.
-      - If the kernel is configured with automatic module loading, an attempt will be made
-         to load the appropriate module for that table if it is not already there.
     type: str
     choices: [ filter, nat, mangle, raw, security ]
     default: filter
@@ -53,7 +59,6 @@ options:
   action:
     description:
       - Whether the rule should be appended at the bottom or inserted at the top.
-      - If the rule already exists the chain will not be modified.
     type: str
     choices: [ append, insert ]
     default: append
@@ -92,9 +97,10 @@ options:
       - Source specification.
       - Address can be either a network name, a hostname, a network IP address
         (with /mask), or a plain IP address.
-      - Hostnames will be resolved once only, before the rule is submitted to
-        the kernel. Please note that specifying any name to be resolved with
-        a remote query such as DNS is a really bad idea.
+      - Hostnames will be resolved only when the policy is (re)loaded. a tool
+        like fail2ban may be configured to make more frequent updates. DNS moves
+        some firewall trust to your configured DNS and security should be a
+        consideration when doing this.
       - The mask can be either a network mask or a plain number, specifying
         the number of 1's at the left side of the network mask. Thus, a mask
         of 24 is equivalent to 255.255.255.0. A C(!) argument before the
@@ -105,9 +111,10 @@ options:
       - Destination specification.
       - Address can be either a network name, a hostname, a network IP address
         (with /mask), or a plain IP address.
-      - Hostnames will be resolved once only, before the rule is submitted to
-        the kernel. Please note that specifying any name to be resolved with
-        a remote query such as DNS is a really bad idea.
+      - Hostnames will be resolved only when the policy is (re)loaded. a tool
+        like fail2ban may be configured to make more frequent updates. DNS moves
+        some firewall trust to your configured DNS and security should be a
+        consideration when doing this.
       - The mask can be either a network mask or a plain number, specifying
         the number of 1's at the left side of the network mask. Thus, a mask
         of 24 is equivalent to 255.255.255.0. A C(!) argument before the
@@ -536,14 +543,81 @@ EXAMPLES = r'''
 
 import re
 
+from copy import deepcopy
+
+from json import loads, dumps
+
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
+
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 
 
 IPTABLES_WAIT_SUPPORT_ADDED = '1.4.20'
 
 IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED = '1.6.0'
+
+MODULE_ARGS = dict(
+    do=dict(type='str', default='run', choice=['run', 'add', 'save']),
+    in_data=dict(type='list', default=[]),
+    picker_includes=dict(type='dict', default={}),
+    picker_definitions=dict(type='dict', default={}),
+    table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
+    state=dict(type='str', default='present', choices=['absent', 'present']),
+    action=dict(type='str', default='append', choices=['append', 'insert']),
+    ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
+    chain=dict(type='str'),
+    rule_num=dict(type='str'),
+    protocol=dict(type='str'),
+    wait=dict(type='str'),
+    source=dict(type='str'),
+    to_source=dict(type='str'),
+    destination=dict(type='str'),
+    to_destination=dict(type='str'),
+    match=dict(type='list', elements='str', default=[]),
+    tcp_flags=dict(type='dict',
+                   options=dict(
+                        flags=dict(type='list', elements='str'),
+                        flags_set=dict(type='list', elements='str'))
+                   ),
+    jump=dict(type='str'),
+    gateway=dict(type='str'),
+    log_prefix=dict(type='str'),
+    log_level=dict(type='str',
+                   choices=['0', '1', '2', '3', '4', '5', '6', '7',
+                            'emerg', 'alert', 'crit', 'error',
+                            'warning', 'notice', 'info', 'debug'],
+                   default=None,
+                   ),
+    goto=dict(type='str'),
+    in_interface=dict(type='str'),
+    out_interface=dict(type='str'),
+    fragment=dict(type='str'),
+    set_counters=dict(type='str'),
+    source_port=dict(type='str'),
+    destination_port=dict(type='str'),
+    destination_ports=dict(type='list', elements='str', default=[]),
+    to_ports=dict(type='str'),
+    set_dscp_mark=dict(type='str'),
+    set_dscp_mark_class=dict(type='str'),
+    comment=dict(type='str'),
+    ctstate=dict(type='list', elements='str', default=[]),
+    src_range=dict(type='str'),
+    dst_range=dict(type='str'),
+    match_set=dict(type='str'),
+    match_set_flags=dict(type='str', choices=['src', 'dst', 'src,dst', 'dst,src']),
+    limit=dict(type='str'),
+    limit_burst=dict(type='str'),
+    uid_owner=dict(type='str'),
+    gid_owner=dict(type='str'),
+    reject_with=dict(type='str'),
+    icmp_type=dict(type='str'),
+    syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
+    flush=dict(type='bool', default=False),
+    policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+    chain_management=dict(type='bool', default=False),
+)
 
 BINS = dict(
     ipv4='iptables',
@@ -554,6 +628,46 @@ ICMP_TYPE_OPTIONS = dict(
     ipv4='--icmp-type',
     ipv6='--icmpv6-type',
 )
+
+DEF_POLICY = {
+    'filter': {
+        '_policy': {
+            'INPUT': 'ACCEPT',
+            'OUTPUT': 'ACCEPT',
+            'FORWARD': 'ACCEPT'
+        }
+    },
+    'mangle': {
+        '_policy': {
+            'PREROUTING': 'ACCEPT',
+            'INPUT': 'ACCEPT',
+            'FORWARD': 'ACCEPT',
+            'OUTPUT': 'ACCEPT',
+            'POSTROUTING': 'ACCEPT'
+        }
+    },
+    'nat': {
+        '_policy': {
+            'PREROUTING': 'ACCEPT',
+            'INPUT': 'ACCEPT',
+            'OUTPUT': 'ACCEPT',
+            'POSTROUTING': 'ACCEPT'
+        }
+    },
+    'raw': {
+        '_policy': {
+            'PREROUTING': 'ACCEPT',
+            'OUTPUT': 'ACCEPT',
+        }
+    },
+    'security': {
+        '_policy': {
+            'INPUT': 'ACCEPT',
+            'FORWARD': 'ACCEPT',
+            'OUTPUT': 'ACCEPT',
+        }
+    }
+}
 
 
 def append_param(rule, param, flag, is_list):
@@ -609,9 +723,6 @@ def construct_rule(params):
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
-    append_param(rule, params['jump'], '-j', False)
-    if params.get('jump') and params['jump'].lower() == 'tee':
-        append_param(rule, params['gateway'], '--gateway', False)
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
@@ -663,6 +774,11 @@ def construct_rule(params):
     append_match(rule, params['gid_owner'], 'owner')
     append_match_flag(rule, params['gid_owner'], '--gid-owner', True)
     append_param(rule, params['gid_owner'], '--gid-owner', False)
+    append_match(rule, params['comment'], 'comment')
+    append_param(rule, params['comment'], '--comment', False)
+    append_param(rule, params['jump'], '-j', False)
+    if params.get('jump') and params['jump'].lower() == 'tee':
+        append_param(rule, params['gateway'], '--gateway', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
@@ -671,8 +787,6 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
-    append_match(rule, params['comment'], 'comment')
-    append_param(rule, params['comment'], '--comment', False)
     return rule
 
 
@@ -751,65 +865,37 @@ def delete_chain(iptables_path, module, params):
     module.run_command(cmd, check_rc=True)
 
 
+# Run through definition picker and add rules
+def rule_picker(picker_definitions, picker_includes, module):
+    data = []
+    for rule_name, choice in picker_includes.items():
+        if rule_name not in picker_definitions.keys():
+            module.fail_json(msg="rule_picker definition not found: %s" % rule_name)
+        if choice:
+            data.extend(picker_definitions[rule_name])
+    # Recurse picker_includes to allow rules depending on other rules
+    for i, item in enumerate(data):
+        if item.get('picker_includes', None):
+            data[i:i] = [rule_picker(picker_definitions, item['picker_includes'], module)]
+    if len(data) > 0:
+        return [ArgumentSpecValidator(MODULE_ARGS).validate(loads(dumps(i))).validated_parameters for i in data]
+
+
+# New dict with unneeded data removed
+def data_rule(params):
+    new_rule = deepcopy(params)
+    del new_rule["in_data"]
+    del new_rule["picker_includes"]
+    del new_rule["picker_definitions"]
+    filled_rule = ArgumentSpecValidator(MODULE_ARGS).validate(loads(dumps(new_rule))).validated_parameters
+
+    return filled_rule
+
+
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
-        argument_spec=dict(
-            table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            action=dict(type='str', default='append', choices=['append', 'insert']),
-            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
-            chain=dict(type='str'),
-            rule_num=dict(type='str'),
-            protocol=dict(type='str'),
-            wait=dict(type='str'),
-            source=dict(type='str'),
-            to_source=dict(type='str'),
-            destination=dict(type='str'),
-            to_destination=dict(type='str'),
-            match=dict(type='list', elements='str', default=[]),
-            tcp_flags=dict(type='dict',
-                           options=dict(
-                                flags=dict(type='list', elements='str'),
-                                flags_set=dict(type='list', elements='str'))
-                           ),
-            jump=dict(type='str'),
-            gateway=dict(type='str'),
-            log_prefix=dict(type='str'),
-            log_level=dict(type='str',
-                           choices=['0', '1', '2', '3', '4', '5', '6', '7',
-                                    'emerg', 'alert', 'crit', 'error',
-                                    'warning', 'notice', 'info', 'debug'],
-                           default=None,
-                           ),
-            goto=dict(type='str'),
-            in_interface=dict(type='str'),
-            out_interface=dict(type='str'),
-            fragment=dict(type='str'),
-            set_counters=dict(type='str'),
-            source_port=dict(type='str'),
-            destination_port=dict(type='str'),
-            destination_ports=dict(type='list', elements='str', default=[]),
-            to_ports=dict(type='str'),
-            set_dscp_mark=dict(type='str'),
-            set_dscp_mark_class=dict(type='str'),
-            comment=dict(type='str'),
-            ctstate=dict(type='list', elements='str', default=[]),
-            src_range=dict(type='str'),
-            dst_range=dict(type='str'),
-            match_set=dict(type='str'),
-            match_set_flags=dict(type='str', choices=['src', 'dst', 'src,dst', 'dst,src']),
-            limit=dict(type='str'),
-            limit_burst=dict(type='str'),
-            uid_owner=dict(type='str'),
-            gid_owner=dict(type='str'),
-            reject_with=dict(type='str'),
-            icmp_type=dict(type='str'),
-            syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
-            flush=dict(type='bool', default=False),
-            policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
-            chain_management=dict(type='bool', default=False),
-        ),
+        argument_spec=MODULE_ARGS,
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
             ['flush', 'policy'],
@@ -829,14 +915,20 @@ def main():
         rule=' '.join(construct_rule(module.params)),
         state=module.params['state'],
         chain_management=module.params['chain_management'],
+        data=deepcopy(module.params["in_data"]),
+        save_str=False,
     )
 
     ip_version = module.params['ip_version']
     iptables_path = module.get_bin_path(BINS[ip_version], True)
 
+    if module.params['do'] in ['save', 'add'] and (module.params['wait'] or args['flush']):
+        module.fail_json(msg="Flush and wait do nothing when doing save or add.")
+
     # Check if chain option is required
-    if args['flush'] is False and args['chain'] is None:
-        module.fail_json(msg="Either chain or flush parameter must be specified.")
+    if (args['flush'] is False and args['chain'] is None and
+            module.params.get("picker_includes", None) is None and module.params.get("picker_definitions", None) is None):
+        module.fail_json(msg="Chain or flush parameter or picker_includes and picker_definitions must be specified")
 
     if module.params.get('log_prefix', None) or module.params.get('log_level', None):
         if module.params['jump'] is None:
@@ -847,20 +939,20 @@ def main():
     # Check if wait option is supported
     iptables_version = LooseVersion(get_iptables_version(iptables_path, module))
 
-    if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
+    if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED) and module.params["do"] == 'run':
         if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
             module.params['wait'] = ''
     else:
         module.params['wait'] = None
 
     # Flush the table
-    if args['flush'] is True:
+    if args['flush'] is True and module.params["do"] == 'run':
         args['changed'] = True
         if not module.check_mode:
             flush_table(iptables_path, module, module.params)
 
     # Set the policy
-    elif module.params['policy']:
+    elif module.params['policy'] and module.params["do"] == 'run':
         current_policy = get_chain_policy(iptables_path, module, module.params)
         if not current_policy:
             module.fail_json(msg='Can\'t detect current policy')
@@ -871,7 +963,7 @@ def main():
             set_chain_policy(iptables_path, module, module.params)
 
     # Delete the chain if there is no rule in the arguments
-    elif (args['state'] == 'absent') and not args['rule']:
+    elif (args['state'] == 'absent') and not args['rule'] and module.params["do"] == 'run':
         chain_is_present = check_chain_present(
             iptables_path, module, module.params
         )
@@ -880,7 +972,7 @@ def main():
         if (chain_is_present and args['chain_management'] and not module.check_mode):
             delete_chain(iptables_path, module, module.params)
 
-    else:
+    elif module.params["do"] == 'run':
         insert = (module.params['action'] == 'insert')
         rule_is_present = check_rule_present(
             iptables_path, module, module.params
@@ -908,6 +1000,73 @@ def main():
                     append_rule(iptables_path, module, module.params)
             else:
                 remove_rule(iptables_path, module, module.params)
+
+    elif module.params["do"] == 'add':
+        picker_data = rule_picker(module.params["picker_definitions"], module.params["picker_includes"], module)
+        if picker_data is not None:
+            args["data"].extend(picker_data)
+
+        rule_data = data_rule(module.params)
+        if rule_data is not None:
+            args["data"].append(rule_data)
+
+    # TODO implement delete and replace
+    elif module.params["do"] == 'save':
+        rules = DEF_POLICY
+        if len(args["data"]) > 0:
+            data = args["data"]
+        else:
+            data = [module.params]
+
+        if isinstance(data) is not list:
+            module.fail_json(msg="Data must be a list of rules and is: %s" % isinstance(data))
+
+        # Precompile
+        for rule in data:
+            if rule.get('chain', None) is None:
+                continue
+            rule_str = construct_rule(rule)
+            if rule["table"] not in rules.keys():
+                rules[rule["table"]] = dict()
+            if rule["chain"] not in rules[rule["table"]].keys():
+                rules[rule["table"]][rule["chain"]] = list()
+
+            if rule["rule_num"]:
+                rules[rule["table"]][rule["chain"]].insert(rule["rule_num"], rule_str)
+            else:
+                rules[rule["table"]][rule["chain"]].append(rule_str)
+
+            if rule["policy"]:
+                rules[rule["table"]]["_policy"][rule["chain"]] = rule["policy"]
+
+        # Compile iptables save string
+        output = []
+        for table in rules.keys():
+            # If the table has no rules, the policy is probably irrelevant
+            # TODO If we jump to it, it becomes important but can't just collect jumps either
+            # as LOG, REJECT, and RETURN aren't tables or policies either. Mandating lower case
+            # tables is an option as is defining all the possible kernel targets (possible fact module).
+            if table != "filter" and len(rules[table].keys() - {"_policy"}) < 1:
+                continue
+            # Define tables
+            output.append("*" + table)
+            # Define policies
+            for policy in rules[table]["_policy"].keys():
+                output.append(":" + policy + " " + rules[table]["_policy"][policy] + " [0:0]")
+            # Define jumps
+            for chain in rules[table].keys():
+                if chain == "_policy" or chain in rules[table]["_policy"].keys():
+                    continue
+                output.append(":" + chain + " - [0:0]")
+            # Define rules
+            for chain in rules[table].keys():
+                if chain == "_policy":
+                    continue
+                for rule in rules[table][chain]:
+                    output.append("-A " + chain + " " + " ".join(rule))
+            # Commit them
+            output.append("COMMIT")
+        args["save_str"] = "\n".join(output)
 
     module.exit_json(**args)
 

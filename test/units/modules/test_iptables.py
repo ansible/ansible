@@ -1190,3 +1190,157 @@ class TestIptables(ModuleTestCase):
             with self.assertRaises(AnsibleExitJson) as result:
                 iptables.main()
                 self.assertFalse(result.exception.args[0]['changed'])
+
+    def test_save_str(self):
+        """Test save str function"""
+        set_module_args({
+            "do":"save",
+            "chain":"INPUT",
+            "jump":"RETURN"
+        })
+        save_str = "\n".join((
+            "*filter",
+            ":INPUT ACCEPT [0:0]",
+            ":OUTPUT ACCEPT [0:0]",
+            ":FORWARD ACCEPT [0:0]",
+            "-A INPUT -j RETURN",
+            "COMMIT"
+        ))
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            iptables.main()
+            self.assertTrue(result.exception.args[0]['changed'])
+            self.assertEqual(result.exception.args[0]['save_str'], save_str)
+
+    def test_save_str(self):
+        """Test flush and chain failure"""
+        tests = [{
+            "jump":"RETURN"
+        },{
+            "picker_includes":{"foo":True},
+            "jump":"RETURN"
+        },{
+            "picker_definitions":{"foo":True},
+            "jump":"RETURN"
+        }]
+
+        for test in tests:
+            set_module_args(test)
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['failed'])
+                self.assertEqual(result.exception.args[0]['msg'], "Chain or flush parameter " +
+                    "or picker_includes and picker_definitions must be specified")
+
+    def test_append_return(self)
+        """Test save str function"""
+        set_module_args({
+            "do":"add",
+            "chain":"INPUT",
+            "jump":"RETURN"
+        })
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            iptables.main()
+            self.assertFalse(result.exception.args[0]['changed'])
+            self.assertEqual(result.exception.args[0]['data'], [{
+                "action": "append",
+                "chain": "INPUT",
+                "chain_management": false,
+                "comment": null,
+                "ctstate": [],
+                "destination": null,
+                "destination_port": null,
+                "destination_ports": [],
+                "do": "add",
+                "dst_range": null,
+                "flush": false,
+                "fragment": null,
+                "gateway": null,
+                "gid_owner": null,
+                "goto": null,
+                "icmp_type": null,
+                "in_data": [],
+                "in_interface": null,
+                "ip_version": "ipv4",
+                "jump": "RETURN",
+                "limit": null,
+                "limit_burst": null,
+                "log_level": null,
+                "log_prefix": null,
+                "match": [],
+                "match_set": null,
+                "match_set_flags": null,
+                "out_interface": null,
+                "picker_definitions": null,
+                "picker_includes": {},
+                "policy": null,
+                "protocol": null,
+                "reject_with": null,
+                "rule_num": null,
+                "set_counters": null,
+                "set_dscp_mark": null,
+                "set_dscp_mark_class": null,
+                "source": null,
+                "source_port": null,
+                "src_range": null,
+                "state": "present",
+                "syn": "ignore",
+                "table": "filter",
+                "tcp_flags": null,
+                "to_destination": null,
+                "to_ports": null,
+                "to_source": null,
+                "uid_owner": null,
+                "wait": null
+            }]
+
+    def test_picker_save(self):
+        """Test save string from picker definitions and dependency"""
+        set_module_args({
+            "do":"save",
+            "picker_includes": ["foo"],
+            "picker_definitions": {
+                "foo": [
+                    {
+                        "picker_includes": ["bar"],
+                    },
+                    {
+                        "chain": "INPUT",
+                        "jump": "RETURN"
+                    },
+                    {
+                        "chain": "INPUT",
+                        "ctstate": "NEW",
+                        "jump": "ACCEPT",
+                        "match": [
+                            "conntrack"
+                        ]
+                    }
+                ],
+                "bar": [
+                    {
+                        "chain": "OUTPUT",
+                        "jump": "RETURN"
+                    },
+                ]
+            }
+        })
+        save_str = "\n".join((
+            "*filter",
+            ":INPUT ACCEPT [0:0]",
+            ":OUTPUT ACCEPT [0:0]",
+            ":FORWARD ACCEPT [0:0]",
+            "-A INPUT -j RETURN",
+            "-A INPUT -m conntrack --ctstate NEW -j ACCEPT",
+            "-A OUTPUT -j RETURN",
+            "COMMIT"
+        ))
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            iptables.main()
+            self.assertTrue(result.exception.args[0]['changed'])
+            self.assertEqual(result.exception.args[0]['save_str'], save_str)
+
+
