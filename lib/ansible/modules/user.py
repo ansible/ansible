@@ -321,6 +321,14 @@ EXAMPLES = r'''
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
 
+- name: Create a 2048-bit SSH key for user johndoe with 1000 KDF rounds
+  ansible.builtin.user:
+    name: johndoe
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    ssh_key_trials: 1000
+
 - name: Added a consultant whose account you want to expire
   ansible.builtin.user:
     name: james18
