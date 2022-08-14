@@ -176,6 +176,11 @@ options:
             - If no passphrase is provided, the SSH key will default to having no passphrase.
         type: str
         version_added: "0.9"
+    ssh_key_trials:
+        description:
+            - Optionally specify the number of KDF (key derivation function) rounds used to provide higher resistance to brute-force password cracking.
+        type: int
+        default: 100
     update_password:
         description:
             - C(always) will update passwords if they differ.
