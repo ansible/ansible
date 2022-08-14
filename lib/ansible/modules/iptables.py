@@ -390,6 +390,26 @@ options:
     type: bool
     default: false
     version_added: "2.13"
+  in_data:
+    description:
+      - Data structure created and returned by this module to be used as a memory
+        store internally or to archive and use as a base.
+      - This data can be found in the registered output.data
+    type: list
+    version_added: "3.0"
+  picker_definitions:
+    description:
+      - Data structure to create rules based on the same structure being used to 
+        define rules from tasks and roles.
+      - Data needs to be passed in for picker_includes to consume.
+    type: dict
+    version_added: "3.0"
+  picker_includes:
+    description:
+      - A dictionary of rule definition names and whether they should be enabled
+        or disabled.
+    type: dict
+    version_added: "3.0"
 '''
 
 EXAMPLES = r'''
