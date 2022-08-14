@@ -1183,6 +1183,8 @@ class User(object):
             else:
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
+        cmd.append('-a')
+        cmd.append(self.ssh_key_trails)
         cmd.append('-t')
         cmd.append(self.ssh_type)
         if self.ssh_bits > 0:
