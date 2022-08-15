@@ -1194,9 +1194,9 @@ class TestIptables(ModuleTestCase):
     def test_save_str(self):
         """Test save str function"""
         set_module_args({
-            "do":"save",
-            "chain":"INPUT",
-            "jump":"RETURN"
+            "do": "save",
+            "chain": "INPUT",
+            "jump": "RETURN"
         })
         save_str = "\n".join((
             "*filter",
@@ -1215,13 +1215,13 @@ class TestIptables(ModuleTestCase):
     def test_save_str(self):
         """Test flush and chain failure"""
         tests = [{
-            "jump":"RETURN"
+            "jump": "RETURN"
         },{
-            "picker_includes":{"foo":True},
-            "jump":"RETURN"
+            "picker_includes": {"foo": True},
+            "jump": "RETURN"
         },{
-            "picker_definitions":{"foo":True},
-            "jump":"RETURN"
+            "picker_definitions": {"foo": True},
+            "jump": "RETURN"
         }]
 
         for test in tests:
@@ -1236,9 +1236,9 @@ class TestIptables(ModuleTestCase):
     def test_append_return(self):
         """Test save str function"""
         set_module_args({
-            "do":"add",
-            "chain":"INPUT",
-            "jump":"RETURN"
+            "do": "add",
+            "chain": "INPUT",
+            "jump": "RETURN"
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
@@ -1294,13 +1294,12 @@ class TestIptables(ModuleTestCase):
                 "to_source": null,
                 "uid_owner": null,
                 "wait": null
-            }]
-        )
+            }])
 
     def test_picker_save(self):
         """Test save string from picker definitions and dependency"""
         set_module_args({
-            "do":"save",
+            "do": "save",
             "picker_includes": ["foo"],
             "picker_definitions": {
                 "foo": [
@@ -1343,5 +1342,4 @@ class TestIptables(ModuleTestCase):
             iptables.main()
             self.assertTrue(result.exception.args[0]['changed'])
             self.assertEqual(result.exception.args[0]['save_str'], save_str)
-
 
