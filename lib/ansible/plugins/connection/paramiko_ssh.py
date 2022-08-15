@@ -59,14 +59,14 @@ DOCUMENTATION = """
             - name: ansible_paramiko_password
               version_added: '2.5'
       host_key_auto_add:
-        description: 'TODO: write it'
+        description: 'Automatically add host keys'
         env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
         ini:
           - {key: host_key_auto_add, section: paramiko_connection}
         type: boolean
       look_for_keys:
         default: True
-        description: 'TODO: write it'
+        description: 'False to disable searching for private key files in ~/.ssh/'
         env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
         ini:
         - {key: look_for_keys, section: paramiko_connection}
@@ -81,7 +81,7 @@ DOCUMENTATION = """
           - {key: proxy_command, section: paramiko_connection}
       pty:
         default: True
-        description: 'TODO: write it'
+        description: 'SUDO usually requires a PTY, True to give a PTY and False to not give a PTY.'
         env:
           - name: ANSIBLE_PARAMIKO_PTY
         ini:
@@ -90,7 +90,7 @@ DOCUMENTATION = """
         type: boolean
       record_host_keys:
         default: True
-        description: 'TODO: write it'
+        description: 'Save the host keys to a file'
         env: [{name: ANSIBLE_PARAMIKO_RECORD_HOST_KEYS}]
         ini:
           - section: paramiko_connection
