@@ -747,7 +747,6 @@ def construct_rule(params):
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
-    append_param(rule, params['to_destination'], '--to-destination', False)
     append_match(rule, params['destination_ports'], 'multiport')
     append_csv(rule, params['destination_ports'], '--dports')
     append_param(rule, params['to_source'], '--to-source', False)
@@ -801,6 +800,7 @@ def construct_rule(params):
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
+    append_param(rule, params['to_destination'], '--to-destination', False)
     append_param(rule, params['source_port'], '--source-port', False)
     append_param(rule, params['destination_port'], '--destination-port', False)
     append_param(rule, params['to_ports'], '--to-ports', False)
