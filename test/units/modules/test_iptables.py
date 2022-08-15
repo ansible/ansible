@@ -1216,10 +1216,10 @@ class TestIptables(ModuleTestCase):
         """Test flush and chain failure"""
         tests = [{
             "jump": "RETURN"
-        },{
+        }, {
             "picker_includes": {"foo": True},
             "jump": "RETURN"
-        },{
+        }, {
             "picker_definitions": {"foo": True},
             "jump": "RETURN"
         }]
@@ -1342,4 +1342,3 @@ class TestIptables(ModuleTestCase):
             iptables.main()
             self.assertTrue(result.exception.args[0]['changed'])
             self.assertEqual(result.exception.args[0]['save_str'], save_str)
-

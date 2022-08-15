@@ -36,11 +36,11 @@ notes:
 options:
   do:
     description:
-      - The action to take:
-      - C(run) implements the firewall (from a save state variable and/or from parameters)
-      - C(add) adds information to a save state variable to implement later
+      - The action to take
+      - C(run) implements the firewall (from a save state variable and/or from parameters).
+      - C(add) adds information to a save state variable to implement later.
       - C(save) parse picker_definitions and add data from rules passed from picker_includes to the
-        save state variable
+        save state variable.
     type: str
     choice: [ run, add, save ]
     default: run
@@ -394,12 +394,12 @@ options:
     description:
       - Data structure created and returned by this module to be used as a memory
         store internally or to archive and use as a base.
-      - This data can be found in the registered output.data
+      - This data can be found in the output.data registered data.
     type: list
     version_added: "3.0"
   picker_definitions:
     description:
-      - Data structure to create rules based on the same structure being used to 
+      - Data structure to create rules based on the same structure being used to
         define rules from tasks and roles.
       - Data needs to be passed in for picker_includes to consume.
     type: dict
