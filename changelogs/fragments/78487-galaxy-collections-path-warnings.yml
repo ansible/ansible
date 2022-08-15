@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "Add ``GALAXY_COLLECTIONS_PATH_WARNING`` option to enable/disable
+    ``ansbile-galaxy collection install`` collections_paths warnings."

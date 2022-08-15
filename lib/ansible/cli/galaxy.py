@@ -1393,7 +1393,10 @@ class GalaxyCLI(CLI):
         upgrade = context.CLIARGS.get('upgrade', False)
 
         collections_path = C.COLLECTIONS_PATHS
-        if len([p for p in collections_path if p.startswith(path)]) == 0:
+        if (
+            C.GALAXY_COLLECTIONS_PATH_WARNING
+            and len([p for p in collections_path if p.startswith(path)]) == 0
+        ):
             display.warning("The specified collections path '%s' is not part of the configured Ansible "
                             "collections paths '%s'. The installed collection will not be picked up in an Ansible "
                             "run, unless within a playbook-adjacent collections directory." % (to_text(path), to_text(":".join(collections_path))))
