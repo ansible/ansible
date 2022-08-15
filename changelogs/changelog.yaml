@@ -1528,6 +1528,17 @@ releases:
     - plugin-loader-deterministic-fuzzy-match.yml
     - v2.12.7rc1_summary.yaml
     release_date: '2022-06-13'
+  2.12.8:
+    changes:
+      release_summary: '| Release Date: 2022-08-15
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - v2.12.8_summary.yaml
+    release_date: '2022-08-15'
   2.12.8rc1:
     changes:
       bugfixes:
