@@ -105,8 +105,8 @@ else
 endif
 
 # Symlink the relevant index into place for building core translated docs
-gettext_structure:
-	@echo "Creating symlinks in gettext_structure"
+gettext_structure: gettext_generate_rst
+	@echo "Creating symlinks in gettext_generate_rst"
 	-ln -sf ../rst/core_index.rst rst/index.rst
 	-ln -sf ../sphinx_conf/all_conf.py rst/conf.py
 
