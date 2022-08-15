@@ -243,7 +243,7 @@ cmd:
   type: str
   sample: pip2 install ansible six
 name:
-  description: list of python modules targetted by pip
+  description: list of python modules targeted by pip
   returned: success
   type: list
   sample: ['ansible', 'six']
