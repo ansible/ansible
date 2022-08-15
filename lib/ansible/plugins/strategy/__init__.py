@@ -776,10 +776,9 @@ class StrategyBase:
 
             ret_results.append(task_result)
 
-            # remove host from handler's notification list
             if isinstance(original_task, Handler):
                 for handler in (h for b in iterator._play.handlers for h in b.block if h._uuid == original_task._uuid):
-                    handler.notified_hosts = [h for h in handler.notified_hosts if h != original_host]
+                    handler.remove_host(original_host)
 
             if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:
                 break
@@ -1056,6 +1055,9 @@ class StrategyBase:
             result['changed'] = False
 
         display.vv("META: %s" % msg)
+
+        if isinstance(task, Handler):
+            task.remove_host(target_host)
 
         res = TaskResult(target_host, task, result)
         if skipped:

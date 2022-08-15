@@ -436,8 +436,10 @@ class PlayIterator:
                     # might be there from previous flush
                     state.handlers = self.handlers[:]
                     state.update_handlers = False
+                    state.cur_handlers_task = 0
 
                 if state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
+                    state.update_handlers = True
                     state.run_state = IteratingStates.COMPLETE
                 else:
                     while True:
@@ -446,7 +448,6 @@ class PlayIterator:
                         except IndexError:
                             task = None
                             state.run_state = state.pre_flushing_run_state
-                            state.cur_handlers_task = 0
                             state.update_handlers = True
                             break
                         else:
@@ -495,6 +496,7 @@ class PlayIterator:
                 state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.HANDLERS:
             state.fail_state |= FailedStates.HANDLERS
+            state.update_handlers = True
             if state._blocks[state.cur_block].rescue:
                 state.run_state = IteratingStates.RESCUE
             elif state._blocks[state.cur_block].always:
@@ -546,6 +548,9 @@ class PlayIterator:
         self._clear_state_errors(self.get_state_for_host(host.name))
 
     def _clear_state_errors(self, state: HostState) -> None:
+        if state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
+            state.run_state = state.pre_flushing_run_state
+
         state.fail_state = FailedStates.NONE
 
         if state.tasks_child_state is not None:
