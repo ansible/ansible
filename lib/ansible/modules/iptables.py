@@ -42,7 +42,7 @@ options:
       - C(save) parse picker_definitions and add data from rules passed from picker_includes to the
         save state variable.
     type: str
-    choice: [ run, add, save ]
+    choices: [ run, add, save ]
     default: run
   table:
     description:
