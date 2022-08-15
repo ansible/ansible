@@ -937,11 +937,11 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t', 'filter',
             '-C', 'INPUT',
-            '-p', 'tcp',
             '-s', '192.168.0.1/32',
+            '-i', 'eth0',
+            '-p', 'tcp',
             '-m', 'multiport',
             '--dports', '80,443,8081:8085',
-            '-i', 'eth0',
             '-m', 'comment',
             '--comment', 'this is a comment',
             '-j', 'ACCEPT'
