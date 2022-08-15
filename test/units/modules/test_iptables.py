@@ -761,10 +761,10 @@ class TestIptables(ModuleTestCase):
             'INPUT',
             '-m',
             'iprange',
-            '-j',
-            'ACCEPT',
             '--src-range',
             '192.168.1.100-192.168.1.199',
+            '-j',
+            'ACCEPT'
         ])
 
         set_module_args({
@@ -791,14 +791,14 @@ class TestIptables(ModuleTestCase):
             'filter',
             '-C',
             'INPUT',
-            '-j',
-            'ACCEPT',
             '-m',
             'iprange',
             '--src-range',
             '192.168.1.100-192.168.1.199',
             '--dst-range',
-            '10.0.0.50-10.0.0.100'
+            '10.0.0.50-10.0.0.100',
+            '-j',
+            'ACCEPT'
         ])
 
         set_module_args({
@@ -824,12 +824,12 @@ class TestIptables(ModuleTestCase):
             'filter',
             '-C',
             'INPUT',
-            '-j',
-            'ACCEPT',
             '-m',
             'iprange',
             '--dst-range',
-            '10.0.0.50-10.0.0.100'
+            '10.0.0.50-10.0.0.100',
+            '-j',
+            'ACCEPT'
         ])
 
     def test_insert_rule_with_wait(self):
