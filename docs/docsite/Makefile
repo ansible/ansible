@@ -57,6 +57,7 @@ ifeq ($(findstring error,$(MAJOR_VERSION)), error)
 $(error "version_helper failed to determine major version")
 endif
 
+
 assertrst:
 ifndef rst
 	$(error specify document or pattern with rst=somefile.rst)
@@ -68,6 +69,7 @@ docs: htmldocs
 
 coredocs: core_htmldocs
 
+
 generate_rst: collections_meta config cli keywords plugins testing
 core_generate_rst: collections_meta config cli keywords base_plugins testing
 
@@ -75,7 +77,7 @@ core_generate_rst: collections_meta config cli keywords base_plugins testing
 # localisation effort. It will come at a later time.
 gettext_generate_rst: collections_meta config cli keywords testing
 
-# The following two symlinks are necessary to produce two different docsets
+# The following symlinks are necessary to produce two different docsets
 # from the same set of rst files (Ansible the package docs, and core docs).
 # Symlink the relevant index into place for building Ansible docs
 ansible_structure:
@@ -95,9 +97,15 @@ ansible_structure:
 core_structure:
 	@echo "Creating symlinks in core_structure"
 	-ln -sf ../rst/core_index.rst rst/index.rst
+	-ln -sf ../dev_guide/core_index.rst rst/dev_guide/index.rst
+# set up the correct core conf.py to use for English vs a translated language
+ifdef LANGOPTS
+	-ln -sf ../sphinx_conf/core_lang_conf.py rst/conf.py
+else
 	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
+endif
 
-# Symlink the relevant index into place for building core docs
+# Symlink the relevant index into place for building core translated docs
 gettext_structure:
 	@echo "Creating symlinks in gettext_structure"
 	-ln -sf ../rst/core_index.rst rst/index.rst
