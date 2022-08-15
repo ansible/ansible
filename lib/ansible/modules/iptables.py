@@ -397,7 +397,7 @@ options:
       - This data can be found in the output.data registered data.
     type: list
     elements: dict
-    default: []
+    default: [{}]
     version_added: "3.0"
   picker_definitions:
     description:
@@ -581,8 +581,8 @@ IPTABLES_WAIT_SUPPORT_ADDED = '1.4.20'
 IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED = '1.6.0'
 
 MODULE_ARGS = dict(
-    do=dict(type='str', default='run', choice=['run', 'add', 'save']),
-    in_data=dict(type='list', default=[]),
+    do=dict(type='str', default='run', choices=['run', 'add', 'save']),
+    in_data=dict(type='list', default=[{}]),
     picker_includes=dict(type='dict', default={}),
     picker_definitions=dict(type='dict', default={}),
     table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
