@@ -407,6 +407,10 @@ class TestIptables(ModuleTestCase):
             '1.2.3.4/32',
             '-d',
             '7.8.9.10/42',
+            '-m',
+            'comment',
+            '--comment',
+            'this is a comment',
             '-j',
             'SNAT',
             '--to-source',
@@ -418,11 +422,7 @@ class TestIptables(ModuleTestCase):
             '--source-port',
             '22',
             '--to-ports',
-            '8600',
-            '-m',
-            'comment',
-            '--comment',
-            'this is a comment'
+            '8600'
         ])
         self.assertEqual(run_command.call_args_list[1][0][0], [
             '/sbin/iptables',
@@ -430,28 +430,28 @@ class TestIptables(ModuleTestCase):
             'nat',
             '-D',
             'PREROUTING',
+            '-i',
+            'eth0',
+            '-o',
+            'eth1',
             '-p',
             'udp',
             '-s',
             '1.2.3.4/32',
             '-d',
             '7.8.9.10/42',
+            '-m',
+            'comment',
+            '--comment',
+            'this is a comment',
             '-j',
             'SNAT',
             '--to-source',
             '5.5.5.5/32',
-            '-i',
-            'eth0',
-            '-o',
-            'eth1',
             '--source-port',
             '22',
             '--to-ports',
-            '8600',
-            '-m',
-            'comment',
-            '--comment',
-            'this is a comment'
+            '8600'
         ])
 
     def test_remove_rule_check_mode(self):
@@ -496,22 +496,22 @@ class TestIptables(ModuleTestCase):
             '1.2.3.4/32',
             '-d',
             '7.8.9.10/42',
-            '-j',
-            'SNAT',
-            '--to-source',
-            '5.5.5.5/32',
             '-i',
             'eth0',
             '-o',
             'eth1',
-            '--source-port',
-            '22',
-            '--to-ports',
-            '8600',
             '-m',
             'comment',
             '--comment',
-            'this is a comment'
+            'this is a comment',
+            '-j',
+            'SNAT',
+            '--to-source',
+            '5.5.5.5/32',
+            '--source-port',
+            '22',
+            '--to-ports',
+            '8600'
         ])
 
     def test_insert_with_reject(self):
@@ -898,16 +898,16 @@ class TestIptables(ModuleTestCase):
             'filter',
             '-C',
             'INPUT',
-            '-j',
-            'ACCEPT',
+            '-m',
+            'comment',
+            '--comment',
+            'this is a comment',
             '-m',
             'conntrack',
             '--ctstate',
             'NEW',
-            '-m',
-            'comment',
-            '--comment',
-            'this is a comment'
+            '-j',
+            'ACCEPT'
         ])
         self.assertEqual(run_command.call_args[0][0][14], 'this is a comment')
 
@@ -937,14 +937,14 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t', 'filter',
             '-C', 'INPUT',
+            '-m', 'comment',
+            '--comment', 'this is a comment',
             '-p', 'tcp',
             '-s', '192.168.0.1/32',
-            '-j', 'ACCEPT',
             '-m', 'multiport',
             '--dports', '80,443,8081:8085',
             '-i', 'eth0',
-            '-m', 'comment',
-            '--comment', 'this is a comment'
+            '-j', 'ACCEPT'
         ])
 
     def test_match_set(self):
@@ -973,13 +973,13 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t', 'filter',
             '-C', 'INPUT',
+            '-m', 'comment',
+            '--comment', 'this is a comment',
             '-p', 'tcp',
-            '-j', 'ACCEPT',
-            '--destination-port', '22',
             '-m', 'set',
             '--match-set', 'admin_hosts', 'src',
-            '-m', 'comment',
-            '--comment', 'this is a comment'
+            '-j', 'ACCEPT',
+            '--destination-port', '22'
         ])
 
         set_module_args({
