@@ -629,9 +629,9 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t', 'mangle',
             '-C', 'PREROUTING',
-            '-i', 'eth0',
             '-p', 'udp',
             '-d', '127.0.0.1',
+            '-i', 'eth0',
             '-m', 'state',
             '--state', 'NEW',
             '-j', 'TEE',
@@ -909,7 +909,7 @@ class TestIptables(ModuleTestCase):
             '-j',
             'ACCEPT'
         ])
-        self.assertEqual(run_command.call_args[0][0][14], 'this is a comment')
+        self.assertEqual(run_command.call_args[0][0][12], 'this is a comment')
 
     def test_destination_ports(self):
         """ Test multiport module usage with multiple ports """
@@ -1005,9 +1005,9 @@ class TestIptables(ModuleTestCase):
             '-t', 'filter',
             '-C', 'INPUT',
             '-p', 'udp',
-            '-j', 'REJECT',
             '-m', 'set',
-            '--match-set', 'banned_hosts', 'src,dst'
+            '--match-set', 'banned_hosts', 'src,dst',
+            '-j', 'REJECT'
         ])
 
     def test_chain_creation(self):

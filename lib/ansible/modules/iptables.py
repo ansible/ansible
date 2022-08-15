@@ -745,8 +745,6 @@ def construct_rule(params):
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
-    append_param(rule, params['log_prefix'], '--log-prefix', False)
-    append_param(rule, params['log_level'], '--log-level', False)
     append_match(rule, params['destination_ports'], 'multiport')
     append_csv(rule, params['destination_ports'], '--dports')
     append_param(rule, params['to_source'], '--to-source', False)
@@ -795,6 +793,8 @@ def construct_rule(params):
     append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
     append_param(rule, params['jump'], '-j', False)
+    append_param(rule, params['log_prefix'], '--log-prefix', False)
+    append_param(rule, params['log_level'], '--log-level', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
         append_param(rule, params['gateway'], '--gateway', False)
     if params['jump'] is None:
