@@ -396,6 +396,8 @@ options:
         store internally or to archive and use as a base.
       - This data can be found in the output.data registered data.
     type: list
+    elements: dict
+    default: []
     version_added: "3.0"
   picker_definitions:
     description:
