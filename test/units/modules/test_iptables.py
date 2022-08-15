@@ -629,14 +629,14 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t', 'mangle',
             '-C', 'PREROUTING',
+            '-i', 'eth0',
             '-p', 'udp',
             '-d', '127.0.0.1',
             '-m', 'state',
+            '--state', 'NEW',
             '-j', 'TEE',
             '--gateway', '192.168.10.1',
-            '-i', 'eth0',
-            '--destination-port', '9521',
-            '--state', 'NEW'
+            '--destination-port', '9521'
         ])
 
     def test_tcp_flags(self):
