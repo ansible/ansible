@@ -12,11 +12,6 @@ DOCUMENTATION:
         - Path components contained in the filename will be returned as part of the root.
       type: str
       required: true
-  seealso:
-    - plugin_type: filter
-      plugin: ansible.builtin.first
-    - plugin_type: filter
-      plugin: ansible.builtin.last
 EXAMPLES: |
 
   # with path == 'nginx.conf' the return would be ('nginx', '.conf')
