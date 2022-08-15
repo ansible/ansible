@@ -1,0 +1,2 @@
+deprecated_features:
+  - "``Templar`` - deprecate ``shared_loader_obj`` option which is unused. ``ansible.plugins.loader`` is used directly instead."
