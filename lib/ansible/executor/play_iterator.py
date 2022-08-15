@@ -548,9 +548,6 @@ class PlayIterator:
         self._clear_state_errors(self.get_state_for_host(host.name))
 
     def _clear_state_errors(self, state: HostState) -> None:
-        if state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
-            state.run_state = state.pre_flushing_run_state
-
         state.fail_state = FailedStates.NONE
 
         if state.tasks_child_state is not None:

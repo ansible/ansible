@@ -166,6 +166,3 @@ ansible-playbook test_flush_handlers_rescue_always.yml -i inventory.handlers "$@
 [ "$(grep out.txt -ce 'rescue ran')" = "1" ]
 [ "$(grep out.txt -ce 'always ran')" = "2" ]
 [ "$(grep out.txt -ce 'should run for both hosts')" = "2" ]
-
-ansible-playbook test_flush_handlers_clear_errors.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
-[ "$(grep out.txt -ce 'should run for both hosts')" = "2" ]
