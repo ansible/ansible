@@ -1,7 +1,17 @@
+- name: Create test collection dir
+  script: make_collection_dir.py "{{ output_dir }}/test_manifest_collection"
+  args:
+    executable: '{{ ansible_facts.python.executable }}'
+
+- name: Copy galaxy.yml with manifest_directives_full
+  copy:
+    src: galaxy.yml
+    dest: '{{ output_dir }}/test_manifest_collection/galaxy.yml'
+
 - name: Build collection
   command: ansible-galaxy collection build --output-path {{ output_dir|quote }} -vvv
   args:
-    chdir: '{{ role_path }}/files/test_manifest_collection'
+    chdir: '{{ output_dir }}/test_manifest_collection'
 
 - name: Get artifact contents
   command: tar tzf '{{ output_dir }}/ns-col-1.0.0.tar.gz'
@@ -17,25 +27,20 @@
     that:
       - artifact_contents.stdout_lines|sort == lookup('file', 'expected.txt').splitlines()|sort
 
-- name: Create dir
-  file:
-    path: '{{ output_dir }}/test_manifest_full_collection'
-    state: directory
-
-- name: Copy test collection
-  copy:
-    src: '{{ role_path }}/files/test_manifest_collection/'
-    dest: '{{ output_dir }}/test_manifest_full_collection/'
+- name: Create test collection dir
+  script: make_collection_dir.py "{{ output_dir }}/test_manifest_no_defaults_collection"
+  args:
+    executable: '{{ ansible_facts.python.executable }}'
 
 - name: Copy galaxy.yml with manifest_directives_full
   copy:
     src: full_manifest_galaxy.yml
-    dest: '{{ output_dir }}/test_manifest_full_collection/galaxy.yml'
+    dest: '{{ output_dir }}/test_manifest_no_defaults_collection/galaxy.yml'
 
 - name: Build collection
   command: ansible-galaxy collection build --output-path {{ output_dir|quote }} -vvv
   args:
-    chdir: '{{ output_dir }}/test_manifest_full_collection'
+    chdir: '{{ output_dir }}/test_manifest_no_defaults_collection'
 
 - name: Get artifact contents
   command: tar tzf '{{ output_dir }}/ns-col-2.0.0.tar.gz'
