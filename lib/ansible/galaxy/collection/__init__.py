@@ -1050,7 +1050,7 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
     has_manifest = manifest_directives is not Sentinel
 
     if ignore_patterns and has_manifest:
-        raise AnsibleError(f'"build_ignore" and "manifest_directives" are mutually exclusive')
+        raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
 
     if has_manifest:
         return _build_files_manifest_distlib(
@@ -1065,10 +1065,10 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, full=False):
-    # type: (bytes, str, str, list[str]) -> FilesManifestType
+    # type: (bytes, str, str, list[str], bool) -> FilesManifestType
 
     if not HAS_DISTLIB:
-        raise AnsibleError(f'Use of "manifest_directives" requires the python "distlib" library')
+        raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
 
     if manifest_directives in (Sentinel, None):
         manifest_directives = []
@@ -1078,7 +1078,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
 
     if not isinstance(full, bool):
         raise AnsibleError(
-            f'"manifest_directives_full" is expected to be a boolean, got: {manifest_directives_full.__class__.__name__}'
+            f'"manifest_directives_full" is expected to be a boolean, got: {full.__class__.__name__}'
         )
 
     if full and not manifest_directives:
