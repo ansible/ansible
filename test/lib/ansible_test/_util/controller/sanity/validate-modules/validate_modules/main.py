@@ -306,7 +306,7 @@ class ModuleValidator(Validator):
     # win_dsc is a dynamic arg spec, the docs won't ever match
     PS_ARG_VALIDATE_REJECTLIST = frozenset(('win_dsc.ps1', ))
 
-    ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
+    ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'annotations', 'division', 'print_function'))
 
     def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
                  base_branch=None, git_cache=None, reporter=None, routing=None, plugin_type='module'):

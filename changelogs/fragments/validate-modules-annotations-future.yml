@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test validate-modules - Allow annotations in ``__future__`` import for plugins
