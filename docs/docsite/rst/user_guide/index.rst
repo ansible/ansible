@@ -13,13 +13,6 @@ User Guide
 Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, interacting with data, writing tasks, plays, and playbooks; executing playbooks, and reference materials.
 Quickly find answers in the following sections or expand the table of contents below to scroll through all resources.
 
-Working with inventory
-======================
-
-* I have a list of servers and devices I want to automate. How do I create :ref:`inventory <intro_inventory>` to track them?
-* I use cloud services and constantly have servers and devices starting and stopping. How do I track them using :ref:`dynamic inventory <intro_dynamic_inventory>`?
-* I want to automate specific sub-sets of my inventory. How do I use :ref:`patterns <intro_patterns>`?
-
 Interacting with data
 =====================
 
@@ -45,10 +38,6 @@ Here is the complete list of resources in the Ansible User Guide:
 
    intro_adhoc
    cheatsheet
-   intro_inventory
-   intro_dynamic_inventory
-   intro_patterns
-   connection_details
    command_line_tools
    vault
    complex_data_manipulation
