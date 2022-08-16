@@ -681,8 +681,13 @@ class Templar:
     '''
 
     def __init__(self, loader, shared_loader_obj=None, variables=None):
-        # NOTE shared_loader_obj is deprecated, ansible.plugins.loader is used
-        # directly. Keeping the arg for now in case 3rd party code "uses" it.
+        if shared_loader_obj is not None:
+            display.deprecated(
+                "The `shared_loader_obj` option to `Templar` is no longer functional, "
+                "ansible.plugins.loader is used directly instead.",
+                version='2.16',
+            )
+
         self._loader = loader
         self._available_variables = {} if variables is None else variables
 
