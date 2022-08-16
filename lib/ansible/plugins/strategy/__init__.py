@@ -252,6 +252,10 @@ class StrategyBase:
         # flushed handlers
         self._flushed_hosts = dict()
 
+        # this dictionary is used to keep track of hosts that have
+        # failed a task with any_errors_fatal: true and have not been rescued
+        self._any_errors_fatal = dict()
+
         self._results = deque()
         self._handler_results = deque()
         self._results_lock = threading.Condition(threading.Lock())
@@ -1142,6 +1146,12 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator.set_fail_state_for_host(host.name, FailedStates.NONE)
+                    if host.name in iterator._play._removed_hosts:
+                        # the host failed a previous play
+                        iterator._play._removed_hosts.remove(host.name)
+                        # update the host state to here
+                        iterator._host_states[host.name] = iterator._host_states[target_host.name].copy()
+                self._any_errors_fatal = {}
                 msg = "cleared host errors"
             else:
                 skipped = True

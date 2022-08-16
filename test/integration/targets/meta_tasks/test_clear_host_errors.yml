@@ -1,0 +1,75 @@
+- name: "Testing clear_host_errors with strategy={{ test_strategy | default('linear') }}"
+  hosts:
+    - testhost
+    - testhost2
+    - testhost3
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+
+    - name: run all three hosts
+      debug: msg='starting play for {{ inventory_hostname }}'
+
+    - name: fail testhost2 (EXPECTED FAILURE)
+      fail:
+      when: "host_var_role_name == 'role2'"
+
+    - debug: msg='post-failure and pre-recovery for {{ inventory_hostname }}'
+
+    - debug: msg='second post-failure and pre-recovery for {{ inventory_hostname }}'
+
+    - meta: clear_host_errors
+
+    - name: run all three hosts
+      debug: msg='post-recovery for {{ inventory_hostname }}'
+
+    - block:
+      - block:
+        - debug: msg="{{ inventory_hostname }} in block"
+
+        - debug: msg="{{ inventory_hostname }} in block2"
+
+        - name: fail testhost2 again (EXPECTED FAILURE)
+          fail:
+          when: "host_var_role_name == 'role2'"
+
+        - debug: msg='block post-failure and pre-recovery for {{ inventory_hostname }}'
+
+        - debug: msg='second in block post-failure and pre-recovery for {{ inventory_hostname }}'
+
+      - block:
+
+        - meta: clear_host_errors
+
+        - debug: msg='third in block post-recovery {{ inventory_hostname }}'
+
+    - debug: msg='second post-recovery for {{ inventory_hostname }}'
+
+    - name: fail testhost2 (EXPECTED FAILURE)
+      fail:
+      when: "host_var_role_name == 'role2'"
+
+- name: "Testing clear_host_errors across plays with strategy={{ test_strategy | default('linear') }}"
+  hosts:
+    - testhost
+    - testhost2
+    - testhost3
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  pre_tasks:
+    - debug: msg="next play pre-recovery for {{ inventory_hostname }}"
+
+    - meta: clear_host_errors
+
+    - debug: msg="next play post-recovery for {{ inventory_hostname }}"
+
+- hosts: testhost,testhost2,testhost3
+  gather_facts: no
+  tasks:
+    - block:
+        - name: fail testhost2 (EXPECTED FAILURE)
+          fail:
+          when: "inventory_hostname == 'testhost2'"
+      rescue:
+        - meta: clear_host_errors
+    - debug: msg="post-recovery in rescue for {{ inventory_hostname }}"
