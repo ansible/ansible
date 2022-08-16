@@ -274,6 +274,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_iterator.get_next_task_for_host.return_value = (None, None)
 
         mock_handler_block = MagicMock()
+        mock_handler_block.name = ''  # implicit unnamed block
         mock_handler_block.block = [mock_handler_task]
         mock_handler_block.rescue = []
         mock_handler_block.always = []
@@ -405,7 +406,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
-        self.assertTrue(mock_handler_task.is_host_notified(mock_host))
+        self.assertEqual(mock_iterator._play.handlers[0].block[0], mock_handler_task)
 
         # queue_items.append(('set_host_var', mock_host, mock_task, None, 'foo', 'bar'))
         # results = strategy_base._process_pending_results(iterator=mock_iterator)
@@ -489,73 +490,3 @@ class TestStrategyBase(unittest.TestCase):
         mock_inc_file._filename = "bad.yml"
         res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)
         self.assertEqual(res, [])
-
-    @patch.object(WorkerProcess, 'run')
-    def test_strategy_base_run_handlers(self, mock_worker):
-        def fake_run(*args):
-            return
-        mock_worker.side_effect = fake_run
-        mock_play_context = MagicMock()
-
-        mock_handler_task = Handler()
-        mock_handler_task.action = 'foo'
-        mock_handler_task.cached_name = False
-        mock_handler_task.name = "test handler"
-        mock_handler_task.listen = []
-        mock_handler_task._role = None
-        mock_handler_task._parent = None
-        mock_handler_task._uuid = 'xxxxxxxxxxxxxxxx'
-
-        mock_handler = MagicMock()
-        mock_handler.block = [mock_handler_task]
-        mock_handler.flag_for_host.return_value = False
-
-        mock_play = MagicMock()
-        mock_play.handlers = [mock_handler]
-
-        mock_host = MagicMock(Host)
-        mock_host.name = "test01"
-        mock_host.has_hostkey = True
-
-        mock_inventory = MagicMock()
-        mock_inventory.get_hosts.return_value = [mock_host]
-        mock_inventory.get.return_value = mock_host
-        mock_inventory.get_host.return_value = mock_host
-
-        mock_var_mgr = MagicMock()
-        mock_var_mgr.get_vars.return_value = dict()
-
-        mock_iterator = MagicMock()
-        mock_iterator._play = mock_play
-
-        fake_loader = DictDataLoader()
-
-        tqm = TaskQueueManager(
-            inventory=mock_inventory,
-            variable_manager=mock_var_mgr,
-            loader=fake_loader,
-            passwords=None,
-            forks=5,
-        )
-        tqm._initialize_processes(3)
-        tqm.hostvars = dict()
-
-        try:
-            strategy_base = StrategyBase(tqm=tqm)
-
-            strategy_base._inventory = mock_inventory
-
-            task_result = TaskResult(mock_host.name, mock_handler_task._uuid, dict(changed=False))
-            strategy_base._queued_task_cache = dict()
-            strategy_base._queued_task_cache[(mock_host.name, mock_handler_task._uuid)] = {
-                'task': mock_handler_task,
-                'host': mock_host,
-                'task_vars': {},
-                'play_context': mock_play_context
-            }
-            tqm._final_q.put(task_result)
-
-            result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
-        finally:
-            strategy_base.cleanup()
-            tqm.cleanup()

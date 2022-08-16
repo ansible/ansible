@@ -1,0 +1,9 @@
+- hosts: A
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - noop_handler
+  handlers:
+    - name: noop_handler
+      meta: noop

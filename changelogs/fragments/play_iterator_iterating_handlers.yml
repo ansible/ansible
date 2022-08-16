@@ -1,0 +1,10 @@
+major_changes:
+  - "Move handler processing into new ``PlayIterator`` phase to use the configured strategy (https://github.com/ansible/ansible/issues/65067)"
+minor_changes:
+  - "Allow meta tasks to be used as handlers."
+  - "Allow ``when`` conditionals to be used on ``flush_handlers`` (https://github.com/ansible/ansible/issues/77616)"
+bugfixes:
+  - "Ensure handlers observe ``any_errors_fatal`` (https://github.com/ansible/ansible/issues/46447)"
+  - "Bug fix for when handlers were ran on failed hosts after an ``always`` section was executed (https://github.com/ansible/ansible/issues/52561)"
+  - "Fix handlers execution with ``serial`` in the ``linear`` strategy (https://github.com/ansible/ansible/issues/54991)"
+  - "Fix for linear strategy when tasks were executed in incorrect order or even removed from execution. (https://github.com/ansible/ansible/issues/64611, https://github.com/ansible/ansible/issues/64999, https://github.com/ansible/ansible/issues/72725, https://github.com/ansible/ansible/issues/72781)"

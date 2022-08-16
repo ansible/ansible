@@ -50,6 +50,9 @@ class Handler(Task):
             return True
         return False
 
+    def remove_host(self, host):
+        self.notified_hosts = [h for h in self.notified_hosts if h != host]
+
     def is_host_notified(self, host):
         return host in self.notified_hosts
 

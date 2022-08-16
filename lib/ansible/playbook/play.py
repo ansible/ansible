@@ -31,6 +31,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
+from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
@@ -300,6 +301,30 @@ class Play(Base, Taggable, CollectionSearch):
             task.implicit = True
 
         block_list = []
+        if self.force_handlers:
+            noop_task = Task()
+            noop_task.action = 'meta'
+            noop_task.args['_raw_params'] = 'noop'
+            noop_task.implicit = True
+            noop_task.set_loader(self._loader)
+
+            b = Block(play=self)
+            b.block = self.pre_tasks or [noop_task]
+            b.always = [flush_block]
+            block_list.append(b)
+
+            tasks = self._compile_roles() + self.tasks
+            b = Block(play=self)
+            b.block = tasks or [noop_task]
+            b.always = [flush_block]
+            block_list.append(b)
+
+            b = Block(play=self)
+            b.block = self.post_tasks or [noop_task]
+            b.always = [flush_block]
+            block_list.append(b)
+
+            return block_list
 
         block_list.extend(self.pre_tasks)
         block_list.append(flush_block)
