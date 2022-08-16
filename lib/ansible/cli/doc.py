@@ -1125,7 +1125,7 @@ class DocCLI(CLI, RoleMixin):
                     continue
 
                 if isinstance(opt[k], Sequence) and not isinstance(opt[k], string_types):
-                    text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent, flow_style=True))
+                    text.append('%s: %s' % (k.capitalize(), DocCLI._dump_yaml(opt[k])), opt_indent, flow_style=True))
                 else:
                     text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
 
