@@ -4,6 +4,7 @@ version: 1.0.0
 readme: README.rst
 authors:
     - Ansible
-manifest_directives:
+manifest:
+  directives:
     - exclude foo.txt
     - recursive-exclude docs/foobar **

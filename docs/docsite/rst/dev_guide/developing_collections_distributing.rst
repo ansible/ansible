@@ -201,10 +201,10 @@ For example to exclude the :file:`sensitive` folder within the ``playbooks`` fol
 
 .. code-block:: yaml
 
-   manifest_directives:
-     - recursive-exclude playbooks/sensitive **
-     - global-exclude *.tar.gz
-   manifest_control:
+   manifest:
+     directives:
+       - recursive-exclude playbooks/sensitive **
+       - global-exclude *.tar.gz
      omit_default_directives: false
 
 By default, the ``MANIFEST.in`` style directives would exclude all files by default, but there are default directives in place. Those default directives are described below. To see the directives in use during build, pass ``-vvv`` with the ``ansible-galaxy collection build`` command.
@@ -235,7 +235,7 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
    recursive-include plugins/vars **.yml **.yaml
    recursive-include plugins/modules **.ps1 **.yml **.yaml
    recursive-include plugins/module_utils **.ps1 **.psm1 **.cs
-   # manifest_directives from galaxy.yml inserted here
+   # manifest.directives from galaxy.yml inserted here
    exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json <namespace>-<name>-*.tar.gz
    recursive-exclude tests/output **
    global-exclude /.* /__pycache__
@@ -243,17 +243,17 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
 .. note::
    ``<namespace>-<name>-*.tar.gz`` is expanded with the actual ``namespace`` and ``name``.
 
-The ``manifest_directives`` supplied in :file:`galaxy.yml` are inserted after the default includes, and before the default excludes.
+The ``manifest.directives`` supplied in :file:`galaxy.yml` are inserted after the default includes, and before the default excludes.
 
-To enable the use of manifest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
+To enable the use of manifest directives without supplying your own, insert either ``manifest: {}`` or ``manifest: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
 
-If the default ``manifest_directives`` do not meet your needs, you can set ``manifest_control.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
-
-.. note::
-   The use of ``manifest_directives`` requires installing the optional ``distlib`` Python dependency.
+If the default manifest directives do not meet your needs, you can set ``manifest.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
 
 .. note::
-   The ``manifest_directives`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
+   The use of ``manifest`` requires installing the optional ``distlib`` Python dependency.
+
+.. note::
+   The ``manifest`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
 
 
 .. _signing_collections:

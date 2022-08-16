@@ -25,7 +25,7 @@ import typing as t
 
 from collections import namedtuple
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, fields as dc_fields
 from hashlib import sha256
 from io import BytesIO
 from importlib.metadata import distribution
@@ -129,7 +129,6 @@ from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
-from ansible.utils.sentinel import Sentinel
 
 
 display = Display()
@@ -144,7 +143,16 @@ SIGNATURE_COUNT_RE = r"^(?P<strict>\+)?(?:(?P<count>\d+)|(?P<all>all))$"
 
 @dataclass
 class ManifestControl:
+    directives: list[str] = None
     omit_default_directives: bool = False
+
+    def __post_init__(self):
+        # Allow a dict representing this dataclass to be splatted directly.
+        # Requires attrs to have a default value, so anything with a default
+        # of None is swapped for its, potentially mutable, default
+        for field in dc_fields(self):
+            if getattr(self, field.name) is None:
+                super().__setattr__(field.name, field.type())
 
 
 class CollectionSignatureError(Exception):
@@ -469,8 +477,7 @@ def build_collection(u_collection_path, u_output_path, force):
         collection_meta['namespace'],  # type: ignore[arg-type]
         collection_meta['name'],  # type: ignore[arg-type]
         collection_meta['build_ignore'],  # type: ignore[arg-type]
-        collection_meta.get('manifest_directives', Sentinel),  # type: ignore[arg-type]
-        collection_meta.get('manifest_control', {}),  # type: ignore[arg-type]
+        collection_meta['manifest'],  # type: ignore[arg-type]
     )
 
     artifact_tarball_file_name = '{ns!s}-{name!s}-{ver!s}.tar.gz'.format(
@@ -1051,57 +1058,51 @@ def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
     }
 
 
-def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives, manifest_control):
-    # type: (bytes, str, str, list[str], list[str], dict) -> FilesManifestType
-    has_manifest = manifest_directives is not Sentinel
+def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_control):
+    # type: (bytes, str, str, list[str], dict[str, t.Any]) -> FilesManifestType
+    if ignore_patterns and manifest_control:
+        raise AnsibleError('"build_ignore" and "manifest" are mutually exclusive')
 
-    if ignore_patterns and has_manifest:
-        raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
-
-    if has_manifest:
+    if manifest_control:
         return _build_files_manifest_distlib(
             b_collection_path,
             namespace,
             name,
-            manifest_directives,
             manifest_control,
         )
 
     return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
 
-def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, manifest_control):
-    # type: (bytes, str, str, list[str], dict) -> FilesManifestType
+def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_control):
+    # type: (bytes, str, str, dict[str, t.Any]) -> FilesManifestType
 
     if not HAS_DISTLIB:
-        raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
-
-    if manifest_directives in (Sentinel, None):
-        manifest_directives = []
-
-    if not is_sequence(manifest_directives):
-        raise AnsibleError(f'"manifest_directives" must be a list, got: {manifest_directives.__class__.__name__}')
+        raise AnsibleError('Use of "manifest" requires the python "distlib" library')
 
     try:
         control = ManifestControl(**manifest_control)
     except TypeError as ex:
-        raise AnsibleError(f'Invalid "manifest_control" provided: {ex}')
+        raise AnsibleError(f'Invalid "manifest" provided: {ex}')
+
+    if not is_sequence(control.directives):
+        raise AnsibleError(f'"manifest.directives" must be a list, got: {control.directives.__class__.__name__}')
 
     if not isinstance(control.omit_default_directives, bool):
         raise AnsibleError(
-            '"manifest_control.omit_default_directives" is expected to be a boolean, got: '
+            '"manifest.omit_default_directives" is expected to be a boolean, got: '
             f'{control.omit_default_directives.__class__.__name__}'
         )
 
-    if control.omit_default_directives and not manifest_directives:
+    if control.omit_default_directives and not control.directives:
         raise AnsibleError(
-            '"manifest_control.omit_default_directives" was set to True, but no directives were defined. '
-            'This would produce an empty collection artifact'
+            '"manifest.omit_default_directives" was set to True, but no directives were defined '
+            'in "manifest.directives". This would produce an empty collection artifact.'
         )
 
     directives = []
     if control.omit_default_directives:
-        directives.extend(manifest_directives)
+        directives.extend(control.directives)
     else:
         directives.extend([
             'include meta/*.yml',
@@ -1128,7 +1129,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
             'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs',
         ])
 
-        directives.extend(manifest_directives)
+        directives.extend(control.directives)
 
         directives.extend([
             f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
@@ -1567,8 +1568,7 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
         b_collection_path,
         collection_meta['namespace'], collection_meta['name'],
         collection_meta['build_ignore'],
-        collection_meta.get('manifest_directives', Sentinel),
-        collection_meta.get('manifest_control', {}),
+        collection_meta['manifest'],
     )
 
     collection_output_path = _build_collection_dir(
