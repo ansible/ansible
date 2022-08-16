@@ -392,6 +392,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                     if 'Permission denied' in ex.message:
                         raise
 
+                    display.warning(str(ex))
                     time.sleep(1)
                 else:
                     return
@@ -594,6 +595,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
                 if 'Permission denied' in ex.message:
                     raise
 
+                display.warning(str(ex))
                 time.sleep(10)
 
         raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
