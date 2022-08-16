@@ -374,12 +374,6 @@ bootstrap_remote_ubuntu()
             ${pyyaml_pkg}
             ${resolvelib_pkg}
             "
-
-        if [ "${platform_version}/${python_version}" = "20.04/3.9" ]; then
-            # Install pyyaml using pip so libyaml support is available on Python 3.9.
-            # The OS package install (which is installed by default) only has a .so file for Python 3.8.
-            pip_install "--upgrade pyyaml"
-        fi
     fi
 
     while true; do
@@ -390,6 +384,14 @@ bootstrap_remote_ubuntu()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+
+    if [ "${controller}" ]; then
+        if [ "${platform_version}/${python_version}" = "20.04/3.9" ]; then
+            # Install pyyaml using pip so libyaml support is available on Python 3.9.
+            # The OS package install (which is installed by default) only has a .so file for Python 3.8.
+            pip_install "--upgrade pyyaml"
+        fi
+    fi
 }
 
 bootstrap_docker()
