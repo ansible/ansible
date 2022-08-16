@@ -23,6 +23,15 @@ Where did this specific module go?
 
 IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`chat channels <communication_irc>`.
 
+.. _slow_install:
+
+How can I speed up Ansible on systems with slow disks?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible may feel sluggish on systems with slow disks, such as Raspberry PI. See `Ansible might be running slow if libyaml is not available <https://www.jeffgeerling.com/blog/2021/ansible-might-be-running-slow-if-libyaml-not-available>`_ for hints on how to improve this.
+
+
+
 .. _set_environment:
 
 How can I set the PATH or any other environment variable for a task or entire play?
