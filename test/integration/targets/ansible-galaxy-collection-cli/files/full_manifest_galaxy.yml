@@ -4,7 +4,8 @@ version: 2.0.0
 readme: README.rst
 authors:
     - Ansible
-manifest_directives_full: true
+manifest_control:
+  omit_default_directives: true
 manifest_directives:
     - include meta/*.yml
     - include *.txt *.md *.rst COPYING LICENSE

@@ -204,6 +204,8 @@ For example to exclude the :file:`sensitive` folder within the ``playbooks`` fol
    manifest_directives:
      - recursive-exclude playbooks/sensitive **
      - global-exclude *.tar.gz
+   manifest_control:
+     omit_default_directives: false
 
 By default, the ``MANIFEST.in`` style directives would exclude all files by default, but there are default directives in place. Those default directives are described below. To see the directives in use during build, pass ``-vvv`` with the ``ansible-galaxy collection build`` command.
 
@@ -245,7 +247,7 @@ The ``manifest_directives`` supplied in :file:`galaxy.yml` are inserted after th
 
 To enable the use of manifest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
 
-If the default ``manifest_directives`` do not meet your needs, you can set ``manifest_directives_full`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
+If the default ``manifest_directives`` do not meet your needs, you can set ``manifest_control.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
 
 .. note::
    The use of ``manifest_directives`` requires installing the optional ``distlib`` Python dependency.
