@@ -387,6 +387,24 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         return evaluate_block(self)
 
+    def get_tasks(self):
+        def evaluate_and_append_task(target):
+            tmp_list = []
+            for task in target:
+                if isinstance(task, Block):
+                    tmp_list.extend(evaluate_block(task))
+                else:
+                    tmp_list.append(task)
+            return tmp_list
+
+        def evaluate_block(block):
+            rv = evaluate_and_append_task(block.block)
+            rv.extend(evaluate_and_append_task(block.rescue))
+            rv.extend(evaluate_and_append_task(block.always))
+            return rv
+
+        return evaluate_block(self)
+
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
 

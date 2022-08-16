@@ -1,0 +1,11 @@
+- hosts: A,B,C,D
+  gather_facts: false
+  serial: 2
+  tasks:
+    - command: echo
+      notify: handler
+  handlers:
+    - name: handler
+      debug:
+        msg: 'handler ran'
+      failed_when: inventory_hostname == 'A'

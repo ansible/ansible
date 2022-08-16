@@ -1,0 +1,24 @@
+- hosts: host1,host2
+  gather_facts: no
+  tasks:
+    - block:
+        - block:
+          - name: EXPECTED FAILURE host1 fails
+            fail:
+            when: inventory_hostname == 'host1'
+
+          - set_fact:
+               only_host2_fact: yes
+
+        - name: should not fail
+          fail:
+          when: only_host2_fact is not defined
+      always:
+        - block:
+          - meta: clear_host_errors
+
+    - assert:
+        that:
+          - only_host2_fact is defined
+      when:
+        - inventory_hostname == 'host2'

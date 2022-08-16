@@ -1,0 +1,13 @@
+- hosts: A
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - handler
+    - meta: flush_handlers
+      when: false
+    - fail:
+  handlers:
+    - name: handler
+      debug:
+        msg: handler ran

@@ -123,3 +123,46 @@ grep out.txt -e "ERROR! Using 'include_role' as a handler is not supported."
 ansible-playbook test_notify_included.yml "$@"  2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'I was included')" = "1" ]
 grep out.txt -e "ERROR! The requested handler 'handler_from_include' was not found in either the main handlers list nor in the listening handlers list"
+
+ansible-playbook test_handlers_meta.yml -i inventory.handlers -vv "$@" | tee out.txt
+[ "$(grep out.txt -ce 'RUNNING HANDLER \[noop_handler\]')" = "1" ]
+[ "$(grep out.txt -ce 'META: noop')" = "1" ]
+
+# https://github.com/ansible/ansible/issues/46447
+set +e
+test "$(ansible-playbook 46447.yml -i inventory.handlers -vv "$@" 2>&1 | grep -c 'SHOULD NOT GET HERE')"
+set -e
+
+# https://github.com/ansible/ansible/issues/52561
+ansible-playbook 52561.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler1 ran')" = "1" ]
+
+# Test flush_handlers meta task does not imply any_errors_fatal
+ansible-playbook 54991.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "4" ]
+
+ansible-playbook order.yml -i inventory.handlers "$@" 2>&1
+set +e
+ansible-playbook order.yml --force-handlers -e test_force_handlers=true -i inventory.handlers "$@" 2>&1
+set -e
+
+ansible-playbook include_handlers_fail_force.yml --force-handlers -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'included handler ran')" = "1" ]
+
+ansible-playbook test_flush_handlers_as_handler.yml -i inventory.handlers "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! flush_handlers cannot be used as a handler"
+
+ansible-playbook test_skip_flush.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "0" ]
+
+ansible-playbook test_flush_in_rescue_always.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran in rescue')" = "1" ]
+[ "$(grep out.txt -ce 'handler ran in always')" = "2" ]
+[ "$(grep out.txt -ce 'lockstep works')" = "2" ]
+
+ansible-playbook test_handlers_infinite_loop.yml -i inventory.handlers "$@" 2>&1
+
+ansible-playbook test_flush_handlers_rescue_always.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'rescue ran')" = "1" ]
+[ "$(grep out.txt -ce 'always ran')" = "2" ]
+[ "$(grep out.txt -ce 'should run for both hosts')" = "2" ]

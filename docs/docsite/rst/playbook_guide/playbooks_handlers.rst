@@ -184,6 +184,12 @@ Notifying a dynamic include such as ``include_task`` as a handler results in exe
 Having a static include such as ``import_task`` as a handler results in that handler being effectively rewritten by handlers from within that import before the play execution. A static include itself cannot be notified; the tasks from within that include, on the other hand, can be notified individually.
 
 
+Meta tasks as handlers
+----------------------
+
+Since Ansible 2.14 :ref:`meta tasks <ansible_collections.ansible.builtin.meta_module>` are allowed to be used and notified as handlers. Note that however ``flush_handlers`` cannot be used as a handler to prevent unexpected behavior.
+
+
 Limitations
 -----------
 
