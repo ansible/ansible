@@ -54,9 +54,26 @@ def get_vars_from_path(loader, path, entities, stage):
                 vars_plugin_list.append(vars_plugin)
 
     for plugin in vars_plugin_list:
-        if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
-            # 2.x plugins shipped with ansible should require enabling, older or non shipped should load automatically
-            continue
+        # Only plugins loaded via vars_loader.all() support REQUIRES_ENABLED = False. A collection plugin was enabled to get to this point.
+        # FIXME: support enabling builtin/legacy plugins by FQCN. They are loaded by all() and always the unqualified name.
+        not_legacy = '.' in plugin._load_name
+
+        # 2.x plugins shipped with ansible should require enabling (host_group_vars is enabled by default for backwards compat).
+        # ansible.legacy should load automatically and run accoring to REQUIRES_ENABLED.
+        if hasattr(plugin, 'REQUIRES_WHITELIST'):
+            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+            if not_legacy and not plugin.REQUIRES_WHITELIST:
+                # collection misleadingly has REQUIRES_WHITELIST = False, but the plugin does actually require enabling.
+                display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_WHITELIST = False is not supported.")
+            if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and plugin.REQUIRES_WHITELIST:
+                continue
+        elif hasattr(plugin, 'REQUIRES_ENABLED'):
+            if not_legacy and not plugin.REQUIRES_ENABLED:
+                # collection misleadingly has REQUIRES_ENABLED = False, but the plugin does actually require enabling.
+                display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED = False is not supported.")
+            if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and plugin.REQUIRES_ENABLED:
+                continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 
