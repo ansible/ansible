@@ -740,10 +740,10 @@ def append_wait(rule, param, flag):
 def construct_rule(params):
     rule = []
     append_wait(rule, params['wait'], '-w')
-    append_param(rule, params['in_interface'], '-i', False)
-    append_param(rule, params['out_interface'], '-o', False)
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
+    append_param(rule, params['in_interface'], '-i', False)
+    append_param(rule, params['out_interface'], '-o', False)
     append_param(rule, params['protocol'], '-p', False)
     append_param(rule, params['match'], '-m', True)
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
