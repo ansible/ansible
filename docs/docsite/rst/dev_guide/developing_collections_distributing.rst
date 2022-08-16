@@ -241,7 +241,7 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
 
 The ``manifest_directives`` supplied in :file:`galaxy.yml` are inserted after the default includes, and before the default excludes.
 
-To enable the use of mainfest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
+To enable the use of manifest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
 
 .. note::
    The use of ``manifest_directives`` requires installing the optional ``distlib`` Python dependency.
