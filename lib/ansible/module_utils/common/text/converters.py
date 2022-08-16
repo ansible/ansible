@@ -209,6 +209,10 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
+    if isinstance(obj, bool):
+        # Return JSON/YAML 1.2 standardized true/false values
+        return "true" if obj else "false"
+
     if isinstance(obj, binary_type):
         # Note: We don't need special handling for surrogate_then_replace
         # because all bytes will either be made into surrogates or are valid
