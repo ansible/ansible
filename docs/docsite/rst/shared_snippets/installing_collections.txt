@@ -70,34 +70,3 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
 See :ref:`collection_structure` for details on the collection directory structure.
 
-Collections signed by a Galaxy server can be verified during installation with GnuPG. To opt into signature verification, configure a keyring for ``ansible-galaxy`` with native GnuPG tooling and provide the file path with the ``--keyring`` CLI option or ref:`GALAXY_GPG_KEYRING`. Signatures provided by the Galaxy server will be used to verify the collection's ``MANIFEST.json``.
-
-Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with additional signatures to those provided by the Galaxy server. Supplemental signatures should be provided as URIs.
-
-.. code-block:: bash
-
-   ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --keyring ~/.ansible/pubring.kbx
-
-GnuPG verification only occurs for collections installed from a Galaxy server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
-
-By default, verification is considered successful if a minimum of 1 signature successfully verifies the collection. The number of required signatures can be configured with ``--required-valid-signature-count`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. All signatures can be required by setting the option to ``all``. To fail signature verification if no valid signatures are found, prepend the value with ``+``, such as ``+all`` or ``+1``.
-
-.. code-block:: bash
-
-   export ANSIBLE_GALAXY_GPG_KEYRING=~/.ansible/pubring.kbx
-   export ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT=2
-   ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc
-
-Certain GnuPG errors can be ignored with ``--ignore-signature-status-code`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` should be a list, and ``--ignore-signature-status-code`` can be provided multiple times to ignore multiple additional error status codes.
-
-This example requires any signatures provided by the Galaxy server to verify the collection except if they fail due to NO_PUBKEY:
-
-.. code-block:: bash
-
-   export ANSIBLE_GALAXY_GPG_KEYRING=~/.ansible/pubring.kbx
-   export ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT=all
-   ansible-galaxy collection install my_namespace.my_collection --ignore-signature-status-code NO_PUBKEY
-
-If verification fails for the example above, only errors other than NO_PUBKEY will be displayed.
-
-If verification is unsuccessful, the collection will not be installed. GnuPG signature verification can be disabled with ``--disable-gpg-verify`` or by configuring :ref:`GALAXY_DISABLE_GPG_VERIFY`.
