@@ -7,6 +7,8 @@ from ...constants import (
     CONTROLLER_PYTHON_VERSIONS,
     REMOTE_PROVIDERS,
     SECCOMP_CHOICES,
+    CGROUP_CHOICES,
+    AUDIT_CHOICES,
     SUPPORTED_PYTHON_VERSIONS,
 )
 
@@ -103,6 +105,8 @@ class DockerKeyValueParser(KeyValueParser):
         return dict(
             python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
             seccomp=ChoicesParser(SECCOMP_CHOICES),
+            cgroup=ChoicesParser(CGROUP_CHOICES),
+            audit=ChoicesParser(AUDIT_CHOICES),
             privileged=BooleanParser(),
             memory=IntegerParser(),
         )
@@ -116,6 +120,8 @@ class DockerKeyValueParser(KeyValueParser):
         state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
             f'  python={python_parser.document(state)}',
             f'  seccomp={ChoicesParser(SECCOMP_CHOICES).document(state)}',
+            f'  cgroup={ChoicesParser(CGROUP_CHOICES).document(state)}',
+            f'  audit={ChoicesParser(AUDIT_CHOICES).document(state)}',
             f'  privileged={BooleanParser().document(state)}',
             f'  memory={IntegerParser().document(state)}  # bytes',
         ])

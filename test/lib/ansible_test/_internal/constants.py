@@ -28,6 +28,17 @@ SECCOMP_CHOICES = [
     'unconfined',
 ]
 
+CGROUP_CHOICES = [
+    'none',
+    'v1',
+    'v2',
+]
+
+AUDIT_CHOICES = [
+    'none',
+    'required',
+]
+
 # This bin symlink map must exactly match the contents of the bin directory.
 # It is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible.
 # It is also used to construct the injector directory at runtime.

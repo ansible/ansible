@@ -282,6 +282,8 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
     memory: t.Optional[int] = None
     privileged: t.Optional[bool] = None
     seccomp: t.Optional[str] = None
+    cgroup: t.Optional[str] = None
+    audit: t.Optional[str] = None
 
     def get_defaults(self, context: HostContext) -> DockerCompletionConfig:
         """Return the default settings."""
@@ -312,6 +314,12 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
         if self.seccomp is None:
             self.seccomp = defaults.seccomp
+
+        if self.cgroup is None:
+            self.cgroup = defaults.cgroup
+
+        if self.audit is None:
+            self.audit = defaults.audit
 
         if self.privileged is None:
             self.privileged = False

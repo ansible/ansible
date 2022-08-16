@@ -140,6 +140,8 @@ class DockerCompletionConfig(PythonCompletionConfig):
     """Configuration for Docker containers."""
     image: str = ''
     seccomp: str = 'default'
+    cgroup: str = 'v2'
+    audit: str = 'none'
     placeholder: bool = False
 
     @property

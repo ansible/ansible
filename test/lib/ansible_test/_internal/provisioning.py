@@ -189,8 +189,11 @@ def dispatch_jobs(jobs: list[tuple[HostProfile, WrappedThread]]) -> None:
     for profile, thread in jobs:
         try:
             thread.wait_for_result()
+        except ApplicationError as ex:
+            display.error(f'Host {profile.config} job failed:\n{ex}')
+            failed = True
         except Exception as ex:  # pylint: disable=broad-except
-            display.error(f'Host {profile} job failed: {ex}\n{"".join(traceback.format_tb(ex.__traceback__))}')
+            display.error(f'Host {profile.config} job failed:\n{ex}\n{"".join(traceback.format_tb(ex.__traceback__))}')
             failed = True
 
     if failed:

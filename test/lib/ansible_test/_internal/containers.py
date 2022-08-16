@@ -85,6 +85,10 @@ from .connections import (
 support_containers: dict[str, ContainerDescriptor] = {}
 support_containers_mutex = threading.Lock()
 
+# Max number of open files in a docker container.
+# Passed with --ulimit option to the docker run command.
+MAX_NUM_OPEN_FILES = 10240
+
 
 class HostType:
     """Enum representing the types of hosts involved in running tests."""
@@ -142,7 +146,7 @@ def run_support_container(
     options = (options or [])
 
     if start:
-        options.append('-d')
+        options.append('-dit')  # the -i and -t options are used to enable capturing of init console output for troubleshooting
 
     if publish_ports:
         for port in ports:
@@ -151,6 +155,8 @@ def run_support_container(
     if env:
         for key, value in env.items():
             options.extend(['--env', '%s=%s' % (key, value)])
+
+    options.extend(['--ulimit', 'nofile=%s' % MAX_NUM_OPEN_FILES])
 
     support_container_id = None
 

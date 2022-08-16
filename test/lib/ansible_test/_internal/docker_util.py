@@ -1,6 +1,7 @@
 """Functions for accessing docker via the docker cli."""
 from __future__ import annotations
 
+import errno
 import json
 import os
 import random
@@ -20,6 +21,7 @@ from .util import (
     find_executable,
     SubprocessError,
     cache,
+    mutex,
     OutputStream,
 )
 
@@ -38,9 +40,153 @@ DOCKER_COMMANDS = [
     'podman',
 ]
 
-# Max number of open files in a docker container.
-# Passed with --ulimit option to the docker run command.
-MAX_NUM_OPEN_FILES = 10240
+UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:1.0.0'
+
+
+class DockerInfo:
+    """The results of `docker info` for the container runtime."""
+    def __init__(self, data: dict[str, t.Any]) -> None:
+        self.data = data
+
+    @property
+    def cgroup_version(self) -> int:
+        """The cgroup version of the container host."""
+        data = self.data
+        host = data.get('host')
+
+        if host:
+            version = int(host['cgroupVersion'].lstrip('v'))  # podman
+        else:
+            version = int(data['CgroupVersion'])  # docker
+
+        return version
+
+    @property
+    def cgroup_driver(self) -> str:
+        """The cgroup driver of the container host."""
+        data = self.data
+        host = data.get('host')
+
+        if host:
+            driver = host['cgroupManager']  # podman
+        else:
+            driver = data['CgroupDriver']  # docker
+
+        return driver
+
+    @property
+    def default_runtime(self) -> str:
+        """The default runtime of the container host."""
+        data = self.data
+        host = data.get('host')
+
+        if host:
+            runtime = host['ociRuntime']['name']  # podman
+        else:
+            runtime = data['DefaultRuntime']  # docker
+
+        return runtime
+
+
+@mutex
+def get_docker_info(args: CommonConfig) -> DockerInfo:
+    """Return info for the current container runtime. The results are cached."""
+    try:
+        return get_docker_info.info  # type: ignore[attr-defined]
+    except AttributeError:
+        info = get_docker_info.info = DockerInfo(docker_info(args))  # type: ignore[attr-defined]
+
+    return info
+
+
+@mutex
+def detect_host_systemd_cgroup_v1(args: EnvironmentConfig) -> bool:
+    """
+    Return True if the container host is using cgroup v1 with systemd, otherwise return False.
+    Detection of cgroup v1 relies on the fact that cgroup v2 removed the 'tasks' file:
+    See: https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#deprecated-v1-core-features
+    """
+    try:
+        return detect_host_systemd_cgroup_v1.cgroup_v1  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    path = '/sys/fs/cgroup/systemd/tasks'
+    options = ['--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro']
+    cmd = ['sh', '-c', f'ls {path} || true']
+    stdout = run_utility_container(args, f'ansible-test-cgroup-{args.session_name}', options=options, cmd=cmd)
+    cgroup_v1 = detect_host_systemd_cgroup_v1.cgroup_v1 = stdout == path  # type: ignore[attr-defined]
+
+    display.info(f'Container host systemd cgroup v1: {cgroup_v1}', verbosity=1)
+
+    return cgroup_v1
+
+
+@mutex
+def detect_host_audit_status(args: EnvironmentConfig) -> int:
+    """
+    Return the errno result from attempting to query the container host's audit status.
+
+    The following error codes are known to occur:
+
+    EPERM (1) - Operation not permitted
+    This occurs when the root user runs a container but lacks the AUDIT_WRITE capability.
+    This will cause patched versions of OpenSSH to disconnect after a login succeeds.
+    See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
+
+    EBADF (9) - Bad file number
+    This occurs when the host doesn't support the audit system (the open_audit call fails).
+    This allows SSH logins to succeed despite the failure.
+    See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/netlink.c#L204-L209
+
+    ECONNREFUSED (111) - Connection refused
+    This occurs when a non-root user runs a container without the AUDIT_WRITE capability.
+    When sending an audit message, libaudit ignores this error condition.
+    This allows SSH logins to succeed despite the failure.
+    See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/deprecated.c#L48-L52
+    """
+    try:
+        return detect_host_audit_status.status  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    cmd = ['audit-status']
+    stdout = run_utility_container(args, f'ansible-test-audit-{args.session_name}', cmd)
+    status = detect_host_audit_status.status = int(stdout) * -1  # type: ignore[attr-defined]
+    name = errno.errorcode.get(status, '?')
+
+    display.info(f'Container host audit status: {name} ({status})', verbosity=1)
+
+    return status
+
+
+@mutex
+def detect_container_loginuid(args: EnvironmentConfig) -> int:
+    """Return the loginuid used by the container host to run containers."""
+    try:
+        return detect_container_loginuid.loginuid  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    cmd = ['cat', '/proc/self/loginuid']
+    stdout = run_utility_container(args, f'ansible-test-loginuid-{args.session_name}', cmd=cmd)
+    loginuid = detect_container_loginuid.loginuid = int(stdout)  # type: ignore[attr-defined]
+
+    display.info(f'Container loginuid: {loginuid}', verbosity=1)
+
+    return loginuid
+
+
+def run_utility_container(args: EnvironmentConfig, name: str, cmd: list[str], options: list[str] | None = None, remove: bool = True) -> str:
+    """Run the specified command using the ansible-test utility container and return stdout."""
+    options = list(options or [])
+
+    if remove:
+        options.append('--rm')
+
+    docker_pull(args, UTILITY_IMAGE)
+
+    return docker_run(args, UTILITY_IMAGE, name, options=options, cmd=cmd)
 
 
 class DockerCommand:
@@ -160,7 +306,8 @@ def get_podman_default_hostname() -> t.Optional[str]:
 
 
 @cache
-def _get_podman_remote() -> t.Optional[str]:
+def get_podman_remote() -> t.Optional[str]:
+    """Return the remote podman hostname, if any, otherwise return None."""
     # URL value resolution precedence:
     # - command line value
     # - environment variable CONTAINER_HOST
@@ -185,7 +332,7 @@ def _get_podman_remote() -> t.Optional[str]:
 @cache
 def get_podman_hostname() -> str:
     """Return the hostname of the Podman service."""
-    hostname = _get_podman_remote()
+    hostname = get_podman_remote()
 
     if not hostname:
         hostname = 'localhost'
@@ -310,8 +457,6 @@ def docker_run(
         # Only when the network is not the default bridge network.
         options.extend(['--network', network])
 
-    options.extend(['--ulimit', 'nofile=%s' % MAX_NUM_OPEN_FILES])
-
     for _iteration in range(1, 3):
         try:
             stdout = docker_command(args, [command] + options + [image] + cmd, capture=True)[0]
@@ -416,6 +561,11 @@ class DockerInspect:
         return self.state['Running']
 
     @property
+    def pid(self) -> int:
+        """Return the PID of the init process."""
+        return self.state['Pid']
+
+    @property
     def env(self) -> list[str]:
         """Return a list of the environment variables used to create the container."""
         return self.config['Env']
@@ -510,6 +660,14 @@ def docker_image_exists(args: EnvironmentConfig, image: str) -> bool:
     return True
 
 
+def docker_logs(args: EnvironmentConfig, container_id: str) -> None:
+    """Display logs for the specified container. If an error occurs, it is displayed rather than raising an exception."""
+    try:
+        docker_command(args, ['logs', container_id], capture=False)
+    except SubprocessError as ex:
+        display.error(str(ex))
+
+
 def docker_exec(
         args: EnvironmentConfig,
         container_id: str,
@@ -560,7 +718,7 @@ def docker_command(
     env = docker_environment()
     command = [require_docker().command]
 
-    if command[0] == 'podman' and _get_podman_remote():
+    if command[0] == 'podman' and get_podman_remote():
         command.append('--remote')
 
     return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always,

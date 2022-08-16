@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+import errno
 import os
+import secrets
 import tempfile
 import time
 import typing as t
@@ -60,8 +62,16 @@ from .util_common import (
 
 from .docker_util import (
     docker_exec,
+    docker_logs,
     docker_rm,
     get_docker_hostname,
+    require_docker,
+    get_docker_info,
+    get_podman_remote,
+    detect_host_systemd_cgroup_v1,
+    detect_host_audit_status,
+    detect_container_loginuid,
+    run_utility_container,
 )
 
 from .bootstrap import (
@@ -107,6 +117,29 @@ TControllerHostConfig = t.TypeVar('TControllerHostConfig', bound=ControllerHostC
 THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 TPosixConfig = t.TypeVar('TPosixConfig', bound=PosixConfig)
 TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
+
+
+class ControlGroupError(ApplicationError):
+    """Raised when the container host does not have the necessary cgroup support to run a container."""
+    def __init__(self, reason: str) -> None:
+        message = (
+            f'{reason}\n'
+            '\n'
+            'This can usually be resolved by running the following commands as root on the container host:\n'
+            '\n'
+            '  mkdir /sys/fs/cgroup/systemd\n'
+            '  mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr\n'
+            '  chown -R {user}.{group} /sys/fs/cgroup/systemd  # only required when running rootless\n'
+        )
+
+        message += (
+            '\n'
+            'NOTE: This change must be applied each time the container host is rebooted.'
+        )
+
+        message = message.strip()
+
+        super().__init__(message)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -343,6 +376,103 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
     def provision(self) -> None:
         """Provision the host before delegation."""
+        options = self.get_docker_run_options()
+
+        # Containers which use old versions of systemd (earlier than version 226) require cgroup v1 support.
+        # If the host is a cgroup v2 (unified) host, changes must be made to how the container is run.
+        #
+        # See: https://github.com/systemd/systemd/blob/main/NEWS
+        #      Under the "CHANGES WITH 226" section:
+        #      > systemd now optionally supports the new Linux kernel "unified" control group hierarchy.
+        #
+        # NOTE: The container host must have the cgroup v1 mount already present.
+        #       If the container is run rootless, the user it runs under must have permissions to the mount.
+        #
+        # The following commands can be used to make the mount available:
+        #
+        #   mkdir /sys/fs/cgroup/systemd
+        #   mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
+        #   chown -R {user}.{group} /sys/fs/cgroup/systemd
+        #
+        # See: https://github.com/containers/crun/blob/main/crun.1.md#runocisystemdforce_cgroup_v1path
+
+        self.check_cgroup_requirements()
+
+        remount_cgroup = require_docker().command == 'docker' and self.config.cgroup == 'v2' and get_docker_info(self.args).cgroup_version == 2
+
+        if require_docker().command == 'podman':
+            # Without AUDIT_WRITE the following errors may appear in the system logs of a container after attempting to log in using SSH:
+            #
+            #   fatal: linux_audit_write_entry failed: Operation not permitted
+            #
+            # This occurs when running containers as root when the container host provides audit support, but the user lacks the AUDIT_WRITE capability.
+            # The AUDIT_WRITE capability is provided by docker by default, but not podman.
+            #
+            # Some containers will be running a patched version of OpenSSH which blocks logins when EPERM is received while using the audit system.
+            # These containers will require the AUDIT_WRITE capability when EPERM is returned while accessing the audit system.
+            # See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
+            #
+            # Since only some containers carry the patch, this capability is enabled on a per-container basis.
+            # No warning is provided when adding this capability, since there's not really anything the user can do about it.
+            if self.config.audit == 'required' and detect_host_audit_status(self.args) == errno.EPERM:
+                options.extend(('--cap-add', 'AUDIT_WRITE'))
+
+            # Without AUDIT_CONTROL the following errors may appear in the system logs of a container after attempting to log in using SSH:
+            #
+            #   pam_loginuid(sshd:session): Error writing /proc/self/loginuid: Operation not permitted
+            #   pam_loginuid(sshd:session): set_loginuid failed
+            #
+            # Containers configured to use the pam_loginuid module will encounter this error. If the module is required, logins will fail.
+            # Since most containers will have this configuration, the code to handle this issue is applied to all containers.
+            #
+            # This occurs when the loginuid is set on the container host and doesn't match the user on the container host which is running the container.
+            # Container hosts which do not use systemd are likely to leave the loginuid unset and thus be unaffected.
+            # The most common source of a mismatch is the use of sudo to run ansible-test, which changes the uid but cannot change the loginuid.
+            # This condition typically occurs only under podman, since the loginuid is inherited from the current user.
+            # See: https://github.com/containers/podman/issues/13012#issuecomment-1034049725
+            #
+            # This condition is detected by querying the loginuid of a container running on the container host.
+            # When it occurs, a warning is displayed and the AUDIT_CONTROL capability is added to containers to work around the issue.
+            # The warning serves as notice to the user that their usage of ansible-test is responsible for the additional capability requirement.
+            if (loginuid := detect_container_loginuid(self.args)) not in (0, 4294967295):
+                display.warning(f'Running container {self.config.name} with capability AUDIT_CONTROL since the container loginuid ({loginuid}) is incorrect. '
+                                'This is most likely due to use of sudo to run ansible-test when loginuid is already set.')
+
+                options.extend(('--cap-add', 'AUDIT_CONTROL'))
+
+            if self.config.cgroup == 'v1' and (cgroup_version := get_docker_info(self.args).cgroup_version) != 1:
+                options.extend((
+                    # Force use of cgroup v1 for systems which do not default to it, when running a container with an old systemd that requires it.
+                    # This work-around requires crun, which is enabled below.
+                    # On Ubuntu 22.04 an alternative work-around, which does not require crun, is to use the option: --systemd false
+                    '--annotation', 'run.oci.systemd.force_cgroup_v1=/sys/fs/cgroup',
+                ))
+
+                if get_podman_remote():
+                    # The '--runtime' option isn't supported with remote podman.
+                    # Raise an error if the remote runtime isn't crun.
+                    if (runtime := get_docker_info(self.args).default_runtime) != 'crun':
+                        raise ApplicationError(f'The {self.config.name} container requires the "crun" runtime on podman hosts with cgroup v{cgroup_version}. '
+                                               f'The podman host is using the "{runtime}" runtime which cannot be overridden when using remote podman. '
+                                               'Use local podman or reconfigure the remote podman host.')
+                else:
+                    options.extend((
+                        # This assumes crun is installed on the container host.
+                        # RHEL 9.0, Fedora 36 and Ubuntu 22.04 will install it with podman by default, unless runc is being installed or already present.
+                        # RHEL 8.6 has crun, but installs runc by default with podman.
+                        '--runtime', 'crun',
+                    ))
+
+        if remount_cgroup:
+            cmd = ['sh', '-c', 'sleep infinity; exec /sbin/init']
+
+            options.extend(('--cgroupns', 'private'))
+        else:
+            cmd = None
+
+            if require_docker().command == 'docker' or self.config.cgroup == 'v1':
+                options.extend(('--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro'))
+
         container = run_support_container(
             args=self.args,
             context='__test_hosts__',
@@ -350,14 +480,37 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             name=f'ansible-test-{"controller" if self.controller else "target"}-{self.args.session_name}',
             ports=[22],
             publish_ports=not self.controller,  # connections to the controller over SSH are not required
-            options=self.get_docker_run_options(),
+            options=options,
             cleanup=CleanupMode.NO,
+            cmd=cmd,
         )
 
         if not container:
             return
 
+        if remount_cgroup:
+            options = ['--pid', 'host', '--privileged']
+            cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p', 'sh', '-c', 'mount -o remount,rw /sys/fs/cgroup/ ; pkill sleep']
+            run_utility_container(self.args, f'ansible-test-remount-{secrets.token_hex(4)}', options=options, cmd=cmd)
+
         self.container_name = container.name
+
+    def check_cgroup_requirements(self):
+        """Check cgroup requirements for the container."""
+        if self.config.cgroup == 'v1' or (get_docker_info(self.args).cgroup_version == 1 and self.config.cgroup != 'none'):
+            # The container requires cgroup v1 or the container host is using cgroup v1 (and the container requires cgroup support).
+            # Make sure that the systemd cgroup is present.
+            # If not, raise an exception that explains the requirement and provides a possible solution.
+            if not detect_host_systemd_cgroup_v1(self.args):
+                if self.config.cgroup == 'v1':
+                    if get_docker_info(self.args).cgroup_version == 2:
+                        reason = f'Container {self.config.name} requires cgroup v1, but the container host only provides cgroup v2.'
+                    else:
+                        reason = f'Container {self.config.name} requires cgroup v1, but the container host does not appear to be running systemd.'
+                else:
+                    reason = 'The container host provides cgroup v1, but does not appear to be running systemd.'
+
+                raise ControlGroupError(reason)
 
     def setup(self) -> None:
         """Perform out-of-band setup before delegation."""
@@ -370,7 +523,12 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         setup_sh = bootstrapper.get_script()
         shell = setup_sh.splitlines()[0][2:]
 
-        docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
+        try:
+            docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
+        except SubprocessError:
+            display.info('Checking container logs...')
+            docker_logs(self.args, self.container_name)
+            raise
 
     def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
@@ -384,6 +542,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         if not self.controller:
             con = self.get_controller_target_connections()[0]
+            last_error = ''
 
             for dummy in range(1, 60):
                 try:
@@ -392,9 +551,27 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                     if 'Permission denied' in ex.message:
                         raise
 
+                    last_error = str(ex)
                     time.sleep(1)
                 else:
                     return
+
+            display.info('Checking container logs...')
+            docker_logs(self.args, self.container_name)
+
+            if self.config.cgroup != 'none':
+                # Containers with cgroup support are assumed to be running systemd.
+                display.info('Checking container systemd logs...')
+
+                try:
+                    docker_exec(self.args, self.container_name, ['journalctl'], capture=False)
+                except SubprocessError as ex:
+                    display.error(str(ex))
+
+            display.info('Checking SSH debug output...')
+            display.info(last_error)
+
+            raise ApplicationError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -426,8 +603,6 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     def get_docker_run_options(self) -> list[str]:
         """Return a list of options needed to run the container."""
         options = [
-            '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
-            f'--privileged={str(self.config.privileged).lower()}',
             # These temporary mount points need to be created at run time.
             # Previously they were handled by the VOLUME instruction during container image creation.
             # However, that approach creates anonymous volumes when running the container, which are then left behind after the container is deleted.
@@ -438,6 +613,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             '--tmpfs', '/run:exec',
             '--tmpfs', '/run/lock',  # some systemd containers require a separate tmpfs here, such as Ubuntu 20.04 and Ubuntu 22.04
         ]
+
+        if self.config.privileged:
+            options.append('--privileged')
 
         if self.config.memory:
             options.extend([
@@ -602,6 +780,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
                 if 'Permission denied' in ex.message:
                     raise
 
+                display.warning(str(ex))
                 time.sleep(10)
 
         raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
