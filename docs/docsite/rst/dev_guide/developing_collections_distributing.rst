@@ -193,7 +193,9 @@ For example, to exclude the :file:`sensitive` folder within the ``playbooks`` fo
 Manifest Directives
 ^^^^^^^^^^^^^^^^^^^
 
-With the 2.14 release, the :file:`galaxy.yml` file now supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
+.. versionadded:: 2.14
+
+The :file:`galaxy.yml` file supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
 
 For example to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives, set the following in your :file:`galaxy.yml` file:
 
@@ -201,7 +203,7 @@ For example to exclude the :file:`sensitive` folder within the ``playbooks`` fol
 
    manifest_directives:
      - recursive-exclude playbooks/sensitive **
-     - exclude *.tar.gz
+     - global-exclude *.tar.gz
 
 By default, the ``MANIFEST.in`` style directives would exclude all files by default, but there are default directives in place. Those default directives are described below. To see the directives in use during build, pass ``-vvv`` with the ``ansible-galaxy collection build`` command.
 
@@ -242,6 +244,8 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
 The ``manifest_directives`` supplied in :file:`galaxy.yml` are inserted after the default includes, and before the default excludes.
 
 To enable the use of manifest directives without supplying your own, insert either ``manifest_directives: []`` or ``manifest_directives: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
+
+If the default ``manifest_directives`` do not meet your needs, you can set ``manifest_directives_full`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
 
 .. note::
    The use of ``manifest_directives`` requires installing the optional ``distlib`` Python dependency.

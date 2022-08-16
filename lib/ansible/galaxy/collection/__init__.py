@@ -464,6 +464,7 @@ def build_collection(u_collection_path, u_output_path, force):
         collection_meta['name'],  # type: ignore[arg-type]
         collection_meta['build_ignore'],  # type: ignore[arg-type]
         collection_meta.get('manifest_directives', Sentinel),  # type: ignore[arg-type]
+        collection_meta.get('manifest_directives_full', False),  # type: ignore[arg-type]
     )
 
     artifact_tarball_file_name = '{ns!s}-{name!s}-{ver!s}.tar.gz'.format(
@@ -1044,60 +1045,84 @@ def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
     }
 
 
-def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives):
-    # type: (bytes, str, str, list[str], list[str]) -> FilesManifestType
-    if ignore_patterns and manifest_directives is not Sentinel:
-        raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
+def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives, manifest_directives_full):
+    # type: (bytes, str, str, list[str], list[str], bool) -> FilesManifestType
+    has_manifest = manifest_directives is not Sentinel
 
-    if manifest_directives is not Sentinel and not HAS_DISTLIB:
-        raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
+    if ignore_patterns and has_manifest:
+        raise AnsibleError(f'"build_ignore" and "manifest_directives" are mutually exclusive')
 
-    if manifest_directives is not Sentinel:
-        return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives)
+    if has_manifest:
+        return _build_files_manifest_distlib(
+            b_collection_path,
+            namespace,
+            name,
+            manifest_directives,
+            full=manifest_directives_full
+        )
 
     return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
 
-def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives):
+def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, full=False):
     # type: (bytes, str, str, list[str]) -> FilesManifestType
-    if manifest_directives is Sentinel or manifest_directives is None:
+
+    if not HAS_DISTLIB:
+        raise AnsibleError(f'Use of "manifest_directives" requires the python "distlib" library')
+
+    if manifest_directives in (Sentinel, None):
         manifest_directives = []
 
     if not is_sequence(manifest_directives):
-        raise AnsibleError(f'manifest_directives must be a list, got: {manifest_directives.__class__.__name__}')
+        raise AnsibleError(f'"manifest_directives" must be a list, got: {manifest_directives.__class__.__name__}')
 
-    directives = [
-        'include meta/*.yml',
-        'include *.txt *.md *.rst COPYING LICENSE',
-        'recursive-include tests **',
-        'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt',
-        'recursive-include roles **.yml **.yaml **.json **.j2',
-        'recursive-include playbooks **.yml **.yaml **.json',
-        'recursive-include changelogs **.yml **.yaml',
-        'recursive-include plugins */**.py',
-    ]
+    if not isinstance(full, bool):
+        raise AnsibleError(
+            f'"manifest_directives_full" is expected to be a boolean, got: {manifest_directives_full.__class__.__name__}'
+        )
 
-    plugins = set(l.package.split('.')[-1] for d, l in get_all_plugin_loaders())
-    for plugin in sorted(plugins):
-        if plugin in ('modules', 'module_utils'):
-            continue
-        elif plugin in C.DOCUMENTABLE_PLUGINS:
-            directives.append(
-                f'recursive-include plugins/{plugin} **.yml **.yaml'
-            )
+    if full and not manifest_directives:
+        raise AnsibleError(
+            '"manifest_directives_full" was set to True, but no directives were defined. '
+            'This would produce an empty collection artifact'
+        )
 
-    directives.extend([
-        'recursive-include plugins/modules **.ps1 **.yml **.yaml',
-        'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs',
-    ])
+    directives = []
+    if full:
+        directives.extend(manifest_directives)
+    else:
+        directives.extend([
+            'include meta/*.yml',
+            'include *.txt *.md *.rst COPYING LICENSE',
+            'recursive-include tests **',
+            'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt',
+            'recursive-include roles **.yml **.yaml **.json **.j2',
+            'recursive-include playbooks **.yml **.yaml **.json',
+            'recursive-include changelogs **.yml **.yaml',
+            'recursive-include plugins */**.py',
+        ])
 
-    directives.extend(manifest_directives)
+        plugins = set(l.package.split('.')[-1] for d, l in get_all_plugin_loaders())
+        for plugin in sorted(plugins):
+            if plugin in ('modules', 'module_utils'):
+                continue
+            elif plugin in C.DOCUMENTABLE_PLUGINS:
+                directives.append(
+                    f'recursive-include plugins/{plugin} **.yml **.yaml'
+                )
 
-    directives.extend([
-        f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
-        'recursive-exclude tests/output **',
-        'global-exclude /.* /__pycache__',
-    ])
+        directives.extend([
+            'recursive-include plugins/modules **.ps1 **.yml **.yaml',
+            'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs',
+        ])
+
+        directives.extend(manifest_directives)
+
+        directives.extend([
+            f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
+            'recursive-exclude tests/output **',
+            'global-exclude /.* /__pycache__',
+        ])
 
     display.vvv('Manifest Directives:')
     display.vvv(textwrap.indent('\n'.join(directives), '    '))
@@ -1531,6 +1556,7 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
         collection_meta['namespace'], collection_meta['name'],
         collection_meta['build_ignore'],
         collection_meta.get('manifest_directives', Sentinel),
+        collection_meta.get('manifest_directives_full', False),
     )
 
     collection_output_path = _build_collection_dir(
