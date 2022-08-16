@@ -385,7 +385,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         if not self.controller:
             con = self.get_controller_target_connections()[0]
 
-            for dummy in range(1, 60):
+            for dummy in range(1, 10):
                 try:
                     con.run(['id'], capture=True)
                 except SubprocessError as ex:
@@ -395,6 +395,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                     time.sleep(1)
                 else:
                     return
+
+            raise ApplicationError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
