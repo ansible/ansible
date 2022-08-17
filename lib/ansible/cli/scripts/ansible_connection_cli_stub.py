@@ -85,11 +85,11 @@ class ConnectionProcess(object):
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
 
-    def start(self, variables):
-        try:
-            messages = list()
-            result = {}
+    def start(self, options):
+        messages = list()
+        result = {}
 
+        try:
             messages.append(('vvvv', 'control socket path is %s' % self.socket_path))
 
             # If this is a relative path (~ gets expanded later) then plug the
@@ -100,7 +100,7 @@ class ConnectionProcess(object):
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
             try:
-                self.connection.set_options(var_options=variables)
+                self.connection.set_options(direct=options)
             except ConnectionError as exc:
                 messages.append(('debug', to_text(exc)))
                 raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
@@ -237,15 +237,15 @@ def main():
 
     try:
         # read the play context data via stdin, which means depickling it
-        vars_data = read_stream(stdin)
+        opts_data = read_stream(stdin)
         init_data = read_stream(stdin)
 
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')
-            variables = cPickle.loads(vars_data, encoding='bytes')
+            options = cPickle.loads(opts_data, encoding='bytes')
         else:
             pc_data = cPickle.loads(init_data)
-            variables = cPickle.loads(vars_data)
+            options = cPickle.loads(opts_data)
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
@@ -283,7 +283,7 @@ def main():
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, task_uuid, ansible_playbook_pid)
-                        process.start(variables)
+                        process.start(options)
                     except Exception:
                         messages.append(('error', traceback.format_exc()))
                         rc = 1
@@ -306,7 +306,7 @@ def main():
                 messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
                 try:
-                    conn.set_options(var_options=variables)
+                    conn.set_options(direct=options)
                 except ConnectionError as exc:
                     messages.append(('debug', to_text(exc)))
                     raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
