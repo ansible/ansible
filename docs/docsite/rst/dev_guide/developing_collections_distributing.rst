@@ -250,7 +250,12 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
 
 The ``manifest.directives`` supplied in :file:`galaxy.yml` are inserted after the default includes and before the default excludes.
 
-To enable the use of manifest directives without supplying your own, insert either ``manifest: {}`` or ``manifest: null`` in the :file:`galaxy.yml` file and remove any use of ``build_ignore``.
+To enable the use of manifest directives without supplying your own, set ``manifest.directives`` to either ``[]`` or ``null`` in the :file:`galaxy.yml` file and remove any use of ``build_ignore``:
+
+.. code-block:: yaml
+
+   manifest:
+     directives: []
 
 If the default manifest directives do not meet your needs, you can set ``manifest.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. You then must specify a  full compliment of manifest directives in :file:`galaxy.yml`. The defaults documented above are a good starting point.
 
