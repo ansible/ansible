@@ -10,8 +10,8 @@ You can set up a ``requirements.yml`` file to install multiple collections in on
 
    # With the collection name, version, and source options
    - name: my_namespace.my_other_collection
-     version: >=1.2.0 # Version range identifiers (default: ``*``)'
-     source: ... # The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
+     version: ">=1.2.0" # Version range identifiers (default: ``*``)
+     source: ... # The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)
 
 You can specify four keys for each collection entry:
 
