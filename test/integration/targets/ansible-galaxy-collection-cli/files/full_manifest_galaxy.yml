@@ -1,0 +1,39 @@
+namespace: ns
+name: col
+version: 2.0.0
+readme: README.rst
+authors:
+    - Ansible
+manifest:
+  omit_default_directives: true
+  directives:
+    - include meta/*.yml
+    - include *.txt *.md *.rst COPYING LICENSE
+    - recursive-include tests **
+    - recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt
+    - recursive-include roles **.yml **.yaml **.json **.j2
+    - recursive-include playbooks **.yml **.yaml **.json
+    - recursive-include changelogs **.yml **.yaml
+    - recursive-include plugins */**.py
+    - recursive-include plugins/become **.yml **.yaml
+    - recursive-include plugins/cache **.yml **.yaml
+    - recursive-include plugins/callback **.yml **.yaml
+    - recursive-include plugins/cliconf **.yml **.yaml
+    - recursive-include plugins/connection **.yml **.yaml
+    - recursive-include plugins/filter **.yml **.yaml
+    - recursive-include plugins/httpapi **.yml **.yaml
+    - recursive-include plugins/inventory **.yml **.yaml
+    - recursive-include plugins/lookup **.yml **.yaml
+    - recursive-include plugins/netconf **.yml **.yaml
+    - recursive-include plugins/shell **.yml **.yaml
+    - recursive-include plugins/strategy **.yml **.yaml
+    - recursive-include plugins/test **.yml **.yaml
+    - recursive-include plugins/vars **.yml **.yaml
+    - recursive-include plugins/modules **.ps1 **.yml **.yaml
+    - recursive-include plugins/module_utils **.ps1 **.psm1 **.cs
+    - exclude foo.txt
+    - recursive-exclude docs/foobar **
+    - exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json ns-col-*.tar.gz
+    - recursive-exclude tests/output **
+    - global-exclude /.* /__pycache__
+    - include galaxy.yml
