@@ -36,6 +36,7 @@ from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 import yaml
 
@@ -530,6 +531,7 @@ def _normalize_galaxy_yml_manifest(
     string_keys = set()  # type: set[str]
     list_keys = set()  # type: set[str]
     dict_keys = set()  # type: set[str]
+    sentinel_keys = set()  # type: set[str]
 
     for info in galaxy_yml_schema:
         if info.get('required', False):
@@ -539,10 +541,11 @@ def _normalize_galaxy_yml_manifest(
             'str': string_keys,
             'list': list_keys,
             'dict': dict_keys,
+            'sentinel': sentinel_keys,
         }[info.get('type', 'str')]
         key_list_type.add(info['key'])
 
-    all_keys = frozenset(list(mandatory_keys) + list(string_keys) + list(list_keys) + list(dict_keys))
+    all_keys = frozenset(mandatory_keys | string_keys | list_keys | dict_keys | sentinel_keys)
 
     set_keys = set(galaxy_yml.keys())
     missing_keys = mandatory_keys.difference(set_keys)
@@ -577,6 +580,10 @@ def _normalize_galaxy_yml_manifest(
     for optional_dict in dict_keys:
         if optional_dict not in galaxy_yml:
             galaxy_yml[optional_dict] = {}
+
+    for optional_sentinel in sentinel_keys:
+        if optional_sentinel not in galaxy_yml:
+            galaxy_yml[optional_sentinel] = Sentinel
 
     # NOTE: `version: null` is only allowed for `galaxy.yml`
     # NOTE: and not `MANIFEST.json`. The use-case for it is collections
