@@ -1,0 +1,2 @@
+minor_changes:
+- yum_repository - do not give the ``async`` parameter a default value anymore, since this option is deprecated in RHEL 8. This means that ``async = 1`` won't be added to repository files if omitted, but it can still be set explicitly if needed.

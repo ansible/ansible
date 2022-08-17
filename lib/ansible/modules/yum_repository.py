@@ -23,8 +23,11 @@ options:
     description:
       - If set to C(yes) Yum will download packages and metadata from this
         repo in parallel, if possible.
+      - In ansible-core 2.11, 2.12, and 2.13 the default value is C(true).
+      - This option has been deprecated in RHEL 8. If you're using one of the
+        versions listed above, you can set this option to None to avoid passing an
+        unknown configuration option.
     type: bool
-    default: 'yes'
   bandwidth:
     description:
       - Maximum available network bandwidth in bytes/second. Used with the
@@ -648,7 +651,7 @@ def main():
         username=dict(),
     )
 
-    argument_spec['async'] = dict(type='bool', default=True)
+    argument_spec['async'] = dict(type='bool')
 
     module = AnsibleModule(
         argument_spec=argument_spec,
