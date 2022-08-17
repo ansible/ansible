@@ -106,7 +106,7 @@
   - This uses C(fnmatch) to match the files or directories.
   - Some directories and files like C(galaxy.yml), C(*.pyc), C(*.retry), and
     C(.git) are always filtered.
-  - Mutually exclusive with C(manifest_directives)
+  - Mutually exclusive with C(manifest)
   type: list
   version_added: '2.10'
 
