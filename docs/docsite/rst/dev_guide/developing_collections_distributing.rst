@@ -152,7 +152,7 @@ You can upload your tarball to one or more distribution servers. You can also di
 Ignoring files and folders
 --------------------------
 
-For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
+You can exclude files from your collection with either  :ref:`build_ignore <build_ignore>` or  :ref:`manifest_directive`. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
 
 
 .. _build_ignore:
@@ -195,7 +195,7 @@ Manifest Directives
 
 .. versionadded:: 2.14
 
-The :file:`galaxy.yml` file supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
+The :file:`galaxy.yml` file supports manifest directives that are historically used in Python packaging, as described in `MANIFEST.in commands <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
 
 .. note::
    The use of ``manifest`` requires installing the optional ``distlib`` Python dependency.
@@ -203,7 +203,7 @@ The :file:`galaxy.yml` file supports manifest directives that are historically u
 .. note::
    The ``manifest`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
 
-For example to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives, set the following in your :file:`galaxy.yml` file:
+For example, to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well as any ``.tar.gz`` archives, set the following in your :file:`galaxy.yml` file:
 
 .. code-block:: yaml
 
@@ -248,11 +248,11 @@ By default, the ``MANIFEST.in`` style directives would exclude all files by defa
 .. note::
    ``<namespace>-<name>-*.tar.gz`` is expanded with the actual ``namespace`` and ``name``.
 
-The ``manifest.directives`` supplied in :file:`galaxy.yml` are inserted after the default includes, and before the default excludes.
+The ``manifest.directives`` supplied in :file:`galaxy.yml` are inserted after the default includes and before the default excludes.
 
-To enable the use of manifest directives without supplying your own, insert either ``manifest: {}`` or ``manifest: null`` in the :file:`galaxy.yml` file, ensuring to remove the use of ``build_ignore``.
+To enable the use of manifest directives without supplying your own, insert either ``manifest: {}`` or ``manifest: null`` in the :file:`galaxy.yml` file and remove any use of ``build_ignore``.
 
-If the default manifest directives do not meet your needs, you can set ``manifest.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
+If the default manifest directives do not meet your needs, you can set ``manifest.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. You then must specify a  full compliment of manifest directives in :file:`galaxy.yml`. The defaults documented above are a good starting point.
 
 Below is an example where the default directives are not included.
 
