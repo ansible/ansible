@@ -24,6 +24,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins import get_plugin_class
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
@@ -1088,7 +1089,8 @@ class TaskExecutor:
         # deals with networking sub_plugins (network_cli/httpapi/netconf)
         sub = getattr(self._connection, '_sub_plugin', None)
         if sub is not None and sub.get('type') != 'external':
-            varnames.extend(self._set_plugin_options(sub.get('type'), variables, templar, task_keys))
+            plugin_type = get_plugin_class(sub.get("obj"))
+            varnames.extend(self._set_plugin_options(plugin_type, variables, templar, task_keys))
         sub_conn = getattr(self._connection, 'ssh_type_conn', None)
         if sub_conn is not None:
             varnames.extend(self._set_plugin_options("ssh_type_conn", variables, templar, task_keys))
