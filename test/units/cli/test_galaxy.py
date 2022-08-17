@@ -640,7 +640,7 @@ def test_collection_build(collection_artifact):
         tar_members = tar.getmembers()
 
         valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md',
-                       'runme.sh']
+                       'runme.sh', 'meta', 'meta/runtime.yml']
         assert len(tar_members) == len(valid_files)
 
         # Verify the uid and gid is 0 and the correct perms are set
@@ -696,16 +696,16 @@ def test_collection_build(collection_artifact):
         finally:
             files_file.close()
 
-        assert len(files['files']) == 7
+        assert len(files['files']) == 9
         assert files['format'] == 1
         assert len(files.keys()) == 2
 
-        valid_files_entries = ['.', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md', 'runme.sh']
+        valid_files_entries = ['.', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md', 'runme.sh', 'meta', 'meta/runtime.yml']
         for file_entry in files['files']:
             assert file_entry['name'] in valid_files_entries
             assert file_entry['format'] == 1
 
-            if file_entry['name'] in ['plugins/README.md', 'runme.sh']:
+            if file_entry['name'] in ['plugins/README.md', 'runme.sh', 'meta/runtime.yml']:
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
                 # Can't test the actual checksum as the html link changes based on the version or the file contents

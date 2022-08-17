@@ -1,0 +1,4 @@
+---
+# Collections must specify a minimum required ansible version to upload
+# to galaxy
+# requires_ansible: '>=2.9.10'
