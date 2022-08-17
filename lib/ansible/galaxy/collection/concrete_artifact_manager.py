@@ -65,7 +65,7 @@ class ConcreteArtifactsManager:
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]
-        self._artifact_meta_cache = {}  # type: dict[bytes, dict[str, str | list[str] | dict[str, str] | None]]
+        self._artifact_meta_cache = {}  # type: dict[bytes, dict[str, str | list[str] | dict[str, str] | None | t.Type[Sentinel]]]
         self._galaxy_collection_cache = {}  # type: dict[Candidate | Requirement, tuple[str, str, GalaxyToken]]
         self._galaxy_collection_origin_cache = {}  # type: dict[Candidate, tuple[str, list[dict[str, str]]]]
         self._b_working_directory = b_working_directory  # type: bytes
@@ -287,7 +287,7 @@ class ConcreteArtifactsManager:
         return collection_dependencies  # type: ignore[return-value]
 
     def get_direct_collection_meta(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> dict[str, t.Union[str, dict[str, str], list[str], None]]
+        # type: (t.Union[Candidate, Requirement]) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
         """Extract meta from the given on-disk collection artifact."""
         try:  # FIXME: use unique collection identifier as a cache key?
             return self._artifact_meta_cache[collection.src]
@@ -517,11 +517,11 @@ def _consume_file(read_from, write_to=None):
 
 
 def _normalize_galaxy_yml_manifest(
-        galaxy_yml,  # type: dict[str, t.Union[str, list[str], dict[str, str], None]]
+        galaxy_yml,  # type: dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
         b_galaxy_yml_path,  # type: bytes
         require_build_metadata=True,  # type: bool
 ):
-    # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
+    # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
     galaxy_yml_schema = (
         get_collections_galaxy_meta_info()
     )  # type: list[dict[str, t.Any]]  # FIXME: <--
@@ -598,7 +598,7 @@ def _normalize_galaxy_yml_manifest(
 def _get_meta_from_dir(
         b_path,  # type: bytes
         require_build_metadata=True,  # type: bool
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
+):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
     try:
         return _get_meta_from_installed_dir(b_path)
     except LookupError:
@@ -608,7 +608,7 @@ def _get_meta_from_dir(
 def _get_meta_from_src_dir(
         b_path,  # type: bytes
         require_build_metadata=True,  # type: bool
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
+):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
     galaxy_yml = os.path.join(b_path, _GALAXY_YAML)
     if not os.path.isfile(galaxy_yml):
         raise LookupError(
@@ -677,7 +677,7 @@ def _get_json_from_installed_dir(
 
 def _get_meta_from_installed_dir(
         b_path,  # type: bytes
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
+):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
     manifest = _get_json_from_installed_dir(b_path, MANIFEST_FILENAME)
     collection_info = manifest['collection_info']
 
@@ -698,7 +698,7 @@ def _get_meta_from_installed_dir(
 
 def _get_meta_from_tar(
         b_path,  # type: bytes
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
+):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
     if not tarfile.is_tarfile(b_path):
         raise AnsibleError(
             "Collection artifact at '{path!s}' is not a valid tar file.".
