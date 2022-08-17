@@ -124,6 +124,7 @@ class ActionModule(ActionBase):
                 'minutes': {'type': int},  # Don't break backwards compat, allow floats, by using int callable
                 'seconds': {'type': int},  # Don't break backwards compat, allow floats, by using int callable
                 'prompt': {'type': 'str'},
+                'silent': {'type': bool, 'default': False},
             },
             mutually_exclusive=(
                 ('minutes', 'seconds'),
@@ -133,6 +134,7 @@ class ActionModule(ActionBase):
         duration_unit = 'minutes'
         prompt = None
         seconds = None
+        silent = 0
         echo = new_module_args['echo']
         echo_prompt = ''
         result.update(dict(
@@ -181,8 +183,11 @@ class ActionModule(ActionBase):
                 signal.alarm(seconds)
 
                 # show the timer and control prompts
-                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                display.display("New_module_args_seconds is %d silent is %s" % (new_module_args['seconds'], silent))
+                display.display("New_module_args_silent is %d silent is %s" % (new_module_args['silent'], silent))
+                if new_module_args['silent'] == silent:
+                    display.display("Pausingggggg for %d seconds%s" % (seconds, echo_prompt))
+                    display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
 
                 # show the prompt specified in the task
                 if new_module_args['prompt']:

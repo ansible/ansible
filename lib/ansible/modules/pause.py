@@ -36,6 +36,11 @@ options:
     type: bool
     default: 'yes'
     version_added: 2.5
+  silent:
+    description:
+      - Silent the help info
+    type: bool
+    default: 'no'
 author: "Tim Bielawa (@tbielawa)"
 extends_documentation_fragment:
   -  action_common_attributes
