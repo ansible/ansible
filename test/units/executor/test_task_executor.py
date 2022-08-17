@@ -334,6 +334,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context.update_vars.return_value = None
 
         mock_connection = MagicMock()
+        mock_connection.force_persistence = False
+        mock_connection.supports_persistence = False
         mock_connection.set_host_overrides.return_value = None
         mock_connection._connect.return_value = None
 
