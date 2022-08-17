@@ -152,7 +152,7 @@ You can upload your tarball to one or more distribution servers. You can also di
 Ignoring files and folders
 --------------------------
 
-You can exclude files from your collection with either  :ref:`build_ignore <build_ignore>` or  :ref:`manifest_directive`. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
+You can exclude files from your collection with either  :ref:`build_ignore <build_ignore>` or  :ref:`manifest_directives`. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
 
 
 .. _build_ignore:
