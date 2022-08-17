@@ -24,6 +24,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins import get_plugin_class
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
@@ -584,6 +585,17 @@ class TaskExecutor:
         # feed back into pc to ensure plugins not using get_option can get correct value
         self._connection._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=vars_copy, templar=templar)
 
+        # for persistent connections, initialize socket path and start connection manager
+        if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
+            self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
+            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
+            display.vvvv('using connection plugin %s' % self._connection.transport, host=self._play_context.remote_addr)
+
+            options = self._connection.get_options()
+            socket_path = start_connection(self._play_context, options, self._task._uuid)
+            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+            setattr(self._connection, '_socket_path', socket_path)
+
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden
         if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
@@ -992,31 +1004,7 @@ class TaskExecutor:
         # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
 
-        if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
-            self._play_context.timeout = connection.get_option('persistent_command_timeout')
-            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
-            display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-
-            options = self._get_persistent_connection_options(connection, cvars, templar)
-            socket_path = start_connection(self._play_context, options, self._task._uuid)
-            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
-            setattr(connection, '_socket_path', socket_path)
-
         return connection
-
-    def _get_persistent_connection_options(self, connection, final_vars, templar):
-
-        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
-        plugin = connection._sub_plugin
-        if plugin.get('type'):
-            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
-
-        options = {}
-        for k in option_vars:
-            if k in final_vars:
-                options[k] = templar.template(final_vars[k])
-
-        return options
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:
@@ -1025,6 +1013,10 @@ class TaskExecutor:
             # Some plugins are assigned to private attrs, ``become`` is not
             plugin = getattr(self._connection, plugin_type)
 
+        # network_cli's "real" connection plugin is not named connection
+        # to avoid the confusion of having connection.connection
+        if plugin_type == "ssh_type_conn":
+            plugin_type = "connection"
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
         options = {}
         for k in option_vars:
@@ -1094,6 +1086,15 @@ class TaskExecutor:
                     pass  # some plugins don't support all base flags
             self._play_context.prompt = self._connection.become.prompt
 
+        # deals with networking sub_plugins (network_cli/httpapi/netconf)
+        sub = getattr(self._connection, '_sub_plugin', None)
+        if sub is not None and sub.get('type') != 'external':
+            plugin_type = get_plugin_class(sub.get("obj"))
+            varnames.extend(self._set_plugin_options(plugin_type, variables, templar, task_keys))
+        sub_conn = getattr(self._connection, 'ssh_type_conn', None)
+        if sub_conn is not None:
+            varnames.extend(self._set_plugin_options("ssh_type_conn", variables, templar, task_keys))
+
         return varnames
 
     def _get_action_handler(self, connection, templar):
@@ -1156,7 +1157,7 @@ class TaskExecutor:
         return handler, module
 
 
-def start_connection(play_context, variables, task_uuid):
+def start_connection(play_context, options, task_uuid):
     '''
     Starts the persistent connection
     '''
@@ -1205,7 +1206,7 @@ def start_connection(play_context, variables, task_uuid):
 
     try:
         termios.tcsetattr(master, termios.TCSANOW, new)
-        write_to_file_descriptor(master, variables)
+        write_to_file_descriptor(master, options)
         write_to_file_descriptor(master, play_context.serialize())
 
         (stdout, stderr) = p.communicate()

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix for network_cli not getting all relevant connection options
