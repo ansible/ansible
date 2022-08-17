@@ -197,6 +197,12 @@ Manifest Directives
 
 The :file:`galaxy.yml` file supports manifest directives that are historically used in Python packaging, as described `here <https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands>`_.
 
+.. note::
+   The use of ``manifest`` requires installing the optional ``distlib`` Python dependency.
+
+.. note::
+   The ``manifest`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
+
 For example to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives, set the following in your :file:`galaxy.yml` file:
 
 .. code-block:: yaml
@@ -205,7 +211,6 @@ For example to exclude the :file:`sensitive` folder within the ``playbooks`` fol
      directives:
        - recursive-exclude playbooks/sensitive **
        - global-exclude *.tar.gz
-     omit_default_directives: false
 
 By default, the ``MANIFEST.in`` style directives would exclude all files by default, but there are default directives in place. Those default directives are described below. To see the directives in use during build, pass ``-vvv`` with the ``ansible-galaxy collection build`` command.
 
@@ -249,11 +254,18 @@ To enable the use of manifest directives without supplying your own, insert eith
 
 If the default manifest directives do not meet your needs, you can set ``manifest.omit_default_directives`` to a value of ``true`` in :file:`galaxy.yml`. This will require a full compliment of manifest directives to be specified in :file:`galaxy.yml`. The defaults documented above are a good starting point.
 
-.. note::
-   The use of ``manifest`` requires installing the optional ``distlib`` Python dependency.
+Below is an example where the default directives are not included.
 
-.. note::
-   The ``manifest`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
+.. code-block:: yaml
+
+   manifest:
+     directives:
+       - include meta/runtime.yml
+       - include README.md LICENSE
+       - recursive-include plugins */**.py
+       - exclude galaxy.yml MANIFEST.json FILES.json <namespace>-<name>-*.tar.gz
+       - recursive-exclude tests/output **
+     omit_default_directives: true
 
 
 .. _signing_collections:
