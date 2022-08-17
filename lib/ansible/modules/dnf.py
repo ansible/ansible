@@ -37,7 +37,7 @@ options:
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks.
-        Use M(ansible.builtin.package_facts) instead.
+        Use M(ansible.builtin.package_facts) instead of the C(list) argument as a best practice.
     type: str
 
   state:
