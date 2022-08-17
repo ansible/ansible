@@ -129,6 +129,7 @@ from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
+from ansible.utils.sentinel import Sentinel
 
 
 display = Display()
@@ -1060,10 +1061,10 @@ def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
 
 def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_control):
     # type: (bytes, str, str, list[str], dict[str, t.Any]) -> FilesManifestType
-    if ignore_patterns and manifest_control:
+    if ignore_patterns and manifest_control is not Sentinel:
         raise AnsibleError('"build_ignore" and "manifest" are mutually exclusive')
 
-    if manifest_control:
+    if manifest_control is not Sentinel:
         return _build_files_manifest_distlib(
             b_collection_path,
             namespace,
@@ -1079,6 +1080,9 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
 
     if not HAS_DISTLIB:
         raise AnsibleError('Use of "manifest" requires the python "distlib" library')
+
+    if manifest_control is None:
+        manifest_control = {}
 
     try:
         control = ManifestControl(**manifest_control)
