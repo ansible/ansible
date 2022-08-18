@@ -69,10 +69,6 @@ class TestHost(unittest.TestCase):
 
     def test_equals_none(self):
         other = None
-        self.hostA == other
-        other == self.hostA
-        self.hostA != other
-        other != self.hostA
         self.assertNotEqual(self.hostA, other)
 
     def test_serialize(self):
