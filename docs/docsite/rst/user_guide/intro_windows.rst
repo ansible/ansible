@@ -1,4 +1,4 @@
 Windows Support
 ===============
 
-You can find documentation for using Ansible on Windows at :ref:`win_guide_index`.
+You can find documentation for using Ansible on Windows at :ref:`os_guide_index`.

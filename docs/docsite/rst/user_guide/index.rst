@@ -45,5 +45,4 @@ Here is the complete list of resources in the Ansible User Guide:
    sample_setup
    modules
    ../plugins/plugins
-   intro_bsd
    collections_using
