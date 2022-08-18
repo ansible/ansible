@@ -142,7 +142,6 @@ class ServiceScanService(BaseService):
 
     def _list_rh(self, services):
 
-        # print '%s --status-all | grep -E "is (running|stopped)"' % service_path
         p = re.compile(
             r'(?P<service>.*?)\s+[0-9]:(?P<rl0>on|off)\s+[0-9]:(?P<rl1>on|off)\s+[0-9]:(?P<rl2>on|off)\s+'
             r'[0-9]:(?P<rl3>on|off)\s+[0-9]:(?P<rl4>on|off)\s+[0-9]:(?P<rl5>on|off)\s+[0-9]:(?P<rl6>on|off)')

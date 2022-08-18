@@ -548,9 +548,7 @@ class DnfModule(YumDnf):
             e2 = str(e2)
         v2 = str(v2)
         r2 = str(r2)
-        # print '%s, %s, %s vs %s, %s, %s' % (e1, v1, r1, e2, v2, r2)
         rc = dnf.rpm.rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
-        # print '%s, %s, %s vs %s, %s, %s = %s' % (e1, v1, r1, e2, v2, r2, rc)
         return rc
 
     def _ensure_dnf(self):
