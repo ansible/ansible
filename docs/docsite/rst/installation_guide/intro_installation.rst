@@ -15,7 +15,47 @@ Ansible is an agentless automation tool that you install on a single host (refer
 Control node requirements
 =========================
 
-For your control node (the machine that runs Ansible), you can use nearly any UNIX-like machine with Python 3.9 or newer installed. This includes Red Hat, Debian, Ubuntu, macOS, BSDs, and Windows under a `Windows Subsystem for Linux (WSL) distribution <https://docs.microsoft.com/en-us/windows/wsl/about>`_. Windows without WSL is not natively supported as a control node; see `Matt Davis' blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ for more information.
+For your *control* node (the machine that runs Ansible), you can use nearly any UNIX-like machine with Python 3.9 or newer installed. This includes Red Hat, Debian, Ubuntu, macOS, BSDs, and Windows under a `Windows Subsystem for Linux (WSL) distribution <https://docs.microsoft.com/en-us/windows/wsl/about>`_. Windows without WSL is not natively supported as a control node; see `Matt Davis' blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ for more information.
+
+.. _managed_node_requirements:
+
+Managed node requirements
+=========================
+
+The *managed* node (the machine that Ansible is managing) does not require Ansible to be installed, but requires Python 2.7, or Python 3.5 - 3.11 to run Ansible library code.
+
+.. note::
+
+   Network modules are an exception and do not require Python on the managed device.  See :ref:`network_modules`.
+
+.. _node_requirements_summary:
+
+Node requirement summary
+========================
+
+The table below lists the current and historical versions of Python
+required on control and managed nodes.
+
+.. list-table::
+   :header-rows: 1
+
+   * - ansible-core Version
+     - Control node Python
+     - Managed node Python
+   * - 2.11
+     - Python 2.7, Python 3.5 - 3.9 `[†]`_
+     - Python 2.6 - 2.7, Python 3.5 - 3.9
+   * - 2.12
+     - Python 3.8 - 3.10
+     - Python 2.6 - 2.7, Python 3.5 - 3.10
+   * - 2.13
+     - Python 3.8 - 3.10
+     - Python 2.7, Python 3.5 - 3.10
+   * - 2.14
+     - Python 3.9 - 3.11
+     - Python 2.7, Python 3.5 - 3.11
+
+_`[†]`: Has a soft requirement of Python 3.8 as not packaged for older versions
 
 .. _getting_ansible:
 
