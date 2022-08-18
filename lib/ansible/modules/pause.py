@@ -41,6 +41,7 @@ options:
       - Do not show info output before pausing
     type: bool
     default: 'no'
+    version_added: 2.14
 author: "Tim Bielawa (@tbielawa)"
 extends_documentation_fragment:
   -  action_common_attributes

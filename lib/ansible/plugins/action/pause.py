@@ -140,7 +140,6 @@ class ActionModule(ActionBase):
         result.update(dict(
             changed=False,
             rc=0,
-            silent=silent,
             stderr='',
             stdout='',
             start=None,
