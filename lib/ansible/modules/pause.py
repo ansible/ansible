@@ -38,7 +38,7 @@ options:
     version_added: 2.5
   silent:
     description:
-      - Silent the help info
+      - Do not show info output before pausing
     type: bool
     default: 'no'
 author: "Tim Bielawa (@tbielawa)"
