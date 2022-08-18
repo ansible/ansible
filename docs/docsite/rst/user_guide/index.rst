@@ -24,7 +24,6 @@ Advanced features and reference
 
 * Manipulating :ref:`complex data <complex_data_manipulation>`
 * Using :ref:`plugins <plugins_lookup>`
-* Using :ref:`command-line tools <command_line_tools>`
 * Rejecting :ref:`specific modules <plugin_filtering_config>`
 * Module :ref:`maintenance <modules_support>`
 
@@ -36,9 +35,6 @@ Here is the complete list of resources in the Ansible User Guide:
 .. toctree::
    :maxdepth: 2
 
-   intro_adhoc
-   cheatsheet
-   command_line_tools
    vault
    complex_data_manipulation
    plugin_filtering_config
