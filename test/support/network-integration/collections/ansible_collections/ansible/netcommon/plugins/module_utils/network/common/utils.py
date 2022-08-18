@@ -127,7 +127,7 @@ class Entity(object):
         transform = Entity(module, argument_spec)
         value = dict(command='foo')
         result = transform(value)
-        print result
+        print(result)
         {'command': 'foo', 'display': 'text', 'validate': None}
 
     Supported argument spec:
