@@ -1,0 +1,2 @@
+bugfixes:
+  - winrm/psrp - fix using extra variables with fully qualified connection names (https://github.com/ansible/ansible/issues/78566).
