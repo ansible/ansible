@@ -80,13 +80,13 @@ The simplest way is to use ``ansible`` adhoc command:
 
 .. code:: shell
 
-    ansible -m library/my_test.py -a 'name=hello new=true' remotehost
+    ANSIBLE_LIBRARY=./library ansible -m my_test -a 'name=hello new=true' remotehost
 
 If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
 .. code:: shell
 
-    ansible -m library/my_test.py -a 'name=hello new=true' localhost
+    ANSIBLE_LIBRARY=./library ansible -m my_test -a 'name=hello new=true' localhost
 
 -  If for any reason (pdb, using print(), faster iteration, etc) you want to avoid going through Ansible,
    another way is to create an arguments file, a basic JSON config file that passes parameters to your module so that you can run it.
