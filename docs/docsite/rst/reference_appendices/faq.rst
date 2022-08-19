@@ -23,6 +23,15 @@ Where did this specific module go?
 
 IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`chat channels <communication_irc>`.
 
+.. _slow_install:
+
+How can I speed up Ansible on systems with slow disks?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible may feel sluggish on systems with slow disks, such as Raspberry PI. See `Ansible might be running slow if libyaml is not available <https://www.jeffgeerling.com/blog/2021/ansible-might-be-running-slow-if-libyaml-not-available>`_ for hints on how to improve this.
+
+
+
 .. _set_environment:
 
 How can I set the PATH or any other environment variable for a task or entire play?
@@ -708,15 +717,6 @@ For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 To determine if a keyword requires ``{{ }}`` or even supports templating, use ``ansible-doc -t keyword <name>``,
 this will return documentation on the keyword including a ``template`` field with the values ``explicit`` (requires ``{{ }}``),
 ``implicit`` (assumes ``{{ }}``, so no needed) or ``static`` (no templating supported, all characters will be interpreted literally)
-
-.. _why_no_wheel:
-
-Why don't you ship ansible in wheel format (or other packaging format) ?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-In most cases it has to do with maintainability. There are many ways to ship software and we do not have
-the resources to release Ansible on every platform.
-In some cases there are technical issues. For example, our dependencies are not present on Python Wheels.
 
 .. _ansible_host_delegated:
 

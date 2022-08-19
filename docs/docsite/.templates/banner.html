@@ -46,7 +46,7 @@
         /* temp extra banner to advertise AnsibeFest2021 */
         banner += extra_banner;
 
-        msg += 'You are reading the <b>latest</b> (stable) community version of the Ansible documentation. Red Hat subscribers, select <b>2.9</b> in the version selection to the left for the most recent Red Hat release.';
+        msg += 'You are reading the <b>latest</b> (stable) community version of the Ansible documentation. If you are a Red Hat customer, refer to the <a href="https://access.redhat.com/support/policy/updates/ansible-automation-platform">Ansible Automation Platform Life Cycle</a> page for subscription details.';
       } else if (startsWith(current_url_path, "/ansible/2.9/")) {
         msg += 'You are reading the latest Red Hat released version of the Ansible documentation. Community users can use this version, or select <b>latest</b> from the version selector to the left for the most recent community version.';
       } else if (startsWith(current_url_path, "/ansible/devel/")) {
