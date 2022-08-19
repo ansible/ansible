@@ -430,6 +430,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Return a list of options needed to run the container."""
         options = [
             '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
+            '--tmpfs', '/tmp',
+            '--tmpfs', '/run',
+            '--tmpfs', '/run/lock',  # some systemd containers require a separate tmpfs here, such as Ubuntu 20.04 and Ubuntu 22.04
             f'--privileged={str(self.config.privileged).lower()}',
         ]
 
