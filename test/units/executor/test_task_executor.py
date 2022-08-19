@@ -358,6 +358,7 @@ class TestTaskExecutor(unittest.TestCase):
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
+        te._connection_fqcn = MagicMock()
         context = MagicMock()
         te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
 

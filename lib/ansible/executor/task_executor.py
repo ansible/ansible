@@ -91,6 +91,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
+        self._connection_fqcn = None
         self._final_q = final_q
         self._loop_eval_error = None
 
@@ -948,6 +949,7 @@ class TaskExecutor:
             task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )
+        self._connection_fqcn = plugin_load_context.resolved_fqcn
 
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
@@ -1023,9 +1025,11 @@ class TaskExecutor:
                 options[k] = templar.template(variables[k])
 
         # add extras if plugin supports them
-        if getattr(self._connection, 'allow_extras', False):
+        ns = '.'.join(self._connection_fqcn.split('.')[0:2])
+        plugin_name = self._connection_fqcn.split(ns + '.', 1)[-1]
+        if getattr(self._connection, 'allow_extras', False) and ns in ('ansible.builtin', 'ansible.legacy'):
             for k in variables:
-                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
+                if k.startswith('ansible_%s_' % plugin_name) and k not in options:
                     options['_extras'][k] = templar.template(variables[k])
 
         task_keys = self._task.dump_attrs()

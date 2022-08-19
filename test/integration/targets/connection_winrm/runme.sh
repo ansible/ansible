@@ -2,10 +2,11 @@
 
 set -eux
 
+for INV in test_connection.inventory.j2 test_fqcn_connection.inventory.j2; do
 # make sure hosts are using winrm connections
 ansible -i ../../inventory.winrm localhost \
     -m template \
-    -a "src=test_connection.inventory.j2 dest=${OUTPUT_DIR}/test_connection.inventory" \
+    -a "src=$INV dest=${OUTPUT_DIR}/test_connection.inventory" \
     "$@"
 
 cd ../connection
@@ -21,3 +22,4 @@ cd ../connection_winrm
 
 ansible-playbook -i "${OUTPUT_DIR}/test_connection.inventory" tests.yml \
     "$@"
+done
