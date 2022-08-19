@@ -201,7 +201,7 @@ The :file:`galaxy.yml` file supports manifest directives that are historically u
    The use of ``manifest`` requires installing the optional ``distlib`` Python dependency.
 
 .. note::
-   The ``manifest`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.14 or newer, and is mutually exclusive with ``build_ignore``.
+   The ``manifest`` feature is only supported with ``ansible-galaxy collection build`` in ``ansible-core`` 2.14 or newer, and is mutually exclusive with ``build_ignore``.
 
 For example, to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well as any ``.tar.gz`` archives, set the following in your :file:`galaxy.yml` file:
 
