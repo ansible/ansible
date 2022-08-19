@@ -1025,9 +1025,13 @@ class TaskExecutor:
                 options[k] = templar.template(variables[k])
 
         # add extras if plugin supports them
-        ns = '.'.join(self._connection_fqcn.split('.')[0:2])
+        if '.' in self._connection_fqcn:
+            ns = '.'.join(self._connection_fqcn.split('.')[0:2])
+        else:
+            # ansible.legacy plugins do not include 'ansible.legacy.' in the resolved plugin name
+            ns = ''
         plugin_name = self._connection_fqcn.split(ns + '.', 1)[-1]
-        if getattr(self._connection, 'allow_extras', False) and ns in ('ansible.builtin', 'ansible.legacy'):
+        if getattr(self._connection, 'allow_extras', False) and ns in ('ansible.builtin', ''):
             for k in variables:
                 if k.startswith('ansible_%s_' % plugin_name) and k not in options:
                     options['_extras'][k] = templar.template(variables[k])
