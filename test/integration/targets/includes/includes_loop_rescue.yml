@@ -1,0 +1,29 @@
+- name: "Test rescue/always sections with includes in a loop, strategy={{ strategy }}"
+  hosts: localhost
+  gather_facts: false
+  strategy: "{{ strategy }}"
+  tasks:
+    - block:
+      - include_role:
+          name: "{{ item }}"
+        loop:
+          - a
+          - b
+      rescue:
+        - debug:
+            msg: rescue include_role in a loop
+      always:
+        - debug:
+            msg: always include_role in a loop
+
+    - block:
+      - include_tasks: "{{ item }}"
+        loop:
+          - a
+          - b
+      rescue:
+        - debug:
+            msg: rescue include_tasks in a loop
+      always:
+        - debug:
+            msg: always include_tasks in a loop

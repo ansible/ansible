@@ -826,8 +826,11 @@ class StrategyBase:
     def _load_included_file(self, included_file, iterator, is_handler=False):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
-        '''
 
+        Raises AnsibleError exception in case of a failure during including a file,
+        in such case the caller is responsible for marking the host(s) as failed
+        using PlayIterator.mark_host_failed().
+        '''
         display.debug("loading included file: %s" % included_file._filename)
         try:
             data = self._loader.load_from_file(included_file._filename)
@@ -863,15 +866,11 @@ class StrategyBase:
             for r in included_file._results:
                 r._result['failed'] = True
 
-            # mark all of the hosts including this file as failed, send callbacks,
-            # and increment the stats for this host
             for host in included_file._hosts:
                 tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
-                iterator.mark_host_failed(host)
-                self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
                 self._tqm.send_callback('v2_runner_on_failed', tr)
-            return []
+            raise AnsibleError(reason) from e
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)

@@ -234,6 +234,7 @@ class StrategyModule(StrategyBase):
 
             if len(included_files) > 0:
                 all_blocks = dict((host, []) for host in hosts_left)
+                failed_includes_hosts = set()
                 for included_file in included_files:
                     display.debug("collecting new blocks for %s" % included_file)
                     is_handler = False
@@ -256,12 +257,12 @@ class StrategyModule(StrategyBase):
                     except AnsibleParserError:
                         raise
                     except AnsibleError as e:
+                        if included_file._is_role:
+                            # include_role does not have on_include callback so display the error
+                            display.error(to_text(e), wrap_text=False)
                         for r in included_file._results:
                             r._result['failed'] = True
-
-                        for host in included_file._hosts:
-                            iterator.mark_host_failed(host)
-                        display.warning(to_text(e))
+                            failed_includes_hosts.add(r._host)
                         continue
 
                     for new_block in new_blocks:
@@ -281,6 +282,10 @@ class StrategyModule(StrategyBase):
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
+
+                for host in failed_includes_hosts:
+                    self._tqm._failed_hosts[host.name] = True
+                    iterator.mark_host_failed(host)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
                 for host in hosts_left:
