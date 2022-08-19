@@ -503,7 +503,7 @@ Since Ansible version 2.4, vars plugins only execute as needed when preparing to
 
 Vars plugins in collections are required to be enabled by the user.
 
-Legacy vars plugins are autoloaded by default, so you can prevent them from automatically running by setting ``REQUIRES_ENABLED`` to True.
+Legacy vars plugins are always loaded and run by default. You can prevent them from automatically running by setting ``REQUIRES_ENABLED`` to True.
 
 .. code-block:: python
 
