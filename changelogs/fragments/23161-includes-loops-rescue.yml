@@ -1,0 +1,2 @@
+bugfixes:
+  - "Properly execute rescue section when an include task fails in all loop iterations (https://github.com/ansible/ansible/issues/23161)"

@@ -273,6 +273,7 @@ class StrategyModule(StrategyBase):
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
                     included_tasks = []
+                    failed_includes_hosts = set()
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
                         is_handler = False
@@ -324,14 +325,17 @@ class StrategyModule(StrategyBase):
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:
+                            if included_file._is_role:
+                                # include_role does not have on_include callback so display the error
+                                display.error(to_text(e), wrap_text=False)
                             for r in included_file._results:
                                 r._result['failed'] = True
-
-                            for host in included_file._hosts:
-                                self._tqm._failed_hosts[host.name] = True
-                                iterator.mark_host_failed(host)
-                            display.error(to_text(e), wrap_text=False)
+                                failed_includes_hosts.add(r._host)
                             continue
+
+                    for host in failed_includes_hosts:
+                        self._tqm._failed_hosts[host.name] = True
+                        iterator.mark_host_failed(host)
 
                     # finally go through all of the hosts and append the
                     # accumulated blocks to their list of tasks

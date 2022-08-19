@@ -11,3 +11,6 @@ set +e
 result="$(ansible-playbook -i ../../inventory include_on_playbook_should_fail.yml -v "$@" 2>&1)"
 set -e
 grep -q "ERROR! 'include' is not a valid attribute for a Play" <<< "$result"
+
+ansible-playbook includes_loop_rescue.yml --extra-vars strategy=linear "$@"
+ansible-playbook includes_loop_rescue.yml --extra-vars strategy=free "$@"
