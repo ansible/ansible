@@ -43,6 +43,8 @@ def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
+    # FIXME: we load legacy/builtin plugins with all(), so the _load_name for those plugins does not reflect the fqcr.
+    # If ansible.builtin.host_group_vars is enabled (instead of the default, host_group_vars), the plugin will not run.
     vars_plugin_list = list(vars_loader.all())
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
         if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
@@ -54,26 +56,26 @@ def get_vars_from_path(loader, path, entities, stage):
                 vars_plugin_list.append(vars_plugin)
 
     for plugin in vars_plugin_list:
-        # Only plugins loaded via vars_loader.all() support REQUIRES_ENABLED = False. A collection plugin was enabled to get to this point.
-        # FIXME: support enabling builtin/legacy plugins by FQCN. They are loaded by all() and always the unqualified name.
-        not_legacy = '.' in plugin._load_name
+        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
+
+        # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
+        # This option does nothing for plugins in collections, but if it's set it should be True to reflect actual behavior.
+        legacy = not '.' in plugin._load_name
 
         # 2.x plugins shipped with ansible should require enabling (host_group_vars is enabled by default for backwards compat).
         # ansible.legacy should load automatically and run accoring to REQUIRES_ENABLED.
+        needs_enabled = not legacy
         if hasattr(plugin, 'REQUIRES_WHITELIST'):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
-            if not_legacy and not plugin.REQUIRES_WHITELIST:
-                # collection misleadingly has REQUIRES_WHITELIST = False, but the plugin does actually require enabling.
-                display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_WHITELIST = False is not supported.")
-            if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and plugin.REQUIRES_WHITELIST:
-                continue
+            needs_enabled = plugin.REQUIRES_WHITELIST
         elif hasattr(plugin, 'REQUIRES_ENABLED'):
-            if not_legacy and not plugin.REQUIRES_ENABLED:
-                # collection misleadingly has REQUIRES_ENABLED = False, but the plugin does actually require enabling.
-                display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED = False is not supported.")
-            if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and plugin.REQUIRES_ENABLED:
-                continue
+            needs_enabled = plugin.REQUIRES_ENABLED
+
+        if not legacy and not needs_enabled:
+            display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED = False is not supported.")
+        if legacy and plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and needs_enabled:
+            continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 
