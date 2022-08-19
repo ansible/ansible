@@ -90,11 +90,22 @@ class MypyTest(SanityMultipleVersion):
             display.warning(f'Skipping sanity test "{self.name}" due to missing virtual environment support on Python {args.controller_python.version}.')
             return SanitySkipped(self.name, python.version)
 
+        # Temporary hack to make Python 3.8 a remote-only Python version since we'll be dropping controller support for it soon.
+        # This avoids having to change annotations or add ignores for issues that are specific to that version.
+
+        change_version = '3.8'
+
+        if change_version not in CONTROLLER_PYTHON_VERSIONS or change_version in REMOTE_ONLY_PYTHON_VERSIONS:
+            raise Exception(f'Remove this hack now that Python {change_version} is not supported by the controller.')
+
+        controller_python_versions = tuple(version for version in CONTROLLER_PYTHON_VERSIONS if version != change_version)
+        remote_only_python_versions = REMOTE_ONLY_PYTHON_VERSIONS + (change_version,)
+
         contexts = (
-            MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], CONTROLLER_PYTHON_VERSIONS),
-            MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], CONTROLLER_PYTHON_VERSIONS),
-            MyPyContext('ansible-core', ['lib/ansible/'], CONTROLLER_PYTHON_VERSIONS),
-            MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], REMOTE_ONLY_PYTHON_VERSIONS),
+            MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], controller_python_versions),
+            MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], controller_python_versions),
+            MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
+            MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
         )
 
         unfiltered_messages = []  # type: t.List[SanityMessage]
