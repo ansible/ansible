@@ -21,11 +21,13 @@ class UnwantedEntry:
             modules_only=False,  # type: bool
             names=None,  # type: t.Optional[t.Tuple[str, ...]]
             ignore_paths=None,  # type: t.Optional[t.Tuple[str, ...]]
+            ansible_test_only=False,  # type: bool
     ):  # type: (...) -> None
         self.alternative = alternative
         self.modules_only = modules_only
         self.names = set(names) if names else set()
         self.ignore_paths = ignore_paths
+        self.ansible_test_only = ansible_test_only
 
     def applies_to(self, path, name=None):  # type: (str, t.Optional[str]) -> bool
         """Return True if this entry applies to the given path, otherwise return False."""
@@ -37,6 +39,9 @@ class UnwantedEntry:
                 return False
 
         if self.ignore_paths and any(path.endswith(ignore_path) for ignore_path in self.ignore_paths):
+            return False
+
+        if self.ansible_test_only and '/test/lib/ansible_test/_internal/' not in path:
             return False
 
         if self.modules_only:
@@ -113,6 +118,10 @@ class AnsibleUnwantedChecker(BaseChecker):
     unwanted_functions = {
         # see https://docs.python.org/3/library/tempfile.html#tempfile.mktemp
         'tempfile.mktemp': UnwantedEntry('tempfile.mkstemp'),
+
+        # os.chmod resolves as posix.chmod
+        'posix.chmod': UnwantedEntry('verified_chmod',
+                                     ansible_test_only=True),
 
         'sys.exit': UnwantedEntry('exit_json or fail_json',
                                   ignore_paths=(

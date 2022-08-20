@@ -33,6 +33,7 @@ from ...util import (
     get_type_map,
     remove_tree,
     sanitize_host_name,
+    verified_chmod,
 )
 
 from ...util_common import (
@@ -166,9 +167,9 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
         write_text_file(coverage_config_path, coverage_config, create_directories=True)
 
-        os.chmod(coverage_config_path, MODE_FILE)
+        verified_chmod(coverage_config_path, MODE_FILE)
         os.mkdir(coverage_output_path)
-        os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
+        verified_chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
 
     def setup_target(self):
         """Perform setup for code coverage on the target."""
