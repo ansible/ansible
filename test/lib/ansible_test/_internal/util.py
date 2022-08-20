@@ -668,6 +668,16 @@ def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str
     return env
 
 
+def verified_chmod(path: str, mode: int) -> None:
+    """Perform chmod on the specified path and then verify the permissions were applied."""
+    os.chmod(path, mode)  # pylint: disable=ansible-bad-function
+
+    executable = any(mode & perm for perm in (stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH))
+
+    if executable and not os.access(path, os.X_OK):
+        raise ApplicationError(f'Path "{path}" should executable, but is not. Is the filesystem mounted with the "noexec" option?')
+
+
 def remove_tree(path):  # type: (str) -> None
     """Remove the specified directory, siliently continuing if the directory does not exist."""
     try:

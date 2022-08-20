@@ -37,6 +37,7 @@ from .util import (
     ApplicationError,
     SubprocessError,
     generate_name,
+    verified_chmod,
 )
 
 from .io import (
@@ -282,9 +283,9 @@ def get_injector_path():  # type: () -> str
         script = set_shebang(script, shebang)
 
         write_text_file(dst, script)
-        os.chmod(dst, mode)
+        verified_chmod(dst, mode)
 
-    os.chmod(injector_path, MODE_DIRECTORY)
+    verified_chmod(injector_path, MODE_DIRECTORY)
 
     def cleanup_injector():
         """Remove the temporary injector directory."""
@@ -345,7 +346,7 @@ def get_python_path(interpreter):  # type: (str) -> str
 
     create_interpreter_wrapper(interpreter, injected_interpreter)
 
-    os.chmod(python_path, MODE_DIRECTORY)
+    verified_chmod(python_path, MODE_DIRECTORY)
 
     if not PYTHON_PATHS:
         atexit.register(cleanup_python_paths)
@@ -383,7 +384,7 @@ def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str
 
     write_text_file(injected_interpreter, code)
 
-    os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
+    verified_chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
 def cleanup_python_paths():
