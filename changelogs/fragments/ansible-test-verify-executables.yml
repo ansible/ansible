@@ -1,0 +1,6 @@
+bugfixes:
+  - ansible-test - Temporary executables are now verified as executable after creation.
+                   Without this check, path injected scripts may not be found,
+                   typically on systems with ``/tmp`` mounted using the "noexec" option.
+                   This can manifest as a missing Python interpreter, or use of the wrong Python interpreter, as well
+                   as other error conditions.
