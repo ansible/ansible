@@ -1,0 +1,5 @@
+bugfixes:
+  - ansible-test - Test containers are now run with the ``--tmpfs`` option for ``/tmp``, ``/run`` and ``/run/lock``.
+                   This allows use of containers built without the ``VOLUME`` instruction.
+                   Additionally, containers with those volumes defined no longer create anonymous volumes for them.
+                   This avoids leaving behind volumes on the container host after the container is stopped and deleted.
