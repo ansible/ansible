@@ -151,8 +151,10 @@
     attributes_supported: yes
   when:
     - attribute_A_set is success
+    - attribute_A_set.stdout_lines
     - "'A' in attribute_A_set.stdout_lines[0].split()[0]"
     - attribute_A_unset is success
+    - attribute_A_unset.stdout_lines
     - "'A' not in attribute_A_unset.stdout_lines[0].split()[0]"
 
 - name: explicitly set file attribute "A"
