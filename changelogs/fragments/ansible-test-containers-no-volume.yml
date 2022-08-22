@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Test containers have been updated to remove the ``VOLUME`` instruction.
