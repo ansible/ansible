@@ -352,6 +352,28 @@ class ConfigManager(object):
 
         return options
 
+    def get_extra_vars(self, plugin_type, name, available_var_names):
+        extra_vars = []
+        for opt, pdef in self.get_configuration_definitions(plugin_type, name).items():
+            if 'meta_vars' in pdef and pdef['meta_vars']:
+                if pdef.get('type', 'str') != 'dict':
+                    raise AnsibleOptionsError(
+                        f"Invalid option definition for {plugin_type} plugin {name}. Option '{opt}' has type "
+                        f"{pdef.get('type', 'str')} but defined meta_vars which are only supported by type 'dict'."
+                    )
+
+                for var_entry in pdef['meta_vars']:
+                    if 'name' in var_entry and 'prefix' in var_entry:
+                        raise AnsibleOptionsError(f"Unsupported variable for {plugin_type} '{name}': {var_entry}")
+                    if 'prefix' in var_entry:
+                        for var_name in available_var_names:
+                            if not var_name.startswith(var_entry['prefix']):
+                                continue
+                            extra_vars.append((opt, var_name,))
+                    elif var_entry['name'] in available_var_names:
+                        extra_vars.append((opt, var_entry['name']))
+        return extra_vars
+
     def get_plugin_vars(self, plugin_type, name):
 
         pvars = []
@@ -365,6 +387,14 @@ class ConfigManager(object):
 
         options = []
         for option_name, pdef in self.get_configuration_definitions(plugin_type, name).items():
+            if 'meta_vars' in pdef and pdef['meta_vars']:
+                for var_entry in pdef['meta_vars']:
+                    if 'name' in var_entry and 'prefix' in var_entry:
+                        raise AnsibleOptionsError(f"Unsupported variable for {plugin_type} '{name}'. : {var_entry}")
+                    if 'name' in var_entry and variable == var_entry['name']:
+                        options.append(option_name)
+                    if 'prefix' in var_entry and variable.startswith(var_entry['prefix']):
+                        options.append(option_name)
             if 'vars' in pdef and pdef['vars']:
                 for var_entry in pdef['vars']:
                     if variable == var_entry['name']:

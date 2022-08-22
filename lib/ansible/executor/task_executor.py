@@ -1020,18 +1020,33 @@ class TaskExecutor:
 
         # create dict of 'templated vars'
         options = {'_extras': {}}
+
+        extra_option_vars = C.config.get_extra_vars('connection', self._connection._load_name, variables.keys())
+        varnames.extend([var for opt, var_name in extra_option_vars])
+        extras = {}
+        for name, var_name in extra_option_vars:
+            if name not in extras:
+                extras[name] = {}
+            extras[name].update({var_name: variables[var_name]})
+        options.update(extras)
+
+        # specific variables have precedence over prefixes
         for k in option_vars:
             if k in variables:
                 options[k] = templar.template(variables[k])
 
-        # add extras if plugin supports them
+        # backwards compat, add extras if plugin supports them
+        ns = ''  # legacy or builtin
         if '.' in self._connection_fqcn:
+            # builtin or a collection
             ns = '.'.join(self._connection_fqcn.split('.')[0:2])
-        else:
-            # ansible.legacy plugins do not include 'ansible.legacy.' in the resolved plugin name
-            ns = ''
-        plugin_name = self._connection_fqcn.split(ns + '.', 1)[-1]
         if getattr(self._connection, 'allow_extras', False) and ns in ('ansible.builtin', ''):
+            display.deprecated(
+                f"Update legacy plugin {self._connection_fqcn} to use config manager. "
+                f"Replace the attribute 'allow_extras' with a new option in the argspec that has 'meta_vars' defined.",
+                version=2.18
+            )
+            plugin_name = self._connection_fqcn.split(ns + '.', 1)[-1]
             for k in variables:
                 if k.startswith('ansible_%s_' % plugin_name) and k not in options:
                     options['_extras'][k] = templar.template(variables[k])

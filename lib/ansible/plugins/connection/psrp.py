@@ -303,6 +303,13 @@ options:
     vars:
     - name: ansible_psrp_configuration_name
     default: Microsoft.PowerShell
+  _extras:
+    description:
+      - Supports any additional variables permitted by the version of psrp.
+        The prefix "ansible_psrp_" (which is used to find the variables) is stripped before psrp uses them.
+    type: dict
+    meta_vars:
+      - prefix: ansible_psrp_
 """
 
 import base64
@@ -343,7 +350,6 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     allow_executable = False
     has_pipelining = True
-    allow_extras = True
 
     def __init__(self, *args, **kwargs):
         self.always_pipeline_modules = True

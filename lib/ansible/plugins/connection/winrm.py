@@ -138,6 +138,13 @@ DOCUMENTATION = """
         vars:
           - name: ansible_winrm_connection_timeout
         type: int
+      _extras:
+        description:
+          - Supports any additional variables permitted by the version of pywinrm.
+            The prefix "ansible_winrm_" (which is used to find the variables) is stripped before pywinrm uses them.
+        type: dict
+        meta_vars:
+          - prefix: ansible_winrm_
 """
 
 import base64
@@ -222,7 +229,6 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     allow_executable = False
     has_pipelining = True
-    allow_extras = True
 
     def __init__(self, *args, **kwargs):
 
