@@ -428,6 +428,15 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         options = [
             '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
             f'--privileged={str(self.config.privileged).lower()}',
+            # These temporary mount points need to be created at run time.
+            # Previously they were handled by the VOLUME instruction during container image creation.
+            # However, that approach creates anonymous volumes when running the container, which are then left behind after the container is deleted.
+            # These options eliminate the need for the VOLUME instruction, and override it if they are present.
+            # The mount options used are those typically found on Linux systems.
+            # Of special note is the "exec" option for "/tmp", which is required by ansible-test for path injection of executables using temporary directories.
+            '--tmpfs', '/tmp:exec',
+            '--tmpfs', '/run:exec',
+            '--tmpfs', '/run/lock',  # some systemd containers require a separate tmpfs here, such as Ubuntu 20.04 and Ubuntu 22.04
         ]
 
         if self.config.memory:
