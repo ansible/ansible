@@ -73,7 +73,6 @@ class TestHost(unittest.TestCase):
         assert not (other == self.hostA)
         assert self.hostA != other
         assert other != self.hostA
-        self.assertNotEqual(self.hostA, other)
 
     def test_serialize(self):
         group = Group('some_group')
