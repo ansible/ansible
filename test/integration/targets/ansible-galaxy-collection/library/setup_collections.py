@@ -87,6 +87,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 from functools import partial
 from multiprocessing import dummy as threading
+from multiprocessing import TimeoutError
+
+
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 120
 
 
 def publish_collection(module, collection):
@@ -241,7 +245,14 @@ def run_module():
 
     pool = threading.Pool(4)
     publish_func = partial(publish_collection, module)
-    result['results'] = pool.map(publish_func, module.params['collections'])
+    try:
+        result['results'] = pool.map_async(
+            publish_func, module.params['collections'],
+        ).get(timeout=COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT)
+    except TimeoutError as timeout_err:
+        module.fail_json(
+            'Timed out waiting for collections to be provisioned.',
+        )
 
     failed = bool(sum(
         r['build']['rc'] + r['publish']['rc'] for r in result['results']
