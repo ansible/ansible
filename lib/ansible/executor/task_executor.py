@@ -1022,7 +1022,7 @@ class TaskExecutor:
         options = {'_extras': {}}
 
         extra_option_vars = C.config.get_extra_vars('connection', self._connection._load_name, variables.keys())
-        varnames.extend([var for opt, var_name in extra_option_vars])
+        varnames.extend([var_name for opt, var_name in extra_option_vars])
         extras = {}
         for name, var_name in extra_option_vars:
             if name not in extras:

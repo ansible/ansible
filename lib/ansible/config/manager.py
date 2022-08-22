@@ -431,15 +431,40 @@ class ConfigManager(object):
 
         return ret
 
-    def _loop_entries(self, container, entry_list):
+    def _loop_entries(self, container, entry_list, meta_vars=False):
         ''' repeat code for value entry assignment '''
-
         value = None
         origin = None
+
+        if meta_vars:
+            combined_value = {}
+            entry_keys = ['name', 'prefix']  # mutually exclusive
+        else:
+            entry_keys = []
+
         for entry in entry_list:
-            name = entry.get('name')
+            for entry_key in entry_keys:
+                if entry_key in entry:
+                    name = entry.get(entry_key)
+                    break
+            else:
+                entry_key = 'name'
+                name = entry.get('name', None)
             try:
-                temp_value = container.get(name, None)
+                if entry_key == 'name':
+                    if meta_vars:
+                        temp_value = None
+                        if name in container:
+                            temp_value = {name: container[name]}
+                    else:
+                        temp_value = container.get(name, None)
+                elif entry_key == 'prefix':
+                    temp_value = None
+                    for container_key in container:
+                        if container_key.startswith(name):
+                            if temp_value is None:
+                                temp_value = {}
+                            temp_value.update({container_key: container[container_key]})
             except UnicodeEncodeError:
                 self.WARNINGS.add(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
                 continue
@@ -454,6 +479,11 @@ class ConfigManager(object):
                 # deal with deprecation of setting source, if used
                 if 'deprecated' in entry:
                     self.DEPRECATED.append((entry['name'], entry['deprecated']))
+
+                if meta_vars:
+                    combined_value.update(temp_value)
+        if meta_vars:
+            return combined_value
 
         return value, origin
 
@@ -497,6 +527,10 @@ class ConfigManager(object):
                     if direct_aliases:
                         value = direct_aliases[0]
                         origin = 'Direct'
+
+            if value is None and variables and defs[config].get('meta_vars'):
+                value = self._loop_entries(variables, defs[config]['meta_vars'], meta_vars=True)
+                origin = 'meta var: %s' % ','.join([var_name for var_name in value.keys()])
 
             if value is None and variables and defs[config].get('vars'):
                 # Use 'variable overrides' if present, highest precedence, but only present when querying running play
