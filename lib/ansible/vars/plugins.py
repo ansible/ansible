@@ -61,9 +61,6 @@ def get_vars_from_path(loader, path, entities, stage):
         # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
         # This option does nothing for plugins in collections, but if it's set it should be True to reflect actual behavior.
         legacy = '.' not in plugin._load_name
-
-        # 2.x plugins shipped with ansible should require enabling (host_group_vars is enabled by default for backwards compat).
-        # ansible.legacy should load automatically and run accoring to REQUIRES_ENABLED.
         needs_enabled = not legacy
         if hasattr(plugin, 'REQUIRES_WHITELIST'):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
