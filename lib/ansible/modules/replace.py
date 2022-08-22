@@ -110,7 +110,8 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+# NOTE: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+- name: Replace old hostname with new hostname
   ansible.builtin.replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
