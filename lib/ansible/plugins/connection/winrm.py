@@ -143,6 +143,7 @@ DOCUMENTATION = """
           - Supports any additional variables permitted by the version of pywinrm.
             The prefix "ansible_winrm_" (which is used to find the variables) is stripped before pywinrm uses them.
         type: dict
+        default: {}
         meta_vars:
           - prefix: ansible_winrm_
 """

@@ -308,6 +308,7 @@ options:
       - Supports any additional variables permitted by the version of psrp.
         The prefix "ansible_psrp_" (which is used to find the variables) is stripped before psrp uses them.
     type: dict
+    default: {}
     meta_vars:
       - prefix: ansible_psrp_
 """
