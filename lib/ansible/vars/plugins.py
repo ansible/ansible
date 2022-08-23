@@ -43,8 +43,6 @@ def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    # FIXME: we load legacy/builtin plugins with all(), so the _load_name for those plugins does not reflect the fqcr.
-    # If ansible.builtin.host_group_vars is enabled (instead of the default, host_group_vars), the plugin will not run.
     vars_plugin_list = list(vars_loader.all())
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
         if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
@@ -56,12 +54,17 @@ def get_vars_from_path(loader, path, entities, stage):
                 vars_plugin_list.append(vars_plugin)
 
     for plugin in vars_plugin_list:
-        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
-
         # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
-        # This option does nothing for plugins in collections, but if it's set it should be True to reflect actual behavior.
-        legacy = '.' not in plugin._load_name
-        needs_enabled = not legacy
+
+        # The name in config corresponds to the following _load_name:
+        #   - legacy_plugin == legacy_plugin
+        #   - ansible.legacy.legacy_plugin == legacy_plugin
+        #   - builtin_plugin == builtin_plugin
+        #   - ansible.builtin.builtin_plugin == ansible_collections.ansible.builtin.plugins.vars.builtin_plugin
+        builtin_or_legacy = '.' not in plugin._load_name or plugin._load_name.startswith('ansible_collections.ansible.builtin.')
+
+        # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
+        needs_enabled = not builtin_or_legacy
         if hasattr(plugin, 'REQUIRES_ENABLED'):
             needs_enabled = plugin.REQUIRES_ENABLED
         elif hasattr(plugin, 'REQUIRES_WHITELIST'):
@@ -69,10 +72,26 @@ def get_vars_from_path(loader, path, entities, stage):
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
             needs_enabled = plugin.REQUIRES_WHITELIST
 
-        if not legacy and not needs_enabled:
-            display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED = False is not supported.")
-        if legacy and plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and needs_enabled:
-            continue
+        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
+        # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
+        if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+            display.warning(
+                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
+                "This should be removed from the collection's plugin."
+            )
+        elif builtin_or_legacy and plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and needs_enabled:
+            # Maybe it was enabled by FQCN.
+            is_builtin = plugin._load_name == 'ansible_collections.ansible.builtin.plugins.vars.host_group_vars'
+            if is_builtin:
+                fqcn_builtin = 'ansible.builtin.host_group_vars'
+                fqcn_legacy = 'ansible.legacy.host_group_vars'
+                if fqcn_builtin not in C.VARIABLE_PLUGINS_ENABLED and fqcn_legacy not in C.VARIABLE_PLUGINS_ENABLED:
+                    continue
+            else:
+                # legacy plugin
+                fqcn_legacy = 'ansible.legacy.%s' % plugin._load_name
+                if fqcn_legacy not in C.VARIABLE_PLUGINS_ENABLED:
+                    continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 
