@@ -100,3 +100,29 @@ class AnsiblePlugin(ABC):
     def _check_required(self):
         # FIXME: standardize required check based on config
         pass
+
+    def match_name(self, list_of_names):
+        ''' See if plugin matches any names from a given list of names '''
+
+        found = None
+        mynames = set([self._load_name])  # start with the default
+
+        # all possible intermediates
+        for attrib in ('NAME', 'resolved_name', 'redirected_names'):
+            if hasattr(self, attrib):
+                mynames.add(getattr(self, attrib))
+
+        # add 'basenames'
+        for name in mynames:
+            if '.' in name:
+                mynames.add(name.split('.')[-1])
+
+        # actuall match!
+        matched = mynames.intersect(set(list_of_names))
+        if matched:
+            display.debug('Matched plugin names: %s' % ', '.join(matched))
+            found = self._load_name
+        else:
+            display.debug('No matches from provided names (%s) vs existing (%s)' % (', '.join(list_of_names), ', '.join(matched)))
+
+        return found
