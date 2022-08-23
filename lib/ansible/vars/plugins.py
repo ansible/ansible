@@ -62,12 +62,12 @@ def get_vars_from_path(loader, path, entities, stage):
         # This option does nothing for plugins in collections, but if it's set it should be True to reflect actual behavior.
         legacy = '.' not in plugin._load_name
         needs_enabled = not legacy
-        if hasattr(plugin, 'REQUIRES_WHITELIST'):
+        if hasattr(plugin, 'REQUIRES_ENABLED'):
+            needs_enabled = plugin.REQUIRES_ENABLED
+        elif hasattr(plugin, 'REQUIRES_WHITELIST'):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
             needs_enabled = plugin.REQUIRES_WHITELIST
-        elif hasattr(plugin, 'REQUIRES_ENABLED'):
-            needs_enabled = plugin.REQUIRES_ENABLED
 
         if not legacy and not needs_enabled:
             display.warning("Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED = False is not supported.")
