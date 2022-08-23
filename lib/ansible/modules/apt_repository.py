@@ -99,6 +99,7 @@ version_added: "0.7"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
+   - apt-key or gpg
 '''
 
 EXAMPLES = '''
