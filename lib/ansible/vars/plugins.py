@@ -77,7 +77,7 @@ def get_vars_from_path(loader, path, entities, stage):
         if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                "This should be removed from the collection's plugin."
+                "This should be removed from the plugin %s." % plugin._load_name  # FIXME: display ns.coll.resource instead of _load_name
             )
         elif builtin_or_legacy and plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and needs_enabled:
             # Maybe it was enabled by FQCN.
