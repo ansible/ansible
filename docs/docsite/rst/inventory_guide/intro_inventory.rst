@@ -125,7 +125,7 @@ You can see that ``one.example.com`` exists in the ``dbservers``, ``east``, and 
 Grouping groups: parent/child group relationships
 -------------------------------------------------
 
-You can create parent/child relationships among groups. Parent groups are also known as nested groups or groups of groups. For example, if all your production hosts are already in groups like ``atlanta_prod`` and ``denver_prod``, you can create a ``production`` group that includes those smaller groups. This approach reduces maintenance because you can add or remove hosts from the parent group by editing the child groups.
+You can create parent/child relationships among groups. Parent groups are also known as nested groups or groups of groups. For example, if all your production hosts are already in groups such as  ``atlanta_prod`` and ``denver_prod``, you can create a ``production`` group that includes those smaller groups. This approach reduces maintenance because you can add or remove hosts from the parent group by editing the child groups.
 
 To create parent/child relationships for groups:
 * in INI format, use the ``:children`` suffix
@@ -228,7 +228,7 @@ or files supported by inventory plugins) at the same time by giving multiple inv
 line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally
 separate environments, like staging and production, at the same time for a specific action.
 
-Target two sources from the command line like this:
+To target two inventory sources from the command line:
 
 .. code-block:: bash
 
@@ -248,12 +248,12 @@ and a file with static hosts:
 .. code-block:: text
 
     inventory/
-      openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      openstack.yml          # configure inventory plugin to get hosts from OpenStack cloud
       dynamic-inventory.py   # add additional hosts with dynamic inventory script
       on-prem                # add static hosts and groups
       parent-groups          # add static hosts and groups
 
-You can target this inventory directory simply like this:
+You can target this inventory directory as follows:
 
 .. code-block:: bash
 
@@ -271,7 +271,7 @@ For example, if you have a file called ``groups-of-groups`` that defines a ``pro
 .. code-block:: text
 
     inventory/
-      01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      01-openstack.yml          # configure inventory plugin to get hosts from OpenStack cloud
       02-dynamic-inventory.py   # add additional hosts with dynamic inventory script
       03-on-prem                # add static hosts and groups
       04-groups-of-groups       # add parent groups
