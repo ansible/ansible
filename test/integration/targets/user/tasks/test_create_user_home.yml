@@ -135,18 +135,18 @@
     state: absent
     remove: yes
 
-# https://github.com/ansible/ansible/issues/75063
-# Create user home directory with /dev/null as skeleton
-- name: "Create user home directory with /dev/null as skeleton"
-  user:
-    name: withskeleton
-    state: present
-    skeleton: "/dev/null"
-    createhome: yes
-  register: create_user_with_skeleton_dev_null
-
-- name: "Remove test user"
-  user:
-    name: withskeleton
-    state: absent
-    remove: yes
+- name: Create user home directory with /dev/null as skeleton, https://github.com/ansible/ansible/issues/75063
+  block:
+    - name: "Create user home directory with /dev/null as skeleton"
+      user:
+        name: withskeleton
+        state: present
+        skeleton: "/dev/null"
+        createhome: yes
+     register: create_user_with_skeleton_dev_null
+  always:
+    - name: "Remove test user"
+      user:
+        name: withskeleton
+        state: absent
+        remove: yes
