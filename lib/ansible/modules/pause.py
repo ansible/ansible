@@ -38,7 +38,9 @@ options:
     version_added: 2.5
   silent:
     description:
-      - Do not show info output before pausing
+      - Controls whether or not the duration and how to interrupt the timeout is shown.
+      - Has no effect unless 'seconds' or 'minutes' is set.
+      - Has no effect on the final message if the timer is interrupted with ctrl+C.
     type: bool
     default: 'no'
     version_added: 2.14
