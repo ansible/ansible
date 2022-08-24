@@ -1247,7 +1247,7 @@ class User(object):
             else:
                 skeleton = '/etc/skel'
 
-            if os.path.exists(skeleton) and os.path.isdir(skeleton):
+            if os.path.exists(skeleton) and skeleton != os.devnull:
                 try:
                     shutil.copytree(skeleton, path, symlinks=True)
                 except OSError as e:
