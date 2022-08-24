@@ -99,6 +99,29 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.3.0
+========================
+
+Major Changes
+-------------
+
+community.mysql
+~~~~~~~~~~~~~~~
+
+- mysql_db - the ``pipefail`` argument's default value will be changed to ``true`` in community.mysql 4.0.0. If your target machines do not use ``bash`` as a default interpreter, set ``pipefail`` to ``false`` explicitly. However, we strongly recommend setting up ``bash`` as a default and ``pipefail=true`` as it will protect you from getting broken dumps you don't know about (https://github.com/ansible-collections/community.mysql/issues/407).
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Support Diff feature in check_mode.
+- Support Fortios 7.2.0.
+
+Deprecated Features
+-------------------
+
+- The google.cloud collection is considered unmaintained and will be removed from Ansible 8 if no one starts maintaining it again before Ansible 8. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/105).
+- The servicenow.servicenow collection has been deprecated by its maintainers (https://github.com/ServiceNowITOM/servicenow-ansible/pull/69) and will be removed from Ansible 7. It can still be installed manually, but it is suggested to swich to `servicenow.itsm <https://galaxy.ansible.com/servicenow/itsm>`__ instead (https://github.com/ansible-community/community-topics/issues/124).
+
 Porting Guide for v6.2.0
 ========================
 
