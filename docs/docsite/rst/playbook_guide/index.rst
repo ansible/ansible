@@ -12,7 +12,7 @@ Using Ansible playbooks
 
 Welcome to the Ansible playbooks guide.
 Playbooks are automation blueprints, in ``YAML`` format, that Ansible uses to deploy and configure nodes in an inventory.
-This guide introduces you to playbooks and then covers different use cases for tasks and plays, such as: 
+This guide introduces you to playbooks and then covers different use cases for tasks and plays, such as:
 
 * Executing tasks with elevated privileges or as a different user.
 * Using loops to repeat tasks for items in a list.
