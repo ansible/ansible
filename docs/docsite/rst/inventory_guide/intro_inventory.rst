@@ -259,7 +259,7 @@ You can target this inventory directory as follows:
 
     ansible-playbook example.yml -i inventory
 
-You can also configure the inventory directory in your ``ansible.cfg`` file. See :ref:`configuration` for more details.
+You can also configure the inventory directory in your ``ansible.cfg`` file. See :ref:`intro_configuration` for more details.
 
 Managing inventory load order
 -----------------------------
