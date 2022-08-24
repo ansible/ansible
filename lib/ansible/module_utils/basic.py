@@ -1094,9 +1094,18 @@ class AnsibleModule(object):
     def _get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
-        is_directory = stat.S_ISDIR(path_stat.st_mode)
-        has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
-        apply_X_permission = is_directory or has_x_permissions
+        # figure out if we should apply X permission
+        if stat.S_ISDIR(path_stat.st_mode):
+            # target is directory
+            apply_X_permission = True
+        else:
+            if 'x' in perms:
+                # current actions will add +x to target
+                # TODO: this assumes -x,+n notation and no repetition, find better way
+                apply_X_permission = perms[perms.index('x') - 1] == '+'
+            else:
+                # current target has +x and we are not removing it
+                apply_X_permission = (prev_mode & EXEC_PERM_BITS) > 0
 
         # Get the umask, if the 'user' part is empty, the effect is as if (a) were
         # given, but bits that are set in the umask are not affected.

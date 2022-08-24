@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc will now also display until as an 'implicit' templating keyword.
