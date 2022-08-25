@@ -3,3 +3,5 @@ shippable/posix/group3
 needs/target/setup_paramiko
 destructive  # potentially installs/uninstalls OS packages via setup_paramiko
 skip/aix
+skip/macos/11.1  # skipping due to issues installing paramiko
+skip/rhel/8.3  # skipping due to issues installing paramiko
