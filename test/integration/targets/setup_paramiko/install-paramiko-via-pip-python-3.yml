@@ -1,0 +1,7 @@
+- name: Install Paramiko for Python 3 using pip
+  pip:
+    name: paramiko
+    extra_args: "-c {{ remote_constraints }}"
+  environment:
+    # Not sure why this fixes the test, but it does.
+    SETUPTOOLS_USE_DISTUTILS: stdlib
