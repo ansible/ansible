@@ -363,7 +363,7 @@ Sample specification
          required: true
          description: "The string value"
 
-   # roles/maypp/tasks/alternate.yml entry point
+   # roles/myapp/tasks/alternate.yml entry point
    alternate:
      short_description: The alternate entry point for the myapp role.
      options:
