@@ -66,7 +66,7 @@ The following table shows:
     <tr>
       <td><a href="https://galaxy.ansible.com/amazon/aws">amazon.aws</a></td>
       <td><a href="https://galaxy.ansible.com/community/aws">community.aws</a></td>
-      <td><a href="https://github.com/ansible/community/tree/master/group-aws">AWS</a></td>
+      <td><a href="https://github.com/ansible/community/tree/main/group-aws">AWS</a></td>
       <td>✓**</td>
       <td>**</td>
       <td>✓</td>

@@ -778,8 +778,8 @@ msgid "The :file:`main.yaml` file should just reference the transport."
 msgstr ":file:`main.yaml` ファイルは、トランスポートを参照するだけです。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:514
-msgid "The following example walks through the integration tests for the ``vyos.vyos.vyos_l3_interfaces`` module in the `vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/master/tests/integration>`_ collection:"
-msgstr "以下の例では、`vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/master/tests/integration>`_ コレクションの ``vyos.vyos.vyos_l3_interfaces`` モジュールの統合テストを行います。"
+msgid "The following example walks through the integration tests for the ``vyos.vyos.vyos_l3_interfaces`` module in the `vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/main/tests/integration>`_ collection:"
+msgstr "以下の例では、`vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/main/tests/integration>`_ コレクションの ``vyos.vyos.vyos_l3_interfaces`` モジュールの統合テストを行います。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:516
 msgid "``test/integration/targets/vyos_l3_interfaces/tasks/main.yaml``"
@@ -813,8 +813,8 @@ msgid "For example:"
 msgstr "たとえば、以下のようになります。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:648
-msgid "See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml."
-msgstr "https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml. で、このテストの完全例を参照してください。"
+msgid "See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/main/tests/integration/targets/prepare_nxos_tests/tasks/main.yml."
+msgstr "https://github.com/ansible-collections/cisco.nxos/blob/main/tests/integration/targets/prepare_nxos_tests/tasks/main.yml. で、このテストの完全例を参照してください。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:652
 msgid "Running network integration tests"
@@ -853,8 +853,8 @@ msgid "To run integration tests for a specific transport:"
 msgstr "特定のトランスポートで統合テストを実行するには、次を実行します。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:706
-msgid "See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests."
-msgstr "テストに実装される方法は、「`test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_」を参照してください。"
+msgid "See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/main/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests."
+msgstr "テストに実装される方法は、「`test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/main/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_」を参照してください。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:708
 msgid "For more options:"
@@ -929,16 +929,16 @@ msgid "Mocking device data"
 msgstr "デバイスデータの模倣"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:795
-msgid "To mock fetching results from devices or provide other complex data structures that come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_."
-msgstr "デバイスからの結果の取得や、外部ライブラリーからの複雑なデータ構造の提供を模倣するために、``fixtures`` を使用して事前に生成されたデータを読み込むことができます。この事前に生成されたデータのテキストファイルは、``test/units/modules/network/PLATFORM/fixtures/`` にあります。たとえば、`eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_ の例を参照してください。"
+msgid "To mock fetching results from devices or provide other complex data structures that come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/main/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_."
+msgstr "デバイスからの結果の取得や、外部ライブラリーからの複雑なデータ構造の提供を模倣するために、``fixtures`` を使用して事前に生成されたデータを読み込むことができます。この事前に生成されたデータのテキストファイルは、``test/units/modules/network/PLATFORM/fixtures/`` にあります。たとえば、`eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/main/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_ の例を参照してください。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:798
 msgid "Load data using the ``load_fixture`` method and set this data as the return value of the ``get_device_data`` method in the facts file:"
 msgstr "``load_fixture`` メソッドを使用してデータを読み込み、このデータをファクトファイルの ``get_device_data`` メソッドの戻り値として設定します。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:808
-msgid "See the unit test file `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ for a practical example."
-msgstr "実用的な例は、ユニットテストファイル `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ を参照してください。"
+msgid "See the unit test file `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/main/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ for a practical example."
+msgstr "実用的な例は、ユニットテストファイル `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/main/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ を参照してください。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:814
 msgid ":ref:`testing_units`"

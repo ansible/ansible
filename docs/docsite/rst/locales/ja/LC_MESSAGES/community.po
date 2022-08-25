@@ -831,8 +831,8 @@ msgid "``#ansible-devel`` - For discussions on developer topics and code related
 msgstr "``#ansible-devel`` - 開発者のトピックや機能やバグに関連するコードについて議論する場。"
 
 #: ../../rst/community/communication.rst:51
-msgid "``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
-msgstr "``#ansible-meeting`` - コミュニティーの公開ミーティング用。通常は、上記のメーリングリストで告知されます。「`ミーティングのスケジュールおよび議題のページ <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
+msgid "``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/main/meetings/README.md>`_"
+msgstr "``#ansible-meeting`` - コミュニティーの公開ミーティング用。通常は、上記のメーリングリストで告知されます。「`ミーティングのスケジュールおよび議題のページ <https://github.com/ansible/community/blob/main/meetings/README.md>`_」を参照してください。"
 
 #: ../../rst/community/communication.rst:56
 msgid "Working groups"
@@ -923,8 +923,8 @@ msgid "`Windows Working Group <https://github.com/ansible/community/wiki/Windows
 msgstr "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - ``#ansible-windows``"
 
 #: ../../rst/community/communication.rst:81
-msgid "Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?"
-msgstr "`新しいワーキンググループを作りたい <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_ ですか?"
+msgid "Want to `form a new Working Group <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_?"
+msgstr "`新しいワーキンググループを作りたい <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_ ですか?"
 
 #: ../../rst/community/communication.rst:84
 msgid "Regional and Language-specific channels"
@@ -951,8 +951,8 @@ msgid "IRC meetings"
 msgstr "IRC ミーティング"
 
 #: ../../rst/community/communication.rst:94
-msgid "The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
-msgstr "Ansible コミュニティーは、さまざまなトピックに関する定期的な IRC ミーティングを開いており、興味のある人は誰でも参加することができます。Ansible ミーティングの詳細は、「`meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
+msgid "The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/main/meetings/README.md>`_."
+msgstr "Ansible コミュニティーは、さまざまなトピックに関する定期的な IRC ミーティングを開いており、興味のある人は誰でも参加することができます。Ansible ミーティングの詳細は、「`meeting schedule and agenda page <https://github.com/ansible/community/blob/main/meetings/README.md>`_」を参照してください。"
 
 #: ../../rst/community/communication.rst:98
 msgid "Ansible Tower support questions"

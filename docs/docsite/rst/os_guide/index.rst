@@ -12,12 +12,12 @@ Using Ansible on Windows and BSD
 
 Welcome to the Ansible guide for Microsoft Windows and BSD.
 Because Windows is not a POSIX-compliant operating system, Ansible interacts with Windows hosts differently to Linux/Unix hosts.
-Likewise managing hosts that run BSD is different to managing other Unix-like host operating systems. 
+Likewise managing hosts that run BSD is different to managing other Unix-like host operating systems.
 Find out everything you need to know about using Ansible on Windows and with BSD hosts.
 
 .. toctree::
    :maxdepth: 2
-   
+
    windows_setup
    windows_usage
    windows_winrm

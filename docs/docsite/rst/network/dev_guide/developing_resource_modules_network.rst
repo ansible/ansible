@@ -511,7 +511,7 @@ For platforms that support ``connection: local`` *and* ``connection: network_cli
 * Name the :file:`targets/` directories after the module name.
 * The :file:`main.yaml` file should just reference the transport.
 
-The following example walks through the integration tests for the ``vyos.vyos.vyos_l3_interfaces`` module in the `vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/master/tests/integration>`_ collection:
+The following example walks through the integration tests for the ``vyos.vyos.vyos_l3_interfaces`` module in the `vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/main/tests/integration>`_ collection:
 
 ``test/integration/targets/vyos_l3_interfaces/tasks/main.yaml``
 
@@ -652,7 +652,7 @@ For example:
       nxos_int3: '{{ intdataraw[3].interface }}'
 
 
-See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml.
+See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/main/tests/integration/targets/prepare_nxos_tests/tasks/main.yml.
 
 
 Running network integration tests
@@ -710,7 +710,7 @@ To run integration tests for a specific transport:
   # Skip any cli tests
    ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking  --skip-tags="cli" nxos_.*
 
-See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
+See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/main/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
 
 For more options:
 
@@ -800,7 +800,7 @@ Mocking device data
 -----------------------
 
 To mock fetching results from devices or provide other complex data structures that
-come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_.
+come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/main/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_.
 
 Load data using the ``load_fixture`` method and set this data as the return value of the
 ``get_device_data`` method in the facts file:
@@ -812,7 +812,7 @@ Load data using the ``load_fixture`` method and set this data as the return valu
             return load_fixture('eos_l2_interfaces_config.cfg')
         self.execute_show_command.side_effect = load_from_file
 
-See the unit test file `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_
+See the unit test file `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/main/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_
 for a practical example.
 
 

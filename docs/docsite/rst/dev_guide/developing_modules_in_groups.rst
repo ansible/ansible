@@ -21,7 +21,7 @@ This list of prerequisites is designed to help ensure that you develop high-qual
 * We encourage supporting :ref:`Python 2.6+ and Python 3.5+ <developing_python_3>`.
 * Look at Ansible Galaxy and review the naming conventions in your functional area (such as cloud, networking, databases).
 * With great power comes great responsibility: Ansible collection maintainers have a duty to help keep content up to date and release collections they are responsible for regularly. As with all successful community projects, collection maintainers should keep a watchful eye for reported issues and contributions.
-* We strongly recommend unit and/or integration tests. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`developing_testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
+* We strongly recommend unit and/or integration tests. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`developing_testing` and the `Testing Working Group <https://github.com/ansible/community/blob/main/meetings/README.md>`_.
 
 
 Naming conventions
@@ -56,7 +56,7 @@ In the :ref:`ansible_community_guide` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" and "Ansible Announce list"
 * ``#ansible-devel`` - We have found that communicating on the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) works best for developers so we can have an interactive dialogue.
-* Working group and other chat channel meetings - Join the various weekly meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
+* Working group and other chat channel meetings - Join the various weekly meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/main/meetings/README.md>`_
 
 Required files
 ==============

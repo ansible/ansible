@@ -396,8 +396,8 @@ msgid "The ``args`` file contains a JSON string. The string is a dictionary cont
 msgstr "``args`` ファイルには JSON 文字列が含まれています。この文字列は、Ansible がモジュールに渡したモジュール引数とその他の変数を含むディクショナリーで、動作を変更します。このファイルを変更して、モジュールに渡されるパラメーターを変更します。"
 
 #: ../../rst/dev_guide/debugging.rst:86
-msgid "The ``ansible`` directory contains the module code in ``modules`` as well as code from :mod:`ansible.module_utils` that is used by the module. Ansible includes files for any :mod:`ansible.module_utils` imports in the module but not any files from any other module. If your module uses :mod:`ansible.module_utils.url` Ansible will include it for you. But if your module includes `requests <https://requests.readthedocs.io/en/master/api/>`_, then you'll have to make sure that the Python `requests library <https://pypi.org/project/requests/>`_ is installed on the system before running the module."
-msgstr "``ansible`` ディレクトリーには、``modules`` のモジュールコードと、モジュールによって使用される :mod:`ansible.module_utils` のコードが含まれています。 Ansible には、モジュール内の :mod:`ansible.module_utils` インポートのファイルが含まれますが、他のモジュールからのファイルは含まれません。モジュールで :mod:`ansible.module_utils.url` が使用される場合は、Ansible にそれが含まれます。ただし、モジュールに `requests <https://requests.readthedocs.io/en/master/api/>`_ が含まれる場合は、モジュールを実行する前に Python `requests library <https://pypi.org/project/requests/>`_ がシステムにインストールされていることを確認する必要があります。"
+msgid "The ``ansible`` directory contains the module code in ``modules`` as well as code from :mod:`ansible.module_utils` that is used by the module. Ansible includes files for any :mod:`ansible.module_utils` imports in the module but not any files from any other module. If your module uses :mod:`ansible.module_utils.url` Ansible will include it for you. But if your module includes `requests <https://requests.readthedocs.io/en/latest/api/>`_, then you'll have to make sure that the Python `requests library <https://pypi.org/project/requests/>`_ is installed on the system before running the module."
+msgstr "``ansible`` ディレクトリーには、``modules`` のモジュールコードと、モジュールによって使用される :mod:`ansible.module_utils` のコードが含まれています。 Ansible には、モジュール内の :mod:`ansible.module_utils` インポートのファイルが含まれますが、他のモジュールからのファイルは含まれません。モジュールで :mod:`ansible.module_utils.url` が使用される場合は、Ansible にそれが含まれます。ただし、モジュールに `requests <https://requests.readthedocs.io/en/latest/api/>`_ が含まれる場合は、モジュールを実行する前に Python `requests library <https://pypi.org/project/requests/>`_ がシステムにインストールされていることを確認する必要があります。"
 
 #: ../../rst/dev_guide/debugging.rst:88
 msgid "You can modify files in this directory if you suspect that the module is having a problem in some of this boilerplate code rather than in the module code you have written."
@@ -1360,8 +1360,8 @@ msgid "See :ref:`testing_compile` and :ref:`testing_sanity` for more information
 msgstr "詳細は、:ref:`testing_compile` および :ref:`testing_sanity` を参照してください。健全性テストと、特定された問題を修正する方法は、「:ref:`健全性テストの完全リスト <all_sanity_tests>`」を参照してください。"
 
 #: ../../rst/dev_guide/developing_collections.rst:670
-msgid "You must place unit tests in the appropriate``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_."
-msgstr "ユニットテストを適切な ``tests/unit/plugins/`` ディレクトリーに置く必要があります。たとえば、``tests/unit/plugins/module_utils/foo/test_bar.py`` または ``tests/unit/plugins/module_utils/foo/bar/test_bar.py`` の ``plugins/module_utils/foo/bar.py`` にテストを置きます。たとえば、`community.general のユニットテスト <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_ を参照してください。"
+msgid "You must place unit tests in the appropriate``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/main/tests/unit/>`_."
+msgstr "ユニットテストを適切な ``tests/unit/plugins/`` ディレクトリーに置く必要があります。たとえば、``tests/unit/plugins/module_utils/foo/test_bar.py`` または ``tests/unit/plugins/module_utils/foo/bar/test_bar.py`` の ``plugins/module_utils/foo/bar.py`` にテストを置きます。たとえば、`community.general のユニットテスト <https://github.com/ansible-collections/community.general/tree/main/tests/unit/>`_ を参照してください。"
 
 #: ../../rst/dev_guide/developing_collections.rst:672
 msgid "To run all unit tests for all supported Python versions::"
@@ -1396,8 +1396,8 @@ msgid "``runme.sh`` tests run directly as scripts. They can set up inventory fil
 msgstr "``runme.sh`` テストは、直接スクリプトとして実行されます。インベントリーファイルを設定し、さまざまな設定で ``ansible-playbook`` または ``ansible-inventory`` を実行できます。"
 
 #: ../../rst/dev_guide/developing_collections.rst:696
-msgid "For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details."
-msgstr "例については、「`community.general の統合テスト <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_」を参照してください。詳細は、「:ref:`testing_integration`」も参照してください。"
+msgid "For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/main/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details."
+msgstr "例については、「`community.general の統合テスト <https://github.com/ansible-collections/community.general/tree/main/tests/integration/targets/>`_」を参照してください。詳細は、「:ref:`testing_integration`」も参照してください。"
 
 #: ../../rst/dev_guide/developing_collections.rst:698
 msgid "Since integration tests can install requirements, and set-up, start and stop services, we recommended running them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. Use the ``default`` image mainly for platform-independent integration tests, such as those for cloud modules. The following examples use the ``centos8`` image."
@@ -4490,12 +4490,12 @@ msgid "Use named parameters with cmdlets, for example ``Remove-Item -Path C:\\te
 msgstr "コマンドレットで名前付きパラメーターを使用します (例： ``Remove-Item C:\\temp`` より ``Remove-Item -Path C:\\temp`` を使用)。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:185
-msgid "A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met."
-msgstr "非常に基本的な Powershell モジュール `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ が、Powershell モジュールのベストプラクティスが組み込まれています。これは、check-mode および diff-support を実装する方法を示し、特定の条件が満たされるとユーザーに警告を表示します。"
+msgid "A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/main/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met."
+msgstr "非常に基本的な Powershell モジュール `win_environment <https://github.com/ansible-collections/ansible.windows/blob/main/plugins/modules/win_environment.ps1>`_ が、Powershell モジュールのベストプラクティスが組み込まれています。これは、check-mode および diff-support を実装する方法を示し、特定の条件が満たされるとユーザーに警告を表示します。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:187
-msgid "A slightly more advanced module is `win_uri <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions."
-msgstr "もう少し高度なモジュールとしては `win_uri <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_uri.ps1>`_ がありますが、ここで、さまざまなパラメーター型 (bool、str、int、list、dict、path) の使用方法やパラメーターの選択方法、モジュールを失敗させる方法、例外の処理方法などを紹介しています。"
+msgid "A slightly more advanced module is `win_uri <https://github.com/ansible-collections/ansible.windows/blob/main/plugins/modules/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions."
+msgstr "もう少し高度なモジュールとしては `win_uri <https://github.com/ansible-collections/ansible.windows/blob/main/plugins/modules/win_uri.ps1>`_ がありますが、ここで、さまざまなパラメーター型 (bool、str、int、list、dict、path) の使用方法やパラメーターの選択方法、モジュールを失敗させる方法、例外の処理方法などを紹介しています。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:189
 msgid "As part of the new ``AnsibleModule`` wrapper, the input parameters are defined and validated based on an argument spec. The following options can be set at the root level of the argument spec:"
@@ -5074,8 +5074,8 @@ msgid "With great power comes great responsibility: Ansible collection maintaine
 msgstr "大きな力には大きな責任が伴います。Ansible コレクションのメンテナーには、コンテンツを最新の状態に保ち、定期的に責任のあるコレクションをリリースするのを支援する義務があります。成功しているすべてのコミュニティープロジェクトと同様に、コレクションのメンテナーは、報告された問題や貢献に注意を払う必要があります。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:24
-msgid "We strongly recommend unit and/or integration tests. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`developing_testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
-msgstr "ユニットテストや統合テストが強く推奨されます。ユニットテストは、外部リソース (クラウドやネットワークデバイスなど) が必要な場合に特に役に立ちます。詳細については、「:ref:`developing_testing`」および「`ワーキンググループのテスト <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
+msgid "We strongly recommend unit and/or integration tests. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`developing_testing` and the `Testing Working Group <https://github.com/ansible/community/blob/main/meetings/README.md>`_."
+msgstr "ユニットテストや統合テストが強く推奨されます。ユニットテストは、外部リソース (クラウドやネットワークデバイスなど) が必要な場合に特に役に立ちます。詳細については、「:ref:`developing_testing`」および「`ワーキンググループのテスト <https://github.com/ansible/community/blob/main/meetings/README.md>`_」を参照してください。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:28
 msgid "Naming conventions"
@@ -5146,7 +5146,7 @@ msgid "``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNod
 msgstr "``#ansible-devel`` - FreeNode の IRC ネットワーク ``#ansible-devel`` では、インタラクティブな対話を行うことができるため、モジュール開発者に最適なものであることが分かっています。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:57
-msgid "IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
+msgid "IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/main/meetings/README.md>`_"
 msgstr "IRC ミーティング。様々な IRC ミーティング (毎週) に参加する。「_」を参照してください。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:60
@@ -10795,8 +10795,8 @@ msgid "Want to know more about testing?"
 msgstr "テストに関する詳細情報"
 
 #: ../../rst/dev_guide/testing.rst:242
-msgid "If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
-msgstr "Ansible テストを改善する詳細な計画を確認したい場合は、`テストワーキンググループ <https://github.com/ansible/community/blob/master/meetings/README.md>`_ にご参加ください。"
+msgid "If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/main/meetings/README.md>`_."
+msgstr "Ansible テストを改善する詳細な計画を確認したい場合は、`テストワーキンググループ <https://github.com/ansible/community/blob/main/meetings/README.md>`_ にご参加ください。"
 
 #: ../../rst/dev_guide/testing/sanity/action-plugin-docs.rst:2
 msgid "action-plugin-docs"
@@ -12317,8 +12317,8 @@ msgid "Extending compile tests"
 msgstr "コンパイルテストの拡張"
 
 #: ../../rst/dev_guide/testing_compile.rst:76
-msgid "If you believe changes are needed to the compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ so it can be discussed."
-msgstr "コンパイルテストに変更が必要な場合は、`ワーキンググループのテストの議題 <https://github.com/ansible/community/blob/master/meetings/README.md>`_ にコメントを追加してください。その内容について話し合うことができます。"
+msgid "If you believe changes are needed to the compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/main/meetings/README.md>`_ so it can be discussed."
+msgstr "コンパイルテストに変更が必要な場合は、`ワーキンググループのテストの議題 <https://github.com/ansible/community/blob/main/meetings/README.md>`_ にコメントを追加してください。その内容について話し合うことができます。"
 
 #: ../../rst/dev_guide/testing_documentation.rst:9
 msgid "Before you submit a module for inclusion in the main Ansible repo, you must test your module documentation for correct HTML rendering and to ensure that the argspec matches the documentation in your Python file. The community pages offer more information on :ref:`testing reStructuredText documentation <testing_documentation_locally>`."
@@ -12402,8 +12402,8 @@ msgid "Extending httptester"
 msgstr "httptester の拡張"
 
 #: ../../rst/dev_guide/testing_httptester.rst:28
-msgid "If you have sometime to improve ``httptester`` please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ to avoid duplicated effort."
-msgstr "``httptester`` を改善するタイミングがある場合は、重複作業を回避するために、「`ワーキンググループのテストの議題 <https://github.com/ansible/community/blob/master/meetings/README.md>`_」にコメントを追加します。"
+msgid "If you have sometime to improve ``httptester`` please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/main/meetings/README.md>`_ to avoid duplicated effort."
+msgstr "``httptester`` を改善するタイミングがある場合は、重複作業を回避するために、「`ワーキンググループのテストの議題 <https://github.com/ansible/community/blob/main/meetings/README.md>`_」にコメントを追加します。"
 
 #: ../../rst/dev_guide/testing_integration.rst:11
 msgid "The Ansible integration Test system."
@@ -12701,8 +12701,8 @@ msgid "Where to find out more"
 msgstr "その他の詳細情報"
 
 #: ../../rst/dev_guide/testing_integration.rst:236
-msgid "If you'd like to know more about the plans for improving testing Ansible, join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
-msgstr "Ansible テストを改善する詳細な計画を確認したい場合は、`テストのワーキンググループ <https://github.com/ansible/community/blob/master/meetings/README.md>`_ にご参加ください。"
+msgid "If you'd like to know more about the plans for improving testing Ansible, join the `Testing Working Group <https://github.com/ansible/community/blob/main/meetings/README.md>`_."
+msgstr "Ansible テストを改善する詳細な計画を確認したい場合は、`テストのワーキンググループ <https://github.com/ansible/community/blob/main/meetings/README.md>`_ にご参加ください。"
 
 #: ../../rst/dev_guide/testing_integration_legacy.rst:7
 msgid "Testing using the Legacy Integration system"
