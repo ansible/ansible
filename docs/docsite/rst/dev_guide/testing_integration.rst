@@ -245,4 +245,4 @@ For guidance on writing network test see :ref:`testing_resource_modules`.
 Where to find out more
 ======================
 
-If you'd like to know more about the plans for improving testing Ansible, join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
+If you'd like to know more about the plans for improving testing Ansible, join the `Testing Working Group <https://github.com/ansible/community/blob/main/meetings/README.md>`_.
