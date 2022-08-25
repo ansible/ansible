@@ -1,4 +1,6 @@
 needs/ssh
 shippable/posix/group3
 needs/target/setup_paramiko
+skip/freebsd/12.2
+skip/freebsd/13.0
 destructive  # potentially installs/uninstalls OS packages via setup_paramiko
