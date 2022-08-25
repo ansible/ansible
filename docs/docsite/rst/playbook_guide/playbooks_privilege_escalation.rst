@@ -387,7 +387,9 @@ Become and Windows
 Since Ansible 2.3, ``become`` can be used on Windows hosts through the
 ``runas`` method. Become on Windows uses the same inventory setup and
 invocation arguments as ``become`` on a non-Windows host, so the setup and
-variable names are the same as what is defined in this document.
+variable names are the same as what is defined in this document with the exception
+of ``become_user``. As there is no sensible default for ``become_user`` on Windows
+it is required when using ``become``. See :ref:`ansible.builtin.runas become plugin <ansible_collections.ansible.builtin.runas_become>` for details.
 
 While ``become`` can be used to assume the identity of another user, there are other uses for
 it with Windows hosts. One important use is to bypass some of the
