@@ -90,7 +90,7 @@ author: "Matt Martz (@sivel)"
 EXAMPLES = r'''
 - name: Case insensitive password string match
   ansible.builtin.expect:
-    ansible.builtin.command: passwd username
+    command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
   # you don't want to show passwords in your logs
@@ -98,7 +98,7 @@ EXAMPLES = r'''
 
 - name: Generic question with multiple different responses
   ansible.builtin.expect:
-    ansible.builtin.command: /path/to/custom/command
+    command: /path/to/custom/command
     responses:
       Question:
         - response1
