@@ -2,4 +2,5 @@ needs/ssh
 shippable/posix/group3
 needs/target/setup_paramiko
 needs/target/connection
+skip/freebsd/13.0  # bcrypt 4+ requires a newer version of rust than is available
 destructive  # potentially installs/uninstalls OS packages via setup_paramiko
