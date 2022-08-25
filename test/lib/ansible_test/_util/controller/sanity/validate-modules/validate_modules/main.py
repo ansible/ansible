@@ -439,6 +439,7 @@ class ModuleValidator(Validator):
     def _get_base_file(self):
         # In case of module moves, look for the original location
         base_path = self._get_base_branch_module_path()
+        ext = os.path.splitext(base_path or self.path)[1]
 
         command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
         p = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, check=False)
@@ -446,7 +447,7 @@ class ModuleValidator(Validator):
         if int(p.returncode) != 0:
             return None
 
-        t = tempfile.NamedTemporaryFile(delete=False)
+        t = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
         t.write(p.stdout)
         t.close()
 
@@ -2097,7 +2098,8 @@ class ModuleValidator(Validator):
                 # already reported during schema validation
                 continue
 
-            if collection_name != self.collection_name:
+            builtin = self.collection_name == 'ansible.builtin' and collection_name in ('ansible.builtin', None)
+            if not builtin and collection_name != self.collection_name:
                 continue
             if (strict_ansible_version != mod_version_added and
                     (version_added < strict_ansible_version or
