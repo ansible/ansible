@@ -1,0 +1,3 @@
+bugfixes:
+  - file modules - don't add executable bit to files for +X (https://github.com/ansible/ansible/issues/78623).
+  - file modules - fix inconsistency determining the new mode when there is no change to be made with the '=' operator.
