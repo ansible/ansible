@@ -1,2 +1,3 @@
 needs/target/setup_remote_tmp_dir
+skip/freebsd/12.2
 skip/freebsd/13.0
