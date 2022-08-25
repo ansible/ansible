@@ -33,7 +33,7 @@ See :ref:`testing_compile` and :ref:`testing_sanity` for more information. See t
 Adding unit tests
 -----------------
 
-You must place unit tests in the appropriate ``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_.
+You must place unit tests in the appropriate ``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/main/tests/unit/>`_.
 
 To run all unit tests for all supported Python versions:
 
@@ -67,7 +67,7 @@ You can write two different kinds of integration tests:
 * Ansible role tests run with ``ansible-playbook`` and validate various aspects of the module. They can depend on other integration tests (usually named ``prepare_bar`` or ``setup_bar``, which prepare a service or install a requirement named ``bar`` in order to test module ``foo``) to set-up required resources, such as installing required libraries or setting up server services.
 * ``runme.sh`` tests run directly as scripts. They can set up inventory files, and execute ``ansible-playbook`` or ``ansible-inventory`` with various settings.
 
-For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details.
+For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/main/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details.
 
 Since integration tests can install requirements, and set-up, start and stop services, we recommended running them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. Use the ``default`` image mainly for platform-independent integration tests, such as those for cloud modules. The following examples use the ``fedora35`` image.
 

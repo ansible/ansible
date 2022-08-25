@@ -25,4 +25,4 @@ Source files can be found in the `http-test-container <https://github.com/ansibl
 Extending httptester
 ====================
 
-If you have sometime to improve ``httptester`` please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ to avoid duplicated effort.
+If you have sometime to improve ``httptester`` please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/main/meetings/README.md>`_ to avoid duplicated effort.

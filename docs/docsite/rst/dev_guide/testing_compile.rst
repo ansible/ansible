@@ -73,4 +73,4 @@ The full list of requirements can be found at `test/lib/ansible_test/_data/requi
 Extending compile tests
 =======================
 
-If you believe changes are needed to the compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ so it can be discussed.
+If you believe changes are needed to the compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/main/meetings/README.md>`_ so it can be discussed.

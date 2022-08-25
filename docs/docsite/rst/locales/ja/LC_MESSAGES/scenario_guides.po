@@ -806,8 +806,8 @@ msgid "A detailed guide on how to use Ansible for automating network infrastruct
 msgstr "ネットワークインフラストラクチャーの自動化に Ansible を使用する方法に関する詳細なガイドです。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:656
-msgid "`Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_"
-msgstr "`Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_"
+msgid "`Network Working Group <https://github.com/ansible/community/tree/main/group-network>`_"
+msgstr "`Network Working Group <https://github.com/ansible/community/tree/main/group-network>`_"
 
 #: ../../rst/scenario_guides/guide_aci.rst:657
 msgid "The Ansible Network community page, includes contact information and meeting information."

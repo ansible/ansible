@@ -1285,8 +1285,8 @@ msgid "You can submit feedback on the current roadmap in multiple ways:"
 msgstr "現在のロードマップに関するフィードバックは、複数の方法で送信できます。"
 
 #: ../../rst/roadmap/ansible_base_roadmap_index.rst:20
-msgid "Edit the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)"
-msgstr "IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ の議題を編集 (推奨)"
+msgid "Edit the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/main/meetings/README.md>`_ (preferred)"
+msgstr "IRC `Core Team Meeting <https://github.com/ansible/community/blob/main/meetings/README.md>`_ の議題を編集 (推奨)"
 
 #: ../../rst/roadmap/ansible_base_roadmap_index.rst:21
 msgid "Post on the ``#ansible-devel`` Freenode IRC channel"

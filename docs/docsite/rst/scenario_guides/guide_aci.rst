@@ -653,7 +653,7 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation.
    :ref:`network_guide`
        A detailed guide on how to use Ansible for automating network infrastructure.
-   `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
+   `Network Working Group <https://github.com/ansible/community/tree/main/group-network>`_
        The Ansible Network community page, includes contact information and meeting information.
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

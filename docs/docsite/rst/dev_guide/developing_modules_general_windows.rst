@@ -177,9 +177,9 @@ When creating a new module there are a few things to keep in mind:
 - Use the full cmdlet name instead of aliases, for example ``Remove-Item`` over ``rm``
 - Use named parameters with cmdlets, for example ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
-A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
+A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/main/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
 
-A slightly more advanced module is `win_uri <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
+A slightly more advanced module is `win_uri <https://github.com/ansible-collections/ansible.windows/blob/main/plugins/modules/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
 
 As part of the new ``AnsibleModule`` wrapper, the input parameters are defined and validated based on an argument
 spec. The following options can be set at the root level of the argument spec:
