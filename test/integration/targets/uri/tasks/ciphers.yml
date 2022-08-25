@@ -1,0 +1,32 @@
+- name: test good cipher
+  uri:
+    url: https://{{ httpbin_host }}/get
+    ciphers: ECDHE-RSA-AES128-SHA256
+  register: good_ciphers
+
+- name: test good cipher redirect
+  uri:
+    url: http://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/get
+    ciphers: ECDHE-RSA-AES128-SHA256
+  register: good_ciphers_redir
+
+- name: test bad cipher
+  uri:
+    url: https://{{ httpbin_host }}/get
+    ciphers: ECDHE-ECDSA-AES128-SHA
+  ignore_errors: true
+  register: bad_ciphers
+
+- name: test bad cipher redirect
+  uri:
+    url: http://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/get
+    ciphers: ECDHE-ECDSA-AES128-SHA
+  ignore_errors: true
+  register: bad_ciphers_redir
+
+- assert:
+    that:
+      - good_ciphers is successful
+      - good_ciphers_redir is successful
+      - bad_ciphers is failed
+      - bad_ciphers_redir is failed

@@ -26,6 +26,12 @@ description:
      - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 version_added: '0.6'
 options:
+  ciphers:
+    description:
+      - SSL/TLS Ciphers to use for the request
+    type: list
+    elements: str
+    version_added: '2.14'
   decompress:
     description:
       - Whether to attempt to decompress gzip content-encoded responses
@@ -370,7 +376,7 @@ def url_filename(url):
 
 
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
-            decompress=True):
+            decompress=True, ciphers=None):
     """
     Download data from the url and store in a temporary file.
 
@@ -379,7 +385,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     start = datetime.datetime.utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
-                          unredirected_headers=unredirected_headers, decompress=decompress)
+                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
@@ -465,6 +471,7 @@ def main():
         tmp_dest=dict(type='path'),
         unredirected_headers=dict(type='list', elements='str', default=[]),
         decompress=dict(type='bool', default=True),
+        ciphers=dict(type='list', elements='str'),
     )
 
     module = AnsibleModule(
@@ -485,6 +492,7 @@ def main():
     tmp_dest = module.params['tmp_dest']
     unredirected_headers = module.params['unredirected_headers']
     decompress = module.params['decompress']
+    ciphers = module.params['ciphers']
 
     result = dict(
         changed=False,
@@ -509,7 +517,7 @@ def main():
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
             checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                                     unredirected_headers=unredirected_headers)
+                                                     unredirected_headers=unredirected_headers, ciphers=ciphers)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)

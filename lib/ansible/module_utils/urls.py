@@ -84,7 +84,7 @@ import ansible.module_utils.compat.typing as t
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
-from ansible.module_utils.common.collections import Mapping
+from ansible.module_utils.common.collections import Mapping, is_sequence
 from ansible.module_utils.six import PY2, PY3, string_types
 from ansible.module_utils.six.moves import cStringIO
 from ansible.module_utils.basic import get_distribution, missing_required_lib
@@ -849,7 +849,7 @@ class RequestWithMethod(urllib_request.Request):
             return urllib_request.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=None):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=None, ciphers=None):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -986,10 +986,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
-    def __init__(self, hostname, port, ca_path=None):
+    def __init__(self, hostname, port, ca_path=None, ciphers=None):
         self.hostname = hostname
         self.port = port
         self.ca_path = ca_path
+        self.ciphers = ciphers
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
@@ -1121,7 +1122,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def make_context(self, cafile, cadata):
+    def make_context(self, cafile, cadata, ciphers=None):
+        if ciphers is None:
+            ciphers = []
+
+        if not is_sequence(ciphers):
+            raise TypeError('Ciphers must be a list. Got %s.' % ciphers.__class__.__name__)
+
         cafile = self.ca_path or cafile
         if self.ca_path:
             cadata = None
@@ -1137,6 +1144,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         if cafile or cadata:
             context.load_verify_locations(cafile=cafile, cadata=cadata)
+
+        if ciphers:
+            context.set_ciphers(':'.join(map(to_native, ciphers)))
+
         return context
 
     def http_request(self, req):
@@ -1148,7 +1159,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         context = None
         try:
-            context = self.make_context(tmp_ca_cert_path, cadata)
+            context = self.make_context(tmp_ca_cert_path, cadata, ciphers=self.ciphers)
         except NotImplementedError:
             # We'll make do with no context below
             pass
@@ -1207,16 +1218,16 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs, ca_path=None):
+def maybe_add_ssl_handler(url, validate_certs, ca_path=None, ciphers=None, ignore_scheme=False):
     parsed = generic_urlparse(urlparse(url))
-    if parsed.scheme == 'https' and validate_certs:
+    if (ignore_scheme or parsed.scheme == 'https') and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path)
+        return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path, ciphers=ciphers)
 
 
 def getpeercert(response, binary_form=False):
@@ -1277,7 +1288,7 @@ class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None, unredirected_headers=None, decompress=True):
+                 ca_path=None, unredirected_headers=None, decompress=True, ciphers=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -1314,6 +1325,7 @@ class Request:
         self.ca_path = ca_path
         self.unredirected_headers = unredirected_headers
         self.decompress = decompress
+        self.ciphers = ciphers
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -1329,7 +1341,8 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None):
+             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
+             ciphers=None):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1369,6 +1382,7 @@ class Request:
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
         :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
+        :kwarg ciphers: (optional) List of ciphers to use
         :returns: HTTPResponse. Added in Ansible 2.9
         """
 
@@ -1396,13 +1410,14 @@ class Request:
         ca_path = self._fallback(ca_path, self.ca_path)
         unredirected_headers = self._fallback(unredirected_headers, self.unredirected_headers)
         decompress = self._fallback(decompress, self.decompress)
+        ciphers = self._fallback(ciphers, self.ciphers)
 
         handlers = []
 
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path)
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path, ciphers=ciphers, ignore_scheme=True)
         if ssl_handler and not HAS_SSLCONTEXT:
             handlers.append(ssl_handler)
 
@@ -1491,7 +1506,7 @@ class Request:
         if ssl_handler and HAS_SSLCONTEXT and validate_certs:
             tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
             try:
-                context = ssl_handler.make_context(tmp_ca_path, cadata)
+                context = ssl_handler.make_context(tmp_ca_path, cadata, ciphers)
             except NotImplementedError:
                 pass
 
@@ -1504,7 +1519,7 @@ class Request:
                 kwargs['context'] = context
             handlers.append(CustomHTTPSHandler(**kwargs))
 
-        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path=ca_path))
+        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path=ca_path, ciphers=ciphers))
 
         # add some nicer cookie handling
         if cookies is not None:
@@ -1639,7 +1654,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True):
+             unredirected_headers=None, decompress=True, ciphers=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1652,7 +1667,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers, decompress=decompress)
+                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
 
 
 def prepare_multipart(fields):
@@ -1803,7 +1818,7 @@ def url_argument_spec():
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
-              decompress=True):
+              decompress=True, ciphers=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1823,6 +1838,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg cookies: (optional) CookieJar object to send with the request
     :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
     :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
+    :kwarg cipher: (optional) List of ciphers to use
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status >= 400)
@@ -1886,7 +1902,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
-                     decompress=decompress)
+                     decompress=decompress, ciphers=ciphers)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
@@ -1968,7 +1984,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
 def fetch_file(module, url, data=None, headers=None, method=None,
                use_proxy=True, force=False, last_mod_time=None, timeout=10,
-               unredirected_headers=None, decompress=True):
+               unredirected_headers=None, decompress=True, ciphers=None):
     '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
@@ -1984,6 +2000,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg int timeout:   Default: 10
     :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
     :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
+    :kwarg ciphers: (optional) List of ciphers to use
 
     :returns: A string, the path to the downloaded file.
     '''
@@ -1995,7 +2012,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
-                              unredirected_headers=unredirected_headers, decompress=decompress)
+                              unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
         if not rsp:
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
         data = rsp.read(bufsize)
