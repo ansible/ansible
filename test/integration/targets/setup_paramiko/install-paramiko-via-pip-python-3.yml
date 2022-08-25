@@ -5,3 +5,7 @@
   environment:
     # Not sure why this fixes the test, but it does.
     SETUPTOOLS_USE_DISTUTILS: stdlib
+  register: pip_install_result
+  delay: 15
+  retries: 10
+  until: pip_install_result is not failed
