@@ -1,3 +1,25 @@
+- name: Ensure PyPI is accessible before trying to install from it
+  wait_for:
+    connect_timeout: 10
+    host: pypi.org
+    msg: >-
+      There is an issue connection to PyPI, it won't be possible to
+      run `pip install` successfully until the network connectivity is
+      resolved.
+    port: 443
+    sleep: 15
+    timeout: 300
+- name: Ensure the PyPI CDN is accessible before trying to get dists
+  wait_for:
+    connect_timeout: 10
+    host: files.pythonhosted.org
+    msg: >-
+      There is an issue connection to the PyPI's content delivery
+      network, it won't be possible to run `pip install` successfully
+      until the network connectivity is resolved.
+    port: 443
+    sleep: 15
+    timeout: 300
 - name: Install Paramiko for Python 3 using pip
   pip:
     name: paramiko
