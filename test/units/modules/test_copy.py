@@ -172,6 +172,13 @@ DATA = (  # Going from no permissions to setting all for user, group, and/or oth
     # Same as chmod but is it a bug?
     # chmod a-X statfile <== removes execute from statfile
     (0o100777, u'a-X', 0o0666),
+    # chmod a+X statfile <== does not add execute to statfile
+    (0o100777, u'a-x+X', 0o0666),
+    (0o100777, u'a=-x+X', 0o0666),
+
+    # +x and -X overwrite each other
+    (0o100777, u'a+x-X', 0o0666),
+    (0o100000, u'a-X+x', 0o0111),
 
     # Verify X uses computed not original mode
     (0o100777, u'a=,u=rX', 0o0400),

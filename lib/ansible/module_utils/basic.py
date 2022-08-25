@@ -1012,6 +1012,10 @@ class AnsibleModule(object):
 
         new_mode = stat.S_IMODE(path_stat.st_mode)
 
+        if not stat.S_ISDIR(path_stat.st_mode):
+            # chmod -X removes executable bit from files, +X does not add it
+            symbolic_mode = symbolic_mode.replace('+X', '')
+
         # Now parse all symbolic modes
         for mode in symbolic_mode.split(','):
             # Per single mode. This always contains a '+', '-' or '='
@@ -1049,6 +1053,9 @@ class AnsibleModule(object):
 
     @staticmethod
     def _apply_operation_to_mode(user, operator, mode_to_apply, current_mode):
+        if mode_to_apply == 0:
+            return current_mode
+
         if operator == '=':
             if user == 'u':
                 mask = stat.S_IRWXU | stat.S_ISUID
