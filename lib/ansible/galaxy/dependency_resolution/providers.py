@@ -327,20 +327,16 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 if candidate.fqcn == fqcn and
                 all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
             }
-        if preinstalled_candidates:
-            # Since we're not upgrading and a sufficient match was found, don't look for more recent versions
-            coll_versions = []  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
-        else:
-            try:
-                coll_versions = self._api_proxy.get_collection_versions(first_req)
-            except TypeError as exc:
-                if first_req.is_concrete_artifact:
-                    # Non hashable versions will cause a TypeError
-                    raise ValueError(
-                        f"Invalid version found for the collection '{first_req}'. {version_req}"
-                    ) from exc
-                # Unexpected error from a Galaxy server
-                raise
+        try:
+            coll_versions = [] if preinstalled_candidates else self._api_proxy.get_collection_versions(first_req)  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
+        except TypeError as exc:
+            if first_req.is_concrete_artifact:
+                # Non hashable versions will cause a TypeError
+                raise ValueError(
+                    f"Invalid version found for the collection '{first_req}'. {version_req}"
+                ) from exc
+            # Unexpected error from a Galaxy server
+            raise
 
         if first_req.is_concrete_artifact:
             # FIXME: do we assume that all the following artifacts are also concrete?
