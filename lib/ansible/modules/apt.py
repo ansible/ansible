@@ -236,9 +236,9 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   ansible.builtin.apt:
-    pkg:
-    - foo
-    - foo-tools
+    name:
+      - foo
+      - foo-tools
 
 - name: Install the version '1.00' of package "foo"
   ansible.builtin.apt:
