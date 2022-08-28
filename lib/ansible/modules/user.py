@@ -181,6 +181,7 @@ options:
             - Optionally specify the number of KDF (key derivation function) rounds used to provide higher resistance to brute-force password cracking.
         type: int
         default: 100
+        version_added: "2.14"
     update_password:
         description:
             - C(always) will update passwords if they differ.
@@ -3133,7 +3134,7 @@ def main():
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(type='str', no_log=True),
-            ssh_key_trials=dict(type='int', default=ssh_defaults['trials']),
+            ssh_key_trials=dict(type='int', default=ssh_defaults['trials'], no_log=False),
             update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             expires=dict(type='float'),
             password_lock=dict(type='bool', no_log=False),
