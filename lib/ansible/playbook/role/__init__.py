@@ -142,7 +142,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return self._role_name
 
     def get_role_path(self):
-        return self._role_path
+        # Purposefully using realpath for canonical path
+        return os.path.realpath(self._role_path)
 
     def _get_hash_dict(self):
         return MappingProxyType(
