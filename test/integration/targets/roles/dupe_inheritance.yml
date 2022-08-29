@@ -1,8 +1,7 @@
 - name: Test
-  hosts: localhost
+  hosts: testhost
   gather_facts: false
   roles:
-
     - role: top
       info: First definition
       testvar: abc
