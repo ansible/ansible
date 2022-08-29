@@ -111,7 +111,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self.public = public
         self.static = True
 
-        self._metadata = None
+        self._metadata = RoleMetadata()
         self._play = play
         self._parents = []
         self._dependencies = []
@@ -220,8 +220,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
-        else:
-            self._metadata = RoleMetadata()
 
         # reset collections list; roles do not inherit collections from parents, just use the defaults
         # FUTURE: use a private config default for this so we can allow it to be overridden later
@@ -420,10 +418,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''
 
         deps = []
-        if self._metadata:
-            for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, play=self._play, parent_role=self)
-                deps.append(r)
+        for role_include in self._metadata.dependencies:
+            r = Role.load(role_include, play=self._play, parent_role=self)
+            deps.append(r)
 
         return deps
 
@@ -632,8 +629,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         res['_had_task_run'] = self._had_task_run.copy()
         res['_completed'] = self._completed.copy()
 
-        if self._metadata:
-            res['_metadata'] = self._metadata.serialize()
+        res['_metadata'] = self._metadata.serialize()
 
         if include_deps:
             deps = []

@@ -175,13 +175,10 @@ class StrategyModule(StrategyBase):
                         # role which has already run (and whether that role allows duplicate execution)
                         if not isinstance(task, Handler) and task._role:
                             role_obj = self._get_cached_role(task, iterator._play)
-                            if role_obj.has_run(host):
-                                # If there is no metadata, the default behavior is to not allow duplicates,
-                                # if there is metadata, check to see if the allow_duplicates flag was set to true
-                                if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                                    display.debug("'%s' skipped because role has already run" % task, host=host_name)
-                                    del self._blocked_hosts[host_name]
-                                    continue
+                            if role_obj.has_run(host) and role_obj._metadata.allow_duplicates is False:
+                                display.debug("'%s' skipped because role has already run" % task, host=host_name)
+                                del self._blocked_hosts[host_name]
+                                continue
 
                         if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
