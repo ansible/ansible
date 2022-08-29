@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from types import MappingProxyType
 from collections.abc import Container, Mapping, Set, Sequence
+from types import MappingProxyType
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
@@ -165,31 +165,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if from_files is None:
             from_files = {}
         try:
-            # The ROLE_CACHE is a dictionary of role names, with each entry
-            # containing another dictionary corresponding to a set of parameters
-            # specified for a role as the key and the Role() object itself.
-            # We use frozenset to make the dictionary hashable.
-
-            # params = role_include.get_role_params()
-            # if role_include.when is not None:
-            #     params['when'] = role_include.when
-            # if role_include.tags is not None:
-            #     params['tags'] = role_include.tags
-            # if from_files is not None:
-            #     params['from_files'] = from_files
-            # if role_include.vars:
-            #     params['vars'] = role_include.vars
-
-            # params['from_include'] = from_include
-
-            # hashed_params = hash_params(params)
-            # if role_include.get_name() in play.ROLE_CACHE:
-            #     for (entry, role_obj) in play.ROLE_CACHE[role_include.get_name()].items():
-            #         if hashed_params == entry:
-            #             if parent_role:
-            #                 role_obj.add_parent(parent_role)
-            #             return role_obj
-
             # TODO: need to fix cycle detection in role load (maybe use an empty dict
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
@@ -197,12 +172,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.get_name() not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.get_name()] = []
+            if role_include.get_name() not in play.role_cache:
+                play.role_cache[role_include.get_name()] = []
 
-            # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            if r not in play.ROLE_CACHE[role_include.get_name()]:
-                play.ROLE_CACHE[role_include.get_name()].append(r)
+            # Using the role name as a cache key is done to improve performance when a large number of roles
+            # are in use in the play
+            if r not in play.role_cache[role_include.get_name()]:
+                play.role_cache[role_include.get_name()].append(r)
 
             return r
 
