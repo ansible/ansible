@@ -1062,10 +1062,11 @@ class StrategyBase:
 
     def _get_cached_role(self, task, play):
         role_path = task._role.get_role_path()
-        for role_obj in play.role_cache[role_path]:
-            if role_obj == task._role:
-                return role_obj
-        return None
+        try:
+            idx = play.role_cache[role_path].index(task._role)
+            return play.role_cache[role_path][idx]
+        except ValueError:
+            return None
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
