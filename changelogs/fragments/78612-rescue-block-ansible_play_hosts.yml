@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix an issue where ``ansible_play_hosts`` and ``ansible_play_batch`` were not properly updated when a failure occured in an explicit block inside the rescue section (https://github.com/ansible/ansible/issues/78612)"
