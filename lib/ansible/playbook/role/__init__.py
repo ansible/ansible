@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from types import MappingProxyType
 from collections.abc import Container, Mapping, Set, Sequence
 
 from ansible import constants as C
@@ -140,6 +141,25 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             return '.'.join(x for x in (self._role_collection, self._role_name) if x)
         return self._role_name
 
+    def _get_hash_dict(self):
+        return MappingProxyType(
+            {
+                'name': self.get_name(),
+                'params': MappingProxyType(self.get_role_params()),
+                'when': self.when,
+                'tags': self.tags,
+                'from_files': MappingProxyType(self._from_files),
+                'vars': MappingProxyType(self.vars),
+                'from_include': self.from_include,
+            }
+        )
+
+    def __eq__(self, other):
+        if not isinstance(other, Role):
+            return False
+
+        return self._get_hash_dict() == other._get_hash_dict()
+
     @staticmethod
     def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=True):
         if from_files is None:
@@ -150,25 +170,25 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             # specified for a role as the key and the Role() object itself.
             # We use frozenset to make the dictionary hashable.
 
-            params = role_include.get_role_params()
-            if role_include.when is not None:
-                params['when'] = role_include.when
-            if role_include.tags is not None:
-                params['tags'] = role_include.tags
-            if from_files is not None:
-                params['from_files'] = from_files
-            if role_include.vars:
-                params['vars'] = role_include.vars
+            # params = role_include.get_role_params()
+            # if role_include.when is not None:
+            #     params['when'] = role_include.when
+            # if role_include.tags is not None:
+            #     params['tags'] = role_include.tags
+            # if from_files is not None:
+            #     params['from_files'] = from_files
+            # if role_include.vars:
+            #     params['vars'] = role_include.vars
 
-            params['from_include'] = from_include
+            # params['from_include'] = from_include
 
-            hashed_params = hash_params(params)
-            if role_include.get_name() in play.ROLE_CACHE:
-                for (entry, role_obj) in play.ROLE_CACHE[role_include.get_name()].items():
-                    if hashed_params == entry:
-                        if parent_role:
-                            role_obj.add_parent(parent_role)
-                        return role_obj
+            # hashed_params = hash_params(params)
+            # if role_include.get_name() in play.ROLE_CACHE:
+            #     for (entry, role_obj) in play.ROLE_CACHE[role_include.get_name()].items():
+            #         if hashed_params == entry:
+            #             if parent_role:
+            #                 role_obj.add_parent(parent_role)
+            #             return role_obj
 
             # TODO: need to fix cycle detection in role load (maybe use an empty dict
             #  for the in-flight in role cache as a sentinel that we're already trying to load
@@ -178,10 +198,12 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.get_name() not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.get_name()] = dict()
+                play.ROLE_CACHE[role_include.get_name()] = []
 
             # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            play.ROLE_CACHE[role_include.get_name()][hashed_params] = r
+            if r not in play.ROLE_CACHE[role_include.get_name()]:
+                play.ROLE_CACHE[role_include.get_name()].append(r)
+
             return r
 
         except RuntimeError:
