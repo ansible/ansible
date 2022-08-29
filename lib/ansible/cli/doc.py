@@ -603,7 +603,9 @@ class DocCLI(CLI, RoleMixin):
 
                             kdata['type'] = getattr(fa, 'isa', 'string')
 
-                            if keyword.endswith('when'):
+                            if keyword.endswith('when') or keyword in ('until',):
+                                # TODO: make this a field attribute property,
+                                # would also helps with the warnings on {{}} stacking
                                 kdata['template'] = 'implicit'
                             elif getattr(fa, 'static'):
                                 kdata['template'] = 'static'
