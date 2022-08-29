@@ -353,44 +353,25 @@ EXAMPLES = r'''
   retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
   delay: 5 # Every 5 seconds
 
-# There are issues in a supporting Python library that is discussed in
-# https://github.com/ansible/ansible/issues/52705 where a proxy is defined
-# but you want to bypass proxy use on CIDR masks by using no_proxy
-- name: Work around a python issue that doesn't support no_proxy envvar
-  ansible.builtin.uri:
-    follow_redirects: none
-    validate_certs: false
-    timeout: 5
-    url: "http://{{ ip_address }}:{{ port | default(80) }}"
-  register: uri_data
-  failed_when: false
-  changed_when: false
-  vars:
-    ip_address: 192.0.2.1
-  environment: |
-      {
-        {% for no_proxy in (lookup('ansible.builtin.env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
-          {% if no_proxy | regex_search('\/') and
-                no_proxy | ipaddr('net') != '' and
-                no_proxy | ipaddr('net') != false and
-                ip_address | ipaddr(no_proxy) is not none and
-                ip_address | ipaddr(no_proxy) != false %}
-            'no_proxy': '{{ ip_address }}'
-          {% elif no_proxy | regex_search(':') != '' and
-                  no_proxy | regex_search(':') != false and
-                  no_proxy == ip_address + ':' + (port | default(80)) %}
-            'no_proxy': '{{ ip_address }}:{{ port | default(80) }}'
-          {% elif no_proxy | ipaddr('host') != '' and
-                  no_proxy | ipaddr('host') != false and
-                  no_proxy == ip_address %}
-            'no_proxy': '{{ ip_address }}'
-          {% elif no_proxy | regex_search('^(\*|)\.') != '' and
-                  no_proxy | regex_search('^(\*|)\.') != false and
-                  no_proxy | regex_replace('\*', '') in ip_address %}
-            'no_proxy': '{{ ip_address }}'
-          {% endif %}
-        {% endfor %}
-      }
+- name: Provide SSL/TLS ciphers as a list
+  uri:
+    url: https://example.org
+    ciphers:
+      - '@SECLEVEL=2'
+      - ECDH+AESGCM
+      - ECDH+CHACHA20
+      - ECDH+AES
+      - DHE+AES
+      - '!aNULL'
+      - '!eNULL'
+      - '!aDSS'
+      - '!SHA1'
+      - '!AESCCM'
+
+- name: Provide SSL/TLS ciphers as an OpenSSL formatted cipher list
+  uri:
+    url: https://example.org
+    ciphers: @SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM
 '''
 
 RETURN = r'''
