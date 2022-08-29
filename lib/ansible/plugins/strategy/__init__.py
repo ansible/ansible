@@ -1061,8 +1061,8 @@ class StrategyBase:
         return [res]
 
     def _get_cached_role(self, task, play):
-        role_name = task._role.get_name()
-        for role_obj in play.role_cache[role_name]:
+        role_path = task._role.get_role_path()
+        for role_obj in play.role_cache[role_path]:
             if role_obj == task._role:
                 return role_obj
         return None

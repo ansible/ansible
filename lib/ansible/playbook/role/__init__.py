@@ -141,10 +141,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             return '.'.join(x for x in (self._role_collection, self._role_name) if x)
         return self._role_name
 
+    def get_role_path(self):
+        return self._role_path
+
     def _get_hash_dict(self):
         return MappingProxyType(
             {
                 'name': self.get_name(),
+                'path': self.get_role_path(),
                 'params': MappingProxyType(self.get_role_params()),
                 'when': self.when,
                 'tags': self.tags,
@@ -172,13 +176,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.get_name() not in play.role_cache:
-                play.role_cache[role_include.get_name()] = []
+            role_path = r.get_role_path()
+            if role_path not in play.role_cache:
+                play.role_cache[role_path] = []
 
             # Using the role name as a cache key is done to improve performance when a large number of roles
             # are in use in the play
-            if r not in play.role_cache[role_include.get_name()]:
-                play.role_cache[role_include.get_name()].append(r)
+            if r not in play.role_cache[role_path]:
+                play.role_cache.setdefault(role_path, []).append(r)
 
             return r
 

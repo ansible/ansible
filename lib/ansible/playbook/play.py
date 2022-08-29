@@ -109,8 +109,11 @@ class Play(Base, Taggable, CollectionSearch):
         """Backwards compat for custom strategies using ``play.ROLE_CACHE``
         """
         cache = {}
-        for name, roles in self.role_cache.items():
-            cache[name] = {hash_params(role._get_hash_dict()): role for role in roles}
+        for path, roles in self.role_cache.items():
+            for role in roles:
+                name = role.get_name()
+                hashed_params = hash_params(role._get_hash_dict())
+                cache.setdefault(name, {})[hashed_params] = role
         return cache
 
     def _validate_hosts(self, attribute, name, value):
