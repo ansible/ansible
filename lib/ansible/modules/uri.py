@@ -370,7 +370,7 @@ EXAMPLES = r'''
 - name: Provide SSL/TLS ciphers as an OpenSSL formatted cipher list
   uri:
     url: https://example.org
-    ciphers: @SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM
+    ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
 '''
 
 RETURN = r'''
