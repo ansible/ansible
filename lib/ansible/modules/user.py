@@ -576,7 +576,7 @@ class User(object):
         self.ssh_type = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
-        self.ssh_key_trails = module.params['ssh_key_trials']
+        self.ssh_key_trials = module.params['ssh_key_trials']
         self.update_password = module.params['update_password']
         self.home = module.params['home']
         self.expires = None
