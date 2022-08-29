@@ -20,8 +20,7 @@ options:
   ciphers:
     description:
       - SSL/TLS Ciphers to use for the request.
-      ->
-        When a list is provided, all ciphers are joined in order with C(:)
+      - 'When a list is provided, all ciphers are joined in order with C(:)'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
       - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
