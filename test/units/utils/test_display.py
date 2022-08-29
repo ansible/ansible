@@ -6,12 +6,30 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import locale
+import sys
+import unicodedata
 from unittest.mock import MagicMock
 
 import pytest
 
-from ansible.utils.display import Display, get_text_width
+from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width
 from ansible.utils.multiprocessing import context as multiprocessing_context
+
+
+@pytest.fixture
+def problematic_wcswidth_chars():
+    problematic = []
+    try:
+        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+    except Exception:
+        return problematic
+
+    candidates = set(chr(c) for c in range(sys.maxunicode) if unicodedata.category(chr(c)) == 'Cf')
+    for c in candidates:
+        if _LIBC.wcswidth(c, _MAX_INT) == -1:
+            problematic.append(c)
+
+    return problematic
 
 
 def test_get_text_width():
@@ -35,9 +53,11 @@ def test_get_text_width():
     pytest.raises(TypeError, get_text_width, b'four')
 
 
-def test_get_text_width_no_locale():
+def test_get_text_width_no_locale(problematic_wcswidth_chars):
+    if not problematic_wcswidth_chars:
+        pytest.skip("No problmatic wcswidth chars")
     locale.setlocale(locale.LC_ALL, 'C.UTF-8')
-    pytest.raises(EnvironmentError, get_text_width, '\U000110cd')
+    pytest.raises(EnvironmentError, get_text_width, problematic_wcswidth_chars[0])
 
 
 def test_Display_banner_get_text_width(monkeypatch):
