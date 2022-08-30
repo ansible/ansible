@@ -865,7 +865,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=N
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
             if not HAS_SSLCONTEXT:
-                handler = maybe_add_ssl_handler(newurl, validate_certs, ca_path=ca_path)
+                handler = maybe_add_ssl_handler(newurl, validate_certs, ca_path=ca_path, ciphers=ciphers)
                 if handler:
                     urllib_request._opener.add_handler(handler)
 
@@ -986,11 +986,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
-    def __init__(self, hostname, port, ca_path=None, ciphers=None):
+    def __init__(self, hostname, port, ca_path=None, ciphers=None, validate_certs=True):
         self.hostname = hostname
         self.port = port
         self.ca_path = ca_path
         self.ciphers = ciphers
+        self.validate_certs = validate_certs
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
@@ -1122,7 +1123,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def make_context(self, cafile, cadata, ciphers=None):
+    def make_context(self, cafile, cadata, ciphers=None, validate_certs=True):
         if ciphers is None:
             ciphers = []
 
@@ -1142,6 +1143,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         else:
             raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
 
+        if not validate_certs:
+            if ssl.OP_NO_SSLv2:
+                context.options |= ssl.OP_NO_SSLv2
+            context.options |= ssl.OP_NO_SSLv3
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+
         if cafile or cadata:
             context.load_verify_locations(cafile=cafile, cadata=cadata)
 
@@ -1159,7 +1167,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         context = None
         try:
-            context = self.make_context(tmp_ca_cert_path, cadata, ciphers=self.ciphers)
+            context = self.make_context(tmp_ca_cert_path, cadata, ciphers=self.ciphers, validate_certs=self.validate_certs)
         except NotImplementedError:
             # We'll make do with no context below
             pass
@@ -1220,14 +1228,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
 def maybe_add_ssl_handler(url, validate_certs, ca_path=None, ciphers=None, ignore_scheme=False):
     parsed = generic_urlparse(urlparse(url))
-    if (ignore_scheme or parsed.scheme == 'https') and validate_certs:
-        if not HAS_SSL:
-            raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
-                             ' however this is unsafe and not recommended')
+    if (ignore_scheme or parsed.scheme == 'https'):
+        if not HAS_SSL and validate_certs:
+            raise NoSSLError('SSL validation is not available in your version of python.')
 
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path, ciphers=ciphers)
+        return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path, ciphers=ciphers, validate_certs=validate_certs)
 
 
 def getpeercert(response, binary_form=False):
@@ -1417,10 +1424,6 @@ class Request:
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path, ciphers=ciphers, ignore_scheme=True)
-        if ssl_handler and not HAS_SSLCONTEXT:
-            handlers.append(ssl_handler)
-
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
             username = url_username
@@ -1486,34 +1489,26 @@ class Request:
             handlers.append(proxyhandler)
 
         context = None
-        if HAS_SSLCONTEXT and not validate_certs:
-            # In 2.7.9, the default context validates certificates
-            context = SSLContext(ssl.PROTOCOL_SSLv23)
-            if ssl.OP_NO_SSLv2:
-                context.options |= ssl.OP_NO_SSLv2
-            context.options |= ssl.OP_NO_SSLv3
-            context.verify_mode = ssl.CERT_NONE
-            context.check_hostname = False
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path, ciphers=ciphers, ignore_scheme=True)
+        if ssl_handler:
+            if not any((HAS_SSLCONTEXT, HAS_URLLIB3_PYOPENSSLCONTEXT)):
+                handlers.append(ssl_handler)
+            else:
+                tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
+                try:
+                    context = ssl_handler.make_context(tmp_ca_path, cadata, ciphers, validate_certs)
+                except NotImplementedError:
+                    if validate_certs:
+                        raise
+
+        if client_cert or unix_socket:
             handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
                                                    client_key=client_key,
-                                                   context=context,
-                                                   unix_socket=unix_socket))
-        elif client_cert or unix_socket:
-            handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                                   client_key=client_key,
-                                                   unix_socket=unix_socket))
+                                                   unix_socket=unix_socket,
+                                                   context=context))
 
-        if ssl_handler and HAS_SSLCONTEXT and validate_certs:
-            tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
-            try:
-                context = ssl_handler.make_context(tmp_ca_path, cadata, ciphers)
-            except NotImplementedError:
-                pass
-
-        # pre-2.6 versions of python cannot use the custom https
-        # handler, since the socket class is lacking create_connection.
         # Some python builds lack HTTPS support.
-        if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
+        if CustomHTTPSHandler:
             kwargs = {}
             if HAS_SSLCONTEXT:
                 kwargs['context'] = context
