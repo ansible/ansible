@@ -366,9 +366,6 @@ class PlayIterator:
             elif state.run_state == IteratingStates.RESCUE:
                 # The process here is identical to IteratingStates.TASKS, except instead
                 # we move into the always portion of the block.
-                if host.name in self._play._removed_hosts:
-                    self._play._removed_hosts.remove(host.name)
-
                 if state.rescue_child_state:
                     (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host)
                     if self._check_failed_state(state.rescue_child_state):
