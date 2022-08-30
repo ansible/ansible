@@ -32,7 +32,6 @@ from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
@@ -466,7 +465,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
                 proc_err,
             )
 
-        return (
+    return (
         os.path.join(b_checkout_path, to_bytes(fragment))
         if fragment else b_checkout_path
     )
