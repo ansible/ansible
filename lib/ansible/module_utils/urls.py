@@ -611,6 +611,8 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 pass
             if self._unix_socket:
                 return UnixHTTPSConnection(self._unix_socket)(host, **kwargs)
+            if not HAS_SSLCONTEXT:
+                return CustomHTTPSConnection(host, **kwargs)
             return httplib.HTTPSConnection(host, **kwargs)
 
     @contextmanager
@@ -1501,18 +1503,10 @@ class Request:
                     if validate_certs:
                         raise
 
-        if client_cert or unix_socket:
-            handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                                   client_key=client_key,
-                                                   unix_socket=unix_socket,
-                                                   context=context))
-
-        # Some python builds lack HTTPS support.
-        if CustomHTTPSHandler:
-            kwargs = {}
-            if HAS_SSLCONTEXT:
-                kwargs['context'] = context
-            handlers.append(CustomHTTPSHandler(**kwargs))
+                handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                                       client_key=client_key,
+                                                       unix_socket=unix_socket,
+                                                       context=context))
 
         handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path=ca_path, ciphers=ciphers))
 
