@@ -848,7 +848,7 @@ class DocCLI(CLI, RoleMixin):
                     self._display_role_doc(docs)
 
             elif docs:
-                text = DocCLI._dump_yaml(docs, '')
+                text = DocCLI.tty_ify(DocCLI._dump_yaml(docs))
 
             if text:
                 DocCLI.pager(''.join(text))
@@ -1038,10 +1038,12 @@ class DocCLI(CLI, RoleMixin):
         return os.pathsep.join(ret)
 
     @staticmethod
-    def _dump_yaml(struct, indent, flow_style=False):
-        return DocCLI.tty_ify('\n'.join([
-            indent + line for line in yaml_dump(struct, default_flow_style=flow_style, default_style="''", Dumper=AnsibleDumper).rstrip('\n').split('\n')
-        ]))
+    def _dump_yaml(struct, flow_style=False):
+        return yaml_dump(struct, default_flow_style=flow_style, default_style="''", Dumper=AnsibleDumper).rstrip('\n')
+
+    @staticmethod
+    def _indent_lines(text, indent):
+        return DocCLI.tty_ify('\n'.join([indent + line for line in text.split('\n')]))
 
     @staticmethod
     def _format_version_added(version_added, version_added_collection=None):
@@ -1115,7 +1117,7 @@ class DocCLI(CLI, RoleMixin):
 
             # add custom header for conf
             if conf:
-                text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
+                text.append(DocCLI._indent_lines(DocCLI._dump_yaml({'set_via': conf}), opt_indent))
 
             # these we handle at the end of generic option processing
             version_added = opt.pop('version_added', None)
@@ -1127,9 +1129,9 @@ class DocCLI(CLI, RoleMixin):
                     continue
 
                 if isinstance(opt[k], Sequence) and not isinstance(opt[k], string_types):
-                    text.append('%s: %s' % (k, DocCLI._dump_yaml(opt[k], opt_indent, flow_style=True)))
+                    text.append(DocCLI._indent_lines('%s: %s' % (k, DocCLI._dump_yaml(opt[k], flow_style=True)), opt_indent))
                 else:
-                    text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
+                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k: opt[k]}), opt_indent))
 
             if version_added:
                 text.append("%sadded in: %s\n" % (opt_indent, DocCLI._format_version_added(version_added, version_added_collection)))
@@ -1183,7 +1185,7 @@ class DocCLI(CLI, RoleMixin):
 
             if doc.get('attributes'):
                 text.append("ATTRIBUTES:\n")
-                text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+                text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc.pop('attributes')), opt_indent))
                 text.append('')
 
             # generic elements we will handle identically
@@ -1197,7 +1199,7 @@ class DocCLI(CLI, RoleMixin):
                     text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
                 else:
                     # use empty indent since this affects the start of the yaml doc, not it's keys
-                    text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
+                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k.upper(): doc[k]}), ''))
                 text.append('')
 
         return text
@@ -1257,7 +1259,7 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('attributes', False):
             text.append("ATTRIBUTES:\n")
-            text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+            text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc.pop('attributes')), opt_indent))
             text.append('')
 
         if doc.get('notes', False):
@@ -1312,7 +1314,7 @@ class DocCLI(CLI, RoleMixin):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
                 # use empty indent since this affects the start of the yaml doc, not it's keys
-                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
+                text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k.upper(): doc[k]}), ''))
             del doc[k]
             text.append('')
 
