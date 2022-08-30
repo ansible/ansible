@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import json
 import os
+import pathlib
 import tarfile
 import subprocess
 import typing as t
@@ -453,7 +454,19 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             proc_err,
         )
 
-    return (
+    if pathlib.Path(f"{b_checkout_path.decode('utf-8')}/.gitmodules").is_file():
+        git_submodule_cmd = git_executable, 'submodule', 'update', '--init', '--recursive'
+        try:
+            subprocess.check_call(git_submodule_cmd, cwd=b_checkout_path)
+        except subprocess.CalledProcessError as proc_err:
+            raise_from(
+                AnsibleError(
+                    'Failed to download submodules'
+                ),
+                proc_err,
+            )
+
+        return (
         os.path.join(b_checkout_path, to_bytes(fragment))
         if fragment else b_checkout_path
     )
