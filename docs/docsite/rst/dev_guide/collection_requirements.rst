@@ -115,7 +115,7 @@ galaxy.yml
 ----------
 
 * The ``tags`` field MUST be set.
-* Collection dependencies must meet a set of rules. See the section on `Collection Dependencies <collection_dependencies_>`_ for this.
+* Collection dependencies must meet a set of rules. See  :ref:`collection_dependencies_requirements` for details.
 * The ``ansible`` package MUST NOT depend on collections not shipped in the package.
 * If you plan to split up your collection, the new collection MUST be approved for inclusion before the smaller collections replace the larger in Ansible.
 * If you plan to add other collections as dependencies, they MUST run through the formal application process.
