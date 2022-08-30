@@ -979,6 +979,138 @@ def atexit_remove_file(filename):
             pass
 
 
+def make_context(cafile=None, cadata=None, ciphers=None, validate_certs=True):
+    if ciphers is None:
+        ciphers = []
+
+    if not is_sequence(ciphers):
+        raise TypeError('Ciphers must be a list. Got %s.' % ciphers.__class__.__name__)
+
+    if HAS_SSLCONTEXT:
+        context = create_default_context(cafile=cafile)
+    elif HAS_URLLIB3_PYOPENSSLCONTEXT:
+        context = PyOpenSSLContext(PROTOCOL)
+    else:
+        raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
+
+    if not validate_certs:
+        if ssl.OP_NO_SSLv2:
+            context.options |= ssl.OP_NO_SSLv2
+        context.options |= ssl.OP_NO_SSLv3
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+    if validate_certs and any((cafile, cadata)):
+        context.load_verify_locations(cafile=cafile, cadata=cadata)
+
+    if ciphers:
+        context.set_ciphers(':'.join(map(to_native, ciphers)))
+
+    return context
+
+
+def get_ca_certs(cafile=None):
+    # tries to find a valid CA cert in one of the
+    # standard locations for the current distribution
+
+    ca_certs = []
+    cadata = bytearray()
+    paths_checked = []
+
+    if cafile:
+        paths_checked = [cafile]
+        with open(to_bytes(cafile, errors='surrogate_or_strict'), 'rb') as f:
+            if HAS_SSLCONTEXT:
+                for b_pem in extract_pem_certs(f.read()):
+                    cadata.extend(
+                        ssl.PEM_cert_to_DER_cert(
+                            to_native(b_pem, errors='surrogate_or_strict')
+                        )
+                    )
+        return cafile, cadata, paths_checked
+
+    if not HAS_SSLCONTEXT:
+        paths_checked.append('/etc/ssl/certs')
+
+    system = to_text(platform.system(), errors='surrogate_or_strict')
+    # build a list of paths to check for .crt/.pem files
+    # based on the platform type
+    if system == u'Linux':
+        paths_checked.append('/etc/pki/ca-trust/extracted/pem')
+        paths_checked.append('/etc/pki/tls/certs')
+        paths_checked.append('/usr/share/ca-certificates/cacert.org')
+    elif system == u'FreeBSD':
+        paths_checked.append('/usr/local/share/certs')
+    elif system == u'OpenBSD':
+        paths_checked.append('/etc/ssl')
+    elif system == u'NetBSD':
+        ca_certs.append('/etc/openssl/certs')
+    elif system == u'SunOS':
+        paths_checked.append('/opt/local/etc/openssl/certs')
+    elif system == u'AIX':
+        paths_checked.append('/var/ssl/certs')
+        paths_checked.append('/opt/freeware/etc/ssl/certs')
+
+    # fall back to a user-deployed cert in a standard
+    # location if the OS platform one is not available
+    paths_checked.append('/etc/ansible')
+
+    tmp_path = None
+    if not HAS_SSLCONTEXT:
+        tmp_fd, tmp_path = tempfile.mkstemp()
+        atexit.register(atexit_remove_file, tmp_path)
+
+    # Write the dummy ca cert if we are running on macOS
+    if system == u'Darwin':
+        if HAS_SSLCONTEXT:
+            cadata.extend(
+                ssl.PEM_cert_to_DER_cert(
+                    to_native(b_DUMMY_CA_CERT, errors='surrogate_or_strict')
+                )
+            )
+        else:
+            os.write(tmp_fd, b_DUMMY_CA_CERT)
+        # Default Homebrew path for OpenSSL certs
+        paths_checked.append('/usr/local/etc/openssl')
+
+    # for all of the paths, find any  .crt or .pem files
+    # and compile them into single temp file for use
+    # in the ssl check to speed up the test
+    for path in paths_checked:
+        if os.path.exists(path) and os.path.isdir(path):
+            dir_contents = os.listdir(path)
+            for f in dir_contents:
+                full_path = os.path.join(path, f)
+                if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
+                    try:
+                        if full_path not in LOADED_VERIFY_LOCATIONS:
+                            with open(full_path, 'rb') as cert_file:
+                                b_cert = cert_file.read()
+                            if HAS_SSLCONTEXT:
+                                try:
+                                    for b_pem in extract_pem_certs(b_cert):
+                                        cadata.extend(
+                                            ssl.PEM_cert_to_DER_cert(
+                                                to_native(b_pem, errors='surrogate_or_strict')
+                                            )
+                                        )
+                                except Exception:
+                                    continue
+                            else:
+                                os.write(tmp_fd, b_cert)
+                                os.write(tmp_fd, b'\n')
+                    except (OSError, IOError):
+                        pass
+
+    if HAS_SSLCONTEXT:
+        default_verify_paths = ssl.get_default_verify_paths()
+        paths_checked[:0] = [default_verify_paths.capath]
+    else:
+        os.close(tmp_fd)
+
+    return (tmp_path, cadata, paths_checked)
+
+
 class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     A custom handler class for SSL validation.
@@ -997,105 +1129,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         self.validate_certs = validate_certs
 
     def get_ca_certs(self):
-        # tries to find a valid CA cert in one of the
-        # standard locations for the current distribution
-
-        ca_certs = []
-        cadata = bytearray()
-        paths_checked = []
-
-        if self.ca_path:
-            paths_checked = [self.ca_path]
-            with open(to_bytes(self.ca_path, errors='surrogate_or_strict'), 'rb') as f:
-                if HAS_SSLCONTEXT:
-                    for b_pem in extract_pem_certs(f.read()):
-                        cadata.extend(
-                            ssl.PEM_cert_to_DER_cert(
-                                to_native(b_pem, errors='surrogate_or_strict')
-                            )
-                        )
-            return self.ca_path, cadata, paths_checked
-
-        if not HAS_SSLCONTEXT:
-            paths_checked.append('/etc/ssl/certs')
-
-        system = to_text(platform.system(), errors='surrogate_or_strict')
-        # build a list of paths to check for .crt/.pem files
-        # based on the platform type
-        if system == u'Linux':
-            paths_checked.append('/etc/pki/ca-trust/extracted/pem')
-            paths_checked.append('/etc/pki/tls/certs')
-            paths_checked.append('/usr/share/ca-certificates/cacert.org')
-        elif system == u'FreeBSD':
-            paths_checked.append('/usr/local/share/certs')
-        elif system == u'OpenBSD':
-            paths_checked.append('/etc/ssl')
-        elif system == u'NetBSD':
-            ca_certs.append('/etc/openssl/certs')
-        elif system == u'SunOS':
-            paths_checked.append('/opt/local/etc/openssl/certs')
-        elif system == u'AIX':
-            paths_checked.append('/var/ssl/certs')
-            paths_checked.append('/opt/freeware/etc/ssl/certs')
-
-        # fall back to a user-deployed cert in a standard
-        # location if the OS platform one is not available
-        paths_checked.append('/etc/ansible')
-
-        tmp_path = None
-        if not HAS_SSLCONTEXT:
-            tmp_fd, tmp_path = tempfile.mkstemp()
-            atexit.register(atexit_remove_file, tmp_path)
-
-        # Write the dummy ca cert if we are running on macOS
-        if system == u'Darwin':
-            if HAS_SSLCONTEXT:
-                cadata.extend(
-                    ssl.PEM_cert_to_DER_cert(
-                        to_native(b_DUMMY_CA_CERT, errors='surrogate_or_strict')
-                    )
-                )
-            else:
-                os.write(tmp_fd, b_DUMMY_CA_CERT)
-            # Default Homebrew path for OpenSSL certs
-            paths_checked.append('/usr/local/etc/openssl')
-
-        # for all of the paths, find any  .crt or .pem files
-        # and compile them into single temp file for use
-        # in the ssl check to speed up the test
-        for path in paths_checked:
-            if os.path.exists(path) and os.path.isdir(path):
-                dir_contents = os.listdir(path)
-                for f in dir_contents:
-                    full_path = os.path.join(path, f)
-                    if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
-                        try:
-                            if full_path not in LOADED_VERIFY_LOCATIONS:
-                                with open(full_path, 'rb') as cert_file:
-                                    b_cert = cert_file.read()
-                                if HAS_SSLCONTEXT:
-                                    try:
-                                        for b_pem in extract_pem_certs(b_cert):
-                                            cadata.extend(
-                                                ssl.PEM_cert_to_DER_cert(
-                                                    to_native(b_pem, errors='surrogate_or_strict')
-                                                )
-                                            )
-                                    except Exception:
-                                        continue
-                                else:
-                                    os.write(tmp_fd, b_cert)
-                                    os.write(tmp_fd, b'\n')
-                        except (OSError, IOError):
-                            pass
-
-        if HAS_SSLCONTEXT:
-            default_verify_paths = ssl.get_default_verify_paths()
-            paths_checked[:0] = [default_verify_paths.capath]
-        else:
-            os.close(tmp_fd)
-
-        return (tmp_path, cadata, paths_checked)
+        return get_ca_certs(self.ca_path)
 
     def validate_proxy_response(self, response, valid_codes=None):
         '''
@@ -1127,39 +1161,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def make_context(self, cafile, cadata, ciphers=None, validate_certs=True):
-        if ciphers is None:
-            ciphers = []
-
-        if not is_sequence(ciphers):
-            raise TypeError('Ciphers must be a list. Got %s.' % ciphers.__class__.__name__)
-
         cafile = self.ca_path or cafile
         if self.ca_path:
             cadata = None
         else:
             cadata = cadata or None
 
-        if HAS_SSLCONTEXT:
-            context = create_default_context(cafile=cafile)
-        elif HAS_URLLIB3_PYOPENSSLCONTEXT:
-            context = PyOpenSSLContext(PROTOCOL)
-        else:
-            raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
-
-        if not validate_certs:
-            if ssl.OP_NO_SSLv2:
-                context.options |= ssl.OP_NO_SSLv2
-            context.options |= ssl.OP_NO_SSLv3
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-
-        if cafile or cadata:
-            context.load_verify_locations(cafile=cafile, cadata=cadata)
-
-        if ciphers:
-            context.set_ciphers(':'.join(map(to_native, ciphers)))
-
-        return context
+        return make_context(cafile=cafile, cadata=cadata, ciphers=ciphers, validate_certs=valdiate_certs)
 
     def http_request(self, req):
         tmp_ca_cert_path, cadata, paths_checked = self.get_ca_certs()
@@ -1229,9 +1237,9 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs, ca_path=None, ciphers=None, ignore_scheme=False):
+def maybe_add_ssl_handler(url, validate_certs, ca_path=None, ciphers=None):
     parsed = generic_urlparse(urlparse(url))
-    if (ignore_scheme or parsed.scheme == 'https'):
+    if parsed.scheme == 'https':
         if not HAS_SSL and validate_certs:
             raise NoSSLError('SSL validation is not available in your version of python.')
 
@@ -1491,23 +1499,22 @@ class Request:
             proxyhandler = urllib_request.ProxyHandler({})
             handlers.append(proxyhandler)
 
-        context = None
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path, ciphers=ciphers, ignore_scheme=True)
-        if ssl_handler:
-            if not any((HAS_SSLCONTEXT, HAS_URLLIB3_PYOPENSSLCONTEXT)):
+        if not any((HAS_SSLCONTEXT, HAS_URLLIB3_PYOPENSSLCONTEXT)):
+            ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path, ciphers=ciphers)
+            if ssl_handler:
                 handlers.append(ssl_handler)
-            else:
-                tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
-                try:
-                    context = ssl_handler.make_context(tmp_ca_path, cadata, ciphers, validate_certs)
-                except NotImplementedError:
-                    if validate_certs:
-                        raise
-
-                handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                                       client_key=client_key,
-                                                       unix_socket=unix_socket,
-                                                       context=context))
+        else:
+            tmp_ca_path, cadata, paths_checked = get_ca_certs(ca_path)
+            context = make_context(
+                cafile=tmp_ca_path,
+                cadata=cadata,
+                ciphers=ciphers,
+                validate_certs=validate_certs,
+            )
+            handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                                   client_key=client_key,
+                                                   unix_socket=unix_socket,
+                                                   context=context))
 
         handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path=ca_path, ciphers=ciphers))
 
