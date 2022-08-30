@@ -1039,7 +1039,9 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def _dump_yaml(struct, indent, flow_style=False):
-        return DocCLI.tty_ify('\n'.join([indent + line for line in yaml_dump(struct, default_flow_style=flow_style,  default_style="''", Dumper=AnsibleDumper).split('\n')]))
+        return DocCLI.tty_ify('\n'.join([
+            indent + line for line in yaml_dump(struct, default_flow_style=flow_style, default_style="''", Dumper=AnsibleDumper).rstrip('\n').split('\n')
+        ]))
 
     @staticmethod
     def _format_version_added(version_added, version_added_collection=None):
