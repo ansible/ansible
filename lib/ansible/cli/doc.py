@@ -1093,7 +1093,6 @@ class DocCLI(CLI, RoleMixin):
                 if subkey in opt:
                     suboptions.append((subkey, opt.pop(subkey)))
 
-
             # sanitize config items
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keyword'):
