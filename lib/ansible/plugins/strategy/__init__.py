@@ -575,6 +575,7 @@ class StrategyBase:
                     if state and (iterator.get_active_state(state).run_state == IteratingStates.RESCUE or
                                   iterator.is_any_block_rescuing(state)):
                         self._tqm._stats.increment('rescued', original_host.name)
+                        iterator._play._removed_hosts.remove(original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(
