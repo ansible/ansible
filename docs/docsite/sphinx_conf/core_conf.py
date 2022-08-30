@@ -121,6 +121,7 @@ exclude_patterns = [
     'community/steering/steering_committee_past_members.rst',
     'community/steering/steering_index.rst',
     'dev_guide/ansible_index.rst',
+    'dev_guide/collection_requirements.rst',
     'dev_guide/core_index.rst',
     'dev_guide/platforms/aws_guidelines.rst',
     'dev_guide/platforms/openstack_guidelines.rst',
