@@ -121,25 +121,26 @@ except ImportError:
     HAS_SSLCONTEXT = False
 
 # SNI Handling for python < 2.7.9 with urllib3 support
-try:
-    # urllib3>=1.15
-    HAS_URLLIB3_SSL_WRAP_SOCKET = False
+HAS_URLLIB3_PYOPENSSLCONTEXT = False
+HAS_URLLIB3_SSL_WRAP_SOCKET = False
+if not HAS_SSLCONTEXT:
     try:
-        from urllib3.contrib.pyopenssl import PyOpenSSLContext
-    except Exception:
-        from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
-    HAS_URLLIB3_PYOPENSSLCONTEXT = True
-except Exception:
-    # urllib3<1.15,>=1.6
-    HAS_URLLIB3_PYOPENSSLCONTEXT = False
-    try:
+        # urllib3>=1.15
         try:
-            from urllib3.contrib.pyopenssl import ssl_wrap_socket
+            from urllib3.contrib.pyopenssl import PyOpenSSLContext
         except Exception:
-            from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
-        HAS_URLLIB3_SSL_WRAP_SOCKET = True
+            from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
+        HAS_URLLIB3_PYOPENSSLCONTEXT = True
     except Exception:
-        pass
+        # urllib3<1.15,>=1.6
+        try:
+            try:
+                from urllib3.contrib.pyopenssl import ssl_wrap_socket
+            except Exception:
+                from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
+            HAS_URLLIB3_SSL_WRAP_SOCKET = True
+        except Exception:
+            pass
 
 # Select a protocol that includes all secure tls protocols
 # Exclude insecure ssl protocols if possible
