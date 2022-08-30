@@ -126,19 +126,19 @@ try:
     HAS_URLLIB3_SSL_WRAP_SOCKET = False
     try:
         from urllib3.contrib.pyopenssl import PyOpenSSLContext
-    except ImportError:
+    except Exception:
         from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
     HAS_URLLIB3_PYOPENSSLCONTEXT = True
-except ImportError:
+except Exception:
     # urllib3<1.15,>=1.6
     HAS_URLLIB3_PYOPENSSLCONTEXT = False
     try:
         try:
             from urllib3.contrib.pyopenssl import ssl_wrap_socket
-        except ImportError:
+        except Exception:
             from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
         HAS_URLLIB3_SSL_WRAP_SOCKET = True
-    except ImportError:
+    except Exception:
         pass
 
 # Select a protocol that includes all secure tls protocols
