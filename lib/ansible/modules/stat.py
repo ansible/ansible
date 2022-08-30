@@ -129,12 +129,12 @@ EXAMPLES = r'''
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-- name: Don not do checksum
+- name: Do not calculate the checksum
   ansible.builtin.stat:
     path: /path/to/myhugefile
     get_checksum: no
 
-- name: Use sha256 to calculate checksum
+- name: Use sha256 to calculate the checksum
   ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
