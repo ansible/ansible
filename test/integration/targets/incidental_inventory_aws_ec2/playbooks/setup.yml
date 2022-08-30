@@ -14,7 +14,7 @@
       owner-id: '125523088429'
       virtualization-type: hvm
       root-device-type: ebs
-      name: 'Fedora-Atomic-27*'
+      name: 'Fedora-Cloud-Base-*'
     <<: *aws_connection_info
   register: fedora_images
 
