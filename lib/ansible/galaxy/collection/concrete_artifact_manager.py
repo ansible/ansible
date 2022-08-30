@@ -454,7 +454,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             proc_err,
         )
 
-    if pathlib.Path(f"{b_checkout_path.decode('utf-8')}/.gitmodules").is_file():
+    if pathlib.Path(str(b_checkout_path) + "/.gitmodules").is_file():
         git_submodule_cmd = git_executable, 'submodule', 'update', '--init', '--recursive'
         try:
             subprocess.check_call(git_submodule_cmd, cwd=b_checkout_path)
