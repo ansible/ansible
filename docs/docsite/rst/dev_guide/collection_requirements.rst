@@ -366,6 +366,8 @@ Also:
 
 See `Migrating content to a different collection <https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html#migrating-ansible-content-to-a-different-collection>`_ for complete details.
 
+.. _collection_development_conventions:
+
 Development conventions
 =======================
 
