@@ -377,7 +377,7 @@ Besides all the requirements listed in the `Development conventions <https://doc
   create new ``_info`` or ``_facts`` modules instead (for more information, refer to the `Developing modules guidelines <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general.html#creating-an-info-or-a-facts-module>`_)
 * ``check_mode`` is supported in all ``*_info`` and ``*_facts`` modules (for more information, refer to the `Development conventions <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html#following-ansible-conventions>`_)
 
-.. _collection_dependencies:
+.. _collection_dependencies_requirements:
 
 Collection Dependencies
 =======================
