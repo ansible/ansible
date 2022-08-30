@@ -1,8 +1,8 @@
 jinja2
 pyyaml
 resolvelib < 0.9.0
-sphinx == 4.2.0
+sphinx == 5.1.1
 sphinx-notfound-page
 sphinx-ansible-theme
 straight.plugin
-antsibull-docs == 1.0.0  # currently approved version
+antsibull-docs == 1.3.0  # currently approved version

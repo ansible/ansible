@@ -1,3 +1,4 @@
-sphinx == 4.2.0  # required for full rstcheck functionality, installed first to get the correct docutils version
-rstcheck < 4  # match version used in other sanity tests
+docutils < 0.18  # match version required by sphinx in the docs-build sanity test
+sphinx == 5.1.1  # required for full rstcheck functionality, installed first to get the correct docutils version
+rstcheck <= 6.1.0  # match version used in other sanity tests
 jinja2  # ansible-core requirement
