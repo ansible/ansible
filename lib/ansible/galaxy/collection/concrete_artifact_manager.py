@@ -463,7 +463,6 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         except subprocess.CalledProcessError as proc_err:
             raise AnsibleError('Failed to download submodules') from proc_err
 
-
     return (
         os.path.join(b_checkout_path, to_bytes(fragment))
         if fragment else b_checkout_path
