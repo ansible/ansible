@@ -28,11 +28,16 @@ display = Display()
 class MultiGalaxyAPIProxy:
     """A proxy that abstracts talking to multiple Galaxy instances."""
 
-    def __init__(self, apis, concrete_artifacts_manager):
+    def __init__(self, apis, concrete_artifacts_manager, offline=False):
         # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager) -> None
         """Initialize the target APIs list."""
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
+        self._offline = offline  # Prevent all GalaxyAPI calls
+
+    def _offline_is_unsupported(self):
+        if self._offline:
+            raise NotImplementedError
 
     def _get_collection_versions(self, requirement):
         # type: (Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]
@@ -41,6 +46,9 @@ class MultiGalaxyAPIProxy:
         Yield api, version pairs for all APIs,
         and reraise the last error if no valid API was found.
         """
+        if self._offline:
+            return []
+
         found_api = False
         last_error = None  # type: Exception | None
 
@@ -102,6 +110,7 @@ class MultiGalaxyAPIProxy:
     def get_collection_version_metadata(self, collection_candidate):
         # type: (Candidate) -> CollectionVersionMetadata
         """Retrieve collection metadata of a given candidate."""
+        self._offline_is_unsupported()
 
         api_lookup_order = (
             (collection_candidate.src, )
@@ -159,6 +168,7 @@ class MultiGalaxyAPIProxy:
                 get_direct_collection_dependencies
             )(collection_candidate)
 
+        self._offline_is_unsupported()
         return (
             self.
             get_collection_version_metadata(collection_candidate).
@@ -167,6 +177,7 @@ class MultiGalaxyAPIProxy:
 
     def get_signatures(self, collection_candidate):
         # type: (Candidate) -> list[str]
+        self._offline_is_unsupported()
         namespace = collection_candidate.namespace
         name = collection_candidate.name
         version = collection_candidate.ver
