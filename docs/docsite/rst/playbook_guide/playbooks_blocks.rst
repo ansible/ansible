@@ -179,7 +179,7 @@ ansible_failed_result
 
 .. note::
 
-  Both variables are propagated from an inner block to an outer ``rescue`` portion of a block.
+  In ``ansible-core`` 2.14 or later, both variables are propagated from an inner block to an outer ``rescue`` portion of a block.
 
 .. seealso::
 
