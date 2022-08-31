@@ -138,14 +138,6 @@ DOCUMENTATION = """
         vars:
           - name: ansible_winrm_connection_timeout
         type: int
-      _extras:
-        description:
-          - Supports any additional variables permitted by the version of pywinrm.
-            The prefix "ansible_winrm_" (which is used to find the variables) is stripped before pywinrm uses them.
-        type: dict
-        default: {}
-        meta_vars:
-          - prefix: ansible_winrm_
 """
 
 import base64
@@ -230,6 +222,7 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     allow_executable = False
     has_pipelining = True
+    allow_extras = [(r'(^ansible_winrm_)', r'')]
 
     def __init__(self, *args, **kwargs):
 
@@ -309,7 +302,7 @@ class Connection(ConnectionBase):
         argspec = getfullargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
-        passed_winrm_args = {v.replace('ansible_winrm_', '') for v in self.get_option('_extras')}
+        passed_winrm_args = {v for v in self.get_option('_extras')}
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm
@@ -318,7 +311,7 @@ class Connection(ConnectionBase):
 
         # pass through matching extras, excluding the list we want to treat specially
         for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
-            self._winrm_kwargs[arg] = self.get_option('_extras')['ansible_winrm_%s' % arg]
+            self._winrm_kwargs[arg] = self.get_option('_extras')[arg]
 
     # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
     # auth itself with a private CCACHE.
@@ -346,7 +339,7 @@ class Connection(ConnectionBase):
             kinit_args = [to_text(a) for a in shlex.split(kinit_args) if a.strip()]
             kinit_cmdline.extend(kinit_args)
 
-        elif boolean(self.get_option('_extras').get('ansible_winrm_kerberos_delegation', False)):
+        elif boolean(self.get_option('_extras').get('kerberos_delegation', False)):
             kinit_cmdline.append('-f')
 
         kinit_cmdline.append(principal)

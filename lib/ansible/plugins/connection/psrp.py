@@ -303,14 +303,6 @@ options:
     vars:
     - name: ansible_psrp_configuration_name
     default: Microsoft.PowerShell
-  _extras:
-    description:
-      - Supports any additional variables permitted by the version of psrp.
-        The prefix "ansible_psrp_" (which is used to find the variables) is stripped before psrp uses them.
-    type: dict
-    default: {}
-    meta_vars:
-      - prefix: ansible_psrp_
 """
 
 import base64
@@ -351,6 +343,7 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     allow_executable = False
     has_pipelining = True
+    allow_extras = [(r'(^ansible_psrp_)', r'')]
 
     def __init__(self, *args, **kwargs):
         self.always_pipeline_modules = True
@@ -759,7 +752,7 @@ if ($bytes_read -gt 0) {
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
             supported_args.extend(auth_kwarg)
-        extra_args = {v.replace('ansible_psrp_', '') for v in self.get_option('_extras')}
+        extra_args = {v for v in self.get_option('_extras')}
         unsupported_args = extra_args.difference(supported_args)
 
         for arg in unsupported_args:
@@ -806,7 +799,7 @@ if ($bytes_read -gt 0) {
 
         # add in the extra args that were set
         for arg in extra_args.intersection(supported_args):
-            option = self.get_option('_extras')['ansible_psrp_%s' % arg]
+            option = self.get_option('_extras')[arg]
             self._psrp_conn_kwargs[arg] = option
 
     def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, arguments=None):

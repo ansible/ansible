@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import os
 import pty
+import re
 import time
 import json
 import signal
@@ -1020,36 +1021,28 @@ class TaskExecutor:
 
         # create dict of 'templated vars'
         options = {'_extras': {}}
-
-        extra_option_vars = C.config.get_extra_vars('connection', self._connection._load_name, variables.keys())
-        varnames.extend([var_name for opt, var_name in extra_option_vars])
-        extras = {}
-        for name, var_name in extra_option_vars:
-            if name not in extras:
-                extras[name] = {}
-            extras[name].update({var_name: variables[var_name]})
-        options.update(extras)
-
-        # specific variables have precedence over prefixes
         for k in option_vars:
             if k in variables:
                 options[k] = templar.template(variables[k])
 
-        # backwards compat, add extras if plugin supports them
-        ns = ''  # legacy or builtin
-        if '.' in self._connection_fqcn:
-            # builtin or a collection
-            ns = '.'.join(self._connection_fqcn.split('.')[0:2])
-        if getattr(self._connection, 'allow_extras', False) and ns in ('ansible.builtin', ''):
-            display.deprecated(
-                f"Update legacy plugin {self._connection_fqcn} to use config manager. "
-                f"Replace the attribute 'allow_extras' with a new option in the argspec that has 'meta_vars' defined.",
-                version=2.18
-            )
-            plugin_name = self._connection_fqcn.split(ns + '.', 1)[-1]
-            for k in variables:
-                if k.startswith('ansible_%s_' % plugin_name) and k not in options:
-                    options['_extras'][k] = templar.template(variables[k])
+        # add extras if plugin supports them
+        if getattr(self._connection, 'allow_extras', False):
+            if self._connection.allow_extras is True:
+                display.deprecated(
+                    "Using the connection plugin's _load_name to determine extra vars is deprecated. "
+                    "Use the porting guide to update {self._connection_fqcn}'s allow_extras attribute "
+                    "from a boolean to a list regex pairs.",
+                    version="2.18"
+                )
+                match_extras = [(r'(^ansible_%s_)' % self._connection_fqcn.split('.')[-1], r'\1')]
+            else:
+                match_extras = self._connection.allow_extras
+
+            for extra_re, repl_re in match_extras:
+                for k in variables:
+                    if k not in options and re.match(extra_re, k):
+                        var_name = re.sub(extra_re, repl_re, k)
+                        options['_extras'][var_name] = templar.template(variables[k])
 
         task_keys = self._task.dump_attrs()
 
