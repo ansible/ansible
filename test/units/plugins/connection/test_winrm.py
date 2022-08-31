@@ -42,8 +42,7 @@ class TestConnectionWinRM(object):
                 '_winrm_transport': ['ssl'],
                 '_winrm_user': None
             },
-            False,
-            False,
+            False
         ),
         # http through port
         (
@@ -55,8 +54,7 @@ class TestConnectionWinRM(object):
                 '_winrm_scheme': 'http',
                 '_winrm_transport': ['plaintext'],
             },
-            False,
-            False,
+            False
         ),
         # kerberos user with kerb present
         (
@@ -71,8 +69,7 @@ class TestConnectionWinRM(object):
                 '_winrm_transport': ['kerberos', 'ssl'],
                 '_winrm_user': 'user@domain.com'
             },
-            True,
-            False,
+            True
         ),
         # kerberos user without kerb present
         (
@@ -87,8 +84,7 @@ class TestConnectionWinRM(object):
                 '_winrm_transport': ['ssl'],
                 '_winrm_user': 'user@domain.com'
             },
-            False,
-            False,
+            False
         ),
         # kerberos user with managed ticket (implicit)
         (
@@ -103,8 +99,7 @@ class TestConnectionWinRM(object):
                 '_winrm_transport': ['kerberos', 'ssl'],
                 '_winrm_user': 'user@domain.com'
             },
-            True,
-            False,
+            True
         ),
         # kerb with managed ticket (explicit)
         (
@@ -114,8 +109,7 @@ class TestConnectionWinRM(object):
             {
                 '_kerb_managed': True,
             },
-            True,
-            False,
+            True
         ),
         # kerb with unmanaged ticket (explicit))
         (
@@ -125,8 +119,7 @@ class TestConnectionWinRM(object):
             {
                 '_kerb_managed': False,
             },
-            True,
-            False,
+            True
         ),
         # transport override (single)
         (
@@ -139,8 +132,7 @@ class TestConnectionWinRM(object):
                 '_winrm_pass': None,
                 '_winrm_transport': ['ntlm'],
             },
-            False,
-            False,
+            False
         ),
         # transport override (list)
         (
@@ -153,10 +145,9 @@ class TestConnectionWinRM(object):
                 '_winrm_pass': None,
                 '_winrm_transport': ['ntlm', 'certificate'],
             },
-            False,
-            False,
+            False
         ),
-        # winrm extras legacy
+        # winrm extras
         (
             {'_extras': {'ansible_winrm_server_cert_validation': 'ignore',
                          'ansible_winrm_service': 'WSMAN'}},
@@ -166,20 +157,7 @@ class TestConnectionWinRM(object):
                                   'server_cert_validation': 'ignore',
                                   'service': 'WSMAN'},
             },
-            False,
-            True,
-        ),
-        # winrm extras config
-        (
-            {'ansible_winrm_server_cert_validation': 'ignore', 'ansible_winrm_service': 'WSMAN'},
-            {},
-            {
-                '_winrm_kwargs': {'username': None, 'password': None,
-                                  'server_cert_validation': 'ignore',
-                                  'service': 'WSMAN'},
-            },
-            False,
-            False,
+            False
         ),
         # direct override
         (
@@ -188,8 +166,7 @@ class TestConnectionWinRM(object):
             {
                 '_winrm_connection_timeout': 10,
             },
-            False,
-            False,
+            False
         ),
         # password as ansible_password
         (
@@ -199,8 +176,7 @@ class TestConnectionWinRM(object):
                 '_winrm_pass': 'pass',
                 '_winrm_kwargs': {'username': None, 'password': 'pass'}
             },
-            False,
-            False,
+            False
         ),
         # password as ansible_winrm_pass
         (
@@ -210,8 +186,7 @@ class TestConnectionWinRM(object):
                 '_winrm_pass': 'pass',
                 '_winrm_kwargs': {'username': None, 'password': 'pass'}
             },
-            False,
-            False,
+            False
         ),
 
         # password as ansible_winrm_password
@@ -222,24 +197,21 @@ class TestConnectionWinRM(object):
                 '_winrm_pass': 'pass',
                 '_winrm_kwargs': {'username': None, 'password': 'pass'}
             },
-            False,
-            False,
+            False
         ),
     )
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
     # pylint: disable=undefined-variable
-    @pytest.mark.parametrize('options, direct, expected, kerb, legacy_extras',
-                             ((o, d, e, k, l) for o, d, e, k, l in OPTIONS_DATA))
-    def test_set_options(self, options, direct, expected, kerb, legacy_extras):
+    @pytest.mark.parametrize('options, direct, expected, kerb',
+                             ((o, d, e, k) for o, d, e, k in OPTIONS_DATA))
+    def test_set_options(self, options, direct, expected, kerb):
         winrm.HAVE_KERBEROS = kerb
 
         pc = PlayContext()
         new_stdin = StringIO()
 
         conn = connection_loader.get('winrm', pc, new_stdin)
-        if legacy_extras:
-            conn.allow_extras = True
         conn.set_options(var_options=options, direct=direct)
         conn._build_winrm_kwargs()
 
@@ -252,39 +224,19 @@ class TestConnectionWinRM(object):
 
 class TestWinRMKerbAuth(object):
 
-    @pytest.mark.parametrize('options, expected, legacy_allow_extras', [
+    @pytest.mark.parametrize('options, expected', [
         [{"_extras": {}},
-         (["kinit", "user@domain"],),
-         True],
-        [{},
-         (["kinit", "user@domain"],),
-         False],
+         (["kinit", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_cmd': 'kinit2'},
-         (["kinit2", "user@domain"],),
-         True],
-        [{'ansible_winrm_kinit_cmd': 'kinit2'},
-         (["kinit2", "user@domain"],),
-         False],
+         (["kinit2", "user@domain"],)],
         [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
-         (["kinit", "-f", "user@domain"],),
-         True],
-        [{'ansible_winrm_kerberos_delegation': True},
-         (["kinit", "-f", "user@domain"],),
-         False],
+         (["kinit", "-f", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
-         (["kinit", "-f", "-p", "user@domain"],),
-         True],
-        [{'ansible_winrm_kinit_args': '-f -p'},
-         (["kinit", "-f", "-p", "user@domain"],),
-         False],
+         (["kinit", "-f", "-p", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
-         (["kinit", "-p", "user@domain"],),
-         True],
-        [{'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
-         (["kinit", "-p", "user@domain"],),
-         False],
-        ])
-    def test_kinit_success_subprocess(self, monkeypatch, options, expected, legacy_allow_extras):
+         (["kinit", "-p", "user@domain"],)]
+    ])
+    def test_kinit_success_subprocess(self, monkeypatch, options, expected):
         def mock_communicate(input=None, timeout=None):
             return b"", b""
 
@@ -297,8 +249,6 @@ class TestWinRMKerbAuth(object):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
-        if legacy_allow_extras:
-            conn.allow_extras = True
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
@@ -311,28 +261,19 @@ class TestWinRMKerbAuth(object):
         assert actual_env['KRB5CCNAME'].startswith("FILE:/")
         assert actual_env['PATH'] == os.environ['PATH']
 
-    @pytest.mark.parametrize('options, expected, legacy_allow_extras', [
+    @pytest.mark.parametrize('options, expected', [
         [{"_extras": {}},
-         ("kinit", ["user@domain"],), True],
+         ("kinit", ["user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_cmd': 'kinit2'},
-         ("kinit2", ["user@domain"],), True],
+         ("kinit2", ["user@domain"],)],
         [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
-         ("kinit", ["-f", "user@domain"],), True],
+         ("kinit", ["-f", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
-         ("kinit", ["-f", "-p", "user@domain"],), True],
+         ("kinit", ["-f", "-p", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
-         ("kinit", ["-p", "user@domain"],), True],
-        [{}, ("kinit", ["user@domain"],), False],
-        [{'ansible_winrm_kinit_cmd': 'kinit2'},
-         ("kinit2", ["user@domain"],), False],
-        [{'ansible_winrm_kerberos_delegation': True},
-         ("kinit", ["-f", "user@domain"],), False],
-        [{'ansible_winrm_kinit_args': '-f -p'},
-         ("kinit", ["-f", "-p", "user@domain"],), False],
-        [{'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
-         ("kinit", ["-p", "user@domain"],), False]
+         ("kinit", ["-p", "user@domain"],)]
     ])
-    def test_kinit_success_pexpect(self, monkeypatch, options, expected, legacy_allow_extras):
+    def test_kinit_success_pexpect(self, monkeypatch, options, expected):
         pytest.importorskip("pexpect")
         mock_pexpect = MagicMock()
         mock_pexpect.return_value.exitstatus = 0
@@ -342,8 +283,6 @@ class TestWinRMKerbAuth(object):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
-        if legacy_allow_extras:
-            conn.allow_extras = True
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
