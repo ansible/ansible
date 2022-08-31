@@ -454,6 +454,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             ),
             proc_err,
         )
+
     has_submodules = (pathlib.Path(b_checkout_path.decode()) / '.gitmodules').is_file()
     with_submodule_cli_request = context.CLIARGS['init_submodules']
     if with_submodule_cli_request and has_submodules:
