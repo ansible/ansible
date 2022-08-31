@@ -67,7 +67,7 @@ FOUND = {}  # type: dict[str, list[str]]
 
 class VarsModule(BaseVarsPlugin):
 
-    REQUIRES_WHITELIST = True
+    REQUIRES_ENABLED = True
 
     def get_vars(self, loader, path, entities, cache=True):
         ''' parses the inventory file '''

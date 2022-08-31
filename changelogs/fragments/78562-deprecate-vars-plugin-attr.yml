@@ -1,0 +1,2 @@
+deprecated_features:
+  - vars plugins - determining whether or not to run ansible.legacy vars plugins with the class attribute REQUIRES_WHITELIST is deprecated, set REQUIRES_ENABLED instead.
