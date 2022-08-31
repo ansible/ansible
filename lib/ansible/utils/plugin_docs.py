@@ -334,6 +334,10 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     except Exception as e:
         raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
 
+    # got nothing, so this is 'undocumented', but lets populate at least some friendly info
+    if not docs[0]:
+        docs[0] = {'description': 'UNDOCUMENTED', 'short_description': 'UNDOCUMENTED'}
+
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     docs[0]['filename'] = filename
     docs[0]['collection'] = collection_name
