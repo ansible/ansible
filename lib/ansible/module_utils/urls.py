@@ -1167,7 +1167,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         else:
             cadata = cadata or None
 
-        return make_context(cafile=cafile, cadata=cadata, ciphers=ciphers, validate_certs=valdiate_certs)
+        return make_context(cafile=cafile, cadata=cadata, ciphers=ciphers, validate_certs=validate_certs)
 
     def http_request(self, req):
         tmp_ca_cert_path, cadata, paths_checked = self.get_ca_certs()
