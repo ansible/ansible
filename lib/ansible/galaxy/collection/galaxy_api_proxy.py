@@ -29,7 +29,7 @@ class MultiGalaxyAPIProxy:
     """A proxy that abstracts talking to multiple Galaxy instances."""
 
     def __init__(self, apis, concrete_artifacts_manager, offline=False):
-        # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager) -> None
+        # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager, bool) -> None
         """Initialize the target APIs list."""
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
