@@ -5,7 +5,7 @@ colorama==0.4.5
 commonmark==0.9.1
 docutils==0.17.1
 packaging==21.3
-pydantic==1.10.0
+pydantic==1.10.1
 Pygments==2.13.0
 pyparsing==3.0.9
 PyYAML==6.0
