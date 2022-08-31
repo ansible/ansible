@@ -1,0 +1,20 @@
+DOCUMENTATION:
+  name: nan
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: is this not a number (nan)
+  description:
+    - Can the input be cast into a number
+  aliases: [is_file]
+  options:
+    _input:
+      description: possible number representation or string that can be converted into one
+      type: raw
+      required: true
+EXAMPLES:
+    isnan: "{{ '42 is nan }}"
+
+RETURN:
+  _value:
+    description: Returns C(True) the input is a number or can be converted int one, c(False) if otherwise
+    type: boolean
