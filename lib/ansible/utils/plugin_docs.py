@@ -330,9 +330,17 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     filename, collection_name = find_plugin_docfile(plugin, plugin_type, loader)
 
     try:
-        docs.extend(get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type))
+        docs = get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
     except Exception as e:
         raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+
+    # no good? try adjacent
+    if not docs[0]:
+        try:
+            newfile =_find_adjacent(filename, plugin, C.DOC_EXTENSIONS)
+            docs = get_docstring(newfile, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
+        except Exception as e:
+            raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
 
     # got nothing, so this is 'undocumented', but lets populate at least some friendly info
     if not docs[0]:
