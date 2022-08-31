@@ -20,6 +20,8 @@ from urllib.parse import urldefrag
 from shutil import rmtree
 from tempfile import mkdtemp
 
+from ansible import context
+
 if t.TYPE_CHECKING:
     from ansible.galaxy.dependency_resolution.dataclasses import (
         Candidate, Requirement,
@@ -452,8 +454,9 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             ),
             proc_err,
         )
-
-    if pathlib.Path(str(b_checkout_path) + "/.gitmodules").is_file():
+    has_submodules = (pathlib.Path(b_checkout_path.decode()) / '.gitmodules').is_file()
+    with_submodule_cli_request = context.CLIARGS['init_submodules']
+    if with_submodule_cli_request and has_submodules:
         git_submodule_cmd = git_executable, 'submodule', 'update', '--init', '--recursive'
         try:
             subprocess.check_call(git_submodule_cmd, cwd=b_checkout_path)

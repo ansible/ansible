@@ -498,6 +498,8 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
                                         help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                         choices=list(GPG_ERROR_MAP.keys()))
+            install_parser.add_argument('--init-submodules', dest='init_submodules', action='store_true',
+                                        default=False, help='Init collection submodules')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
