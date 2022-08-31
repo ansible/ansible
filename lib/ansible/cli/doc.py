@@ -1093,6 +1093,9 @@ class DocCLI(CLI, RoleMixin):
                 if subkey in opt:
                     suboptions.append((subkey, opt.pop(subkey)))
 
+            if not required and not return_values and 'default' not in opt:
+                opt['default'] = None
+
             # sanitize config items
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keyword'):

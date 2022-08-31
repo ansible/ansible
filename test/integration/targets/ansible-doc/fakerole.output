@@ -25,6 +25,7 @@ OPTIONS (= is mandatory):
 - myopt3
         Third option.
         choices: [choice1, choice2]
+        default: null
         type: str
 
 

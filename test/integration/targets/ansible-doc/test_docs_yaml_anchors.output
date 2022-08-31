@@ -11,6 +11,7 @@ OPTIONS (= is mandatory):
 
 - egress
         Egress firewall rules
+        default: null
         elements: dict
         type: list
 
@@ -22,6 +23,7 @@ OPTIONS (= is mandatory):
 
 - ingress
         Ingress firewall rules
+        default: null
         elements: dict
         type: list
 

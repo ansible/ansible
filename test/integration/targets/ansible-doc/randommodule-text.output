@@ -23,12 +23,14 @@ OPTIONS (= is mandatory):
               version: 2.0.0
               why: Test deprecation
             name: TEST_ENV
+        default: null
         type: dict
 
         OPTIONS:
 
         - subtest2
             Another suboption.
+            default: null
             type: float
             added in: version 1.1.0
 
@@ -38,24 +40,28 @@ OPTIONS (= is mandatory):
 
         - subtest
             A suboption.
+            default: null
             type: int
             added in: version 1.1.0 of testns.testcol
 
 
 - test
         Some text.
+        default: null
         type: str
         added in: version 1.2.0 of testns.testcol
 
 
 - testcol2option
         An option taken from testcol2
+        default: null
         type: str
         added in: version 1.0.0 of testns.testcol2
 
 
 - testcol2option2
         Another option taken from testcol2
+        default: null
         type: str
 
 
