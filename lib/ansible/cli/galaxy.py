@@ -1671,7 +1671,7 @@ class GalaxyCLI(CLI):
 
         if response['count'] == 0:
             display.display("No roles match your search.", color=C.COLOR_ERROR)
-            return True
+            return 1
 
         data = [u'']
 
@@ -1694,7 +1694,7 @@ class GalaxyCLI(CLI):
         data = u'\n'.join(data)
         self.pager(data)
 
-        return True
+        return 0
 
     def execute_import(self):
         """ used to import a role into Ansible Galaxy """
@@ -1800,7 +1800,7 @@ class GalaxyCLI(CLI):
 
         display.display(resp['status'])
 
-        return True
+        return 0
 
 
 def main(args=None):
