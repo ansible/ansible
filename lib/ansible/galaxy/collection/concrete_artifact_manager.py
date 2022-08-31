@@ -456,7 +456,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         )
 
     has_submodules = (pathlib.Path(to_native(b_checkout_path)) / '.gitmodules').is_file()
-    with_submodule_cli_request = context.CLIARGS['init_submodules']
+    with_submodule_cli_request = context.CLIARGS['git_init_submodules']
     if with_submodule_cli_request and has_submodules:
         git_submodule_cmd = git_executable, 'submodule', 'update', '--init', '--recursive'
         try:
