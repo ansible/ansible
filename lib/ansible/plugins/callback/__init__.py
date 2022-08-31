@@ -143,6 +143,9 @@ class CallbackBase(AnsiblePlugin):
     '''
 
     def __init__(self, display=None, options=None):
+
+        super(CallbackBase, self).__init__()
+
         if display:
             self._display = display
         else:
@@ -168,6 +171,7 @@ class CallbackBase(AnsiblePlugin):
 
     def set_option(self, k, v):
         self._plugin_options[k] = v
+        self._hash = None
 
     def get_option(self, k):
         return self._plugin_options[k]
@@ -179,6 +183,7 @@ class CallbackBase(AnsiblePlugin):
 
         # load from config
         self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._hash = None
 
     @staticmethod
     def host_label(result):

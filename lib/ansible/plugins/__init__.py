@@ -21,6 +21,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pickle
+
 from abc import ABC
 
 import types
@@ -57,6 +59,17 @@ class AnsiblePlugin(ABC):
 
     def __init__(self):
         self._options = {}
+        self._hash = None
+
+    def _gen_signature(self):
+        # create immutable
+        s_options = pickle.dumps(self.get_options(hostvars=variables))
+        self._hash = hash(self._load_name) + hash(s_options)
+
+    def signature(self):
+        if self._hash is None:
+            self._gen_signature()
+        return self._hash
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
@@ -76,6 +89,7 @@ class AnsiblePlugin(ABC):
 
     def set_option(self, option, value):
         self._options[option] = value
+        self._hash = None
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         '''
@@ -91,6 +105,8 @@ class AnsiblePlugin(ABC):
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
+
+        self._gen_signature()
 
     def has_option(self, option):
         if not self._options:
