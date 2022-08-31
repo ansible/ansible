@@ -210,6 +210,8 @@ notes:
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the I(name) option.
+   - When C(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
+   - When an exact version is specified, an implicit priority of 1001 is used.
 '''
 
 EXAMPLES = '''
@@ -485,12 +487,17 @@ def package_version_compare(version, other_version):
 
 def package_best_match(pkgname, version_cmp, version, release, cache):
     policy = apt_pkg.Policy(cache)
+
+    policy.read_pinfile(apt_pkg.config.find_file("Dir::Etc::preferences"))
+    policy.read_pindir(apt_pkg.config.find_file("Dir::Etc::preferencesparts"))
+
     if release:
         # 990 is the priority used in `apt-get -t`
         policy.create_pin('Release', pkgname, release, 990)
     if version_cmp == "=":
-        # You can't pin to a minimum version, only equality with a glob
-        policy.create_pin('Version', pkgname, version, 991)
+        # Installing a specific version from command line overrides all pinning
+        # We don't mimmic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
+        policy.create_pin('Version', pkgname, version, 1001)
     pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
@@ -503,6 +510,14 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
 
 
 def package_status(m, pkgname, version_cmp, version, default_release, cache, state):
+    """
+    :return: A tuple of (installed, installed_version, version_installable, has_files). *installed* indicates whether
+    the package (regardless of version) is installed. *installed_version* indicates whether the installed package
+    matches the provided version criteria. *version_installable* provides the latest matching version that can be
+    installed. In the case of virtual packages where we can't determine an applicable match, True is returned.
+    *has_files* indicates whether the package has files on the filesystem (even if not installed, meaning a purge is
+    required).
+    """
     try:
         # get the package from the cache, as well as the
         # low-level apt_pkg.Package object which contains
@@ -527,15 +542,15 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
 
                     # Otherwise return nothing so apt will sort out
                     # what package to satisfy this with
-                    return False, False, None, False
+                    return False, False, True, False
 
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
                 # mark as not installed and let apt-get install deal with it
-                return False, False, None, False
+                return False, False, True, False
         else:
-            return False, False, False, False
+            return False, False, None, False
     try:
         has_files = len(pkg.installed_files) > 0
     except UnicodeDecodeError:
@@ -565,13 +580,16 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
         if version_cmp == "=":
             # check if the version is matched as well
             version_is_installed = fnmatch.fnmatch(installed_version, version)
+            if version_best and installed_version != version_best and fnmatch.fnmatch(version_best, version):
+                version_installable = version_best
         elif version_cmp == ">=":
             version_is_installed = apt_pkg.version_compare(installed_version, version) >= 0
+            if version_best and installed_version != version_best and apt_pkg.version_compare(version_best, version) >= 0:
+                version_installable = version_best
         else:
             version_is_installed = True
-
-        if installed_version != version_best:
-            version_installable = version_best
+            if version_best and installed_version != version_best:
+                version_installable = version_best
     else:
         version_installable = version_best
 
@@ -692,23 +710,27 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         name, version_cmp, version = package_split(package)
         package_names.append(name)
         installed, installed_version, version_installable, has_files = package_status(m, name, version_cmp, version, default_release, cache, state='install')
-        if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and version_installable):
-            if version_installable or version:
-                pkg_list.append("'%s=%s'" % (name, version_installable or version))
+
+        if (not installed_version and not version_installable) or (not installed and only_upgrade):
+            status = False
+            data = dict(msg="no available installation candidate for %s" % package)
+            return (status, data)
+
+        if version_installable and ((not installed and not only_upgrade) or upgrade or not installed_version):
+            if version_installable is not True:
+                pkg_list.append("'%s=%s'" % (name, version_installable))
+            elif version:
+                pkg_list.append("'%s=%s'" % (name, version))
             else:
                 pkg_list.append("'%s'" % name)
         elif installed_version and version_installable and version_cmp == "=":
             # This happens when the package is installed, a newer version is
             # available, and the version is a wildcard that matches both
             #
-            # We do not apply the upgrade flag because we cannot specify both
-            # a version and state=latest.  (This behaviour mirrors how apt
-            # treats a version with wildcard in the package)
-            #
             # This is legacy behavior, and isn't documented (in fact it does
             # things documentations says it shouldn't). It should not be relied
             # upon.
-            pkg_list.append("'%s=%s'" % (name, version_installable))
+            pkg_list.append("'%s=%s'" % (name, version))
     packages = ' '.join(pkg_list)
 
     if packages:

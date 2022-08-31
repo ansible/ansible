@@ -40,6 +40,17 @@
         state: absent
         allow_unauthenticated: yes
 
+- name: Try to install non-existent version
+  apt:
+    name: foo=99
+    state: present
+  ignore_errors: true
+  register: apt_result
+
+- name: Check if install failed
+  assert:
+    that:
+      - apt_result is failed
 
 # https://github.com/ansible/ansible/issues/30638
 - block:
@@ -56,6 +67,7 @@
     assert:
       that:
         - "apt_result is not changed"
+        - "apt_result is failed"
 
   - apt:
       name: foo=1.0.0
@@ -122,10 +134,56 @@
         - item.item.3 is none or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
     loop: '{{ apt_result.results }}'
 
+  - name: Pin foo=1.0.0
+    copy:
+      content: |-
+        Package: foo
+        Pin: version 1.0.0
+        Pin-Priority: 1000
+      dest: /etc/apt/preferences.d/foo
+
+  - name: Run pinning version test matrix
+    apt:
+      name: foo{{ item.0 }}
+      default_release: '{{ item.1 }}'
+      state: '{{ item.2 | ternary("latest","present") }}'
+    check_mode: true
+    ignore_errors: true
+    register: apt_result
+    loop:
+      # [filter, release, state_latest, expected] # expected=null for no change. expected=False to assert an error
+      - ["", null, false, null]
+      - ["", null, true, null]
+      - ["=1.0.0", null, false, null]
+      - ["=1.0.0", null, true, null]
+      - ["=1.0.1", null, false, "1.0.1"]
+      #- ["=1.0.*", null, false, null] # legacy behavior. should not upgrade without state=latest
+      - ["=1.0.*", null, true, "1.0.1"]
+      - [">=1.0.0", null, false, null]
+      - [">=1.0.0", null, true, null]
+      - [">=1.0.1", null, false, False]
+      - ["", "testing", false, null]
+      - ["", "testing", true, null]
+      - ["=2.0.0", null, false, "2.0.0"]
+      - [">=2.0.0", "testing", false, False]
+
+  - name: Validate pinning version test matrix
+    assert:
+      that:
+        - (item.item.3 != False) or (item.item.3 == False and item is failed)
+        - (item.item.3 is string) == (item.stdout is defined)
+        - item.item.3 is not string or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
+    loop: '{{ apt_result.results }}'
+
   always:
     - name: Uninstall foo
       apt:
         name: foo
+        state: absent
+
+    - name: Unpin foo
+      file:
+        path: /etc/apt/preferences.d/foo
         state: absent
 
 # https://github.com/ansible/ansible/issues/35900
