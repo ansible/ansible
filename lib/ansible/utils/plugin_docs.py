@@ -307,7 +307,9 @@ def find_plugin_docfile(plugin, plugin_type, loader):
     docfile = Path(context.plugin_resolved_path)
     possible_names = [plugin, getattr(plugin_obj, '_load_name', None), docfile.name.removeprefix('_'), docfile.name]
     if context:
-        possible_names.extend([context.redirect_list[-1], context.plugin_resolved_name])
+        if context.redirect_list:
+            possible_names.append(context.redirect_list[-1])
+        possible_names.append(context.plugin_resolved_name)
     if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
         # only look for adjacent if plugin file does not support documents or
         # name does not match file basname (except deprecated)
