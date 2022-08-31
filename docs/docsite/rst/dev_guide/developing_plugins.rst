@@ -501,7 +501,9 @@ This ``get_vars`` method just needs to return a dictionary structure with the va
 
 Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible. Since Ansible version 2.10, vars plugin execution can be toggled by the user to run when preparing to execute a task or after importing an inventory source.
 
-You can create vars plugins that are not enabled by default using the class variable ``REQUIRES_ENABLED``. If your vars plugin resides in a collection, it cannot be enabled by default. You must use ``REQUIRES_ENABLED`` in all collections-based vars plugins. To require users to enable your plugin, set the class variable ``REQUIRES_ENABLED``:
+The user must explicitly enable vars plugins that reside in a collection. See :ref:`enable_vars` for details.
+
+Legacy vars plugins are always loaded and run by default. You can prevent them from automatically running by setting ``REQUIRES_ENABLED`` to True.
 
 .. code-block:: python
 

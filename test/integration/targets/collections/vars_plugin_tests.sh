@@ -10,19 +10,21 @@ export ANSIBLE_RUN_VARS_PLUGINS=start
 # Test vars plugin in a playbook-adjacent collection
 export ANSIBLE_VARS_ENABLED=testns.content_adj.custom_adj_vars
 
-ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
+ansible-inventory -i a.statichost.yml --list --playbook-dir=./ 2>&1 | tee out.txt
 
 grep '"collection": "adjacent"' out.txt
 grep '"adj_var": "value"' out.txt
+grep -v "REQUIRES_ENABLED is not supported" out.txt
 
 # Test vars plugin in a collection path
 export ANSIBLE_VARS_ENABLED=testns.testcoll.custom_vars
 export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_sys
 
-ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
+ansible-inventory -i a.statichost.yml --list --playbook-dir=./ 2>&1 | tee out.txt
 
 grep '"collection": "collection_root_user"' out.txt
 grep -v '"adj_var": "value"' out.txt
+grep "REQUIRES_ENABLED is not supported" out.txt
 
 # Test enabled vars plugins order reflects the order in which variables are merged
 export ANSIBLE_VARS_ENABLED=testns.content_adj.custom_adj_vars,testns.testcoll.custom_vars
