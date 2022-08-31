@@ -3096,7 +3096,7 @@ def main():
         type='rsa',
         passphrase=None,
         comment='ansible-generated on %s' % socket.gethostname(),
-        trials=100
+        rounds=100
     )
     module = AnsibleModule(
         argument_spec=dict(
@@ -3134,7 +3134,7 @@ def main():
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(type='str', no_log=True),
-            ssh_key_rounds=dict(type='int', default=ssh_defaults['trials'], no_log=False),
+            ssh_key_rounds=dict(type='int', default=ssh_defaults['rounds'], no_log=False),
             update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             expires=dict(type='float'),
             password_lock=dict(type='bool', no_log=False),
