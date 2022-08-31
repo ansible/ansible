@@ -19,7 +19,6 @@ import traceback
 
 import ansible.plugins.loader as plugin_loader
 
-from collections.abc import Sequence
 from pathlib import Path
 
 from ansible import constants as C
@@ -28,6 +27,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
@@ -1077,7 +1077,7 @@ class DocCLI(CLI, RoleMixin):
             # description is specifically formated and can either be string or list of strings
             if 'description' not in opt:
                 raise AnsibleError("All (sub-)options and return values must have a 'description' field")
-            if isinstance(opt['description'], Sequence) and not isinstance(opt['description'], string_types):
+            if is_sequence(opt['description']):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
@@ -1127,7 +1127,7 @@ class DocCLI(CLI, RoleMixin):
                 if k.startswith('_'):
                     continue
 
-                if isinstance(opt[k], Sequence) and not isinstance(opt[k], string_types):
+                if is_sequence(opt[k]):
                     text.append(DocCLI._indent_lines('%s: %s' % (k, DocCLI._dump_yaml(opt[k], flow_style=True)), opt_indent))
                 else:
                     text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k: opt[k]}), opt_indent))
