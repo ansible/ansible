@@ -9,12 +9,8 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def nochange(a):
+def donothing(a):
     return a
-
-
-def meaningoflife(a):
-    return 42
 
 
 class FilterModule(object):
@@ -22,7 +18,5 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'noop': nochange,
-            'ultimatequestion': meaningoflife,
-            'b64decode': nochange,   # here to colide with basename of builtin
+            'donothing': donothing,
         }
