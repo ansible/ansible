@@ -151,7 +151,7 @@ class TestConnectionPSRP(object):
         ),
         # psrp extras
         (
-            {'_extras': {'ansible_psrp_mock_test1': True}},
+            {'_extras': {'mock_test1': True}},
             {
                 '_psrp_conn_kwargs': {
                     'server': 'inventory_hostname',
@@ -223,7 +223,7 @@ class TestConnectionPSRP(object):
         new_stdin = StringIO()
 
         conn = connection_loader.get('psrp', pc, new_stdin)
-        conn.set_options(var_options={'_extras': {'ansible_psrp_mock_test3': True}})
+        conn.set_options(var_options={'_extras': {'mock_test3': True}})
 
         mock_display = MagicMock()
         monkeypatch.setattr(Display, "warning", mock_display)
