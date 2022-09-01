@@ -149,8 +149,8 @@ class TestConnectionWinRM(object):
         ),
         # winrm extras
         (
-            {'_extras': {'ansible_winrm_server_cert_validation': 'ignore',
-                         'ansible_winrm_service': 'WSMAN'}},
+            {'_extras': {'server_cert_validation': 'ignore',
+                         'service': 'WSMAN'}},
             {},
             {
                 '_winrm_kwargs': {'username': None, 'password': None,
@@ -229,7 +229,7 @@ class TestWinRMKerbAuth(object):
          (["kinit", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_cmd': 'kinit2'},
          (["kinit2", "user@domain"],)],
-        [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
+        [{"_extras": {'kerberos_delegation': True}},
          (["kinit", "-f", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
          (["kinit", "-f", "-p", "user@domain"],)],
@@ -266,7 +266,7 @@ class TestWinRMKerbAuth(object):
          ("kinit", ["user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_cmd': 'kinit2'},
          ("kinit2", ["user@domain"],)],
-        [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
+        [{"_extras": {'kerberos_delegation': True}},
          ("kinit", ["-f", "user@domain"],)],
         [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
          ("kinit", ["-f", "-p", "user@domain"],)],
