@@ -4,7 +4,7 @@ bugfixes:
   (https://github.com/ansible/ansible/issues/78566).
 deprecated_features:
 - >-
-  Determining extra vars for connection plugins is deprecated.
+  Determining extra vars for connection plugins using the plugin name is deprecated.
   Instead of setting the class attribute allow_extras to True, set allow_extras
   to a list of tuple pairs.
   The first item in each pair is a regex to match variable names, and the second
