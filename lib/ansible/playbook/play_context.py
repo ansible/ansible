@@ -26,7 +26,6 @@ from ansible import context
 from ansible.module_utils.compat.paramiko import paramiko
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.plugins import get_plugin_class
 from ansible.utils.display import Display
 from ansible.utils.ssh_functions import check_for_controlpersist
 
@@ -168,7 +167,7 @@ class PlayContext(Base):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
-        options = C.config.get_configuration_definitions(get_plugin_class(plugin), plugin._load_name)
+        options = C.config.get_configuration_definitions(plugin.plugin_type, plugin._load_name)
         for option in options:
             if option:
                 flag = options[option].get('name')

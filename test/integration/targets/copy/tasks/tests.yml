@@ -2019,12 +2019,11 @@
 
 
 ## test copying the directory on remote with chown
-
+- name: setting 'ansible_copy_test_user_name' outside block since 'always' section depends on this also
+  set_fact:
+    ansible_copy_test_user_name: 'ansible_copy_test_{{ 100000 | random }}'
 
 - block:
-
-  - set_fact:
-      ansible_copy_test_user_name: 'ansible_copy_test_{{ 100000 | random }}'
 
   - name: execute - create a user for test
     user:

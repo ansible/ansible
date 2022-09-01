@@ -1,0 +1,9 @@
+DOCUMENTATION:
+  module: test_win_module
+  short_description: Test win module
+  description:
+      - Test win module with sidecar docs
+  author:
+      - Ansible Core Team
+EXAMPLES: ''
+RETURN: ''

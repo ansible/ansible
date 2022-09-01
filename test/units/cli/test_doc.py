@@ -127,4 +127,4 @@ def test_legacy_modules_list():
     obj = DocCLI(args=args)
     obj.parse()
     result = obj._list_plugins('module', module_loader)
-    assert len(result) == 0
+    assert len(result) > 0

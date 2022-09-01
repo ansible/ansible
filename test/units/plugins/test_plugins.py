@@ -123,7 +123,7 @@ class TestErrors(unittest.TestCase):
             ['/path/to/import_fixture.py']
         ]
 
-        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        pl = PluginLoader('test', '', 'test', 'test_plugins')
         # Aside from needing ``list()`` so we can do a len, ``PluginLoader.all`` returns a generator
         # so ``list()`` actually causes ``PluginLoader.all`` to run.
         plugins = list(pl.all())
