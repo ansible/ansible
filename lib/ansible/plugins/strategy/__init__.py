@@ -912,7 +912,7 @@ class StrategyBase:
             return task.evaluate_conditional(templar, all_vars)
 
         skipped = False
-        msg = ''
+        msg = meta_action
         skip_reason = '%s conditional evaluated to False' % meta_action
         if isinstance(task, Handler):
             self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
@@ -1046,10 +1046,10 @@ class StrategyBase:
         if skipped:
             result['skipped'] = True
             result['skip_reason'] = skip_reason
+            display.vv(f"META: {skip_reason}")
         else:
             result['changed'] = False
-
-        display.vv("META: %s" % msg)
+            display.vv(f"META: {msg}")
 
         if isinstance(task, Handler):
             task.remove_host(target_host)
