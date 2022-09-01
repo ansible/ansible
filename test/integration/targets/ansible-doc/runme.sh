@@ -39,7 +39,7 @@ do
 	# FIXME post=$(ansible-doc -l -t ${ptype} --playbook-dir ./|wc -l)
 	# FIXME test "$pre" -eq $((post - 1))
 	if [ "${ptype}" == "filter" ]; then
-		expected=2
+		expected=3
 	else
 		expected=1
 	fi
@@ -133,4 +133,42 @@ ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --
 
 # ensure that --metadata-dump does fail when --no-fail-on-errors is not supplied
 output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR!' || true)
-test "$output" -eq 1
+test "${output}" -eq 1
+
+# ensure we list the 'legacy plugins'
+[ "$(ansible-doc -M ./library -l ansible.legacy |wc -l)"  -gt "0" ]
+
+# playbook dir should work the same
+[ "$(ansible-doc -l ansible.legacy --playbook-dir ./|wc -l)" -gt "0" ]
+
+# see that we show undocumented when missing docs
+[ "$(ansible-doc -M ./library -l ansible.legacy |grep -c UNDOCUMENTED)" == "6" ]
+
+# ensure filtering works and does not include any 'test_' modules
+[ "$(ansible-doc -M ./library -l ansible.builtin |grep -c test_)" == 0 ]
+[ "$(ansible-doc --playbook-dir ./  -l ansible.builtin |grep -c test_)" == 0 ]
+
+# ensure filtering still shows modules
+count=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc -l ansible.builtin |wc -l)
+[ "${count}" -gt "0" ]
+[ "$(ansible-doc -M ./library -l ansible.builtin |wc -l)" == "${count}" ]
+[ "$(ansible-doc --playbook-dir ./ -l ansible.builtin |wc -l)" == "${count}" ]
+
+
+# produce 'sidecar' docs for test
+[ "$(ansible-doc -t test --playbook-dir ./ testns.testcol.yolo| wc -l)" -gt "0" ]
+[ "$(ansible-doc -t filter --playbook-dir ./ donothing| wc -l)" -gt "0" ]
+[ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
+
+# produce 'sidecar' docs for module
+[ "$(ansible-doc -M ./library test_win_module| wc -l)" -gt "0" ]
+[ "$(ansible-doc --playbook-dir ./ test_win_module| wc -l)" -gt "0" ]
+
+# test 'double DOCUMENTATION' use
+[ "$(ansible-doc --playbook-dir ./ double_doc| wc -l)" -gt "0" ]
+
+# don't break on module dir
+ansible-doc --list --module-path ./modules > /dev/null
+
+# ensure we dedupe by fqcn and not base name
+#[ "$(ansible-doc -l -t filter --playbook-dir ./ |grep 'b64decode' | wc -l)" -eq "2"]

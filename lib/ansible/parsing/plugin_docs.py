@@ -52,8 +52,9 @@ def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
         elif verbose:
             display.error(msg)
 
-    for key in string_to_vars:
-        data[string_to_vars[key]] = file_data.get(key, None)
+    if file_data:
+        for key in string_to_vars:
+            data[string_to_vars[key]] = file_data.get(key, None)
 
     return data
 
@@ -64,32 +65,44 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
     Parse from YAML and return the resulting python structure or None together with examples as plain text.
     """
 
-    found = 0
+    seen = set()
     data = _init_doc_dict()
 
     next_string = None
     with tokenize.open(filename) as f:
         tokens = tokenize.generate_tokens(f.readline)
         for token in tokens:
-            if token.type == tokenize.NAME:
-                if token.string in string_to_vars:
-                    next_string = string_to_vars[token.string]
 
+            # found lable that looks like variable
+            if token.type == tokenize.NAME:
+
+                # label is expected value, in correct place and has not been seen before
+                if token.start == 1 and token.string in string_to_vars and token.string not in seen:
+                    # next token that is string has the docs
+                    next_string = string_to_vars[token.string]
+                    continue
+
+            # previous token indicated this string is a doc string
             if next_string is not None and token.type == tokenize.STRING:
 
-                found += 1
+                # ensure we only process one case of it
+                seen.add(token.string)
 
                 value = token.string
+
+                # strip string modifiers/delimiters
                 if value.startswith(('r', 'b')):
                     value = value.lstrip('rb')
 
                 if value.startswith(("'", '"')):
                     value = value.strip("'\"")
 
+                # actually use the data
                 if next_string == 'plainexamples':
-                    # keep as string
+                    # keep as string, can be yaml, but we let caller deal with it
                     data[next_string] = to_text(value)
                 else:
+                    # yaml load the data
                     try:
                         data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
                     except Exception as e:
@@ -102,7 +115,7 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
                 next_string = None
 
     # if nothing else worked, fall back to old method
-    if not found:
+    if not seen:
         data = read_docstring_from_python_file(filename, verbose, ignore_errors)
 
     return data

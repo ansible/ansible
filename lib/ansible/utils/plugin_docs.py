@@ -5,16 +5,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from collections.abc import MutableMapping, MutableSet, MutableSequence
+from pathlib import Path
 
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -271,3 +271,85 @@ def get_versioned_doclink(path):
         return '{0}{1}/{2}'.format(base_url, doc_version, path)
     except Exception as ex:
         return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))
+
+
+def _find_adjacent(path, plugin, extensions):
+
+    found = None
+    adjacent = Path(path)
+
+    plugin_base_name = plugin.split('.')[-1]
+    if adjacent.stem != plugin_base_name:
+        # this should only affect filters/tests
+        adjacent = adjacent.with_name(plugin_base_name)
+
+    for ext in extensions:
+        candidate = adjacent.with_suffix(ext)
+        if candidate.exists():
+            found = to_native(candidate)
+            break
+
+    return found
+
+
+def find_plugin_docfile(plugin, plugin_type, loader):
+    '''  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs '''
+
+    context = loader.find_plugin_with_context(plugin, ignore_deprecated=False, check_aliases=True)
+    plugin_obj = None
+    if (not context or not context.resolved) and plugin_type in ('filter', 'test'):
+        # should only happen for filters/test
+        plugin_obj, context = loader.get_with_context(plugin)
+
+    if not context or not context.resolved:
+        raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
+
+    docfile = Path(context.plugin_resolved_path)
+    possible_names = [plugin, getattr(plugin_obj, '_load_name', None), docfile.name.removeprefix('_'), docfile.name]
+    if context:
+        if context.redirect_list:
+            possible_names.append(context.redirect_list[-1])
+        possible_names.append(context.plugin_resolved_name)
+    if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
+        # only look for adjacent if plugin file does not support documents or
+        # name does not match file basname (except deprecated)
+        filename = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
+    else:
+        filename = to_native(docfile)
+
+    if filename is None:
+        raise AnsibleError('%s cannot contain DOCUMENTATION nor does it have a companion documentation file' % (plugin))
+
+    return filename, context.plugin_resolved_collection
+
+
+def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
+
+    docs = []
+
+    # find plugin doc file, if it doesn't exist this will throw error, we let it through
+    # can raise exception and short circuit when 'not found'
+    filename, collection_name = find_plugin_docfile(plugin, plugin_type, loader)
+
+    try:
+        docs = get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
+    except Exception as e:
+        raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+
+    # no good? try adjacent
+    if not docs[0]:
+        try:
+            newfile = _find_adjacent(filename, plugin, C.DOC_EXTENSIONS)
+            docs = get_docstring(newfile, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
+        except Exception as e:
+            raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+
+    # got nothing, so this is 'undocumented', but lets populate at least some friendly info
+    if not docs[0]:
+        docs[0] = {'description': 'UNDOCUMENTED', 'short_description': 'UNDOCUMENTED'}
+
+    # add extra data to docs[0] (aka 'DOCUMENTATION')
+    docs[0]['filename'] = filename
+    docs[0]['collection'] = collection_name
+
+    return docs

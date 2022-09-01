@@ -7,15 +7,14 @@ __metaclass__ = type
 
 import os
 
-
+from ansible import context
 from ansible import constants as C
 from ansible.collections.list import list_collections
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
-from ansible.utils.path import is_subpath
-from ansible.utils.collection_loader._collection_finder import _get_collection_path
+from ansible.utils.collection_loader._collection_finder import _get_collection_path, AnsibleCollectionRef
 
 display = Display()
 
@@ -25,6 +24,16 @@ IGNORE = {
     'module': ('async_wrapper', ),
     'cache': ('base', ),
 }
+
+
+def get_composite_name(collection, name, path, depth):
+
+    # collectionize name
+    composite = [collection]
+    if depth:
+        composite.extend(path.split(os.path.sep)[depth * -1:])
+    composite.append(to_native(name))
+    return '.'.join(composite)
 
 
 def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
@@ -66,70 +75,41 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                         if any([
                                 plugin in C.IGNORE_FILES,                # general files to ignore
                                 ext in C.REJECT_EXTS,                    # general extensions to ignore
+                                ext in (b'.yml', b'.yaml', b'.json'),    # ignore docs files TODO: constant!
                                 plugin in IGNORE.get(bkey, ()),          # plugin in reject list
+                                os.path.islink(full_path),               # skip aliases, author should document in 'aliaes' field
                         ]):
                             continue
 
                         if ptype in ('test', 'filter'):
-                            ploader = getattr(loader, '{0}_loader'.format(ptype))
-
-                            if ptype == 'filter':
-                                method_name = 'filters'
-                            elif ptype == 'test':
-                                method_name = 'tests'
-                            else:
-                                raise AnsibleError('how did you get here?')
-
-                            added = False
-
                             try:
-                                if path not in ploader._extra_dirs:
-                                    ploader.add_directory(path)
-                                    added = True
-                                for plugin_map in ploader.all():
-                                    if not is_subpath(plugin_map._original_path, path, real=True):
-                                        # loader will not restrict to collection so we need to do it here
-                                        # requires both to be 'real' since loader solves symlinks
-                                        continue
-                                    try:
-                                        # uses the jinja2 method tests/filters to get 'name -> function' map
-                                        method_map = getattr(plugin_map, method_name)
-                                        jplugins = method_map()
-                                        seen = set()
-                                        # skip aliases, names that reference same function
-                                        for candidate in jplugins:
-                                            if jplugins[candidate] not in seen:
-                                                # use names and associate to actual file instead of 'function'
-                                                composite = [collection]
-                                                if depth:
-                                                    composite.extend(plugin_map._original_path.split(os.path.sep)[depth * -1:])
-                                                composite.append(to_native(candidate))
-                                                fqcn = '.'.join(composite)
-                                                plugins[fqcn] = plugin_map._original_path
-                                                seen.add(jplugins[candidate])
-                                    except Exception as e:
-                                        display.warning("Skipping plugin file %s as it seems to be invalid: %r" % (to_native(plugin_map._original_path), e))
-                            finally:
-                                if added:
-                                    ploader._extra_dirs.remove(os.path.realpath(path))
-                                    ploader._clear_caches()
-                        else:
-                            # collectionize name
-                            composite = [collection]
-                            if depth:
-                                composite.extend(path.split(os.path.sep)[depth * -1:])
-                            composite.append(to_native(plugin))
-                            plugin = '.'.join(composite)
+                                file_plugins = _list_j2_plugins_from_file(collection, full_path, ptype, plugin)
+                            except KeyError as e:
+                                display.warning('Skipping file %s: %s' % (full_path, to_native(e)))
+                                continue
 
-                            if not os.path.islink(full_path):
-                                # skip aliases, author should document in 'aliaes' field
-                                plugins[plugin] = full_path
+                            for plugin in file_plugins:
+                                plugin_name = get_composite_name(collection, plugin._load_name, full_path, depth)
+                                plugins[plugin_name] = full_path
+                        else:
+                            plugin = get_composite_name(collection, plugin, path, depth)
+                            plugins[plugin] = full_path
             else:
                 display.debug("Skip listing plugins in '{0}' as it is not a directory".format(path))
         else:
             display.debug("Skip listing plugins in '{0}' as it does not exist".format(path))
 
     return plugins
+
+
+def _list_j2_plugins_from_file(collection, plugin_path, ptype, plugin_name):
+
+    ploader = getattr(loader, '{0}_loader'.format(ptype))
+    if collection in ('ansible.builtin', 'ansible.legacy'):
+        file_plugins = ploader.all()
+    else:
+        file_plugins = ploader.get_contained_plugins(collection, plugin_path, plugin_name)
+    return file_plugins
 
 
 def list_collection_plugins(ptype, collections, search_paths=None):
@@ -146,19 +126,22 @@ def list_collection_plugins(ptype, collections, search_paths=None):
     for collection in collections.keys():
         if collection == 'ansible.builtin':
             # dirs from ansible install, but not configured paths
-            dirs.extend([d.path for d in ploader._get_paths_with_context() if d.path not in ploader.config])
+            dirs.extend([d.path for d in ploader._get_paths_with_context() if d.internal])
         elif collection == 'ansible.legacy':
             # configured paths + search paths (should include basedirs/-M)
-            dirs = ploader.config
-            if search_paths is not None:
-                for d in search_paths:
-                    if not d.endswith(ploader.subdir):
-                        d = os.path.join([d, ploader.subdir])
-                    dirs.append(d)
+            dirs.extend([d.path for d in ploader._get_paths_with_context() if not d.internal])
+            if context.CLIARGS.get('module_path', None):
+                dirs.extend(context.CLIARGS['module_path'])
         else:
-            # search path in this case is for locating collection itself
+            # search path in this case is for locating collection itselfA
             b_ptype = to_bytes(C.COLLECTION_PTYPE_COMPAT.get(ptype, ptype))
             dirs = [to_native(os.path.join(collections[collection], b'plugins', b_ptype))]
+            # acr = AnsibleCollectionRef.try_parse_fqcr(collection, ptype)
+            # if acr:
+            #     dirs = acr.subdirs
+            # else:
+
+            #     raise Exception('bad acr for %s, %s' % (collection, ptype))
 
         plugins.update(_list_plugins_from_paths(ptype, dirs, collection))
 
@@ -187,17 +170,18 @@ def list_plugins(ptype, collection=None, search_paths=None):
 
     # {plugin_name: (filepath, class), ...}
     plugins = {}
-    do_legacy = False
+    do_legacy_replace = True
     collections = {}
     if collection is None:
-        # list all collections
+        # list all collections, add synthetic ones
         collections['ansible.builtin'] = b''
+        collections['ansible.legacy'] = b''
         collections.update(list_collections(search_paths=search_paths, dedupe=True))
-        do_legacy = True
-    elif collection == 'ansilbe.builtin':
-        collections['ansible.builtin'] = b''
     elif collection == 'ansible.legacy':
-        do_legacy = True
+        # add builtin, since legacy also resolves to these
+        collections[collection] = b''
+        collections['ansible.builtin'] = b''
+        do_legacy_replace = False
     else:
         try:
             collections[collection] = to_bytes(_get_collection_path(collection))
@@ -207,14 +191,20 @@ def list_plugins(ptype, collection=None, search_paths=None):
     if collections:
         plugins.update(list_collection_plugins(ptype, collections))
 
-    if do_legacy:
-        legacy = list_collection_plugins(ptype, {'ansible.legacy': search_paths})
-        for plugin in legacy.keys():
-            builtin = plugin.replace('ansible.legacy.', 'ansible.builtin.', 1)
-            if builtin in plugins and legacy[plugin][0] == plugins[builtin][0]:
-                # add only if no overlap or overlap but diff files
-                continue
-            plugins[plugin] = legacy[plugin]
+    if do_legacy_replace:
+        # remove legacy that exist as builtin, they are the same plugin but builtin is prefered display
+        for plugin in list(plugins.keys()):
+            if 'ansible.builtin' in plugin:
+                legacy = plugin.replace('ansible.builtin.', 'ansible.legacy.', 1)
+                if legacy in plugins:
+                    del plugins[legacy]
+    else:
+        # when listing only ansilbe.legacy, this includes all of the builtin under the legacy ns
+        for plugin in list(plugins.keys()):
+            if 'ansible.builtin' in plugin:
+                legacy = plugin.replace('ansible.builtin.', 'ansible.legacy.', 1)
+                plugins[legacy] = plugins[plugin]
+                del plugins[plugin]
 
     return plugins
 

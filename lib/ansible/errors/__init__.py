@@ -366,3 +366,8 @@ class AnsibleCollectionUnsupportedVersionError(AnsiblePluginError):
 class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
     ''' a Jinja filter templating failure due to bad type'''
     pass
+
+
+class AnsiblePluginNotFound(AnsiblePluginError):
+    ''' Indicates we did not find an Ansible plugin '''
+    pass
