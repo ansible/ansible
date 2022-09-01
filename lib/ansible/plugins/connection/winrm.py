@@ -302,7 +302,7 @@ class Connection(ConnectionBase):
         argspec = getfullargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
-        passed_winrm_args = {v for v in self.get_option('_extras')}
+        passed_winrm_args = set(self.get_option('_extras'))
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm

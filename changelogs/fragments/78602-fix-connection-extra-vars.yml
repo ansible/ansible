@@ -9,6 +9,6 @@ deprecated_features:
   to a list of tuple pairs.
   The first item in each pair is a regex to match variable names, and the second
   item is the replacement string.
-  For example, to match all variable names starting with 'prefix_' and remove the
-  the prefix, set allow_extras to [(r'^prefix_', '')].
-  To keep the prefix, allow_extras can be set to [(r'(^prefix_)', r'\1')].
+  For example, to match all variable names starting with ``prefix_`` and remove the
+  the prefix, set allow_extras to ``[(r'^prefix_', '')]``.
+  To keep the prefix, allow_extras can be set to ``[(r'(^prefix_)', r'\1')]``.

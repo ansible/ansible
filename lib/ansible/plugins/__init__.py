@@ -53,7 +53,7 @@ def get_plugin_class(obj):
 class AnsiblePlugin(ABC):
 
     # allow extra passthrough parameters
-    allow_extras = False
+    allow_extras = False  # type: t.Union[bool, t.List[t.Tuple[str, str]]]
 
     def __init__(self):
         self._options = {}
