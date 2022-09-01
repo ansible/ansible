@@ -72,7 +72,7 @@ These are called "Flow collections".
 
 .. _truthiness:
 
-Ansible doesn't really use these too much, but you can also specify a boolean value (true/false) in several forms::
+Ansible doesn't really use these too much, but you can also specify a :ref:`boolean value <playbooks_variables>` (true/false) in several forms::
 
     create_key: yes
     needs_agent: no
