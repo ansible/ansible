@@ -945,10 +945,11 @@ class PluginLoader:
         found_in_cache = True
 
         for i in self._get_paths():
-            all_matches.extend(glob.glob(to_native(os.path.join(i, "*.py"))))
+            # we sort within each path, but keep path precedence from config
+            all_matches.extend(sorted(glob.glob(to_native(os.path.join(i, "*.py"))), key=os.path.basename))
 
         loaded_modules = set()
-        for path in sorted(all_matches, key=os.path.basename):
+        for path in all_matches:
             name = os.path.splitext(path)[0]
             basename = os.path.basename(name)
 
@@ -1230,7 +1231,7 @@ class Jinja2Loader(PluginLoader):
 
         # inputs, we ignore 'dedupe' we always do, used in base class to find files for this one
         path_only = kwargs.pop('path_only', False)
-        class_only = kwargs.pop('class_only', False)    # basically ignored for test/filters since they are functions
+        class_only = kwargs.pop('class_only', False)  # basically ignored for test/filters since they are functions
 
         # Having both path_only and class_only is a coding bug
         if path_only and class_only:
