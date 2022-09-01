@@ -35,9 +35,14 @@ class MultiGalaxyAPIProxy:
         self._concrete_art_mgr = concrete_artifacts_manager
         self._offline = offline  # Prevent all GalaxyAPI calls
 
-    def _offline_is_unsupported(self):
-        if self._offline:
-            raise NotImplementedError
+    @property
+    def is_offline_mode_requested(self):
+        return self._offline
+
+    def _assert_that_offline_mode_is_not_requested(self):  # type: () -> None
+        """Raises NotImplementedError if MultiGalaxyAPIProxy would make an GalaxyAPI call with --offline."""
+        if self.is_offline_mode_requested:
+            raise NotImplementedError("The calling code is not supposed to be invoked in 'offline' mode.")
 
     def _get_collection_versions(self, requirement):
         # type: (Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]
@@ -110,7 +115,7 @@ class MultiGalaxyAPIProxy:
     def get_collection_version_metadata(self, collection_candidate):
         # type: (Candidate) -> CollectionVersionMetadata
         """Retrieve collection metadata of a given candidate."""
-        self._offline_is_unsupported()
+        self._assert_that_offline_mode_is_not_requested()
 
         api_lookup_order = (
             (collection_candidate.src, )
@@ -168,7 +173,6 @@ class MultiGalaxyAPIProxy:
                 get_direct_collection_dependencies
             )(collection_candidate)
 
-        self._offline_is_unsupported()
         return (
             self.
             get_collection_version_metadata(collection_candidate).
@@ -177,7 +181,7 @@ class MultiGalaxyAPIProxy:
 
     def get_signatures(self, collection_candidate):
         # type: (Candidate) -> list[str]
-        self._offline_is_unsupported()
+        self._assert_that_offline_mode_is_not_requested()
         namespace = collection_candidate.namespace
         name = collection_candidate.name
         version = collection_candidate.ver
