@@ -98,7 +98,7 @@ You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ans
 .. _list_variables:
 
 Boolean variables
-==============
+=================
 
 Ansible accepts a broad range of values for boolean variables: ``true/false``, ``1/0``, ``yes/no``, ``True/False``, and so on.
 While documentation examples focus on ``true/false`` to be compatible with ``ansible-lint`` default settings, you can use any of the following:
