@@ -1239,12 +1239,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
 def maybe_add_ssl_handler(url, validate_certs, ca_path=None, ciphers=None):
     parsed = generic_urlparse(urlparse(url))
-    if parsed.scheme == 'https':
-        if not HAS_SSL and validate_certs:
-            raise NoSSLError('SSL validation is not available in your version of python.')
+    if parsed.scheme == 'https' and validate_certs:
+        if not HAS_SSL:
+            raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
+                             ' however this is unsafe and not recommended')
 
-        # create the SSL validation handler and
-        # add it to the list of handlers
+        # create the SSL validation handler
         return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path, ciphers=ciphers, validate_certs=validate_certs)
 
 
