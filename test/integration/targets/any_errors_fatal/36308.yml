@@ -1,0 +1,14 @@
+- hosts: testhost
+  gather_facts: false
+  any_errors_fatal: true
+  force_handlers: true
+  tasks:
+    - command: echo
+      notify:
+        - handler1
+
+    - fail:
+  handlers:
+    - name: handler1
+      debug:
+        msg: handler1 ran
