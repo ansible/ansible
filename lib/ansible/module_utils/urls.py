@@ -1013,7 +1013,6 @@ def get_ca_certs(cafile=None):
     # tries to find a valid CA cert in one of the
     # standard locations for the current distribution
 
-    ca_certs = []
     cadata = bytearray()
     paths_checked = []
 
@@ -1044,7 +1043,7 @@ def get_ca_certs(cafile=None):
     elif system == u'OpenBSD':
         paths_checked.append('/etc/ssl')
     elif system == u'NetBSD':
-        ca_certs.append('/etc/openssl/certs')
+        paths_checked.append('/etc/openssl/certs')
     elif system == u'SunOS':
         paths_checked.append('/opt/local/etc/openssl/certs')
     elif system == u'AIX':
