@@ -19,4 +19,5 @@ class FilterModule(object):
     def filters(self):
         return {
             'donothing': donothing,
+            'nodocs': donothing,
         }
