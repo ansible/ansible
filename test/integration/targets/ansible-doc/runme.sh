@@ -160,6 +160,9 @@ count=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc -l ansible.builtin |wc -l)
 [ "$(ansible-doc -t filter --playbook-dir ./ donothing| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
 
+# no docs and no sidecar
+ansible-doc -t filter --playbook-dir ./ nodocs 2>&1| grep -c 'missing documentation' || true
+
 # produce 'sidecar' docs for module
 [ "$(ansible-doc -M ./library test_win_module| wc -l)" -gt "0" ]
 [ "$(ansible-doc --playbook-dir ./ test_win_module| wc -l)" -gt "0" ]
