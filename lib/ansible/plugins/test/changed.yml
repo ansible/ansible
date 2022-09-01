@@ -3,7 +3,7 @@ DOCUMENTATION:
   author: Ansible Core
   version_added: "1.9"
   short_description: did the task require changes
-  aliases[change]
+  aliases: [change]
   description:
     - Tests if task required changes to complete
     - This test checks for the existance of a C(changed) key in the input dictionary and that it is C(True) if present

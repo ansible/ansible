@@ -12,7 +12,7 @@ DOCUMENTATION:
       type: string
       required: True
     convert_bool:
-      default: Attempts to convert the result to a strict Python boolean vs normally acceptable values (yes/no, on/off, 0/1, etc)
+      description: Attempts to convert the result to a strict Python boolean vs normally acceptable values (yes/no, on/off, 0/1, etc)
       type: bool
       default: false
 EXAMPLES: |
