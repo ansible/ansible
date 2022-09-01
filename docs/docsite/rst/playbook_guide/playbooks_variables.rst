@@ -95,6 +95,26 @@ You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ans
       vars:
            app_path: "{{ base_path }}/22"
 
+.. _boolean_variables:
+
+Boolean variables
+=================
+
+Ansible accepts a broad range of values for boolean variables: ``true/false``, ``1/0``, ``yes/no``, ``True/False`` and so on. The matching of valid strings is case insensitive.
+While documentation examples focus on ``true/false`` to be compatible with ``ansible-lint`` default settings, you can use any of the following:
+
+.. table::
+   :class: documentation-table
+
+   =============================================================================================== ====================================================================
+    Valid values                                                                                    Description
+   =============================================================================================== ====================================================================
+    ``True`` , ``'true'`` , ``'t'`` , ``'yes'`` , ``'y'`` , ``'on'`` , ``'1'`` , ``1`` , ``1.0``     Truthy values
+
+    ``False`` , ``'false'`` , ``'f'`` , ``'no'`` , ``'n'`` , ``'off'`` , ``'0'`` , ``0`` , ``0.0``   Falsy values
+
+   =============================================================================================== ====================================================================
+
 .. _list_variables:
 
 List variables
