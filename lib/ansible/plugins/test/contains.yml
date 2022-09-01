@@ -12,7 +12,7 @@ DOCUMENTATION:
       type: list
       elements: raw
       required: True
-    contained:
+    _contained:
       description: elements to test for
       type: raw
       required: True
