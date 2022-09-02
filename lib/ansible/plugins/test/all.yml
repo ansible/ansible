@@ -8,7 +8,7 @@ DOCUMENTATION:
     - Same as the C(all) Python function.
   options:
     _input:
-      description: list of conditions, each can be a booleans or conditional expressions that result in a boolean value
+      description: List of conditions, each can be a boolean or conditional expression that results in a boolean value.
       type: list
       elements: raw
       required: True
