@@ -40,7 +40,6 @@ class MultiGalaxyAPIProxy:
         return self._offline
 
     def _assert_that_offline_mode_is_not_requested(self):  # type: () -> None
-        """Raises NotImplementedError if MultiGalaxyAPIProxy would make an GalaxyAPI call with --offline."""
         if self.is_offline_mode_requested:
             raise NotImplementedError("The calling code is not supposed to be invoked in 'offline' mode.")
 
