@@ -180,7 +180,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     return x
 
 
-def load_extra_vars(loader, cache=False):
+def load_extra_vars(loader):
     extra_vars = {}
     for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
         data = None
@@ -195,7 +195,7 @@ def load_extra_vars(loader, cache=False):
             raise AnsibleOptionsError("Please prepend extra_vars filename '%s' with '@'" % extra_vars_opt)
         elif extra_vars_opt[0] in [u'[', u'{']:
             # Arguments as YAML
-            data = loader.load(extra_vars_opt, cache=cache)
+            data = loader.load(extra_vars_opt)
         else:
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
