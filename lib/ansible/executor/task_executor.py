@@ -1045,7 +1045,7 @@ class TaskExecutor:
             if (
                     not isinstance(match_extras, Iterable) or
                     any(not isinstance(item, Iterable) for item in match_extras) or
-                    any(not len(item) == 2 for item in match_extras)
+                    any(len(item) != 2 for item in match_extras)
             ):
                 raise AnsibleError(
                     f"Unable to load extra vars for {self._connection_fqcn}. "
