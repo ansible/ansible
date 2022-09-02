@@ -619,7 +619,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
         for pkgspec_pattern in pkgspec:
 
             if not isinstance(pkgspec_pattern, string_types):
-                m.fail_json(msg="Invalid type for package name, expected string but got %t" % type(pkgspec_pattern))
+                m.fail_json(msg="Invalid type for package name, expected string but got %s" % type(pkgspec_pattern))
 
             pkgname_pattern, version_cmp, version = package_split(pkgspec_pattern)
 
