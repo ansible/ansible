@@ -342,15 +342,13 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
             newfile = _find_adjacent(filename, plugin, C.DOC_EXTENSIONS)
             if newfile:
                 docs = get_docstring(newfile, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
+                filename = newfile
         except Exception as e:
             raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
 
-    # got nothing, so this is 'undocumented', but lets populate at least some friendly info
-    if docs[0] is None:
-        docs = ({'description': 'UNDOCUMENTED', 'short_description': 'UNDOCUMENTED'},) + docs[1:]
-
     # add extra data to docs[0] (aka 'DOCUMENTATION')
-    docs[0]['filename'] = filename
-    docs[0]['collection'] = collection_name
+    if docs[0] is not None:
+        docs[0]['filename'] = filename
+        docs[0]['collection'] = collection_name
 
     return docs
