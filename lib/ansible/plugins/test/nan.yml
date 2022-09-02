@@ -2,19 +2,19 @@ DOCUMENTATION:
   name: nan
   author: Ansible Core
   version_added: "2.5"
-  short_description: is this not a number (nan)
+  short_description: is this not a number (NaN)
   description:
-    - Can the input be cast into a number
+    - Whether the input is a special floating point number called L(not a number, https://en.wikipedia.org/wiki/NaN).
   aliases: [is_file]
   options:
     _input:
-      description: possible number representation or string that can be converted into one
+      description: Possible number representation or string that can be converted into one.
       type: raw
       required: true
 EXAMPLES:
-    isnan: "{{ '42 is nan }}"
+    isnan: "{{ '42' is nan }}"
 
 RETURN:
   _value:
-    description: Returns C(True) the input is a number or can be converted int one, c(False) if otherwise
+    description: Returns C(True) if the input is NaN, C(False) if otherwise.
     type: boolean

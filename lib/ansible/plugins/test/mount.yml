@@ -4,11 +4,11 @@ DOCUMENTATION:
   version_added: "2.5"
   short_description: does the path resolve to mount point
   description:
-    - Check if the provided path maps to a filesystem mount point on the controller (localhost)
+    - Check if the provided path maps to a filesystem mount point on the controller (localhost).
   aliases: [is_mount]
   options:
     _input:
-      description: a path
+      description: A path.
       type: path
 
 EXAMPLES:
@@ -18,5 +18,5 @@ EXAMPLES:
 
 RETURN:
   _value:
-    description: Returns C(True) the path corresponds to a mount point on the controller, c(False) if otherwise
+    description: Returns C(True) if the path corresponds to a mount point on the controller, C(False) if otherwise.
     type: boolean

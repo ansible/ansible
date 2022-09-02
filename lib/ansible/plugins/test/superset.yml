@@ -2,19 +2,19 @@ DOCUMENTATION:
   name: superset
   author: Ansible Core
   version_added: "2.4"
-  short_description: is the list of superset of this other list
+  short_description: is the list a superset of this other list
   aliases: [issuperset]
   description:
-    - Validate if the first list is a super set (includes) the second list
-    - Same as the ``all`` Python function
+    - Validate if the first list is a super set (includes) the second list.
+    - Same as the C(all) Python function.
   options:
     _input:
-      description: list
+      description: List.
       type: list
       elements: raw
       required: True
     _subset:
-      description: list to test against
+      description: List to test against.
       type: list
       elements: raw
       required: True

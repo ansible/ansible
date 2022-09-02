@@ -4,10 +4,10 @@ DOCUMENTATION:
   version_added: "2.10"
   short_description: Is this an encrypted vault
   description:
-    - Verfies if the input is an Ansible vault
+    - Verfies if the input is an Ansible vault.
   options:
     _input:
-      description: the possible vault
+      description: The possible vault.
       type: string
       required: True
 EXAMPLES: |

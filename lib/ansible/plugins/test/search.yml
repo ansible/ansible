@@ -3,22 +3,22 @@ DOCUMENTATION:
   author: Ansible Core
   short_description: Does string match a regular expression
   description:
-    - Compare string against regular expression using Python's search function
+    - Compare string against regular expression using Python's C(search) function.
   options:
     _input:
-      description: string to match
+      description: String to match.
       type: string
       required: True
     pattern:
-      description: regex to match against
+      description: Regex to match against.
       type: string
       required: True
     ignorecase:
-      description: use case insenstive matching
+      description: Use case insenstive matching.
       type:
       default: False
     multiline:
-      description: match against mulitple lines in string
+      description: Match against mulitple lines in string.
       type: boolean
       default: False
 

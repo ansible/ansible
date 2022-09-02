@@ -5,14 +5,14 @@ DOCUMENTATION:
   short_description: Pythonic true
   description:
     - This check is a more Python version of what is 'true'.
-    - It is the opposite of 'falsy'.
+    - It is the opposite of C(falsy).
   options:
     _input:
-      description: an expression that can be expressed in a boolean context
+      description: An expression that can be expressed in a boolean context.
       type: string
       required: True
     convert_bool:
-      description: Attempts to convert to strict python boolean vs normally acceptable values (yes/no, on/off, 0/1, etc)
+      description: Attempts to convert to strict python boolean vs normally acceptable values (C(yes)/C(no), C(on)/C(off), C(0)/C(1), etc).
       type: bool
       default: false
 EXAMPLES: |

@@ -4,11 +4,11 @@ DOCUMENTATION:
   version_added: "2.4"
   short_description: is any conditions in a list true
   description:
-    - This test checks each condition in a list for truthynes
-    - Same as the ``any`` Python function
+    - This test checks each condition in a list for truthines.
+    - Same as the C(any) Python function.
   options:
     _input:
-      description: list of conditions, each can be a booleans or conditional expressions that result in a boolean value
+      description: List of conditions, each can be a boolean or conditional expression that results in a boolean value.
       type: list
       elements: raw
       required: True
@@ -19,5 +19,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) if any elements of the list were True, C(False) otherwise.
+    description: Returns C(True) if any element of the list was true, C(False) otherwise.
     type: boolean

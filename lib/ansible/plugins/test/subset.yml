@@ -5,16 +5,16 @@ DOCUMENTATION:
   aliases: [issubset]
   short_description: is the list a subset of this other list
   description:
-    - Validate if the first list is a sub set (is included) of the second list
-    - Same as the ``all`` Python function
+    - Validate if the first list is a sub set (is included) of the second list.
+    - Same as the C(all) Python function.
   options:
     _input:
-      description: list
+      description: List.
       type: list
       elements: raw
       required: True
     _superset:
-      description: list to test against
+      description: List to test against.
       type: list
       elements: raw
       required: True

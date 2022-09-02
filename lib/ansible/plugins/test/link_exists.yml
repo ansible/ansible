@@ -4,11 +4,11 @@ DOCUMENTATION:
   version_added: "2.5"
   short_description: does the path exist, no follow
   description:
-    - Check if the provided path maps to an existing symlink on the controller's filesystem (localhost)
-    - Does not Follow symlinks, so it only verifies that the link itself exists.
+    - Check if the provided path maps to an existing symlink on the controller's filesystem (localhost).
+    - Does not follow symlinks, so it only verifies that the link itself exists.
   options:
     _input:
-      description: a path
+      description: A path.
       type: path
 
 EXAMPLES:
@@ -17,5 +17,5 @@ EXAMPLES:
 
 RETURN:
   _value:
-    description: Returns C(True) the path corresponds to an existing filesystem object on the controller, c(False) if otherwise
+    description: Returns C(True) if the path corresponds to an existing filesystem object on the controller, C(False) if otherwise.
     type: boolean

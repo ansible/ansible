@@ -3,26 +3,26 @@ DOCUMENTATION:
   author: Ansible Core
   short_description: Does string match regular expression from the start
   description:
-    - Compare string against regular expression using Python's match or search functions
+    - Compare string against regular expression using Python's match or search functions.
   options:
     _input:
-      description: string to match
+      description: String to match.
       type: string
       required: True
     pattern:
-      description: regex to match against
+      description: Regex to match against.
       type: string
       required: True
     ignorecase:
-      description: use case insenstive matching
-      type:
+      description: Use case insenstive matching.
+      type: boolean
       default: False
     multiline:
-      description: match against mulitple lines in string
+      description: Match against multiple lines in string.
       type: boolean
       default: False
     match_type:
-      description: decide which function to be used to do the matching
+      description: Decide which function to be used to do the matching.
       type: string
       choices: [match, search]
       default: search

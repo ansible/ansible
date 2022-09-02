@@ -2,16 +2,16 @@ DOCUMENTATION:
   name: same_file
   author: Ansible Core
   version_added: "2.5"
-  short_description: compares 2 paths to see if they resolve to the same filesystem object
-  description: Check if the provided paths map to the same location onthe controller's filesystem (localhost)
+  short_description: compares two paths to see if they resolve to the same filesystem object
+  description: Check if the provided paths map to the same location onthe controller's filesystem (localhost).
   aliases: [is_file]
   options:
     _input:
-      description: a path
+      description: A path.
       type: path
       required: true
     _path2:
-      description: another path
+      description: Another path.
       type: path
       required: true
 
@@ -20,5 +20,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) the paths correspond to the same location on the filesystem on the controller, c(False) if otherwise
+    description: Returns C(True) if the paths correspond to the same location on the filesystem on the controller, C(False) if otherwise.
     type: boolean

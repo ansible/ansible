@@ -8,12 +8,12 @@ DOCUMENTATION:
     - Same as the ``all`` Python function
   options:
     _input:
-      description: list of elements to compare
+      description: List of elements to compare.
       type: list
       elements: raw
       required: True
     _contained:
-      description: elements to test for
+      description: Element to test for.
       type: raw
       required: True
 EXAMPLES: |
