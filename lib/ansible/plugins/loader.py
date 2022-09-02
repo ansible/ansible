@@ -670,6 +670,7 @@ class PluginLoader:
             return plugin_load_context
 
         # if we got here, there's no collection list and it's not an FQ name, so do legacy lookup
+
         return self._find_plugin_legacy(name, plugin_load_context, ignore_deprecated, check_aliases, suffix)
 
     def _find_plugin_legacy(self, name, plugin_load_context, ignore_deprecated=False, check_aliases=False, suffix=None):
@@ -1119,8 +1120,6 @@ class Jinja2Loader(PluginLoader):
         context = PluginLoadContext()
 
         # avoid collection path for legacy
-
-        prefer_legacy = name.startswith('ansible.legacy.') or '.' not in name
         name = name.removeprefix('ansible.legacy.')
 
         if '.' not in name:
@@ -1224,8 +1223,8 @@ class Jinja2Loader(PluginLoader):
                     continue
 
                 for func_name, func in plugin_map:
-                    py_fq_name = '.'.join((parent_prefix, func_name))
-                    fq_name = f"{acr.collection}.{func_name}"
+                    fq_name = '.'.join((parent_prefix, func_name))
+                    src_name = f"ansible_collections.{acr.collection}.plugins.{self.type}.{acr.subdirs}.{func_name}"
                     # TODO: load  anyways into CACHE so we only match each at end of loop
                     #       the files themseves should already be cached by base class caching of modules(python)
                     if key in (func_name, fq_name):
@@ -1233,7 +1232,7 @@ class Jinja2Loader(PluginLoader):
                         plugin = pclass(func)
                         if plugin:
                             context = plugin_impl.plugin_load_context
-                            self._update_object(plugin, py_fq_name, plugin_impl.object._original_path, resolved=fq_name)
+                            self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
                             break  # go to next file as it can override if dupe (dont break both loops)
 
         except AnsiblePluginRemovedError as apre:

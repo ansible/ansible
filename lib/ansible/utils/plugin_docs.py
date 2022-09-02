@@ -303,14 +303,12 @@ def find_plugin_docfile(plugin, plugin_type, loader):
         raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
 
     docfile = Path(context.plugin_resolved_path)
-
-    possible_names = [plugin]
+    possible_names = [plugin, docfile.name.removeprefix('_'), docfile.name]
     if context.redirect_list or context._resolved_fqcn:
         possible_names += [context.resolved_fqcn] + context.redirect_list
     elif context.plugin_resolved_collection and not plugin.startswith('%s.' % context.plugin_resolved_collection):
         possible_names.append('%s.%s' % context.plugin_resolved_collection, plugin)
 
-    docfile = Path(context.plugin_resolved_path)
     if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
         # only look for adjacent if plugin file does not support documents or
         # name does not match file basname (except deprecated)
