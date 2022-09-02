@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Iterable
+
 import os
 import pty
 import re
@@ -1030,13 +1032,26 @@ class TaskExecutor:
             if self._connection.allow_extras is True:
                 display.deprecated(
                     "Using the connection plugin's _load_name to determine extra vars is deprecated. "
-                    "Use the porting guide to update {self._connection_fqcn}'s allow_extras attribute "
+                    f"Use the porting guide to update {self._connection_fqcn}'s allow_extras attribute "
                     "from a boolean to a list regex pairs.",
                     version="2.18"
                 )
-                match_extras = [(r'(^ansible_%s_)' % self._connection_fqcn.split('.')[-1], r'\1')]
+                # Remove the namespace.collection and join the remainder to handle subdir.plugin
+                plugin_name = '.'.join(self._connection_fqcn.split('.')[2:])
+                match_extras = [(r'(^ansible_%s_)' % re.escape(plugin_name), r'\1')]
             else:
                 match_extras = self._connection.allow_extras
+
+            if (
+                    not isinstance(match_extras, Iterable) or
+                    any(not isinstance(item, Iterable) for item in match_extras) or
+                    any(not len(item) == 2 for item in match_extras)
+            ):
+                raise AnsibleError(
+                    f"Unable to load extra vars for {self._connection_fqcn}. "
+                    "Set the plugin's allow_extras attribute to a list of tuple pairs or a boolean. "
+                    f"Got: {match_extras}"
+                )
 
             for extra_re, repl_re in match_extras:
                 for k in variables:
