@@ -53,6 +53,7 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
    command_guide/index
    playbook_guide/index
    vault_guide/index
+   modules_plugins_collections/index
    os_guide/index
    tips_tricks/index
 
