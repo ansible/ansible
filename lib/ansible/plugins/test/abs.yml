@@ -19,5 +19,5 @@ EXAMPLES:
 
 RETURN:
   _value:
-    description: Returns C(True) the path is absolute, c(False) if it is relative
+    description: Returns C(True) if the path is absolute, C(False) if it is relative.
     type: boolean
