@@ -163,10 +163,8 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
 
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
-        real_collection_name = 'ansible.builtin'
-        real_fragment_name = getattr(fragment_class, '_load_name')
-        if real_fragment_name.startswith('ansible_collections.'):
-            real_collection_name = '.'.join(real_fragment_name.split('.')[1:3])
+        real_fragment_name = getattr(fragment_class, '_fqcn')
+        real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''
         add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
 
         if 'notes' in fragment:
@@ -305,11 +303,14 @@ def find_plugin_docfile(plugin, plugin_type, loader):
         raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
 
     docfile = Path(context.plugin_resolved_path)
-    possible_names = [plugin, getattr(plugin_obj, '_load_name', None), docfile.name.removeprefix('_'), docfile.name]
-    if context:
-        if context.redirect_list:
-            possible_names.append(context.redirect_list[-1])
-        possible_names.append(context.plugin_resolved_name)
+
+    possible_names = [plugin]
+    if context.redirect_list or context._resolved_fqcn:
+        possible_names += [context.resolved_fqcn] + context.redirect_list
+    elif context.plugin_resolved_collection and not plugin.startswith('%s.' % context.plugin_resolved_collection):
+        possible_names.append('%s.%s' % context.plugin_resolved_collection, plugin)
+
+    docfile = Path(context.plugin_resolved_path)
     if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
         # only look for adjacent if plugin file does not support documents or
         # name does not match file basname (except deprecated)

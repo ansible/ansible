@@ -26,16 +26,6 @@ IGNORE = {
 }
 
 
-def get_composite_name(collection, name, path, depth):
-
-    # collectionize name
-    composite = [collection]
-    if depth:
-        composite.extend(path.split(os.path.sep)[depth * -1:])
-    composite.append(to_native(name))
-    return '.'.join(composite)
-
-
 def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
 
     plugins = {}
@@ -89,10 +79,8 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                             for plugin in file_plugins:
-                                plugin_name = get_composite_name(collection, plugin._load_name, full_path, depth)
-                                plugins[plugin_name] = full_path
+                                plugins[plugin._fqcn] = full_path
                         else:
-                            plugin = get_composite_name(collection, plugin, path, depth)
                             plugins[plugin] = full_path
             else:
                 display.debug("Skip listing plugins in '{0}' as it is not a directory".format(path))
