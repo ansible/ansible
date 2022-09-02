@@ -347,7 +347,9 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
             raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
-    if docs[0] is not None:
+    if docs[0] is None:
+        raise AnsibleParserError('No documentation availalbe for %s (%s)' % (plugin, filename))
+    else:
         docs[0]['filename'] = filename
         docs[0]['collection'] = collection_name
 
