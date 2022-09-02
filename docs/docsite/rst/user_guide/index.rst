@@ -16,7 +16,6 @@ Quickly find answers in the following sections or expand the table of contents b
 Interacting with data
 =====================
 
-* I need to access sensitive data like passwords with Ansible. How can I protect that data with :ref:`Ansible vault <vault>`?
 * I use certain modules frequently. How do I streamline my inventory and playbooks by :ref:`setting default values for module parameters <module_defaults>`?
 
 Advanced features and reference
@@ -35,7 +34,6 @@ Here is the complete list of resources in the Ansible User Guide:
 .. toctree::
    :maxdepth: 2
 
-   vault
    complex_data_manipulation
    plugin_filtering_config
    sample_setup
