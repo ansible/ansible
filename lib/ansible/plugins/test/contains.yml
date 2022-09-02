@@ -4,8 +4,7 @@ DOCUMENTATION:
   version_added: "2.4"
   short_description: does the list contain this element
   description:
-    - This test checks each condition in a list for truthynes
-    - Same as the ``all`` Python function
+    - Checks the supplied element against the input list to see if it exists within it.
   options:
     _input:
       description: List of elements to compare.
