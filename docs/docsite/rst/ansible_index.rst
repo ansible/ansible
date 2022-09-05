@@ -46,7 +46,8 @@ Ansible releases a new major release approximately twice a year. The core applic
    command_guide/index
    playbook_guide/index
    vault_guide/index
-   modules_plugins_collections/index
+   module_plugin_guide/index
+   collections_guide/index
    os_guide/index
    tips_tricks/index
 
@@ -95,8 +96,6 @@ Ansible releases a new major release approximately twice a year. The core applic
    :maxdepth: 1
    :caption: Reference & Appendices
 
-   collections/index
-   collections/all_plugins
    reference_appendices/playbooks_keywords
    reference_appendices/common_return_values
    reference_appendices/config
