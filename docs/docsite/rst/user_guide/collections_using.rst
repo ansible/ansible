@@ -5,4 +5,4 @@
 Using collections
 *****************
 
-This page has moved to :ref:`modules_plugins_collections_index`.
+This page has moved to :ref:`collections_index`.

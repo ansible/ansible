@@ -1,8 +1,8 @@
-.. _modules_plugins_collections_index:
+.. _modules_plugins_index:
 
-##############################################
-Working with modules, plugins, and collections
-##############################################
+#################################
+Using Ansible modules and plugins
+#################################
 
 .. note::
 
@@ -20,15 +20,11 @@ Similar to modules are plugins, which are pieces of code that extend core Ansibl
 Ansible uses a plugin architecture to enable a rich, flexible, and expandable feature set.
 Ansible ships with several plugins and lets you easily use your own plugins.
 
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins.
-You can install and use collections through a distribution server, such as Ansible Galaxy, or a Pulp 3 Galaxy server.
-
 .. toctree::
    :maxdepth: 2
 
    modules_intro
    modules_support
-   ../reference_appendices/common_return_values
    plugin_filtering_config
    ../plugins/plugins
-   collections_using
+   ../collections/all_plugins
