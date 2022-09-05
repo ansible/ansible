@@ -48,7 +48,6 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
    :maxdepth: 2
    :caption: Using Ansible Core
 
-   user_guide/index
    inventory_guide/index
    command_guide/index
    playbook_guide/index
