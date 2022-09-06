@@ -41,7 +41,6 @@ Ansible releases a new major release approximately twice a year. The core applic
    :maxdepth: 2
    :caption: Using Ansible
 
-   user_guide/index
    inventory_guide/index
    command_guide/index
    playbook_guide/index

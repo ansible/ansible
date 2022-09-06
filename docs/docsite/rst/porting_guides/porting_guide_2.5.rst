@@ -94,7 +94,7 @@ For a full list of keywords see :ref:`playbook_keywords`.
 Migrating from with_X to loop
 -----------------------------
 
-.. include:: ../user_guide/shared_snippets/with2loop.txt
+.. include:: ../playbook_guide/shared_snippets/with2loop.txt
 
 
 Deprecated
