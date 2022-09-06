@@ -500,7 +500,7 @@ class GalaxyCLI(CLI):
                                         choices=list(GPG_ERROR_MAP.keys()))
             install_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
                                         help='Install collection artifacts (tarballs) without contacting any distribution servers. '
-                                             'This does not apply to collections in Git repositories or prevent fetching remote URLs. '
+                                             'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
                                         )
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
