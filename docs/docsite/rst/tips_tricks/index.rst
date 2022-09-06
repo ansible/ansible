@@ -20,3 +20,4 @@ Ultimately, though, you should use Ansible in the way that makes most sense for 
    :maxdepth: 2
    
    ansible_tips_tricks
+   sample_setup
