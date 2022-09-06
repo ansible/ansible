@@ -1973,7 +1973,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     info = {'url': url, 'status': -1}
     try:
         r, tmp_info = catch_request_errors(
-            Request().open, url, data=data, headers=headers, method=method,
+            Request().open, method, url, data=data, headers=headers,
             use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
             validate_certs=validate_certs, url_username=username,
             url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
