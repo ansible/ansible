@@ -124,3 +124,6 @@ ansible-playbook -i host1,host2 -vv 78612.yml | tee 78612.out
 set -e
 [ "$(grep -c 'PASSED' 78612.out)" -eq 1 ]
 rm -f 78612.out
+
+ansible-playbook -vv 43191.yml
+ansible-playbook -vv 43191-2.yml
