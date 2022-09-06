@@ -5,6 +5,21 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.9rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-09-06
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix for network_cli not getting all relevant connection options
+
 v2.12.8
 =======
 
