@@ -848,13 +848,13 @@ class PluginLoader:
             # FIXME: this is probably an error (eg removed plugin)
             return get_with_context_result(None, plugin_load_context)
 
-        name = plugin_load_context.resolved_fqcn
-        source_name = plugin_load_context.plugin_resolved_name
+        fq_name = plugin_load_context.resolved_fqcn
+        name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
         redirected_names = plugin_load_context.redirect_list or []
 
         if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source(source_name, path)
+            self._module_cache[path] = self._load_module_source(name, path)
             found_in_cache = False
 
         self._load_config_defs(name, self._module_cache[path], path)
@@ -881,7 +881,7 @@ class PluginLoader:
                 # A plugin may need to use its _load_name in __init__ (for example, to set
                 # or get options from config), so update the object before using the constructor
                 instance = object.__new__(obj)
-                self._update_object(instance, name, path, redirected_names, plugin_load_context.resolved_fqcn)
+                self._update_object(instance, name, path, redirected_names, fq_name)
                 obj.__init__(instance, *args, **kwargs)  # pylint: disable=unnecessary-dunder-call
                 obj = instance
             except TypeError as e:
@@ -891,7 +891,7 @@ class PluginLoader:
                     return get_with_context_result(None, plugin_load_context)
                 raise
 
-        self._update_object(obj, name, path, redirected_names, plugin_load_context.resolved_fqcn)
+        self._update_object(obj, name, path, redirected_names, fq_name)
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
