@@ -56,6 +56,13 @@
   loop_control:
     loop_var: resolvelib_version
 
+- name: run ansible-galaxy collection offline installation tests
+  include_tasks: install_offline.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
 - name: run ansible-galaxy collection publish tests for {{ test_name }}
   include_tasks: publish.yml
   args:

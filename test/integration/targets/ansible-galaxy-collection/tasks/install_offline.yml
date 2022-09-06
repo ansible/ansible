@@ -1,0 +1,51 @@
+- set_fact:
+    init_dir: "{{ galaxy_dir }}/offline/setup"
+    build_dir: "{{ galaxy_dir }}/offline/build"
+    install_dir: "{{ galaxy_dir }}/offline/collections"
+
+- name: create test directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ init_dir }}"
+    - "{{ build_dir }}"
+    - "{{ install_dir }}"
+
+- name: test installing a tarfile with an installed dependency offline
+  block:
+    - name: init two collections
+      command: ansible-galaxy collection init ns.{{ item }} --init-path {{ init_dir }}
+      loop:
+        - coll1
+        - coll2
+
+    - name: add one collection as the dependency of the other
+      lineinfile:
+        path: "{{ galaxy_dir }}/offline/setup/ns/coll1/galaxy.yml"
+        regexp: "^dependencies:*"
+        line: "dependencies: {'ns.coll2': '1.0.0'}"
+
+    - name: build both collections
+      command: ansible-galaxy collection build {{ init_dir }}/ns/{{ item }}
+      args:
+        chdir: "{{ build_dir }}"
+      loop:
+        - coll1
+        - coll2
+
+    - name: install the dependency from the tarfile
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll2-1.0.0.tar.gz -p {{ install_dir }} -s offline
+
+    - name: install the tarfile with the installed dependency
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz -p {{ install_dir }} -s offline
+
+  always:
+    - name: clean up test directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ init_dir }}"
+        - "{{ build_dir }}"
+        - "{{ install_dir }}"
