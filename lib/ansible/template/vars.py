@@ -56,8 +56,8 @@ class AnsibleJ2Vars(Mapping):
         except Exception as e:
             msg = getattr(e, 'message', None) or to_native(e)
             raise AnsibleError(
-                "An unhandled exception occurred while templating'{to_native(variable)}'. "
-                "Error was a {type(e)}, original message: {msg}"
+                f"An unhandled exception occurred while templating'{to_native(variable)}'. "
+                f"Error was a {type(e)}, original message: {msg}"
             )
 
     def add_locals(self, locals):
