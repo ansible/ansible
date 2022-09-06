@@ -14,6 +14,7 @@ if t.TYPE_CHECKING:
         ConcreteArtifactsManager,
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
+    from ansible.galaxy.api import GalaxyAPI
 
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
@@ -316,8 +317,18 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # The fqcn is guaranteed to be the same
         version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
         version_req += "This is an issue with the collection."
+
+        # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
+        # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
+        preinstalled_candidates = set()
+        if not self._upgrade and first_req.type == 'galaxy':
+            preinstalled_candidates = {
+                candidate for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn and
+                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
+            }
         try:
-            coll_versions = self._api_proxy.get_collection_versions(first_req)
+            coll_versions = [] if preinstalled_candidates else self._api_proxy.get_collection_versions(first_req)  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
         except TypeError as exc:
             if first_req.is_concrete_artifact:
                 # Non hashable versions will cause a TypeError
@@ -395,19 +406,20 @@ class CollectionDependencyProviderBase(AbstractProvider):
             reverse=True,  # prefer newer versions over older ones
         )
 
-        preinstalled_candidates = {
-            candidate for candidate in self._preferred_candidates
-            if candidate.fqcn == fqcn and
-            (
-                # check if an upgrade is necessary
-                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+        if not preinstalled_candidates:
+            preinstalled_candidates = {
+                candidate for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn and
                 (
-                    not self._upgrade or
-                    # check if an upgrade is preferred
-                    all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                    # check if an upgrade is necessary
+                    all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+                    (
+                        not self._upgrade or
+                        # check if an upgrade is preferred
+                        all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                    )
                 )
-            )
-        }
+            }
 
         return list(preinstalled_candidates) + latest_matches
 
