@@ -8,7 +8,7 @@ DOCUMENTATION:
   aliases: [is_file]
   options:
     _input:
-      description: a path
+      description: A path.
       type: path
 
 EXAMPLES:
