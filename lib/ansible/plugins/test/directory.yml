@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "2.5"
   short_description: does the path resolve to an existing directory
   description:
-    - Check if the provided path maps to an existing directory on the controller's filesystem (localhost)
+    - Check if the provided path maps to an existing directory on the controller's filesystem (localhost).
   options:
     _input:
       description: a path
