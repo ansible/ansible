@@ -1966,6 +1966,47 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     return r, info
 
 
+def _suffixes(name):
+    """A list of the final component's suffixes, if any."""
+    if name.endswith('.'):
+        return []
+    name = name.lstrip('.')
+    return ['.' + s for s in name.split('.')[1:]]
+
+
+def _split_multiext(name, min=3, max=4, count=2):
+    """Split a multi-part extension from a file name.
+
+    Returns '([name minus extension], extension)'.
+
+    Define the valid extension length (including the '.') with 'min' and 'max',
+    'count' sets the number of extensions, counting from the end, to evaluate.
+    Evaluation stops on the first file extension that is outside the min and max range.
+
+    If no valid extensions are found, the original ``name`` is returned
+    and ``extension`` is empty.
+
+    :arg name: File name or path.
+    :kwarg min: Minimum length of a valid file extension.
+    :kwarg max: Maximum length of a valid file extension.
+    :kwarg count: Number of suffixes from the end to evaluate.
+
+    """
+    extension = ''
+    for i, sfx in enumerate(reversed(_suffixes(name))):
+        if i >= count:
+            break
+
+        if min <= len(sfx) <= max:
+            extension = '%s%s' % (sfx, extension)
+            name = name.rstrip(sfx)
+        else:
+            # Stop on the first invalid extension
+            break
+
+    return name, extension
+
+
 def fetch_file(module, url, data=None, headers=None, method=None,
                use_proxy=True, force=False, last_mod_time=None, timeout=10,
                unredirected_headers=None, decompress=True):
@@ -1990,8 +2031,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     # download file
     bufsize = 65536
     parts = urlparse(url)
-    file_name, file_ext = os.path.splitext(os.path.basename(parts.path))
-    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
+    file_prefix, file_ext = _split_multiext(os.path.basename(parts.path), count=2)
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_prefix, suffix=file_ext, delete=False)
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
