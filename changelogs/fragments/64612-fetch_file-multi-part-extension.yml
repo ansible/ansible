@@ -1,0 +1,2 @@
+bugfixes:
+  - fetch_file - properly split files with multiple file extensions (https://github.com/ansible/ansible/pull/75257)
