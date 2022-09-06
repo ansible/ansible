@@ -2,10 +2,10 @@ DOCUMENTATION:
   name: exists
   author: Ansible Core
   version_added: "2.5"
-  short_description: does the path exsit, follow symlinks
+  short_description: does the path exist, follow symlinks
   description:
-    - Check if the provided path maps to an existing filesystem object on the controller (localhost)
-    - Follows symlinks and checks the target of the symlink isteand of the link itself, use link or link_exists to check on the link.
+    - Check if the provided path maps to an existing filesystem object on the controller (localhost).
+    - Follows symlinks and checks the target of the symlink instead of the link itself, use the C(link) or C(link_exists) tests to check on the link.
   options:
     _input:
       description: a path
@@ -18,5 +18,5 @@ EXAMPLES:
 
 RETURN:
   _value:
-    description: Returns C(True) the path corresponds to an existing filesystem object on the controller (after following symnlinks), c(False) if otherwise
+    description: Returns C(True) if the path corresponds to an existing filesystem object on the controller (after following symlinks), C(False) if otherwise.
     type: boolean
