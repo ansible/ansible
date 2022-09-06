@@ -20,4 +20,5 @@ class FilterModule(object):
         return {
             'donothing': donothing,
             'nodocs': donothing,
+            'split': donothing,
         }

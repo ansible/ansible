@@ -764,13 +764,7 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
 
-                # TODO: remove when we have all shipped plugins of these types documented
-                # also fail_ok below should be False
-                if ptype in ('test', 'filter'):
-                    no_fail = True
-                else:
-                    no_fail = (not context.CLIARGS['no_fail_on_errors'])
-
+                no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
                 if ptype == 'role':
                     roles = self._create_role_list(fail_on_errors=no_fail)
                     docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=no_fail)
