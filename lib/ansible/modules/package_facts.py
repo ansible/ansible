@@ -21,7 +21,7 @@ options:
       - The 'apk' option was added in version 2.11.
       - The 'pkg_info' option was added in version 2.13.
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk', 'pkg_info']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk', 'pkg_info', 'zypper']
     type: list
     elements: str
   strategy:
@@ -232,6 +232,25 @@ ansible_facts:
                   "version": "20210608v0"
               }
             ],
+          }
+        }
+        # Sample zypper
+        {
+          "packages": {
+            "bash": [
+              {
+                  "name": "bash",
+                  "source": "zypper",
+                  "version": "1.04-2.22"
+              }
+            ],
+            "curl": [
+              {
+                  "name": "curl"
+                  "source": "zypper"
+                  "version": "1.23-2.34"
+              }
+            ]
           }
         }
 '''
@@ -474,6 +493,33 @@ class PKG_INFO(CLIMgr):
             return {
                 'name': details[0],
                 'version': details[1],
+            }
+        except IndexError:
+            return raw_pkg_details
+
+
+class ZYPPER(CLIMgr):
+
+    CLI = 'zypper'
+
+    def list_installed(self):
+        package_list = []
+        # Tail skips loading/reading, no defined repositories, and header messages
+        rc, out, err = module.run_command(' '.join([self._cli, 'se', '-s', '-i', '|', 'tail', '-n', '+7']), use_unsafe_shell=True)
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+
+        for line in out.splitlines():
+            package_list.append([x.strip() for x in line.split("|")])
+
+        return package_list
+
+    def get_package_details(self, package):
+        raw_pkg_details = {'name': package, 'version': ''}
+        try:
+            return {
+                'name': package[1],
+                'version': package[3],
             }
         except IndexError:
             return raw_pkg_details
