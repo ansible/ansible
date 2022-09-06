@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "2.4"
   short_description: are all conditions in a list true
   description:
-    - This test checks each condition in a list for truthines.
+    - This test checks each condition in a list for truthiness.
     - Same as the C(all) Python function.
   options:
     _input:

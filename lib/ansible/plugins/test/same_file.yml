@@ -3,7 +3,7 @@ DOCUMENTATION:
   author: Ansible Core
   version_added: "2.5"
   short_description: compares two paths to see if they resolve to the same filesystem object
-  description: Check if the provided paths map to the same location onthe controller's filesystem (localhost).
+  description: Check if the provided paths map to the same location on the controller's filesystem (localhost).
   aliases: [is_file]
   options:
     _input:
