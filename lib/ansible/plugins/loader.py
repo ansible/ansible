@@ -1085,11 +1085,12 @@ class Jinja2Loader(PluginLoader):
 
         for func_name, func in plugin_map:
             fq_name = '.'.join((collection, func_name))
+            full = '.'.join((full_name, func_name))
             pclass = self._load_jinja2_class()
             plugin = pclass(func)
             if plugin in plugins:
                 continue
-            self._update_object(plugin, fq_name, plugin_path)
+            self._update_object(plugin, full, plugin_path)
             plugins.append(plugin)
 
         return plugins

@@ -89,10 +89,7 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                             for plugin in file_plugins:
-                                if plugin._load_name.startswith(collection):
-                                    plugin_name = plugin._load_name
-                                else:
-                                    plugin_name = get_composite_name(collection, plugin._load_name, full_path, depth)
+                                plugin_name = get_composite_name(collection, plugin._load_name, full_path, depth)
                                 plugins[plugin_name] = full_path
                         else:
                             plugin = get_composite_name(collection, plugin, path, depth)
