@@ -177,6 +177,10 @@ ansible_failed_task
 ansible_failed_result
     The captured return result of the failed task that triggered the rescue. This would equate to having used this var in the ``register`` keyword.
 
+.. note::
+
+  In ``ansible-core`` 2.14 or later, both variables are propagated from an inner block to an outer ``rescue`` portion of a block.
+
 .. seealso::
 
    :ref:`playbooks_intro`
