@@ -1861,16 +1861,33 @@ def catch_request_errors(func, *args, **kwargs):
             body = ''
         else:
             e.close()
-        info.update({'msg': to_native(e), 'body': body, 'status': e.code})
+        info.update({
+            'msg': to_native(e),
+            'body': body,
+            'status': e.code,
+        })
     except urllib_error.URLError as e:
         code = int(getattr(e, 'code', -1))
-        info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
+        info.update({
+            'msg': 'Request failed: %s' % to_native(e),
+            'status': code,
+        })
     except socket.error as e:
-        info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+        info.update({
+            'msg': 'Connection failure: %s' % to_native(e),
+            'status': -1,
+        })
     except httplib.BadStatusLine as e:
-        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
+        info.update({
+            'msg': 'Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line),
+            'status': -1,
+        })
     else:
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
+        info.update({
+            'msg': 'OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'),
+            'url': r.geturl(),
+            'status': r.code,
+        })
 
     return r, info
 
@@ -1976,8 +1993,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except MissingModuleError as e:
         module.fail_json(msg=to_text(e), exception=e.import_traceback)
     except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+        info.update({
+            'msg': 'An unknown error occurred: %s' % to_native(e),
+            'status': -1,
+            'exception': traceback.format_exc()
+        })
     else:
         info.update(tmp_info)
     finally:
