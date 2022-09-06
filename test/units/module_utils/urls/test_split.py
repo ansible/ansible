@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Ansible Project
+# Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.splitter import split_multiext
+from ansible.module_utils.urls import _split_multiext
 
 
 @pytest.mark.parametrize(
@@ -28,8 +28,8 @@ from ansible.module_utils.splitter import split_multiext
         ('https://acme.com/drivers/geckodriver-v0.26.0-linux64.tar.bz', ('https://acme.com/drivers/geckodriver-v0.26.0-linux64', '.tar.bz')),
     )
 )
-def test_split_multiext(name, expected):
-    assert expected == split_multiext(name)
+def test__split_multiext(name, expected):
+    assert expected == _split_multiext(name)
 
 
 @pytest.mark.parametrize(
@@ -43,8 +43,8 @@ def test_split_multiext(name, expected):
         (('base-v0.26.0.hidden.tar.gz', 4, 7), ('base-v0.26.0.hidden.tar.gz', '')),
     )
 )
-def test_split_multiext_min_max(args, expected):
-    assert expected == split_multiext(*args)
+def test__split_multiext_min_max(args, expected):
+    assert expected == _split_multiext(*args)
 
 
 @pytest.mark.parametrize(
@@ -57,8 +57,8 @@ def test_split_multiext_min_max(args, expected):
         (({'name': 'base-v0.25.foo.tar.gz', 'count': 4}), ('base-v0', '.25.foo.tar.gz')),
     )
 )
-def test_split_multiext_count(kwargs, expected):
-    assert expected == split_multiext(**kwargs)
+def test__split_multiext_count(kwargs, expected):
+    assert expected == _split_multiext(**kwargs)
 
 
 @pytest.mark.parametrize(
@@ -72,6 +72,6 @@ def test_split_multiext_count(kwargs, expected):
         247,
     )
 )
-def test_split_multiext_invalid(name):
+def test__split_multiext_invalid(name):
     with pytest.raises((TypeError, AttributeError)):
-        split_multiext(name)
+        _split_multiext(name)
