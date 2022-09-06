@@ -1,0 +1,2 @@
+bugfixes:
+  - Propagate ``ansible_failed_task`` and ``ansible_failed_result`` to an outer rescue (https://github.com/ansible/ansible/issues/43191)
