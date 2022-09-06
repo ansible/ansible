@@ -320,7 +320,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
-        preinstalled_candidates = None
+        preinstalled_candidates = set()
         if not self._upgrade and first_req.type == 'galaxy':
             preinstalled_candidates = {
                 candidate for candidate in self._preferred_candidates
