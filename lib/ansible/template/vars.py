@@ -17,7 +17,7 @@ def _process_locals(_l):
     if _l is None:
         return {}
     # FIXME is this needed? why?
-    return {k:v for k, v in _l.items() if v is not missing and k not in ('context', 'environment', 'template')}
+    return {k: v for k, v in _l.items() if v is not missing and k not in ('context', 'environment', 'template')}
 
 
 class AnsibleJ2Vars(Mapping):
@@ -25,7 +25,8 @@ class AnsibleJ2Vars(Mapping):
 
     def __init__(self, templar, globals, locals=None):
         self._templar = templar
-        self._variables = ChainMap(_process_locals(locals), self._templar.available_variables, globals)
+        self._variables = ChainMap(locals, self._templar.available_variables, globals)
+        # self._variables = ChainMap(_process_locals(locals), self._templar.available_variables, globals)
 
     def __iter__(self):
         return iter(self._variables)
