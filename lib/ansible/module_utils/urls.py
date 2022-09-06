@@ -1303,6 +1303,83 @@ def rfc2822_date_string(timetuple, zone='-0000'):
         zone)
 
 
+def normalize_headers(response):
+    if PY2:
+        headers = httplib.HTTPMessage(cStringIO())
+    else:
+        headers = httplib.HTTPMessage()
+
+    if response is None:
+        return headers
+
+    for name, value in response.headers.items():
+        if name in headers:
+            headers[name] = ', '.join((headers[name], value))
+        else:
+            headers[name] = value
+
+    return headers
+
+
+def process_cookies(cookies):
+    # parse the cookies into a nice dictionary
+    cookie_list = []
+    cookie_dict = {}
+    # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
+    # Cookies with the same path are reversed from response order.
+    # This code makes no assumptions about that, and accepts the order given by python
+    for cookie in cookies:
+        cookie_dict[cookie.name] = cookie.value
+        cookie_list.append((cookie.name, cookie.value))
+    cookies_string = '; '.join('%s=%s' % c for c in cookie_list)
+
+    return cookie_dict, cookies_string
+
+
+def catch_request_errors(func, *args, **kwargs):
+    info = {}
+    r = None
+    try:
+        r = func(*args, **kwargs)
+    except urllib_error.HTTPError as e:
+        r = e
+        try:
+            body = e.read()
+        except AttributeError:
+            body = ''
+        else:
+            e.close()
+        info.update({
+            'msg': to_native(e),
+            'body': body,
+            'status': e.code,
+        })
+    except urllib_error.URLError as e:
+        code = int(getattr(e, 'code', -1))
+        info.update({
+            'msg': 'Request failed: %s' % to_native(e),
+            'status': code,
+        })
+    except socket.error as e:
+        info.update({
+            'msg': 'Connection failure: %s' % to_native(e),
+            'status': -1,
+        })
+    except httplib.BadStatusLine as e:
+        info.update({
+            'msg': 'Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line),
+            'status': -1,
+        })
+    else:
+        info.update({
+            'msg': 'OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'),
+            'url': r.geturl(),
+            'status': r.code,
+        })
+
+    return r, info
+
+
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
@@ -1815,83 +1892,6 @@ def url_argument_spec():
     )
 
 
-def normalize_headers(response):
-    if PY2:
-        headers = httplib.HTTPMessage(cStringIO())
-    else:
-        headers = httplib.HTTPMessage()
-
-    if response is None:
-        return headers
-
-    for name, value in response.headers.items():
-        if name in headers:
-            headers[name] = ', '.join((headers[name], value))
-        else:
-            headers[name] = value
-
-    return headers
-
-
-def process_cookies(cookies):
-    # parse the cookies into a nice dictionary
-    cookie_list = []
-    cookie_dict = {}
-    # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
-    # Cookies with the same path are reversed from response order.
-    # This code makes no assumptions about that, and accepts the order given by python
-    for cookie in cookies:
-        cookie_dict[cookie.name] = cookie.value
-        cookie_list.append((cookie.name, cookie.value))
-    cookies_string = '; '.join('%s=%s' % c for c in cookie_list)
-
-    return cookie_dict, cookies_string
-
-
-def catch_request_errors(func, *args, **kwargs):
-    info = {}
-    r = None
-    try:
-        r = func(*args, **kwargs)
-    except urllib_error.HTTPError as e:
-        r = e
-        try:
-            body = e.read()
-        except AttributeError:
-            body = ''
-        else:
-            e.close()
-        info.update({
-            'msg': to_native(e),
-            'body': body,
-            'status': e.code,
-        })
-    except urllib_error.URLError as e:
-        code = int(getattr(e, 'code', -1))
-        info.update({
-            'msg': 'Request failed: %s' % to_native(e),
-            'status': code,
-        })
-    except socket.error as e:
-        info.update({
-            'msg': 'Connection failure: %s' % to_native(e),
-            'status': -1,
-        })
-    except httplib.BadStatusLine as e:
-        info.update({
-            'msg': 'Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line),
-            'status': -1,
-        })
-    else:
-        info.update({
-            'msg': 'OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'),
-            'url': r.geturl(),
-            'status': r.code,
-        })
-
-    return r, info
-
-
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
@@ -1973,7 +1973,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     info = {'url': url, 'status': -1}
     try:
         r, tmp_info = catch_request_errors(
-            open_url, url, data=data, headers=headers, method=method,
+            Request().open, url, data=data, headers=headers, method=method,
             use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
             validate_certs=validate_certs, url_username=username,
             url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
