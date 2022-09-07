@@ -1046,10 +1046,12 @@ class StrategyBase:
         if skipped:
             result['skipped'] = True
             result['skip_reason'] = skip_reason
-            display.vv(f"META: {skip_reason}")
         else:
             result['changed'] = False
-            display.vv(f"META: {msg}")
+
+        if not task.implicit:
+            header = skip_reason if skipped else msg
+            display.vv(f"META: {header}")
 
         if isinstance(task, Handler):
             task.remove_host(target_host)
