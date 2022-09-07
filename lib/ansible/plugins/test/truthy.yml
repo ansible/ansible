@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: truthy
+  author: Ansible Core
+  version_added: "2.10"
+  short_description: Pythonic true
+  description:
+    - This check is a more Python version of what is 'true'.
+    - It is the opposite of C(falsy).
+  options:
+    _input:
+      description: An expression that can be expressed in a boolean context.
+      type: string
+      required: True
+    convert_bool:
+      description: Attempts to convert to strict python boolean vs normally acceptable values (C(yes)/C(no), C(on)/C(off), C(0)/C(1), etc).
+      type: bool
+      default: false
+EXAMPLES: |
+    thisistrue: '{{ "any string" is truthy }}'
+    thisisfalse: '{{ "" is truthy }}'
+RETURN:
+  _value:
+    description: Returns C(True) if the condition is not "Python truthy", C(False) otherwise.
+    type: boolean

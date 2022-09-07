@@ -3,6 +3,7 @@ DOCUMENTATION:
   author: Ansible Core
   version_added: "1.9"
   short_description: check task success
+  aliases: [succeeded, successful]
   description:
     - Tests if task finished successfully, opposite of C(failed).
     - This test checks for the existance of a C(failed) key in the input dictionary and that it is C(False) if present

@@ -1,0 +1,49 @@
+DOCUMENTATION:
+  name: contains
+  author: Ansible Core
+  version_added: "2.4"
+  short_description: does the list contain this element
+  description:
+    - Checks the supplied element against the input list to see if it exists within it.
+  options:
+    _input:
+      description: List of elements to compare.
+      type: list
+      elements: raw
+      required: True
+    _contained:
+      description: Element to test for.
+      type: raw
+      required: True
+EXAMPLES: |
+  # simple expression
+  {{ listofthings is contains('this') }}
+
+  # as a selector
+  - action: module=doessomething
+    when: lacp_groups|selectattr('interfaces', 'contains', 'em1')|first).master
+    vars:
+      lacp_groups:
+        - master: lacp0
+          network: 10.65.100.0/24
+          gateway: 10.65.100.1
+          dns4:
+            - 10.65.100.10
+            - 10.65.100.11
+          interfaces:
+            - em1
+            - em2
+
+        - master: lacp1
+          network: 10.65.120.0/24
+          gateway: 10.65.120.1
+          dns4:
+            - 10.65.100.10
+            - 10.65.100.11
+          interfaces:
+              - em3
+              - em4
+RETURN:
+  _value:
+    description: Returns C(True) if the specified element is contained in the supplied sequence, C(False) otherwise.
+    type: boolean

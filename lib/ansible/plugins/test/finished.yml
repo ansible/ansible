@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: finished
   author: Ansible Core
   version_added: "1.9"
-  short_description: check if a task has finished
+  short_description: Did async task finish
   description:
     - Used to test if an async task has finished, it will aslo work with normal tasks but will issue a warning.
     - This test checks for the existance of a C(finished) key in the input dictionary and that it is C(1) if present
