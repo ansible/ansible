@@ -25,6 +25,7 @@ class AnsibleJ2Vars(Mapping):
 
     def __init__(self, templar, globals, locals=None):
         self._templar = templar
+        # ChainMap lookups search from the first mapping to the last so locals have the highest precedence
         self._variables = ChainMap(locals or {}, self._templar.available_variables, globals)
         # self._variables = ChainMap(_process_locals(locals), self._templar.available_variables, globals)
 
