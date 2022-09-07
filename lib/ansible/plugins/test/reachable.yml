@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: reachable
   author: Ansible Core
   version_added: "1.9"
-  short_description: check task didn't return that host was unreachable
+  short_description: Task did not end due to unreachable host
   description:
     - Tests if task was able to reach the host for execution
     - This test checks for the existance of a C(unreachable) key in the input dictionary and that it is C(False) if present

@@ -3,6 +3,7 @@ DOCUMENTATION:
   author: Ansible Core
   version_added: "1.6"
   short_description: compare version strings
+  aliases: [version_compare]
   description:
     - Compare version strings using various versioning schemes
   options:

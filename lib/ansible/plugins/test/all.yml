@@ -1,0 +1,23 @@
+DOCUMENTATION:
+  name: all
+  author: Ansible Core
+  version_added: "2.4"
+  short_description: are all conditions in a list true
+  description:
+    - This test checks each condition in a list for truthiness.
+    - Same as the C(all) Python function.
+  options:
+    _input:
+      description: List of conditions, each can be a boolean or conditional expression that results in a boolean value.
+      type: list
+      elements: raw
+      required: True
+EXAMPLES: |
+  varexpression: "{{ 3 == 3 }}"
+  # are all statements true?
+  {{ [true, booleanvar, varexpression] is all }}
+
+RETURN:
+  _value:
+    description: Returns C(True) if all elements of the list were True, C(False) otherwise.
+    type: boolean
