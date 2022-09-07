@@ -128,7 +128,10 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {%     endif %}
 {%     if 'default' in config and config['default'] == '' %}
 :Default: {{config['default']}}
-{%     elif 'default' in config %}
+{% if 'default' in config %}
+  {%- if config['default'] == '' %}
+:Default: {{config['default']}}
+  {%- else %}
 :Default: ``{{config['default']}}``
 {%     endif %}
 {%     if config.get('choices', False) %}
