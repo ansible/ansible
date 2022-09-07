@@ -1,0 +1,28 @@
+DOCUMENTATION:
+  name: subset
+  author: Ansible Core
+  version_added: "2.4"
+  aliases: [issubset]
+  short_description: is the list a subset of this other list
+  description:
+    - Validate if the first list is a sub set (is included) of the second list.
+    - Same as the C(all) Python function.
+  options:
+    _input:
+      description: List.
+      type: list
+      elements: raw
+      required: True
+    _superset:
+      description: List to test against.
+      type: list
+      elements: raw
+      required: True
+EXAMPLES: |
+  big: [1,2,3,4,5]
+  sml: [3,4]
+  issmallinbig: '{{ small is subset(big) }}'
+RETURN:
+  _value:
+    description: Returns C(True) if the specified list is a subset of the provided list, C(False) otherwise.
+    type: boolean
