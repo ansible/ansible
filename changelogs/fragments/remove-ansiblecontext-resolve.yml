@@ -1,0 +1,2 @@
+minor_changes:
+  - Remove the ``AnsibleContext.resolve`` method as its override is not necessary. Furthermore the ability to override the ``resolve`` method was deprecated in Jinja 3.0.0 and removed in Jinja 3.1.0.

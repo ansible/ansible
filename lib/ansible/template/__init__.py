@@ -327,7 +327,7 @@ class AnsibleUndefined(StrictUndefined):
 
 class AnsibleContext(Context):
     '''
-    A custom context, which intercepts resolve() calls and sets a flag
+    A custom context, which intercepts resolve_or_missing() calls and sets a flag
     internally if any variable lookup returns an AnsibleUnsafe value. This
     flag is checked post-templating, and (when set) will result in the
     final templated result being wrapped in AnsibleUnsafe.
@@ -358,15 +358,6 @@ class AnsibleContext(Context):
     def _update_unsafe(self, val):
         if val is not None and not self.unsafe and self._is_unsafe(val):
             self.unsafe = True
-
-    def resolve(self, key):
-        '''
-        The intercepted resolve(), which uses the helper above to set the
-        internal flag whenever an unsafe variable value is returned.
-        '''
-        val = super(AnsibleContext, self).resolve(key)
-        self._update_unsafe(val)
-        return val
 
     def resolve_or_missing(self, key):
         val = super(AnsibleContext, self).resolve_or_missing(key)
