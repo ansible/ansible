@@ -1312,7 +1312,13 @@ def normalize_headers(response):
     if response is None:
         return headers
 
-    for name, value in response.headers.items():
+    try:
+        response_headers = response.headers
+    except AttributeError:
+        # Python2 and HTTPError
+        response_headers = response.hdrs
+
+    for name, value in response_headers.items():
         if name in headers:
             headers[name] = ', '.join((headers[name], value))
         else:
