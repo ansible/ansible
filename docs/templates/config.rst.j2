@@ -126,13 +126,12 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {%     if config['type'] %}
 :Type: {{config['type']}}
 {%     endif %}
-{%     if 'default' in config and config['default'] == '' %}
+{%     if 'default' in config %}
+{%       if config['default'] == '' %}
 :Default: {{config['default']}}
-{% if 'default' in config %}
-  {%- if config['default'] == '' %}
-:Default: {{config['default']}}
-  {%- else %}
+{%       else %}
 :Default: ``{{config['default']}}``
+{%       endif %}
 {%     endif %}
 {%     if config.get('choices', False) %}
 :Choices:
