@@ -1304,6 +1304,9 @@ def rfc2822_date_string(timetuple, zone='-0000'):
 
 
 def normalize_headers(response):
+    """Normalizes headers between Python2 and Python3
+    to behave more like Python2
+    """
     if PY2:
         headers = httplib.HTTPMessage(cStringIO())
     else:
@@ -1328,6 +1331,11 @@ def normalize_headers(response):
 
 
 def process_cookies(cookies):
+    """Processes a CookieJar instance, and returns a tuple
+    of a dict representation of the cookies, and a string
+    that can be used directly for a Cookie header in subsequent
+    requests
+    """
     # parse the cookies into a nice dictionary
     cookie_list = []
     cookie_dict = {}
@@ -1343,6 +1351,10 @@ def process_cookies(cookies):
 
 
 def catch_request_errors(func, *args, **kwargs):
+    """Call ``func`` and catch some typical exceptions,
+    returning a tuple of the HTTPResponse and a dict
+    containing headers and additional info from the request
+    """
     info = {}
     r = None
     try:
