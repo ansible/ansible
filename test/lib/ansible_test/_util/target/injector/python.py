@@ -27,7 +27,7 @@ def main():
                 found = bool(importlib.util.find_spec('coverage'))
             else:
                 # noinspection PyDeprecation
-                import imp  # pylint: disable=deprecated-module
+                import imp
 
                 try:
                     # noinspection PyDeprecation
