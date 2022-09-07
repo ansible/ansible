@@ -16,8 +16,11 @@ __all__ = ['AnsibleJ2Vars']
 def _process_locals(_l):
     if _l is None:
         return {}
-    # FIXME is this needed? why?
-    return {k: v for k, v in _l.items() if v is not missing and k not in ('context', 'environment', 'template')}
+    return {
+        k: v for k, v in _l.items()
+        if v is not missing
+        and k not in ('context', 'environment', 'template')  # NOTE is this really needed?
+    }
 
 
 class AnsibleJ2Vars(Mapping):
@@ -25,9 +28,11 @@ class AnsibleJ2Vars(Mapping):
 
     def __init__(self, templar, globals, locals=None):
         self._templar = templar
-        # ChainMap lookups search from the first mapping to the last so locals have the highest precedence
-        self._variables = ChainMap(locals or {}, self._templar.available_variables, globals)
-        # self._variables = ChainMap(_process_locals(locals), self._templar.available_variables, globals)
+        self._variables = ChainMap(
+            _process_locals(locals),  # first mapping has the highest precedence
+            self._templar.available_variables,
+            globals,
+        )
 
     def __iter__(self):
         return iter(self._variables)
