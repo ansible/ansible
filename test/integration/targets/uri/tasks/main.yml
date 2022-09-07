@@ -305,7 +305,7 @@
   environment:
     https_proxy: 'https://localhost:3456'
   uri:
-    url: 'https://httpbin.org/get'
+    url: 'https://{{ httpbin_host }}/get'
   register: result
   ignore_errors: true
 
@@ -318,7 +318,7 @@
   environment:
     https_proxy: 'https://localhost:3456'
   uri:
-    url: 'https://httpbin.org/get'
+    url: 'https://{{ httpbin_host }}/get'
     use_proxy: no
 
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
