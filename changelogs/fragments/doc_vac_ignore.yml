@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc will now not display version_added_collection under same conditions it does not display version_added.
