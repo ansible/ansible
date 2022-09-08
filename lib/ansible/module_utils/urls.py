@@ -1076,30 +1076,32 @@ def get_ca_certs(cafile=None):
     # and compile them into single temp file for use
     # in the ssl check to speed up the test
     for path in paths_checked:
-        if os.path.exists(path) and os.path.isdir(path):
-            dir_contents = os.listdir(path)
-            for f in dir_contents:
-                full_path = os.path.join(path, f)
-                if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
-                    try:
-                        if full_path not in LOADED_VERIFY_LOCATIONS:
-                            with open(full_path, 'rb') as cert_file:
-                                b_cert = cert_file.read()
-                            if HAS_SSLCONTEXT:
-                                try:
-                                    for b_pem in extract_pem_certs(b_cert):
-                                        cadata.extend(
-                                            ssl.PEM_cert_to_DER_cert(
-                                                to_native(b_pem, errors='surrogate_or_strict')
-                                            )
+        if not os.path.isdir(path):
+            continue
+
+        dir_contents = os.listdir(path)
+        for f in dir_contents:
+            full_path = os.path.join(path, f)
+            if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
+                try:
+                    if full_path not in LOADED_VERIFY_LOCATIONS:
+                        with open(full_path, 'rb') as cert_file:
+                            b_cert = cert_file.read()
+                        if HAS_SSLCONTEXT:
+                            try:
+                                for b_pem in extract_pem_certs(b_cert):
+                                    cadata.extend(
+                                        ssl.PEM_cert_to_DER_cert(
+                                            to_native(b_pem, errors='surrogate_or_strict')
                                         )
-                                except Exception:
-                                    continue
-                            else:
-                                os.write(tmp_fd, b_cert)
-                                os.write(tmp_fd, b'\n')
-                    except (OSError, IOError):
-                        pass
+                                    )
+                            except Exception:
+                                continue
+                        else:
+                            os.write(tmp_fd, b_cert)
+                            os.write(tmp_fd, b'\n')
+                except (OSError, IOError):
+                    pass
 
     if HAS_SSLCONTEXT:
         default_verify_paths = ssl.get_default_verify_paths()
