@@ -771,3 +771,6 @@
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
   when: krb5_config is defined
+
+- name: Test ciphers
+  import_tasks: ciphers.yml
