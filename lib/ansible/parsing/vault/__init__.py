@@ -57,7 +57,7 @@ from ansible import constants as C
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.display import Display
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import makedirs_safe, unfrackpath
 
 display = Display()
 
@@ -349,7 +349,7 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    this_path = os.path.realpath(os.path.expanduser(filename))
+    this_path = unfrackpath(filename, follow=false)
 
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
