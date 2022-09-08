@@ -25,7 +25,8 @@ OPTIONS (= is mandatory):
         You can use `TEST_ENV' to set this.
         set_via:
           env:
-          - deprecated:
+          - added in: version 1.0.0
+            deprecated:
               alternative: none
               removed_in: 2.0.0
               version: 2.0.0

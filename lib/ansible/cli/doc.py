@@ -1116,8 +1116,12 @@ class DocCLI(CLI, RoleMixin):
                 if config in opt and opt[config]:
                     # Create a copy so we don't modify the original (in case YAML anchors have been used)
                     conf[config] = [dict(item) for item in opt.pop(config)]
-                    for ignore in DocCLI.IGNORE:
-                        for item in conf[config]:
+                    for item in conf[config]:
+                        version_added = item.pop('version_added', None)
+                        version_added_collection = item.pop('version_added_collection', None)
+                        if version_added:
+                            item['added in'] = DocCLI._format_version_added(version_added, version_added_collection)
+                        for ignore in DocCLI.IGNORE:
                             if ignore in item:
                                 del item[ignore]
 

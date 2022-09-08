@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-doc - show ``version_added`` value for plugin configuration (``set_via``) as well (https://github.com/ansible/ansible/pull/78730)."
