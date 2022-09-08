@@ -385,12 +385,10 @@ class PluginLoader:
         self._paths = ret
         return ret
 
-    def _get_paths(self, subdirs=True, exclude_internal=False):
+    def _get_paths(self, subdirs=True):
         ''' Return a list of paths to search for plugins in '''
 
         paths_with_context = self._get_paths_with_context(subdirs=subdirs)
-        if exclude_internal:
-            return [path_with_context.path for path_with_context in paths_with_context if not path_with_context.internal]
         return [path_with_context.path for path_with_context in paths_with_context]
 
     def _load_config_defs(self, name, module, path):
@@ -849,6 +847,8 @@ class PluginLoader:
             return get_with_context_result(None, plugin_load_context)
 
         fq_name = plugin_load_context.resolved_fqcn
+        if plugin_load_context.plugin_resolved_collection and '.' not in fq_name:
+            fq_name = '.'.join(('ansible.builtin', fq_name))
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
         redirected_names = plugin_load_context.redirect_list or []
@@ -952,13 +952,12 @@ class PluginLoader:
         found_in_cache = True
 
         legacy_excluding_builtin = set()
-
-        for i in self._get_paths(exclude_internal=True):
-            legacy_excluding_builtin.update(glob.glob(to_native(os.path.join(i, "*.py"))))
-
-        for i in self._get_paths():
+        for path_with_context in self._get_paths_with_context():
+            matches = glob.glob(to_native(os.path.join(path_with_context.path, "*.py")))
+            if not path_with_context.internal:
+                legacy_excluding_builtin.update(matches)
             # we sort within each path, but keep path precedence from config
-            all_matches.extend(sorted(glob.glob(to_native(os.path.join(i, "*.py"))), key=os.path.basename))
+            all_matches.extend(sorted(matches, key=os.path.basename))
 
         loaded_modules = set()
         for path in all_matches:
@@ -1284,8 +1283,10 @@ class Jinja2Loader(PluginLoader):
                     pclass = self._load_jinja2_class()
                     result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
                     found.add(plugin_name)
-                    # FIXME: builtin _fqcn should start with 'ansible.builtin.'
-                    self._update_object(result, plugin_name, p_map._original_path, resolved=plugin_name)
+                    fqcn = plugin_name
+                    if p_map._fqcn.startswith('ansible.builtin.') and not fqcn.startswith('ansible.builtin.'):
+                        fqcn = '.'.join(('ansible.builtin.', fqcn))
+                    self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
                 yield result
 
     def _load_jinja2_class(self):

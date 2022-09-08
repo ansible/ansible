@@ -24,10 +24,10 @@ class ActionModule(ActionBase):
         if fact_module not in C._ACTION_SETUP:
             # TODO: remove in favor of controller side argspec detecing valid arguments
             # network facts modules must support gather_subset
-            try:
-                name = self._connection.redirected_names[-1].removeprefix('ansible.netcommon.')
-            except (IndexError, AttributeError):
-                name = self._connection._load_name.split('.')[-1]
+            rm_prefixes = ('ansible.netcommon.', 'ansible.legacy.', 'ansible.builtin.')
+            name = self._connection.name
+            if name.startswith(rm_prefixes):
+                name = '.'.join(name.split('.')[2:])
             if name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
                 if subset not in ('all', ['all']):
@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-            modules.extend([connection_map.get(network_os or self._connection._load_name, 'ansible.legacy.setup')])
+            modules.extend([connection_map.get(network_os or self._connection.name, 'ansible.legacy.setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}

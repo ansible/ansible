@@ -294,7 +294,6 @@ def find_plugin_docfile(plugin, plugin_type, loader):
     '''  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs '''
 
     context = loader.find_plugin_with_context(plugin, ignore_deprecated=False, check_aliases=True)
-    plugin_obj = None
     if (not context or not context.resolved) and plugin_type in ('filter', 'test'):
         # should only happen for filters/test
         plugin_obj, context = loader.get_with_context(plugin)
@@ -303,15 +302,8 @@ def find_plugin_docfile(plugin, plugin_type, loader):
         raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
 
     docfile = Path(context.plugin_resolved_path)
-    possible_names = [plugin, docfile.name.removeprefix('_'), docfile.name]
-    if context.redirect_list or context._resolved_fqcn:
-        possible_names += [context.resolved_fqcn] + context.redirect_list
-    elif context.plugin_resolved_collection and not plugin.startswith('%s.' % context.plugin_resolved_collection):
-        possible_names.append('%s.%s' % context.plugin_resolved_collection, plugin)
-
-    if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
-        # only look for adjacent if plugin file does not support documents or
-        # name does not match file basname (except deprecated)
+    if docfile.suffix not in C.DOC_EXTENSIONS:
+        # only look for adjacent if plugin file does not support documents
         filename = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
     else:
         filename = to_native(docfile)
