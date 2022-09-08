@@ -432,8 +432,7 @@ class ScriptVaultSecret(FileVaultSecret):
         vault_pass = stdout.strip(b'\r\n')
 
         empty_password_msg = 'Invalid vault password was provided from script (%s)' % filename
-        verify_secret_is_not_empty(vault_pass,
-                                   msg=empty_password_msg)
+        verify_secret_is_not_empty(vault_pass, msg=empty_password_msg)
 
         return vault_pass
 
@@ -659,8 +658,7 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % to_native(filename)
             raise AnsibleError(msg)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
-                                                                             filename=filename)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt

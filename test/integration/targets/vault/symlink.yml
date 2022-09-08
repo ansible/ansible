@@ -7,4 +7,4 @@
       assert:
         that:
           - control is defined
-          - symlink == 'this is a secret'
+          - symlink == 'this is a test'
