@@ -20,7 +20,3 @@ case "${basename}" in
 esac
 
 echo "${password}_${dirname}"
-
-06:24 ERROR: test/integration/targets/vault/script/vault-secret.sh:5:22: SC2086: Double quote to prevent globbing and word splitting. (100%)
-06:24 ERROR: test/integration/targets/vault/script/vault-secret.sh:6:21: SC2046: Quote this to prevent word splitting. (100%)
-06:24 ERROR: test/integration/targets/vault/script/vault-secret.sh:6:31: SC2086
