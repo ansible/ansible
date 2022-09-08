@@ -15,17 +15,17 @@ OPTIONS (= is mandatory):
 
 = myopt1
         First option.
-
         type: str
 
 - myopt2
         Second option
-        [Default: 8000]
+        default: 8000
         type: int
 
 - myopt3
         Third option.
-        (Choices: choice1, choice2)[Default: (null)]
+        choices: [choice1, choice2]
+        default: null
         type: str
 
 

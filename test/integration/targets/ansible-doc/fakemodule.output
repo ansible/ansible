@@ -8,7 +8,7 @@ OPTIONS (= is mandatory):
 
 - _notreal
         really not a real option
-        [Default: (null)]
+        default: null
 
 
 AUTHOR: me
