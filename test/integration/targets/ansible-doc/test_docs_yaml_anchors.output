@@ -5,12 +5,12 @@ OPTIONS (= is mandatory):
 
 - at_the_top
         Short desc
-        [Default: some string]
+        default: some string
         type: str
 
 - egress
         Egress firewall rules
-        [Default: (null)]
+        default: null
         elements: dict
         type: list
 
@@ -18,12 +18,11 @@ OPTIONS (= is mandatory):
 
         = port
             Rule port
-
             type: int
 
 - ingress
         Ingress firewall rules
-        [Default: (null)]
+        default: null
         elements: dict
         type: list
 
@@ -31,12 +30,11 @@ OPTIONS (= is mandatory):
 
         = port
             Rule port
-
             type: int
 
 - last_one
         Short desc
-        [Default: some string]
+        default: some string
         type: str
 
 

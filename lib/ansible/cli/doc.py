@@ -19,7 +19,6 @@ import traceback
 
 import ansible.plugins.loader as plugin_loader
 
-from collections.abc import Sequence
 from pathlib import Path
 
 from ansible import constants as C
@@ -28,6 +27,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
@@ -835,7 +835,7 @@ class DocCLI(CLI, RoleMixin):
                     self._display_role_doc(docs)
 
             elif docs:
-                text = DocCLI._dump_yaml(docs, '')
+                text = DocCLI.tty_ify(DocCLI._dump_yaml(docs))
 
             if text:
                 DocCLI.pager(''.join(text))
@@ -1000,8 +1000,12 @@ class DocCLI(CLI, RoleMixin):
         return os.pathsep.join(ret)
 
     @staticmethod
-    def _dump_yaml(struct, indent):
-        return DocCLI.tty_ify('\n'.join([indent + line for line in yaml_dump(struct, default_flow_style=False, Dumper=AnsibleDumper).split('\n')]))
+    def _dump_yaml(struct, flow_style=False):
+        return yaml_dump(struct, default_flow_style=flow_style, default_style="''", Dumper=AnsibleDumper).rstrip('\n')
+
+    @staticmethod
+    def _indent_lines(text, indent):
+        return DocCLI.tty_ify('\n'.join([indent + line for line in text.split('\n')]))
 
     @staticmethod
     def _format_version_added(version_added, version_added_collection=None):
@@ -1021,6 +1025,7 @@ class DocCLI(CLI, RoleMixin):
             # Create a copy so we don't modify the original (in case YAML anchors have been used)
             opt = dict(fields[o])
 
+            # required is used as indicator and removed
             required = opt.pop('required', False)
             if not isinstance(required, bool):
                 raise AnsibleError("Incorrect value for 'Required', a boolean is needed.: %s" % required)
@@ -1031,9 +1036,10 @@ class DocCLI(CLI, RoleMixin):
 
             text.append("%s%s %s" % (base_indent, opt_leadin, o))
 
+            # description is specifically formated and can either be string or list of strings
             if 'description' not in opt:
                 raise AnsibleError("All (sub-)options and return values must have a 'description' field")
-            if isinstance(opt['description'], list):
+            if is_sequence(opt['description']):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
@@ -1044,29 +1050,15 @@ class DocCLI(CLI, RoleMixin):
                 text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
 
-            aliases = ''
-            if 'aliases' in opt:
-                if len(opt['aliases']) > 0:
-                    aliases = "(Aliases: " + ", ".join(to_text(i) for i in opt['aliases']) + ")"
-                del opt['aliases']
-            choices = ''
-            if 'choices' in opt:
-                if len(opt['choices']) > 0:
-                    choices = "(Choices: " + ", ".join(to_text(i) for i in opt['choices']) + ")"
-                del opt['choices']
-            default = ''
-            if not return_values:
-                if 'default' in opt or not required:
-                    default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
-
-            text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
-                                      initial_indent=opt_indent, subsequent_indent=opt_indent))
-
             suboptions = []
             for subkey in ('options', 'suboptions', 'contains', 'spec'):
                 if subkey in opt:
                     suboptions.append((subkey, opt.pop(subkey)))
 
+            if not required and not return_values and 'default' not in opt:
+                opt['default'] = None
+
+            # sanitize config items
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keyword'):
                 if config in opt and opt[config]:
@@ -1077,6 +1069,7 @@ class DocCLI(CLI, RoleMixin):
                             if ignore in item:
                                 del item[ignore]
 
+            # reformat cli optoins
             if 'cli' in opt and opt['cli']:
                 conf['cli'] = []
                 for cli in opt['cli']:
@@ -1086,24 +1079,23 @@ class DocCLI(CLI, RoleMixin):
                         conf['cli'].append(cli)
                 del opt['cli']
 
+            # add custom header for conf
             if conf:
-                text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
+                text.append(DocCLI._indent_lines(DocCLI._dump_yaml({'set_via': conf}), opt_indent))
 
+            # these we handle at the end of generic option processing
             version_added = opt.pop('version_added', None)
             version_added_collection = opt.pop('version_added_collection', None)
 
+            # general processing for options
             for k in sorted(opt):
                 if k.startswith('_'):
                     continue
-                if isinstance(opt[k], string_types):
-                    text.append('%s%s: %s' % (opt_indent, k,
-                                              textwrap.fill(DocCLI.tty_ify(opt[k]),
-                                                            limit - (len(k) + 2),
-                                                            subsequent_indent=opt_indent)))
-                elif isinstance(opt[k], (Sequence)) and all(isinstance(x, string_types) for x in opt[k]):
-                    text.append(DocCLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
+
+                if is_sequence(opt[k]):
+                    text.append(DocCLI._indent_lines('%s: %s' % (k, DocCLI._dump_yaml(opt[k], flow_style=True)), opt_indent))
                 else:
-                    text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
+                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k: opt[k]}), opt_indent))
 
             if version_added:
                 text.append("%sadded in: %s\n" % (opt_indent, DocCLI._format_version_added(version_added, version_added_collection)))
@@ -1157,7 +1149,7 @@ class DocCLI(CLI, RoleMixin):
 
             if doc.get('attributes'):
                 text.append("ATTRIBUTES:\n")
-                text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+                text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc.pop('attributes')), opt_indent))
                 text.append('')
 
             # generic elements we will handle identically
@@ -1171,7 +1163,7 @@ class DocCLI(CLI, RoleMixin):
                     text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
                 else:
                     # use empty indent since this affects the start of the yaml doc, not it's keys
-                    text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
+                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k.upper(): doc[k]}), ''))
                 text.append('')
 
         return text
@@ -1231,7 +1223,7 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('attributes', False):
             text.append("ATTRIBUTES:\n")
-            text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+            text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc.pop('attributes')), opt_indent))
             text.append('')
 
         if doc.get('notes', False):
@@ -1286,7 +1278,7 @@ class DocCLI(CLI, RoleMixin):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
                 # use empty indent since this affects the start of the yaml doc, not it's keys
-                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
+                text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k.upper(): doc[k]}), ''))
             del doc[k]
             text.append('')
 

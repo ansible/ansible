@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-doc - remove some of the manual formatting, and use YAML more uniformly. This in particular means that ``true`` and ``false`` are used for boolean values, instead of ``True`` and ``False`` (https://github.com/ansible/ansible/pull/78668)."
