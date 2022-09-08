@@ -355,7 +355,7 @@ class DocCLI(CLI, RoleMixin):
     name = 'ansible-doc'
 
     # default ignore list for detailed views
-    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
+    IGNORE = ('module', 'docuri', 'version_added', 'version_added_collection', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
 
     # Warning: If you add more elements here, you also need to add it to the docsite build (in the
     # ansible-community/antsibull repo)
