@@ -57,7 +57,7 @@ from ansible import constants as C
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.display import Display
-from ansible.utils.path import makedirs_safe, unfrackpath
+from ansible.utils.path import makedirs_safe
 
 display = Display()
 
@@ -349,21 +349,21 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    this_path = unfrackpath(filename, follow=False)
 
-    if not os.path.exists(this_path):
-        raise AnsibleError("The vault password file %s was not found" % this_path)
+    if not os.path.exists(filename):
+        raise AnsibleError("The vault password file %s was not found" % filename)
 
-    if loader.is_executable(this_path):
+    if loader.is_executable(filename):
+
         if script_is_client(filename):
             display.vvvv(u'The vault password file %s is a client script.' % to_text(filename))
             # TODO: pass vault_id_name to script via cli
-            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
-                                           encoding=encoding, loader=loader)
-        # just a plain vault password script. No args, returns a byte array
-        return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+            return ClientScriptVaultSecret(filename=filename, vault_id=vault_id, encoding=encoding, loader=loader)
 
-    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+        # just a plain vault password script. No args, returns a byte array
+        return ScriptVaultSecret(filename=filename, encoding=encoding, loader=loader)
+
+    return FileVaultSecret(filename=filename, encoding=encoding, loader=loader)
 
 
 # TODO: mv these classes to a separate file so we don't pollute vault with 'subprocess' etc
