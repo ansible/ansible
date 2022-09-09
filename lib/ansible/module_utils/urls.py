@@ -1303,6 +1303,106 @@ def rfc2822_date_string(timetuple, zone='-0000'):
         zone)
 
 
+def normalize_headers(response):
+    """Normalizes headers between Python2 and Python3
+    to behave more like Python2
+    """
+    if PY2:
+        headers = httplib.HTTPMessage(cStringIO())
+    else:
+        headers = httplib.HTTPMessage()
+
+    if response is None:
+        return headers
+
+    try:
+        response_headers = response.headers
+    except AttributeError:
+        # Python2 and HTTPError
+        response_headers = response.hdrs
+
+    for name, value in response_headers.items():
+        if name in headers:
+            headers[name] = ', '.join((headers[name], value))
+        else:
+            headers[name] = value
+
+    return headers
+
+
+def process_cookies(cookies):
+    """Processes a CookieJar instance, and returns a tuple
+    of a dict representation of the cookies, and a string
+    that can be used directly for a Cookie header in subsequent
+    requests
+    """
+    # parse the cookies into a nice dictionary
+    cookie_list = []
+    cookie_dict = {}
+    # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
+    # Cookies with the same path are reversed from response order.
+    # This code makes no assumptions about that, and accepts the order given by python
+    for cookie in cookies:
+        cookie_dict[cookie.name] = cookie.value
+        cookie_list.append((cookie.name, cookie.value))
+    cookies_string = '; '.join('%s=%s' % c for c in cookie_list)
+
+    return cookie_dict, cookies_string
+
+
+def catch_request_errors(func, *args, **kwargs):
+    """Call ``func`` and catch some typical exceptions,
+    returning a tuple of the HTTPResponse and a dict
+    containing headers and additional info from the request
+    """
+    info = {}
+    r = None
+    try:
+        r = func(*args, **kwargs)
+    except urllib_error.HTTPError as e:
+        r = e
+        try:
+            if e.fp is None:
+                # Certain HTTPError objects may not have the ability to call ``.read()`` on Python 3
+                # This is not handled gracefully in Python 3, and instead an exception is raised from
+                # tempfile, due to ``urllib.response.addinfourl`` not being initialized
+                raise AttributeError
+            body = e.read()
+        except AttributeError:
+            body = ''
+        else:
+            e.close()
+        info.update({
+            'msg': to_native(e),
+            'body': body,
+            'status': e.code,
+        })
+    except urllib_error.URLError as e:
+        code = int(getattr(e, 'code', -1))
+        info.update({
+            'msg': 'Request failed: %s' % to_native(e),
+            'status': code,
+        })
+    except socket.error as e:
+        info.update({
+            'msg': 'Connection failure: %s' % to_native(e),
+            'status': -1,
+        })
+    except httplib.BadStatusLine as e:
+        info.update({
+            'msg': 'Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line),
+            'status': -1,
+        })
+    else:
+        info.update({
+            'msg': 'OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'),
+            'url': r.geturl(),
+            'status': r.code,
+        })
+
+    return r, info
+
+
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
@@ -1893,46 +1993,18 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         cookies = cookiejar.LWPCookieJar()
 
     r = None
-    info = dict(url=url, status=-1)
+    info = {'url': url, 'status': -1}
     try:
-        r = open_url(url, data=data, headers=headers, method=method,
-                     use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
-                     validate_certs=validate_certs, url_username=username,
-                     url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
-                     follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
-                     decompress=decompress, ciphers=ciphers)
-        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
-        info.update(dict((k.lower(), v) for k, v in r.info().items()))
-
-        # Don't be lossy, append header values for duplicate headers
-        # In Py2 there is nothing that needs done, py2 does this for us
-        if PY3:
-            temp_headers = {}
-            for name, value in r.headers.items():
-                # The same as above, lower case keys to match py2 behavior, and create more consistent results
-                name = name.lower()
-                if name in temp_headers:
-                    temp_headers[name] = ', '.join((temp_headers[name], value))
-                else:
-                    temp_headers[name] = value
-            info.update(temp_headers)
-
-        # parse the cookies into a nice dictionary
-        cookie_list = []
-        cookie_dict = dict()
-        # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
-        # Cookies with the same path are reversed from response order.
-        # This code makes no assumptions about that, and accepts the order given by python
-        for cookie in cookies:
-            cookie_dict[cookie.name] = cookie.value
-            cookie_list.append((cookie.name, cookie.value))
-        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
-
-        info['cookies'] = cookie_dict
-        # finally update the result with a message about the fetch
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
+        r, tmp_info = catch_request_errors(
+            open_url, url, data=data, headers=headers, method=method,
+            use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
+            validate_certs=validate_certs, url_username=username,
+            url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
+            follow_redirects=follow_redirects, client_cert=client_cert,
+            client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
+            unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
+            decompress=decompress, ciphers=ciphers,
+        )
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
@@ -1943,41 +2015,20 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
         module.fail_json(msg=to_text(e), exception=e.import_traceback)
-    except urllib_error.HTTPError as e:
-        r = e
-        try:
-            if e.fp is None:
-                # Certain HTTPError objects may not have the ability to call ``.read()`` on Python 3
-                # This is not handled gracefully in Python 3, and instead an exception is raised from
-                # tempfile, due to ``urllib.response.addinfourl`` not being initialized
-                raise AttributeError
-            body = e.read()
-        except AttributeError:
-            body = ''
-        else:
-            e.close()
-
-        # Try to add exception info to the output but don't fail if we can't
-        try:
-            # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
-            info.update(dict((k.lower(), v) for k, v in e.info().items()))
-        except Exception:
-            pass
-
-        info.update({'msg': to_native(e), 'body': body, 'status': e.code})
-
-    except urllib_error.URLError as e:
-        code = int(getattr(e, 'code', -1))
-        info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
-    except socket.error as e:
-        info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
-    except httplib.BadStatusLine as e:
-        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
     except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+        info.update({
+            'msg': 'An unknown error occurred: %s' % to_native(e),
+            'status': -1,
+            'exception': traceback.format_exc()
+        })
+    else:
+        info.update(tmp_info)
     finally:
         tempfile.tempdir = old_tempdir
+
+    # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+    info.update(dict((k.lower(), v) for k, v in normalize_headers(r).items()))
+    info['cookies'], info['cookies_string'] = process_cookies(cookies)
 
     return r, info
 
