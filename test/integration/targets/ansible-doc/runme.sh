@@ -30,22 +30,37 @@ ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid coll
 # ensure we dont break on invalid collection name for list
 ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection name"
 
-
 # test listing diff plugin types from collection
-for ptype in cache inventory lookup vars filter
+for ptype in cache inventory lookup vars filter module
 do
 	# each plugin type adds 1 from collection
 	# FIXME pre=$(ansible-doc -l -t ${ptype}|wc -l)
 	# FIXME post=$(ansible-doc -l -t ${ptype} --playbook-dir ./|wc -l)
 	# FIXME test "$pre" -eq $((post - 1))
 	if [ "${ptype}" == "filter" ]; then
-		expected=3
+		expected=5
+		expected_names=("b64decode" "filter_subdir.nested" "filter_subdir.noop" "noop" "ultimatequestion")
+	elif [ "${ptype}" == "module" ]; then
+		expected=4
+		expected_names=("fakemodule" "notrealmodule" "randommodule" "database.database_type.subdir_module")
 	else
 		expected=1
+                if [ "${ptype}" == "cache" ]; then expected_names=("notjsonfile");
+                elif [ "${ptype}" == "inventory" ]; then expected_names=("statichost");
+                elif [ "${ptype}" == "lookup" ]; then expected_names=("noop");
+                elif [ "${ptype}" == "vars" ]; then expected_names=("noop_vars_plugin"); fi
 	fi
 	# ensure we ONLY list from the collection
 	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns.testcol|wc -l)
 	test "$justcol" -eq "$expected"
+
+	# ensure the right names are displayed
+	list_result=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns.testcol)
+	metadata_result=$(ansible-doc --metadata-dump --no-fail-on-errors -t ${ptype} --playbook-dir ./ testns.testcol)
+	for name in "${expected_names[@]}"; do
+		echo "${list_result}" | grep "testns.testcol.${name}"
+		echo "${metadata_result}" | grep "testns.testcol.${name}"
+	done
 
 	# ensure we get error if passinginvalid collection, much less any plugins
 	ansible-doc -l -t ${ptype} testns.testcol  2>&1 | grep "unable to locate collection"
@@ -174,7 +189,7 @@ ansible-doc -t filter --playbook-dir ./ nodocs 2>&1| grep -c 'missing documentat
 ansible-doc --list --module-path ./modules > /dev/null
 
 # ensure we dedupe by fqcn and not base name
-#[ "$(ansible-doc -l -t filter --playbook-dir ./ |grep 'b64decode' | wc -l)" -eq "2"]
+[ "$(ansible-doc -l -t filter --playbook-dir ./ |grep -c 'b64decode')" -eq "3" ]
 
 # with playbook dir, legacy should override
 ansible-doc -t filter split --playbook-dir ./ |grep histerical

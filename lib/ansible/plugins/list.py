@@ -26,9 +26,17 @@ IGNORE = {
 }
 
 
-def get_composite_name(collection, resource_name, path, depth):
+def get_composite_name(collection, name, path, depth):
+    resolved_collection = collection
+    if '.' not in name:
+        resource_name = name
+    else:
+        if collection == 'ansible.legacy' and name.startswith('ansible.builtin.'):
+            resolved_collection = 'ansible.builtin'
+        resource_name = '.'.join(name.split(f"{resolved_collection}.")[1:])
+
     # collectionize name
-    composite = [collection]
+    composite = [resolved_collection]
     if depth:
         composite.extend(path.split(os.path.sep)[depth * -1:])
     composite.append(to_native(resource_name))
@@ -88,15 +96,10 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                             for plugin in file_plugins:
-                                resource_name = '.'.join(plugin._fqcn.split(collection + '.')[1:])
-                                plugin_name = get_composite_name(collection, resource_name, os.path.dirname(to_native(full_path)), depth)
+                                plugin_name = get_composite_name(collection, plugin._fqcn, os.path.dirname(to_native(full_path)), depth)
                                 plugins[plugin_name] = full_path
                         else:
-                            if plugin.startswith(collection + '.'):
-                                resource_name = '.'.join(plugin.split(collection + '.')[1:])
-                            else:
-                                resource_name = plugin
-                            plugin_name = get_composite_name(collection, resource_name, os.path.splitext(to_native(full_path))[0], depth)
+                            plugin_name = get_composite_name(collection, plugin, os.path.dirname(to_native(full_path)), depth)
                             plugins[plugin_name] = full_path
             else:
                 display.debug("Skip listing plugins in '{0}' as it is not a directory".format(path))
@@ -120,7 +123,6 @@ def list_collection_plugins(ptype, collections, search_paths=None):
 
     # starts at  {plugin_name: filepath, ...}, but changes at the end
     plugins = {}
-    dirs = []
     try:
         ploader = getattr(loader, '{0}_loader'.format(ptype))
     except AttributeError:
@@ -130,10 +132,10 @@ def list_collection_plugins(ptype, collections, search_paths=None):
     for collection in collections.keys():
         if collection == 'ansible.builtin':
             # dirs from ansible install, but not configured paths
-            dirs.extend([d.path for d in ploader._get_paths_with_context() if d.internal])
+            dirs = [d.path for d in ploader._get_paths_with_context() if d.internal]
         elif collection == 'ansible.legacy':
             # configured paths + search paths (should include basedirs/-M)
-            dirs.extend([d.path for d in ploader._get_paths_with_context() if not d.internal])
+            dirs = [d.path for d in ploader._get_paths_with_context() if not d.internal]
             if context.CLIARGS.get('module_path', None):
                 dirs.extend(context.CLIARGS['module_path'])
         else:
@@ -174,7 +176,6 @@ def list_plugins(ptype, collection=None, search_paths=None):
 
     # {plugin_name: (filepath, class), ...}
     plugins = {}
-    do_legacy_replace = True
     collections = {}
     if collection is None:
         # list all collections, add synthetic ones
@@ -185,7 +186,6 @@ def list_plugins(ptype, collection=None, search_paths=None):
         # add builtin, since legacy also resolves to these
         collections[collection] = b''
         collections['ansible.builtin'] = b''
-        do_legacy_replace = False
     else:
         try:
             collections[collection] = to_bytes(_get_collection_path(collection))
@@ -195,27 +195,12 @@ def list_plugins(ptype, collection=None, search_paths=None):
     if collections:
         plugins.update(list_collection_plugins(ptype, collections))
 
-    if do_legacy_replace:
-        # remove legacy that exist as builtin, they are the same plugin but builtin is prefered display
-        for plugin in list(plugins.keys()):
-            if 'ansible.builtin' in plugin:
-                legacy = plugin.replace('ansible.builtin.', 'ansible.legacy.', 1)
-                if legacy in plugins:
-                    del plugins[legacy]
-    else:
-        # when listing only ansilbe.legacy, this includes all of the builtin under the legacy ns
-        for plugin in list(plugins.keys()):
-            if 'ansible.builtin' in plugin:
-                legacy = plugin.replace('ansible.builtin.', 'ansible.legacy.', 1)
-                plugins[legacy] = plugins[plugin]
-                del plugins[plugin]
-
     return plugins
 
 
 # wrappers
 def list_plugin_names(ptype, collection=None):
-    return list_plugins(ptype, collection).keys()
+    return [plugin.name for plugin in list_plugins(ptype, collection)]
 
 
 def list_plugin_files(ptype, collection=None):

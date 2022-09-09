@@ -847,8 +847,8 @@ class PluginLoader:
             return get_with_context_result(None, plugin_load_context)
 
         fq_name = plugin_load_context.resolved_fqcn
-        if plugin_load_context.plugin_resolved_collection and '.' not in fq_name:
-            fq_name = '.'.join(('ansible.builtin', fq_name))
+        if '.' not in fq_name:
+            fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
         redirected_names = plugin_load_context.redirect_list or []
@@ -1125,7 +1125,7 @@ class Jinja2Loader(PluginLoader):
             # TODO: support collections_list
             # Filter/tests must always be FQCN except builtin and legacy
             for known_plugin in self.all(*args, **kwargs):
-                if known_plugin._fqcn == name or known_plugin._fqcn == 'ansible.builtin.%s' % name:
+                if known_plugin._fqcn == name or known_plugin._fqcn == f"ansible.builtin.{name}":
                     # set context
                     context.resolved = True
                     context.plugin_resolved_name = name
@@ -1285,7 +1285,7 @@ class Jinja2Loader(PluginLoader):
                     found.add(plugin_name)
                     fqcn = plugin_name
                     if p_map._fqcn.startswith('ansible.builtin.') and not fqcn.startswith('ansible.builtin.'):
-                        fqcn = '.'.join(('ansible.builtin.', fqcn))
+                        fqcn = '.'.join(('ansible.builtin', fqcn))
                     self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
                 yield result
 

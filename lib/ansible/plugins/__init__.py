@@ -59,21 +59,12 @@ class AnsiblePlugin(ABC):
         self._options = {}
         self._defs = None
 
-    def _get_load_name_as_fqcn(self):
-        if not self._load_name.startswith('ansible_collections.') or len(self._load_name.split('.')) < 6:
-            # FIXME: plugin loader needs to return a consistent _load_name for builtin (ansible_collections.ansible.builtin....)
-            return f"ansible.legacy.{self._load_name}"
-
-        # f"ansible_collections.{namespace}.{collection}.plugins.{plugin_type}.{resource_name}"
-        name_components = self._load_name.split('.')
-        return '.'.join([*name_components[1:3], *name_components[5:]])
-
     @property
     def name(self):
         try:
             return self.aliases[0]
         except IndexError:
-            raise AnsibleError("Plugin must have a valid _load_name at minimum to get its name")
+            raise AnsibleError("No plugin name found")
 
     @property
     def aliases(self):
@@ -86,9 +77,6 @@ class AnsiblePlugin(ABC):
         if self._redirected_names:
             # FIXME: the first may not be fqcn but not in ansible.builtin (due to collections keyword)
             names.extend(self._redirected_names[::-1])
-        if self._load_name:
-            # legacy/last resort
-            names.append(self._get_load_name_as_fqcn())
         return names
 
     def matches_name(self, possible_names):

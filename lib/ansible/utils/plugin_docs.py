@@ -339,7 +339,7 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     if docs[0] is None:
-        raise AnsibleParserError('No documentation availalbe for %s (%s)' % (plugin, filename))
+        raise AnsibleParserError('No documentation available for %s (%s)' % (plugin, filename))
     else:
         docs[0]['filename'] = filename
         docs[0]['collection'] = collection_name
