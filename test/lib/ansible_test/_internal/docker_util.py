@@ -286,13 +286,14 @@ def docker_cp_to(args, container_id, src, dst):  # type: (EnvironmentConfig, str
 def docker_run(
         args,  # type: EnvironmentConfig
         image,  # type: str
+        name,  # type: str
         options,  # type: t.Optional[t.List[str]]
         cmd=None,  # type: t.Optional[t.List[str]]
         create_only=False,  # type: bool
 ):  # type: (...) -> str
     """Run a container using the given docker image."""
-    if not options:
-        options = []
+    options = list(options or [])
+    options.extend(['--name', name])
 
     if not cmd:
         cmd = []
@@ -321,6 +322,7 @@ def docker_run(
         except SubprocessError as ex:
             display.error(ex.message)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
+            docker_rm(args, name)  # podman doesn't remove containers after create if run fails
             time.sleep(3)
 
     raise ApplicationError('Failed to run docker image "%s".' % image)

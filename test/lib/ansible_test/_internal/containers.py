@@ -138,7 +138,7 @@ def run_support_container(
         if current_container_id:
             publish_ports = False  # publishing ports is pointless if already running in a docker container
 
-    options = (options or []) + ['--name', name]
+    options = (options or [])
 
     if start:
         options.append('-d')
@@ -182,7 +182,7 @@ def run_support_container(
     else:
         display.info('Starting new "%s" container.' % name)
         docker_pull(args, image)
-        support_container_id = docker_run(args, image, options, create_only=not start, cmd=cmd)
+        support_container_id = docker_run(args, image, name, options, create_only=not start, cmd=cmd)
         running = start
         existing = False
 
