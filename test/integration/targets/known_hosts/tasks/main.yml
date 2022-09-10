@@ -96,6 +96,27 @@
     - 'result.diff.before == result.diff.after'
     - 'known_hosts.stdout == known_hosts_v2.stdout'
 
+# test removal of a different key does not change the state of the host
+# and does not remove anything
+- name: remove different key
+  known_hosts: 
+    name: example.org
+    key: "{{ example_org_ed25519_key }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_different_key_removal
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts_v2.stdout == known_hosts_different_key_removal.stdout'
+
 # test removal
 
 - name: remove the host in check mode
