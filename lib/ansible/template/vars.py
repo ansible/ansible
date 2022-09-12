@@ -55,7 +55,7 @@ class AnsibleJ2Vars(ChainMap):
         except Exception as e:
             msg = getattr(e, 'message', None) or to_native(e)
             raise AnsibleError(
-                f"An unhandled exception occurred while templating'{to_native(variable)}'. "
+                f"An unhandled exception occurred while templating '{to_native(variable)}'. "
                 f"Error was a {type(e)}, original message: {msg}"
             )
 
