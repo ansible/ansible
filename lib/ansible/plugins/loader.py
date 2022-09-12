@@ -825,11 +825,6 @@ class PluginLoader:
 
         return module
 
-    def _ensure_ansible_legacy_prefix(self, name):
-        if '.' not in name:
-            return f"ansible.legacy.{name}"
-        return name
-
     def _update_object(self, obj, name, path, redirected_names=None, resolved=None):
 
         # set extra info on the module, in case we want it later
@@ -839,11 +834,10 @@ class PluginLoader:
 
         names = []
         if resolved:
-            names.append(self._ensure_ansible_legacy_prefix(resolved))
+            names.append(resolved)
         if redirected_names:
             # reverse list so best name comes first
-            for redir in redirected_names[::-1]:
-                names.append(self._ensure_ansible_legacy_prefix(redir))
+            names.extend(redirected_names[::-1])
         if not names:
             raise AnsibleError(f"Missing FQCN for plugin source {name}")
 
@@ -1149,7 +1143,7 @@ class Jinja2Loader(PluginLoader):
                     context.plugin_resolved_name = name
                     context.plugin_resolved_path = known_plugin._original_path
                     context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.name.startswith('ansible.builtin.') else ''
-                    context._resolved_fqcn = known_plugin.name.removeprefix('ansible.legacy.')
+                    context._resolved_fqcn = known_plugin.name
                     return get_with_context_result(known_plugin, context)
 
         plugin = None

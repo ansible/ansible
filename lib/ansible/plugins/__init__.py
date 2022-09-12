@@ -63,10 +63,10 @@ class AnsiblePlugin(ABC):
         possible_fqcns = set()
         for name in possible_names:
             if '.' not in name:
-                possible_fqcns.update([f"ansible.legacy.{name}", f"ansible.builtin.{name}"])
-            else:
-                possible_fqcns.add(name)
-
+                possible_fqcns.add(f"ansible.builtin.{name}")
+            elif name.startswith("ansible.legacy."):
+                possible_fqcns.add(name.removeprefix("ansible.legacy."))
+            possible_fqcns.add(name)
         return bool(possible_fqcns.intersection(set(self.aliases)))
 
     def get_option(self, option, hostvars=None):
