@@ -669,3 +669,6 @@
 
 - name: Test ciphers
   import_tasks: ciphers.yml
+
+- name: Test use_netrc=False
+  import_tasks: use_netrc.yml
