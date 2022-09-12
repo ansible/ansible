@@ -1568,6 +1568,17 @@ releases:
     - atomic_cache_files.yml
     - v2.12.8rc1_summary.yaml
     release_date: '2022-08-08'
+  2.12.9:
+    changes:
+      release_summary: '| Release Date: 2022-09-12
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - v2.12.9_summary.yaml
+    release_date: '2022-09-12'
   2.12.9rc1:
     changes:
       bugfixes:

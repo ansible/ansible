@@ -5,13 +5,13 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
-v2.12.9rc1
-==========
+v2.12.9
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2022-09-06
+| Release Date: 2022-09-12
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
