@@ -836,7 +836,6 @@ class PluginLoader:
         setattr(obj, '_original_path', path)
         setattr(obj, '_load_name', name)
         setattr(obj, '_redirected_names', redirected_names or [])
-        setattr(obj, '_fqcn', resolved)
 
         names = []
         if resolved:

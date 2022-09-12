@@ -96,7 +96,7 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                             for plugin in file_plugins:
-                                plugin_name = get_composite_name(collection, plugin._fqcn, os.path.dirname(to_native(full_path)), depth)
+                                plugin_name = get_composite_name(collection, plugin.name.removeprefix('ansible.legacy.'), os.path.dirname(to_native(full_path)), depth)
                                 plugins[plugin_name] = full_path
                         else:
                             plugin_name = get_composite_name(collection, plugin, os.path.dirname(to_native(full_path)), depth)
