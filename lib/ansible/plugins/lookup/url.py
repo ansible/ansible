@@ -113,6 +113,21 @@ options:
     ini:
         - section: url_lookup
           key: use_gssapi
+  use_netrc:
+    description:
+    - Determining whether to use credentials from ``~/.netrc`` file
+    - By default .netrc is used with Basic authentication headers
+    - When set to False, .netrc credentials are ignored
+    type: boolean
+    version_added: "2.14"
+    default: True
+    vars:
+        - name: ansible_lookup_url_use_netrc
+    env:
+        - name: ANSIBLE_LOOKUP_URL_USE_NETRC
+    ini:
+        - section: url_lookup
+          key: use_netrc
   unix_socket:
     description: String of file system path to unix socket file to use when establishing connection to the provided url
     type: string
@@ -230,6 +245,7 @@ class LookupModule(LookupBase):
                     ca_path=self.get_option('ca_path'),
                     unredirected_headers=self.get_option('unredirected_headers'),
                     ciphers=self.get_option('ciphers'),
+                    use_netrc=self.get_option('use_netrc')
                 )
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))

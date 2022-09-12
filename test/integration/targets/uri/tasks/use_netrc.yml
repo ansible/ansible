@@ -1,0 +1,51 @@
+- name: Write out netrc
+  copy:
+    dest: "{{ remote_tmp_dir }}/netrc"
+    content: |
+      machine {{ httpbin_host }}
+      login foo
+      password bar
+
+- name: Test Bearer authorization is failed with netrc
+  uri:
+    url: https://{{ httpbin_host }}/bearer
+    return_content: yes
+    headers:
+      Authorization: Bearer foobar
+  ignore_errors: yes
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+  register: response_failed
+
+- name: assert Test Bearer authorization is failed with netrc
+  assert:
+    that:
+    - response_failed.json.token != 'foobar'
+    - "'Zm9vOmJhcg==' in response_failed.json.token"
+    fail_msg: "Was expecting 'foo:bar' in base64, but received: {{ response_failed }}"
+    success_msg: "Expected to fail because netrc is using Basic authentication by default"
+
+- name: Test Bearer authorization is successfull with use_netrc=False
+  uri:
+    url: https://{{ httpbin_host }}/bearer
+    use_netrc: false
+    return_content: yes
+    headers:
+      Authorization: Bearer foobar
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+  register: response
+
+- name: assert Test Bearer authorization is successfull with use_netrc=False
+  assert:
+    that:
+    - response.status == 200
+    - response.json.token == 'foobar'
+    - response.url == 'https://{{ httpbin_host }}/bearer'
+    fail_msg: "Was expecting successful Bearer authentication, but received: {{ response }}"
+    success_msg: "Bearer authentication successfull when netrc is ignored."
+
+- name: Clean up
+  file:
+    dest: "{{ remote_tmp_dir }}/netrc"
+    state: absent

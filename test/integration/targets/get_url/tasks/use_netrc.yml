@@ -1,0 +1,67 @@
+- name: Write out netrc
+  copy:
+    dest: "{{ remote_tmp_dir }}/netrc"
+    content: |
+      machine {{ httpbin_host }}
+      login foo
+      password bar
+
+- name: Test Bearer authorization is failed with netrc
+  get_url:
+    url: https://{{ httpbin_host }}/bearer
+    headers:
+      Authorization: Bearer foobar
+    dest: "{{ remote_tmp_dir }}/msg.txt"
+  ignore_errors: yes
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+
+- name: Read msg.txt file
+  ansible.builtin.slurp:
+    src: "{{ remote_tmp_dir }}/msg.txt"
+  register: response_failed
+
+- name: Parse token from msg.txt
+  set_fact: 
+    token: "{{ (response_failed['content'] | b64decode | from_json).token }}"
+
+- name: assert Test Bearer authorization is failed with netrc
+  assert:
+    that:
+    - "token.find('v=' ~ 'Zm9vOmJhcg') == -1"
+    fail_msg: "Was expecting 'foo:bar' in base64, but received: {{ response_failed['content'] | b64decode | from_json }}"
+    success_msg: "Expected Basic authentication even Bearer headers were sent"
+
+- name: Test Bearer authorization is successfull with use_netrc=False
+  get_url:
+    url: https://{{ httpbin_host }}/bearer
+    use_netrc: false
+    headers:
+      Authorization: Bearer foobar
+    dest: "{{ remote_tmp_dir }}/msg.txt"
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+
+- name: Read msg.txt file
+  ansible.builtin.slurp:
+    src: "{{ remote_tmp_dir }}/msg.txt"
+  register: response
+
+- name: Parse token from msg.txt
+  set_fact: 
+    token: "{{ (response['content'] | b64decode | from_json).token }}"
+
+- name: assert Test Bearer authorization is successfull with use_netrc=False
+  assert:
+    that:
+    - "token.find('v=' ~ 'foobar') == -1"
+    fail_msg: "Was expecting Bearer token 'foobar', but received: {{ response['content'] | b64decode | from_json }}"
+    success_msg: "Bearer authentication successfull without netrc"
+
+- name: Clean up
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ remote_tmp_dir }}/netrc"
+    - "{{ remote_tmp_dir }}/msg.txt"

@@ -49,3 +49,6 @@
         that:
           - good_ciphers is successful
           - bad_ciphers is failed
+
+- name: Test use_netrc=False
+  import_tasks: use_netrc.yml
