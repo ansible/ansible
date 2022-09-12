@@ -193,5 +193,19 @@ ansible-doc --list --module-path ./modules > /dev/null
 
 # with playbook dir, legacy should override
 ansible-doc -t filter split --playbook-dir ./ |grep histerical
+
+pyc_src="$(pwd)/filter_plugins/other.py"
+pyc_1="$(pwd)/filter_plugins/split.pyc"
+pyc_2="$(pwd)/library/notaplugin.pyc"
+trap 'rm -rf "$pyc_1" "$pyc_2"' EXIT
+
+# test pyc files are not used as adjacent documentation
+python -c "import py_compile; py_compile.compile('"$pyc_src"', cfile='"$pyc_1"')"
+ansible-doc -t filter split --playbook-dir ./ |grep histerical
+
+# test pyc files are not listed as plugins
+python -c "import py_compile; py_compile.compile('"$pyc_src"', cfile='"$pyc_2"')"
+test "$(ansible-doc -l -t module --playbook-dir ./ 2>&1 1>/dev/null |grep -c "notaplugin")" == 0
+
 # without playbook dir, builtin should return
 ansible-doc -t filter split |grep -v histerical

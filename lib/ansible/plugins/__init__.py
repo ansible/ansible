@@ -59,26 +59,6 @@ class AnsiblePlugin(ABC):
         self._options = {}
         self._defs = None
 
-    @property
-    def name(self):
-        try:
-            return self.aliases[0]
-        except IndexError:
-            raise AnsibleError("No plugin name found")
-
-    @property
-    def aliases(self):
-        names = []
-        if self._fqcn:
-            if '.' not in self._fqcn:
-                names.append(f"ansible.legacy.{self._fqcn}")
-            else:
-                names.append(self._fqcn)
-        if self._redirected_names:
-            # FIXME: the first may not be fqcn but not in ansible.builtin (due to collections keyword)
-            names.extend(self._redirected_names[::-1])
-        return names
-
     def matches_name(self, possible_names):
         possible_fqcns = set()
         for name in possible_names:

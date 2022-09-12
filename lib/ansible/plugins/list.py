@@ -65,7 +65,7 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                         continue
 
                     display.debug("Found possible plugin: '{0}'".format(plugin_file))
-                    b_plugin, ext = os.path.splitext(plugin_file)
+                    b_plugin, b_ext = os.path.splitext(plugin_file)
                     plugin = to_native(b_plugin)
                     full_path = os.path.join(b_path, plugin_file)
 
@@ -81,8 +81,8 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                     else:
                         if any([
                                 plugin in C.IGNORE_FILES,                # general files to ignore
-                                ext in C.REJECT_EXTS,                    # general extensions to ignore
-                                ext in (b'.yml', b'.yaml', b'.json'),    # ignore docs files TODO: constant!
+                                to_native(b_ext) in C.REJECT_EXTS,       # general extensions to ignore
+                                b_ext in (b'.yml', b'.yaml', b'.json'),  # ignore docs files TODO: constant!
                                 plugin in IGNORE.get(bkey, ()),          # plugin in reject list
                                 os.path.islink(full_path),               # skip aliases, author should document in 'aliaes' field
                         ]):

@@ -502,14 +502,17 @@ class PluginLoader:
             redirect = routing_metadata.get('redirect', None)
 
             if redirect:
+                fq_redirect = f"{acr.collection}.{redirect}" if '.' not in redirect else redirect
+
                 # FIXME: remove once this is covered in debug or whatever
-                display.vv("redirecting (type: {0}) {1} to {2}".format(plugin_type, fq_name, redirect))
+                display.vv("redirecting (type: {0}) {1} to {2}".format(plugin_type, fq_name, fq_redirect))
+
                 # The name doing the redirection is added at the beginning of _resolve_plugin_step,
                 # but if the unqualified name is used in conjunction with the collections keyword, only
                 # the unqualified name is in the redirect list.
                 if fq_name not in plugin_load_context.redirect_list:
                     plugin_load_context.redirect_list.append(fq_name)
-                return plugin_load_context.redirect(redirect)
+                return plugin_load_context.redirect(fq_redirect)
                 # TODO: non-FQCN case, do we support `.` prefix for current collection, assume it with no dots, require it for subdirs in current, or ?
 
             if self.type == 'modules':
@@ -822,6 +825,11 @@ class PluginLoader:
 
         return module
 
+    def _ensure_ansible_legacy_prefix(self, name):
+        if '.' not in name:
+            return f"ansible.legacy.{name}"
+        return name
+
     def _update_object(self, obj, name, path, redirected_names=None, resolved=None):
 
         # set extra info on the module, in case we want it later
@@ -829,6 +837,19 @@ class PluginLoader:
         setattr(obj, '_load_name', name)
         setattr(obj, '_redirected_names', redirected_names or [])
         setattr(obj, '_fqcn', resolved)
+
+        names = []
+        if resolved:
+            names.append(self._ensure_ansible_legacy_prefix(resolved))
+        if redirected_names:
+            # reverse list so best name comes first
+            for redir in redirected_names[::-1]:
+                names.append(self._ensure_ansible_legacy_prefix(redir))
+        if not names:
+            raise AnsibleError(f"Missing FQCN for plugin source {name}")
+
+        setattr(obj, 'aliases', names)
+        setattr(obj, 'name', names[0])
 
     def get(self, name, *args, **kwargs):
         return self.get_with_context(name, *args, **kwargs).object
@@ -1122,15 +1143,14 @@ class Jinja2Loader(PluginLoader):
         name = name.removeprefix('ansible.legacy.')
 
         if '.' not in name:
-            # TODO: support collections_list
             # Filter/tests must always be FQCN except builtin and legacy
             for known_plugin in self.all(*args, **kwargs):
-                if known_plugin._fqcn == name or known_plugin._fqcn == f"ansible.builtin.{name}":
-                    # set context
+                if known_plugin.matches_name([name]):
                     context.resolved = True
                     context.plugin_resolved_name = name
                     context.plugin_resolved_path = known_plugin._original_path
-                    context._resolved_fqcn = known_plugin._fqcn
+                    context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.name.startswith('ansible.builtin.') else ''
+                    context._resolved_fqcn = known_plugin.name.removeprefix('ansible.legacy.')
                     return get_with_context_result(known_plugin, context)
 
         plugin = None
@@ -1284,8 +1304,10 @@ class Jinja2Loader(PluginLoader):
                     result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
                     found.add(plugin_name)
                     fqcn = plugin_name
-                    if p_map._fqcn.startswith('ansible.builtin.') and not fqcn.startswith('ansible.builtin.'):
-                        fqcn = '.'.join(('ansible.builtin', fqcn))
+                    collection = '.'.join(p_map.name.split('.')[2:]) if p_map.name.count('.') > 2 else ''
+                    if not plugin_name.startswith(collection):
+                        fqcn = f"{collection}.{plugin_name}"
+
                     self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
                 yield result
 
