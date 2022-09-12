@@ -96,7 +96,7 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                             for plugin in file_plugins:
-                                plugin_name = get_composite_name(collection, plugin.name, os.path.dirname(to_native(full_path)), depth)
+                                plugin_name = get_composite_name(collection, plugin.ansible_name, os.path.dirname(to_native(full_path)), depth)
                                 plugins[plugin_name] = full_path
                         else:
                             plugin_name = get_composite_name(collection, plugin, os.path.dirname(to_native(full_path)), depth)
@@ -200,7 +200,7 @@ def list_plugins(ptype, collection=None, search_paths=None):
 
 # wrappers
 def list_plugin_names(ptype, collection=None):
-    return [plugin.name for plugin in list_plugins(ptype, collection)]
+    return [plugin.ansible_name for plugin in list_plugins(ptype, collection)]
 
 
 def list_plugin_files(ptype, collection=None):

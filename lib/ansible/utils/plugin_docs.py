@@ -163,7 +163,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
 
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
-        real_fragment_name = getattr(fragment_class, 'name')
+        real_fragment_name = getattr(fragment_class, 'ansible_name')
         real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''
         add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
 

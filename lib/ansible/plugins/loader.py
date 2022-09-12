@@ -841,8 +841,8 @@ class PluginLoader:
         if not names:
             raise AnsibleError(f"Missing FQCN for plugin source {name}")
 
-        setattr(obj, 'aliases', names)
-        setattr(obj, 'name', names[0])
+        setattr(obj, 'ansible_aliases', names)
+        setattr(obj, 'ansible_name', names[0])
 
     def get(self, name, *args, **kwargs):
         return self.get_with_context(name, *args, **kwargs).object
@@ -1142,8 +1142,8 @@ class Jinja2Loader(PluginLoader):
                     context.resolved = True
                     context.plugin_resolved_name = name
                     context.plugin_resolved_path = known_plugin._original_path
-                    context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.name.startswith('ansible.builtin.') else ''
-                    context._resolved_fqcn = known_plugin.name
+                    context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
+                    context._resolved_fqcn = known_plugin.ansible_name
                     return get_with_context_result(known_plugin, context)
 
         plugin = None
@@ -1297,7 +1297,7 @@ class Jinja2Loader(PluginLoader):
                     result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
                     found.add(plugin_name)
                     fqcn = plugin_name
-                    collection = '.'.join(p_map.name.split('.')[2:]) if p_map.name.count('.') > 2 else ''
+                    collection = '.'.join(p_map.ansible_name.split('.')[2:]) if p_map.ansible_name.count('.') > 2 else ''
                     if not plugin_name.startswith(collection):
                         fqcn = f"{collection}.{plugin_name}"
 

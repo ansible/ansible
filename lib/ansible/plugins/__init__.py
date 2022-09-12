@@ -67,7 +67,7 @@ class AnsiblePlugin(ABC):
             elif name.startswith("ansible.legacy."):
                 possible_fqcns.add(name.removeprefix("ansible.legacy."))
             possible_fqcns.add(name)
-        return bool(possible_fqcns.intersection(set(self.aliases)))
+        return bool(possible_fqcns.intersection(set(self.ansible_aliases)))
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:

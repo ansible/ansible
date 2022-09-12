@@ -56,7 +56,7 @@ def get_vars_from_path(loader, path, entities, stage):
     for plugin in vars_plugin_list:
         # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
 
-        builtin_or_legacy = plugin.name.startswith(('ansible.legacy.', 'ansible.builtin.'))
+        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
 
         # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
         needs_enabled = not builtin_or_legacy
@@ -72,7 +72,7 @@ def get_vars_from_path(loader, path, entities, stage):
         if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                "This should be removed from the plugin %s." % plugin.name
+                "This should be removed from the plugin %s." % plugin.ansible_name
             )
         elif builtin_or_legacy and needs_enabled and not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
             continue
