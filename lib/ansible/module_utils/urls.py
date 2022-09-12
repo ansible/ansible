@@ -1350,57 +1350,77 @@ def process_cookies(cookies):
     return cookie_dict, cookies_string
 
 
-def catch_request_errors(func, *args, **kwargs):
-    """Call ``func`` and catch some typical exceptions,
-    returning a tuple of the HTTPResponse and a dict
-    containing headers and additional info from the request
-    """
-    info = {}
-    r = None
-    try:
-        r = func(*args, **kwargs)
-    except urllib_error.HTTPError as e:
-        r = e
-        try:
-            if e.fp is None:
-                # Certain HTTPError objects may not have the ability to call ``.read()`` on Python 3
-                # This is not handled gracefully in Python 3, and instead an exception is raised from
-                # tempfile, due to ``urllib.response.addinfourl`` not being initialized
-                raise AttributeError
-            body = e.read()
-        except AttributeError:
-            body = ''
-        else:
-            e.close()
-        info.update({
-            'msg': to_native(e),
-            'body': body,
-            'status': e.code,
-        })
-    except urllib_error.URLError as e:
-        code = int(getattr(e, 'code', -1))
-        info.update({
-            'msg': 'Request failed: %s' % to_native(e),
-            'status': code,
-        })
-    except socket.error as e:
-        info.update({
-            'msg': 'Connection failure: %s' % to_native(e),
-            'status': -1,
-        })
-    except httplib.BadStatusLine as e:
-        info.update({
-            'msg': 'Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line),
-            'status': -1,
-        })
-    else:
-        info.update({
-            'msg': 'OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'),
-            'url': r.geturl(),
-            'status': r.code,
-        })
+@contextmanager
+def wrap_opener_for_errors(func):
+    """This context manager is meant to wrap ``open_url`` or any of the ``Request``
+    methods to provide common error handling.
 
-    return r, info
+    When in use, the return value will be a tuple of (**response**, **info**).
+    Use ``response.read()`` to read the data. The **info** contains the 'status'
+    and other meta data. When a HttpError (status >= 400) occurred then
+    ``info['body']`` contains the error response data
+
+    >>> with wrap_opener_for_errors(open_url) as opener:
+    >>>    r, info = opener('https://ansible.com/')
+
+    This method will ultimately catch the following exceptions:
+        * ``urllib.error.HTTPError``
+        * ``urllib.error.URLError``
+        * ``socket.error``
+        * ``http.client.BadStatusLine``
+
+    All other exceptions will be raised for the caller to handle.
+    """
+
+    def opener(*args, **kwargs):
+        info = {}
+        r = None
+        try:
+            r = func(*args, **kwargs)
+        except urllib_error.HTTPError as e:
+            r = e
+            try:
+                if e.fp is None:
+                    # Certain HTTPError objects may not have the ability to call ``.read()`` on Python 3
+                    # This is not handled gracefully in Python 3, and instead an exception is raised from
+                    # tempfile, due to ``urllib.response.addinfourl`` not being initialized
+                    raise AttributeError
+                body = e.read()
+            except AttributeError:
+                body = ''
+            else:
+                e.close()
+            info.update({
+                'msg': to_native(e),
+                'body': body,
+                'status': e.code,
+            })
+        except urllib_error.URLError as e:
+            code = int(getattr(e, 'code', -1))
+            info.update({
+                'msg': 'Request failed: %s' % to_native(e),
+                'status': code,
+            })
+        except socket.error as e:
+            info.update({
+                'msg': 'Connection failure: %s' % to_native(e),
+                'status': -1,
+            })
+        except httplib.BadStatusLine as e:
+            info.update({
+                'msg': 'Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line),
+                'status': -1,
+            })
+        else:
+            info.update({
+                'msg': 'OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'),
+                'url': r.geturl(),
+                'status': r.code,
+            })
+
+        return r, info
+
+    yield opener
 
 
 class Request:
@@ -1995,16 +2015,17 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     r = None
     info = {'url': url, 'status': -1}
     try:
-        r, tmp_info = catch_request_errors(
-            open_url, url, data=data, headers=headers, method=method,
-            use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
-            validate_certs=validate_certs, url_username=username,
-            url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
-            follow_redirects=follow_redirects, client_cert=client_cert,
-            client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-            unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
-            decompress=decompress, ciphers=ciphers,
-        )
+        with wrap_opener_for_errors(open_url) as opener:
+            r, tmp_info = opener(
+                url, data=data, headers=headers, method=method,
+                use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
+                validate_certs=validate_certs, url_username=username,
+                url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
+                follow_redirects=follow_redirects, client_cert=client_cert,
+                client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
+                unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
+                decompress=decompress, ciphers=ciphers,
+            )
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
