@@ -1297,7 +1297,7 @@ class Jinja2Loader(PluginLoader):
                     result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
                     found.add(plugin_name)
                     fqcn = plugin_name
-                    collection = '.'.join(p_map.ansible_name.split('.')[2:]) if p_map.ansible_name.count('.') > 2 else ''
+                    collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
                     if not plugin_name.startswith(collection):
                         fqcn = f"{collection}.{plugin_name}"
 

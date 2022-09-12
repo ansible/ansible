@@ -191,6 +191,9 @@ ansible-doc --list --module-path ./modules > /dev/null
 # ensure we dedupe by fqcn and not base name
 [ "$(ansible-doc -l -t filter --playbook-dir ./ |grep -c 'b64decode')" -eq "3" ]
 
+# ensure we don't show duplicates for plugins that only exist in ansible.builtin when listing ansible.legacy plugins
+[ "$(ansible-doc -l -t filter --playbook-dir ./ |grep -c 'b64encode')" -eq "1" ]
+
 # with playbook dir, legacy should override
 ansible-doc -t filter split --playbook-dir ./ |grep histerical
 
