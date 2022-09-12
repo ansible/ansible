@@ -215,6 +215,14 @@ options:
     type: bool
     default: no
     version_added: '2.11'
+  use_netrc:
+    description:
+      - Determining whether to use credentials from ``~/.netrc`` file
+      - By default .netrc is used with Basic authentication headers
+      - When set to False, .netrc credentials are ignored
+    type: bool
+    default: true
+    version_added: '2.14'
 extends_documentation_fragment:
   - action_common_attributes
   - files
@@ -545,7 +553,7 @@ def form_urlencoded(body):
 
 
 def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress,
-        ciphers):
+        ciphers, use_netrc):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
 
@@ -570,7 +578,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           ciphers=ciphers, **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -605,6 +613,7 @@ def main():
         unredirected_headers=dict(type='list', elements='str', default=[]),
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
+        use_netrc=dict(type='bool', default=True),
     )
 
     module = AnsibleModule(
@@ -628,6 +637,7 @@ def main():
     unredirected_headers = module.params['unredirected_headers']
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
+    use_netrc = module.params['use_netrc']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -671,7 +681,7 @@ def main():
     start = datetime.datetime.utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
-                  decompress, ciphers)
+                  decompress, ciphers, use_netrc)
 
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
