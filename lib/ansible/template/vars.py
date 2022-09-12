@@ -23,25 +23,19 @@ def _process_locals(_l):
     }
 
 
-class AnsibleJ2Vars(Mapping):
+class AnsibleJ2Vars(ChainMap):
     """Helper variable storage class that allows for nested variables templating: `foo: "{{ bar }}"`."""
 
     def __init__(self, templar, globals, locals=None):
         self._templar = templar
-        self._variables = ChainMap(
+        super().__init__(
             _process_locals(locals),  # first mapping has the highest precedence
             self._templar.available_variables,
             globals,
         )
 
-    def __iter__(self):
-        return iter(self._variables)
-
-    def __len__(self):
-        return len(self._variables)
-
     def __getitem__(self, varname):
-        variable = self._variables[varname]
+        variable = super().__getitem__(varname)
 
         from ansible.vars.hostvars import HostVars
         if (isinstance(variable, dict) and varname == "vars") or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
@@ -73,8 +67,8 @@ class AnsibleJ2Vars(Mapping):
         if locals is None:
             return self
 
-        current_locals = self._variables.maps[0]
-        current_globals = self._variables.maps[2]
+        current_locals = self.maps[0]
+        current_globals = self.maps[2]
 
         # prior to version 2.9, locals contained all of the vars and not just the current
         # local vars so this was not necessary for locals to propagate down to nested includes
