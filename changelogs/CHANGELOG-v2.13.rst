@@ -5,13 +5,13 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
-v2.13.4rc1
-==========
+v2.13.4
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2022-09-06
+| Release Date: 2022-09-12
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 

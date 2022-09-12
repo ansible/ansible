@@ -1003,6 +1003,17 @@ releases:
     - type_shim_exception_swallow.yml
     - v2.13.3rc1_summary.yaml
     release_date: '2022-08-08'
+  2.13.4:
+    changes:
+      release_summary: '| Release Date: 2022-09-12
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - v2.13.4_summary.yaml
+    release_date: '2022-09-12'
   2.13.4rc1:
     changes:
       bugfixes:
