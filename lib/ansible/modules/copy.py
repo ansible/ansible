@@ -654,7 +654,8 @@ def main():
                     module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
 
-    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
+    # We only need write access to the parent when the file does not already exist (or we play it unsafe)
+    if not checksum_dest and not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
@@ -685,7 +686,8 @@ def main():
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
 
                 b_mysrc = b_src
-                if remote_src and os.path.isfile(b_src):
+                # we can only safely create a temp copy of the source if we can write in the parent
+                if remote_src and os.path.isfile(b_src) and os.access(os.path.dirname(b_dest), os.W_OK):
 
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
