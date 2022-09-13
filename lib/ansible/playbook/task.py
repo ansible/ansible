@@ -76,7 +76,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     delegate_facts = FieldAttribute(isa='bool')
     failed_when = FieldAttribute(isa='list', default=list)
     loop = FieldAttribute()
-    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl)
+    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     notify = FieldAttribute(isa='list')
     poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = FieldAttribute(isa='string', static=True)
@@ -275,12 +275,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def _validate_failed_when(self, attr, name, value):
         if not isinstance(value, list):
             setattr(self, name, [value])
-
-    def _validate_loop_control(self, attr, name, value):
-        # ensure loop_control is of class_type even if not specified by user
-        # so default values are properly set
-        if value is None:
-            setattr(self, name, attr.class_type())
 
     def post_validate(self, templar):
         '''
