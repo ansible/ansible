@@ -502,6 +502,13 @@ class PluginLoader:
             redirect = routing_metadata.get('redirect', None)
 
             if redirect:
+                # Prevent mystery redirects that would be determined by the collections keyword
+                if not AnsibleCollectionRef.is_valid_fqcr(redirect):
+                    raise AnsibleError(
+                        f"Collection {acr.collection} contains invalid redirect for {fq_name}: {redirect}. "
+                        "Redirects must use fully qualified collection names."
+                    )
+
                 # FIXME: remove once this is covered in debug or whatever
                 display.vv("redirecting (type: {0}) {1} to {2}".format(plugin_type, fq_name, redirect))
                 # The name doing the redirection is added at the beginning of _resolve_plugin_step,
@@ -1171,6 +1178,12 @@ class Jinja2Loader(PluginLoader):
             # check redirects
             redirect = routing_entry.get('redirect', None)
             if redirect:
+                if not AnsibleCollectionRef.is_valid_fqcr(redirect):
+                    raise AnsibleError(
+                        f"Collection {acr.collection} contains invalid redirect for {acr.collection}.{acr.resource}: {redirect}. "
+                        "Redirects must use fully qualified collection names."
+                    )
+
                 next_key, leaf_key = get_fqcr_and_name(redirect, collection=acr.collection)
                 display.vvv('redirecting (type: {0}) {1}.{2} to {3}'.format(self.type, acr.collection, acr.resource, next_key))
                 key = next_key
