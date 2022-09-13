@@ -104,6 +104,22 @@
           - 'ansible_mounts|default("UNDEF_MOUNT") != "UNDEF_MOUNT" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
+- hosts: facthost1
+  tags: [ 'fact_min' ]
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Test that we can retrieve the loadavg fact
+      setup:
+        filter: "ansible_loadavg"
+
+    - name: Test the contents of the loadavg fact
+      assert:
+        that:
+          - 'ansible_loadavg|default("UNDEF_ENV") != "UNDEF_ENV"'
+          - '"1m" in ansible_loadavg and ansible_loadavg["1m"] is float'
+          - '"5m" in ansible_loadavg and ansible_loadavg["5m"] is float'
+          - '"15m" in ansible_loadavg and ansible_loadavg["15m"] is float'
 
 - hosts: facthost19
   tags: [ 'fact_min' ]
