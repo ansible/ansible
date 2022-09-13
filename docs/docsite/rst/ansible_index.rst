@@ -95,6 +95,8 @@ Ansible releases a new major release approximately twice a year. The core applic
    :maxdepth: 1
    :caption: Reference & Appendices
 
+   collections/index
+   collections/all_plugins
    reference_appendices/playbooks_keywords
    reference_appendices/common_return_values
    reference_appendices/config
