@@ -27,4 +27,4 @@ Ansible ships with several plugins and lets you easily use your own plugins.
    modules_support
    plugin_filtering_config
    ../plugins/plugins
-   ../collections/all_plugins
+   modules_plugins_index
