@@ -11,7 +11,7 @@ DOCUMENTATION:
       description: Possible number representation or string that can be converted into one.
       type: raw
       required: true
-EXAMPLES:
+EXAMPLES: |
     isnan: "{{ '42' is nan }}"
 
 RETURN:
