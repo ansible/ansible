@@ -1695,6 +1695,14 @@ class AnsibleModule(object):
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
+            elif e.errno == errno.EXDEV:
+                try:
+                    # copy() is the perfect equivalent of rename() when dealing with cross-device situations
+                    shutil.copy(b_src, b_dest)
+                except (IOError, OSError) as e:
+                    self.fail_json(msg='Could not replace file (using copy instead of rename): %s to %s: %s'
+                                       % (src, dest, to_native(e)),
+                                   exception=traceback.format_exc())
             else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
