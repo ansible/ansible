@@ -2,6 +2,7 @@ jinja2
 pyyaml
 resolvelib < 0.9.0
 sphinx == 5.1.1
+rstcheck < 6.0.0 # above this causes errors we need to fix in docs
 sphinx-notfound-page
 sphinx-ansible-theme
 straight.plugin
