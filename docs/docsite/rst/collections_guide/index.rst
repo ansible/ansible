@@ -24,4 +24,4 @@ You can install and use collections through a distribution server, such as Ansib
    collections_listing
    collections_verifying
    collections_using_playbooks
-   ../collections/index
+   collections_index
