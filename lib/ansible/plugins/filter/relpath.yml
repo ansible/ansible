@@ -2,28 +2,27 @@ DOCUMENTATION:
   name: relpath
   author: Jakub Jirutka (@jirutka)
   version_added: "1.7"
-  short_description: get relative path of the given file
+  short_description: Make a path relative
+  positional: _input, start
   description:
-    - Returns the relative path of the given file to the current directory if I(start) is not specified,
+    - Converts the given path to a relative path from the C(start).
       or relative to the directory given in I(start).
-  positional: start
   options:
     _input:
       description: A path.
-      type: path
+      type: str
       required: true
     start:
-      description: The directory the path should be relative to.
-      type: path
+      description: The directory the path should be relative to. if not supplied the current working directory will be used
+      type: str
+
 EXAMPLES: |
 
-  # Get the relative path to 'mypath' from 'mydir'
-  {{ mypath | relpath(mydir) }}
-
-  # Returns '../foo/bar.txt'
-  {{ '/tmp/foo/bar.txt' | relpath('/tmp/baz/') }}
+  # foobar => ../test/me.txt
+  testing: "{{ '/tmp/test/me.txt' | relpath('/tmp/other/') }}"
+  otherrelpath: "{{ mypath | relpath(mydir) }}"
 
 RETURN:
   _value:
     description: The relative path.
-    type: path
+    type: str
