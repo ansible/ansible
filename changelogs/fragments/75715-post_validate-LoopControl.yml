@@ -1,0 +1,2 @@
+minor_changes:
+  - "``LoopControl`` is now templated through standard ``post_validate`` method (https://github.com/ansible/ansible/pull/75715)"
