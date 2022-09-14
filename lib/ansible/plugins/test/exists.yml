@@ -11,7 +11,7 @@ DOCUMENTATION:
       description: a path
       type: path
 
-EXAMPLES:
+EXAMPLES: |
   vars:
     my_etc_hosts_exists: "{{ '/etc/hosts' is exist }}"
     list_of_local_files_to_copy_to_remote: "{{ list_of_all_possible_files | select('exists') }}"

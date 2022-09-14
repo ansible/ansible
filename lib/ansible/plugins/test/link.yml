@@ -11,7 +11,7 @@ DOCUMENTATION:
       description: A path.
       type: path
 
-EXAMPLES:
+EXAMPLES: |
     ismyhostsalink: "{{ '/etc/hosts' is link}}"
     list_of_symlinks: "{{ list_of_paths | select('link') }}"
 
