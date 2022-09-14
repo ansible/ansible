@@ -11,7 +11,7 @@ DOCUMENTATION:
       description: A path.
       type: path
 
-EXAMPLES:
+EXAMPLES: |
   vars:
     ihopefalse: "{{ '/etc/hosts' is mount }}"
     normallytrue: "{{ '/tmp' is mount }}"

@@ -11,7 +11,7 @@ DOCUMENTATION:
       description: A path.
       type: path
 
-EXAMPLES:
+EXAMPLES: |
   vars:
     my_etc_hosts_is_a_file: "{{ '/etc/hosts' is file }}"
     list_of_files: "{{ list_of_paths | select('file') }}"

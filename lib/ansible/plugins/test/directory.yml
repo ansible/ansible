@@ -10,7 +10,7 @@ DOCUMENTATION:
       description: A path.
       type: path
 
-EXAMPLES:
+EXAMPLES: |
   vars:
     my_etc_hosts_not_a_dir: "{{ '/etc/hosts' is directory}}"
     list_of_files: "{{ list_of_paths | reject('directory') }}"

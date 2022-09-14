@@ -13,7 +13,7 @@ DOCUMENTATION:
       description: A path.
       type: path
 
-EXAMPLES:
+EXAMPLES: |
     is_path_absolute: "{{ '/etc/hosts' is abs }}}"
     relative_paths: "{{ all_paths | reject('abs') }}"
 
