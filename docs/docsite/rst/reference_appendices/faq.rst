@@ -845,7 +845,9 @@ How do I submit a change to the documentation?
 Documentation for Ansible is kept in the main project git repository, and complete instructions
 for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_. Thanks!
 
+
 .. _legacy_vs_builtin:
+
 What is the difference between ansible.legacy and ansible.builtin collections?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
