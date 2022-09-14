@@ -74,6 +74,7 @@ coverage.xml
 # Development
 /test/develop
 venv
+env
 Vagrantfile
 .vagrant
 # Backwards compatibility with `stable-2.9` and earlier branches.
