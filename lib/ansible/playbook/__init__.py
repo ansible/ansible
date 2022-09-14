@@ -28,6 +28,7 @@ from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 
 display = Display()
 
@@ -74,13 +75,13 @@ class Playbook:
         # check for errors and restore the basedir in case this error is caught and handled
         if ds is None:
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("Empty playbook, nothing to do", obj=ds)
+            raise AnsibleParserError("Empty playbook, nothing to do: %s" % unfrackpath(file_name), obj=ds)
         elif not isinstance(ds, list):
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("A playbook must be a list of plays, got a %s instead" % type(ds), obj=ds)
+            raise AnsibleParserError("A playbook must be a list of plays, got a %s instead: %s" % (type(ds), unfrackpath(file_name)), obj=ds)
         elif not ds:
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("A playbook must contain at least one play")
+            raise AnsibleParserError("A playbook must contain at least one play: %s" % unfrackpath(file_name))
 
         # Parse the playbook entries. For plays, we simply parse them
         # using the Play() object, and includes are parsed using the
