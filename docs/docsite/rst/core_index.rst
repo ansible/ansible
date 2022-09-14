@@ -72,6 +72,12 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
 
    dev_guide/index
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Ansible Galaxy
+
+   galaxy/user_guide.rst
+   galaxy/dev_guide.rst
 
 .. toctree::
    :maxdepth: 1

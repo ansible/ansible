@@ -94,7 +94,6 @@ exclude_patterns = [
     '2.10_index.rst',
     'ansible_index.rst',
     'core_index.rst',
-    'galaxy',
     'network',
     'scenario_guides',
     'community/collection_contributors/test_index.rst',
