@@ -262,35 +262,18 @@ class TaskExecutor:
         into an array named 'results' which is inserted into the final result
         along with the item for which the loop ran.
         '''
-
-        results = []
-
-        # make copies of the job vars and task so we can add the item to
-        # the variables and re-validate the task with the item variable
-        # task_vars = self._job_vars.copy()
         task_vars = self._job_vars
+        templar = Templar(loader=self._loader, variables=task_vars)
 
-        loop_var = 'item'
-        index_var = None
-        label = None
-        loop_pause = 0
-        extended = False
-        templar = Templar(loader=self._loader, variables=self._job_vars)
+        self._task.loop_control.post_validate(templar=templar)
 
-        # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
-        if self._task.loop_control:
-            loop_var = templar.template(self._task.loop_control.loop_var)
-            index_var = templar.template(self._task.loop_control.index_var)
-            loop_pause = templar.template(self._task.loop_control.pause)
-            extended = templar.template(self._task.loop_control.extended)
-            extended_allitems = templar.template(self._task.loop_control.extended_allitems)
-
-            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
-            label = self._task.loop_control.label
-
+        loop_var = self._task.loop_control.loop_var
+        index_var = self._task.loop_control.index_var
+        loop_pause = self._task.loop_control.pause
+        extended = self._task.loop_control.extended
+        extended_allitems = self._task.loop_control.extended_allitems
         # ensure we always have a label
-        if label is None:
-            label = '{{' + loop_var + '}}'
+        label = self._task.loop_control.label or '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
             display.warning(u"%s: The loop variable '%s' is already in use. "
@@ -298,9 +281,9 @@ class TaskExecutor:
                             u" to something else to avoid variable collisions and unexpected behavior." % (self._task, loop_var))
 
         ran_once = False
-
         no_log = False
         items_len = len(items)
+        results = []
         for item_index, item in enumerate(items):
             task_vars['ansible_loop_var'] = loop_var
 
@@ -333,10 +316,7 @@ class TaskExecutor:
 
             # pause between loop iterations
             if loop_pause and ran_once:
-                try:
-                    time.sleep(float(loop_pause))
-                except ValueError as e:
-                    raise AnsibleError('Invalid pause value: %s, produced error: %s' % (loop_pause, to_native(e)))
+                time.sleep(loop_pause)
             else:
                 ran_once = True
 
