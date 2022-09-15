@@ -73,7 +73,16 @@ coverage.xml
 /test/cache/*
 # Development
 /test/develop
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 venv
+env
 Vagrantfile
 .vagrant
 # Backwards compatibility with `stable-2.9` and earlier branches.
