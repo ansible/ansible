@@ -280,15 +280,13 @@ class StrategyModule(StrategyBase):
                         if is_handler:
                             for task in new_block.block:
                                 task.notified_hosts = included_file._hosts[:]
-                            final_block = new_block
-                        else:
-                            task_vars = self._variable_manager.get_vars(
-                                play=iterator._play,
-                                task=new_block.get_first_parent_include(),
-                                _hosts=self._hosts_cache,
-                                _hosts_all=self._hosts_cache_all,
-                            )
-                            final_block = new_block.filter_tagged_tasks(task_vars)
+                        task_vars = self._variable_manager.get_vars(
+                            play=iterator._play,
+                            task=new_block.get_first_parent_include(),
+                            _hosts=self._hosts_cache,
+                            _hosts_all=self._hosts_cache_all,
+                        )
+                        final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)

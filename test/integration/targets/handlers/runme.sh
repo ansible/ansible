@@ -216,3 +216,16 @@ ansible-playbook nested_flush_handlers_failure_force.yml -i inventory.handlers "
 
 ansible-playbook 82241.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'included_task_from_tasks_dir')" = "1" ]
+
+# tags on handlers
+for strategy in linear free; do
+    export ANSIBLE_STRATEGY=$strategy
+    ansible-playbook test_handlers_tags.yml --tags handler_tag -i inventory.handlers "$@" 2>&1 | tee out.txt
+    [ "$(grep out.txt -ce 'handler_tagged ran')" = "1" ]
+    [ "$(grep out.txt -ce 'handler_implicit_always ran')" = "1" ]
+
+    ansible-playbook test_handlers_tags.yml --skip-tags handler_tag -i inventory.handlers "$@" 2>&1 | tee out.txt
+    [ "$(grep out.txt -ce 'handler_tagged ran')" = "0" ]
+    [ "$(grep out.txt -ce 'handler_implicit_always ran')" = "1" ]
+    unset ANSIBLE_STRATEGY
+done

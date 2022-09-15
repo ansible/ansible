@@ -1510,6 +1510,19 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
+HANDLERS_TAGS_COMPAT_WARNING:
+  name: Warn when untagged handlers are detected and ``--tags`` is specified on the command line
+  default: True
+  description:
+    - By default, Ansible will issue a warning when untagged handlers are defined in the play and ``--tags`` is
+      specified on the command line. It is because for backwards compatibility any untagged handler is
+      implicitly tagged with the ``always`` tag.
+    - This warning can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_HANDLERS_TAGS_COMPAT_WARNING}]
+  ini:
+  - {key: handlers_tags_compat_warning, section: defaults}
+  type: boolean
+  version_added: "2.17"
 HOST_KEY_CHECKING:
   # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
