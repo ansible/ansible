@@ -54,7 +54,7 @@
 
 # https://github.com/ansible/ansible/issues/30638
 - block:
-  - name: Fail to install foo=1.0.1 since foo is not installed and only_upgrade is set
+  - name: Do nothing to install foo=1.0.1 since foo is not installed and only_upgrade is set
     apt:
       name: foo=1.0.1
       state: present
@@ -67,7 +67,7 @@
     assert:
       that:
         - "apt_result is not changed"
-        - "apt_result is failed"
+        - "apt_result is success"
 
   - apt:
       name: foo=1.0.0
