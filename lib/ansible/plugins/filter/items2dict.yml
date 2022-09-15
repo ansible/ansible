@@ -15,11 +15,11 @@ DOCUMENTATION:
       elements: dict
       required: true
     key_name:
-      description: Allows to configure the key to use instead of C(key).
+      description: Configure the key to use instead of C(key).
       type: str
       default: key
     value_name:
-      description: Allows to configure the key to use instead of C(value).
+      description: Configure the key to use instead of C(value).
       type: str
       default: value
   seealso:
