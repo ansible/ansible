@@ -41,16 +41,6 @@ At a high level we have the following classifications of tests:
   * Tests directly against individual parts of the code base.
 
 
-If you're a developer, one of the most valuable things you can do is look at the GitHub
-issues list and help fix bugs.  We almost always prioritize bug fixing over feature
-development.
-
-Even for non developers, helping to test pull requests for bug fixes and features is still
-immensely valuable.  Ansible users who understand writing playbooks and roles should be
-able to add integration tests and so GitHub pull requests with integration tests that show
-bugs in action will also be a great way to help.
-
-
 Testing within GitHub & Azure Pipelines
 =======================================
 
