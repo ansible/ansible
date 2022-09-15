@@ -109,11 +109,11 @@ For votes with more than two options, one choice must have at least half of the 
 Community topics triage
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The Committee conducts a triage of `community topics <https://github.com/ansible-community/community-topics/issues>`_ periodically (every three-six months).
+The Committee conducts a triage of `community topics <https://github.com/ansible-community/community-topics/issues>`_ periodically (every three to six months).
 
 The triage goals are:
 
-* Sparking interest to forgotten topics.
+* Sparking interest for forgotten topics.
 * Identifying and closing irrelevant topics, for example, when the reason of the topic does not exist anymore or the topic is out of the Committee responsibilities scope.
 * Identifying and closing topics that the Community are not interested in discussing. As indicators, it can be absence of comments or no activity in comments, at least, for the last six months.
 * Identifying and closing topics that were solved and implemented but not closed (in this case, such a topic can be closed on the spot with a comment that it has been implemented).
