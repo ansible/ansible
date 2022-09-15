@@ -845,6 +845,35 @@ How do I submit a change to the documentation?
 Documentation for Ansible is kept in the main project git repository, and complete instructions
 for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_. Thanks!
 
+
+.. _legacy_vs_builtin:
+
+What is the difference between ``ansible.legacy`` and ``ansible.builtin`` collections?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Neither is a real collection. They are virtually constructed by the core engine (synthetic collections).
+
+The ``ansible.builtin`` collection only refers to plugins that ship with ``ansible-core``.
+
+The ``ansible.legacy`` collection is a superset of  ``ansible.builtin`` (you can reference the plugins from builtin  through ``ansible.legacy``). You also get the ability to
+add 'custom' plugins in the :ref:`configured paths and adjacent directories <ansible_search_path>`, with the ability to override the builtin plugins that have the same name.
+
+Also, ``ansible.legacy`` is what you get by default when you do not specify an FQCN.
+So this:
+
+    .. code-block:: yaml
+
+        - shell: echo hi
+
+Is really equivalent to:
+
+    .. code-block:: yaml
+
+        - ansible.legacy.shell: echo hi
+
+Though, if you do not override the ``shell`` module, you can also just write it as ``ansible.builtin.shell``, since legacy will resolve to the builtin collection.
+
+
 .. _i_dont_see_my_question:
 
 I don't see my question here
