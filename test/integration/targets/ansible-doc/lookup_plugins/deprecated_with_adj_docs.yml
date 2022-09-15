@@ -1,0 +1,16 @@
+DOCUMENTATION:
+  name: deprecated_with_adj_docs
+  short_description: test lookup
+  description: test lookup
+  author: Ansible Core Team
+  version_added: "2.14"
+  deprecated:
+    why: reasons
+    alternative: use other thing
+    removed_in: "2.16"
+    removed_from_collection: "ansible.legacy"
+  options: {}
+
+EXAMPLE: ""
+
+RETURN: {}

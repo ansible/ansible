@@ -9,7 +9,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def donothing(a):
+def nochange(a):
     return a
 
 
@@ -18,8 +18,6 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'donothing': donothing,
-            'nodocs': donothing,
-            'split': donothing,
-            'b64decode': donothing,
+            'noop': nochange,
+            'nested': nochange,
         }

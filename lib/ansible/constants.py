@@ -100,7 +100,7 @@ REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
 
-PYTHON_DOC_EXTENSIONS = ('.py', '.pyc', '.pyo')
+PYTHON_DOC_EXTENSIONS = ('.py',)
 YAML_DOC_EXTENSIONS = ('.yml', '.yaml')
 DOC_EXTENSIONS = PYTHON_DOC_EXTENSIONS + YAML_DOC_EXTENSIONS
 

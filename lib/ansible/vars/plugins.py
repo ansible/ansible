@@ -56,12 +56,7 @@ def get_vars_from_path(loader, path, entities, stage):
     for plugin in vars_plugin_list:
         # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
 
-        # The name in config corresponds to the following _load_name:
-        #   - legacy_plugin == legacy_plugin
-        #   - ansible.legacy.legacy_plugin == legacy_plugin
-        #   - builtin_plugin == builtin_plugin
-        #   - ansible.builtin.builtin_plugin == ansible_collections.ansible.builtin.plugins.vars.builtin_plugin
-        builtin_or_legacy = '.' not in plugin._load_name or plugin._load_name.startswith('ansible_collections.ansible.builtin.')
+        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
 
         # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
         needs_enabled = not builtin_or_legacy
@@ -77,21 +72,10 @@ def get_vars_from_path(loader, path, entities, stage):
         if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                "This should be removed from the plugin %s." % plugin._load_name  # FIXME: display ns.coll.resource instead of _load_name
+                "This should be removed from the plugin %s." % plugin.ansible_name
             )
-        elif builtin_or_legacy and plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and needs_enabled:
-            # Maybe it was enabled by FQCN.
-            is_builtin = plugin._load_name == 'ansible_collections.ansible.builtin.plugins.vars.host_group_vars'
-            if is_builtin:
-                fqcn_builtin = 'ansible.builtin.host_group_vars'
-                fqcn_legacy = 'ansible.legacy.host_group_vars'
-                if fqcn_builtin not in C.VARIABLE_PLUGINS_ENABLED and fqcn_legacy not in C.VARIABLE_PLUGINS_ENABLED:
-                    continue
-            else:
-                # legacy plugin
-                fqcn_legacy = 'ansible.legacy.%s' % plugin._load_name
-                if fqcn_legacy not in C.VARIABLE_PLUGINS_ENABLED:
-                    continue
+        elif builtin_or_legacy and needs_enabled and not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
+            continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 
