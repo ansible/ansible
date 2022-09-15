@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: realpath
+  author: darkone23 (@darkone23)
+  version_added: "1.8"
+  short_description: get canonical path for the given file
+  description:
+    - Returns the canonical path for the given file. This is done by eliminating symbolic
+      links encountered in the path.
+  options:
+    _input:
+      description: A path to a file.
+      type: path
+      required: true
+EXAMPLES: |
+
+  # To get the real path of a link
+  {{ mypath | realpath }}
+
+RETURN:
+  _value:
+    description: The canonical path.
+    type: path

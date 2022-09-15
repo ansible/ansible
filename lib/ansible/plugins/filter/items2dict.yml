@@ -1,0 +1,47 @@
+DOCUMENTATION:
+  name: items2dict
+  author: Ansible core team
+  version_added: "2.7"
+  short_description: convert a list of one-element dictionaries into a dictionary
+  description:
+    - Takes a list of dicts with each having a C(key) and C(value) keys, and transforms the list into a dictionary,
+      effectively as the reverse of R(dict2items,ansible_collections.ansible.builtin.dict2items_filter).
+  options:
+    _input:
+      description:
+        - A list of dictionaries.
+        - Every dictionary must have keys C(key) and C(value).
+      type: list
+      elements: dict
+      required: true
+    key_name:
+      description: Configure the key to use instead of C(key).
+      type: str
+      default: key
+    value_name:
+      description: Configure the key to use instead of C(value).
+      type: str
+      default: value
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.dict2items
+EXAMPLES: |
+  - name: Convert list of key-value pairs to dictionary
+    debug:
+      msg: "{{ tags | items2dict }}"
+    vars:
+      tags:
+        - key: Application
+          value: payment
+        - key: Environment
+          value: dev
+
+  # The output is a dictionary with two key/value pairs:
+  #
+  #     Application: payment
+  #     Environment: dev
+
+RETURN:
+  _value:
+    description: The resulting dictionary.
+    type: dict
