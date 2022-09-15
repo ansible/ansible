@@ -712,7 +712,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         installed, installed_version, version_installable, has_files = package_status(m, name, version_cmp, version, default_release, cache, state='install')
 
         if (not installed_version and not version_installable) or (not installed and only_upgrade):
-            status = False
+            status = not installed and only_upgrade
             data = dict(msg="no available installation candidate for %s" % package)
             return (status, data)
 
