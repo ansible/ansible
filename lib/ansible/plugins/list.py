@@ -27,12 +27,19 @@ IGNORE = {
 
 
 def get_composite_name(collection, name, path, depth):
+    resolved_collection = collection
+    if '.' not in name:
+        resource_name = name
+    else:
+        if collection == 'ansible.legacy' and name.startswith('ansible.builtin.'):
+            resolved_collection = 'ansible.builtin'
+        resource_name = '.'.join(name.split(f"{resolved_collection}.")[1:])
 
     # collectionize name
-    composite = [collection]
+    composite = [resolved_collection]
     if depth:
         composite.extend(path.split(os.path.sep)[depth * -1:])
-    composite.append(to_native(name))
+    composite.append(to_native(resource_name))
     return '.'.join(composite)
 
 
@@ -58,7 +65,7 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                         continue
 
                     display.debug("Found possible plugin: '{0}'".format(plugin_file))
-                    b_plugin, ext = os.path.splitext(plugin_file)
+                    b_plugin, b_ext = os.path.splitext(plugin_file)
                     plugin = to_native(b_plugin)
                     full_path = os.path.join(b_path, plugin_file)
 
@@ -74,8 +81,8 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                     else:
                         if any([
                                 plugin in C.IGNORE_FILES,                # general files to ignore
-                                ext in C.REJECT_EXTS,                    # general extensions to ignore
-                                ext in (b'.yml', b'.yaml', b'.json'),    # ignore docs files TODO: constant!
+                                to_native(b_ext) in C.REJECT_EXTS,       # general extensions to ignore
+                                b_ext in (b'.yml', b'.yaml', b'.json'),  # ignore docs files TODO: constant!
                                 plugin in IGNORE.get(bkey, ()),          # plugin in reject list
                                 os.path.islink(full_path),               # skip aliases, author should document in 'aliaes' field
                         ]):
@@ -89,11 +96,11 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                             for plugin in file_plugins:
-                                plugin_name = get_composite_name(collection, plugin._load_name, full_path, depth)
+                                plugin_name = get_composite_name(collection, plugin.ansible_name, os.path.dirname(to_native(full_path)), depth)
                                 plugins[plugin_name] = full_path
                         else:
-                            plugin = get_composite_name(collection, plugin, path, depth)
-                            plugins[plugin] = full_path
+                            plugin_name = get_composite_name(collection, plugin, os.path.dirname(to_native(full_path)), depth)
+                            plugins[plugin_name] = full_path
             else:
                 display.debug("Skip listing plugins in '{0}' as it is not a directory".format(path))
         else:
@@ -116,7 +123,6 @@ def list_collection_plugins(ptype, collections, search_paths=None):
 
     # starts at  {plugin_name: filepath, ...}, but changes at the end
     plugins = {}
-    dirs = []
     try:
         ploader = getattr(loader, '{0}_loader'.format(ptype))
     except AttributeError:
@@ -126,10 +132,10 @@ def list_collection_plugins(ptype, collections, search_paths=None):
     for collection in collections.keys():
         if collection == 'ansible.builtin':
             # dirs from ansible install, but not configured paths
-            dirs.extend([d.path for d in ploader._get_paths_with_context() if d.internal])
+            dirs = [d.path for d in ploader._get_paths_with_context() if d.internal]
         elif collection == 'ansible.legacy':
             # configured paths + search paths (should include basedirs/-M)
-            dirs.extend([d.path for d in ploader._get_paths_with_context() if not d.internal])
+            dirs = [d.path for d in ploader._get_paths_with_context() if not d.internal]
             if context.CLIARGS.get('module_path', None):
                 dirs.extend(context.CLIARGS['module_path'])
         else:
@@ -170,7 +176,6 @@ def list_plugins(ptype, collection=None, search_paths=None):
 
     # {plugin_name: (filepath, class), ...}
     plugins = {}
-    do_legacy_replace = True
     collections = {}
     if collection is None:
         # list all collections, add synthetic ones
@@ -181,7 +186,6 @@ def list_plugins(ptype, collection=None, search_paths=None):
         # add builtin, since legacy also resolves to these
         collections[collection] = b''
         collections['ansible.builtin'] = b''
-        do_legacy_replace = False
     else:
         try:
             collections[collection] = to_bytes(_get_collection_path(collection))
@@ -191,27 +195,12 @@ def list_plugins(ptype, collection=None, search_paths=None):
     if collections:
         plugins.update(list_collection_plugins(ptype, collections))
 
-    if do_legacy_replace:
-        # remove legacy that exist as builtin, they are the same plugin but builtin is prefered display
-        for plugin in list(plugins.keys()):
-            if 'ansible.builtin' in plugin:
-                legacy = plugin.replace('ansible.builtin.', 'ansible.legacy.', 1)
-                if legacy in plugins:
-                    del plugins[legacy]
-    else:
-        # when listing only ansilbe.legacy, this includes all of the builtin under the legacy ns
-        for plugin in list(plugins.keys()):
-            if 'ansible.builtin' in plugin:
-                legacy = plugin.replace('ansible.builtin.', 'ansible.legacy.', 1)
-                plugins[legacy] = plugins[plugin]
-                del plugins[plugin]
-
     return plugins
 
 
 # wrappers
 def list_plugin_names(ptype, collection=None):
-    return list_plugins(ptype, collection).keys()
+    return [plugin.ansible_name for plugin in list_plugins(ptype, collection)]
 
 
 def list_plugin_files(ptype, collection=None):

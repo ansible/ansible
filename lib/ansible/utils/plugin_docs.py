@@ -163,10 +163,8 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
 
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
-        real_collection_name = 'ansible.builtin'
-        real_fragment_name = getattr(fragment_class, '_load_name')
-        if real_fragment_name.startswith('ansible_collections.'):
-            real_collection_name = '.'.join(real_fragment_name.split('.')[1:3])
+        real_fragment_name = getattr(fragment_class, 'ansible_name')
+        real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''
         add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
 
         if 'notes' in fragment:
@@ -296,7 +294,6 @@ def find_plugin_docfile(plugin, plugin_type, loader):
     '''  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs '''
 
     context = loader.find_plugin_with_context(plugin, ignore_deprecated=False, check_aliases=True)
-    plugin_obj = None
     if (not context or not context.resolved) and plugin_type in ('filter', 'test'):
         # should only happen for filters/test
         plugin_obj, context = loader.get_with_context(plugin)
@@ -305,14 +302,8 @@ def find_plugin_docfile(plugin, plugin_type, loader):
         raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
 
     docfile = Path(context.plugin_resolved_path)
-    possible_names = [plugin, getattr(plugin_obj, '_load_name', None), docfile.name.removeprefix('_'), docfile.name]
-    if context:
-        if context.redirect_list:
-            possible_names.append(context.redirect_list[-1])
-        possible_names.append(context.plugin_resolved_name)
-    if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
-        # only look for adjacent if plugin file does not support documents or
-        # name does not match file basname (except deprecated)
+    if docfile.suffix not in C.DOC_EXTENSIONS:
+        # only look for adjacent if plugin file does not support documents
         filename = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
     else:
         filename = to_native(docfile)
@@ -348,7 +339,7 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     if docs[0] is None:
-        raise AnsibleParserError('No documentation availalbe for %s (%s)' % (plugin, filename))
+        raise AnsibleParserError('No documentation available for %s (%s)' % (plugin, filename))
     else:
         docs[0]['filename'] = filename
         docs[0]['collection'] = collection_name
