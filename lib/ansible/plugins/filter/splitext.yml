@@ -1,0 +1,30 @@
+DOCUMENTATION:
+  name: splitext
+  author: Matt Martz (@sivel)
+  version_added: "2.0"
+  short_description: split a filename into root and file extension
+  description:
+    - Returns a tuple consisting of C(root) and C(extension), where C(root ~ extension) equals the filename.
+  options:
+    _input:
+      description:
+        - A filename.
+        - Path components contained in the filename will be returned as part of the root.
+      type: str
+      required: true
+EXAMPLES: |
+
+  # with path == 'nginx.conf' the return would be ('nginx', '.conf')
+  {{ path | splitext }}
+
+  # with path == 'nginx.conf' the return would be 'nginx'
+  {{ path | splitext | first }}
+
+  # with path == 'nginx.conf' the return would be '.conf'
+  {{ path | splitext | last }}
+
+RETURN:
+  _value:
+    description: A tuple consisting of root and the extension.
+    type: tuple
+    elements: str
