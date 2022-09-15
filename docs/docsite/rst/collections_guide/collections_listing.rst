@@ -23,6 +23,7 @@ To list installed collections, run ``ansible-galaxy collection list``. This show
       sensu.sensu_go    1.3.0
 
 Run with ``-vvv`` to display more detailed information.
+You may see additional collections here that were added as dependencies of your installed collections. Only use collections in your playbooks that you have directly installed.
 
 To list a specific collection, pass a valid fully qualified collection name (FQCN) to the command ``ansible-galaxy collection list``. All instances of the collection will be listed.
 
