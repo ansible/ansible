@@ -542,7 +542,7 @@ class TaskExecutor:
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
-                self._connection._load_name != current_connection or
+                not self._connection.matches_name([current_connection]) or
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):

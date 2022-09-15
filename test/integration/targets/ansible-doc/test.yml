@@ -152,3 +152,21 @@
       assert:
         that:
           - "'x' == ('x'|donothing)"
+
+    - name: docs for deprecated plugin
+      command: ansible-doc deprecated_with_docs -t lookup
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"DEPRECATED_WITH_DOCS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: adjacent docs for deprecated plugin
+      command: ansible-doc deprecated_with_adj_docs -t lookup
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"DEPRECATED_WITH_ADJ_DOCS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
