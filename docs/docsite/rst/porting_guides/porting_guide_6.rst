@@ -99,6 +99,23 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.4.0
+========================
+
+Added Collections
+-----------------
+
+- inspur.ispim (version 1.0.1)
+- vultr.cloud (version 1.1.0)
+
+Deprecated Features
+-------------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- proxmox - deprecated the current ``unprivileged`` default value, will be changed to ``true`` in community.general 7.0.0 (https://github.com/pull/5224).
+
 Porting Guide for v6.3.0
 ========================
 
