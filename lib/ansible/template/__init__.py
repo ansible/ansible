@@ -34,7 +34,7 @@ from traceback import format_exc
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
-from jinja2.runtime import Context, StrictUndefined
+from jinja2.runtime import Context, StrictUndefined, ChainableUndefined
 
 from ansible import constants as C
 from ansible.errors import (
@@ -296,22 +296,14 @@ def _wrap_native_text(func):
     return _update_wrapper(wrapper, func)
 
 
-class AnsibleUndefined(StrictUndefined):
-    '''
-    A custom Undefined class, which returns further Undefined objects on access,
-    rather than throwing an exception.
-    '''
+class AnsibleUndefined(StrictUndefined, ChainableUndefined):
     def __getattr__(self, name):
         if name == '__UNSAFE__':
             # AnsibleUndefined should never be assumed to be unsafe
             # This prevents ``hasattr(val, '__UNSAFE__')`` from evaluating to ``True``
             raise AttributeError(name)
-        # Return original Undefined object to preserve the first failure context
-        return self
 
-    def __getitem__(self, key):
-        # Return original Undefined object to preserve the first failure context
-        return self
+        return super().__getattr__(name)
 
     def __repr__(self):
         return 'AnsibleUndefined(hint={0!r}, obj={1!r}, name={2!r})'.format(
@@ -319,10 +311,6 @@ class AnsibleUndefined(StrictUndefined):
             self._undefined_obj,
             self._undefined_name
         )
-
-    def __contains__(self, item):
-        # Return original Undefined object to preserve the first failure context
-        return self
 
 
 class AnsibleContext(Context):
