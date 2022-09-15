@@ -230,3 +230,16 @@ ansible-playbook handler_notify_earlier_handler.yml "$@" 2>&1 | tee out.txt
 ANSIBLE_DEBUG=1 ansible-playbook tagged_play.yml --skip-tags the_whole_play "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'META: triggered running handlers')" = "0" ]
 [ "$(grep out.txt -ce 'handler_ran')" = "0" ]
+
+# tags on handlers
+for strategy in linear free; do
+    export ANSIBLE_STRATEGY=$strategy
+    ansible-playbook test_handlers_tags.yml --tags handler_tag -i inventory.handlers "$@" 2>&1 | tee out.txt
+    [ "$(grep out.txt -ce 'handler_tagged ran')" = "1" ]
+    [ "$(grep out.txt -ce 'handler_implicit_always ran')" = "1" ]
+
+    ansible-playbook test_handlers_tags.yml --skip-tags handler_tag -i inventory.handlers "$@" 2>&1 | tee out.txt
+    [ "$(grep out.txt -ce 'handler_tagged ran')" = "0" ]
+    [ "$(grep out.txt -ce 'handler_implicit_always ran')" = "1" ]
+    unset ANSIBLE_STRATEGY
+done
