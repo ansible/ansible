@@ -125,10 +125,11 @@ you must use the alias in your pattern. In the example above, you must use ``hos
 Pattern processing order
 ------------------------
 
-The processing is a bit special and happens in the following order: 
-1.  ``:`` and ``,``  
-2. `` &``
-3.  ``!``  
+The processing is a bit special and happens in the following order:
+
+1. ``:`` and ``,``
+2. ``&``
+3. ``!``
 
 This positioning only accounts for processing order inside each operation:
 ``a:b:&c:!d:!e == &c:a:!d:b:!e == !d:a:!e:&c:b``
@@ -197,25 +198,25 @@ You can also limit the hosts you target on a particular run with the ``--limit``
 
 .. code-block:: bash
 
-    $ ansible -m [module] -a "[module options]" --limit "host1"
+    $ ansible all -m [module] -a "[module options]" --limit "host1"
 
 * Limit to multiple hosts
 
 .. code-block:: bash
 
-    $ ansible -m [module] -a "[module options]" --limit "host1,host2"
+    $ ansible all -m [module] -a "[module options]" --limit "host1,host2"
 
 * Negated limit. Note that single quotes MUST be used to prevent bash interpolation.
 
 .. code-block:: bash
 
-    $ ansible -m [module] -a "[module options]" --limit 'all:!host1'
+    $ ansible all -m [module] -a "[module options]" --limit 'all:!host1'
 
 * Limit to host group
 
 .. code-block:: bash
 
-    $ ansible -m [module] -a "[module options]" --limit 'group1'
+    $ ansible all -m [module] -a "[module options]" --limit 'group1'
 
 Patterns and ansible-playbook flags
 -----------------------------------
@@ -233,6 +234,8 @@ Finally, you can use ``--limit`` to read the list of hosts from a file by prefix
     ansible-playbook site.yml --limit @retry_hosts.txt
 
 If :ref:`RETRY_FILES_ENABLED` is set to ``True``, a ``.retry`` file will be created after the ``ansible-playbook`` run containing a list of failed hosts from all plays. This file is overwritten each time ``ansible-playbook`` finishes running.
+
+.. code-block:: bash
 
     ansible-playbook site.yml --limit @site.retry
 
