@@ -19,4 +19,6 @@ case "${basename}" in
     ;;
 esac
 
+# the password is different depending on the path used (direct or symlink)
+# it would be the same if symlink is 'resolved'.
 echo "${password}_${dirname}"
