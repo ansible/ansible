@@ -2021,17 +2021,6 @@ To join one or more path components:
 
 .. versionadded:: 2.10
 
-.. code-block:: yaml+jinja
-
-    {{ path | commonpath }}
-
-To get Normalize path, eliminating double slashes, etc. (new in version 2.10):
-
-.. code-block:: yaml+jinja
-
-    {{ path | normpath }}
-
-To get the longest common sub-path, given a sequence of path names. (new in version 2.10):
 
 Manipulating strings
 ====================

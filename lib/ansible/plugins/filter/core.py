@@ -566,13 +566,18 @@ def path_join(paths):
 
 
 def commonpath(paths):
-    '''
-    takes a list of paths and it returns the longest common path from the given list.
-    '''
-    if is_sequence(paths):
-        return os.path.commonpath(paths)
-    else:
+    """
+    Retrieve the longest common path from the given list.
+
+    :param paths: A list of file system paths.
+    :type paths: List[str]
+    :returns: The longest common path.
+    :rtype: str
+    """
+    if not is_sequence(paths):
         raise AnsibleFilterTypeError("|path_join expects sequence, got %s instead." % type(paths))
+
+    return os.path.commonpath(paths)
 
 
 class FilterModule(object):
@@ -611,7 +616,6 @@ class FilterModule(object):
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
             'commonpath': commonpath,
-            'normpath': partial(unicode_wrap, os.path.normpath),
 
             # file glob
             'fileglob': fileglob,
