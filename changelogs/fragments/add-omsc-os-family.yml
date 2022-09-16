@@ -1,0 +1,2 @@
+minor_changes:
+  - facts - add OSMC to Debian os_family mapping
