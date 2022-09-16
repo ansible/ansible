@@ -565,6 +565,16 @@ def path_join(paths):
         raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
+def commonpath(paths):
+    '''
+    takes a list of paths and it returns the longest common path from the given list.
+    '''
+    if is_sequence(paths):
+        return os.path.commonpath(paths)
+    else:
+        raise AnsibleFilterTypeError("|path_join expects sequence, got %s instead." % type(paths))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -600,6 +610,8 @@ class FilterModule(object):
             'win_basename': partial(unicode_wrap, ntpath.basename),
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
+            'commonpath': commonpath,
+            'normpath': partial(unicode_wrap, os.path.normpath),
 
             # file glob
             'fileglob': fileglob,
