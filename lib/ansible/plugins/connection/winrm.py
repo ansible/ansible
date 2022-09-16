@@ -100,15 +100,28 @@ DOCUMENTATION = """
         type: str
       connection_timeout:
         description:
-            - Sets the operation and read timeout settings for the WinRM
-              connection.
-            - Corresponds to the C(operation_timeout_sec) and
-              C(read_timeout_sec) args in pywinrm so avoid setting these vars
-              with this one.
+            - Sets the 'wsman:OperationTimeout' setting for the WinRM connection (server side WS-Man/WinRM-service).
+            - Corresponds to the C(operation_timeout_sec) arg in pywinrm so avoid setting these
+              vars with this one.
             - The default value is whatever is set in the installed version of
               pywinrm.
         vars:
           - name: ansible_winrm_connection_timeout
+        type: int
+      read_timeout:
+        description:
+            - Sets the maximum seconds to wait before an HTTP connect/read times out (client side)
+            - Corresponds to the C(read_timeout_sec) args in pywinrm so avoid setting these vars
+              with this one.
+            - The default value is whatever is set in the installed version of
+              pywinrm.
+            - This value must be higer than C(operation_timeout_sec), so much higher to compansate
+              for network delay and congestion waiting for ReceiveResponse package from
+              WinRM-service (connection_timeout).
+            - If C(connection_timeout) is specified it is ensured that C(read_timeout) is at least
+              10 seconds higher than C(connection_timeout) var
+        vars:
+            - name: ansible_winrm_read_timeout
         type: int
 """
 
@@ -235,6 +248,7 @@ class Connection(ConnectionBase):
         self._kinit_cmd = self.get_option('kerberos_command')
         self._winrm_transport = self.get_option('transport')
         self._winrm_connection_timeout = self.get_option('connection_timeout')
+        self._winrm_read_timeout = self.get_option('read_timeout')
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -407,7 +421,13 @@ class Connection(ConnectionBase):
                 winrm_kwargs = self._winrm_kwargs.copy()
                 if self._winrm_connection_timeout:
                     winrm_kwargs['operation_timeout_sec'] = self._winrm_connection_timeout
-                    winrm_kwargs['read_timeout_sec'] = self._winrm_connection_timeout + 1
+                    winrm_kwargs['read_timeout_sec'] = winrm_kwargs['operation_timeout_sec'] + 10
+                    if self._winrm_read_timeout and self._winrm_read_timeout > winrm_kwargs['read_timeout_sec']:
+                        winrm_kwargs['read_timeout_sec'] = self._winrm_read_timeout
+                    else:
+                        display.warning(\
+                        "ansible_winrm_read_timeout must be least 12 seconds higher than ansible_winrm_connection_timeout, resetting it: {0}"\
+                        .format(winrm_kwargs['read_timeout_sec']))
                 protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
                 # open the shell from connect so we know we're able to talk to the server
