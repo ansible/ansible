@@ -426,8 +426,8 @@ class Connection(ConnectionBase):
                         winrm_kwargs['read_timeout_sec'] = self._winrm_read_timeout
                     else:
                         display.warning(\
-                        "ansible_winrm_read_timeout must be least 12 seconds higher than ansible_winrm_connection_timeout, resetting it: {0}"\
-                        .format(winrm_kwargs['read_timeout_sec']))
+                            "ansible_winrm_read_timeout must be least 10 seconds higher than ansible_winrm_connection_timeout, resetting it: {0}"\
+                            .format(winrm_kwargs['read_timeout_sec']))
                 protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
                 # open the shell from connect so we know we're able to talk to the server
