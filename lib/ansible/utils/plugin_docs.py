@@ -283,6 +283,9 @@ def _find_adjacent(path, plugin, extensions):
     paths = []
     for ext in extensions:
         candidate = adjacent.with_suffix(ext)
+        if candidate == adjacent:
+            # we're looking for an adjacent file, skip this since it's identical
+            continue
         if candidate.exists():
             paths.append(to_native(candidate))
 
