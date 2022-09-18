@@ -29,6 +29,15 @@ def fqcr(value):
     return value
 
 
+def collection_name(value):
+    """Validate a collection name."""
+    if not isinstance(value, string_types):
+        raise Invalid('Must be a string that is a collection name')
+    if not AnsibleCollectionRef.is_valid_collection_name(value):
+        raise Invalid('Must be a collection name')
+    return value
+
+
 def isodate(value, check_deprecation_date=False, is_tombstone=False):
     """Validate a datetime.date or ISO 8601 date string."""
     # datetime.date objects come from YAML dates, these are ok
@@ -205,8 +214,20 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         }, extra=PREVENT_EXTRA),
     )
 
+    # Adjusted schema for module_utils
+    plugin_routing_schema_mu = Any(
+        Schema({
+            ('deprecation'): Any(deprecation_schema),
+            ('tombstone'): Any(tombstoning_schema),
+            ('redirect'): Any(fqcr, collection_name),
+        }, extra=PREVENT_EXTRA),
+    )
+
     list_dict_plugin_routing_schema = [{str_type: plugin_routing_schema}
                                        for str_type in string_types]
+
+    list_dict_plugin_routing_schema_mu = [{str_type: plugin_routing_schema_mu}
+                                          for str_type in string_types]
 
     plugin_schema = Schema({
         ('action'): Any(None, *list_dict_plugin_routing_schema),
@@ -220,7 +241,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         ('httpapi'): Any(None, *list_dict_plugin_routing_schema),
         ('inventory'): Any(None, *list_dict_plugin_routing_schema),
         ('lookup'): Any(None, *list_dict_plugin_routing_schema),
-        ('module_utils'): Any(None, *list_dict_plugin_routing_schema),
+        ('module_utils'): Any(None, *list_dict_plugin_routing_schema_mu),
         ('modules'): Any(None, *list_dict_plugin_routing_schema),
         ('netconf'): Any(None, *list_dict_plugin_routing_schema),
         ('shell'): Any(None, *list_dict_plugin_routing_schema),
@@ -234,7 +255,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
 
     import_redirection_schema = Any(
         Schema({
-            ('redirect'): Any(*string_types),
+            ('redirect'): Any(fqcr, collection_name),
             # import_redirect doesn't currently support deprecation
         }, extra=PREVENT_EXTRA)
     )
