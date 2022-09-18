@@ -16,7 +16,17 @@ from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.six import string_types
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.version import SemanticVersion
+
+
+def fqcr(value):
+    """Validate a FQCR."""
+    if not isinstance(value, string_types):
+        raise Invalid('Must be a string that is a FQCR')
+    if not AnsibleCollectionRef.is_valid_fqcr(value):
+        raise Invalid('Must be a FQCR')
+    return value
 
 
 def isodate(value, check_deprecation_date=False, is_tombstone=False):
@@ -188,7 +198,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         Schema({
             ('deprecation'): Any(deprecation_schema),
             ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): Any(*string_types),
+            ('redirect'): fqcr,
         }, extra=PREVENT_EXTRA),
     )
 
