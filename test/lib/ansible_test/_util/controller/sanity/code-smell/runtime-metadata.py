@@ -136,12 +136,15 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         with open(path, 'r', encoding='utf-8') as f_path:
             routing = yaml.safe_load(f_path)
     except yaml.error.MarkedYAMLError as ex:
-        print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line +
-                                                  1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+        print('%s:%d:%d: YAML load failed: %s' % (
+            path,
+            ex.context_mark.line + 1 if ex.context_mark else 0,
+            ex.context_mark.column + 1 if ex.context_mark else 0,
+            re.sub(r'\s+', ' ', str(ex)),
+        ))
         return
     except Exception as ex:  # pylint: disable=broad-except
-        print('%s:%d:%d: YAML load failed: %s' %
-              (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
+        print('%s:%d:%d: YAML load failed: %s' % (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
         return
 
     if is_ansible:
