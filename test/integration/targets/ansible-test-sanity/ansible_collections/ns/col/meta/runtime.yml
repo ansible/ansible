@@ -3,3 +3,10 @@ plugin_routing:
   modules:
     hi:
       redirect: ns.col2.hello
+    hiya:
+      redirect: ns.col2.package.subdir.hiya
+  module_utils:
+    hi:
+      redirect: ns.col2
+    hello:
+      redirect: ns.col2.hiya
