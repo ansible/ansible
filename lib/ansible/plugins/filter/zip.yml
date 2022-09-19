@@ -12,7 +12,7 @@ DOCUMENTATION:
       type: list
       elements: any
       required: yes
-    _additional_list:
+    '*_additional_list':
       description: Additional list(s)
       type: list
       elements: any

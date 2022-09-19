@@ -13,7 +13,7 @@ DOCUMENTATION:
       description: first list
       type: list
       required: true
-    _additional_list:  #TODO: *args, N possible additional lists
+    '*_additional_list':  #TODO: *args, N possible additional lists
       description: addional list for the product
       type: list
       required: false

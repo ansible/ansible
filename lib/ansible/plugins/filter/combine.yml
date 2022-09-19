@@ -10,7 +10,7 @@ DOCUMENTATION:
       description: First dictionary to combine
       type: dict
       required: true
-    dicts:  # TODO: this is really an *args so not list, but list ref
+    '*dicts':  # TODO: this is really an *args so not list, but list ref
       description: the list of dictionaries to combine
       type: list
       elements: dictionary
