@@ -73,7 +73,7 @@
       register: missing_dep
 
     - name: install the tarfile with a missing dependency and --offline
-      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz -p {{ install_dir }} -s offline --offline
+      command: ansible-galaxy collection install --offline {{ build_dir }}/ns-coll1-1.0.0.tar.gz -p {{ install_dir }} -s offline
       environment:
         ANSIBLE_FORCE_COLOR: False
         ANSIBLE_NOCOLOR: True
@@ -98,25 +98,25 @@
     - name: install the tarfile with --offline for dep resolution
       command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz {{ cli_opts }}
       vars:
-        cli_opts: "-p {{ install_dir }} -s offline --offline"
+        cli_opts: "--offline -p {{ install_dir }} -s offline"
       register: offline_install
 
     - name: upgrade using tarfile with --offline for dep resolution
       command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-2.0.0.tar.gz {{ cli_opts }}
       vars:
-        cli_opts: "-p {{ install_dir }} -s offline --offline --upgrade"
+        cli_opts: "--offline --upgrade -p {{ install_dir }} -s offline"
       register: offline_upgrade
 
     - name: reinstall ns-coll1-1.0.0 to test upgrading the dependency too
       command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz {{ cli_opts }}
       vars:
-        cli_opts: "-p {{ install_dir }} -s offline --offline --force"
+        cli_opts: "--offline --force -p {{ install_dir }} -s offline"
 
     - name: upgrade both collections using tarfiles and --offline
       command: ansible-galaxy collection install {{ collections }} {{ cli_opts }}
       vars:
         collections: "{{ build_dir }}/ns-coll1-2.0.0.tar.gz {{ build_dir }}/ns-coll2-2.0.0.tar.gz"
-        cli_opts: "-s offline --offline --upgrade"
+        cli_opts: "--offline --upgrade -s offline"
       register: upgrade_all
 
     - assert:
