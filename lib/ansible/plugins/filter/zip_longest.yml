@@ -2,8 +2,8 @@ DOCUMENTATION:
   name: zip_longest
   version_added: "2.3"
   short_description: combine list elements, with filler
-  positional: _input, _additional_list, fillvalue
-  description: 
+  positional: _input, _additional_lists
+  description:
       - Make an iterator that aggregates elements from each of the iterables.
         If the iterables are of uneven length, missing values are filled-in with fillvalue.
         Iteration continues until the longest iterable is exhausted.
@@ -15,7 +15,7 @@ DOCUMENTATION:
       type: list
       elements: any
       required: yes
-    _additional_list:
+    _additional_lists:
       description: Additional list(s)
       type: list
       elements: any
