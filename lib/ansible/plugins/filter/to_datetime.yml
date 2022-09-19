@@ -6,7 +6,7 @@ DOCUMENTATION:
     - Using the input string attempt to create a matching Python datetime object
   notes:
     - For a full list of format codes for working with python date format strings, see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
-  positional: _input, second, utc
+  positional: _input
   options:
     _input:
       description: A string containing date time information
