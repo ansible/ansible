@@ -16,5 +16,5 @@
 
     - name: 'Install hvac Python package'
       pip:
-        name: "{{ hvac_package|default('hvac') }}"
+        name: "{{ hvac_package | default('hvac < 1.0.0') }}"
         extra_args: "-c {{ playbook_dir }}/../../../../lib/ansible_test/_data/requirements/constraints.txt"
