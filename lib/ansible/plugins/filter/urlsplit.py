@@ -25,7 +25,7 @@ DOCUMENTATION=r'''
 
 EXAMPLES=r'''
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}
+    parts: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}'
     # =>
     #   {
     #       "fragment": "fragment",

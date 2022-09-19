@@ -20,7 +20,7 @@ RETURN:
     description: a dictionary with components as keyword and their value
     type: dict
 
-EXAMPLES:
+EXAMPLES: |
 
     {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}
     # =>
