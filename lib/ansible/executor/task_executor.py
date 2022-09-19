@@ -94,7 +94,6 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
-        self._connection_fqcn = None
         self._final_q = final_q
         self._loop_eval_error = None
 
@@ -952,7 +951,6 @@ class TaskExecutor:
             task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )
-        self._connection_fqcn = plugin_load_context.resolved_fqcn
 
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
@@ -1032,12 +1030,12 @@ class TaskExecutor:
             if self._connection.allow_extras is True:
                 display.deprecated(
                     "Using the connection plugin's _load_name to determine extra vars is deprecated. "
-                    f"Use the porting guide to update {self._connection_fqcn}'s allow_extras attribute "
+                    f"Use the porting guide to update {self._connection.ansible_name}'s allow_extras attribute "
                     "from a boolean to a list regex pairs.",
                     version="2.18"
                 )
                 # Remove the namespace.collection and join the remainder to handle subdir.plugin
-                plugin_name = '.'.join(self._connection_fqcn.split('.')[2:])
+                plugin_name = '.'.join(self._connection.ansible_name.split('.')[2:])
                 match_extras = [(r'(^ansible_%s_)' % re.escape(plugin_name), r'\1')]
             else:
                 match_extras = self._connection.allow_extras
@@ -1048,7 +1046,7 @@ class TaskExecutor:
                     any(len(item) != 2 for item in match_extras)
             ):
                 raise AnsibleError(
-                    f"Unable to load extra vars for {self._connection_fqcn}. "
+                    f"Unable to load extra vars for {self._connection.ansible_name}. "
                     "Set the plugin's allow_extras attribute to a list of tuple pairs or a boolean. "
                     f"Got: {match_extras}"
                 )
