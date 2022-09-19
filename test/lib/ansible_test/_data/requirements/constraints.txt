@@ -48,7 +48,6 @@ setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require pyth
 cffi != 1.14.4 # Fails on systems with older gcc. Should be fixed in the next release. https://foss.heptapod.net/pypy/cffi/-/issues/480
 websocket-client < 1 ; python_version < '3'  # version 1.0.0 drops support for python 2
 certifi < 2020.4.5.2 ; python_version < '3'  # version 2020.4.5.2 drops support for python 2
-hvac < 1.0.0 ; python_version < '3'  # version 1.0.0 breaks and subsequently drops support for python 2
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.3.3
