@@ -3,11 +3,11 @@ DOCUMENTATION:
   version_added: "1.9"
   short_description: checksum of input data
   description:
-    - Returns a checksum (sha1) hash of the input data
+    - Returns a checksum (L(SHA-1, https://en.wikipedia.org/wiki/SHA-1)) hash of the input data.
   positional: _input
   options:
     _input:
-      description: data to checksum
+      description: Data to checksum.
       type: raw
       required: true
 
@@ -17,5 +17,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The checksum (sha1) of the input
+    description: The checksum (SHA-1) of the input.
     type: string

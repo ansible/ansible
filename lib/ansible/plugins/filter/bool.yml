@@ -7,7 +7,7 @@ DOCUMENTATION:
   positional: _input
   options:
     _input:
-      description: data to cast
+      description: Data to cast.
       type: raw
       required: true
 

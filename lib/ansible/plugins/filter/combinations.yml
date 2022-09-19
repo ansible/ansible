@@ -3,15 +3,15 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: combinations from the elements of a list
   description:
-    - Create a list of combinations of sets from the elements of a list
+    - Create a list of combinations of sets from the elements of a list.
   positional: _input, set_size
   options:
     _input:
-      description: elements to combine
+      description: Elements to combine.
       type: list
       required: true
     set_size:
-      description: the size of the set for each combination
+      description: The size of the set for each combination.
       type: int
       required: true
 EXAMPLES: |
@@ -22,5 +22,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: list of combination sets resulting from the supplied elements and set size
+    description: List of combination sets resulting from the supplied elements and set size.
     type: list

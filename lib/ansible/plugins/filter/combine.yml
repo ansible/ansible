@@ -3,15 +3,15 @@ DOCUMENTATION:
   version_added: "2.0"
   short_description: combine two dictionaries
   description:
-    - Create a dictionary (hash/associative array) as a result of merging existing dictionaries
+    - Create a dictionary (hash/associative array) as a result of merging existing dictionaries.
   positional: _input, _dicts
   options:
     _input:
-      description: First dictionary to combine
+      description: First dictionary to combine.
       type: dict
       required: true
     _dicts:  # TODO: this is really an *args so not list, but list ref
-      description: the list of dictionaries to combine
+      description: The list of dictionaries to combine.
       type: list
       elements: dictionary
       required: true
@@ -41,5 +41,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: resulting merge of supplied dictionaries
+    description: Resulting merge of supplied dictionaries.
     type: dict

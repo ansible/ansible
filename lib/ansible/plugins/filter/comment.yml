@@ -3,15 +3,15 @@ DOCUMENTATION:
   version_added: 'historical'
   short_description: comment out a string
   description:
-    - Use a programmign language convention to turn the string into an embeedeble comment
+    - Use a programmign language convention to turn the string into an embeddable comment.
   positional: _input, style
   options:
     _input:
-      description: string to comment
+      description: String to comment.
       type: string
       required: true
     style:
-      description: Comment style to use
+      description: Comment style to use.
       type: string
       default: plain
       choices: ['plain', 'decoration', 'erlang', 'c', 'cblock', 'xml']

@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION=r'''
+DOCUMENTATION = r'''
   name: urlsplit
   version_added: "2.4"
   short_description: get components from URL
@@ -23,7 +23,7 @@ DOCUMENTATION=r'''
       choices: ["fragment", "hostname", "netloc", "password",  "path",  "port",  "query", "scheme",  "username"]
 '''
 
-EXAMPLES=r'''
+EXAMPLES = r'''
 
     parts: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}'
     # =>
@@ -39,17 +39,17 @@ EXAMPLES=r'''
     #       "username": "user"
     #   }
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('hostname') }}
+    hostname: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit("hostname") }}'
     # => 'www.acme.com'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('query') }}
+    query: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit("query") }}'
     # => 'query=term'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('path') }}
+    path: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit("path") }}'
     # => '/dir/index.html'
 '''
 
-RETURN=r'''
+RETURN = r'''
   _value:
     description: a dictionary with components as keyword and their value
     type: dict
