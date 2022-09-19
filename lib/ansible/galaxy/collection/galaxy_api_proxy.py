@@ -28,11 +28,20 @@ display = Display()
 class MultiGalaxyAPIProxy:
     """A proxy that abstracts talking to multiple Galaxy instances."""
 
-    def __init__(self, apis, concrete_artifacts_manager):
-        # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager) -> None
+    def __init__(self, apis, concrete_artifacts_manager, offline=False):
+        # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager, bool) -> None
         """Initialize the target APIs list."""
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
+        self._offline = offline  # Prevent all GalaxyAPI calls
+
+    @property
+    def is_offline_mode_requested(self):
+        return self._offline
+
+    def _assert_that_offline_mode_is_not_requested(self):  # type: () -> None
+        if self.is_offline_mode_requested:
+            raise NotImplementedError("The calling code is not supposed to be invoked in 'offline' mode.")
 
     def _get_collection_versions(self, requirement):
         # type: (Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]
@@ -41,6 +50,9 @@ class MultiGalaxyAPIProxy:
         Yield api, version pairs for all APIs,
         and reraise the last error if no valid API was found.
         """
+        if self._offline:
+            return []
+
         found_api = False
         last_error = None  # type: Exception | None
 
@@ -102,6 +114,7 @@ class MultiGalaxyAPIProxy:
     def get_collection_version_metadata(self, collection_candidate):
         # type: (Candidate) -> CollectionVersionMetadata
         """Retrieve collection metadata of a given candidate."""
+        self._assert_that_offline_mode_is_not_requested()
 
         api_lookup_order = (
             (collection_candidate.src, )
@@ -167,6 +180,7 @@ class MultiGalaxyAPIProxy:
 
     def get_signatures(self, collection_candidate):
         # type: (Candidate) -> list[str]
+        self._assert_that_offline_mode_is_not_requested()
         namespace = collection_candidate.namespace
         name = collection_candidate.name
         version = collection_candidate.ver
