@@ -250,9 +250,9 @@ Global completion requires bash 4.2.
 
 .. code-block:: console
 
-    $ activate-global-python-argcomplete
+    $ activate-global-python-argcomplete --user
 
-This will write a bash completion file to a global location. Use ``--dest`` to change the location.
+This will write a bash completion file to a user location. Use ``--dest`` to change the location or ``sudo`` to set up the completion globally.
 
 Per command configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
