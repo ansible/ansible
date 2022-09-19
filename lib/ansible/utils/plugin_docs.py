@@ -273,7 +273,6 @@ def get_versioned_doclink(path):
 
 def _find_adjacent(path, plugin, extensions):
 
-    found = None
     adjacent = Path(path)
 
     plugin_base_name = plugin.split('.')[-1]
@@ -281,13 +280,16 @@ def _find_adjacent(path, plugin, extensions):
         # this should only affect filters/tests
         adjacent = adjacent.with_name(plugin_base_name)
 
+    paths = []
     for ext in extensions:
         candidate = adjacent.with_suffix(ext)
+        if candidate == adjacent:
+            # we're looking for an adjacent file, skip this since it's identical
+            continue
         if candidate.exists():
-            found = to_native(candidate)
-            break
+            paths.append(to_native(candidate))
 
-    return found
+    return paths
 
 
 def find_plugin_docfile(plugin, plugin_type, loader):
@@ -304,7 +306,8 @@ def find_plugin_docfile(plugin, plugin_type, loader):
     docfile = Path(context.plugin_resolved_path)
     if docfile.suffix not in C.DOC_EXTENSIONS:
         # only look for adjacent if plugin file does not support documents
-        filename = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
+        filenames = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
+        filename = filenames[0] if filenames else None
     else:
         filename = to_native(docfile)
 
@@ -329,13 +332,14 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
     # no good? try adjacent
     if not docs[0]:
-        try:
-            newfile = _find_adjacent(filename, plugin, C.DOC_EXTENSIONS)
-            if newfile:
+        for newfile in _find_adjacent(filename, plugin, C.DOC_EXTENSIONS):
+            try:
                 docs = get_docstring(newfile, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
                 filename = newfile
-        except Exception as e:
-            raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+                if docs[0] is not None:
+                    break
+            except Exception as e:
+                raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     if docs[0] is None:
