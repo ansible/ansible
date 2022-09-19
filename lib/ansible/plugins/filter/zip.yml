@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: zip
   version_added: "2.3"
   short_description: combine list elements
-  positional: _input, '*_additional_list', strict
+  positional: _input, _additional_list, strict
   description: Iterate over several iterables in parallel, producing tuples with an item from each one
   notes:
     - This is mostly a passhtrough to Python's C(zip) function
@@ -12,7 +12,7 @@ DOCUMENTATION:
       type: list
       elements: any
       required: yes
-    '*_additional_list':
+    _additional_list:
       description: Additional list(s)
       type: list
       elements: any

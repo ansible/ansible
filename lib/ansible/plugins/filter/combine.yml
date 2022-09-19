@@ -4,13 +4,13 @@ DOCUMENTATION:
   short_description: combine two dictionaries
   description:
     - Create a dictionary (hash/associative array) as a result of merging existing dictionaries
-  positional: _input, '*dicts'
+  positional: _input, dicts
   options:
     _input:
       description: First dictionary to combine
       type: dict
       required: true
-    '*dicts':  # TODO: this is really an *args so not list, but list ref
+    dicts:  # TODO: this is really an *args so not list, but list ref
       description: the list of dictionaries to combine
       type: list
       elements: dictionary

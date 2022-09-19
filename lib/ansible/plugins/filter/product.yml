@@ -7,13 +7,13 @@ DOCUMENTATION:
     - this is an effective way to create 'nested loops', looping over C(listA) and C(listB) is the same as looping over C(listA|product(listB))
   notes:
     - This is a passthrough to Python's C(itertools.product)
-  positional: _input, '*_additional_list', repeat
+  positional: _input, _additional_list, repeat
   options:
     _input:
       description: first list
       type: list
       required: true
-    '*_additional_list':  #TODO: *args, N possible additional lists
+    _additional_lis':  #TODO: *args, N possible additional lists
       description: addional list for the product
       type: list
       required: false
