@@ -1,5 +1,0 @@
-bugfixes:
-- urls - Guard imports of ``urllib3`` by catching ``Exception`` instead of
-  ``ImportError`` to prevent exceptions in the import process of optional
-  dependencies from preventing use of ``urls.py``
-  (https://github.com/ansible/ansible/issues/78648)

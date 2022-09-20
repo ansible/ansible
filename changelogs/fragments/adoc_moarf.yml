@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-doc will not again warn and skip when missing docs, always show the doc file (for edit on github) and match legacy plugins.

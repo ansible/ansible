@@ -1,5 +1,0 @@
-bugfixes:
-  - ansible-test - Correctly detect when running as the ``root`` user (UID 0) on the origin host.
-                   The result of the detection was incorrectly being inverted.
-  - ansible-test - Fix skipping of tests marked ``needs/root`` on the origin host.
-  - ansible-test - Fix skipping of tests marked ``needs/python`` on the origin host.

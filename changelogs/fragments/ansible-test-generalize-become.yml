@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Become support for remote instance provisioning is no longer tied to a fixed list of platforms.

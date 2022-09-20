@@ -1,2 +1,0 @@
-bugfixes:
-  - unarchive - if unzip is available but zipinfo is not, use unzip -Z instead of zipinfo (https://github.com/ansible/ansible/issues/76959).

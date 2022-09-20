@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - The ``http-test-container`` container is now multi-arch, supporting both x86_64 and aarch64.
-  - ansible-test - The ``pypi-test-container`` container is now multi-arch, supporting both x86_64 and aarch64.

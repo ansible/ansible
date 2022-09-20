@@ -1,2 +1,0 @@
-removed_features:
-  - import_playbook - remove deprecated functionality that allows providing additional parameters in free form

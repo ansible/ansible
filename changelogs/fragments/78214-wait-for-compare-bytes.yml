@@ -1,3 +1,0 @@
-bugfixes:
-- wait_for - Read file and perform comparisons using bytes to avoid decode errors
-  (https://github.com/ansible/ansible/issues/78214)

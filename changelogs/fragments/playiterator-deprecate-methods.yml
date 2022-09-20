@@ -1,2 +1,0 @@
-deprecated_features:
-  - "``PlayIterator`` - deprecate ``cache_block_tasks`` and ``get_original_task`` which are noop and unused."

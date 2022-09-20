@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Avoid using the ``mock_use_standalone_module`` setting for unit tests running on Python 3.8 or later.

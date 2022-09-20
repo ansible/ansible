@@ -1,2 +1,0 @@
-bugfixes:
-  - git module fix docs and proper use of ssh wrapper script and GIT_SSH_COMMAND depending on version.

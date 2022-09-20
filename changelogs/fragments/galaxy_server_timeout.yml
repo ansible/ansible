@@ -1,5 +1,0 @@
-minor_changes:
-  - ansible-galaxy now supports a user defined timeout,  instead of existing hardcoded 60s (now the default).
-bugfixes:
-  - ansible-galaxy --ignore-certs now has proper precedence over configuration
-  - GALAXY_IGNORE_CERTS reworked to allow each server entry to override

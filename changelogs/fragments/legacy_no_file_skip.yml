@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-doc will not traceback when legacy plugins don't have docs nor adjacent file with docs

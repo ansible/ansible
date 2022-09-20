@@ -1,2 +1,0 @@
-deprecated_features:
-  - "``DEFAULT_FACT_PATH``, ``DEFAULT_GATHER_SUBSET`` and ``DEFAULT_GATHER_TIMEOUT`` are deprecated and will be removed in 2.18. Use ``module_defaults`` keyword instead."

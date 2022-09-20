@@ -1,2 +1,0 @@
-bugfixes:
-  - apt module now correctly handles virtual packages.

@@ -1,2 +1,0 @@
-bugfixes:
-  - user - fix creating a local user if the user group already exists (https://github.com/ansible/ansible/pull/75042)

@@ -1,2 +1,0 @@
-bugfixes:
-  - plugin loader will now load config data for plugin by name instead of by file to avoid issues with the same file being loaded under different names (fqcn + short name).

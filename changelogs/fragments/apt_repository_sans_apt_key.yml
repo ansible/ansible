@@ -1,2 +1,0 @@
-minor_changes:
-  - apt_repository remove dependency on apt-key and use gpg + /usr/share/keyrings directly instead

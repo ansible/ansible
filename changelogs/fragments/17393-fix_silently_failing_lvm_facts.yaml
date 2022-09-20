@@ -1,2 +1,0 @@
-bugfixes:
-  - setup - Adds a default value to ``lvm_facts`` when lvm or lvm2 is not installed on linux (https://github.com/ansible/ansible/issues/17393)

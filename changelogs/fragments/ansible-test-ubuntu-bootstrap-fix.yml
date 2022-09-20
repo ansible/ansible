@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix bootstrapping of Python 3.9 on Ubuntu 20.04 remotes.
