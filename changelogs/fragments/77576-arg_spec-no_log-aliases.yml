@@ -1,2 +1,0 @@
-bugfixes:
-  - arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used (https://github.com/ansible/ansible/pull/77576)

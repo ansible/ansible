@@ -1,2 +1,0 @@
-removed_features:
-  - Remove deprecated ``plugin_filters_cfg`` config option from ``default`` section (https://github.com/ansible/ansible/issues/77398)

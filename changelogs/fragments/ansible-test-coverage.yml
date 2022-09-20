@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-test - Support multiple pinned versions of the ``coverage`` module.
-                   The version used now depends on the Python version in use.
-  - ansible-test - Enable loading of ``coverage`` data files created by older supported ansible-test releases.

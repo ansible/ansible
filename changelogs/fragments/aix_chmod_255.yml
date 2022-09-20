@@ -1,2 +1,0 @@
-bugfixes:
-  - Avoid 'unreachable' error when chmod on AIX has 255 as return code.

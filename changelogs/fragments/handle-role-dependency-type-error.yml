@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - Fix unhandled traceback if a role's dependencies in meta/main.yml or meta/requirements.yml are not lists.

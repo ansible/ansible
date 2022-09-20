@@ -1,5 +1,0 @@
-minor_changes:
-  - ansible-test - Ubuntu 22.04 has been added as a test container.
-  - ansible-test - Fedora 36 has been added as a test container.
-  - ansible-test - The openSUSE test container has been updated to openSUSE Leap 15.4.
-  - ansible-test - The Alpine 3 test container has been updated to Alpine 3.16.0.

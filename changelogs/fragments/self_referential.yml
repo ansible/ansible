@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix PluginLoader to mimic Python import machinery by adding module to sys.modules before exec

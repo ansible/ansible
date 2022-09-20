@@ -1,4 +1,0 @@
-minor_changes:
-- Display - The display class will now proxy calls to Display.display via the queue from forks/workers
-  to be handled by the parent process for actual display. This reduces some reliance on the fork start method
-  and improves reliability of displaying messages.

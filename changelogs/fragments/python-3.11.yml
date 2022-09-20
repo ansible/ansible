@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Add support for Python 3.11.
-  - ansible - Add support for Python 3.11 to Python interpreter discovery.

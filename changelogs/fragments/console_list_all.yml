@@ -1,6 +1,0 @@
-bugfixes:
-  - ansible-console now shows installed collection modules.
-  - ansible-console fixed to load modules via fqcn, short names and handle redirects.
-  - ansible-console commands now all have a help entry.
-minor_changes:
-  - ansible-console added 'collections' command to match playbook keyword.

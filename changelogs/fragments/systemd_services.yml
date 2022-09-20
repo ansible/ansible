@@ -1,2 +1,0 @@
-minor_changes:
-  - systemd is now systemd_service to better reflect the scope of the module, systemd is kept as an alias for backwards compatibility.

@@ -1,2 +1,0 @@
-bugfixes:
-  - cli now emits clearer error on no hosts selected

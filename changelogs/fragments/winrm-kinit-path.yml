@@ -1,2 +1,0 @@
-bugfixes:
-- winrm - Ensure ``kinit`` is run with the same ``PATH`` env var as the Ansible process
