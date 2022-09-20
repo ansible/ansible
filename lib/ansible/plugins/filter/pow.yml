@@ -1,0 +1,34 @@
+DOCUMENTATION:
+  name: pow
+  version_added: "1.9"
+  short_description: power of (math operation)
+  description:
+    - math operation that returns the N power of inputed number X ^ N
+  notes:
+    - This is a passthrough to Python's C(itertools.product)
+  positional: _input, _power
+  options:
+    _input:
+      description: number to power up!
+      type: int
+      required: true
+    _power:
+      description: which power to use
+      type: int
+      required: true
+
+EXAMPLES: |
+
+  # => 32768
+  eight_power_five: "{{ 8 | pow(5) }}"
+
+  # 4
+  square_of_2: "{{ 2 | pow(2) }}"
+
+  # me ^ 3
+  cube_me: "{{ me | pow(3) }}"
+
+RETURN:
+  _value:
+    description: resulting number
+    type: int

@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: sha1
+  version_added: "historical"
+  short_description: sha1 hash of input data
+  description:
+    - Returns a sha1 hash of the input data
+  positional: _input
+  notes:
+    - This requires the md5 algorithim to be available on the system, security contexts like FIPS might prevent this.
+    - SHA1 has been deemed insecure and is not recommended for security related uses.
+  options:
+    _input:
+      description: data to hash
+      type: raw
+      required: true
+
+EXAMPLES: |
+    # sha1hash => "dc724af18fbdd4e59189f5fe768a5f8311527050"
+    sha1hash: "{{ 'testing' | sha1 }}"
+
+RETURN:
+  _value:
+    description: The sha1 hash of the input
+    type: string

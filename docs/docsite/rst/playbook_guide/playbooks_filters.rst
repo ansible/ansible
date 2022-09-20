@@ -350,7 +350,7 @@ Combining and selecting data
 
 You can combine data from multiple sources and types, and select values from large data structures, giving you precise control over complex data.
 
-.. _zip_filter:
+.. _zip_filter_example:
 
 Combining items from multiple lists: zip and zip_longest
 --------------------------------------------------------
@@ -1008,7 +1008,7 @@ As of Ansible version 2.9, you can also initialize the random number generator f
     "{{ '52:54:00' | community.general.random_mac(seed=inventory_hostname) }}"
 
 
-.. _random_filter:
+.. _random_filter_example:
 
 Random items or numbers
 -----------------------
