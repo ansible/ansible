@@ -1,6 +1,0 @@
-bugfixes:
-  - >-
-     local facts - if a local fact in the facts directory cannot be stated,
-     store an error message as the fact value and emit a warning just as if
-     just as if the facts execution has failed. The stat can fail e.g. on
-     dangling symlinks.
