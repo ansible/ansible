@@ -1,0 +1,2 @@
+bugfixes:
+  - plugin_loader - normalize legacy plugin names for ``ansible_name`` and ``ansible_aliases`` plugin attributes.
