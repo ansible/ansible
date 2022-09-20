@@ -1,0 +1,14 @@
+plugin_routing:
+  connection:
+    redirect1:
+      redirect: testns.testcoll.redirect2
+    redirect2:
+      redirect: testns.testcoll.redirect3
+    redirect3:
+      redirect: testns.testcoll.subdir.test_connection
+  vars:
+    redirect_vars:
+      redirect: testns.testcoll.test_vars
+  filter:
+    redirect_filter:
+      redirect: testns.testcoll.subdir.collection_filter

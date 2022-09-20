@@ -842,7 +842,11 @@ class PluginLoader:
             names.append(resolved)
         if redirected_names:
             # reverse list so best name comes first
-            names.extend(redirected_names[::-1])
+            for name in redirected_names[::-1]:
+                normalized_name = name.removeprefix('ansible.legacy.')
+                if normalized_name in names:
+                    continue
+                names.append(normalized_name)
         if not names:
             raise AnsibleError(f"Missing FQCN for plugin source {name}")
 
@@ -866,7 +870,7 @@ class PluginLoader:
             return get_with_context_result(None, plugin_load_context)
 
         fq_name = plugin_load_context.resolved_fqcn
-        if '.' not in fq_name:
+        if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path

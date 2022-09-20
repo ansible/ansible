@@ -34,3 +34,5 @@ done
 
 # test config loading
 ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ansible.builtin.ssh' "$@"
+
+ANSIBLE_DEBUG=True ANSIBLE_CONFIG=./plugin_object/ansible.cfg ansible-playbook -i host, plugin_object/playbook.yml "$@"
