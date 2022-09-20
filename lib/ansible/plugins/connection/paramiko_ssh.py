@@ -321,9 +321,9 @@ class Connection(ConnectionBase):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', '') or '',
-            getattr(self._play_context, 'ssh_common_args', '') or '',
-            getattr(self._play_context, 'ssh_args', '') or '',
+            self.get_option('ssh_extra_args'),
+            self.get_option('ssh_common_args'),
+            self.get_option('ssh_args', ''),
         ]
 
         args = self._split_ssh_args(' '.join(ssh_args))
