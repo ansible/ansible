@@ -1,0 +1,2 @@
+bugfixes:
+  - vault secrets file now executes in the correct context when it is a symlink (not resolved to canonical file).
