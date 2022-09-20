@@ -70,6 +70,7 @@ DOCUMENTATION = """
         env:
             - {name: ANSIBLE_PARAMIKO_USE_RSA_SHA2_ALGORITHMS}
         default: True
+        type: boolean
         version_added: '2.14'
       host_key_auto_add:
         description: 'Automatically add host keys'
