@@ -1,4 +1,0 @@
-minor_changes:
-- >-
-  ``ansible-galaxy collection install`` - add an ``--offline`` option to
-  prevent querying distribution servers (https://github.com/ansible/ansible/issues/77443).
