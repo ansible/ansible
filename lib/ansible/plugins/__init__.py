@@ -62,7 +62,9 @@ class AnsiblePlugin(ABC):
     def matches_name(self, possible_names):
         possible_fqcns = set()
         for name in possible_names:
-            possible_fqcns.add(name.removeprefix("ansible.legacy."))
+            possible_fqcns.add(name.removeprefix('ansible.legacy.'))
+            if '.' not in name:
+                possible_fqcns.add(f'ansible.builtin.{name}')
         return bool(possible_fqcns.intersection(set(self.ansible_aliases)))
 
     def get_option(self, option, hostvars=None):

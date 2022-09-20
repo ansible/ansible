@@ -55,16 +55,16 @@
             - ansible.builtin.local
             - local
             - ansible.legacy.local
-        # Even though there is no legacy override in this case, legacy names should not match the loaded plugin.
-        # The earliest known name in the alias chain is the user-specified name.
+        # AnsiblePlugin().matches_name() is mostly for config/vars that may contain plugin names (such as to enable them).
+        # Even if there is a legacy override (there is not in this case), true legacy names (non-fqcn) in config should also match the builtin.
         - connection: ansible.builtin.local
           name: ansible.builtin.local
           aliases:
             - ansible.builtin.local
           matches:
             - ansible.builtin.local
-          mismatches:
             - local
+          mismatches:
             - ansible.legacy.local
         - connection: redirected_local
           name: ansible.builtin.local
@@ -77,8 +77,8 @@
             - ansible.builtin.redirected_local
             - redirected_local
             - ansible.legacy.redirected_local
-          mismatches:
             - local
+          mismatches:
             - ansible.legacy.local
         - connection: ansible.legacy.redirected_local
           name: ansible.builtin.local
@@ -91,8 +91,8 @@
             - ansible.builtin.redirected_local
             - redirected_local
             - ansible.legacy.redirected_local
-          mismatches:
             - local
+          mismatches:
             - ansible.legacy.local
         # Test legacy override
         - connection: test_connection
