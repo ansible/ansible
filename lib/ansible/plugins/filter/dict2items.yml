@@ -2,7 +2,8 @@ DOCUMENTATION:
   name: dict2items
   author: Ansible core team
   version_added: "2.6"
-  short_description: takes a dictionary and transforms it into a list of dictionaries
+  short_description: Convert a dictionary into an itemized list of dictionaries
+  positional: _input, key_name, value_name
   description:
     - Takes a dictionary and transforms it into a list of dictionaries, with each having a
       C(key) and C(value) keys that correspond to the keys and values of the original.
@@ -13,32 +14,29 @@ DOCUMENTATION:
       type: dict
       required: true
     key_name:
-      description: Configure the key to use instead of C(key).
+      description: The name of the property on the item representing the dictionary's keys.
       type: str
       default: key
       version_added: "2.8"
     value_name:
-      description: Configure the key to use instead of C(value).
+      description: The name of the property on the item representing the dictionary's values.
       type: str
       default: value
       version_added: "2.8"
   seealso:
     - plugin_type: filter
       plugin: ansible.builtin.items2dict
-EXAMPLES: |
-  - name: Convert a dictionary into a list of dictionaries
-    debug:
-      msg: "{{ files | dict2items(key_name='file', value_name='path') }}"
-    vars:
-      files:
-        users: /etc/passwd
-        groups: /etc/group
 
-  # The output is a list of dictionaries:
-  #   - file: users
-  #     path: /etc/passwd
-  #   - file: groups
-  #     path: /etc/group
+EXAMPLES: |
+
+  # items => [ { "key": "a", "value": 1 }, { "key": "b", "value": 2 } ]
+  items: "{{ {'a': 1, 'b': 2}| dict2items}}"
+
+  vars:
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+    files_dicts: "{{ files | dict2items(key_name='file', value_name='path') }}"
 
 RETURN:
   _value:

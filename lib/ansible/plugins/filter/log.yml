@@ -1,0 +1,32 @@
+DOCUMENTATION:
+  name: log
+  version_added: "1.9"
+  short_description: log of (math operation)
+  description:
+    - math operation that returns the N logarithim of inputed number logN(X)
+  notes:
+    - This is a passthrough to Python's C(math.log)
+  positional: _input, base
+  options:
+    _input:
+      description: number to operate on
+      type: int
+      required: true
+    base:
+      description: which base to use
+      type: int
+      default: 10
+
+EXAMPLES: |
+
+  # 1.2920296742201791
+  eightlogfive: "{{ 8 | log(5) }}"
+
+  # 0.9030899869919435
+  eightlog10: "{{ 8 | log() }}"
+
+
+RETURN:
+  _value:
+    description: resulting number
+    type: int

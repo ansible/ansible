@@ -1288,7 +1288,10 @@ class DocCLI(CLI, RoleMixin):
             if isinstance(doc['plainexamples'], string_types):
                 text.append(doc.pop('plainexamples').strip())
             else:
-                text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+                try:
+                    text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+                except Exception as e:
+                    raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
             text.append('')
             text.append('')
 
