@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - do not require mandatory keys in the ``galaxy.yml`` of source collections when listing them (https://github.com/ansible/ansible/issues/70180).

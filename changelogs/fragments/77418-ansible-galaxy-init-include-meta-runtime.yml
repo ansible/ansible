@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - fix missing meta/runtime.yml in default galaxy skeleton used for ansible-galaxy collection init 

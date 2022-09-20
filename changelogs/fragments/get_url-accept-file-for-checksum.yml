@@ -1,2 +1,0 @@
-minor_changes:
-- get_url - permit to pass to parameter ``checksum`` an URL pointing to a file containing only a checksum (https://github.com/ansible/ansible/issues/54390).

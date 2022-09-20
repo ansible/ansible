@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-config adds JSON and YAML output formats for list and dump actions.

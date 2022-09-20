@@ -1,3 +1,0 @@
-bugfixes:
-- ansible-test - Don't fail if network cannot be disconnected
-  (https://github.com/ansible/ansible/pull/77472)

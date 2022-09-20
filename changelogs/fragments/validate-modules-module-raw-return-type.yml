@@ -1,2 +1,0 @@
-minor_changes:
-- 'validate-modules - Allow ``type: raw`` on a module return type definition for values that have a dynamic type'

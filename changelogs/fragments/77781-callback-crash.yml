@@ -1,2 +1,0 @@
-bugfixes:
-  - "callback plugins - do not crash when ``exception`` passed from a module is not a string (https://github.com/ansible/ansible/issues/75726, https://github.com/ansible/ansible/pull/77781)."

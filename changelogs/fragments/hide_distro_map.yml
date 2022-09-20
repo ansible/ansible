@@ -1,2 +1,0 @@
-minor_changes:
-  - configuration entry INTERPRETER_PYTHON_DISTRO_MAP is now 'private' and won't show up in normal configuration queries and docs, since it is not 'settable' this avoids user confusion.
