@@ -1,4 +1,0 @@
-breaking_changes:
-  - >-
-    strategy plugins - Make ``ignore_unreachable`` to increase ``ignored`` and ``ok`` and  counter,
-    not ``skipped`` and ``unreachable``. (https://github.com/ansible/ansible/issues/77690)

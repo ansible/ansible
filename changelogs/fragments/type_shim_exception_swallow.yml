@@ -1,2 +1,0 @@
-bugfixes:
-- prevent type annotation shim failures from causing runtime failures (https://github.com/ansible/ansible/pull/77860)

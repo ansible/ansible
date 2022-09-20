@@ -1,3 +1,0 @@
-minor_changes:
-- urls - Add support to specify SSL/TLS ciphers to use during a request
-  (https://github.com/ansible/ansible/issues/78633)

@@ -1,2 +1,0 @@
-bugfixes:
-  - file backed cache plugins now handle concurrent access by making atomic updates to the files.

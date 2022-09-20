@@ -1,2 +1,0 @@
-bugfixes:
-  - uri module - failed status when Authentication Bearer used with netrc, because Basic authentication was by default. Fix now allows to ignore netrc by changing use_netrc=False (https://github.com/ansible/ansible/issues/74397).

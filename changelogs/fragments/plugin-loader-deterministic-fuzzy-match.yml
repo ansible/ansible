@@ -1,2 +1,0 @@
-bugfixes:
-  - plugin loader - Sort results when fuzzy matching plugin names (https://github.com/ansible/ansible/issues/77966).

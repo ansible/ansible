@@ -1,4 +1,0 @@
-bugfixes:
-  - dnf - The ``skip_broken`` option is now used in installs (https://github.com/ansible/ansible/issues/73072).
-  - dnf - The ``nobest`` option now also works for ``state=latest``.
-  - dnf - Condense a few internal boolean returns.

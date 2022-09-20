@@ -1,2 +1,0 @@
-removed_features:
-   - "Remove deprecated functionality that allows subclassing ``DefaultCallback`` without the corresponding ``doc_fragment``."

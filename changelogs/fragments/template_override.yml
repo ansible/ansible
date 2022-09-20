@@ -1,3 +1,0 @@
-bugfixes:
-  - More gracefully handle separator errors in jinja2 template overrides (https://github.com/ansible/ansible/pull/77495).
-  - Support colons in jinja2 template override values (https://github.com/ansible/ansible/pull/77495).

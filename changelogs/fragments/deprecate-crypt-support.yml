@@ -1,2 +1,0 @@
-deprecated_features:
-- Encryption - Deprecate use of the Python crypt module due to it's impending removal from Python 3.13

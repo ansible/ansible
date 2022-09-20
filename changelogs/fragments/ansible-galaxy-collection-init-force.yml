@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-galaxy - Fix reinitializing the whole collection directory with ``ansible-galaxy collection init ns.coll --force``.
-    Now directories and files that are not included in the collection skeleton will be removed.

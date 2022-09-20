@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix dnf module documentation to indicate that comparison operators for package version require spaces around them (https://github.com/ansible/ansible/issues/78295)

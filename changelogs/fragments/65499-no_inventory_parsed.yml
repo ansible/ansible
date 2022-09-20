@@ -1,2 +1,0 @@
-minor_changes:
-- Add a new "INVENTORY_UNPARSED_WARNING" flag add to hide the "No inventory was parsed, only implicit localhost is available" warning

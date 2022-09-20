@@ -1,7 +1,0 @@
-minor_changes:
-  - ansible-test - Add RHEL 9.0 remote support.
-  - ansible-test - Add FreeBSD 13.1 remote support.
-  - ansible-test - Remove RHEL 8.5 remote support.
-  - ansible-test - Remove FreeBSD 13.0 remote support.
-  - ansible-test - Remove Ubuntu 18.04 test container.
-  - ansible-test - Remove Fedora 34 test container.

@@ -1,6 +1,0 @@
-major_changes:
-  - ansible - At startup the filesystem encoding and locale are checked to verify they are UTF-8.
-              If not, the process exits with an error reporting the errant encoding.
-breaking_changes:
-  - ansible - At startup the filesystem encoding and locale are checked to verify they are UTF-8.
-              If not, the process exits with an error reporting the errant encoding.

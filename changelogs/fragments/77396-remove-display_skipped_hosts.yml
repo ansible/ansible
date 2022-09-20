@@ -1,2 +1,0 @@
-removed_features:
-  - Remove deprecated ``DISPLAY_SKIPPED_HOSTS`` environment variable (https://github.com/ansible/ansible/issues/77396)

@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix internal validation of remote completion configuration.

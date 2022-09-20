@@ -1,2 +1,0 @@
-minor_changes:
-- distribution - add distribution_minor_version for Debian Distro (https://github.com/ansible/ansible/issues/74481).

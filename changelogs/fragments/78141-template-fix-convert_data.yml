@@ -1,2 +1,0 @@
-bugfixes:
-  - template module/lookup - fix ``convert_data`` option that was effectively always set to True for Jinja macros (https://github.com/ansible/ansible/issues/78141)

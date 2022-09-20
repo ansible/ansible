@@ -1,2 +1,0 @@
-bugfixes:
-  - shell plugins now give a more user friendly error when fed the wrong type of data.
