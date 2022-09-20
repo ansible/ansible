@@ -9705,7 +9705,7 @@ action_groups:
   azure:
     - metadata:
         extend_group:
-          - azure.azcollection.azure
+          - azure.azcollection.all
   cpm:
     - metadata:
         extend_group:
