@@ -62,13 +62,14 @@ DOCUMENTATION = """
         description:
             - Whether or not to enable RSA SHA2 algorithms for pubkeys and hostkeys
             - On paramiko versions older than 2.9, this only affects hostkeys
+            - For behavior matching paramiko<2.9 set this to C(False)
         vars:
             - name: ansible_paramiko_use_rsa_sha2_algorithms
         ini:
             - {key: use_rsa_sha2_algorithms, section: paramiko_connection}
         env:
             - {name: ANSIBLE_PARAMIKO_USE_RSA_SHA2_ALGORITHMS}
-        default: False
+        default: True
         version_added: '2.14'
       host_key_auto_add:
         description: 'Automatically add host keys'
@@ -332,8 +333,8 @@ class Connection(ConnectionBase):
 
         ssh = paramiko.SSHClient()
 
-        # Set pubkey and hostkey algorithms to disable
-        # rsa-sha2 will only be enabled if explicitly specified, resulting in paramiko<2.9 behavior
+        # Set pubkey and hostkey algorithms to disable, the only manipulation allowed currently
+        # is keeping or omitting rsa-sha2 algorithms
         paramiko_preferred_pubkeys = getattr(paramiko.Transport, '_preferred_pubkeys', ())
         paramiko_preferred_hostkeys = getattr(paramiko.Transport, '_preferred_keys', ())
         use_rsa_sha2_algorithms = self.get_option('use_rsa_sha2_algorithms')
