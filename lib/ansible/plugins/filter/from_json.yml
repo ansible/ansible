@@ -6,7 +6,7 @@ DOCUMENTATION:
     - Converts a JSON string representation into an equivalent structured Ansible variable.
     - Ansible internally auto-converts JSON strings into variable structures in most contexts, this plugin is used for those contexts it doesn't.
   notes:
-    - This filter functions as a wrapper to the Python ``json.loads()`` function.
+    - This filter functions as a wrapper to the Python C(json.loads) function.
   options:
     _input:
       description: A JSON string.
@@ -21,5 +21,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: the variable resuliting from deserializing the JSON document.
+    description: The variable resulting from deserialization of the JSON document.
     type: raw

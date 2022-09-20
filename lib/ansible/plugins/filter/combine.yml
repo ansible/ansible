@@ -16,14 +16,14 @@ DOCUMENTATION:
       elements: dictionary
       required: true
     recursive:
-      description: If c(True), merge elements recursively
+      description: If C(True), merge elements recursively.
       type: bool
       default: false
     list_merge:
-      describe: behaviour when encountering list elements
+      describe: Behaviour when encountering list elements.
       type: str
       default: replace
-      chioces:
+      choices:
         replace: overwrite older entries with newer ones
         keep: discard newer entries
         append: append newer entries to the older ones

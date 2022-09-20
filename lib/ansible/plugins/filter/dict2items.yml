@@ -14,12 +14,12 @@ DOCUMENTATION:
       type: dict
       required: true
     key_name:
-      description: The name of the property on the item representing the dictionary's keys
+      description: The name of the property on the item representing the dictionary's keys.
       type: str
       default: key
       version_added: "2.8"
     value_name:
-      description: The name of the property on the item representing the dictionary's values
+      description: The name of the property on the item representing the dictionary's values.
       type: str
       default: value
       version_added: "2.8"
@@ -30,7 +30,7 @@ DOCUMENTATION:
 EXAMPLES: |
 
   # items => [ { "key": "a", "value": 1 }, { "key": "b", "value": 2 } ]
-  items: {{ {'a': 1, 'b': 2}| dict2items}}
+  items: "{{ {'a': 1, 'b': 2}| dict2items}}"
 
   vars:
     files:
@@ -40,6 +40,6 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: A list of dictionaries
+    description: A list of dictionaries.
     type: list
     elements: dict

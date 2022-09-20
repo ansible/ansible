@@ -16,13 +16,13 @@ DOCUMENTATION:
       default: plain
       choices: ['plain', 'decoration', 'erlang', 'c', 'cblock', 'xml']
     decoration:
-      description: Inicator for comment or intermediate comment depending on the style
+      description: Indicator for comment or intermediate comment depending on the style.
       type: string
     begining:
-      description : Indicattor of the start of a comment block, only available for styles that support multiline comments
+      description : Indicator of the start of a comment block, only available for styles that support multiline comments.
       type: string
     end:
-      description : Indicator the end of a comment block, only available for styles that support multiline comments
+      description : Indicator the end of a comment block, only available for styles that support multiline comments.
       type: string
     newline:
       description : Indicator of comment end of line, only available for styles that support multiline comments
@@ -56,5 +56,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The 'commented out' string
+    description: The 'commented out' string.
     type: string

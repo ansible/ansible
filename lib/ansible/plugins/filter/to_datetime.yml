@@ -33,4 +33,3 @@ RETURN:
     description: datetime object from the represented value
     type: raw
 
-
