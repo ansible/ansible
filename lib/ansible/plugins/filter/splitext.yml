@@ -2,29 +2,29 @@ DOCUMENTATION:
   name: splitext
   author: Matt Martz (@sivel)
   version_added: "2.0"
-  short_description: split a filename into root and file extension
+  short_description: split a path into root and file extension
+  positional: _input
   description:
-    - Returns a tuple consisting of C(root) and C(extension), where C(root ~ extension) equals the filename.
+    - Returns a list of two, with the elements consisting filename root and extension
   options:
     _input:
-      description:
-        - A filename.
-        - Path components contained in the filename will be returned as part of the root.
+      description: A path.
       type: str
       required: true
+
 EXAMPLES: |
 
-  # with path == 'nginx.conf' the return would be ('nginx', '.conf')
-  {{ path | splitext }}
+  # gobble => [ '/etc/make', 'conf' ]
+  gobble: "{{ '/etc/make.conf' | splitext }}"
 
-  # with path == 'nginx.conf' the return would be 'nginx'
-  {{ path | splitext | first }}
+  # file_n_ext => [ 'ansible', 'cfg' ]
+  file_n_ext: "{{ 'ansible.cfg' | splitext }}"
 
-  # with path == 'nginx.conf' the return would be '.conf'
-  {{ path | splitext | last }}
+  # hoax => ['/etc/hoasdf', '']
+  hoax: '{{ "/etc//hoasdf/"|splitext }}'
 
 RETURN:
   _value:
-    description: A tuple consisting of root and the extension.
-    type: tuple
+    description: A list consisting of root of the path and the extension.
+    type: list
     elements: str

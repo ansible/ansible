@@ -1,0 +1,32 @@
+DOCUMENTATION:
+  name: root
+  version_added: "1.9"
+  short_description: root of (math operation)
+  description:
+    - math operation that returns the N root of inputed number X ^^ N
+  positional: _input, base
+  options:
+    _input:
+      description: number to operate on
+      type: int
+      required: true
+    base:
+      description: which base to use
+      type: int
+      default: 2
+
+EXAMPLES: |
+
+  # => 8
+  fiveroot: "{{ 32768 | root (5) }}"
+
+  # 2
+  sqrt_of_2: "{{ 4 | root }}"
+
+  # me ^^ 3
+  cuberoot_me: "{{ me | root(3) }}"
+
+RETURN:
+  _value:
+    description: resulting number
+    type: int
