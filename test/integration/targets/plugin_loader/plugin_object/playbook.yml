@@ -27,13 +27,6 @@
         - "{{ 'data' | testns.testcoll.subdir.collection_filter }}"
         - "{{ 'data' | testns.testcoll.redirect_filter }}"
 
-    - name: test vars plugins passed their internal test
-      assert:
-        that:
-          - legacy_var is defined
-          - collection_var is defined
-          - builtin_var is defined
-
     - name: run connection test matrix
       test_connection:
         connection_name: "{{ item.name | default(omit) }}"
