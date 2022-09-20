@@ -79,6 +79,60 @@ DOCUMENTATION = """
         env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
         ini:
           - {key: proxy_command, section: paramiko_connection}
+        vars:
+          - name: ansible_paramiko_proxy_command
+            version_added: '2.14'
+      ssh_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          default: ''
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_args'
+          env:
+              - name: ANSIBLE_SSH_ARGS
+          vars:
+              - name: ansible_ssh_args
+                version_added: '2.7'
+          deprecated:
+              why: In favor of the "proxy_command" option.
+              version: "2.18"
+              alternatives: proxy_command
+      ssh_common_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_common_args'
+                version_added: '2.7'
+          env:
+              - name: ANSIBLE_SSH_COMMON_ARGS
+                version_added: '2.7'
+          vars:
+              - name: ansible_ssh_common_args
+          cli:
+              - name: ssh_common_args
+          default: ''
+          deprecated:
+              why: In favor of the "proxy_command" option.
+              version: "2.18"
+              alternatives: proxy_command
+      ssh_extra_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          vars:
+              - name: ansible_ssh_extra_args
+          env:
+            - name: ANSIBLE_SSH_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: ssh_extra_args
+              section: ssh_connection
+              version_added: '2.7'
+          cli:
+            - name: ssh_extra_args
+          default: ''
+          deprecated:
+              why: In favor of the "proxy_command" option.
+              version: "2.18"
+              alternatives: proxy_command
       pty:
         default: True
         description: 'SUDO usually requires a PTY, True to give a PTY and False to not give a PTY.'
