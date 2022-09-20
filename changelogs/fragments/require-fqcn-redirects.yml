@@ -1,2 +1,0 @@
-bugfixes:
-  - Error for collection redirects that do not use fully qualified collection names, as the redirect would be determined by the ``collections`` keyword.

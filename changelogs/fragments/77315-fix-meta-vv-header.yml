@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix ``-vv`` output for meta tasks to not have an empty message when skipped, print the skip reason instead. (https://github.com/ansible/ansible/issues/77315)

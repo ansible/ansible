@@ -1,4 +1,0 @@
-minor_changes:
-  - plugin loader - add ansible_name and ansible_aliases attributes to plugin objects/classes.
-bugfixes:
-  - ansible-doc - fix listing plugins.

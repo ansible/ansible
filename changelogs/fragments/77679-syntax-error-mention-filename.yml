@@ -1,2 +1,0 @@
-bugfixes:
-  - Ensure syntax check errors include playbook filenames
