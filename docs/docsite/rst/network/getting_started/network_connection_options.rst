@@ -42,7 +42,7 @@ Using the global configuration (in :file:`ansible.cfg`)
 
 .. code-block:: ini
 
-  [persistent_connection ]
+  [persistent_connection]
   command_timeout = 30
 
 See :ref:`ansible_variable_precedence` for details on the relative precedence of each of these variables. See the individual connection type to understand each option.
