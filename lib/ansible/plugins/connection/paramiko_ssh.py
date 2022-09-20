@@ -81,7 +81,7 @@ DOCUMENTATION = """
           - {key: proxy_command, section: paramiko_connection}
         vars:
           - name: ansible_paramiko_proxy_command
-            version_added: '2.14'
+            version_added: '2.15'
       ssh_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
           default: ''
