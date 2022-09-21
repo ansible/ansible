@@ -544,7 +544,7 @@ class TaskExecutor:
                 not getattr(self._connection, 'connected', False) or
                 not (
                     (load_info := self._shared_loader_obj.connection_loader.get_with_context(
-                        self._play_context.connection,
+                        current_connection,
                         self._play_context,
                         self._new_stdin,
                         task_uuid=self._task._uuid,
