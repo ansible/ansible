@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import keyword
+import functools
 import random
 import uuid
 
@@ -180,7 +181,9 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     return x
 
 
+@functools.cache()
 def load_extra_vars(loader):
+
     extra_vars = {}
     for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
         data = None
@@ -208,6 +211,7 @@ def load_extra_vars(loader):
     return extra_vars
 
 
+@functools.cache()
 def load_options_vars(version):
 
     if version is None:

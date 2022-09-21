@@ -1,0 +1,2 @@
+minor_changes:
+  - optimized var loading by switching from lru_cache to cache (new in Python 3.9) as there is no variance in input during run.
