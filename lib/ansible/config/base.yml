@@ -549,20 +549,9 @@ CALLBACKS_ENABLED:
     - "List of enabled callbacks, not all callbacks need enabling,
       but many of those shipped with Ansible do as we don't want them activated by default."
   env:
-  - name: ANSIBLE_CALLBACK_WHITELIST
-    deprecated:
-      why: normalizing names to new standard
-      version: "2.15"
-      alternatives: 'ANSIBLE_CALLBACKS_ENABLED'
   - name: ANSIBLE_CALLBACKS_ENABLED
     version_added: '2.11'
   ini:
-  - key: callback_whitelist
-    section: defaults
-    deprecated:
-      why: normalizing names to new standard
-      version: "2.15"
-      alternatives: 'callbacks_enabled'
   - key: callbacks_enabled
     section: defaults
     version_added: '2.11'
