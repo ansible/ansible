@@ -1,6 +1,6 @@
 # edit "docs-build.requirements.in" and generate with: hacking/update-sanity-requirements.py --test docs-build
 aiofiles==22.1.0
-aiohttp==3.8.1
+aiohttp==3.8.3
 aiosignal==1.2.0
 alabaster==0.7.12
 ansible-pygments==0.1.1
@@ -45,6 +45,6 @@ sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
 straight.plugin==1.5.0
 Twiggy==0.5.1
-typing-extensions==4.3.0
+typing_extensions==4.3.0
 urllib3==1.26.12
 yarl==1.8.1
