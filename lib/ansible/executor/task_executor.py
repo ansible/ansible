@@ -543,13 +543,8 @@ class TaskExecutor:
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 not (
-                    (load_info := self._shared_loader_obj.connection_loader.get_with_context(
-                        current_connection,
-                        self._play_context,
-                        self._new_stdin,
-                        task_uuid=self._task._uuid,
-                        ansible_playbook_pid=to_text(os.getppid()))) and
-                        load_info.plugin_load_context.resolved and load_info.object.ansible_name == self._connection.ansible_name
+                    (context := connection_loader.find_plugin_with_context(current_connection)) and
+                    context.resolved and context.resolved_fqcn == self._connection.ansible_name
                 ) or
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
@@ -949,7 +944,7 @@ class TaskExecutor:
         # (really paramiko), eventually this should move to task object itself.
         conn_type = self._play_context.connection
 
-        connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
+        connection, plugin_load_context = connection_loader.get_with_context(
             conn_type,
             self._play_context,
             self._new_stdin,
