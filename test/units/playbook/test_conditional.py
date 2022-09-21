@@ -114,7 +114,6 @@ class TestConditional(unittest.TestCase):
                                                                  'key3': '{{ undefined_dict_value }}'
                                                                  }}
 
-        # raises an exception when a non-string conditional is passed to extract_defined_undefined()
         when = [u"some_defined_dict_with_undefined_values"]
         self.assertRaisesRegex(errors.AnsibleError,
                                "The conditional check 'some_defined_dict_with_undefined_values' failed.",
