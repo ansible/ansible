@@ -341,7 +341,7 @@ class Connection(ConnectionBase):
             if proxy_command:
                 break
 
-        proxy_command = proxy_command or self.get_option('proxy_command')
+        proxy_command = self.get_option('proxy_command') or proxy_command
 
         sock_kwarg = {}
         if proxy_command:
