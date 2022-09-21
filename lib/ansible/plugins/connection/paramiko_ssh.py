@@ -76,9 +76,6 @@ DOCUMENTATION = """
         env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
         ini:
           - {key: proxy_command, section: paramiko_connection}
-        vars:
-          - name: ansible_paramiko_proxy_command
-            version_added: '2.15'
       ssh_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
           default: ''
@@ -90,10 +87,6 @@ DOCUMENTATION = """
           vars:
               - name: ansible_ssh_args
                 version_added: '2.7'
-          deprecated:
-              why: In favor of the "proxy_command" option.
-              version: "2.18"
-              alternatives: proxy_command
       ssh_common_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
           ini:
@@ -108,10 +101,6 @@ DOCUMENTATION = """
           cli:
               - name: ssh_common_args
           default: ''
-          deprecated:
-              why: In favor of the "proxy_command" option.
-              version: "2.18"
-              alternatives: proxy_command
       ssh_extra_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
           vars:
@@ -126,10 +115,6 @@ DOCUMENTATION = """
           cli:
             - name: ssh_extra_args
           default: ''
-          deprecated:
-              why: In favor of the "proxy_command" option.
-              version: "2.18"
-              alternatives: proxy_command
       pty:
         default: True
         description: 'TODO: write it'
