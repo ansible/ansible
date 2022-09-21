@@ -1,0 +1,3 @@
+removed_features:
+  - Remove deprecated ``ANSIBLE_COW_WHITELIST`` configuration environment variable, use ``ANSIBLE_COW_ACCEPTLIST`` instead. (https://github.com/ansible/ansible/issues/78819)
+  - Remove deprecated ``cow_whitelist`` configuration option, use ``cowsay_enabled_stencils`` instead. (https://github.com/ansible/ansible/issues/78820)
