@@ -6,11 +6,14 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import types
+import warnings
 
 PARAMIKO_IMPORT_ERR = None
 
 try:
-    import paramiko
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', message='Blowfish has been deprecated', category=UserWarning)
+        import paramiko
 # paramiko and gssapi are incompatible and raise AttributeError not ImportError
 # When running in FIPS mode, cryptography raises InternalError
 # https://bugzilla.redhat.com/show_bug.cgi?id=1778939

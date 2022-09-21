@@ -1,7 +1,6 @@
 # do not add a cryptography or pyopenssl constraint to this file, they require special handling, see get_cryptography_requirements in python_requirements.py
 # do not add a coverage constraint to this file, it is handled internally by ansible-test
 packaging < 21.0 ; python_version < '3.6' # packaging 21.0 requires Python 3.6 or newer
-paramiko < 2.9.0 # paramiko 2.9.0+ requires changes to the paramiko_ssh connection plugin to work with older systems
 pywinrm >= 0.3.0 ; python_version < '3.11' # message encryption support
 pywinrm >= 0.4.3 ; python_version >= '3.11' # support for Python 3.11
 pytest < 5.0.0, >= 4.5.0 ; python_version == '2.7' # pytest 5.0.0 and later will no longer support python 2.7
