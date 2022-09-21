@@ -20,7 +20,7 @@ DOCUMENTATION:
       type: bool
       default: false
     list_merge:
-      description: Behaviour when encountering list elements.
+      description: Behavior when encountering list elements.
       type: str
       default: replace
       choices:
