@@ -1,6 +1,5 @@
 {
     "disabled": true,
-    "maximum_python_version": "3.10",
     "no_targets": true,
     "output": "path-line-column-message"
 }
