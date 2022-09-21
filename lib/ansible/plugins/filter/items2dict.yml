@@ -16,11 +16,11 @@ DOCUMENTATION:
       elements: dict
       required: true
     key_name:
-      description: The name of the key in the element dictionaries that holds the key to use at destination
+      description: The name of the key in the element dictionaries that holds the key to use at destination.
       type: str
       default: key
     value_name:
-      description: The name of the key in the element dictionaries that holds the value to use at destination
+      description: The name of the key in the element dictionaries that holds the value to use at destination.
       type: str
       default: value
   seealso:
@@ -44,5 +44,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: dictionary with the consolidated key/values
+    description: Dictionary with the consolidated key/values.
     type: dict
