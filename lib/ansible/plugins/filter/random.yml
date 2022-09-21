@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "2.6"
   short_description: random number or list item
   description:
-    - Use the intput to either select a random element of a list or generate a random number.
+    - Use the input to either select a random element of a list or generate a random number.
   positional: _input, start, step, seed
   options:
     _input:

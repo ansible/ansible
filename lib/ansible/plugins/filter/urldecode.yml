@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "2.4"
   short_description: get components from URL
   description:
-    - Given an URL, spiti it into it's component parts.
+    - Split a URL into its component parts.
   positional: _input, query
   options:
     _input:

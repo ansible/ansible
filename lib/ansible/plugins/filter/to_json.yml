@@ -23,8 +23,8 @@ DOCUMENTATION:
       default: True
       version_added: '2.9'
     allow_nan:
-      description: When off, strict adherence to float value limits of the JSON specifications, so C(nan), C(inf) and C(-inf) values will produce errors.
-                   If on, JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
+      description: When C(False), strict adherence to float value limits of the JSON specifications, so C(nan), C(inf) and C(-inf) values will produce errors.
+                   When C(True), JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
       default: True
       type: bool
     check_circular:

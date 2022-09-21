@@ -6,7 +6,7 @@ DOCUMENTATION:
   description:
     - Converts an Ansible variable into a 'nicely formatted' JSON string representation
     - This filter functions as a wrapper to the Python C(json.dumps) function.
-    - Ansible internally auto-converts JSON strings into variable structures so this plugin is used to force it into a JSON string.
+    - Ansible automatically converts JSON strings into variable structures so this plugin is used to forcibly retain a JSON string.
   options:
     _input:
       description: A variable or expression that returns a data structure.
@@ -23,8 +23,8 @@ DOCUMENTATION:
       default: True
       version_added: '2.9'
     allow_nan:
-      description: When off, strict adherence to float value limits of the JSON specification, so C(nan), C(inf) and C(-inf) values will produce errors.
-                   If on, JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
+      description: When C(False), strict adherence to float value limits of the JSON specification, so C(nan), C(inf) and C(-inf) values will produce errors.
+                   When C(True), JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
       default: True
       type: bool
     check_circular:

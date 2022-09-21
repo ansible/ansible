@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: 'historical'
   short_description: comment out a string
   description:
-    - Use a programming language conventions to turn the input string into an embeddable comment.
+    - Use programming language conventions to turn the input string into an embeddable comment.
   positional: _input, style
   options:
     _input:

@@ -10,7 +10,7 @@ DOCUMENTATION = r'''
   version_added: "2.4"
   short_description: get components from URL
   description:
-    - Given an URL, split it into it's component parts.
+    - Split a URL into its component parts.
   positional: _input, query
   options:
     _input:
@@ -18,7 +18,7 @@ DOCUMENTATION = r'''
       type: str
       required: true
     query:
-      description: Specify a single compoenent to return.
+      description: Specify a single component to return.
       type: str
       choices: ["fragment", "hostname", "netloc", "password",  "path",  "port",  "query", "scheme",  "username"]
 '''

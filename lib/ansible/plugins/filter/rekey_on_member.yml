@@ -14,7 +14,7 @@ DOCUMENTATION:
       type: str
       required: yes
     duplicates:
-      description: How to handle duplilcates.
+      description: How to handle duplicates.
       type: str
       default: error
       choices: [overwrite, error]

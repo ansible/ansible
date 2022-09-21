@@ -25,7 +25,7 @@ DOCUMENTATION:
       type: bool
       default: no
     ignorecase:
-      description: Force the serach to be case insensitive if C(True), case sensitive otherwise.
+      description: Force the search to be case insensitive if C(True), case sensitive otherwise.
       type: bool
       default: no
 

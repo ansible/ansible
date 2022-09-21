@@ -4,7 +4,7 @@ DOCUMENTATION:
   short_description: cartesian product of lists
   description:
     - Combines two lists into one with each element being the product of the elements of the input lists.
-    - this is an effective way to create 'nested loops', looping over C(listA) and C(listB) is the same as looping over C(listA | product(listB)).
+    - Creates 'nested loops'. Looping over C(listA) and C(listB) is the same as looping over C(listA | product(listB)).
   notes:
     - This is a passthrough to Python's C(itertools.product)
   positional: _input, _additional_lists, repeat
@@ -14,7 +14,7 @@ DOCUMENTATION:
       type: list
       required: true
     _additional_lists:  #TODO: *args, N possible additional lists
-      description: Addional list for the product.
+      description: Additional list for the product.
       type: list
       required: false
     repeat:
