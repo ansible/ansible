@@ -5,9 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from jinja2.runtime import Undefined
-from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import string_types, binary_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -30,7 +29,7 @@ def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=Fals
     vl = VaultLib()
     try:
         vault = vl.encrypt(to_bytes(data), vs, vaultid, salt)
-    except UndefinedError:
+    except AnsibleUndefinedVariable:
         raise
     except Exception as e:
         raise AnsibleFilterError("Unable to encrypt: %s" % to_native(e), orig_exc=e)
@@ -60,7 +59,7 @@ def do_unvault(vault, secret, vaultid='filter_default'):
     elif is_encrypted(vault):
         try:
             data = vl.decrypt(vault)
-        except UndefinedError:
+        except AnsibleUndefinedVariable:
             raise
         except Exception as e:
             raise AnsibleFilterError("Unable to decrypt: %s" % to_native(e), orig_exc=e)

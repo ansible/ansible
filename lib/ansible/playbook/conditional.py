@@ -22,7 +22,6 @@ __metaclass__ = type
 import ast
 
 from jinja2.compiler import generate
-from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
@@ -173,5 +172,5 @@ class Conditional:
                 return False
             else:
                 raise AnsibleError("unable to evaluate conditional: %s" % original)
-        except (AnsibleUndefinedVariable, UndefinedError) as e:
+        except AnsibleUndefinedVariable as e:
             raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))

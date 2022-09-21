@@ -12,8 +12,6 @@ import os
 from copy import copy as shallowcopy
 from functools import cache
 
-from jinja2.exceptions import UndefinedError
-
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -561,7 +559,7 @@ class FieldAttributeBase:
                 value = getattr(self, name)
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
-            except (AnsibleUndefinedVariable, UndefinedError) as e:
+            except AnsibleUndefinedVariable as e:
                 if templar._fail_on_undefined_errors and name != 'name':
                     if name == 'args':
                         msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))

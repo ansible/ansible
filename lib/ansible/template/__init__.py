@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from numbers import Number
 from traceback import format_exc
 
-from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.exceptions import TemplateSyntaxError
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
 from jinja2.runtime import Context, StrictUndefined, ChainableUndefined
@@ -297,6 +297,10 @@ def _wrap_native_text(func):
 
 
 class AnsibleUndefined(StrictUndefined, ChainableUndefined):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._undefined_exception = AnsibleUndefinedVariable
+
     def __getattr__(self, name):
         if name == '__UNSAFE__':
             # AnsibleUndefined should never be assumed to be unsafe
@@ -817,11 +821,11 @@ class Templar:
         # safely catch run failures per #5059
         try:
             ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
-        except (AnsibleUndefinedVariable, UndefinedError) as e:
-            raise AnsibleUndefinedVariable(e)
-        except AnsibleOptionsError as e:
+        except AnsibleUndefinedVariable:
+            raise
+        except AnsibleOptionsError:
             # invalid options given to lookup, just reraise
-            raise e
+            raise
         except AnsibleLookupError as e:
             # lookup handled error but still decided to bail
             msg = 'Lookup failed but the error is being ignored: %s' % to_native(e)
@@ -1004,7 +1008,7 @@ class Templar:
                     if unsafe:
                         res = wrap_var(res)
             return res
-        except (UndefinedError, AnsibleUndefinedVariable) as e:
+        except AnsibleUndefinedVariable as e:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e, orig_exc=e)
             else:

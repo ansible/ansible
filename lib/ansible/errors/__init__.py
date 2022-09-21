@@ -24,6 +24,8 @@ import traceback
 
 from collections.abc import Sequence
 
+from jinja2.exceptions import UndefinedError
+
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
     YAML_COMMON_LEADING_TAB_ERROR,
@@ -271,7 +273,7 @@ class AnsibleLookupError(AnsibleTemplateError):
     pass
 
 
-class AnsibleUndefinedVariable(AnsibleTemplateError):
+class AnsibleUndefinedVariable(AnsibleTemplateError, UndefinedError):
     ''' a templating failure '''
     pass
 

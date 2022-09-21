@@ -31,8 +31,6 @@ import time
 from collections import deque
 from multiprocessing import Lock
 
-from jinja2.exceptions import UndefinedError
-
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
@@ -519,7 +517,7 @@ class StrategyBase:
 
                             if handler_name in candidates:
                                 return handler_task
-                        except (UndefinedError, AnsibleUndefinedVariable) as e:
+                        except AnsibleUndefinedVariable as e:
                             # We skip this handler due to the fact that it may be using
                             # a variable in the name that was conditionally included via
                             # set_fact or some other method, and we don't want to error

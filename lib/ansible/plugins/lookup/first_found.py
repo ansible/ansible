@@ -140,8 +140,6 @@ import re
 
 from collections.abc import Mapping, Sequence
 
-from jinja2.exceptions import UndefinedError
-
 from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
@@ -218,7 +216,7 @@ class LookupModule(LookupBase):
 
             try:
                 fn = self._templar.template(fn)
-            except (AnsibleUndefinedVariable, UndefinedError):
+            except AnsibleUndefinedVariable:
                 continue
 
             # get subdir if set by task executor, default to files otherwise

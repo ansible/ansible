@@ -21,9 +21,8 @@ __metaclass__ = type
 import io
 import yaml
 
-from jinja2.exceptions import UndefinedError
-
 from units.compat import unittest
+from ansible.errors import AnsibleUndefinedVariable
 from ansible.parsing import vault
 from ansible.parsing.yaml import dumper, objects
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -117,7 +116,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         undefined_object = AnsibleUndefined()
         try:
             yaml_out = self._dump_string(undefined_object, dumper=self.dumper)
-        except UndefinedError:
+        except AnsibleUndefinedVariable:
             yaml_out = None
 
         self.assertIsNone(yaml_out)
