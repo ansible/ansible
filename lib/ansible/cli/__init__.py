@@ -119,7 +119,7 @@ except ImportError:
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
-    PAGER = c.config.get_config_value('PAGER')
+    PAGER = C.config.get_config_value('PAGER')
 
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
