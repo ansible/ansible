@@ -1,2 +1,2 @@
 minor_changes:
-  - optimized var loading by using functools.cache (new in Python 3.9) as there is no variance in input during run.
+  - optimized var loading by caching results as there is no variance in input during run.
