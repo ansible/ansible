@@ -15,7 +15,7 @@ DOCUMENTATION:
       description: if specified use a pseudo random selection instead (repeatable)
       type: str
 
-EXAMPLES:
+EXAMPLES: |
 
   randomized_list: "{{ ['a','b','c'] | shuffle}}"
   per_host_repeatable: "{{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}"

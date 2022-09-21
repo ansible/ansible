@@ -10,10 +10,10 @@ DOCUMENTATION:
       description: bytes
       type: int
       required: true
-  isbits:
+    isbits:
       description: input is bits, instead of bytes
       type: bool
-  unit:
+    unit:
       description: unit to force output into, if none specified the largest unit arrived at will be used
       type: str
       choices: [ 'Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'K', 'B']

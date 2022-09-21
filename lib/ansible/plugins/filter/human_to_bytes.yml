@@ -10,11 +10,11 @@ DOCUMENTATION:
       description: bytes
       type: int
       required: true
-  default_unit:
+    default_unit:
       description: unit to assume when input does not specify it
       type: str
       choices: ['Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'K', 'B']
-  isbits:
+    isbits:
       description: if C(True) force to interpet only bit input, if C(False) force bytes, otherwise just use the notation to guess
       type: bool
 EXAMPLES: |

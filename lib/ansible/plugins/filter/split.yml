@@ -17,7 +17,7 @@ DOCUMENTATION:
       type: str
       default: ' '
 
-EXAMPLES:
+EXAMPLES: |
 
     # listjojo => [ "jojo", "is", "a" ]
     listjojo: "{{ 'jojo is a' | split }}"
