@@ -6,6 +6,21 @@
     # redirect connection
     ansible_connection: testns.testcoll.redirected_local
   tasks:
+  - name: test loop reusing connection with different names that resolve to the same plugin
+    raw: noop
+    register: connected_test
+    vars:
+      ansible_localconn_command_count: True
+      ansible_connection: "{{ item }}"
+    loop:
+      - testns.testcoll.localconn
+      - testns.testcoll.redirected_localconn
+
+  - assert:
+      that:
+        - connected_test.results[0].stdout == "localconn ran noop (1)"
+        - connected_test.results[1].stdout == "localconn ran noop (2)"
+
   - assert:
       that: ('data' | testns.testcoll.testfilter) == 'data_via_testfilter_from_userdir'
 

@@ -542,7 +542,15 @@ class TaskExecutor:
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
-                not self._connection.matches_name([current_connection]) or
+                not (
+                    (load_info := self._shared_loader_obj.connection_loader.get_with_context(
+                        self._play_context.connection,
+                        self._play_context,
+                        self._new_stdin,
+                        task_uuid=self._task._uuid,
+                        ansible_playbook_pid=to_text(os.getppid()))) and
+                        load_info.plugin_load_context.resolved and load_info.object.ansible_name == self._connection.ansible_name
+                ) or
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
