@@ -16,7 +16,7 @@ DOCUMENTATION:
     base:
       description: Which base to use. Defaults to L(Euler's number, https://en.wikipedia.org/wiki/Euler%27s_number).
       type: float
-      default: e
+      default: 2.718281828459045
 
 EXAMPLES: |
 
