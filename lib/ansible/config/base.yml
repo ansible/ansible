@@ -37,20 +37,9 @@ ANSIBLE_COW_ACCEPTLIST:
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
   description: Accept list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
   env:
-  - name: ANSIBLE_COW_WHITELIST
-    deprecated:
-      why: normalizing names to new standard
-      version: "2.15"
-      alternatives: 'ANSIBLE_COW_ACCEPTLIST'
   - name: ANSIBLE_COW_ACCEPTLIST
     version_added: '2.11'
   ini:
-  - key: cow_whitelist
-    section: defaults
-    deprecated:
-      why: normalizing names to new standard
-      version: "2.15"
-      alternatives: 'cowsay_enabled_stencils'
   - key: cowsay_enabled_stencils
     section: defaults
     version_added: '2.11'
