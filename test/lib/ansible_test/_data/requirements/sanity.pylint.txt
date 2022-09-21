@@ -9,5 +9,5 @@ pylint==2.15.3
 PyYAML==6.0
 tomli==2.0.1
 tomlkit==0.11.4
-typing-extensions==4.3.0
+typing_extensions==4.3.0
 wrapt==1.14.1
