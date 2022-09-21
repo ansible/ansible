@@ -1,0 +1,5 @@
+bugfixes:
+- paramiko - Add a new option to allow paramiko >= 2.9 to easily work with
+  all devices now that rsa-sha2 support was added to paramiko, which
+  prevented communication with numerous platforms.
+  (https://github.com/ansible/ansible/issues/76737)

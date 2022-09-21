@@ -58,6 +58,20 @@ DOCUMENTATION = """
             - name: ansible_paramiko_pass
             - name: ansible_paramiko_password
               version_added: '2.5'
+      use_rsa_sha2_algorithms:
+        description:
+            - Whether or not to enable RSA SHA2 algorithms for pubkeys and hostkeys
+            - On paramiko versions older than 2.9, this only affects hostkeys
+            - For behavior matching paramiko<2.9 set this to C(False)
+        vars:
+            - name: ansible_paramiko_use_rsa_sha2_algorithms
+        ini:
+            - {key: use_rsa_sha2_algorithms, section: paramiko_connection}
+        env:
+            - {name: ANSIBLE_PARAMIKO_USE_RSA_SHA2_ALGORITHMS}
+        default: True
+        type: boolean
+        version_added: '2.14'
       host_key_auto_add:
         description: 'Automatically add host keys'
         env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
@@ -374,6 +388,18 @@ class Connection(ConnectionBase):
 
         ssh = paramiko.SSHClient()
 
+        # Set pubkey and hostkey algorithms to disable, the only manipulation allowed currently
+        # is keeping or omitting rsa-sha2 algorithms
+        paramiko_preferred_pubkeys = getattr(paramiko.Transport, '_preferred_pubkeys', ())
+        paramiko_preferred_hostkeys = getattr(paramiko.Transport, '_preferred_keys', ())
+        use_rsa_sha2_algorithms = self.get_option('use_rsa_sha2_algorithms')
+        disabled_algorithms = {}
+        if not use_rsa_sha2_algorithms:
+            if paramiko_preferred_pubkeys:
+                disabled_algorithms['pubkeys'] = tuple(a for a in paramiko_preferred_pubkeys if 'rsa-sha2' in a)
+            if paramiko_preferred_hostkeys:
+                disabled_algorithms['keys'] = tuple(a for a in paramiko_preferred_hostkeys if 'rsa-sha2' in a)
+
         # override paramiko's default logger name
         if self._log_channel is not None:
             ssh.set_log_channel(self._log_channel)
@@ -423,7 +449,8 @@ class Connection(ConnectionBase):
                 password=conn_password,
                 timeout=self._play_context.timeout,
                 port=port,
-                **ssh_connect_kwargs
+                disabled_algorithms=disabled_algorithms,
+                **ssh_connect_kwargs,
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
