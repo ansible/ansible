@@ -478,6 +478,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_port=connection.port,
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
+            ansible_paramiko_use_rsa_sha2_algorithms='no',
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
         )
 
