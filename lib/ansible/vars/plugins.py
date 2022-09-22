@@ -57,7 +57,7 @@ def get_vars_from_path(loader, path, entities, stage):
         if not vars_plugin.ansible_name.startswith('ansible.builtin.') and invalid_collection_option:
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                "This should be removed from the plugin %s." % plugin.ansible_name
+                "This should be removed from the plugin %s." % vars_plugin.ansible_name
             )
         enabled_vars_plugins.append(vars_plugin)
 

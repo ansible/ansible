@@ -871,6 +871,7 @@ class PluginLoader:
 
         fq_name = plugin_load_context.resolved_fqcn
         if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
+            raise Exception
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
