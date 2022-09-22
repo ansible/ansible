@@ -285,6 +285,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
         }
 
         for target in posix_targets:
+            if target.name == 'ansible-test-container':
+                continue  # special test target which uses group 6 -- nothing else should be in that group
+
             if f'{self.TEST_ALIAS_PREFIX}/posix/' not in target.aliases:
                 continue
 
@@ -344,6 +347,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
         messages = []
 
         for path in unassigned_paths:
+            if path == 'test/integration/targets/ansible-test-container':
+                continue  # special test target which uses group 6 -- nothing else should be in that group
+
             messages.append(SanityMessage(unassigned_message, '%s/aliases' % path))
 
         for path in conflicting_paths:

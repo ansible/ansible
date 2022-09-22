@@ -1,0 +1,7 @@
+- name: Install MariaDB
+  zypper:
+    name: mariadb
+- name: Start MariaDB
+  service:
+    name: mariadb
+    state: started
