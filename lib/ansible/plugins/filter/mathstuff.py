@@ -33,6 +33,7 @@ from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_native, to_text
+from ansible.template import fail_on_undefined_obj
 from ansible.utils.display import Display
 
 try:
@@ -180,8 +181,7 @@ def rekey_on_member(data, key, duplicates='error'):
 
     new_obj = {}
 
-    # Ensure the positional args are defined - raise jinja2.exceptions.UndefinedError if not
-    bool(data) and bool(key)
+    fail_on_undefined_obj(data) and fail_on_undefined_obj(key)
 
     if isinstance(data, Mapping):
         iterate_over = data.values()

@@ -465,16 +465,16 @@ class JinjaPluginIntercept(MutableMapping):
         return len(self._delegatee)
 
 
-def _fail_on_undefined(data):
+def fail_on_undefined_obj(data):
     """Recursively find an undefined value in a nested data structure
     and properly raise the undefined exception.
     """
     if isinstance(data, Mapping):
         for value in data.values():
-            _fail_on_undefined(value)
+            fail_on_undefined_obj(value)
     elif is_sequence(data):
         for item in data:
-            _fail_on_undefined(item)
+            fail_on_undefined_obj(item)
     else:
         if isinstance(data, StrictUndefined):
             # To actually raise the undefined exception we need to
@@ -500,7 +500,7 @@ def _ansible_finalize(thing):
     which can produce a generator in the middle of a template are already
     wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
     """
-    return thing if _fail_on_undefined(thing) is not None else ''
+    return thing if fail_on_undefined_obj(thing) is not None else ''
 
 
 class AnsibleEnvironment(NativeEnvironment):
@@ -529,7 +529,7 @@ class AnsibleNativeEnvironment(AnsibleEnvironment):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.finalize = _unroll_iterator(_fail_on_undefined)
+        self.finalize = _unroll_iterator(fail_on_undefined_obj)
 
 
 class Templar:
