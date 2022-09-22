@@ -71,7 +71,7 @@ def get_vars_from_path(loader, path, entities, stage):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
         if getattr(plugin, 'REQUIRES_ENABLED', getattr(plugin, 'REQUIRES_WHITELIST', False)):
-            if not plugin.ansible_name in enabled_canonical_names:
+            if plugin.ansible_name not in enabled_canonical_names:
                 continue
         legacy_vars_plugins.append(plugin)
 
