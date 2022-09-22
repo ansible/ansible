@@ -836,22 +836,7 @@ class PluginLoader:
         setattr(obj, '_original_path', path)
         setattr(obj, '_load_name', name)
         setattr(obj, '_redirected_names', redirected_names or [])
-
-        names = []
-        if resolved:
-            names.append(resolved)
-        if redirected_names:
-            # reverse list so best name comes first
-            for name in redirected_names[::-1]:
-                normalized_name = name.removeprefix('ansible.legacy.')
-                if normalized_name in names:
-                    continue
-                names.append(normalized_name)
-        if not names:
-            raise AnsibleError(f"Missing FQCN for plugin source {name}")
-
-        setattr(obj, 'ansible_aliases', names)
-        setattr(obj, 'ansible_name', names[0])
+        setattr(obj, 'ansible_name', resolved)
 
     def get(self, name, *args, **kwargs):
         return self.get_with_context(name, *args, **kwargs).object
@@ -870,9 +855,6 @@ class PluginLoader:
             return get_with_context_result(None, plugin_load_context)
 
         fq_name = plugin_load_context.resolved_fqcn
-        if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
-            raise Exception
-            fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
         redirected_names = plugin_load_context.redirect_list or []
@@ -1148,7 +1130,7 @@ class Jinja2Loader(PluginLoader):
         if '.' not in name:
             # Filter/tests must always be FQCN except builtin and legacy
             for known_plugin in self.all(*args, **kwargs):
-                if known_plugin.matches_name([name]):
+                if known_plugin.ansible_name in (name, f"ansible.builtin.{name}"):
                     context.resolved = True
                     context.plugin_resolved_name = name
                     context.plugin_resolved_path = known_plugin._original_path

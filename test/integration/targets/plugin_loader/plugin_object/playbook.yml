@@ -10,7 +10,6 @@
     - name: test legacy filter plugins
       assert:
         that:
-          - item.filter_file_aliases == ['legacy_filters']
           - item.filter_file_name == 'legacy_filters'
       loop:
         - "{{ 'data' | legacy_filter }}"
@@ -19,7 +18,6 @@
     - name: test collection filter plugins
       assert:
         that:
-          - result.filter_file_aliases == ['testns.testcoll.subdir.collection_filters']
           - result.filter_file_name == 'testns.testcoll.subdir.collection_filters'
       loop_control:
         loop_var: result
@@ -30,7 +28,6 @@
     - name: run connection test matrix
       test_connection:
         connection_name: "{{ item.name | default(omit) }}"
-        connection_aliases: "{{ item.aliases | default(omit) }}"
         connection_name_matches: "{{ item.matches | default(omit) }}"
         connection_name_mismatches: "{{ item.mismatches | default(omit) }}"
       connection: "{{ item.connection }}"
@@ -38,9 +35,6 @@
         # Test ansible.builtin plugin
         - connection: local
           name: ansible.builtin.local
-          aliases:
-            - ansible.builtin.local
-            - local
           matches:
             - ansible.builtin.local
             - local
@@ -48,57 +42,37 @@
         # ansible.legacy.local == local, so the results should be identical
         - connection: ansible.legacy.local
           name: ansible.builtin.local
-          aliases:
-            - ansible.builtin.local
-            - local
           matches:
             - ansible.builtin.local
             - local
             - ansible.legacy.local
-        # AnsiblePlugin().matches_name() is mostly for config/vars that may contain plugin names (such as to enable them).
-        # If the plugin wasn't loaded using a legacy name, legacy names should not match.
         - connection: ansible.builtin.local
           name: ansible.builtin.local
-          aliases:
-            - ansible.builtin.local
           matches:
             - ansible.builtin.local
-          mismatches:
             - local
             - ansible.legacy.local
         - connection: redirected_local
           name: ansible.builtin.local
-          aliases:
-            - ansible.builtin.local
-            - ansible.builtin.redirected_local
-            - redirected_local
           matches:
             - ansible.builtin.local
             - ansible.builtin.redirected_local
             - redirected_local
             - ansible.legacy.redirected_local
-          mismatches:
             - local
             - ansible.legacy.local
         - connection: ansible.legacy.redirected_local
           name: ansible.builtin.local
-          aliases:
-            - ansible.builtin.local
-            - ansible.builtin.redirected_local
-            - redirected_local
           matches:
             - ansible.builtin.local
             - ansible.builtin.redirected_local
             - redirected_local
             - ansible.legacy.redirected_local
-          mismatches:
             - local
             - ansible.legacy.local
         # Test legacy override
         - connection: test_connection
           name: test_connection
-          aliases:
-            - test_connection
           matches:
             - test_connection
             - ansible.legacy.test_connection
@@ -106,8 +80,6 @@
             - ansible.builtin.test_connection
         - connection: ansible.legacy.test_connection
           name: test_connection
-          aliases:
-            - test_connection
           matches:
             - test_connection
             - ansible.legacy.test_connection
@@ -116,8 +88,6 @@
         # Test connection plugin
         - connection: testns.testcoll.test_connection
           name: testns.testcoll.test_connection
-          aliases:
-            - testns.testcoll.test_connection
           matches:
             - testns.testcoll.test_connection
           mismatches:
@@ -125,11 +95,6 @@
             - test_connection
         - connection: testns.testcoll.redirect1
           name: testns.testcoll.subdir.test_connection
-          aliases:
-            - testns.testcoll.subdir.test_connection
-            - testns.testcoll.redirect3
-            - testns.testcoll.redirect2
-            - testns.testcoll.redirect1
           matches:
             - testns.testcoll.subdir.test_connection
             - testns.testcoll.redirect3

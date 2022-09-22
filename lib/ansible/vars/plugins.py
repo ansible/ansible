@@ -44,11 +44,13 @@ def get_vars_from_path(loader, path, entities, stage):
     data = {}
 
     enabled_vars_plugins = []
+    enabled_canonical_names = []
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
         vars_plugin = vars_loader.get(plugin_name)
         if vars_plugin is None:
             # Error if there's no play directory or the name is wrong?
             continue
+        enabled_canonical_names.append(vars_plugin.ansible_name)
         if '.' not in vars_plugin.ansible_name:
             # Legacy plugin will be loaded below with all()
             continue
@@ -69,7 +71,7 @@ def get_vars_from_path(loader, path, entities, stage):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
         if getattr(plugin, 'REQUIRES_ENABLED', getattr(plugin, 'REQUIRES_WHITELIST', False)):
-            if not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
+            if not plugin.ansible_name in enabled_canonical_names:
                 continue
         legacy_vars_plugins.append(plugin)
 

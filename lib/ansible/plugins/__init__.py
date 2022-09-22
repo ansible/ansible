@@ -59,10 +59,6 @@ class AnsiblePlugin(ABC):
         self._options = {}
         self._defs = None
 
-    def matches_name(self, possible_names):
-        normalized_names = set(name.removeprefix('ansible.legacy.') for name in possible_names)
-        return normalized_names.intersection(set(self.ansible_aliases))
-
     def get_option(self, option, hostvars=None):
         if option not in self._options:
             try:
