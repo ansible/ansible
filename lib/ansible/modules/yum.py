@@ -49,7 +49,7 @@ options:
     version_added: "2.0"
   list:
     description:
-      - "Package name to run the equivalent of yum list C(--show-duplicates <package>) against. In addition to listing packages,
+      - "Package name to run the equivalent of C(yum list --show-duplicates <package>) against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
       - This parameter is mutually exclusive with I(name).
     type: str
