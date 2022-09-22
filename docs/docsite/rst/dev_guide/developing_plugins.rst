@@ -36,7 +36,6 @@ You should return errors encountered during plugin execution by raising ``Ansibl
     except Exception as e:
         raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
-Since Ansible evaluates variables only when they are needed, filter and test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
 
 Check the different `AnsibleError objects <https://github.com/ansible/ansible/blob/devel/lib/ansible/errors/__init__.py>`_ and see which one applies best to your situation.
 Check the section on the specific plugin type you're developing for type-specific error handling details.
@@ -319,13 +318,24 @@ Filter plugins manipulate data. They are a feature of Jinja2 and are also availa
 
 Filter plugins do not use the standard configuration system described above, but since ansible-core 2.14 can use it as plain documentation.
 
-Since Ansible evaluates variables only when they are needed, filter plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
+Since Ansible evaluates variables only when they are needed, filter plugins should propagate the ``AnsibleUndefinedVariable`` exception to ensure undefined variables are only fatal when necessary.
 
 .. code-block:: python
 
    try:
        cause_an_exception(with_undefined_variable)
-   except jinja2.exceptions.UndefinedError as e:
+   except AnsibleUndefinedVariable as e:
+       raise
+   except Exception as e:
+       raise AnsibleFilterError("Something happened, this was the original exception: %s" % to_native(e))
+
+Prior to ansible-core 2.15 filter plugins had to propagate ``jinja2.exceptions.UndefinedError`` as well.
+
+.. code-block:: python
+
+   try:
+       cause_an_exception(with_undefined_variable)
+   except (jinja2.exceptions.UndefinedError, AnsibleUndefinedVariable) as e:
        raise AnsibleUndefinedVariable("Something happened, this was the original exception: %s" % to_native(e))
    except Exception as e:
        raise AnsibleFilterError("Something happened, this was the original exception: %s" % to_native(e))
@@ -457,13 +467,24 @@ Test plugins verify data. They are a feature of Jinja2 and are also available in
 
 Test plugins do not use the standard configuration system described above. Since ansible-core 2.14 test plugins can use plain documentation.
 
-Since Ansible evaluates variables only when they are needed, test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
+Since Ansible evaluates variables only when they are needed, test plugins should propagate the ``AnsibleUndefinedVariable`` exception to ensure undefined variables are only fatal when necessary.
 
 .. code-block:: python
 
    try:
        cause_an_exception(with_undefined_variable)
-   except jinja2.exceptions.UndefinedError as e:
+   except AnsibleUndefinedVariable as e:
+       raise
+   except Exception as e:
+       raise AnsibleFilterError("Something happened, this was the original exception: %s" % to_native(e))
+
+Prior to ansible-core 2.15 test plugins had to propagate ``jinja2.exceptions.UndefinedError`` as well.
+
+.. code-block:: python
+
+   try:
+       cause_an_exception(with_undefined_variable)
+   except (jinja2.exceptions.UndefinedError, AnsibleUndefinedVariable) as e:
        raise AnsibleUndefinedVariable("Something happened, this was the original exception: %s" % to_native(e))
    except Exception as e:
        raise AnsibleFilterError("Something happened, this was the original exception: %s" % to_native(e))
