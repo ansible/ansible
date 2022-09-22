@@ -109,19 +109,19 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
         if not self.allow_destructive and not self.config.is_managed:
             override_destructive = set(target for target in self.include_targets if target.startswith('destructive/'))
-            override = [target.name for target in targets if override_destructive & set(target.skips)]
+            override = [target.name for target in targets if override_destructive & set(target.aliases)]
 
             self.skip('destructive', 'which require --allow-destructive or prefixing with "destructive/" to run on unmanaged hosts', targets, exclude, override)
 
         if not self.args.allow_disabled:
             override_disabled = set(target for target in self.args.include if target.startswith('disabled/'))
-            override = [target.name for target in targets if override_disabled & set(target.skips)]
+            override = [target.name for target in targets if override_disabled & set(target.aliases)]
 
             self.skip('disabled', 'which require --allow-disabled or prefixing with "disabled/"', targets, exclude, override)
 
         if not self.args.allow_unsupported:
             override_unsupported = set(target for target in self.args.include if target.startswith('unsupported/'))
-            override = [target.name for target in targets if override_unsupported & set(target.skips)]
+            override = [target.name for target in targets if override_unsupported & set(target.aliases)]
 
             self.skip('unsupported', 'which require --allow-unsupported or prefixing with "unsupported/"', targets, exclude, override)
 
@@ -131,7 +131,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
             if self.args.allow_unstable_changed:
                 override_unstable |= set(self.args.metadata.change_description.focused_targets or [])
 
-            override = [target.name for target in targets if override_unstable & set(target.skips)]
+            override = [target.name for target in targets if override_unstable & set(target.aliases)]
 
             self.skip('unstable', 'which require --allow-unstable or prefixing with "unstable/"', targets, exclude, override)
 
