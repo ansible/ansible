@@ -230,6 +230,7 @@ class PluginLoader:
 
         # caches
         self._module_cache = MODULE_CACHE[class_name]
+        self._loaded_module_names = set()
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
@@ -872,11 +873,13 @@ class PluginLoader:
         path = plugin_load_context.plugin_resolved_path
         redirected_names = plugin_load_context.redirect_list or []
 
-        if path not in self._module_cache:
+        # A plugin can be called via shortname or fqcn. We want to load up defs on either
+        # call type. #78795 / #77669
+        if path not in self._module_cache or name not in self._loaded_module_names:
             self._module_cache[path] = self._load_module_source(name, path)
+            self._load_config_defs(name, self._module_cache[path], path)
+            self._loaded_module_names.add(name)
             found_in_cache = False
-
-        self._load_config_defs(name, self._module_cache[path], path)
 
         obj = getattr(self._module_cache[path], self.class_name)
 
@@ -1002,7 +1005,7 @@ class PluginLoader:
                 yield path
                 continue
 
-            if path not in self._module_cache:
+            if path not in self._module_cache or name not in self._loaded_module_names:
                 if self.type in ('filter', 'test'):
                     # filter and test plugin files can contain multiple plugins
                     # they must have a unique python module name to prevent them from shadowing each other
@@ -1017,11 +1020,11 @@ class PluginLoader:
                     continue
 
                 self._module_cache[path] = module
+                self._load_config_defs(basename, module, path)
+                self._loaded_module_names.add(name)
                 found_in_cache = False
             else:
                 module = self._module_cache[path]
-
-            self._load_config_defs(basename, module, path)
 
             try:
                 obj = getattr(module, self.class_name)
