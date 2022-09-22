@@ -3,6 +3,9 @@
     chdir: '{{ role_path }}'
   vars:
     verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
   register: result
 
 - debug:
