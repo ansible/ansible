@@ -1107,7 +1107,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # People should start writing collections instead of modules in roles so we
         # may never fix this
         display.debug('ANSIBALLZ: Could not determine module FQN')
-        remote_module_fqn = 'ansible.modules.%s' % module_name
+        remote_module_fqn = module_name
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)

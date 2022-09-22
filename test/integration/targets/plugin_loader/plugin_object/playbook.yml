@@ -4,7 +4,6 @@
   tasks:
     # TODO: test plugin_loader caching
     # test legacy scope adjacent to the playbook and in roles
-    # test loading builtin and legacy override in same play
 
     # Note: filter plugin tests are actually testing the FilterModule name, which can contain multiple filter plugins
     - name: test legacy filter plugins
@@ -32,14 +31,13 @@
         connection_name_mismatches: "{{ item.mismatches | default(omit) }}"
       connection: "{{ item.connection }}"
       loop:
-        # Test ansible.builtin plugin
+        # Test canonical plugin name resolving to ansible.builtin plugin
         - connection: local
           name: ansible.builtin.local
           matches:
             - ansible.builtin.local
             - local
             - ansible.legacy.local
-        # ansible.legacy.local == local, so the results should be identical
         - connection: ansible.legacy.local
           name: ansible.builtin.local
           matches:
@@ -70,7 +68,7 @@
             - ansible.legacy.redirected_local
             - local
             - ansible.legacy.local
-        # Test legacy override
+        # Test canonical plugin name resolving to legacy override
         - connection: test_connection
           name: test_connection
           matches:
