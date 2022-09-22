@@ -1,0 +1,8 @@
+- name: Install MariaDB
+  command: apk add mariadb-client mariadb
+- name: Setup MariaDB
+  command: /etc/init.d/mariadb setup
+- name: Start MariaDB
+  service:
+    name: mariadb
+    state: started

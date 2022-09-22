@@ -84,7 +84,7 @@ stages:
   - stage: Remote
     dependsOn: []
     jobs:
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/target
         parameters:
           targets:
             - name: macOS 12.0
@@ -104,7 +104,7 @@ stages:
           groups:
             - 1
             - 2
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
             - name: macOS 12.0
@@ -119,6 +119,23 @@ stages:
             - 3
             - 4
             - 5
+      - template: templates/matrix.yml  # context/controller (ansible-test container management)
+        parameters:
+          targets:
+            - name: Alpine 3.16
+              test: alpine/3.16
+            - name: Fedora 36
+              test: fedora/36
+            - name: RHEL 8.6
+              test: rhel/8.6
+            - name: RHEL 9.0
+              test: rhel/9.0
+            - name: Ubuntu 20.04
+              test: ubuntu/20.04
+            - name: Ubuntu 22.04
+              test: ubuntu/22.04
+          groups:
+            - 6
   - stage: Docker
     dependsOn: []
     jobs:

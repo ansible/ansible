@@ -1,0 +1,4 @@
+- name: Setup MariaDB
+  include: "{{ ansible_distribution.lower().replace(' ', '_') }}.yml"
+- name: Show MariaDB version variables
+  command: mysql -e 'show variables like "%version%"'

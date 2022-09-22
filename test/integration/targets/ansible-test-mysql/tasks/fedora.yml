@@ -1,0 +1,7 @@
+- name: Install MariaDB
+  dnf:
+    name: mariadb-server
+- name: Start MariaDB
+  service:
+    name: mariadb
+    state: started
