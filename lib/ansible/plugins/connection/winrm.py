@@ -134,11 +134,11 @@ DOCUMENTATION = """
               windows host. The operation timeout specifies how long a command will run on the
               winRM-service before it sends the message 'WinRMOperationTimeoutError' back to the
               client. The client (silently) ignores this message and starts a new instance of the
-              operation timeout, waiting for the command to finish (long running commands). 
+              operation timeout, waiting for the command to finish (long running commands).
             - The read timeout is the client HTTP-request timeout and specifies how long the
               client (ansible controller) will wait for data from the server to come back over
               the HTTP-connection (transport layer). When this timer expires, an exception will
-              be thrown and the ansible connection will be terminated with this error message:
+              be thrown and the ansible connection will be terminated with this error message
               C(msg": "winrm connection error: HTTPSConnectionPool(host='172.16.76.240',
               port=5986): Read timed out. (read timeout=nnn)")
             - To avoid the above exception to be thrown, the read timeout will be set to 10
