@@ -406,24 +406,39 @@ def docker_pull(args: EnvironmentConfig, image: str) -> None:
     Pull the specified image if it is not available.
     Images without a tag or digest will not be pulled.
     Retries up to 10 times if the pull fails.
+    A warning will be shown for any image with volumes defined.
     """
+    inspect: DockerImageInspect | None = None
+
     if '@' not in image and ':' not in image:
         display.info('Skipping pull of image without tag or digest: %s' % image, verbosity=2)
-        return
-
-    if docker_image_exists(args, image):
+    elif inspect := docker_image_inspect(args, image, always=True):
         display.info('Skipping pull of existing image: %s' % image, verbosity=2)
+    else:
+        for _iteration in range(1, 10):
+            try:
+                docker_command(args, ['pull', image], capture=False)
+                break
+            except SubprocessError:
+                display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
+                time.sleep(3)
+        else:
+            raise ApplicationError('Failed to pull docker image "%s".' % image)
+
+    if not inspect:
+        inspect = docker_image_inspect(args, image)
+
+    if args.explain:
         return
 
-    for _iteration in range(1, 10):
-        try:
-            docker_command(args, ['pull', image], capture=False)
-            return
-        except SubprocessError:
-            display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
-            time.sleep(3)
+    if not inspect:
+        raise ApplicationError(f'Image "{image}" not found after pull completed.')
 
-    raise ApplicationError('Failed to pull docker image "%s".' % image)
+    if inspect.volumes:
+        display.warning(f'Image "{image}" contains {len(inspect.volumes)} volume(s): {", ".join(sorted(inspect.volumes))}\n'
+                        'This may result in leaking anonymous volumes. It may also prevent the image from working on some hosts or container engines.\n'
+                        'The image should be rebuilt without the use of the VOLUME instruction.',
+                        unique=True)
 
 
 def docker_cp_to(args: EnvironmentConfig, container_id: str, src: str, dst: str) -> None:
@@ -650,14 +665,45 @@ def docker_network_disconnect(args: EnvironmentConfig, container_id: str, networ
     docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
 
 
-def docker_image_exists(args: EnvironmentConfig, image: str) -> bool:
-    """Return True if the image exists, otherwise False."""
-    try:
-        docker_command(args, ['image', 'inspect', image], capture=True)
-    except SubprocessError:
-        return False
+class DockerImageInspect:
+    """The results of `docker image inspect` for a single image."""
+    def __init__(self, args: EnvironmentConfig, inspection: dict[str, t.Any]) -> None:
+        self.args = args
+        self.inspection = inspection
 
-    return True
+    # primary properties
+
+    @property
+    def config(self) -> dict[str, t.Any]:
+        """Return a dictionary of the image config."""
+        return self.inspection['Config']
+
+    # nested properties
+
+    @property
+    def volumes(self) -> dict[str, t.Any]:
+        """Return a dictionary of the image volumes."""
+        return self.config.get('Volumes') or {}
+
+
+def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = False) -> DockerImageInspect | None:
+    """
+    Return the results of `docker image inspect` for the specified image or None if the image does not exist.
+    """
+    try:
+        stdout = docker_command(args, ['image', 'inspect', image], capture=True, always=always)[0]
+    except SubprocessError as ex:
+        stdout = ex.stdout
+
+    if args.explain and not always:
+        items = []
+    else:
+        items = json.loads(stdout)
+
+    if len(items) == 1:
+        return DockerImageInspect(args, items[0])
+
+    return None
 
 
 def docker_logs(args: EnvironmentConfig, container_id: str) -> None:
