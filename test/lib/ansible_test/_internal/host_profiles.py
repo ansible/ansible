@@ -129,7 +129,7 @@ class ControlGroupError(ApplicationError):
             '\n'
             '  mkdir /sys/fs/cgroup/systemd\n'
             '  mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr\n'
-            '  chown -R {user}.{group} /sys/fs/cgroup/systemd  # only required when running rootless\n'
+            '  chown -R {user}:{group} /sys/fs/cgroup/systemd  # only required when running rootless\n'
         )
 
         message += (
@@ -392,7 +392,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         #
         #   mkdir /sys/fs/cgroup/systemd
         #   mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
-        #   chown -R {user}.{group} /sys/fs/cgroup/systemd
+        #   chown -R {user}:{group} /sys/fs/cgroup/systemd
         #
         # See: https://github.com/containers/crun/blob/main/crun.1.md#runocisystemdforce_cgroup_v1path
 
