@@ -7,6 +7,6 @@ plugin_routing:
       redirect: ns.col2.package.subdir.hiya
   module_utils:
     hi:
-      redirect: ns.col2
+      redirect: ansible_collections.ns.col2.plugins.module_utils
     hello:
       redirect: ns.col2.hiya

@@ -219,7 +219,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         Schema({
             ('deprecation'): Any(deprecation_schema),
             ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): Any(fqcr, collection_name),
+            ('redirect'): Any(*string_types),  # TODO: use something like Any(fqcr, collection_name),
         }, extra=PREVENT_EXTRA),
     )
 
