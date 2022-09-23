@@ -146,7 +146,7 @@ def run_support_container(
     options = (options or [])
 
     if start:
-        options.append('-dit')  # the -i and -t options are used to enable capturing of init console output for troubleshooting
+        options.append('-dt')  # the -t option is required to cause systemd in the container to log output to the console
 
     if publish_ports:
         for port in ports:
