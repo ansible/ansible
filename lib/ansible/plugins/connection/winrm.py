@@ -139,7 +139,8 @@ DOCUMENTATION = """
               client (ansible controller) will wait for data from the server to come back over
               the HTTP-connection (transport layer). When this timer expires, an exception will
               be thrown and the ansible connection will be terminated with this error message:
-              msg": "winrm connection error: HTTPSConnectionPool(host='172.16.76.240', port=5986): Read timed out. (read timeout=nnn)",
+              C(msg": "winrm connection error: HTTPSConnectionPool(host='172.16.76.240',
+              port=5986): Read timed out. (read timeout=nnn)")
             - To avoid the above exception to be thrown, the read timeout will be set to 10
               seconds higher than the WS-Man operation timeout, thus make the connection more
               robust on networks with long latency and/or many hops between server and client.
