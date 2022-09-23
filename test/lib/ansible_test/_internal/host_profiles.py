@@ -502,6 +502,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             # Make sure that the systemd cgroup is present.
             # If not, raise an exception that explains the requirement and provides a possible solution.
             if not detect_host_systemd_cgroup_v1(self.args):
+                if self.args.explain:
+                    return  # assume the detection succeeded, since we can't run it in explain mode (can't pull the container)
+
                 if self.config.cgroup == 'v1':
                     if get_docker_info(self.args).cgroup_version == 2:
                         reason = f'Container {self.config.name} requires cgroup v1, but the container host only provides cgroup v2.'
