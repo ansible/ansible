@@ -128,19 +128,24 @@ DOCUMENTATION = """
         type: str
       connection_timeout:
         description:
-            - Desite its name, sets both the 'operation' and 'read' timeout settings for the WinRM
+            - Despite its name, sets both the 'operation' and 'read' timeout settings for the WinRM
               connection.
-            - The operation timeout sets the WS-Man Operation timeout that runs on the managed
+            - The operation timeout belongs to the WS-Man layer and runs on the winRM-service on the
+              managed windows host.
+            - The read timeout belongs to the underlying python Request call (http-layer) and runs
+              on the ansible controller.
+            - The operation timeout sets the WS-Man 'Operation timeout' that runs on the managed
               windows host. The operation timeout specifies how long a command will run on the
               winRM-service before it sends the message 'WinRMOperationTimeoutError' back to the
               client. The client (silently) ignores this message and starts a new instance of the
               operation timeout, waiting for the command to finish (long running commands).
-            - The read timeout is the client HTTP-request timeout and specifies how long the
+            - The read timeout sets the client HTTP-request timeout and specifies how long the
               client (ansible controller) will wait for data from the server to come back over
-              the HTTP-connection (transport layer). When this timer expires, an exception will
-              be thrown and the ansible connection will be terminated with this error message
-              C(msg": "winrm connection error: HTTPSConnectionPool(host='172.16.76.240',
-              port=5986): Read timed out. (read timeout=nnn)")
+              the HTTP-connection (timeout for waiting for in-between messages from the server).
+              When this timer expires, an exception will be thrown and the ansible connection
+              will be terminated with this error message
+              '(msg": "winrm connection error: HTTPSConnectionPool(host=''172.16.76.240'',
+              port=5986): Read timed out. (read timeout=nnn)")'
             - To avoid the above exception to be thrown, the read timeout will be set to 10
               seconds higher than the WS-Man operation timeout, thus make the connection more
               robust on networks with long latency and/or many hops between server and client.
