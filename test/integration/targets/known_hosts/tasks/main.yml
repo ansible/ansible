@@ -96,8 +96,8 @@
     - 'result.diff.before == result.diff.after'
     - 'known_hosts.stdout == known_hosts_v2.stdout'
 
-# test removal of a different key does not change the state of the host
-# and does not remove anything
+# https://github.com/ansible/ansible/issues/78598
+# test removing nonexistent host key when the other keys exist for the host
 - name: remove different key
   known_hosts: 
     name: example.org
