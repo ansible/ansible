@@ -29,15 +29,6 @@ def fqcr(value):
     return value
 
 
-def collection_name(value):
-    """Validate a collection name."""
-    if not isinstance(value, string_types):
-        raise Invalid('Must be a string that is a collection name')
-    if not AnsibleCollectionRef.is_valid_collection_name(value):
-        raise Invalid('Must be a collection name')
-    return value
-
-
 def isodate(value, check_deprecation_date=False, is_tombstone=False):
     """Validate a datetime.date or ISO 8601 date string."""
     # datetime.date objects come from YAML dates, these are ok
@@ -219,7 +210,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         Schema({
             ('deprecation'): Any(deprecation_schema),
             ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): Any(*string_types),  # TODO: use something like Any(fqcr, collection_name),
+            ('redirect'): Any(*string_types),
         }, extra=PREVENT_EXTRA),
     )
 
@@ -255,7 +246,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
 
     import_redirection_schema = Any(
         Schema({
-            ('redirect'): Any(fqcr, collection_name),
+            ('redirect'): Any(*string_types),
             # import_redirect doesn't currently support deprecation
         }, extra=PREVENT_EXTRA)
     )
