@@ -16,7 +16,17 @@ from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.six import string_types
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.version import SemanticVersion
+
+
+def fqcr(value):
+    """Validate a FQCR."""
+    if not isinstance(value, string_types):
+        raise Invalid('Must be a string that is a FQCR')
+    if not AnsibleCollectionRef.is_valid_fqcr(value):
+        raise Invalid('Must be a FQCR')
+    return value
 
 
 def isodate(value, check_deprecation_date=False, is_tombstone=False):
@@ -126,12 +136,15 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         with open(path, 'r', encoding='utf-8') as f_path:
             routing = yaml.safe_load(f_path)
     except yaml.error.MarkedYAMLError as ex:
-        print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line +
-                                                  1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+        print('%s:%d:%d: YAML load failed: %s' % (
+            path,
+            ex.context_mark.line + 1 if ex.context_mark else 0,
+            ex.context_mark.column + 1 if ex.context_mark else 0,
+            re.sub(r'\s+', ' ', str(ex)),
+        ))
         return
     except Exception as ex:  # pylint: disable=broad-except
-        print('%s:%d:%d: YAML load failed: %s' %
-              (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
+        print('%s:%d:%d: YAML load failed: %s' % (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
         return
 
     if is_ansible:
@@ -188,12 +201,24 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         Schema({
             ('deprecation'): Any(deprecation_schema),
             ('tombstone'): Any(tombstoning_schema),
+            ('redirect'): fqcr,
+        }, extra=PREVENT_EXTRA),
+    )
+
+    # Adjusted schema for module_utils
+    plugin_routing_schema_mu = Any(
+        Schema({
+            ('deprecation'): Any(deprecation_schema),
+            ('tombstone'): Any(tombstoning_schema),
             ('redirect'): Any(*string_types),
         }, extra=PREVENT_EXTRA),
     )
 
     list_dict_plugin_routing_schema = [{str_type: plugin_routing_schema}
                                        for str_type in string_types]
+
+    list_dict_plugin_routing_schema_mu = [{str_type: plugin_routing_schema_mu}
+                                          for str_type in string_types]
 
     plugin_schema = Schema({
         ('action'): Any(None, *list_dict_plugin_routing_schema),
@@ -207,7 +232,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         ('httpapi'): Any(None, *list_dict_plugin_routing_schema),
         ('inventory'): Any(None, *list_dict_plugin_routing_schema),
         ('lookup'): Any(None, *list_dict_plugin_routing_schema),
-        ('module_utils'): Any(None, *list_dict_plugin_routing_schema),
+        ('module_utils'): Any(None, *list_dict_plugin_routing_schema_mu),
         ('modules'): Any(None, *list_dict_plugin_routing_schema),
         ('netconf'): Any(None, *list_dict_plugin_routing_schema),
         ('shell'): Any(None, *list_dict_plugin_routing_schema),
