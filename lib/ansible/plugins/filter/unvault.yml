@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "2.12"
   short_description: Open an Ansible Vault
   description:
-    - Retrieve your information from an encrypted Ansible Vault
+    - Retrieve your information from an encrypted Ansible Vault.
   positional: secret
   options:
     _input:
@@ -12,11 +12,11 @@ DOCUMENTATION:
       type: string
       required: true
     secret:
-      description: Vault secret, the key that lets you open the vault
+      description: Vault secret, the key that lets you open the vault.
       type: string
       required: true
     vault_id:
-      description: Secret identifier, used internally to try to best match a secret when multiple are provided
+      description: Secret identifier, used internally to try to best match a secret when multiple are provided.
       type: string
       default: 'filter_default'
 

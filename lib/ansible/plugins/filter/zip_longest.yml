@@ -5,23 +5,23 @@ DOCUMENTATION:
   positional: _input, _additional_lists
   description:
       - Make an iterator that aggregates elements from each of the iterables.
-        If the iterables are of uneven length, missing values are filled-in with fillvalue.
+        If the iterables are of uneven length, missing values are filled-in with I(fillvalue).
         Iteration continues until the longest iterable is exhausted.
   notes:
     - This is mostly a passhtrough to Python's C(itertools.zip_longest) function
   options:
     _input:
-      description: Original list
+      description: Original list.
       type: list
       elements: any
       required: yes
     _additional_lists:
-      description: Additional list(s)
+      description: Additional list(s).
       type: list
       elements: any
       required: yes
     fillvalue:
-      description: Filler value to add to output when one of the lists does not contain enough elements to match the others
+      description: Filler value to add to output when one of the lists does not contain enough elements to match the others.
       type: any
 
 EXAMPLES: |
@@ -31,6 +31,6 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: list of lists made of elements matching the positions of the input lists
+    description: List of lists made of elements matching the positions of the input lists.
     type: list
     elements: list

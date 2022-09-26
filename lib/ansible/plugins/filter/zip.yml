@@ -3,22 +3,22 @@ DOCUMENTATION:
   version_added: "2.3"
   short_description: combine list elements
   positional: _input, _additional_lists
-  description: Iterate over several iterables in parallel, producing tuples with an item from each one
+  description: Iterate over several iterables in parallel, producing tuples with an item from each one.
   notes:
-    - This is mostly a passhtrough to Python's C(zip) function
+    - This is mostly a passhtrough to Python's C(zip) function.
   options:
     _input:
-      description: Original list
+      description: Original list.
       type: list
       elements: any
       required: yes
     _additional_lists:
-      description: Additional list(s)
+      description: Additional list(s).
       type: list
       elements: any
       required: yes
     strict:
-      description: If C(True) return an error on mismatching list length, otherwise shortest list determines output
+      description: If C(True) return an error on mismatching list length, otherwise shortest list determines output.
       type: bool
       default: no
 
@@ -38,6 +38,6 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: list of lists made of elements matching the positions of the input lists
+    description: List of lists made of elements matching the positions of the input lists.
     type: list
     elements: list
