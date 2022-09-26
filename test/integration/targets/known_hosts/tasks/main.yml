@@ -96,6 +96,37 @@
     - 'result.diff.before == result.diff.after'
     - 'known_hosts.stdout == known_hosts_v2.stdout'
 
+# https://github.com/ansible/ansible/issues/78598
+# test removing nonexistent host key when the other keys exist for the host
+- name: remove different key
+  known_hosts: 
+    name: example.org
+    key: "{{ example_org_ed25519_key }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: remove nonexistent key with check mode
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_ed25519_key }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  check_mode: yes
+  register: check_mode_result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_different_key_removal
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'check_mode_result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts_v2.stdout == known_hosts_different_key_removal.stdout'
+
 # test removal
 
 - name: remove the host in check mode
@@ -129,6 +160,7 @@
 - name: assert that the key was removed and ordering preserved
   assert:
     that:
+    - 'diff is changed'
     - 'result is changed'
     - '"example.org" not in known_hosts_v3.stdout'
     - 'known_hosts_v3.stdout_lines[0].startswith("example.com")'
