@@ -5,8 +5,8 @@ DOCUMENTATION:
   short_description: Convert variable to YAML string
   description:
     - Converts an Ansible variable into a YAML string representation.
-    - This filter functions as a wrapper to the Python pyaml library's ``yaml.dump()`` function.
-    - Ansible internally auto-converts YAML strings into variable structures so this plugin is used to force it into a YAML string.
+    - This filter functions as a wrapper to the L(Python PyYAML library, https://pypi.org/project/PyYAML/)'s C(yaml.dump) function.
+    - Ansible automatically converts YAML strings into variable structures so this plugin is used to forcibly retain a YAML string.
   positional: _input
   options:
     _input:
@@ -14,14 +14,14 @@ DOCUMENTATION:
       type: raw
       required: true
     indent:
-      description: Number of spaces to indent python structures, mainly used for display to humans
+      description: Number of spaces to indent Python structures, mainly used for display to humans.
       type: integer
     sort_keys:
-      description: Affects sorting of dictionary keys
+      description: Affects sorting of dictionary keys.
       default: True
       type: bool
   notes:
-    - more optoins may be available, see pyyaml docs for details
+    - More options may be available, see L(PyYAML documentation, https://pyyaml.org/wiki/PyYAMLDocumentation) for details.
 
     # TODO: find docs for these
     #allow_unicode:
@@ -48,5 +48,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The YAML serialized string representing the variable structure inputted
+    description: The YAML serialized string representing the variable structure inputted.
     type: string

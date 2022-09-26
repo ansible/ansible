@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: 'historical'
   short_description: comment out a string
   description:
-    - Use a programmign language convention to turn the string into an embeddable comment.
+    - Use programming language conventions to turn the input string into an embeddable comment.
   positional: _input, style
   options:
     _input:
@@ -25,21 +25,21 @@ DOCUMENTATION:
       description: Indicator the end of a comment block, only available for styles that support multiline comments.
       type: string
     newline:
-      description: Indicator of comment end of line, only available for styles that support multiline comments
+      description: Indicator of comment end of line, only available for styles that support multiline comments.
       type: string
       default: '\n'
     prefix:
-      description: Token to start each line inside a comment block, only available for styles that support multiline comments
+      description: Token to start each line inside a comment block, only available for styles that support multiline comments.
       type: string
     prefix_count:
-      description: Number of times to add a prefix at the start of a line, when a prefix exists and is usable
+      description: Number of times to add a prefix at the start of a line, when a prefix exists and is usable.
       type: int
       default: 1
     postfix:
-      description: Indicator of the end of each line inside a comment block, only available for styles that support multiline comments
+      description: Indicator of the end of each line inside a comment block, only available for styles that support multiline comments.
       type: string
     protfix_count:
-      description: Number of times to add a postfix at the end of a line, when a prefix exists and is usable
+      description: Number of times to add a postfix at the end of a line, when a prefix exists and is usable.
       type: int
       default: 1
 

@@ -4,7 +4,7 @@ DOCUMENTATION:
   short_description: Convert JSON string into variable structure
   description:
     - Converts a JSON string representation into an equivalent structured Ansible variable.
-    - Ansible internally auto-converts JSON strings into variable structures in most contexts, this plugin is used for those contexts it doesn't.
+    - Ansible automatically converts JSON strings into variable structures in most contexts, use this plugin in contexts where automatic conversion does not happen.
   notes:
     - This filter functions as a wrapper to the Python C(json.loads) function.
   options:

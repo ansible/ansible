@@ -7,11 +7,11 @@ DOCUMENTATION:
     - Provide a list with the common elements from other lists.
   options:
     _input:
-      description: A list
+      description: A list.
       type: list
       required: true
     _second_list:
-      description: A list
+      description: A list.
       type: list
       required: true
   seealso:
@@ -31,5 +31,5 @@ EXAMPLES: |
   # => [1, 2, 5, 3, 4]
 RETURN:
   _value:
-    description: A list with unique elements common to both lists, also known as a set
+    description: A list with unique elements common to both lists, also known as a set.
     type: list

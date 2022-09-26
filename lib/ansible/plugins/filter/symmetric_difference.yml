@@ -2,16 +2,16 @@ DOCUMENTATION:
   name: symmetric_difference
   author: Brian Coca (@bcoca)
   version_added: "1.4"
-  short_description: different items from 2 lists
+  short_description: different items from two lists
   description:
     - Provide a unique list of all the elements unique to each list.
   options:
     _input:
-      description: A list
+      description: A list.
       type: list
       required: true
     _second_list:
-      description: A list
+      description: A list.
       type: list
       required: true
   seealso:
@@ -31,5 +31,5 @@ EXAMPLES: |
   # => [10, 11, 99]
 RETURN:
   _value:
-    description: A unique list of the elements from 2 lists that are unique to each one
+    description: A unique list of the elements from two lists that are unique to each one.
     type: list

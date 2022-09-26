@@ -1,12 +1,12 @@
 DOCUMENTATION:
   name: md5
   version_added: "historical"
-  short_description: md5 hash of input data
+  short_description: MD5 hash of input data
   description:
-    - Returns a md5 hash of the input data
+    - Returns an L(MD5 hash, https://en.wikipedia.org/wiki/MD5) of the input data
   positional: _input
   notes:
-    - This requires the md5 algorithim to be available on the system, security contexts like FIPS might prevent this.
+    - This requires the MD5 algorithm to be available on the system, security contexts like FIPS might prevent this.
     - MD5 has long been deemed insecure and is not recommended for security related uses.
   options:
     _input:
@@ -20,5 +20,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The md5 hash of the input
+    description: The MD5 hash of the input.
     type: string

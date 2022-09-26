@@ -10,15 +10,15 @@ DOCUMENTATION = r'''
   version_added: "2.4"
   short_description: get components from URL
   description:
-    - Given an URL, spiti it into it's component parts
+    - Split a URL into its component parts.
   positional: _input, query
   options:
     _input:
-      description: url string to split
+      description: URL string to split.
       type: str
       required: true
     query:
-      description: specify a single compoenent to return
+      description: Specify a single component to return.
       type: str
       choices: ["fragment", "hostname", "netloc", "password",  "path",  "port",  "query", "scheme",  "username"]
 '''
@@ -51,8 +51,10 @@ EXAMPLES = r'''
 
 RETURN = r'''
   _value:
-    description: a dictionary with components as keyword and their value
-    type: dict
+    description:
+      - A dictionary with components as keyword and their value.
+      - If I(query) is provided, a string or integer will be returned instead, depending on I(query).
+    type: any
 '''
 
 from urllib.parse import urlsplit

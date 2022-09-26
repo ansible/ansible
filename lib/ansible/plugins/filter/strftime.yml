@@ -3,20 +3,22 @@ DOCUMENTATION:
   version_added: "2.4"
   short_description: date formating
   description:
-    - Using Python's stftime function, take a data formating string and a date/time to create a formated date.
+    - Using Python's C(strftime) function, take a data formating string and a date/time to create a formated date.
   notes:
-    - This is a passthrough to Python's C(shelex.quote)
+    - This is a passthrough to Python's C(stftime).
   positional: _input, second, utc
   options:
     _input:
-      description: A formating string following stftime convetions
+      description:
+        - A formating string following C(stftime) conventions.
+        - See L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior) for a reference.
       type: str
       required: true
     second:
-      description: datetime in seconds from C(epoch) to format, if not suplied C(gmttime()/localtime()) will be used
+      description: Datetime in seconds from C(epoch) to format, if not supplied C(gmttime/localtime) will be used.
       type: int
     utc:
-      description: if time supplied is in UTC
+      description: Whether time supplied is in UTC.
       type: bool
       default: false
 
@@ -39,5 +41,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: a formated date/time
+    description: A formatted date/time string.
     type: str
