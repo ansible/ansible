@@ -23,7 +23,7 @@ DOCUMENTATION:
       type: any
       version_added: '2.8'
   notes:
-    - vars as values are evaluated even if not returned. This is due to them being evaluated before being passed into the filter.
+    - Vars as values are evaluated even when not returned. This is due to them being evaluated before being passed into the filter.
 
 EXAMPLES: |
   # set first 10 volumes rw, rest as dp

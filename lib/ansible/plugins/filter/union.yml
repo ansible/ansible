@@ -4,14 +4,14 @@ DOCUMENTATION:
   version_added: "1.4"
   short_description: union of lists
   description:
-    - Provide a unique list of all the elements of 2 lists.
+    - Provide a unique list of all the elements of two lists.
   options:
     _input:
-      description: A list
+      description: A list.
       type: list
       required: true
     _second_list:
-      description: A list
+      description: A list.
       type: list
       required: true
   seealso:
@@ -31,5 +31,5 @@ EXAMPLES: |
   # => [1, 2, 5, 1, 3, 4, 10, 11, 99]
 RETURN:
   _value:
-    description: A unique list of all the elements from both lists
+    description: A unique list of all the elements from both lists.
     type: list

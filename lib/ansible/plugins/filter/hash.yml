@@ -3,17 +3,17 @@ DOCUMENTATION:
   version_added: "1.9"
   short_description: hash of input data
   description:
-    - Returns a configurable hash (sha1) hash of the input data
+    - Returns a configurable hash of the input data. Uses L(SHA-1, https://en.wikipedia.org/wiki/SHA-1) by default.
   positional: _input
   options:
     _input:
-      description: data to checksum
+      description: Data to checksum.
       type: raw
       required: true
     hashtype:
       description:
-        - type of algorighim to produce the hash
-        - the list of available choices depends on the installed Python's hashlib
+        - Type of algorithm to produce the hash.
+        - The list of available choices depends on the installed Python's hashlib.
       type: string
       default: sha1
 EXAMPLES: |
@@ -24,5 +24,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The checksum (sha1) of the input
+    description: The checksum of the input, as configured in I(hashtype).
     type: string

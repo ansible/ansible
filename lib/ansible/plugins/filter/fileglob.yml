@@ -2,8 +2,8 @@ DOCUMENTATION:
   name: fileglob
   short_description: explode a path glob to matching files
   description:
-    - return a list of files that matches the supplied path glob pattern
-    - filters run on the controller, so the files are matched from the controller's file system
+    - Return a list of files that matches the supplied path glob pattern.
+    - Filters run on the controller, so the files are matched from the controller's file system.
   positional: _input
   options:
     _input:
@@ -19,3 +19,4 @@ RETURN:
   _value:
     description: List of files matched.
     type: list
+    elements: string

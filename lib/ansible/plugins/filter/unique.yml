@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Creates a list of unique elements (a set) from the provided input list.
   options:
     _input:
-      description: A list
+      description: A list.
       type: list
       required: true
   seealso:
@@ -26,5 +26,5 @@ EXAMPLES: |
   # => [1, 2, 5, 3, 4, 10]
 RETURN:
   _value:
-    description: A list with unique elements, also known as a set
+    description: A list with unique elements, also known as a set.
     type: list

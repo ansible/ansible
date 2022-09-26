@@ -2,9 +2,9 @@ DOCUMENTATION:
   name: basename
   author: ansible core team
   version_added: "1.5"
-  short_description: Returns a path with '~' translation.
+  short_description: Returns a path with C(~) translation.
   description:
-    - Translates `~` in a path to the proper user's home directory.
+    - Translates C(~) in a path to the proper user's home directory.
   options:
     _input:
       description: A string that contains a path.

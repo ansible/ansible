@@ -4,29 +4,29 @@ DOCUMENTATION:
   version_added: "2.12"
   short_description: vault your secrets
   description:
-    - Put your information into an encrypted Ansible Vault
+    - Put your information into an encrypted Ansible Vault.
   positional: secret
   options:
     _input:
-      description: data to vault
+      description: Data to vault.
       type: string
       required: true
     secret:
-      description: Vault secret, the key that lets you open the vault
+      description: Vault secret, the key that lets you open the vault.
       type: string
       required: true
     salt:
       description:
-        - Encryption salt, will be random if not provided
-        - While providing one makes the resulting encrypted string reproducible, it can lower the security of the vault
+        - Encryption salt, will be random if not provided.
+        - While providing one makes the resulting encrypted string reproducible, it can lower the security of the vault.
       type: string
     vault_id:
-      description: Secret identifier, used internally to try to best match a secret when multiple are provided
+      description: Secret identifier, used internally to try to best match a secret when multiple are provided.
       type: string
       default: 'filter_default'
     wrap_object:
       description:
-        - This toggle can force the return of an C(AnsibleVaultEncryptedUnicode) string object, when C(False), you get a simple string
+        - This toggle can force the return of an C(AnsibleVaultEncryptedUnicode) string object, when C(False), you get a simple string.
         - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
       type: bool
       default: False
@@ -44,5 +44,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The vault string that contains the secret data (or AnsibleVaultEncryptedUnicode string object)
+    description: The vault string that contains the secret data (or C(AnsibleVaultEncryptedUnicode) string object).
     type: string

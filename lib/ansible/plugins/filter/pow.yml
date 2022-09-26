@@ -3,18 +3,18 @@ DOCUMENTATION:
   version_added: "1.9"
   short_description: power of (math operation)
   description:
-    - math operation that returns the N power of inputed number X ^ N
+    - Math operation that returns the Nth power of inputed number, C(X ^ N).
   notes:
-    - This is a passthrough to Python's C(itertools.product)
+    - This is a passthrough to Python's C(math.pow).
   positional: _input, _power
   options:
     _input:
-      description: number to power up!
-      type: int
+      description: The base.
+      type: float
       required: true
     _power:
-      description: which power to use
-      type: int
+      description: Which power (exponent) to use.
+      type: float
       required: true
 
 EXAMPLES: |
@@ -30,5 +30,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: resulting number
-    type: int
+    description: Resulting number.
+    type: float

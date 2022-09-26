@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: cast into a boolean
   description:
-    - Attempt to cast the input into a boolean (C(True) or C(False)) value
+    - Attempt to cast the input into a boolean (C(True) or C(False)) value.
   positional: _input
   options:
     _input:
@@ -24,5 +24,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The boolean resulting of casting the input expression into a C(True) or C(False) value
+    description: The boolean resulting of casting the input expression into a C(True) or C(False) value.
     type: bool

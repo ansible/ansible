@@ -3,21 +3,21 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: split a string into a list
   description:
-    - Using Python's text object method C(split()) we turn strings into lists via a 'spliting character'.
+    - Using Python's text object method C(split) we turn strings into lists via a 'spliting character'.
   notes:
-    - This is a passthrough to Python's C(shelex.quote)
+    - This is a passthrough to Python's C(str.split).
   positional: _input, _split_string
   options:
     _input:
-      description: A string to split
+      description: A string to split.
       type: str
       required: true
     _split_string:
-      description: a string on which to split the original
+      description: A string on which to split the original.
       type: str
       default: ' '
 
-EXAMPLES:
+EXAMPLES: |
 
     # listjojo => [ "jojo", "is", "a" ]
     listjojo: "{{ 'jojo is a' | split }}"
@@ -27,6 +27,6 @@ EXAMPLES:
 
 RETURN:
   _value:
-    description: list of substrings split from the original
+    description: List of substrings split from the original.
     type: list
     elements: str

@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "2.3"
   short_description: show input data type
   description:
-    - Returns the equivalent of Python's ``type()`` function
+    - Returns the equivalent of Python's C(type) function.
   options:
     _input:
       description: Variable or expression of which you want to determine type.
