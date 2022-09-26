@@ -1,0 +1,4 @@
+minor_changes:
+  - "ansible-test runtime-metadata sanity test - ensure that ``redirect`` entries in ``meta/runtime.yml`` contain collection names, except for ``module_utils`` plugin redirects and ``import_redirect`` redirects (https://github.com/ansible/ansible/pull/78802)."
+bugfixes:
+  - "ansible-test runtime-metadata sanity test - do not crash on YAML parsing errors without a context mark (https://github.com/ansible/ansible/pull/78802)."
