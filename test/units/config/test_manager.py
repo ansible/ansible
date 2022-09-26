@@ -65,11 +65,6 @@ ensure_test_data = [
     ('None', 'none', type(None))
 ]
 
-plugin_test_data = [
-    ( 'vars', 'host_group_vars', {} ),
-    ( 'lookup', 'notreal', {} ),
-]
-
 
 class TestConfigManager:
     @classmethod
@@ -147,10 +142,3 @@ class TestConfigManager:
 
         actual_value = ensure_type(vault_var, value_type)
         assert actual_value == "vault text"
-
-    @pytest.mark.parametrize("plugin_type name config_def"), plugin_test_data))
-    def test_initialize_plugin_config(plugin_type, name, configdef):
-        pass
-        #self.manager.initialize_plugin_config(plugin_type, name, configdef)
-        #self.manager.has_configuration_definition(type_name, name)
-        #self.manager.get_configuration_definition(type_name, name)
