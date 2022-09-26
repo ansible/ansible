@@ -3,25 +3,25 @@ DOCUMENTATION:
   version_added: "2.6"
   short_description: randomize a list
   description:
-    - Take the elements of the input list and return in a random order
+    - Take the elements of the input list and return in a random order.
   positional: _input
   options:
     _input:
-      description: A number or list to randomize
+      description: A number or list to randomize.
       type: list
       elements: any
       required: true
     seed:
-      description: if specified use a pseudo random selection instead (repeatable)
+      description: If specified use a pseudo random selection instead (repeatable).
       type: str
 
-EXAMPLES:
+EXAMPLES: |
 
   randomized_list: "{{ ['a','b','c'] | shuffle}}"
   per_host_repeatable: "{{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}"
 
 RETURN:
   _value:
-    description: random number or list element
+    description: Random number or list element.
     type: list
     elements: any

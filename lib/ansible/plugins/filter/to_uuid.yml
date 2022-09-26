@@ -3,15 +3,15 @@ DOCUMENTATION:
   version_added: "2.9"
   short_description: namespaced UUID generator
   description:
-    - Use to generate namespeced Universal Unique ID
+    - Use to generate namespeced Universal Unique ID.
   positional: _input, namespace
   options:
     _input:
-      description: string to use as base fo the UUID
+      description: String to use as base fo the UUID.
       type: str
       required: true
     namespace:
-      description: UUID nsamespace to use
+      description: UUID namespace to use.
       type: str
       default: 361E6D51-FAEC-444A-9079-341386DA8E2E
 
@@ -26,5 +26,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: generated UUID
+    description: Generated UUID.
     type: string

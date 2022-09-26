@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Returns the last name component of a path, what is left in the string that is not 'dirname'.
   options:
     _input:
-      description: A path
+      description: A path.
       type: path
       required: true
   seealso:

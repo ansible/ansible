@@ -5,7 +5,7 @@ DOCUMENTATION:
   short_description: split a path into root and file extension
   positional: _input
   description:
-    - Returns a list of two, with the elements consisting filename root and extension
+    - Returns a list of two, with the elements consisting of filename root and extension.
   options:
     _input:
       description: A path.

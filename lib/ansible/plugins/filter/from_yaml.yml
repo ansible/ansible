@@ -4,9 +4,9 @@ DOCUMENTATION:
   short_description: Convert YAML string into variable structure
   description:
     - Converts a YAML string representation into an equivalent structured Ansible variable.
-    - Ansible internally auto-converts YAML strings into variable structures in most contexts, this plugin is used for those contexts it doesn't.
+    - Ansible automatically converts YAML strings into variable structures in most contexts, use this plugin in contexts where automatic conversion does not happen.
   notes:
-    - This filter functions as a wrapper to the Python pyyaml library's ``yaml.safe_load()`` function.
+    - This filter functions as a wrapper to the L(Python pyyaml library, https://pypi.org/project/PyYAML/)'s C(yaml.safe_load) function.
   options:
     _input:
       description: A YAML string.
@@ -21,5 +21,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: the variable resuliting from deserializing the YAML document.
+    description: The variable resulting from deserializing the YAML document.
     type: raw

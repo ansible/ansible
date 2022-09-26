@@ -3,19 +3,20 @@ DOCUMENTATION:
   version_added: "1.9"
   short_description: log of (math operation)
   description:
-    - math operation that returns the N logarithim of inputed number logN(X)
+    - Math operation that returns the L(logarithm, https://en.wikipedia.org/wiki/Logarithm) to base N of the input number.
+    - By default, computes the L(natural logarithm, https://en.wikipedia.org/wiki/Natural_logarithm).
   notes:
-    - This is a passthrough to Python's C(math.log)
+    - This is a passthrough to Python's C(math.log).
   positional: _input, base
   options:
     _input:
-      description: number to operate on
-      type: int
+      description: Number to operate on.
+      type: float
       required: true
     base:
-      description: which base to use
-      type: int
-      default: 10
+      description: Which base to use. Defaults to L(Euler's number, https://en.wikipedia.org/wiki/Euler%27s_number).
+      type: float
+      default: 2.718281828459045
 
 EXAMPLES: |
 
@@ -28,5 +29,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: resulting number
-    type: int
+    description: Resulting number.
+    type: float
