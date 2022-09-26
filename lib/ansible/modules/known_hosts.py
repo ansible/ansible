@@ -143,6 +143,12 @@ def enforce_state(module, params):
 
     params['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
 
+    # check if we are trying to remove a non matching key,
+    # in that case return with no change to the host
+    if state == 'absent' and not found_line and key:
+        params['changed'] = False
+        return params
+
     # We will change state if found==True & state!="present"
     # or found==False & state=="present"
     # i.e found XOR (state=="present")
