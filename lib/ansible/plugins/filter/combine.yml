@@ -1,3 +1,4 @@
+---
 DOCUMENTATION:
   name: combine
   version_added: "2.0"
@@ -20,24 +21,35 @@ DOCUMENTATION:
       type: bool
       default: false
     list_merge:
-      describe: Behaviour when encountering list elements.
+      description: |
+        Behaviour when encountering list elements.
+
+        + `replace`: overwrite older entries with newer ones
+        + `keep`: discard newer entries
+        + `append`: append newer entries to the older ones
+        + `prepend`: insert newer entries in front of the older ones
+        + `append_rp`: append newer entries to the older ones, overwrite duplicates
+        + `prepend_rp`: insert newer entries in front of the older ones, discard duplicates
+
       type: str
       default: replace
       choices:
-        replace: overwrite older entries with newer ones
-        keep: discard newer entries
-        append: append newer entries to the older ones
-        prepend: insert newer entries in front of the older ones
-        append_rp: append newer entries to the older ones, overwrite duplicates
-        prepend_rp: insert newer entries in front of the older ones, discard duplicates
+        - replace
+        - keep
+        - append
+        - prepend
+        - append_rp
+        - prepend_rp
 
 EXAMPLES: |
 
     # ab => {'a':1, 'b':3, 'c': 4}
     ab: {{ {'a':1, 'b':2} | combine({'b':3, 'c':4}) }}
 
-    # ab => {'a':1, 'b':3, 'c': 4}
     many: "{{ dict1 | combine(dict2, dict3, dict4) }}"
+
+    # deep => {'a':1, 'b': {'c': {'d': 42}}}
+    deep: {{ {'a':1, 'b': {'c': {'d': 12}}} | combine({'b': {'c': {'d': 42}}}) }}
 
 RETURN:
   _value:
