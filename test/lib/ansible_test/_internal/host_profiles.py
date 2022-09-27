@@ -565,7 +565,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             display.info('Checking SSH debug output...')
             display.info(last_error)
 
-            if not self.args.delegate:
+            if not self.args.delegate and not self.args.host_path:
                 self.on_target_failure()  # when the controller is not delegated, report failures immediately
 
             raise ApplicationError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
