@@ -1,0 +1,36 @@
+major_changes:
+  - ansible-test - Docker and Podman are now supported on hosts with cgroup v2 unified. 
+                   Previously only cgroup v1 and cgroup v2 hybrid were supported.
+  - ansible-test - Podman now works on container hosts without systemd.
+                   Previously only some containers worked, while others required rootfull or rootless Podman,
+                   but would not work with both. Some containers did not work at all.
+  - ansible-test - When additional cgroup setup is required on the container host, this will be automatically detected.
+                   Instructions on how to configure the host will be provided in the error message shown.
+minor_changes:
+  - ansible-test - Containers that require the ``crun`` runtime will now use it automatically when run under Podman.
+                   If ``crun`` is unavailable a clear error message will be displayed.
+                   Previously the container would fail to run and no useful error was provided.
+  - ansible-test - When using Podman, ansible-test will detect if the loginuid used in containers is incorrect.
+                   When this occurs a warning is displayed and the container is run with the AUDIT_CONTROL capability.
+                   Previously containers would fail under this situation, with no useful warnings or errors given.
+  - ansible-test - Failure to connect to a container over SSH now results in a clear error.
+                   Previously tests would be attempted even after initial connection attempts failed.
+  - ansible-test - Warnings are now shown when using containers that were built with VOLUME instructions.
+  - ansible-test - Unit tests now support network disconnect by default when running under Podman.
+                   Previously this feature only worked by default under Docker.
+  - ansible-test - Additional log details are shown when containers fail to start or SSH connections to containers fail.
+  - ansible-test - Containers included with ansible-test no longer disable seccomp by default.
+  - ansible-test - A new ``cgroup`` option is available when running custom containers.
+                   This option can be used to indicate a container requires cgroup v1 or that it does not use cgroup.
+                   The default behavior assumes the container works with cgroup v2 (as well as v1).
+  - ansible-test - A new ``audit`` option is available when running custom containers.
+                   This option can be used to indicate a container requires the AUDIT_WRITE capability.
+                   Containers with a patched OpenSSH requiring this capability will need this option when using Podman.
+  - ansible-test - More details are provided about an instance when provisioning fails.
+  - ansible-test - Connection failures to remote provisioned hosts now show failure details as a warning.
+bugfixes:
+  - ansible-test - Multiple containers now work under podman without specifying the ``--docker-network`` option.
+known_issues:
+  - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
+                   Podman should work with SELinux in enforcing mode.
+  - ansible-test - Containers may not work under WSL or WSL2.
