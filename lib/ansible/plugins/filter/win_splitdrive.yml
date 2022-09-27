@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: win_splitdrive
   author: ansible core team
   version_added: "2.0"
-  short_description: split a Windows path by the drive letter
+  short_description: Split a Windows path by the drive letter
   description:
     - Returns a list with the first component being the drive letter and the second, the rest of the path.
   options:

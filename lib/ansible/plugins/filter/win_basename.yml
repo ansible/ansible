@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: win_basename
   author: ansible core team
   version_added: "2.0"
-  short_description: get a Windows path's base name
+  short_description: Get a Windows path's base name
   description:
     - Returns the last name component of a Windows path, what is left in the string that is not 'win_dirname'.
   options:
