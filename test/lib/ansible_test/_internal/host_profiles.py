@@ -119,6 +119,10 @@ TPosixConfig = t.TypeVar('TPosixConfig', bound=PosixConfig)
 TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
 
 
+class HostConnectionError(ApplicationError):
+    """Raised when the initial connection during host profile setup has failed and all retries have been exhausted."""
+
+
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
     def __init__(self, reason: str) -> None:
@@ -568,7 +572,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             if not self.args.delegate and not self.args.host_path:
                 self.on_target_failure()  # when the controller is not delegated, report failures immediately
 
-            raise ApplicationError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
+            raise HostConnectionError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -702,7 +706,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
                 else:
                     return
 
-            raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
+            raise HostConnectionError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -798,7 +802,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
                 display.warning(str(ex))
                 time.sleep(10)
 
-        raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
+        raise HostConnectionError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -934,7 +938,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
                 else:
                     return
 
-        raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
+        raise HostConnectionError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
