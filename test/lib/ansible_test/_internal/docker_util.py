@@ -366,7 +366,7 @@ def get_docker_container_id() -> t.Optional[str]:
     return container_id
 
 
-def get_docker_preferred_network_name(args: EnvironmentConfig) -> str:
+def get_docker_preferred_network_name(args: EnvironmentConfig) -> str | None:
     """
     Return the preferred network name for use with Docker. The selection logic is:
     - the network selected by the user with `--docker-network`
@@ -390,6 +390,14 @@ def get_docker_preferred_network_name(args: EnvironmentConfig) -> str:
             # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
             container = docker_inspect(args, current_container_id, always=True)
             network = container.get_network_name()
+
+    # The default docker behavior puts containers on the same network.
+    # The default podman behavior puts containers on isolated networks which don't allow communication between containers or network disconnect.
+    # Starting with podman version 2.1.0 rootless containers are able to join networks.
+    # Starting with podman version 2.2.0 containers can be disconnected from networks.
+    # To maintain feature parity with docker, detect and use the default "podman" network when running under podman.
+    if network is None and require_docker().command == 'podman' and docker_network_inspect(args, 'podman', always=True):
+        network = 'podman'
 
     get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
 
@@ -702,6 +710,33 @@ def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = Fal
 
     if len(items) == 1:
         return DockerImageInspect(args, items[0])
+
+    return None
+
+
+class DockerNetworkInspect:
+    """The results of `docker network inspect` for a single network."""
+    def __init__(self, args: EnvironmentConfig, inspection: dict[str, t.Any]) -> None:
+        self.args = args
+        self.inspection = inspection
+
+
+def docker_network_inspect(args: EnvironmentConfig, network: str, always: bool = False) -> DockerNetworkInspect | None:
+    """
+    Return the results of `docker network inspect` for the specified network or None if the network does not exist.
+    """
+    try:
+        stdout = docker_command(args, ['network', 'inspect', network], capture=True, always=always)[0]
+    except SubprocessError as ex:
+        stdout = ex.stdout
+
+    if args.explain and not always:
+        items = []
+    else:
+        items = json.loads(stdout)
+
+    if len(items) == 1:
+        return DockerNetworkInspect(args, items[0])
 
     return None
 
