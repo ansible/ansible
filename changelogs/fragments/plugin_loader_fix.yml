@@ -1,0 +1,2 @@
+bugfixes:
+  - plugin loader, fix detection for existing configuration before initializing for a plugin
