@@ -700,8 +700,8 @@ def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = Fal
     """
     try:
         stdout = docker_command(args, ['image', 'inspect', image], capture=True, always=always)[0]
-    except SubprocessError as ex:
-        stdout = ex.stdout
+    except SubprocessError:
+        stdout = '[]'
 
     if args.explain and not always:
         items = []
@@ -727,8 +727,8 @@ def docker_network_inspect(args: EnvironmentConfig, network: str, always: bool =
     """
     try:
         stdout = docker_command(args, ['network', 'inspect', network], capture=True, always=always)[0]
-    except SubprocessError as ex:
-        stdout = ex.stdout
+    except SubprocessError:
+        stdout = '[]'
 
     if args.explain and not always:
         items = []
