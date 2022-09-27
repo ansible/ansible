@@ -212,6 +212,9 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     def setup(self) -> None:
         """Perform out-of-band setup before delegation."""
 
+    def on_target_failure(self) -> None:
+        """Executed during failure handling if this profile is a target."""
+
     def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
 
@@ -559,20 +562,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 else:
                     return
 
-            display.info('Checking container logs...')
-            docker_logs(self.args, self.container_name)
-
-            if self.config.cgroup != 'none':
-                # Containers with cgroup support are assumed to be running systemd.
-                display.info('Checking container systemd logs...')
-
-                try:
-                    docker_exec(self.args, self.container_name, ['journalctl'], capture=False)
-                except SubprocessError as ex:
-                    display.error(str(ex))
-
             display.info('Checking SSH debug output...')
             display.info(last_error)
+
+            if not self.args.delegate:
+                self.on_target_failure()  # when the controller is not delegated, report failures immediately
 
             raise ApplicationError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
 
@@ -602,6 +596,24 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     def get_working_directory(self) -> str:
         """Return the working directory for the host."""
         return '/root'
+
+    def on_target_failure(self) -> None:
+        """Executed during failure handling if this profile is a target."""
+        display.info(f'Checking container "{self.container_name}" logs...')
+
+        try:
+            docker_logs(self.args, self.container_name)
+        except SubprocessError as ex:
+            display.error(str(ex))
+
+        if self.config.cgroup != 'none':
+            # Containers with cgroup support are assumed to be running systemd.
+            display.info(f'Checking container "{self.container_name}" systemd logs...')
+
+            try:
+                docker_exec(self.args, self.container_name, ['journalctl'], capture=False)
+            except SubprocessError as ex:
+                display.error(str(ex))
 
     def get_docker_run_options(self) -> list[str]:
         """Return a list of options needed to run the container."""

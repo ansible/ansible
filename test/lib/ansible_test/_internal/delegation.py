@@ -213,6 +213,10 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
             if host_delegation:
                 download_results(args, con, content_root, success)
 
+            if not success:
+                for target in host_state.target_profiles:
+                    target.on_target_failure()  # when the controller is delegated, report failures after delegation fails
+
 
 def insert_options(command, options):
     """Insert addition command line options into the given command and return the result."""
