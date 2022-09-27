@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Returns a list with the first component being the drive letter and the second, the rest of the path.
   options:
     _input:
-      description: A Windows path
+      description: A Windows path.
       type: str
       required: true
 
@@ -17,13 +17,13 @@ EXAMPLES: |
   {{ mypath | win_splitdrive }}
 
   # just the drive letter
-  {{ mypath | win_splitdrive|first }}
+  {{ mypath | win_splitdrive | first }}
 
   # path w/o drive letter
-  {{ mypath | win_splitdrive|last }}
+  {{ mypath | win_splitdrive | last }}
 
 RETURN:
   _value:
-    description: List in which the first element is the drive letter and the 2nd the rest of the path
+    description: List in which the first element is the drive letter and the second the rest of the path.
     type: list
     elements: str

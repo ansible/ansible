@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Returns the last name component of a Windows path, what is left in the string that is not 'win_dirname'.
   options:
     _input:
-      description: A Windows path
+      description: A Windows path.
       type: str
       required: true
   seealso:
