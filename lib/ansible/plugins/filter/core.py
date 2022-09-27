@@ -616,6 +616,7 @@ class FilterModule(object):
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
             'commonpath': commonpath,
+            'normpath': partial(unicode_wrap, os.path.normpath),
 
             # file glob
             'fileglob': fileglob,

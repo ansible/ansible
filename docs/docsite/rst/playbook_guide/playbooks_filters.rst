@@ -2021,7 +2021,6 @@ To join one or more path components:
 
 .. versionadded:: 2.10
 
-
 Manipulating strings
 ====================
 
