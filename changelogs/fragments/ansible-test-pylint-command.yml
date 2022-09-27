@@ -1,2 +1,2 @@
 minor_changes:
-  - ansible-test - Improve consistency of executed ``pylint`` commands.
+  - ansible-test - Improve consistency of executed ``pylint`` commands by making the plugins ordered.
