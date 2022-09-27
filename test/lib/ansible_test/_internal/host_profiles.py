@@ -622,7 +622,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     def get_docker_run_options(self) -> list[str]:
         """Return a list of options needed to run the container."""
         options = [
-            # These temporary mount points need to be created at run time.
+            # These temporary mount points need to be created at run time when using docker.
+            # They are automatically provided by podman, but will be overridden by VOLUME instructions for the container, if they exist.
+            # If supporting containers with VOLUME instructions is not desired, these options could be limited to use with docker.
+            # See: https://github.com/containers/podman/pull/1318
             # Previously they were handled by the VOLUME instruction during container image creation.
             # However, that approach creates anonymous volumes when running the container, which are then left behind after the container is deleted.
             # These options eliminate the need for the VOLUME instruction, and override it if they are present.
