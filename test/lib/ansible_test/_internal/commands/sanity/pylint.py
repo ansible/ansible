@@ -226,7 +226,7 @@ class PylintTest(SanitySingleVersion):
             '--max-complexity', '20',
             '--rcfile', rcfile,
             '--output-format', 'json',
-            '--load-plugins', ','.join(load_plugins),
+            '--load-plugins', ','.join(sorted(load_plugins)),
         ] + paths
 
         if data_context().content.collection:
