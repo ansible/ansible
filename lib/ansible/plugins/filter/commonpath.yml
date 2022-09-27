@@ -16,7 +16,7 @@ DOCUMENTATION:
       plugin_type: filter
 EXAMPLES: |
 
-  # To get the longest common path(ex. '/foo/bar') from the given list of paths(ex. ['/foo/bar/foobar','/foo/bar']) 
+  # To get the longest common path (ex. '/foo/bar') from the given list of paths (ex. ['/foo/bar/foobar','/foo/bar'])
   {{ listofpaths | commonpath }}
 
 RETURN:
