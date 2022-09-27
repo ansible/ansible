@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: win_splitdrive
+  author: ansible core team
+  version_added: "2.0"
+  short_description: Split a Windows path by the drive letter
+  description:
+    - Returns a list with the first component being the drive letter and the second, the rest of the path.
+  options:
+    _input:
+      description: A Windows path.
+      type: str
+      required: true
+
+EXAMPLES: |
+
+  # To get the last name of a file Windows path, like ['C', '\Users\asdf\foo.txt'] out of 'C:\Users\asdf\foo.txt'
+  {{ mypath | win_splitdrive }}
+
+  # just the drive letter
+  {{ mypath | win_splitdrive | first }}
+
+  # path w/o drive letter
+  {{ mypath | win_splitdrive | last }}
+
+RETURN:
+  _value:
+    description: List in which the first element is the drive letter and the second the rest of the path.
+    type: list
+    elements: str
