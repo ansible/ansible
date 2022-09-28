@@ -124,6 +124,9 @@ class _AnsibleTraversableResources:
 
     def files(self):
         package = self._package
+        parts = package.split('.')
+        if parts[0] == 'ansible_collections' and len(parts) < 3:
+            raise TypeError('Cannot traverse ansible_collection packages below an individual collection')
 
         if isinstance(package, string_types):
             package = spec_from_loader(package, self._loader)
