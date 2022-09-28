@@ -70,8 +70,9 @@ def get_test_scenarios() -> list[TestScenario]:
         raise ApplicationError(f'No supported container engines found: {", ".join(supported_engines)}')
 
     with open(pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt')) as docker_file:
-        # check all containers other than default (base, which default extends, will be tested instead)
-        entries = {name: value for name, value in [parse_completion_entry(line) for line in docker_file.read().splitlines()] if name != 'default'}
+        # TODO: consider including testing for the collection default image
+        entries = {name: value for name, value in [parse_completion_entry(line) for line in docker_file.read().splitlines()]
+                   if value.get('context') != 'collection'}
 
     scenarios: list[TestScenario] = []
 
@@ -117,7 +118,13 @@ def get_test_scenarios() -> list[TestScenario]:
 def run_test(scenario: TestScenario) -> TestResult:
     display.section(f'Testing {scenario}')
 
-    command = ['ansible-test', 'integration', 'split', '--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v']
+    integration = ['ansible-test', 'integration', 'split']
+    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v']
+
+    commands = [
+        [*integration, *integration_options],
+        [*integration, '--controller', 'docker:default', *integration_options],
+    ]
 
     env: dict[str, str] = {}
 
@@ -135,17 +142,17 @@ def run_test(scenario: TestScenario) -> TestResult:
         )
 
         become_cmd = ['ssh', f'{scenario.user}@{scenario.hostname}']
-        test_command = ['sh', '-c'] + [f'{format_env(env)} {shlex.join(command)}']
+        test_commands = [['sh', '-c'] + [f'{format_env(env)} {shlex.join(command)}'] for command in commands]
     elif scenario.user:
         # Use SSH to run the tests so that /proc/self/loginuid reflects the user we're testing as.
         # Without this, the loginuid will be set to a value other than 4294967295 (-1) even though we've switched to root after login.
         become_cmd = ['ssh', f'{scenario.user}@localhost']
-        test_command = become_cmd + [f'cd ~/ansible; {format_env(env)} {sys.executable} bin/{shlex.join(command)}']
+        test_commands = [become_cmd + [f'cd ~/ansible; {format_env(env)} {sys.executable} bin/{shlex.join(command)}'] for command in commands]
     else:
         # Run as the current user, which is root.
         # However, our loginuid ins't root since sudo, su, etc. was used after login.
         become_cmd = ['sh', '-c']
-        test_command = become_cmd + [f'{format_env(env)} {shlex.join(command)}']
+        test_commands = [become_cmd + [f'{format_env(env)} {shlex.join(command)}'] for command in commands]
 
     if scenario.engine == 'podman' and scenario.user == UNPRIVILEGED_USER_NAME:
         # When testing podman we need to make sure that the overlay filesystem is used instead of vfs.
@@ -188,7 +195,8 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_selinux:
             run_command('setenforce', 'permissive')
 
-        run_command(*test_command)
+        for test_command in test_commands:
+            run_command(*test_command)
     except SubprocessError as ex:
         message = str(ex)
         display.error(f'{scenario} {message}')
