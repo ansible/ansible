@@ -28,6 +28,8 @@ minor_changes:
                    Containers with a patched OpenSSH requiring this capability will need this option when using Podman.
   - ansible-test - More details are provided about an instance when provisioning fails.
   - ansible-test - Connection failures to remote provisioned hosts now show failure details as a warning.
+  - ansible-test - When setting the max open files for containers, the container host's limit will be checked.
+                   If the host limit is lower than the preferred value, it will be used and a warning will be shown.
 bugfixes:
   - ansible-test - Multiple containers now work under podman without specifying the ``--docker-network`` option.
 known_issues:

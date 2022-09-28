@@ -583,12 +583,14 @@ class Bootstrapper(metaclass=abc.ABCMeta):
             CGROUP_SYSTEMD.chmod(0o777)
 
         # Alpine defaults to a 4K hard limit, which prevents non-root users from setting a higher limit.
-        # This prevents rootless podman from working with the `--ulimit 10240` option used by ansible-test.
-        # By raising the current hard limit (as root) and restarting SSHD, the limit of regular users logging in using SSH will increase.
-        import resource
+        # This condition is detected by ansible-test and the current hard limit is used instead of the preferred value.
+        # The following code could be used to change the limit if the fallback behavior is unwanted.
 
-        resource.setrlimit(resource.RLIMIT_NOFILE, (1024, 10240))
-        run_command('service', 'sshd', 'restart')
+        # By raising the current hard limit (as root) and restarting SSHD, the limit of regular users logging in using SSH will increase.
+        # import resource
+        #
+        # resource.setrlimit(resource.RLIMIT_NOFILE, (1024, 10240))
+        # run_command('service', 'sshd', 'restart')
 
     @classmethod
     def configure_source_trees(cls):

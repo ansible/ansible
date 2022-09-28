@@ -42,6 +42,10 @@ DOCKER_COMMANDS = [
 
 UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:1.0.0'
 
+# Max number of open files in a docker container.
+# Passed with --ulimit option to the docker run command.
+MAX_NUM_OPEN_FILES = 10240
+
 
 class DockerInfo:
     """The results of `docker info` for the container runtime."""
@@ -177,6 +181,45 @@ def detect_container_loginuid(args: EnvironmentConfig) -> int | None:
     detect_container_loginuid.loginuid = loginuid  # type: ignore[attr-defined]
 
     return loginuid
+
+
+@mutex
+def detect_container_max_num_open_files(args: EnvironmentConfig) -> int:
+    """Return the max number of open files supported by the container host to run containers."""
+    try:
+        return detect_container_max_num_open_files.hard_limit  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    cmd = ['sh', '-c', 'cat /proc/sys/fs/nr_open && ulimit -Hn']
+    stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd=cmd)
+    lines = stdout.splitlines()
+    system_limit, hard_limit = int(lines[0]), int(lines[1])
+
+    if hard_limit < MAX_NUM_OPEN_FILES and hard_limit < system_limit and require_docker().command == 'docker':
+        # Podman will use the highest possible limits, up to its default of 1M.
+        # See: https://github.com/containers/podman/blob/009afb50b308548eb129bc68e654db6c6ad82e7a/pkg/specgen/generate/oci.go#L39-L58
+        # Docker limits are less predictable. They could be the system limit or the user's soft limit.
+        # If Docker is running as root it should be able to use the system limit.
+        # When Docker reports a limit below the preferred value and the system limit, attempt to use the preferred value, up to the system limit.
+        options = ['--ulimit', f'nofile={min(system_limit, MAX_NUM_OPEN_FILES)}']
+        cmd = ['sh', '-c', 'ulimit -Hn']
+
+        try:
+            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', options=options, cmd=cmd)
+        except SubprocessError as ex:
+            display.warning(str(ex))
+        else:
+            hard_limit = int(stdout)
+
+    display.info(f'Container host max open files: {hard_limit}', verbosity=1)
+
+    if hard_limit < MAX_NUM_OPEN_FILES:
+        display.warning(f'Unable to set container max open files to {MAX_NUM_OPEN_FILES}. Using container host limit of {hard_limit} instead.')
+
+    detect_container_max_num_open_files.hard_limit = hard_limit  # type: ignore[attr-defined]
+
+    return hard_limit
 
 
 def run_utility_container(args: EnvironmentConfig, name: str, cmd: list[str], options: list[str] | None = None, remove: bool = True) -> str:

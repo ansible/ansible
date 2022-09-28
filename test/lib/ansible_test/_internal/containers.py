@@ -45,6 +45,7 @@ from .docker_util import (
     get_docker_host_ip,
     get_podman_host_ip,
     require_docker,
+    detect_container_max_num_open_files,
 )
 
 from .ansible_util import (
@@ -84,10 +85,6 @@ from .connections import (
 # information about support containers provisioned by the current ansible-test instance
 support_containers: dict[str, ContainerDescriptor] = {}
 support_containers_mutex = threading.Lock()
-
-# Max number of open files in a docker container.
-# Passed with --ulimit option to the docker run command.
-MAX_NUM_OPEN_FILES = 10240
 
 
 class HostType:
@@ -156,7 +153,9 @@ def run_support_container(
         for key, value in env.items():
             options.extend(['--env', '%s=%s' % (key, value)])
 
-    options.extend(['--ulimit', 'nofile=%s' % MAX_NUM_OPEN_FILES])
+    max_open_files = detect_container_max_num_open_files(args)
+
+    options.extend(['--ulimit', 'nofile=%s' % max_open_files])
 
     support_container_id = None
 
