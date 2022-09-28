@@ -1,19 +1,20 @@
 DOCUMENTATION:
   name: to_datetime
   version_added: "2.4"
-  short_description: Get datetime from string
+  short_description: Get C(datetime) from string
   description:
-    - Using the input string attempt to create a matching Python datetime object
+    - Using the input string attempt to create a matching Python C(datetime) object.
   notes:
-    - For a full list of format codes for working with python date format strings, see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
+    - For a full list of format codes for working with Python date format strings, see
+      L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior).
   positional: _input
   options:
     _input:
-      description: A string containing date time information
+      description: A string containing date time information.
       type: str
       required: true
     format:
-      description: strformat formated string that describes the expected format of the input string
+      description: C(strformat) formatted string that describes the expected format of the input string.
       type: str
 
 EXAMPLES: |
@@ -30,5 +31,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: datetime object from the represented value
+    description: C(datetime) object from the represented value.
     type: raw

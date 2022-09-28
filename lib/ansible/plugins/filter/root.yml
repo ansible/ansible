@@ -3,16 +3,16 @@ DOCUMENTATION:
   version_added: "1.9"
   short_description: root of (math operation)
   description:
-    - math operation that returns the N root of inputed number X ^^ N
+    - Math operation that returns the Nth root of inputed number C(X ^^ N).
   positional: _input, base
   options:
     _input:
-      description: number to operate on
-      type: int
+      description: Number to operate on.
+      type: float
       required: true
     base:
-      description: which base to use
-      type: int
+      description: Which root to take.
+      type: float
       default: 2
 
 EXAMPLES: |
@@ -28,5 +28,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: resulting number
-    type: int
+    description: Resulting number.
+    type: float

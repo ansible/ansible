@@ -3,16 +3,16 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: permutations from the elements of a list
   description:
-    - Create a list of the permutations of lists from the elements of a list
-    - Unlke combinations, in permutations order is significant
+    - Create a list of the permutations of lists from the elements of a list.
+    - Unlike combinations, in permutations order is significant.
   positional: _input, list_size
   options:
     _input:
-      description: elements to base the permutations on
+      description: Elements to base the permutations on.
       type: list
       required: true
     list_size:
-      description: the size of the list for each permutation
+      description: The size of the list for each permutation.
       type: int
       required: true
 
@@ -22,5 +22,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: list of permutations lists resulting from the supplied elements and list size
+    description: List of permutations lists resulting from the supplied elements and list size.
     type: list

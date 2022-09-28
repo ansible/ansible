@@ -3,19 +3,19 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: Get bytes from string
   description:
-    - Convert a human readable byte or bit string into a number bytes
+    - Convert a human readable byte or bit string into a number bytes.
   positional: _input, default_unit, isbits
   options:
     _input:
-      description: bytes
+      description: Human readable description of a number of bytes.
       type: int
       required: true
-  default_unit:
-      description: unit to assume when input does not specify it
+    default_unit:
+      description: Unit to assume when input does not specify it.
       type: str
       choices: ['Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'K', 'B']
-  isbits:
-      description: if C(True) force to interpet only bit input, if C(False) force bytes, otherwise just use the notation to guess
+    isbits:
+      description: If C(True), force to interpret only bit input; if C(False), force bytes. Otherwise use the notation to guess.
       type: bool
 EXAMPLES: |
 
@@ -30,5 +30,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: integer representing the bytes from the input
+    description: Integer representing the bytes from the input.
     type: int

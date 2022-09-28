@@ -3,20 +3,18 @@ DOCUMENTATION:
   version_added: "2.13"
   short_description: Rekey a list of dicts into a dict using a member
   positional: _input, '_key', duplicates
-  description: Iterate over several iterables in parallel, producing tuples with an item from each one
-  notes:
-    - This is mostly a passhtrough to Python's C(zip) function
+  description: Iterate over several iterables in parallel, producing tuples with an item from each one.
   options:
     _input:
-      description: Original dictionary
+      description: Original dictionary.
       type: dict
       required: yes
     _key:
-      description: The key to rekey
+      description: The key to rekey.
       type: str
       required: yes
     duplicates:
-      description: how to handle duplilcates
+      description: How to handle duplicates.
       type: str
       default: error
       choices: [overwrite, error]
@@ -28,5 +26,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: the resulting dictionary
+    description: The resulting dictionary.
     type: dict

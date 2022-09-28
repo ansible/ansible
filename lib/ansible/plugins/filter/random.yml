@@ -3,24 +3,22 @@ DOCUMENTATION:
   version_added: "2.6"
   short_description: random number or list item
   description:
-    - Use the intput to either select a random element of a list or generate a random number
-  notes:
-    - This is a passthrough to Python's C(shelex.quote)
+    - Use the input to either select a random element of a list or generate a random number.
   positional: _input, start, step, seed
   options:
     _input:
-      description: A number or list/sequence, if it is a number it is the top bound for random  number generation, if it is a sequence or list, the source of the random element selected
+      description: A number or list/sequence, if it is a number it is the top bound for random  number generation, if it is a sequence or list, the source of the random element selected.
       type: raw
       required: true
     start:
-      description: bottom bound for the random number/element generated
+      description: Bottom bound for the random number/element generated.
       type: int
     step:
-      description: subsets the defined range by only using this value to select the increments of it between start and end
+      description: Subsets the defined range by only using this value to select the increments of it between start and end.
       type: int
       default: 1
     seed:
-      description: if specified use a pseudo random selection instead (repeatable)
+      description: If specified use a pseudo random selection instead (repeatable).
       type: str
 
 EXAMPLES: |
@@ -33,5 +31,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: random number or list element
+    description: Random number or list element.
     type: raw

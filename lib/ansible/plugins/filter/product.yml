@@ -3,22 +3,22 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: cartesian product of lists
   description:
-    - Combines two lists into one with each element being the product of the elements of the input lists
-    - this is an effective way to create 'nested loops', looping over C(listA) and C(listB) is the same as looping over C(listA|product(listB))
+    - Combines two lists into one with each element being the product of the elements of the input lists.
+    - Creates 'nested loops'. Looping over C(listA) and C(listB) is the same as looping over C(listA | product(listB)).
   notes:
     - This is a passthrough to Python's C(itertools.product)
   positional: _input, _additional_lists, repeat
   options:
     _input:
-      description: first list
+      description: First list.
       type: list
       required: true
     _additional_lists:  #TODO: *args, N possible additional lists
-      description: addional list for the product
+      description: Additional list for the product.
       type: list
       required: false
     repeat:
-      description: number of times to repeat the product against itself
+      description: Number of times to repeat the product against itself.
       default: 1
       type: int
 EXAMPLES: |
@@ -37,5 +37,6 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: list of lists of combined elements from the input lists
+    description: List of lists of combined elements from the input lists.
     type: list
+    elements: list

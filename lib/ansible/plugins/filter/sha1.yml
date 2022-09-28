@@ -1,16 +1,16 @@
 DOCUMENTATION:
   name: sha1
   version_added: "historical"
-  short_description: sha1 hash of input data
+  short_description: SHA-1 hash of input data
   description:
-    - Returns a sha1 hash of the input data
+    - Returns a L(SHA-1 hash, https://en.wikipedia.org/wiki/SHA-1) of the input data.
   positional: _input
   notes:
-    - This requires the md5 algorithim to be available on the system, security contexts like FIPS might prevent this.
-    - SHA1 has been deemed insecure and is not recommended for security related uses.
+    - This requires the SHA-1 algorithm to be available on the system, security contexts like FIPS might prevent this.
+    - SHA-1 has been deemed insecure and is not recommended for security related uses.
   options:
     _input:
-      description: data to hash
+      description: Data to hash.
       type: raw
       required: true
 
@@ -20,5 +20,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The sha1 hash of the input
+    description: The SHA-1 hash of the input.
     type: string

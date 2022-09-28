@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Returns the 'head' component of a path, basically everything that is not the 'basename'.
   options:
     _input:
-      description: A path
+      description: A path.
       type: path
       required: true
   seealso:

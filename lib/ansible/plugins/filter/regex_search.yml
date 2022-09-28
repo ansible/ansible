@@ -3,24 +3,24 @@ DOCUMENTATION:
   version_added: "2.0"
   short_description: extract regex match from string
   description:
-    - Search in a string to extract the part that matches the regular expression
+    - Search in a string to extract the part that matches the regular expression.
   notes:
-    - Maps to Python's C(regex.search)
+    - Maps to Python's C(regex.search).
   positional: _input, _regex
   options:
     _input:
-      description: String to match against
+      description: String to match against.
       type: str
       required: true
     _regex:
-      description: regular expression string that defines the match
+      description: Regular expression string that defines the match.
       type: str
     multiline:
-      description: search across line endings if C(True), don't if otherwise
+      description: Search across line endings if C(True), do not if otherwise.
       type: bool
       default: no
     ignorecase:
-      description: force the serach to be case insensitive if C(True), case senstitive otherwise
+      description: Force the search to be case insensitive if C(True), case sensitive otherwise.
       type: bool
       default: no
 
@@ -34,5 +34,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: matched string or empty string if no match
+    description: Matched string or empty string if no match.
     type: str
