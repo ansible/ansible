@@ -183,7 +183,7 @@ class ConfigCLI(CLI):
 
         # pylint: disable=unreachable
         try:
-            editor = shlex.split(os.environ.get('EDITOR', 'vi'))
+            editor = shlex.split(C.config.get_config_value('EDITOR'))
             editor.append(self.config_file)
             subprocess.call(editor)
         except Exception as e:

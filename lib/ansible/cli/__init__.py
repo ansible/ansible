@@ -119,7 +119,7 @@ except ImportError:
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
-    PAGER = 'less'
+    PAGER = C.config.get_config_value('PAGER')
 
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
@@ -494,11 +494,11 @@ class CLI(ABC):
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
             display.display(text, screen_only=True)
-        elif 'PAGER' in os.environ:
+        elif CLI.PAGER:
             if sys.platform == 'win32':
                 display.display(text, screen_only=True)
             else:
-                CLI.pager_pipe(text, os.environ['PAGER'])
+                CLI.pager_pipe(text)
         else:
             p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.communicate()
@@ -508,12 +508,12 @@ class CLI(ABC):
                 display.display(text, screen_only=True)
 
     @staticmethod
-    def pager_pipe(text, cmd):
+    def pager_pipe(text):
         ''' pipe text through a pager '''
-        if 'LESS' not in os.environ:
+        if 'less' in CLI.PAGER:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
-            cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
         except IOError:
             pass
