@@ -13,6 +13,17 @@ ANSIBLE_HOME:
     section: defaults
   type: path
   version_added: '2.14'
+ANSIBLE_VAULT_EDITOR:
+  name: Editor program to use with ansible-vault
+  description:
+  - Allows to set an editor different from system-wide, falls back to $EDITOR
+  default: null
+  env:
+  - name: ANSIBLE_VAULT_EDITOR
+  ini:
+  - key: vault_editor
+    section: defaults
+  type: string
 ANSIBLE_CONNECTION_PATH:
   name: Path of ansible-connection script
   default: null
