@@ -16,3 +16,20 @@
   vars:
     # Kind of hack to just send a JSON string through jinja, by templating out nothing
     foo: '{{ "" }}{"null": null, "true": true, "false": false}'
+
+- name: Make sure that test with name that isn't a valid Ansible plugin name does not result in a crash (1/2)
+  set_fact:
+    foo: '{{ [{"failed": false}] | selectattr("failed", "==", true) }}'
+
+- name: Make sure that test with name that isn't a valid Ansible plugin name does not result in a crash (2/2)
+  template:
+    src: invalid_test_name.j2
+    dest: /tmp/foo
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - >-
+        "TemplateRuntimeError: No test named 'asdf '" in result.msg
