@@ -1,0 +1,9 @@
+role_vars_only: role_vars
+play_and_role_vars: role_vars
+play_and_roles_and_role_vars: role_vars
+play_and_import_and_role_vars: role_vars
+play_and_include_and_role_vars: role_vars
+play_and_role_vars_and_role_vars: role_vars
+roles_and_role_vars: role_vars
+import_and_role_vars: role_vars
+include_and_role_vars: role_vars

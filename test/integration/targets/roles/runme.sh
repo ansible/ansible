@@ -26,3 +26,6 @@ else
   echo "Test failed, expected output from playbook failure is missing, output not shown)."
   exit 1
 fi
+
+# ensure vars scope is correct
+ansible-playbook vars_scope.yml -i ../../inventory "$@"

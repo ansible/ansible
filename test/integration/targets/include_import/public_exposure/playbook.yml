@@ -10,12 +10,16 @@
     - name: Static imports should expose vars at parse time, not at execution time
       assert:
         that:
-          - static_defaults_var == 'static_defaults'
-          - static_vars_var == 'static_vars'
+          - static_defaults_var is not defined
+          - static_vars_var is not defined
+          - static_task_var is not defined
     - import_role:
         name: static
     - assert:
         that:
+          - static_vars_var is defined
+          - static_tasks_var is defined
+          - static_defaults_var is defined
           - static_tasks_var == 'static_tasks'
           - static_defaults_var == 'static_defaults'
           - static_vars_var == 'static_vars'
