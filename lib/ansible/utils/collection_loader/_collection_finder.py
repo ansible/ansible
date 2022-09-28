@@ -39,6 +39,12 @@ except ImportError:
     reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
+    from importlib.resources import Package
+    from importlib.resources.abc import TraversableResources, Traversable
+except ImportError:
+    TraversableResources = object
+
+try:
     from importlib.util import spec_from_loader
 except ImportError:
     pass
@@ -49,6 +55,11 @@ except ImportError:
     HAS_FILE_FINDER = False
 else:
     HAS_FILE_FINDER = True
+
+try:
+    import pathlib
+except ImportError:
+    pass
 
 # NB: this supports import sanity test providing a different impl
 try:
@@ -78,6 +89,44 @@ except AttributeError:  # Python 2
 
 
 PB_EXTENSIONS = ('.yml', '.yaml')
+
+
+class _AnsibleTraversableResources(TraversableResources):
+    def __init__(self, package, loader):
+        self._package = package
+        self._loader = loader
+
+    def _get_name(self, package):
+        try:
+            return package.name
+        except AttributeError:
+            return package.__name__
+
+    def _get_package(self, package):
+        try:
+            return package.__package__
+        except AttributeError:
+            return package.__parent__
+
+    def _ensure_package(self, package):
+        origin = getattr(package, 'origin', None)
+        if origin and os.path.basename(origin) in ('__synthetic__', '__init__.py'):
+            return
+        if self._get_package(package) != package.__name__:
+            raise TypeError('%r is not a package' % package.__name__)
+
+    def files(self):
+        package = self._package
+
+        if isinstance(package, string_types):
+            package = spec_from_loader(package, self._loader)
+        elif not isinstance(package, ModuleType):
+            raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
+
+        self._ensure_package(package)
+        package = self._get_name(package)
+
+        return pathlib.Path(package)
 
 
 class _AnsibleCollectionFinder:
@@ -423,6 +472,9 @@ class _AnsibleCollectionPkgLoaderBase:
 
         return module_path, has_code, package_path
 
+    def get_resource_reader(self, fullname):
+        return _AnsibleTraversableResources(fullname, self)
+
     def exec_module(self, module):
         # short-circuit redirect; avoid reinitializing existing modules
         if self._redirect_module:
@@ -747,6 +799,9 @@ class _AnsibleInternalRedirectLoader:
 
         if not self._redirect:
             raise ImportError('not redirected, go ask path_hook')
+
+    def get_resource_reader(self, fullname):
+        return _AnsibleTraversableResources(fullname, self)
 
     def exec_module(self, module):
         # should never see this
