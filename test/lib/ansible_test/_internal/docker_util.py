@@ -161,18 +161,20 @@ def detect_host_audit_status(args: EnvironmentConfig) -> int:
 
 
 @mutex
-def detect_container_loginuid(args: EnvironmentConfig) -> int:
-    """Return the loginuid used by the container host to run containers."""
+def detect_container_loginuid(args: EnvironmentConfig) -> int | None:
+    """Return the loginuid used by the container host to run containers, or None if the audit subsystem is unavailable."""
     try:
         return detect_container_loginuid.loginuid  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
-    cmd = ['cat', '/proc/self/loginuid']
+    cmd = ['sh', '-c', f'cat /proc/self/loginuid || true']
     stdout = run_utility_container(args, f'ansible-test-loginuid-{args.session_name}', cmd=cmd)
-    loginuid = detect_container_loginuid.loginuid = int(stdout)  # type: ignore[attr-defined]
+    loginuid = int(stdout) if stdout else None
 
-    display.info(f'Container loginuid: {loginuid}', verbosity=1)
+    display.info(f'Container loginuid: {loginuid if loginuid is not None else "unavailable"}', verbosity=1)
+
+    detect_container_loginuid.loginuid = loginuid  # type: ignore[attr-defined]
 
     return loginuid
 

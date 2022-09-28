@@ -441,7 +441,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             # This condition is detected by querying the loginuid of a container running on the container host.
             # When it occurs, a warning is displayed and the AUDIT_CONTROL capability is added to containers to work around the issue.
             # The warning serves as notice to the user that their usage of ansible-test is responsible for the additional capability requirement.
-            if (loginuid := detect_container_loginuid(self.args)) not in (0, 4294967295):
+            if (loginuid := detect_container_loginuid(self.args)) not in (0, 4294967295, None):
                 display.warning(f'Running container {self.config.name} with capability AUDIT_CONTROL since the container loginuid ({loginuid}) is incorrect. '
                                 'This is most likely due to use of sudo to run ansible-test when loginuid is already set.')
 
