@@ -102,6 +102,13 @@ class _AnsibleTraversableResources:
         except AttributeError:
             return package.__parent__
 
+    def _get_path(self, package):
+        try:
+            return package.origin
+        except AttributeError:
+            return package.__file__
+
+
     def _ensure_package(self, package):
         origin = getattr(package, 'origin', None)
         if origin and os.path.basename(origin) in ('__synthetic__', '__init__.py'):
@@ -118,9 +125,7 @@ class _AnsibleTraversableResources:
             raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
 
         self._ensure_package(package)
-        package = self._get_name(package)
-
-        return pathlib.Path(package)
+        return pathlib.Path(self._get_path(package)).parent
 
 
 class _AnsibleCollectionFinder:
