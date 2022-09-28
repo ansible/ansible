@@ -383,6 +383,14 @@ class ConfigManager(object):
 
         return ret
 
+    def has_configuration_definition(self, plugin_type, name):
+
+        has = False
+        if plugin_type in self._plugins:
+            has = (name in self._plugins[plugin_type])
+
+        return has
+
     def get_configuration_definitions(self, plugin_type=None, name=None, ignore_private=False):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
