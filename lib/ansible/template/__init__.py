@@ -427,8 +427,10 @@ class JinjaPluginIntercept(MutableMapping):
             plugin = None
             try:
                 plugin = self._pluginloader.get(key)
-            except (AnsibleError, KeyError) as e:
+            except AnsibleError as e:
                 raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(e)), 0)
+            except KeyError as e:
+                plugin = None
             except Exception as e:
                 display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
                 raise e
