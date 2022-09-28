@@ -1,0 +1,5 @@
+bugfixes:
+- >-
+  ``ansible-galaxy`` - remove extra server api call during dependency resolution
+  for requirements and dependencies that are already satisfied
+  (https://github.com/ansible/ansible/issues/77443).
