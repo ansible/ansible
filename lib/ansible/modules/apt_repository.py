@@ -177,8 +177,8 @@ except ImportError:
 
     HAVE_PYTHON_APT = False
 
+APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
 DEFAULT_SOURCES_PERM = 0o0644
-
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
@@ -482,7 +482,7 @@ class UbuntuSourcesList(SourcesList):
 
         found = False
         keyfiles = ['/etc/apt/trusted.gpg']  # main gpg repo for apt
-        for other_dir in ('/etc/apt/trusted.gpg.d', '/usr/share/keyrings'):
+        for other_dir in APT_KEY_DIRS:
             # add other known sources of gpg sigs for apt, skip hidden files
             keyfiles.extend([os.path.join(other_dir, x) for x in os.listdir(other_dir) if not x.startswith('.')])
 
@@ -522,7 +522,14 @@ class UbuntuSourcesList(SourcesList):
                         command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80',
                                    info['signing_key_fingerprint']]
                     else:
-                        keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
+                        # use first available key dir, in order of preference
+                        for keydir in APT_KEY_DIRS:
+                            if os.path.exists(keydir):
+                                break
+                        else:
+                            self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
+
+                        keyfile = '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
                         command = [self.gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export', info['signing_key_fingerprint']]
 
                     rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
