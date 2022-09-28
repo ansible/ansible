@@ -29,7 +29,7 @@ from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
-
+21
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
     valid_metadata = {
         'extend_group': {
@@ -479,11 +479,15 @@ class FieldAttributeBase:
         return value
 
     def set_to_context(self, name):
-        try:
-            setattr(self, name, self._get_parent_attribute(name))
-        except AttributeError:
-            # mostly playcontext as only tasks/handlers really resolve to parent
+
+        if isinstance(attribute, NonInheritableFieldAttribute):
             self.set_to_default(name)
+        else:
+            try:
+                setattr(self, name, self._get_parent_attribute(name))
+            except AttributeError:
+                # mostly playcontext as only tasks/handlers really resolve to parent
+                self.set_to_default(name)
 
     def set_to_default(self, name):
 
@@ -539,10 +543,7 @@ class FieldAttributeBase:
                 # If this evaluated to the omit value, set the value back to inherited by context
                 # or default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    if isinstance(attribute, NonInheritableFieldAttribute):
-                        self.set_to_default(name)
-                    else:
-                        self.set_to_context(name)
+                    self.set_to_context(name)
                     self._finalized = True
                     continue
 
