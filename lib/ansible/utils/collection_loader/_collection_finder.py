@@ -176,7 +176,7 @@ class _AnsibleTraversableResources:
             raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
 
         self._ensure_package(package)
-        if parts[0] == 'ansible_collections' and len(parts) < 3:
+        if is_ns:
             return _AnsibleNSTraversable(*package.submodule_search_locations)
         return pathlib.Path(self._get_path(package)).parent
 
