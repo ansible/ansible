@@ -1,0 +1,26 @@
+play_only: play
+play_and_roles: play
+play_and_import: play
+play_and_include: play
+play_and_role_vars: play
+play_and_roles_and_role_vars: play
+play_and_import_and_role_vars: play
+play_and_include_and_role_vars: play
+possible_vars:
+    - default_only
+    - import_and_role_vars
+    - import_only
+    - include_and_role_vars
+    - include_only
+    - play_and_import
+    - play_and_import_and_role_vars
+    - play_and_include
+    - play_and_include_and_role_vars
+    - play_and_roles
+    - play_and_roles_and_role_vars
+    - play_and_role_vars
+    - play_and_role_vars_and_role_vars
+    - play_only
+    - roles_and_role_vars
+    - roles_only
+    - role_vars_only

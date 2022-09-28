@@ -101,12 +101,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     delegate_to = FieldAttribute(isa='string')
     delegate_facts = FieldAttribute(isa='bool')
 
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True):
+    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=True):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
         self._role_params = dict()
         self._loader = None
+        self.public = public
+        self.static = True
 
         self._metadata = None
         self._play = play
@@ -139,8 +141,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True):
-
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=True):
         if from_files is None:
             from_files = {}
         try:
@@ -173,7 +174,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate)
+            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.get_name() not in play.ROLE_CACHE:
@@ -453,14 +454,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=None):
+    def get_inherited_vars(self, dep_chain=None, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
 
         inherited_vars = dict()
 
         if dep_chain:
             for parent in dep_chain:
-                inherited_vars = combine_vars(inherited_vars, parent.vars)
+                if not only_exports:
+                    inherited_vars = combine_vars(inherited_vars, parent.vars)
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
@@ -474,18 +476,36 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         params = combine_vars(params, self._role_params)
         return params
 
-    def get_vars(self, dep_chain=None, include_params=True):
+    def get_vars(self, dep_chain=None, include_params=True, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
 
-        all_vars = self.get_inherited_vars(dep_chain)
+        all_vars = {}
 
+        # get role_vars: from parent objects
+        # TODO: is this right precedence for inherited role_vars?
+        all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
+
+        # get exported variables from meta/dependencies
+        seen = set()
         for dep in self.get_all_dependencies():
-            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
+            # Avoid reruning dupe deps since they can have vars from previous invocations and they accumulate in deps
+            # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
+            if dep not in seen:
+                # only take 'exportable' vars from deps
+                all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
+                seen.add(dep)
 
-        all_vars = combine_vars(all_vars, self.vars)
+        # role_vars come from vars/ in a role
         all_vars = combine_vars(all_vars, self._role_vars)
-        if include_params:
-            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
+
+        if not only_exports:
+            # include_params are 'inline variables' in role invocation. - {role: x, varname: value}
+            if include_params:
+                # TODO: add deprecation notice
+                all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
+
+            # these come from vars: keyword in role invocation. - {role: x, vars: {varname: value}}
+            all_vars = combine_vars(all_vars, self.vars)
 
         return all_vars
 

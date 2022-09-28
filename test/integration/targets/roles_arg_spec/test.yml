@@ -48,6 +48,7 @@
           name: a
         vars:
           a_int: "{{ INT_VALUE }}"
+          a_str: "import_role"
 
       - name: "Call role entry point that is defined, but has no spec data"
         import_role:

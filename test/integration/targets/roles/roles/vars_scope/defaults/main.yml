@@ -1,0 +1,10 @@
+default_only: default
+role_vars_only: default
+play_and_role_vars: default
+play_and_roles_and_role_vars: default
+play_and_import_and_role_vars: default
+play_and_include_and_role_vars: default
+play_and_role_vars_and_role_vars: default
+roles_and_role_vars: default
+import_and_role_vars: default
+include_and_role_vars: default
