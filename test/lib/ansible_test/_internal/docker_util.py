@@ -168,7 +168,7 @@ def detect_container_loginuid(args: EnvironmentConfig) -> int | None:
     except AttributeError:
         pass
 
-    cmd = ['sh', '-c', f'cat /proc/self/loginuid || true']
+    cmd = ['sh', '-c', 'cat /proc/self/loginuid || true']
     stdout = run_utility_container(args, f'ansible-test-loginuid-{args.session_name}', cmd=cmd)
     loginuid = int(stdout) if stdout else None
 
