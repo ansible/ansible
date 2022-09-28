@@ -447,6 +447,14 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
                 options.extend(('--cap-add', 'AUDIT_CONTROL'))
 
+            if self.config.cgroup == 'none':
+                # Containers which do not use cgroup do not use systemd.
+                # Disabling systemd support in Podman will allow these containers to work on hosts without systemd.
+                # Without this, running a container results in the following error on hosts without systemd:
+                #    Error: crun: error stat'ing file `/sys/fs/cgroup/systemd`: No such file or directory:
+                #    OCI runtime attempted to invoke a command that was not found
+                options.extend(('--systemd', 'false'))
+
             if self.config.cgroup == 'v1' and (cgroup_version := get_docker_info(self.args).cgroup_version) != 1:
                 options.extend((
                     # Force use of cgroup v1 for systems which do not default to it, when running a container with an old systemd that requires it.
