@@ -397,7 +397,7 @@ class PluginLoader:
             type_name = get_plugin_class(self.class_name)
 
             # if type name != 'module_doc_fragment':
-            if type_name in C.CONFIGURABLE_PLUGINS and not C.config.get_configuration_definition(type_name, name):
+            if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
                 dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 if dstring:
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
