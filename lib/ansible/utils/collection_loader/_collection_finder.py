@@ -92,26 +92,32 @@ class _AnsibleTraversableResources:
 
     def _get_name(self, package):
         try:
+            # spec
             return package.name
         except AttributeError:
+            # module
             return package.__name__
 
     def _get_package(self, package):
         try:
-            return package.__package__
-        except AttributeError:
+            # spec
             return package.__parent__
+        except AttributeError:
+            # module
+            return package.__package__
 
     def _get_path(self, package):
         try:
+            # spec
             return package.origin
         except AttributeError:
+            # module
             return package.__file__
-
 
     def _ensure_package(self, package):
         origin = getattr(package, 'origin', None)
         if origin and os.path.basename(origin) in ('__synthetic__', '__init__.py'):
+            # Short circuit our loaders
             return
         if self._get_package(package) != package.__name__:
             raise TypeError('%r is not a package' % package.__name__)
