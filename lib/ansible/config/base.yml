@@ -1003,6 +1003,19 @@ DEFAULT_STDOUT_CALLBACK:
   env: [{name: ANSIBLE_STDOUT_CALLBACK}]
   ini:
   - {key: stdout_callback, section: defaults}
+EDITOR:
+  name: editor application touse
+  default: vi
+  descrioption:
+    - for the cases in which Ansible needs to return a file within an editor, this chooses the application to use
+  ini:
+    - section: defaults
+      key: editor
+      version_added: '2.15'
+  env:
+    - name: ANSIBLE_EDITOR
+      version_added: '2.15'
+    - name: EDITOR
 ENABLE_TASK_DEBUGGER:
   name: Whether to enable the task debugger
   default: False
@@ -1739,6 +1752,19 @@ OLD_PLUGIN_CACHE_CLEARING:
   type: boolean
   default: False
   version_added: "2.8"
+PAGER:
+  name: pager application to use
+  default: less
+  descrioption:
+    - for the cases in which Ansible needs to return output in pageable fasion, this chooses the application to use
+  ini:
+    - section: defaults
+      key: pager
+      version_added: '2.15'
+  env:
+    - name: ANSIBLE_PAGER
+      version_added: '2.15'
+    - name: PAGER
 PARAMIKO_HOST_KEY_AUTO_ADD:
   # TODO: move to plugin
   default: False
