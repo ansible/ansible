@@ -7,15 +7,16 @@ DOCUMENTATION:
     - Returns the longest common path from the given list of paths.
   options:
     _input:
-      description: A list of paths
-      type: list of path
+      description: A list of paths.
+      type: list
+      elements: path
       required: true
   seealso:
     - plugin: ansible.builtin.basename
       plugin_type: filter
 EXAMPLES: |
 
-  # To get the longest common path(ex. '/foo/bar') from the given list of paths(ex. ['/foo/bar/foobar','/foo/bar']) 
+  # To get the longest common path (ex. '/foo/bar') from the given list of paths (ex. ['/foo/bar/foobar','/foo/bar'])
   {{ listofpaths | commonpath }}
 
 RETURN:
