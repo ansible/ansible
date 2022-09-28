@@ -365,8 +365,8 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.urls import fetch_file
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -617,6 +617,10 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     if pkgspec:
         for pkgspec_pattern in pkgspec:
+
+            if not isinstance(pkgspec_pattern, string_types):
+                m.fail_json(msg="Invalid type for package name, expected string but got %s" % type(pkgspec_pattern))
+
             pkgname_pattern, version_cmp, version = package_split(pkgspec_pattern)
 
             # note that none of these chars is allowed in a (debian) pkgname
@@ -639,7 +643,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
                 if not matches:
-                    m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                    m.fail_json(msg="No package(s) matching '%s' available" % to_text(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
