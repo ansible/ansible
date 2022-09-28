@@ -1,0 +1,25 @@
+- hosts: localhost
+  gather_facts: false
+  become: yes
+  tasks:
+    - shell: whoami
+      register: inherited
+
+    - shell: whoami
+      register: explicit_no
+      become: false
+
+    - shell: whoami
+      register: omited_inheritance
+      become: '{{ omit }}'
+
+    - shell: whoami
+      register: explicit_yes
+      become: yes
+
+    - name: ensure omit works with inheritance
+      assert:
+        that:
+          - inherited.stdout == omited_inheritance.stdout
+          - inherited.stdout == explicit_yes.stdout
+          - inherited.stdout != explicit_no.stdout
