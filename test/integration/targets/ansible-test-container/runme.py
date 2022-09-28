@@ -174,7 +174,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         if test_containers.is_dir():
             # First remove the directory as root, since the user may not have permissions on all the files.
             # The directory will be removed again after login, before initializing the database.
-            shutil.rmtree(test_containers)
+            rmtree(test_containers)
 
     message = ''
 
@@ -244,6 +244,30 @@ def run_test(scenario: TestScenario) -> TestResult:
         scenario=scenario,
         message=message,
     )
+
+
+def rmtree(path: pathlib.Path) -> None:
+    """Wrapper around shutil.rmtree with additional error handling."""
+    for retries in range(10, -1, -1):
+        try:
+            display.info(f'rmtree: {path} ({retries} attempts remaining) ... ')
+            shutil.rmtree(path)
+        except Exception:
+            if not path.exists():
+                display.info(f'rmtree: {path} (not found)')
+                return
+
+            if not path.is_dir():
+                display.info(f'rmtree: {path} (not a directory)')
+                return
+
+            if retries:
+                continue
+
+            raise
+        else:
+            display.info(f'rmtree: {path} (done)')
+            return
 
 
 def format_env(env: dict[str, str]) -> str:
@@ -602,12 +626,12 @@ class Bootstrapper(metaclass=abc.ABCMeta):
 
         if current_ansible != root_ansible:
             display.info(f'copying {current_ansible} -> {root_ansible} ...')
-            shutil.rmtree(root_ansible, ignore_errors=True)
+            rmtree(root_ansible)
             shutil.copytree(current_ansible, root_ansible)
             run_command('chown', '-R', 'root:root', str(root_ansible))
 
         display.info(f'copying {current_ansible} -> {test_ansible} ...')
-        shutil.rmtree(test_ansible, ignore_errors=True)
+        rmtree(test_ansible)
         shutil.copytree(current_ansible, test_ansible)
         run_command('chown', '-R', f'{UNPRIVILEGED_USER_NAME}:{UNPRIVILEGED_USER_NAME}', str(test_ansible))
 
