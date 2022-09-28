@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "2.0"
   short_description: replace a string via regex
   description:
-    - Replace a substring defined by a regular expression with another defined by another regular expressoin based on the first match.
+    - Replace a substring defined by a regular expression with another defined by another regular expression based on the first match.
   notes:
     - Maps to Python's C(regex.replace).
   positional: _input, _regex_match, _regex_replace
