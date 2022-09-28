@@ -7,6 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import itertools
 import os
 import os.path
 import pkgutil
@@ -39,7 +40,7 @@ except ImportError:
     reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
-    from importlib.util import spec_from_loader
+    from importlib.util import find_spec, spec_from_loader
 except ImportError:
     pass
 
@@ -83,6 +84,32 @@ except AttributeError:  # Python 2
 
 
 PB_EXTENSIONS = ('.yml', '.yaml')
+SYNTHETIC_PACKAGE_NAME = '<ansible_synthetic_collection_package>'
+
+
+class _AnsibleNSTraversable:
+    def __init__(self, *paths):
+        self._paths = [pathlib.Path(p) for p in paths]
+
+    def __repr__(self):
+        return '_AnsibleNSTraversable(\'%s\')' % '\', \''.join(map(to_text, self._paths))
+
+    def iterdir(self):
+        return itertools.chain(*[list(p.iterdir()) for p in self._paths if p.is_dir()])
+
+    def is_dir(self):
+        return any((p.is_dir() for p in self._paths))
+
+    def is_file(self):
+        return False
+
+    def glob(self, pattern):
+        return itertools.chain(*[list(p.glob(pattern)) for p in self._paths if p.is_dir()])
+
+    def _not_implemented(self, *args, **kwargs):
+        raise NotImplementedError('not usable on namespaces')
+
+    joinpath = __truediv__ = __truediv__ = read_bytes = read_text = _not_implemented
 
 
 class _AnsibleTraversableResources:
@@ -114,9 +141,22 @@ class _AnsibleTraversableResources:
             # module
             return package.__file__
 
-    def _ensure_package(self, package):
+    def _is_ansible_ns_package(self, package):
         origin = getattr(package, 'origin', None)
-        if origin and os.path.basename(origin) in ('__synthetic__', '__init__.py'):
+        return all(
+            (
+                origin,
+                any(
+                    (
+                        origin == SYNTHETIC_PACKAGE_NAME,
+                        os.path.basename(origin) in ('__synthetic__', '__init__.py'),
+                    )
+                )
+            )
+        )
+
+    def _ensure_package(self, package):
+        if self._is_ansible_ns_package(package):
             # Short circuit our loaders
             return
         if self._get_package(package) != package.__name__:
@@ -125,15 +165,19 @@ class _AnsibleTraversableResources:
     def files(self):
         package = self._package
         parts = package.split('.')
-        if parts[0] == 'ansible_collections' and len(parts) < 3:
-            raise TypeError('Cannot traverse ansible_collection packages below an individual collection')
+        is_ns = parts[0] == 'ansible_collections' and len(parts) < 3
 
         if isinstance(package, string_types):
-            package = spec_from_loader(package, self._loader)
+            if is_ns:
+                package = find_spec(package)
+            else:
+                package = spec_from_loader(package, self._loader)
         elif not isinstance(package, ModuleType):
             raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
 
         self._ensure_package(package)
+        if parts[0] == 'ansible_collections' and len(parts) < 3:
+            return _AnsibleNSTraversable(*package.submodule_search_locations)
         return pathlib.Path(self._get_path(package)).parent
 
 
@@ -569,7 +613,7 @@ class _AnsibleCollectionPkgLoaderBase:
         return None
 
     def _synthetic_filename(self, fullname):
-        return '<ansible_synthetic_collection_package>'
+        return SYNTHETIC_PACKAGE_NAME
 
     def get_filename(self, fullname):
         if fullname != self._fullname:
