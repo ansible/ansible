@@ -39,12 +39,6 @@ except ImportError:
     reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
-    from importlib.resources import Package
-    from importlib.resources.abc import TraversableResources, Traversable
-except ImportError:
-    TraversableResources = object
-
-try:
     from importlib.util import spec_from_loader
 except ImportError:
     pass
@@ -91,7 +85,7 @@ except AttributeError:  # Python 2
 PB_EXTENSIONS = ('.yml', '.yaml')
 
 
-class _AnsibleTraversableResources(TraversableResources):
+class _AnsibleTraversableResources:
     def __init__(self, package, loader):
         self._package = package
         self._loader = loader
