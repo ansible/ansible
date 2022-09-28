@@ -1,0 +1,2 @@
+minor_changes:
+  - optimized var loading by caching results as there is no variance in input during run.
