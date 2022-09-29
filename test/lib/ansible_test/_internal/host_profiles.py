@@ -505,7 +505,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         if remount_cgroup:
             options = ['--pid', 'host', '--privileged']
-            cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p', 'sh', '-c', 'mount -o remount,rw /sys/fs/cgroup/ ; pkill sleep']
+            cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p', 'sh', '-c', 'mount -o remount,rw /sys/fs/cgroup/ && pkill sleep']
             run_utility_container(self.args, f'ansible-test-remount-{secrets.token_hex(4)}', options=options, cmd=cmd)
 
         self.container_name = container.name
