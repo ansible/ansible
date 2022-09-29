@@ -31,8 +31,23 @@ No notable changes
 Deprecated
 ==========
 
-No notable changes
+* Providing a list of dictionaries to ``vars:`` is deprecated in favor of supplying a dictionary.
 
+  Instead of:
+
+  .. code-block:: yaml
+
+     vars:
+       - var1: foo
+       - var2: bar
+
+  Use:
+
+  .. code-block:: yaml
+
+     vars:
+       var1: foo
+       var2: bar
 
 Modules
 =======
