@@ -551,6 +551,7 @@ class TaskExecutor:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
+            self._set_become_plugin(cvars, templar, self._connection)
 
         plugin_vars = self._set_connection_options(cvars, templar)
 
@@ -952,6 +953,14 @@ class TaskExecutor:
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
+        self._set_become_plugin(cvars, templar, connection)
+
+        # Also backwards compat call for those still using play_context
+        self._play_context.set_attributes_from_plugin(connection)
+
+        return connection
+
+    def _set_become_plugin(self, cvars, templar, connection):
         # load become plugin if needed
         if cvars.get('ansible_become') is not None:
             become = boolean(templar.template(cvars['ansible_become']))
@@ -964,27 +973,28 @@ class TaskExecutor:
             else:
                 become_plugin = self._get_become(self._task.become_method)
 
-            try:
-                connection.set_become_plugin(become_plugin)
-            except AttributeError:
-                # Older connection plugin that does not support set_become_plugin
-                pass
+        else:
+            # If become is not enabled on the task it needs to be removed from the connection plugin
+            # https://github.com/ansible/ansible/issues/78425
+            become_plugin = None
 
+        try:
+            connection.set_become_plugin(become_plugin)
+        except AttributeError:
+            # Older connection plugin that does not support set_become_plugin
+            pass
+
+        if become_plugin:
             if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
                 raise AnsibleError(
                     "The '%s' connection does not provide a TTY which is required for the selected "
-                    "become plugin: %s." % (conn_type, become_plugin.name)
+                    "become plugin: %s." % (connection._load_name, become_plugin.name)
                 )
 
             # Backwards compat for connection plugins that don't support become plugins
             # Just do this unconditionally for now, we could move it inside of the
             # AttributeError above later
             self._play_context.set_become_plugin(become_plugin.name)
-
-        # Also backwards compat call for those still using play_context
-        self._play_context.set_attributes_from_plugin(connection)
-
-        return connection
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:
