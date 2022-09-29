@@ -1050,3 +1050,29 @@ releases:
     - ansible-test-self-change-classification.yml
     - v2.13.4rc1_summary.yaml
     release_date: '2022-09-06'
+  2.13.5rc1:
+    changes:
+      bugfixes:
+      - '``ansible-galaxy`` - remove extra server api call during dependency resolution
+        for requirements and dependencies that are already satisfied (https://github.com/ansible/ansible/issues/77443).'
+      - ansible-test - Allow disabled, unsupported, unstable and destructive integration
+        test targets to be selected using their respective prefixes.
+      - ansible-test - Allow unstable tests to run when targeted changes are made
+        and the ``--allow-unstable-changed`` option is specified (resolves https://github.com/ansible/ansible/issues/74213).
+      - known_hosts - do not return changed status when a non-existing key is removed
+        (https://github.com/ansible/ansible/issues/78598)
+      - plugin loader, fix detection for existing configuration before initializing
+        for a plugin
+      release_summary: '| Release Date: 2022-10-03
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 77468-ansible-galaxy-remove-unnecessary-api-call.yml
+    - 78878--fix-known-hosts-wrong-changed-status.yaml
+    - ansible-test-integration-targets-filter.yml
+    - plugin_loader_fix.yml
+    - v2.13.5rc1_summary.yaml
+    release_date: '2022-10-03'
