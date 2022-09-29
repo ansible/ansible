@@ -1,37 +1,40 @@
 @{
-    Rules = @{
-        PSAvoidLongLines = @{
-            Enable = $true
+    Rules        = @{
+        PSAvoidLongLines                   = @{
+            Enable            = $true
             MaximumLineLength = 160
         }
-        PSPlaceOpenBrace = @{
+        PSAvoidSemicolonsAsLineTerminators = @{
             Enable = $true
-            OnSameLine = $true
-            IgnoreOneLineBlock = $true
-            NewLineAfter = $true
         }
-        PSPlaceCloseBrace = @{
-            Enable = $true
+        PSPlaceOpenBrace                   = @{
+            Enable             = $true
+            OnSameLine         = $true
             IgnoreOneLineBlock = $true
-            NewLineAfter = $true
-            NoEmptyLineBefore = $false
+            NewLineAfter       = $true
         }
-        PSUseConsistentIndentation = @{
-            Enable = $true
-            IndentationSize = 4
+        PSPlaceCloseBrace                  = @{
+            Enable             = $true
+            IgnoreOneLineBlock = $true
+            NewLineAfter       = $true
+            NoEmptyLineBefore  = $false
+        }
+        PSUseConsistentIndentation         = @{
+            Enable              = $true
+            IndentationSize     = 4
             PipelineIndentation = 'IncreaseIndentationForFirstPipeline'
-            Kind = 'space'
+            Kind                = 'space'
         }
-        PSUseConsistentWhitespace = @{
-            Enable = $true
-            CheckInnerBrace = $true
-            CheckOpenBrace = $true
-            CheckOpenParen = $true
-            CheckOperator = $true
-            CheckPipe = $true
-            CheckPipeForRedundantWhitespace = $false
-            CheckSeparator = $true
-            CheckParameter = $false
+        PSUseConsistentWhitespace          = @{
+            Enable                                  = $true
+            CheckInnerBrace                         = $true
+            CheckOpenBrace                          = $true
+            CheckOpenParen                          = $true
+            CheckOperator                           = $true
+            CheckPipe                               = $true
+            CheckPipeForRedundantWhitespace         = $false
+            CheckSeparator                          = $true
+            CheckParameter                          = $false
             IgnoreAssignmentOperatorInsideHashTable = $false
         }
     }
