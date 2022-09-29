@@ -1,0 +1,3 @@
+bugfixes:
+- Fix reusing a connection in a task loop that uses a redirected or aliased name - https://github.com/ansible/ansible/issues/78425
+- Fix setting become activation in a task loop - https://github.com/ansible/ansible/issues/78425
