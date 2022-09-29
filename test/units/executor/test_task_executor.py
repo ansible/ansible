@@ -329,6 +329,7 @@ class TestTaskExecutor(unittest.TestCase):
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async_val = 1
         mock_task.poll = 0
+        mock_task.evaluate_conditional_with_result.return_value = (True, None)
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
