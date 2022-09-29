@@ -143,17 +143,14 @@ class _AnsibleTraversableResources:
 
     def _is_ansible_ns_package(self, package):
         origin = getattr(package, 'origin', None)
-        return all(
-            (
-                origin,
-                any(
-                    (
-                        origin == SYNTHETIC_PACKAGE_NAME,
-                        os.path.basename(origin) in ('__synthetic__', '__init__.py'),
-                    )
-                )
-            )
-        )
+        if not origin:
+            return False
+
+        if origin == SYNTHETIC_PACKAGE_NAME:
+            return True
+
+        module_filename = os.path.basename(origin)
+        return module_filename in {'__synthetic__', '__init__.py'}
 
     def _ensure_package(self, package):
         if self._is_ansible_ns_package(package):
