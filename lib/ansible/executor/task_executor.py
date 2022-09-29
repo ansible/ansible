@@ -996,20 +996,6 @@ class TaskExecutor:
             # AttributeError above later
             self._play_context.set_become_plugin(become_plugin.name)
 
-    def _get_persistent_connection_options(self, connection, final_vars, templar):
-
-        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
-        plugin = connection._sub_plugin
-        if plugin.get('type'):
-            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
-
-        options = {}
-        for k in option_vars:
-            if k in final_vars:
-                options[k] = templar.template(final_vars[k])
-
-        return options
-
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:
             plugin = getattr(self._connection, '_%s' % plugin_type)
