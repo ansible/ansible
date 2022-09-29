@@ -1,0 +1,9 @@
+breaking_changes:
+- >-
+  ansible-test validate-modules - Removed the ``missing-python-doc`` error code in validate modules,
+  ``missing-documentation`` is used instead for missing PowerShell module documentation.
+minor_changes:
+- >-
+  ansible-test validate-modules - Added support for validating module documentation stored in a sidecar
+  file alongside the module (``{module}.yml`` or ``{module}.yaml``). Previously these files were ignored
+  and documentation had to be placed in ``{module}.py``.

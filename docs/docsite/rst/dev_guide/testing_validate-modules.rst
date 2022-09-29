@@ -105,7 +105,6 @@ Codes
   missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
   missing-module-utils-import-csharp-requirements              Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
-  missing-python-doc                                           Naming               Error                  Missing python documentation file
   missing-python-interpreter                                   Syntax               Error                  Interpreter line is not ``#!/usr/bin/python``
   missing-return                                               Documentation        Error                  No ``RETURN`` documentation provided
   missing-return-legacy                                        Documentation        Warning                No ``RETURN`` documentation provided for legacy module
