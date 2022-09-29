@@ -423,6 +423,7 @@ class JinjaPluginIntercept(MutableMapping):
         if not isinstance(key, string_types):
             raise ValueError('key must be a string, got %s instead' % type(key))
 
+        key_error = None
         if key not in self._loaded_builtins:
             plugin = None
             try:
@@ -431,6 +432,7 @@ class JinjaPluginIntercept(MutableMapping):
                 raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(e)), 0)
             except KeyError as e:
                 plugin = None
+                key_error = e
             except Exception as e:
                 display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
                 raise e
@@ -442,7 +444,10 @@ class JinjaPluginIntercept(MutableMapping):
                 self._loaded_builtins.add(key)
 
         # let it trigger keyerror if we could not find ours or jinja2 one
-        func = self._delegatee[key]
+        try:
+            func = self._delegatee[key]
+        except KeyError as e:
+            raise key_error or e
 
         # if i do have func and it is a filter, it nees wrapping
         if self._pluginloader.type == 'filter':
