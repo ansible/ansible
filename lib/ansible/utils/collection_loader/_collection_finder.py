@@ -88,6 +88,36 @@ SYNTHETIC_PACKAGE_NAME = '<ansible_synthetic_collection_package>'
 
 
 class _AnsibleNSTraversable:
+    """Class that implements the ``importlib.resources.abc.Traversable``
+    interface for the following ``ansible_collections`` namespace packages::
+
+    * ``ansible_collections``
+    * ``ansible_collections.<namespace>``
+
+    These namespace packages operate differently from a normal Python
+    namespace package, in that the same namespace can be distributed across
+    multiple directories on the filesystem and still function as a single
+    namespace, such as::
+
+    * ``/usr/share/ansible/collections/ansible_collections/ansible/posix/``
+    * ``/home/user/.ansible/collections/ansible_collections/ansible/windows/``
+
+    This class will mimic the behavior of various ``pathlib.Path`` methods,
+    by combining the results of multiple root paths into the output.
+
+    This class does not do anything to remove duplicate collections from the
+    list, so when traversing either namespace patterns supported by this class,
+    it is possible to have the same collection located in multiple root paths,
+    but precedence rules only use one. When iterating or traversing these
+    package roots, there is the potential to see the same collection in
+    multiple places without indication of which would be used. In such a
+    circumstance, it is best to then call ``importlib.resources.files`` for an
+    individual collection package rather than continuing to traverse from the
+    namespace package.
+
+    Several methods will raise ``NotImplementedError`` as they do not make
+    sense for these namespace packages.
+    """
     def __init__(self, *paths):
         self._paths = [pathlib.Path(p) for p in paths]
 
@@ -113,6 +143,16 @@ class _AnsibleNSTraversable:
 
 
 class _AnsibleTraversableResources:
+    """Implements ``importlib.resources.abc.TraversableResources`` for the
+    collection Python loaders.
+
+    The result of ``files`` will depend on whether a particular collection, or
+    a sub package of a collection was refernced, as opposed to
+    ``ansible_collections`` or a particular namespace. For a collection and
+    its subpackages, a ``pathlib.Path`` instance will be returned, whereas
+    for the higher level namespace packages, ``_AnsibleNSTraversable``
+    will be returned.
+    """
     def __init__(self, package, loader):
         self._package = package
         self._loader = loader
