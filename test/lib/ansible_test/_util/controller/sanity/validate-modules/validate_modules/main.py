@@ -1102,10 +1102,10 @@ class ModuleValidator(Validator):
 
         elif self.plugin_type in PLUGINS_WITH_YAML_EXAMPLES:
             dummy, errors, traces = parse_yaml(examples_raw,
-                                                examples_lineno,
-                                                self.name, 'EXAMPLES',
-                                                load_all=True,
-                                                ansible_loader=True)
+                                               examples_lineno,
+                                               self.name, 'EXAMPLES',
+                                               load_all=True,
+                                               ansible_loader=True)
             for error in errors:
                 self.reporter.error(
                     path=self.object_path,
