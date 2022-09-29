@@ -315,6 +315,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = 'mock.action'
         mock_task.args = dict()
+        mock_task.become = False
         mock_task.retries = 0
         mock_task.delay = -1
         mock_task.register = 'foo'

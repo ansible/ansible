@@ -1,0 +1,33 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: test changing become activation on the same connection
+    raw: become_test
+    register: become_test
+    become: '{{ item }}'
+    vars:
+      ansible_connection: ns.name.dummy
+    loop:
+    - true
+    - false
+
+  - assert:
+      that:
+      - become_test.results[0].stderr == "become - sudo"
+      - become_test.results[0].stdout.startswith("sudo ")
+      - become_test.results[1].stderr == "become - None"
+      - become_test.results[1].stdout == "become_test"
+
+  - name: test loop reusing connection with redirected plugin name
+    raw: connected_test
+    register: connected_test
+    vars:
+      ansible_connection: ns.name.redirected_dummy
+    loop:
+    - 1
+    - 2
+
+  - assert:
+      that:
+      - connected_test.results[0].stderr == "ran - 1"
+      - connected_test.results[1].stderr == "ran - 2"
