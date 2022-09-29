@@ -129,7 +129,7 @@ To check a task:
 
 2. If the module changes the system state, check the actual system state using at least one other module. For example, if the module changes a file, we can check that the file has been changed by checking its checksum with the :ref:`stat <ansible_collections.ansible.builtin.stat_module>` module before and after the test tasks.
 3. Run the same task with ``check_mode: yes`` if check-mode is supported by the module. Check with other modules that the actual system state has not been changed.
-4. Cover cases when the module must fail. Use the ``ignore_errors: yes`` option and check the returned message with the ``assert`` module.
+4. Cover cases when the module must fail. Use the ``ignore_errors: true`` option and check the returned message with the ``assert`` module.
 
 Example:
 
@@ -139,7 +139,7 @@ Example:
     abstract_module:
         ...
     register: result
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Check the task fails and its error message
     assert:

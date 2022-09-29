@@ -213,7 +213,7 @@ That is enough for our very basic example.
 .. code-block:: yaml
 
   - name: Test postgresql_info module
-    become: yes
+    become: true
     become_user: postgres
     postgresql_info:
       login_user: postgres
