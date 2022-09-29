@@ -1,5 +1,5 @@
 - name: omit should reset to 'absent' or same context, not just 'default' value
-  hosts: localhost
+  hosts: testhost
   gather_facts: false
   become: yes
   tasks:
