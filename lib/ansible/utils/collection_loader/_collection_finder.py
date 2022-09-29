@@ -206,6 +206,9 @@ class _AnsibleTraversableResources:
 
         if isinstance(package, string_types):
             if is_ns:
+                # Don't use ``spec_from_loader`` here, because that will point
+                # to exactly 1 location for a namespace. Use ``find_spec``
+                # to get a list of all locations for the namespace
                 package = find_spec(package)
             else:
                 package = spec_from_loader(package, self._loader)
