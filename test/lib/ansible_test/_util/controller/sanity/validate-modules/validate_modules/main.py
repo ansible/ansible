@@ -124,6 +124,7 @@ LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
 PLUGINS_WITH_RETURN_VALUES = ('module', )
 PLUGINS_WITH_EXAMPLES = ('module', )
+PLUGINS_WITH_YAML_EXAMPLES = ('module', )
 
 
 def is_potential_secret_option(option_name):
@@ -676,17 +677,8 @@ class ModuleValidator(Validator):
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
-        try:
-            min_doc_line = min(
-                doc_info[key]['lineno'] for key in doc_info if doc_info[key]['lineno']
-            )
-        except ValueError:
-            # We can't perform this validation, as there are no DOCs provided at all
-            return
-
-        max_doc_line = max(
-            doc_info[key]['end_lineno'] for key in doc_info if doc_info[key]['end_lineno']
-        )
+        min_doc_line = min(doc_info[key]['lineno'] for key in doc_info)
+        max_doc_line = max(doc_info[key]['end_lineno'] for key in doc_info)
 
         import_lines = []
 
@@ -817,16 +809,25 @@ class ModuleValidator(Validator):
             )
 
     def _find_ps_docs_file(self):
-        for ext in ('.yml', '.yaml', '.py'):
-            doc_path = self.path.replace('.ps1', ext)
+        sidecar = self._find_sidecar_docs()
+        if sidecar:
+            return sidecar
+
+        py_path = self.path.replace('.ps1', '.py')
+        if not os.path.isfile(py_path):
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-documentation',
+                msg='No DOCUMENTATION provided'
+            )
+        return py_path
+
+    def _find_sidecar_docs(self):
+        base_path = os.path.splitext(self.path)[0]
+        for ext in ('.yml', '.yaml'):
+            doc_path = f"{base_path}{ext}"
             if os.path.isfile(doc_path):
                 return doc_path
-
-        self.reporter.error(
-            path=self.object_path,
-            code='missing-documentation',
-            msg='No DOCUMENTATION provided'
-        )
 
     def _get_py_docs(self):
         docs = {
@@ -926,8 +927,20 @@ class ModuleValidator(Validator):
                 routing_says_deprecated = True
                 deprecated = True
 
+        if self._python_module():
+            doc_info = self._get_py_docs()
+        else:
+            doc_info = None
+
+        sidecar_text = None
         if self._sidecar_doc():
-            sidecar_doc, errors, traces = parse_yaml(self.text, 0, self.name, 'DOCUMENTATION')
+            sidecar_text = self.text
+        elif sidecar_path := self._find_sidecar_docs():
+            with open(sidecar_path, mode='r', encoding='utf-8') as fd:
+                sidecar_text = fd.read()
+
+        if sidecar_text:
+            sidecar_doc, errors, traces = parse_yaml(sidecar_text, 0, self.name, 'DOCUMENTATION')
             for error in errors:
                 self.reporter.error(
                     path=self.object_path,
@@ -945,9 +958,7 @@ class ModuleValidator(Validator):
             examples_lineno = 1
             returns = sidecar_doc.get('RETURN', None)
 
-        else:
-            doc_info = self._get_py_docs()
-
+        elif doc_info:
             if bool(doc_info['DOCUMENTATION']['value']):
                 doc, errors, traces = parse_yaml(
                     doc_info['DOCUMENTATION']['value'],
@@ -987,9 +998,6 @@ class ModuleValidator(Validator):
                         path=self.object_path,
                         tracebk=trace
                     )
-
-            first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
-            self._ensure_imports_below_docs(doc_info, first_callable)
 
         if doc:
             add_collection_to_versions_and_dates(doc, self.collection_name,
@@ -1084,30 +1092,30 @@ class ModuleValidator(Validator):
                 msg='No DOCUMENTATION provided',
             )
 
-        if self.plugin_type in PLUGINS_WITH_EXAMPLES:
-            if examples_raw:
-                dummy, errors, traces = parse_yaml(examples_raw,
-                                                   examples_lineno,
-                                                   self.name, 'EXAMPLES',
-                                                   load_all=True,
-                                                   ansible_loader=True)
-                for error in errors:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='invalid-examples',
-                        **error
-                    )
-                for trace in traces:
-                    self.reporter.trace(
-                        path=self.object_path,
-                        tracebk=trace
-                    )
-
-            else:
+        if not examples_raw and self.plugin_type in PLUGINS_WITH_EXAMPLES:
+            if self.plugin_type in PLUGINS_WITH_EXAMPLES:
                 self.reporter.error(
                     path=self.object_path,
                     code='missing-examples',
                     msg='No EXAMPLES provided'
+                )
+
+        elif self.plugin_type in PLUGINS_WITH_YAML_EXAMPLES:
+            dummy, errors, traces = parse_yaml(examples_raw,
+                                                examples_lineno,
+                                                self.name, 'EXAMPLES',
+                                                load_all=True,
+                                                ansible_loader=True)
+            for error in errors:
+                self.reporter.error(
+                    path=self.object_path,
+                    code='invalid-examples',
+                    **error
+                )
+            for trace in traces:
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=trace
                 )
 
         if returns:
@@ -1197,7 +1205,7 @@ class ModuleValidator(Validator):
 
             # In the future we should error if ANSIBLE_METADATA exists in a collection
 
-        return doc
+        return doc_info, doc
 
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
@@ -2190,8 +2198,9 @@ class ModuleValidator(Validator):
             return
 
         end_of_deprecation_should_be_removed_only = False
+        doc_info = None
         if self._python_module() or self._sidecar_doc():
-            docs = self._validate_docs()
+            doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
             if docs and docs.get('deprecated', False):
@@ -2261,6 +2270,10 @@ class ModuleValidator(Validator):
                 self._find_module_utils()
             self._find_has_import()
 
+            if doc_info:
+                first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
+                self._ensure_imports_below_docs(doc_info, first_callable)
+
             if self.plugin_type == 'module':
                 self._check_for_subprocess()
                 self._check_for_os_call()
@@ -2273,7 +2286,7 @@ class ModuleValidator(Validator):
             pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
             if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_REJECTLIST:
                 with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
-                    docs = docs_mv._validate_docs()
+                    docs = docs_mv._validate_docs()[1]
                     self._validate_ansible_module_call(docs)
 
         self._check_gpl3_header()
