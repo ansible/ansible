@@ -1,4 +1,3 @@
 shippable/posix/group5
 needs/target/setup_test_user
-needs/target/setup_remote_tmp_dir
 context/controller
