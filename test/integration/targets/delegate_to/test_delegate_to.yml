@@ -1,9 +1,9 @@
 - hosts: testhost3
   vars:
-    - template_role: ./roles/test_template
-    - output_dir: "{{ playbook_dir }}"
-    - templated_var: foo
-    - templated_dict: { 'hello': 'world' }
+    template_role: ./roles/test_template
+    output_dir: "{{ playbook_dir }}"
+    templated_var: foo
+    templated_dict: { 'hello': 'world' }
   tasks:
     - name: Test no delegate_to
       setup:
