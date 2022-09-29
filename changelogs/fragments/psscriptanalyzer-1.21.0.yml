@@ -1,0 +1,4 @@
+minor_changes:
+- >- 
+  ansible-test pslint - Upgrade PSScriptAnalyzer to ``1.21.0`` which enables the ``AvoidMultipleTypeAttributes``,
+  ``AvoidSemicolonsAsLineTerminators``, and ``AvoidUsingBrokenHashAlgorithms`` rules
