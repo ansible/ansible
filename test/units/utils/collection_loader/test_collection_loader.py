@@ -13,7 +13,7 @@ from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (
     _AnsibleCollectionFinder, _AnsibleCollectionLoader, _AnsibleCollectionNSPkgLoader, _AnsibleCollectionPkgLoader,
-    _AnsibleCollectionPkgLoaderBase, _AnsibleCollectionRootPkgLoader, _AnsiblePathHookFinder,
+    _AnsibleCollectionPkgLoaderBase, _AnsibleCollectionRootPkgLoader, _AnsibleNSTraversable, _AnsiblePathHookFinder,
     _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl
 )
 from ansible.utils.collection_loader._collection_config import _EventSource
@@ -826,6 +826,52 @@ def test_collectionref_components_invalid(name, subdirs, resource, ref_type, exp
         AnsibleCollectionRef(name, subdirs, resource, ref_type)
 
     assert re.search(expected_error_expression, str(curerr.value))
+
+
+@pytest.mark.skipif(not PY3, reason='importlib.resources only supported for py3')
+def test_importlib_resources():
+    if sys.version_info < (3, 10):
+        from importlib_resources import files
+    else:
+        from importlib.resources import files
+    from pathlib import Path
+
+    f = get_default_finder()
+    reset_collections_loader_state(f)
+
+    ansible_collections_ns = files('ansible_collections')
+    ansible_ns = files('ansible_collections.ansible')
+    testns = files('ansible_collections.testns')
+    testcoll = files('ansible_collections.testns.testcoll')
+    testcoll2 = files('ansible_collections.testns.testcoll2')
+    module_utils = files('ansible_collections.testns.testcoll.plugins.module_utils')
+
+    assert isinstance(ansible_collections_ns, _AnsibleNSTraversable)
+    assert isinstance(ansible_ns, _AnsibleNSTraversable)
+    assert isinstance(testcoll, Path)
+    assert isinstance(module_utils, Path)
+
+    assert ansible_collections_ns.is_dir()
+    assert ansible_ns.is_dir()
+    assert testcoll.is_dir()
+    assert module_utils.is_dir()
+
+    first_path = Path(default_test_collection_paths[0])
+    second_path = Path(default_test_collection_paths[1])
+    testns_paths = []
+    ansible_ns_paths = []
+    for path in default_test_collection_paths[:2]:
+        ansible_ns_paths.append(Path(path) / 'ansible_collections' / 'ansible')
+        testns_paths.append(Path(path) / 'ansible_collections' / 'testns')
+
+    assert testns._paths == testns_paths
+    assert ansible_ns._paths == ansible_ns_paths
+    assert ansible_collections_ns._paths == [Path(p) / 'ansible_collections' for p in default_test_collection_paths[:2]]
+    assert testcoll2 == second_path / 'ansible_collections' / 'testns' / 'testcoll2'
+
+    assert [p.name for p in module_utils.glob('*.py')] == ['__init__.py', 'my_other_util.py', 'my_util.py']
+    nestcoll_mu_init = first_path / 'ansible_collections' / 'testns' / 'testcoll' / 'plugins' / 'module_utils' / '__init__.py'
+    assert next(module_utils.glob('__init__.py')) == nestcoll_mu_init
 
 
 # BEGIN TEST SUPPORT
