@@ -79,6 +79,8 @@ Our IRC channels may require you to register your IRC nickname. If you receive a
 
 as described in the `libera.chat docs <https://libera.chat/guides/findingchannels>`_.
 
+Our channels record history on the Matrix side. The channel history can be viewed in a browser - all channels will report an appropriate link to ``chat.ansible.im`` in their Chanserv entrymsg upon joining the room. Alternatively, a URL of the form ``https://chat.ansible.im/#/room/# {IRC channel name}:libera.chat`` will also work, for example -  for the #ansible-docs channel it would be `https://app.element.io/#/room/#ansible-docs:libera.chat`.
+
 .. _general_channels:
 
 General channels
