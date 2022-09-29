@@ -54,7 +54,7 @@
 
 # https://github.com/ansible/ansible/issues/30638
 - block:
-  - name: Fail to install foo=1.0.1 since foo is not installed and only_upgrade is set
+  - name: Don't install foo=1.0.1 since foo is not installed and only_upgrade is set
     apt:
       name: foo=1.0.1
       state: present
@@ -67,30 +67,36 @@
     assert:
       that:
         - "apt_result is not changed"
-        - "apt_result is failed"
+        - "apt_result is success"
 
   - apt:
       name: foo=1.0.0
       allow_unauthenticated: yes
 
-  - name: Upgrade foo to 1.0.1
+  - name: Upgrade foo to 1.0.1 but don't upgrade foobar since it is not installed
     apt:
-      name: foo=1.0.1
+      name: foobar=1.0.1,foo=1.0.1
       state: present
       only_upgrade: yes
       allow_unauthenticated: yes
     register: apt_result
 
   - name: Check install with dpkg
-    shell: dpkg-query -l foo
+    shell: "dpkg-query -l {{ item }}"
     register: dpkg_result
+    ignore_errors: yes
+    loop:
+      - foobar
+      - foo
 
   - name: Check if install was successful
     assert:
       that:
         - "apt_result is success"
-        - "dpkg_result is success"
-        - "'1.0.1' in dpkg_result.stdout"
+        - "dpkg_result.results[0] is failure"
+        - "'1.0.1' not in dpkg_result.results[0].stdout"
+        - "dpkg_result.results[1] is success"
+        - "'1.0.1' in dpkg_result.results[1].stdout"
   always:
     - name: Clean up
       apt:

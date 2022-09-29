@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  apt - Fix module failure when a package is not installed and only_upgrade=True.
+  Skip that package and check the remaining requested packages for upgrades. (https://github.com/ansible/ansible/issues/78762)
