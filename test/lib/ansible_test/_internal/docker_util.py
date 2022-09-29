@@ -415,6 +415,7 @@ def get_docker_container_id() -> t.Optional[str]:
     return container_id
 
 
+@mutex
 def get_docker_preferred_network_name(args: EnvironmentConfig) -> str | None:
     """
     Return the preferred network name for use with Docker. The selection logic is:

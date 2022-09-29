@@ -82,6 +82,10 @@ from .connections import (
     SshConnection,
 )
 
+from .thread import (
+    mutex,
+)
+
 # information about support containers provisioned by the current ansible-test instance
 support_containers: dict[str, ContainerDescriptor] = {}
 support_containers_mutex = threading.Lock()
@@ -226,6 +230,7 @@ def run_support_container(
     return descriptor
 
 
+@mutex
 def get_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Return the current container database, creating it as needed, or returning the one provided on the command line through delegation."""
     try:

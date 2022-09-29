@@ -33,6 +33,7 @@ minor_changes:
 bugfixes:
   - ansible-test - Multiple containers now work under podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.
+  - ansible-test - Prevent concurrent execution of cached methods.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.
