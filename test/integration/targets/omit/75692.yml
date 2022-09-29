@@ -3,7 +3,7 @@
   gather_facts: false
   become: yes
   roles:
-    - setup_test_user
+    - name: setup_test_user
   tasks:
     - shell: whoami
       register: inherited
