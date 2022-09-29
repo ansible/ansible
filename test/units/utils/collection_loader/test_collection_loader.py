@@ -869,7 +869,7 @@ def test_importlib_resources():
     assert ansible_collections_ns._paths == [Path(p) / 'ansible_collections' for p in default_test_collection_paths[:2]]
     assert testcoll2 == second_path / 'ansible_collections' / 'testns' / 'testcoll2'
 
-    assert [p.name for p in module_utils.glob('*.py')] == ['__init__.py', 'my_other_util.py', 'my_util.py']
+    assert {p.name for p in module_utils.glob('*.py')} == {'__init__.py', 'my_other_util.py', 'my_util.py'}
     nestcoll_mu_init = first_path / 'ansible_collections' / 'testns' / 'testcoll' / 'plugins' / 'module_utils' / '__init__.py'
     assert next(module_utils.glob('__init__.py')) == nestcoll_mu_init
 
