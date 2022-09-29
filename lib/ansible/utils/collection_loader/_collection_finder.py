@@ -95,7 +95,7 @@ class _AnsibleNSTraversable:
         return '_AnsibleNSTraversable(\'%s\')' % '\', \''.join(map(to_text, self._paths))
 
     def iterdir(self):
-        return itertools.chain(*[list(p.iterdir()) for p in self._paths if p.is_dir()])
+        return itertools.chain.from_iterable(p.iterdir() for p in self._paths if p.is_dir())
 
     def is_dir(self):
         return any((p.is_dir() for p in self._paths))
@@ -104,7 +104,7 @@ class _AnsibleNSTraversable:
         return False
 
     def glob(self, pattern):
-        return itertools.chain(*[list(p.glob(pattern)) for p in self._paths if p.is_dir()])
+        return itertools.chain.from_iterable(p.glob(pattern) for p in self._paths if p.is_dir())
 
     def _not_implemented(self, *args, **kwargs):
         raise NotImplementedError('not usable on namespaces')
