@@ -1,12 +1,12 @@
 ---
 - hosts: testhost
   vars:
-    - ansible_hostname: "BAD!"
-    - vars_var: "vars_var"
-    - param_var: "BAD!"
-    - vars_files_var: "BAD!"
-    - extra_var_override_once_removed: "{{ extra_var_override }}"
-    - from_inventory_once_removed: "{{ inven_var | default('BAD!') }}"
+    ansible_hostname: "BAD!"
+    vars_var: "vars_var"
+    param_var: "BAD!"
+    vars_files_var: "BAD!"
+    extra_var_override_once_removed: "{{ extra_var_override }}"
+    from_inventory_once_removed: "{{ inven_var | default('BAD!') }}"
   vars_files:
     - vars/test_var_precedence.yml
   roles:
