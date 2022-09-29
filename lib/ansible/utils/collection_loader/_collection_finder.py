@@ -98,7 +98,7 @@ class _AnsibleNSTraversable:
         return itertools.chain.from_iterable(p.iterdir() for p in self._paths if p.is_dir())
 
     def is_dir(self):
-        return any((p.is_dir() for p in self._paths))
+        return any(p.is_dir() for p in self._paths)
 
     def is_file(self):
         return False
