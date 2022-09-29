@@ -110,7 +110,7 @@ We will add the following code to the file.
   - name: Test for new_option, create new user WITHOUT the attribute
     postgresql_user:
       name: test_user
-      add_attribute: no
+      add_attribute: false
     register: result
 
   - name: Check the module returns what we expect
@@ -131,7 +131,7 @@ We will add the following code to the file.
   - name: Test for new_option, create new user WITH the attribute
     postgresql_user:
       name: test_user
-      add_attribute: yes
+      add_attribute: true
     register: result
 
   - name: Check the module returns what we expect
@@ -153,16 +153,16 @@ Then we :ref:`run the tests<collection_run_integration_tests>` with ``postgresql
 
 In reality, we would alternate the tasks above with the same tasks run with the ``check_mode: yes`` option to be sure our option works as expected in check-mode as well. See :ref:`Recommendations on coverage<collection_integration_recommendations>` for details.
 
-If we expect a task to fail, we use the ``ignore_errors: yes`` option and check that the task actually failed and returned the message we expect:
+If we expect a task to fail, we use the ``ignore_errors: true`` option and check that the task actually failed and returned the message we expect:
 
 .. code-block:: yaml
 
   - name: Test for fail_when_true option
     postgresql_user:
       name: test_user
-      fail_when_true: yes
+      fail_when_true: true
     register: result
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Check the module fails and returns message we expect
     assert:
