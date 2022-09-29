@@ -76,6 +76,45 @@ DOCUMENTATION = """
         env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
         ini:
           - {key: proxy_command, section: paramiko_connection}
+      ssh_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          default: ''
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_args'
+          env:
+              - name: ANSIBLE_SSH_ARGS
+          vars:
+              - name: ansible_ssh_args
+                version_added: '2.7'
+      ssh_common_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_common_args'
+                version_added: '2.7'
+          env:
+              - name: ANSIBLE_SSH_COMMON_ARGS
+                version_added: '2.7'
+          vars:
+              - name: ansible_ssh_common_args
+          cli:
+              - name: ssh_common_args
+          default: ''
+      ssh_extra_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          vars:
+              - name: ansible_ssh_extra_args
+          env:
+            - name: ANSIBLE_SSH_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: ssh_extra_args
+              section: ssh_connection
+              version_added: '2.7'
+          cli:
+            - name: ssh_extra_args
+          default: ''
       pty:
         default: True
         description: 'TODO: write it'
@@ -253,9 +292,9 @@ class Connection(ConnectionBase):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', '') or '',
-            getattr(self._play_context, 'ssh_common_args', '') or '',
-            getattr(self._play_context, 'ssh_args', '') or '',
+            self.get_option('ssh_extra_args'),
+            self.get_option('ssh_common_args'),
+            self.get_option('ssh_args', ''),
         ]
 
         args = self._split_ssh_args(' '.join(ssh_args))
@@ -273,7 +312,7 @@ class Connection(ConnectionBase):
             if proxy_command:
                 break
 
-        proxy_command = proxy_command or self.get_option('proxy_command')
+        proxy_command = self.get_option('proxy_command') or proxy_command
 
         sock_kwarg = {}
         if proxy_command:
