@@ -29,7 +29,7 @@ from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
-21
+
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
     valid_metadata = {
         'extend_group': {
