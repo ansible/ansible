@@ -480,6 +480,7 @@ class FieldAttributeBase:
 
     def set_to_context(self, name):
 
+        attribute = self.fattributes[name]
         if isinstance(attribute, NonInheritableFieldAttribute):
             self.set_to_default(name)
         else:
