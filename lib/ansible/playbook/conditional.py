@@ -16,10 +16,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import ast
+import typing as t
 
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
@@ -28,6 +30,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
+from ansible.template import Templar
 from ansible.utils.display import Display
 
 display = Display()
@@ -35,20 +38,22 @@ display = Display()
 
 class Conditional:
 
-    '''
+    """
     This is a mix-in class, to be used with Base to allow the object
     to be run conditionally when a condition is met or skipped.
-    '''
+    """
 
-    when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
+    when = FieldAttribute(isa="list", default=list, extend=True, prepend=True)
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
         # make sure we don't trample on the existing one if this class
         # is used as a mix-in with a playbook base class
-        if not hasattr(self, '_loader'):
+        if not hasattr(self, "_loader"):
             if loader is None:
-                raise AnsibleError("a loader must be specified when using Conditional() directly")
+                raise AnsibleError(
+                    "a loader must be specified when using Conditional() directly"
+                )
             else:
                 self._loader = loader
         super(Conditional, self).__init__()
@@ -57,25 +62,37 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [value])
 
-    def evaluate_conditional(self, templar, all_vars):
-        '''
+    def evaluate_conditional(
+        self, templar: Templar, all_vars: dict[str, t.Any]
+    ) -> bool:
+        """
         Loops through the conditionals set on this object, returning
         False if any of them evaluate as such.
-        '''
+        """
+        return self.evaluate_conditional_with_result(templar, all_vars)[0]
 
+    def evaluate_conditional_with_result(
+        self, templar: Templar, all_vars: dict[str, t.Any]
+    ) -> tuple[bool, t.Optional[str]]:
+        """
+        Loops through the conditionals set on this object, returning
+        False if any of them evaluate as such as well as the condition
+        that was false.
+        """
         # since this is a mix-in, it may not have an underlying datastructure
         # associated with it, so we pull it out now in case we need it for
         # error reporting below
         ds = None
-        if hasattr(self, '_ds'):
-            ds = getattr(self, '_ds')
+        if hasattr(self, "_ds"):
+            ds = getattr(self, "_ds")
 
         result = True
+        failed_conditional: t.Optional[str] = None
         try:
             for conditional in self.when:
 
                 # do evaluation
-                if conditional is None or conditional == '':
+                if conditional is None or conditional == "":
                     res = True
                 elif isinstance(conditional, bool):
                     res = conditional
@@ -88,33 +105,40 @@ class Conditional:
 
                 display.debug("Evaluated conditional (%s): %s" % (conditional, res))
                 if not result:
+                    failed_conditional = conditional
                     break
 
         except Exception as e:
-            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
+            raise AnsibleError(
+                "The conditional check '%s' failed. The error was: %s"
+                % (to_native(conditional), to_native(e)),
+                obj=ds,
+            )
 
-        return result
+        return result, failed_conditional
 
     def _check_conditional(self, conditional, templar, all_vars):
-        '''
+        """
         This method does the low-level evaluation of each conditional
         set on this object, using jinja2 to wrap the conditionals for
         evaluation.
-        '''
+        """
 
         original = conditional
 
         if templar.is_template(conditional):
-            display.warning('conditional statements should not include jinja2 '
-                            'templating delimiters such as {{ }} or {%% %%}. '
-                            'Found: %s' % conditional)
+            display.warning(
+                "conditional statements should not include jinja2 "
+                "templating delimiters such as {{ }} or {%% %%}. "
+                "Found: %s" % conditional
+            )
 
         # make sure the templar is using the variables specified with this method
         templar.available_variables = all_vars
 
         try:
             # if the conditional is "unsafe", disable lookups
-            disable_lookups = hasattr(conditional, '__UNSAFE__')
+            disable_lookups = hasattr(conditional, "__UNSAFE__")
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
 
             if not isinstance(conditional, text_type) or conditional == "":
@@ -122,7 +146,7 @@ class Conditional:
 
             # update the lookups flag, as the string returned above may now be unsafe
             # and we don't want future templating calls to do unsafe things
-            disable_lookups |= hasattr(conditional, '__UNSAFE__')
+            disable_lookups |= hasattr(conditional, "__UNSAFE__")
 
             # First, we do some low-level jinja2 parsing involving the AST format of the
             # statement to ensure we don't do anything unsafe (using the disable_lookup flag above)
@@ -137,12 +161,13 @@ class Conditional:
                             if inside_call and node.s.startswith("__"):
                                 # calling things with a dunder is generally bad at this point...
                                 raise AnsibleError(
-                                    "Invalid access found in the conditional: '%s'" % conditional
+                                    "Invalid access found in the conditional: '%s'"
+                                    % conditional
                                 )
                             elif inside_yield:
                                 # we're inside a yield, so recursively parse and traverse the AST
                                 # of the result to catch forbidden syntax from executing
-                                parsed = ast.parse(node.s, mode='exec')
+                                parsed = ast.parse(node.s, mode="exec")
                                 cnv = CleansingNodeVisitor()
                                 cnv.visit(parsed)
                     # iterate over all child nodes
@@ -150,12 +175,13 @@ class Conditional:
                         self.generic_visit(
                             child_node,
                             inside_call=inside_call,
-                            inside_yield=inside_yield
+                            inside_yield=inside_yield,
                         )
+
             try:
                 res = templar.environment.parse(conditional, None, None)
                 res = generate(res, templar.environment, None, None)
-                parsed = ast.parse(res, mode='exec')
+                parsed = ast.parse(res, mode="exec")
 
                 cnv = CleansingNodeVisitor()
                 cnv.visit(parsed)
@@ -165,7 +191,9 @@ class Conditional:
             # and finally we generate and template the presented string and look at the resulting string
             # NOTE The spaces around True and False are intentional to short-circuit literal_eval for
             #      jinja2_native=False and avoid its expensive calls.
-            presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+            presented = (
+                "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+            )
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
@@ -174,4 +202,6 @@ class Conditional:
             else:
                 raise AnsibleError("unable to evaluate conditional: %s" % original)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
-            raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
+            raise AnsibleUndefinedVariable(
+                "error while evaluating conditional (%s): %s" % (original, e)
+            )
