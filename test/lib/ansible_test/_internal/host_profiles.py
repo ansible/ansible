@@ -544,7 +544,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         try:
             docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
         except SubprocessError:
-            display.info('Checking container logs...')
+            display.info(f'Checking container "{self.container_name}" logs...')
             docker_logs(self.args, self.container_name)
             raise
 
