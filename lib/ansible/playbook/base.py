@@ -570,6 +570,13 @@ class FieldAttributeBase:
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
+                display.deprecated(
+                    (
+                        'Specifying a list of dictionaries for vars is deprecated in favor of '
+                        'specifying a dictionary.'
+                    ),
+                    version='2.18'
+                )
                 all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
@@ -582,7 +589,7 @@ class FieldAttributeBase:
             else:
                 raise ValueError
         except ValueError as e:
-            raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__,
+            raise AnsibleParserError("Vars in a %s must be specified as a dictionary" % self.__class__.__name__,
                                      obj=ds, orig_exc=e)
         except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds, orig_exc=e)

@@ -7,8 +7,8 @@
 
 - hosts: testhost
   vars:
-    - test1:
-        key1: val1
+    test1:
+      key1: val1
   environment:
     PATH: '{{ansible_env.PATH + ":/lola"}}'
     lola: 'ido'
@@ -41,9 +41,9 @@
 
 - hosts: testhost
   vars:
-    - test1:
-        key1: val1
-    - test2:
+    test1:
+      key1: val1
+    test2:
         key1: not1
         other1: val2
   environment: "{{test1}}"
