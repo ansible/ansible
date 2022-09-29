@@ -694,7 +694,7 @@ class FieldAttributeBase:
             if name in data:
                 setattr(self, name, data[name])
             else:
-                self.set_to_default(name)
+                self.set_to_context(name)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
