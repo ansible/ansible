@@ -35,6 +35,10 @@ from .config import (
     EnvironmentConfig,
 )
 
+from .thread import (
+    named_lock,
+)
+
 DOCKER_COMMANDS = [
     'docker',
     'podman',
@@ -460,7 +464,16 @@ def docker_pull(args: EnvironmentConfig, image: str) -> None:
     Images without a tag or digest will not be pulled.
     Retries up to 10 times if the pull fails.
     A warning will be shown for any image with volumes defined.
+    Images will be pulled only once.
+    Concurrent pulls for the same image will block until the first completes.
     """
+    with named_lock(f'docker_pull:{image}') as first:
+        if first:
+            __docker_pull(args, image)
+
+
+def __docker_pull(args: EnvironmentConfig, image: str) -> None:
+    """Internal implementation for docker_pull. Do not call directly."""
     inspect: DockerImageInspect | None = None
 
     if '@' not in image and ':' not in image:

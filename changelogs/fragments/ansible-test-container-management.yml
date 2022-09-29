@@ -32,6 +32,7 @@ minor_changes:
                    If the host limit is lower than the preferred value, it will be used and a warning will be shown.
 bugfixes:
   - ansible-test - Multiple containers now work under podman without specifying the ``--docker-network`` option.
+  - ansible-test - Prevent concurrent / repeat pulls of the same container image.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.

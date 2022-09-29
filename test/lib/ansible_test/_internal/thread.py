@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import collections.abc as c
+import contextlib
 import functools
 import sys
 import threading
@@ -60,3 +61,25 @@ def mutex(func: TCallable) -> TCallable:
             return func(*args, **kwargs)
 
     return wrapper  # type: ignore[return-value]  # requires https://www.python.org/dev/peps/pep-0612/ support
+
+
+__named_lock = threading.Lock()
+__named_locks: dict[str, threading.Lock] = {}
+
+
+@contextlib.contextmanager
+def named_lock(name: str) -> c.Iterator[bool]:
+    """
+    Context manager that provides named locks using threading.Lock instances.
+    Once named lock instances are created they are not deleted.
+    Returns True if this is the first instance of the named lock, otherwise False.
+    """
+    with __named_lock:
+        if lock_instance := __named_locks.get(name):
+            first = False
+        else:
+            first = True
+            lock_instance = __named_locks[name] = threading.Lock()
+
+    with lock_instance:
+        yield first
