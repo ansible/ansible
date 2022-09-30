@@ -188,7 +188,7 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
-                    task_action = templar.template(task.action)
+                    task_action = task.get_keyword_value('action', templar)
 
                     try:
                         action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
@@ -197,13 +197,15 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         action = None
 
+                    task_any_fatal = task.get_keyword_value('any_errors_fatal', templar)
+                    task_ignore_errors = task.get_keyword_value('ignore_errors', templar)
                     if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
                         if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers'):
                             run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if (task_any_fatal or run_once) and not task_ignore_errors:
                             any_errors_fatal = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
@@ -214,9 +216,9 @@ class StrategyModule(StrategyBase):
                                 skip_rest = True
                                 break
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        run_once = task.get_keyword_value('run_once', templar) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if (task_any_fatal or run_once) and not task_ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:
@@ -224,7 +226,8 @@ class StrategyModule(StrategyBase):
                             saved_name = task.name
                             display.debug("done copying, going to template now")
                             try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                                # we normally dont task attributes but this prevents a copy of full task and we restore below
+                                task.name = to_text(task.get_keyword_value('name', templar), nonstring='empty')
                                 display.debug("done templating")
                             except Exception:
                                 # just ignore any errors during task name templating,

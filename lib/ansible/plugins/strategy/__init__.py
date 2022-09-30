@@ -491,6 +491,8 @@ class StrategyBase:
 
         ret_results = []
         handler_templar = Templar(self._loader)
+        handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play, task=handler_task, _hosts=self._hosts_cache,
+                                                                              _hosts_all=self._hosts_cache_all)
 
         def search_handler_blocks_by_name(handler_name, handler_blocks):
             # iterate in reversed order since last handler loaded with the same name wins
@@ -500,11 +502,7 @@ class StrategyBase:
                         try:
                             if not handler_task.cached_name:
                                 if handler_templar.is_template(handler_task.name):
-                                    handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
-                                                                                                          task=handler_task,
-                                                                                                          _hosts=self._hosts_cache,
-                                                                                                          _hosts_all=self._hosts_cache_all)
-                                    handler_task.name = handler_templar.template(handler_task.name)
+                                    handler_task.name = handler_templar.get_keyword_value('name', handler_templar)
                                 handler_task.cached_name = True
 
                             # first we check with the full result of get_name(), which may
@@ -630,17 +628,11 @@ class StrategyBase:
 
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
-                                        listeners = getattr(listening_handler, 'listen', []) or []
-                                        if not listeners:
-                                            continue
-
-                                        listeners = listening_handler.get_validated_value(
-                                            'listen', listening_handler.fattributes.get('listen'), listeners, handler_templar
-                                        )
-                                        if handler_name not in listeners:
-                                            continue
-                                        else:
+                                        listeners = listening_handler.get_keyword_value('listen', handler_templar)
+                                        if listeners and handler_name in listeners:
                                             found = True
+                                        else:
+                                            continue
 
                                         if listening_handler.notify_host(original_host):
                                             self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)

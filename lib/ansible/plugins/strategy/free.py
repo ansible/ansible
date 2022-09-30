@@ -129,7 +129,7 @@ class StrategyModule(StrategyBase):
                         display.debug("done getting variables", host=host_name)
 
                         try:
-                            throttle = int(templar.template(task.throttle))
+                            throttle = task.get_keyword_value('throttle', templar)
                         except Exception as e:
                             raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
 
@@ -147,26 +147,27 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host_name] = True
                         iterator.set_state_for_host(host.name, state)
 
+                        action_name = task.get_keyword_value('action', templar)
                         try:
-                            action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
+                            action = action_loader.get(action_name, class_only=True, collection_list=task.collections)
                         except KeyError:
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin
                             action = None
 
                         try:
-                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                            task.name = to_text(task.get_keyword_value('name', templar), nonstring='empty')
                             display.debug("done templating", host=host_name)
                         except Exception:
                             # just ignore any errors during task name templating,
                             # we don't care if it just shows the raw name
                             display.debug("templating failed for some reason", host=host_name)
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        run_once = task.get_keyword_value('run_once', templar) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:
                             if action and getattr(action, 'BYPASS_HOST_LOOP', False):
                                 raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
-                                                   "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
+                                                   "and would instead execute for every host in the inventory list." % action_name, obj=task._ds)
                             else:
                                 display.warning("Using run_once with the free strategy is not currently supported. This task will still be "
                                                 "executed for every host in the inventory list.")
@@ -181,13 +182,13 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action in C._ACTION_META:
+                        if action_name in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
-                                if task.any_errors_fatal:
+                                if task.any_errors_fatal:   # we just check any value is set, no need to get validated/templated
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
                                                     "as tasks are executed independently on each host")
                                 if isinstance(task, Handler):
