@@ -721,7 +721,7 @@ def set_chain_policy(iptables_path, module, params):
 
 def get_chain_policy(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
-    if module.numeric
+    if module.params['numeric']:
       cmd.append('--numeric')
     rc, out, _ = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
@@ -744,7 +744,7 @@ def create_chain(iptables_path, module, params):
 
 def check_chain_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
-    if module.numeric
+    if module.params['numeric']:
       cmd.append('--numeric')
     rc, _, __ = module.run_command(cmd, check_rc=False)
     return (rc == 0)
