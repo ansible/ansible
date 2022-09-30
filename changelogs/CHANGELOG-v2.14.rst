@@ -5,6 +5,46 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2022-10-03
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test validate-modules - Added support for validating module documentation stored in a sidecar file alongside the module (``{module}.yml`` or ``{module}.yaml``). Previously these files were ignored and documentation had to be placed in ``{module}.py``.
+- apt_repository will use the trust repo directories in order of preference (more appropriate to less) as they exist on the target.
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- ansible-test validate-modules - Removed the ``missing-python-doc`` error code in validate modules, ``missing-documentation`` is used instead for missing PowerShell module documentation.
+
+Bugfixes
+--------
+
+- Fix reusing a connection in a task loop that uses a redirected or aliased name - https://github.com/ansible/ansible/issues/78425
+- Fix setting become activation in a task loop - https://github.com/ansible/ansible/issues/78425
+- apt module should not traceback on invalid type given as package. issue 78663.
+- known_hosts - do not return changed status when a non-existing key is removed (https://github.com/ansible/ansible/issues/78598)
+- plugin loader, fix detection for existing configuration before initializing for a plugin
+
+New Plugins
+-----------
+
+Test
+~~~~
+
+- ansible.builtin.uri - is the string a valid URI
+- ansible.builtin.url - is the string a valid URL
+- ansible.builtin.urn - is the string a valid URN
+
 v2.14.0b1
 =========
 
@@ -353,13 +393,3 @@ Bugfixes
 - winrm connection now handles default to inventory_hostname correctly.
 - yaml inventory plugin - fix the error message for non-string hostnames (https://github.com/ansible/ansible/issues/77519).
 - yum - fix traceback when ``releasever`` is specified with ``latest`` (https://github.com/ansible/ansible/issues/78058)
-
-New Plugins
------------
-
-Test
-~~~~
-
-- uri - is the string a valid URI
-- url - is the string a valid URL
-- urn - is the string a valid URN
