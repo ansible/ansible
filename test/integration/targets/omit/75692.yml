@@ -2,6 +2,7 @@
   hosts: testhost
   gather_facts: false
   become: yes
+  become_user: nobody
   roles:
     - name: setup_test_user
   tasks:
