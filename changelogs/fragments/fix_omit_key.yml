@@ -1,0 +1,2 @@
+bugfixes:
+  - omit on keywords was resetting to default value, ignoring inheritance.
