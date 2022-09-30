@@ -1,2 +1,3 @@
 shippable/posix/group5
+needs/target/setup_test_user
 context/controller
