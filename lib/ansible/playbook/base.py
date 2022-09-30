@@ -362,10 +362,7 @@ class FieldAttributeBase:
         # Resolve extended groups last, after caching the group in case they recursively refer to each other
         for include_group in include_groups:
             if not AnsibleCollectionRef.is_valid_fqcr(include_group):
-                include_group_collection = collection_name
                 include_group = collection_name + '.' + include_group
-            else:
-                include_group_collection = '.'.join(include_group.split('.')[0:2])
 
             dummy, group_actions = self._resolve_group(include_group, mandatory=False)
 
@@ -481,6 +478,26 @@ class FieldAttributeBase:
             value.post_validate(templar=templar)
         return value
 
+    def set_to_context(self, name):
+
+        attribute = self.fattributes[name]
+        if isinstance(attribute, NonInheritableFieldAttribute):
+            self.set_to_default(name)
+        else:
+            try:
+                setattr(self, name, self._get_parent_attribute(name))
+            except AttributeError:
+                # mostly playcontext as only tasks/handlers really resolve to parent
+                self.set_to_default(name)
+
+    def set_to_default(self, name):
+
+        attribute = self.fattributes[name]
+        if callable(attribute.default):
+            setattr(self, name, attribute.default())
+        else:
+            setattr(self, name, attribute.default)
+
     def post_validate(self, templar):
         '''
         we can't tell that everything is of the right type until we have
@@ -524,13 +541,11 @@ class FieldAttributeBase:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
 
-                # if this evaluated to the omit value, set the value back to
-                # the default specified in the FieldAttribute and move on
+                # If this evaluated to the omit value, set the value back to inherited by context
+                # or default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    if callable(attribute.default):
-                        setattr(self, name, attribute.default())
-                    else:
-                        setattr(self, name, attribute.default)
+                    self.set_to_context(name)
+                    self._finalized = True
                     continue
 
                 # and make sure the attribute is of the type it should be
@@ -679,7 +694,7 @@ class FieldAttributeBase:
             if name in data:
                 setattr(self, name, data[name])
             else:
-                setattr(self, name, attribute.default)
+                self.set_to_context(name)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
