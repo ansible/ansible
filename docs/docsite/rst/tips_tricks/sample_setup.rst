@@ -4,9 +4,9 @@
 Sample Ansible setup
 ********************
 
-You have learned about playbooks, inventory, roles, and variables. This section pulls all those elements together, outlining a sample setup for automating a web service. You can find more example playbooks illustrating these patterns in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  (NOTE: These may not use all of the features in the latest release, but are still an excellent reference!).
+You have learned about playbooks, inventory, roles, and variables. This section combines all those elements, and outlines a sample setup for automating a web service. You can find more example playbooks that illustrate these patterns in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_. (NOTE: These examples do not use all of the latest features, but are still an excellent reference.).
 
-The sample setup organizes playbooks, roles, inventory, and variables files by function, with tags at the play and task level for greater granularity and control. This is a powerful and flexible approach, but there are other ways to organize Ansible content. Your usage of Ansible should fit your needs, not ours, so feel free to modify this approach and organize your content as you see fit.
+The sample setup organizes playbooks, roles, inventory, and files with variables by function. Tags at the play and task level provide greater granularity and control. This is a powerful and flexible approach, but there are other ways to organize Ansible content. Your usage of Ansible should fit your needs, so feel free to modify this approach and organize your content accordingly.
 
 .. contents::
    :local:
@@ -39,12 +39,12 @@ This layout organizes most tasks in roles, with a single inventory file for each
         webservers-extra.yml  # <-- avoids confusing playbook with task files
 .. include:: shared_snippets/role_directory.txt
 
-.. note:: By default, Ansible assumes your playbooks are stored in one directory with roles stored in a sub-directory called ``roles/``. As you use Ansible to automate more tasks, you may want to move your playbooks into a sub-directory called ``playbooks/``. If you do this, you must configure the path to your ``roles/`` directory using the ``roles_path`` setting in ansible.cfg.
+.. note:: By default, Ansible assumes your playbooks are stored in one directory with roles stored in a sub-directory called ``roles/``. With more tasks to automate, you can consider moving your playbooks into a sub-directory called ``playbooks/``. If you do this, you must configure the path to your ``roles/`` directory using the ``roles_path`` setting in the ``ansible.cfg`` file.
 
 Alternative directory layout
 ----------------------------
 
-Alternatively you can put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` don't have that much in common in different environments. The layout could look something like this:
+You can also put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` do not have that much in common in different environments. The layout could look like this example:
 
   .. code-block:: console
 
@@ -88,7 +88,7 @@ This layout gives you more flexibility for larger environments, as well as a tot
 Sample group and host variables
 -------------------------------
 
-These sample group and host variables files record the variable values that apply to each machine or group of machines. For instance, the data center in Atlanta has its own NTP servers, so when setting up ntp.conf, we should use them:
+These sample group and host files with variables contain the values that apply to each machine or a group of machines. For instance, the data center in Atlanta has its own NTP servers. As a result, when setting up the ``ntp.conf`` file, you could use similar code as in this example:
 
   .. code-block:: yaml
 
@@ -97,7 +97,7 @@ These sample group and host variables files record the variable values that appl
     ntp: ntp-atlanta.example.com
     backup: backup-atlanta.example.com
 
-Similarly, the webservers have some configuration that does not apply to the database servers:
+Similarly, hosts in the webservers group have some configuration that does not apply to the database servers:
 
   .. code-block:: yaml
 
@@ -106,7 +106,7 @@ Similarly, the webservers have some configuration that does not apply to the dat
     apacheMaxRequestsPerChild: 3000
     apacheMaxClients: 900
 
-Default values, or values that are universally true, belong in a file called group_vars/all:
+Default values, or values that are universally true, belong in a file called ``group_vars/all``:
 
   .. code-block:: yaml
 
@@ -115,7 +115,7 @@ Default values, or values that are universally true, belong in a file called gro
     ntp: ntp-boston.example.com
     backup: backup-boston.example.com
 
-If necessary, you can define specific hardware variance in systems in a host_vars file:
+If necessary, you can define specific hardware variance in systems in the ``host_vars`` directory:
 
   .. code-block:: yaml
 
@@ -124,14 +124,17 @@ If necessary, you can define specific hardware variance in systems in a host_var
     foo_agent_port: 86
     bar_agent_port: 99
 
-Again, if you are using :ref:`dynamic inventory <dynamic_inventory>`, Ansible creates many dynamic groups automatically.  So a tag like "class:webserver" would load in variables from the file "group_vars/ec2_tag_class_webserver" automatically.
+If you use :ref:`dynamic inventory <dynamic_inventory>`, Ansible creates many dynamic groups automatically. As a result, a tag like ``class:webserver`` will load in variables from the file ``group_vars/ec2_tag_class_webserver`` automatically.
+
+.. note:: You can access host variables with a special variable called ``hostvars``. See :ref:`special_variables` for a list of these variables. The ``hostvars`` variable can access only host-specific variables, not group variables.
+
 
 .. _split_by_role:
 
 Sample playbooks organized by function
 --------------------------------------
 
-With this setup, a single playbook can define all the infrastructure. The site.yml playbook imports two other playbooks, one for the webservers and one for the database servers:
+With this setup, a single playbook can define the entire infrastructure. The ``site.yml`` playbook imports two other playbooks. One for the webservers and one for the database servers:
 
   .. code-block:: yaml
 
@@ -140,7 +143,7 @@ With this setup, a single playbook can define all the infrastructure. The site.y
     - import_playbook: webservers.yml
     - import_playbook: dbservers.yml
 
-The webservers.yml file, also at the top level, maps the configuration of the webservers group to the roles related to the webservers group:
+The ``webservers.yml`` playbook, also at the top level, maps the configuration of the webservers group to the roles related to the webservers group:
 
   .. code-block:: yaml
 
@@ -151,7 +154,7 @@ The webservers.yml file, also at the top level, maps the configuration of the we
         - common
         - webtier
 
-With this setup, you can configure your whole infrastructure by "running" site.yml, or run a subset by running webservers.yml.  This is analogous to the Ansible "--limit" parameter but a little more explicit:
+With this setup, you can configure your entire infrastructure by running ``site.yml``. Alternatively, to configure just a portion of your infrastructure, run ``webservers.yml``. This is similar to the Ansible ``--limit`` parameter but a little more explicit:
 
   .. code-block:: shell
 
@@ -163,7 +166,7 @@ With this setup, you can configure your whole infrastructure by "running" site.y
 Sample task and handler files in a function-based role
 ------------------------------------------------------
 
-Ansible loads any file called ``main.yml`` in a role sub-directory. This sample ``tasks/main.yml`` file is simple - it sets up NTP, but it could do more if we wanted:
+Ansible loads any file called ``main.yml`` in a role sub-directory. This sample ``tasks/main.yml`` file configures NTP:
 
   .. code-block:: yaml
 
@@ -191,8 +194,7 @@ Ansible loads any file called ``main.yml`` in a role sub-directory. This sample 
         enabled: yes
       tags: ntp
 
-Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end
-of each play:
+Here is an example handlers file. Handlers are only triggered when certain tasks report changes. Handlers run at the end of each play:
 
   .. code-block:: yaml
 
@@ -264,20 +266,16 @@ To discover what tasks would run or what hostnames would be affected by a partic
 Organizing for deployment or configuration
 ------------------------------------------
 
-The sample setup models a typical configuration topology.  When doing multi-tier deployments, there are going
-to be some additional playbooks that hop between tiers to roll out an application. In this case, 'site.yml'
-may be augmented by playbooks like 'deploy_exampledotcom.yml' but the general concepts still apply. Ansible allows you to deploy and configure using the same tool, so you would likely reuse groups and keep the OS configuration in separate playbooks or roles from the app deployment.
+The sample setup illustrates a typical configuration topology. When you do multi-tier deployments, you will likely need some additional playbooks that hop between tiers to roll out an application. In this case, you can augment ``site.yml`` with playbooks like ``deploy_exampledotcom.yml``. However, the general concepts still apply. With Ansible you can deploy and configure using the same utility. Therefore, you will probably reuse groups and keep the OS configuration in separate playbooks or roles from the application deployment.
 
-Consider "playbooks" as a sports metaphor -- you can have one set of plays to use against all your infrastructure and situational plays that you use at different times and for different purposes.
+Consider "playbooks" as a sports metaphor -- you can have one set of plays to use against all your infrastructure. Then you have situational plays that you use at different times and for different purposes.
 
 .. _ship_modules_with_playbooks:
 
 Using local Ansible modules
 ---------------------------
 
-If a playbook has a :file:`./library` directory relative to its YAML file, this directory can be used to add Ansible modules that will
-automatically be in the Ansible module path.  This is a great way to keep modules that go with a playbook together.  This is shown
-in the directory structure example at the start of this section.
+If a playbook has a :file:`./library` directory relative to its YAML file, you can use this directory to add Ansible modules automatically to the module path. This organizes modules with playbooks. For example, see the directory structure at the start of this section.
 
 .. seealso::
 
