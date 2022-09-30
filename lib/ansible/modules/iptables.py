@@ -721,7 +721,8 @@ def set_chain_policy(iptables_path, module, params):
 
 def get_chain_policy(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
-    cmd.append('--numeric')
+    if module.numeric
+      cmd.append('--numeric')
     rc, out, _ = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
     result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
@@ -743,7 +744,8 @@ def create_chain(iptables_path, module, params):
 
 def check_chain_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
-    cmd.append('--numeric')
+    if module.numeric
+      cmd.append('--numeric')
     rc, _, __ = module.run_command(cmd, check_rc=False)
     return (rc == 0)
 
@@ -811,6 +813,7 @@ def main():
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
             chain_management=dict(type='bool', default=False),
+            numeric=dict(type='bool', default=False),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
