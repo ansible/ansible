@@ -95,7 +95,7 @@ Codes
   invalid-examples                                             Documentation        Error                  ``EXAMPLES`` is not valid YAML
   invalid-extension                                            Naming               Error                  Official Ansible modules must have a ``.py`` extension for python modules or a ``.ps1`` for powershell modules
   invalid-module-schema                                        Documentation        Error                  ``AnsibleModule`` schema validation error
-  invalid-removal-version                                      Documentation        Error                  The version at which a feature is supposed to be removed cannot be parsed (for collections, it must be a semantic version, see https://semver.org/)
+  invalid-removal-version                                      Documentation        Error                  The version at which a feature is supposed to be removed cannot be parsed (for collections, it must be a `semantic version https://semver.org/`_)
   invalid-requires-extension                                   Naming               Error                  Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs, Module ``#Requires`` should not end in .psm1
   missing-doc-fragment                                         Documentation        Error                  ``DOCUMENTATION`` fragment missing
   missing-existing-doc-fragment                                Documentation        Warning                Pre-existing ``DOCUMENTATION`` fragment missing

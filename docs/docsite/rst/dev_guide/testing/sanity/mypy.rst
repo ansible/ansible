@@ -11,4 +11,4 @@ Additionally, the following code is checked against Python versions supported on
  * ``lib/ansible/modules/``
  * ``lib/ansible/module_utils/``
 
-See https://mypy.readthedocs.io/en/stable/ for additional details.
+See `the mypy documentation https://mypy.readthedocs.io/en/stable/`_ for additional details.

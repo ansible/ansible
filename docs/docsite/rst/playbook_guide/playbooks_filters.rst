@@ -2106,7 +2106,7 @@ To get a date object from a string use the `to_datetime` filter:
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
 
-.. note:: For a full list of format codes for working with python date format strings, see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
+.. note:: For a full list of format codes for working with python date format strings, see :ref:`python3.datetime`.
 
 .. versionadded:: 2.4
 
