@@ -194,7 +194,7 @@ Breaking Changes
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
-- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (see `pull 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
+- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (see `issue 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
 
 Deprecated Features
 -------------------
