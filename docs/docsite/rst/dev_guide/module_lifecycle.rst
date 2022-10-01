@@ -69,13 +69,15 @@ Changing a module or plugin name in the Ansible main repository
 ===============================================================
 
 You can also rename a module and keep a deprecated alias to the old name by using a symlink that starts with _.
-This example allows the ``stat`` module to be called with ``fileinfo``, making the following examples equivalent::
+This example allows the ``stat`` module to be called with ``fileinfo``, making the following examples equivalent:
 
-    EXAMPLES = '''
+For Example:
+
+.. code-block:: yaml
+    
     ln -s stat.py _fileinfo.py
     ansible -m stat -a "path=/tmp" localhost
     ansible -m fileinfo -a "path=/tmp" localhost
-    '''
 
 Renaming a module or plugin in a collection, or redirecting a module or plugin to another collection
 ====================================================================================================
