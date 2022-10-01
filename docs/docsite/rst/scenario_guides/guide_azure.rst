@@ -374,11 +374,11 @@ the same directory.
 
 Control grouping using the following variables defined in the environment:
 
-* AZURE_GROUP_BY_RESOURCE_GROUP=yes
-* AZURE_GROUP_BY_LOCATION=yes
-* AZURE_GROUP_BY_SECURITY_GROUP=yes
-* AZURE_GROUP_BY_TAG=yes
-* AZURE_GROUP_BY_OS_FAMILY=yes
+* AZURE_GROUP_BY_RESOURCE_GROUP=true
+* AZURE_GROUP_BY_LOCATION=true
+* AZURE_GROUP_BY_SECURITY_GROUP=true
+* AZURE_GROUP_BY_TAG=true
+* AZURE_GROUP_BY_OS_FAMILY=true
 
 Select hosts within specific resource groups by assigning a comma separated list to:
 
@@ -398,7 +398,7 @@ Or, select hosts for specific tag key:value pairs by assigning a comma separated
 
 If you don't need the powerstate, you can improve performance by turning off powerstate fetching:
 
-* AZURE_INCLUDE_POWERSTATE=no
+* AZURE_INCLUDE_POWERSTATE=false
 
 A sample azure_rm.ini file is included along with the inventory script in
 `here <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/azure_rm.ini>`_.
@@ -418,15 +418,15 @@ An .ini file will contain the following:
     #locations=
 
     # Include powerstate. If you don't need powerstate information, turning it off improves runtime performance.
-    # Valid values: yes, no, true, false, True, False, 0, 1.
-    include_powerstate=yes
+    # Valid values: true, false, true, false, True, False, 0, 1.
+    include_powerstate=true
 
-    # Control grouping with the following boolean flags. Valid values: yes, no, true, false, True, False, 0, 1.
-    group_by_resource_group=yes
-    group_by_location=yes
-    group_by_security_group=yes
-    group_by_tag=yes
-    group_by_os_family=yes
+    # Control grouping with the following boolean flags. Valid values: true, false, true, false, True, False, 0, 1.
+    group_by_resource_group=true
+    group_by_location=true
+    group_by_security_group=true
+    group_by_tag=true
+    group_by_os_family=true
 
 Examples
 ........
@@ -460,7 +460,7 @@ Here is a simple playbook to exercise the Azure inventory script:
     - name: Test the inventory script
       hosts: azure
       connection: local
-      gather_facts: no
+      gather_facts: false
       tasks:
         - debug:
             msg: "{{ inventory_hostname }} has powerstate {{ powerstate }}"
