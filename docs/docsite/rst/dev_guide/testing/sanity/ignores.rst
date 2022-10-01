@@ -73,7 +73,7 @@ If the named test uses error codes then the error code to ignore must be appende
 
 Below are some example ignore entries for an Ansible collection:
 
-.. code-block::
+.. code-block:: text
 
     roles/my_role/files/my_script.sh shellcheck:SC2154 # ignore undefined variable
     plugins/modules/my_module.py validate-modules:missing-gplv3-license # ignore license check
