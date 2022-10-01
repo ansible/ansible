@@ -194,7 +194,7 @@ Adding anchors
 * Place the main anchor above the main header
 * If the file has a unique title, use that for the main page anchor:
 
-.. code-block:: rst
+.. code-block:: text
 
    .. _unique_page::
 
