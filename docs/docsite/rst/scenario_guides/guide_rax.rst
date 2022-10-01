@@ -104,7 +104,7 @@ Here is a basic example of provisioning an instance in ad hoc mode:
 
 .. code-block:: bash
 
-    $ ansible localhost -m rax -a "name=awx flavor=4 image=ubuntu-1204-lts-precise-pangolin wait=yes"
+    $ ansible localhost -m rax -a "name=awx flavor=4 image=ubuntu-1204-lts-precise-pangolin wait=true"
 
 Here's what it would look like in a playbook, assuming the parameters were defined in variables:
 
@@ -118,7 +118,7 @@ Here's what it would look like in a playbook, assuming the parameters were defin
             image: "{{ rax_image }}"
             count: "{{ rax_count }}"
             group: "{{ group }}"
-            wait: yes
+            wait: true
         register: rax
         delegate_to: localhost
 
@@ -442,9 +442,9 @@ Create an isolated cloud network and build a server
             region: IAD
             state: present
             count: 5
-            exact_count: yes
+            exact_count: true
             group: web
-            wait: yes
+            wait: true
             wait_timeout: 360
           register: rax
           delegate_to: localhost
@@ -473,7 +473,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             type: PUBLIC
             timeout: 30
             region: IAD
-            wait: yes
+            wait: true
             state: present
             meta:
               app: my-cool-app
@@ -502,9 +502,9 @@ Build a complete webserver environment with servers, custom networks and load ba
             region: IAD
             state: present
             count: 5
-            exact_count: yes
+            exact_count: true
             group: web
-            wait: yes
+            wait: true
           register: rax
 
         - name: Add servers to web host group
@@ -525,7 +525,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             port: 80
             condition: enabled
             type: primary
-            wait: yes
+            wait: true
             region: IAD
           loop: "{{ rax.success }}"
           when: rax.action == 'create'
@@ -538,12 +538,12 @@ Build a complete webserver environment with servers, custom networks and load ba
 
       tasks:
         - name: Install nginx
-          apt: pkg=nginx state=latest update_cache=yes cache_valid_time=86400
+          apt: pkg=nginx state=latest update_cache=true cache_valid_time=86400
           notify:
             - restart nginx
 
         - name: Ensure nginx starts on boot
-          service: name=nginx state=started enabled=yes
+          service: name=nginx state=started enabled=true
 
         - name: Create custom index.html
           copy: content="{{ inventory_hostname }}" dest=/usr/share/nginx/www/index.html
@@ -583,9 +583,9 @@ Using a Control Machine
             region: DFW
             state: present
             count: 1
-            exact_count: yes
+            exact_count: true
             group: web
-            wait: yes
+            wait: true
           register: rax
 
         - name: Add servers to in memory groups
@@ -645,7 +645,7 @@ Using a Control Machine
         - role: users
 
         - role: openssh
-          opensshd_PermitRootLogin: "no"
+          opensshd_PermitRootLogin: "false"
 
         - role: ntp
 
@@ -676,7 +676,7 @@ Using Ansible Pull
             - name: Wait for rackconnect automation to complete
               uri:
                 url: "https://{{ rax_region.stdout|trim }}.api.rackconnect.rackspace.com/v1/automation_status?format=json"
-                return_content: yes
+                return_content: true
               register: automation_status
               when: bootstrap.stat.exists != True
               until: automation_status['automation_status']|default('') == 'DEPLOYED'
@@ -703,7 +703,7 @@ Using Ansible Pull
         - role: users
 
         - role: openssh
-          opensshd_PermitRootLogin: "no"
+          opensshd_PermitRootLogin: "false"
 
         - role: ntp
 
@@ -771,7 +771,7 @@ Using Ansible Pull with XenStore
         - role: users
 
         - role: openssh
-          opensshd_PermitRootLogin: "no"
+          opensshd_PermitRootLogin: "false"
 
         - role: ntp
 
@@ -803,7 +803,6 @@ Ansible is a powerful orchestration tool, and rax modules allow you the opportun
 * Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed
 * A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned
 * Servers and load balancers that have DNS records created and destroyed on creation and decommissioning, respectively
-
 
 
 
