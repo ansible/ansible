@@ -132,6 +132,7 @@ Create a fresh area to work:
 Next, find the pull request you'd like to test and make note of its number. It will look something like this:
 
 .. code-block:: text
+
    Use os.path.sep instead of hardcoding / #65381
 
 .. note:: Only test ``ansible:devel``
@@ -208,6 +209,7 @@ Any potential issues should be added as comments on the pull request (and it's a
 Example:
 
 .. code-block:: text
+
    Works for me! Tested on `Ansible 2.3.0`.  I verified this on CentOS 6.5 and also Ubuntu 14.04.
 
 If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead:
