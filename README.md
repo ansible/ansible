@@ -30,7 +30,11 @@ Use Ansible
 
 You can install a released version of Ansible with ``pip`` or a package manager. See our
 `installation guide <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for details on installing Ansible
-on a variety of platforms.
+on a variety of platforms. To install Ansible run the following command:
+
+```
+python3 -m pip install --user ansible
+```
 
 Power users and developers can run the ``devel`` branch, which has the latest
 features and fixes, directly. Although it is reasonably stable, you are more likely to encounter
