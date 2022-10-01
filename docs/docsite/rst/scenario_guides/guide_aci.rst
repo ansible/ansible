@@ -111,14 +111,14 @@ For this very reason, the modules need to run on the local Ansible controller (o
 
 Gathering facts
 ```````````````
-Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play.
+Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: false`` to every play.
 
 .. code-block:: yaml
    :emphasize-lines: 3
 
     - name: Another play in my playbook
       hosts: my-apic-1
-      gather_facts: no
+      gather_facts: false
       tasks:
       - name: Create a tenant
         aci_tenant:
@@ -217,16 +217,16 @@ Every Ansible ACI module accepts the following parameters that influence the mod
         Timeout value for socket-level communication.
 
     use_proxy
-        Use system proxy settings. (Defaults to ``yes``)
+        Use system proxy settings. (Defaults to ``true``)
 
     use_ssl
-        Use HTTPS or HTTP for APIC REST communication. (Defaults to ``yes``)
+        Use HTTPS or HTTP for APIC REST communication. (Defaults to ``true``)
 
     validate_certs
-        Validate certificate when using HTTPS communication. (Defaults to ``yes``)
+        Validate certificate when using HTTPS communication. (Defaults to ``true``)
 
     output_level
-        Influence the level of detail ACI modules return to the user. (One of ``normal``, ``info`` or ``debug``) *New in version 2.5*
+        Influence the level of detail ACI modules return to the user. (One of ``falsermal``, ``info`` or ``debug``) *New in version 2.5*
 
 
 Proxy support
@@ -235,9 +235,9 @@ By default, if an environment variable ``<protocol>_proxy`` is set on the target
 
 HTTP redirects can redirect from HTTP to HTTPS so ensure that the proxy environment for both protocols is correctly configured.
 
-If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: no`` to avoid accidental system proxy usage.
+If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: false`` to avoid accidental system proxy usage.
 
-.. hint:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
+.. hint:: Selective proxy support using the ``false_proxy`` environment variable is also supported.
 
 
 Return values
