@@ -1389,7 +1389,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         # symlink target does not exist
         if not os.path.islink(dest_file):
             os.chmod(dest_file, mode)
-    
+
     collection_output = to_text(b_collection_output)
     return collection_output
 
