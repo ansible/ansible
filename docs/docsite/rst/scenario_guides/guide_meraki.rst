@@ -65,13 +65,13 @@ All Ansible Meraki modules support the following parameters which affect communi
         Hostname or IP of Meraki Dashboard.
 
     use_https
-        Specifies whether communication should be over HTTPS. (Defaults to ``yes``)
+        Specifies whether communication should be over HTTPS. (Defaults to ``true``)
 
     use_proxy
         Whether to use a proxy for any communication.
 
     validate_certs
-        Determine whether certificates should be validated or trusted. (Defaults to ``yes``)
+        Determine whether certificates should be validated or trusted. (Defaults to ``true``)
 
 These are the common parameters which are used for most every module.
 
