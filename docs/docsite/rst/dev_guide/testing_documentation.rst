@@ -33,6 +33,6 @@ To ensure that your module documentation matches your ``argument_spec``:
 
 #. run the ``validate-modules`` test:
 
-.. code-block:: bash
+   .. code-block:: bash
 
     ansible-test sanity --test validate-modules mymodule
