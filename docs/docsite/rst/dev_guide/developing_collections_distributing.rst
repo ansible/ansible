@@ -134,7 +134,7 @@ After configuring one or more distribution servers, build a collection tarball. 
 
 This command builds a tarball of the collection in the current directory, which you can upload to your selected distribution server:
 
-.. code-block:: text
+.. code-block:: shell
 
     my_collection/
     ├── galaxy.yml
