@@ -266,7 +266,7 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
 
 In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``delegate_to: localhost`` to execute the API calls locally from our workstation.
 
-In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
+In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: true`` to the task, which would stop the VM, change the offering and start the VM again.
 
 In the second task we ensure the ports are opened if we give a public IP to the VM.
 
