@@ -772,11 +772,6 @@
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
 
-- name: debug SBDA
-  find:
-    path: '{{ galaxy_dir }}'
-    file_type: any
-
 # Testing an install from source to check that symlinks to directories
 # are preserved (see issue https://github.com/ansible/ansible/issues/78442)
 - name: symlink_dirs collection install from source test
