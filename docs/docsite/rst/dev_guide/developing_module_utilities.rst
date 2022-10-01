@@ -20,7 +20,9 @@ resolving those matching the namespace against a :ref:`search path <ansible_sear
 active configuration.
 
 To reduce the maintenance burden in a collection or in local modules, you can extract
-duplicated code into one or more module utilities and import them into your modules. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file like this::
+duplicated code into one or more module utilities and import them into your modules. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file like this:
+
+.. code-block:: python
 
   from ansible.module_utils.my_shared_code import MySharedCodeClient
 
