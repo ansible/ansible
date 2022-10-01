@@ -31,6 +31,8 @@ To ensure that your module documentation matches your ``argument_spec``:
 
       pip install --user -r test/lib/ansible_test/_data/requirements/sanity.txt
 
-#. run the ``validate-modules`` test::
+#. run the ``validate-modules`` test:
+
+   .. code-block:: bash
 
     ansible-test sanity --test validate-modules mymodule
