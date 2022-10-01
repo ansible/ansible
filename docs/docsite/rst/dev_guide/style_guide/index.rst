@@ -192,7 +192,9 @@ Adding anchors
 
 * Include at least one anchor on every page
 * Place the main anchor above the main header
-* If the file has a unique title, use that for the main page anchor::
+* If the file has a unique title, use that for the main page anchor:
+
+.. code-block:: rst
 
    .. _unique_page::
 
