@@ -52,7 +52,7 @@ def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: l
             return
 
         try:
-            shutil.copyfile(path,first.config.path)
+            shutil.copyfile(path, first.config.path)
         except shutil.SameFileError:
             pass
 
