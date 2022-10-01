@@ -13,8 +13,9 @@ PEP 8
 Running Locally
 ===============
 
-The `PEP 8`_ check can be run locally with::
+The `PEP 8`_ check can be run locally with:
 
+.. code-block:: shell
 
     ansible-test sanity --test pep8 [file-or-directory-path-to-check] ...
 
