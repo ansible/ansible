@@ -226,7 +226,7 @@ Every Ansible ACI module accepts the following parameters that influence the mod
         Validate certificate when using HTTPS communication. (Defaults to ``true``)
 
     output_level
-        Influence the level of detail ACI modules return to the user. (One of ``falsermal``, ``info`` or ``debug``) *New in version 2.5*
+        Influence the level of detail ACI modules return to the user. (One of ``normal``, ``info`` or ``debug``) *New in version 2.5*
 
 
 Proxy support
