@@ -771,6 +771,47 @@
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
+# Testing a install from source to check that symlinks to directories
+# are preserved (see issue https://github.com/ansible/ansible/issues/78442)
+- name: create symlink2 collection
+  command: ansible-galaxy collection init symlink2.symlink2 --init-path "{{ galaxy_dir }}"
+
+- name: create directory in collection
+  file:
+    path: "{{ galaxy_dir }}/symlink2/symlink2/folderA"
+    state: directory
+
+- name: create symlink to folderA
+  file:
+    dest: "{{ galaxy_dir }}/symlink2/symlink2/folderB"
+    src: ./folderA
+    state: link
+    force: yes
+
+- name: install symlink2 collection from source
+  command: ansible-galaxy collection install {{ galaxy_dir }}/symlink2/ --force
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_symlink2
+
+- name: get result of install collection with symlink2 - {{ test_id }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink2/symlink2/{{ path }}'
+  register: install_symlink2_actual
+  loop_control:
+    loop_var: path
+  loop:
+  - folderA
+  - folderB
+
+- name: assert install collection with symlink2 - {{ test_id }}
+  assert:
+    that:
+    - '"Installing ''symlink2.symlink2:1.0.0'' to" in install_symlink2.stdout'
+    - install_symlink2_actual.results[0].stat.isdir
+    - install_symlink2_actual.results[1].stat.islnk
+    - install_symlink2_actual.results[1].stat.lnk_target == './folderA'
+
 - name: remove install directory for the next test because parent_dep.parent_collection was installed - {{ test_id }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections'
