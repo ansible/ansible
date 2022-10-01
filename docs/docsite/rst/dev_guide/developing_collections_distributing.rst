@@ -132,7 +132,9 @@ After configuring one or more distribution servers, build a collection tarball. 
 
     collection_dir#> ansible-galaxy collection build
 
-This command builds a tarball of the collection in the current directory, which you can upload to your selected distribution server::
+This command builds a tarball of the collection in the current directory, which you can upload to your selected distribution server:
+
+.. code-block:: text
 
     my_collection/
     ├── galaxy.yml
