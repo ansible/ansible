@@ -771,46 +771,60 @@
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
-# Testing a install from source to check that symlinks to directories
+
+- name: debug SBDA
+  find:
+    path: '{{ galaxy_dir }}'
+    file_type: any
+
+# Testing an install from source to check that symlinks to directories
 # are preserved (see issue https://github.com/ansible/ansible/issues/78442)
-- name: create symlink_dirs collection
-  command: ansible-galaxy collection init symlink_dirs.symlink_dirs --init-path "{{ galaxy_dir }}"
+- name: symlink_dirs collection install from source test
+  block:
 
-- name: create directory in collection
-  file:
-    path: "{{ galaxy_dir }}/symlink_dirs/symlink_dirs/folderA"
-    state: directory
+    - name: create symlink_dirs collection
+      command: ansible-galaxy collection init symlink_dirs.symlink_dirs --init-path "{{ galaxy_dir }}/scratch"
 
-- name: create symlink to folderA
-  file:
-    dest: "{{ galaxy_dir }}/symlink_dirs/symlink_dirs/folderB"
-    src: ./folderA
-    state: link
-    force: yes
+    - name: create directory in collection
+      file:
+        path: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderA"
+        state: directory
 
-- name: install symlink_dirs collection from source
-  command: ansible-galaxy collection install {{ galaxy_dir }}/symlink_dirs/
-  environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
-  register: install_symlink_dirs
+    - name: create symlink to folderA
+      file:
+        dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderB"
+        src: ./folderA
+        state: link
+        force: yes
 
-- name: get result of install collection with symlink_dirs - {{ test_id }}
-  stat:
-    path: '{{ galaxy_dir }}/ansible_collections/symlink_dirs/symlink_dirs/{{ path }}'
-  register: install_symlink_dirs_actual
-  loop_control:
-    loop_var: path
-  loop:
-  - folderA
-  - folderB
+    - name: install symlink_dirs collection from source
+      command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/
+      environment:
+        ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+      register: install_symlink_dirs
 
-- name: assert install collection with symlink_dirs - {{ test_id }}
-  assert:
-    that:
-    - '"Installing ''symlink_dirs.symlink_dirs:1.0.0'' to" in install_symlink_dirs.stdout'
-    - install_symlink_dirs_actual.results[0].stat.isdir
-    - install_symlink_dirs_actual.results[1].stat.islnk
-    - install_symlink_dirs_actual.results[1].stat.lnk_target == './folderA'
+    - name: get result of install collection with symlink_dirs - {{ test_id }}
+      stat:
+        path: '{{ galaxy_dir }}/ansible_collections/symlink_dirs/symlink_dirs/{{ path }}'
+      register: install_symlink_dirs_actual
+      loop_control:
+        loop_var: path
+      loop:
+      - folderA
+      - folderB
+
+    - name: assert install collection with symlink_dirs - {{ test_id }}
+      assert:
+        that:
+        - '"Installing ''symlink_dirs.symlink_dirs:1.0.0'' to" in install_symlink_dirs.stdout'
+        - install_symlink_dirs_actual.results[0].stat.isdir
+        - install_symlink_dirs_actual.results[1].stat.islnk
+        - install_symlink_dirs_actual.results[1].stat.lnk_target == './folderA'
+  always:
+    - name: clean up symlink_dirs collection directory
+      file:
+        path: "{{ galaxy_dir }}/scratch/symlink_dirs"
+        state: absent
 
 - name: remove install directory for the next test because parent_dep.parent_collection was installed - {{ test_id }}
   file:
