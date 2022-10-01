@@ -85,7 +85,7 @@ When this is done, no error code is included, even if the sanity test uses error
 
 Below are some example skip entries for an Ansible collection:
 
-.. code-block::
+.. code-block:: text
 
     plugins/module_utils/my_util.py validate-modules!skip # waiting for bug fix in module validator
     plugins/lookup/my_plugin.py compile-2.6!skip # Python 2.6 is not supported on the controller
