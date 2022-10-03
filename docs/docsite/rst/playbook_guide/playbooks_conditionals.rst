@@ -29,7 +29,7 @@ The simplest conditional statement applies to a single task. Create the task, th
         ansible.posix.seboolean:
           name: mysql_connect_any
           state: true
-          persistent: yes
+          persistent: true
         when: ansible_selinux.status == "enabled"
         # all variables can be used directly in conditionals without double curly braces
 
