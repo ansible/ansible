@@ -421,7 +421,7 @@ An .ini file will contain the following:
     # Valid values: yes, no, true, false, True, False, 0, 1.
     include_powerstate=true
 
-    # Control grouping with the following boolean flags. Valid values: true, false, true, false, True, False, 0, 1.
+    # Control grouping with the following boolean flags. Valid values: yes, no, true, false, True, False, 0, 1.
     group_by_resource_group=true
     group_by_location=true
     group_by_security_group=true
