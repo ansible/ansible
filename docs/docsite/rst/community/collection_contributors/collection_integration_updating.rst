@@ -44,7 +44,7 @@ We will add the following code to the file.
 
   # https://github.com/ansible-collections/community.postgresql/issues/NUM
   - name: Test user name containing underscore
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: underscored_user
     register: result
 
@@ -54,7 +54,7 @@ We will add the following code to the file.
         - result is changed
 
   - name: Query the database if the user exists
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'underscored_user'
     register: result
 
@@ -108,7 +108,7 @@ We will add the following code to the file.
   # https://github.com/ansible-collections/community.postgresql/issues/NUM
   # We should also run the same tasks with check_mode: yes. We omit it here for simplicity.
   - name: Test for new_option, create new user WITHOUT the attribute
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
       add_attribute: false
     register: result
@@ -119,7 +119,7 @@ We will add the following code to the file.
         - result is changed
 
   - name: Query the database if the user exists but does not have the attribute (it is NULL)
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user' AND attribute = NULL
     register: result
 
@@ -129,7 +129,7 @@ We will add the following code to the file.
         - result.query_result.rowcount == 1
 
   - name: Test for new_option, create new user WITH the attribute
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
       add_attribute: true
     register: result
@@ -140,7 +140,7 @@ We will add the following code to the file.
         - result is changed
 
   - name: Query the database if the user has the attribute (it is TRUE)
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user' AND attribute = 't'
     register: result
 
@@ -158,7 +158,7 @@ If we expect a task to fail, we use the ``ignore_errors: true`` option and check
 .. code-block:: yaml
 
   - name: Test for fail_when_true option
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
       fail_when_true: true
     register: result
