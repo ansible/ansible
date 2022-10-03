@@ -42,7 +42,7 @@ For example, to manage a system service (which requires ``root`` privileges) whe
       service:
         name: httpd
         state: started
-      become: yes
+      become: true
 
 To run a command as the ``apache`` user:
 
@@ -50,7 +50,7 @@ To run a command as the ``apache`` user:
 
     - name: Run a command as the apache user
       command: somecommand
-      become: yes
+      become: true
       become_user: apache
 
 To do something as the ``nobody`` user when the shell is nologin:
@@ -59,7 +59,7 @@ To do something as the ``nobody`` user when the shell is nologin:
 
     - name: Run a command as nobody
       command: somecommand
-      become: yes
+      become: true
       become_method: su
       become_user: nobody
       become_flags: '-s /bin/sh'
@@ -316,7 +316,7 @@ To set ``enable`` mode for a specific task, add ``become`` at the task level:
      arista.eos.eos_facts:
        gather_subset:
          - "!hardware"
-     become: yes
+     become: true
      become_method: enable
 
 To set enable mode for all tasks in a single play, add ``become`` at the play level:
@@ -324,7 +324,7 @@ To set enable mode for all tasks in a single play, add ``become`` at the play le
 .. code-block:: yaml
 
    - hosts: eos-switches
-     become: yes
+     become: true
      become_method: enable
      tasks:
        - name: Gather facts (eos)
@@ -344,7 +344,7 @@ Often you wish for all tasks in all plays to run using privilege mode, that is b
    ansible_connection: ansible.netcommon.network_cli
    ansible_network_os: arista.eos.eos
    ansible_user: myuser
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
 
 Passwords for enable mode
@@ -374,7 +374,7 @@ Ansible still supports ``enable`` mode with ``connection: local`` for legacy net
            gather_subset:
              - "!hardware"
          provider:
-           authorize: yes
+           authorize: true
            auth_pass: " {{ secret_auth_pass }}"
 
 We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` documentation for details.
@@ -423,7 +423,7 @@ task:
 
     - Check my user name
       ansible.windows.win_whoami:
-      become: yes
+      become: true
 
 The output will look something similar to the below:
 
@@ -725,9 +725,9 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
     ansible.windows.win_copy:
       src: \\server\share\data\file.txt
       dest: C:\temp\file.txt
-      remote_src: yes
+      remote_src: true
     vars:
-      ansible_become: yes
+      ansible_become: true
       ansible_become_method: runas
       ansible_become_user: DOMAIN\user
       ansible_become_password: Password01
@@ -735,12 +735,12 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
 
   - name: run a command under a batch logon
     ansible.windows.win_whoami:
-    become: yes
+    become: true
     become_flags: logon_type=batch
 
   - name: run a command and not load the user profile
     ansible.windows.win_whomai:
-    become: yes
+    become: true
     become_flags: logon_flags=
 
 

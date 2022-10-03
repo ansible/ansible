@@ -67,7 +67,7 @@ You can apply the same tag to more than one individual task. This example tags s
      ansible.builtin.service:
        name: ntpd
        state: started
-       enabled: yes
+       enabled: true
      tags: ntp
 
    - name: Install NFS utils
@@ -147,7 +147,7 @@ If you want to apply a tag to many, but not all, of the tasks in your play, use 
        ansible.builtin.service:
          name: ntpd
          state: started
-         enabled: yes
+         enabled: true
 
    - name: Install NFS utils
      ansible.builtin.yum:
@@ -183,7 +183,7 @@ If all the tasks in a play should get the same tag, you can add the tag at the l
        ansible.builtin.service:
          name: ntpd
          state: started
-         enabled: yes
+         enabled: true
 
    - hosts: fileservers
      tags: filesharing
