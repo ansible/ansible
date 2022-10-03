@@ -485,7 +485,7 @@ class FieldAttributeBase:
             self.set_to_default(name)
         else:
             try:
-                setattr(self, name, self._get_parent_attribute(name))
+                setattr(self, name, self._get_parent_attribute(name, omit=True))
             except AttributeError:
                 # mostly playcontext as only tasks/handlers really resolve to parent
                 self.set_to_default(name)
