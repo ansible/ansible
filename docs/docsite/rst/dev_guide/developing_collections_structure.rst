@@ -199,11 +199,11 @@ To run the plays, users can now use such commands as ``ansible-playbook --e 'tar
 tests directory
 ----------------
 
-Ansible Collections are tested much like Ansible itself, by using the `ansible-test` utility which is released as part of Ansible, version 2.9.0 and newer. Because Ansible Collections are tested using the same tooling as Ansible itself, via `ansible-test`, all Ansible developer documentation for testing is applicable for authoring Collections Tests with one key concept to keep in mind.
+Ansible Collections are tested much like Ansible itself, by using the `ansible-test` utility which is released as part of Ansible, version 2.9.0 and newer. Because Ansible Collections are tested using the same tooling as Ansible itself, by using the `ansible-test`, all Ansible developer documentation for testing is applicable for authoring Collections Tests with one key concept to keep in mind.
 
 See :ref:`testing_collections` for specific information on how to test collections with ``ansible-test``.
 
-When reading the :ref:`developing_testing` documentation, there will be content that applies to running Ansible from source code via a git clone, which is typical of an Ansible developer. However, it's not always typical for an Ansible Collection author to be running Ansible from source but instead from a stable release, and to create Collections it is not necessary to run Ansible from source. Therefore, when references of dealing with `ansible-test` binary paths, command completion, or environment variables are presented throughout the :ref:`developing_testing` documentation; keep in mind that it is not needed for Ansible Collection Testing because the act of installing the stable release of Ansible containing `ansible-test` is expected to setup those things for you.
+When reading the :ref:`developing_testing` documentation, there will be content that applies to running Ansible from source code through a git clone, which is typical of an Ansible developer. However, it's not always typical for an Ansible Collection author to be running Ansible from source but instead from a stable release, and to create Collections it is not necessary to run Ansible from source. Therefore, when references of dealing with `ansible-test` binary paths, command completion, or environment variables are presented throughout the :ref:`developing_testing` documentation; keep in mind that it is not needed for Ansible Collection Testing because the act of installing the stable release of Ansible containing `ansible-test` is expected to setup those things for you.
 
 .. _meta_runtime_yml:
 

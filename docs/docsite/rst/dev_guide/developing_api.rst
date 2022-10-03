@@ -28,7 +28,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
 .. literalinclude:: ../../../../examples/scripts/uptime.py
    :language: python
 
-.. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
+.. note:: Ansible emits warnings and errors through the display object, which prints directly to stdout, stderr and the Ansible log.
 
 The source code for the ``ansible``
 command line tools (``lib/ansible/cli/``) is `available on GitHub <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.

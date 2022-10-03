@@ -85,7 +85,7 @@ has lambda basic execution privileges.
 Running Tests
 =============
 
-The tests are invoked via a ``Makefile``.
+The tests are invoked through the ``Makefile``.
 
 If you haven't already got Ansible available use the local checkout by doing:
 
