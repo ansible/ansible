@@ -79,7 +79,7 @@ To access the configuration settings in your plugin, use ``self.get_option(<opti
 
 Configuration sources follow the precedence rules for values in Ansible. When there are multiple values from the same category, the value defined last takes precedence. For example, in the above configuration block, if both ``name_of_ansible_var`` and ``name_of_second_var`` are defined, the value of the ``option_name`` option will be the value of ``name_of_second_var``. Refer to :ref:`general_precedence_rules` for further information.
 
-Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
+Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either through a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
 Developing particular plugin types
 ==================================
@@ -160,7 +160,7 @@ Cache plugins
 
 Cache plugins store gathered facts and data retrieved by inventory plugins.
 
-Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
+Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options by the ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
 
 .. code-block:: python
 
@@ -287,7 +287,7 @@ Note that the ``CALLBACK_VERSION`` and ``CALLBACK_NAME`` definitions are require
 
 For example callback plugins, see the source code for the `callback plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_
 
-New in ansible-core 2.11, callback plugins are notified (via ``v2_playbook_on_task_start``) of :ref:`meta<meta_module>` tasks. By default, only explicit ``meta`` tasks that users list in their plays are sent to callbacks.
+New in ansible-core 2.11, callback plugins are notified (by the ``v2_playbook_on_task_start``) of :ref:`meta<meta_module>` tasks. By default, only explicit ``meta`` tasks that users list in their plays are sent to callbacks.
 
 There are also some tasks which are generated internally and implicitly at various points in execution. Callback plugins can opt-in to receiving these implicit tasks as well, by setting ``self.wants_implicit_tasks = True``. Any ``Task`` object received by a callback hook will have an ``.implicit`` attribute, which can be consulted to determine whether the ``Task`` originated from within Ansible, or explicitly by the user.
 
@@ -342,7 +342,7 @@ You can see the details for inventory plugins in the :ref:`developing_inventory`
 Lookup plugins
 --------------
 
-Lookup plugins pull in data from external data stores. Lookup plugins can be used within playbooks both for looping --- playbook language constructs like ``with_fileglob`` and ``with_items`` are implemented via lookup plugins --- and to return values into a variable or parameter.
+Lookup plugins pull in data from external data stores. Lookup plugins can be used within playbooks both for looping --- playbook language constructs like ``with_fileglob`` and ``with_items`` are implemented through lookup plugins --- and to return values into a variable or parameter.
 
 Lookup plugins are expected to return lists, even if just a single element.
 

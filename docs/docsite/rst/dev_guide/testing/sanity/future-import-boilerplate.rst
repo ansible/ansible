@@ -8,7 +8,7 @@ comment header:
 
     from __future__ import (absolute_import, division, print_function)
 
-This uses Python 3 semantics for absolute vs relative imports, division, and print.  By doing this,
+This uses Python 3 semantics for absolute versus relative imports, division, and print.  By doing this,
 we can write code which is portable between Python 2 and Python 3 by following the Python 3 semantics.
 
 
