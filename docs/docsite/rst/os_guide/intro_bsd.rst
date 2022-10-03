@@ -129,7 +129,7 @@ For example, given the inventory
   [test:vars]
   ansible_connection=ssh
   ansible_user=admin
-  ansible_become=yes
+  ansible_become=true
   ansible_become_user=root
   ansible_become_method=sudo
   ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
@@ -213,7 +213,7 @@ You can either ignore it or get rid of it by setting the variable ``ansible_pyth
   [test:vars]
   ansible_connection=ssh
   ansible_user=admin
-  ansible_become=yes
+  ansible_become=true
   ansible_become_user=root
   ansible_become_method=sudo
   ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
