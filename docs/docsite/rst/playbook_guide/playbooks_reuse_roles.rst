@@ -324,8 +324,7 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
            * Ensure that the default value in the docs matches the default value in the code. The actual
              default for the role variable will always come from ``defaults/main.yml``.
            * The default field must not be listed as part of the description, unless it requires additional information or conditions.
-           * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
-             (such as true/false or yes/no).  Choose the one that reads better in the context of the option.
+           * If the option is a boolean value, you should use true/false.
 
         :choices:
 
