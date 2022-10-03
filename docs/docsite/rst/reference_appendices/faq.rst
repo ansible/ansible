@@ -166,10 +166,10 @@ want on the system if :command:`/usr/bin/python` on your system does not point t
 Python interpreter.
 
 Some platforms may only have Python 3 installed by default. If it is not installed as
-:command:`/usr/bin/python`, you will need to configure the path to the interpreter via
+:command:`/usr/bin/python`, you will need to configure the path to the interpreter through
 ``ansible_python_interpreter``. Although most core modules will work with Python 3, there may be some
 special purpose ones which do not or you may encounter a bug in an edge case. As a temporary
-workaround you can install Python 2 on the managed host and configure Ansible to use that Python via
+workaround you can install Python 2 on the managed host and configure Ansible to use that Python through
 ``ansible_python_interpreter``. If there's no mention in the module's documentation that the module
 requires Python 2, you can also report a bug on our `bug tracker
 <https://github.com/ansible/ansible/issues>`_ so that the incompatibility can be fixed in a future release.
@@ -223,7 +223,7 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
     $ source ./ansible/bin/activate
     $ pip install ansible
 
-If you need to use any libraries which are not available via pip (for instance, SELinux Python
+If you need to use any libraries which are not available through pip (for instance, SELinux Python
 bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled), then you
 need to install them into the virtualenv. There are two methods:
 
@@ -299,7 +299,7 @@ There are a few common errors that one might run into when trying to execute Ans
 
   To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII. Version 2.7.13 is verified to work.
 
-* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode through sftp however execution of python fails with
 
   .. error::
       SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
@@ -333,7 +333,7 @@ It is known that it will not correctly expand the default tmp directory Ansible 
 If you see module failures, this is likely the problem.
 The simple workaround is to set ``remote_tmp`` to a path that will expand correctly (see documentation of the shell plugin you are using for specifics).
 
-For example, in the ansible config file (or via environment variable) you can set::
+For example, in the ansible config file (or through environment variable) you can set::
 
     remote_tmp=$HOME/.ansible/tmp
 
@@ -449,7 +449,7 @@ How do I access a variable name programmatically?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
-via a role parameter or other input. Variable names can be built by adding strings together using "~", like so:
+through a role parameter or other input. Variable names can be built by adding strings together using "~", like so:
 
 .. code-block:: jinja
 
@@ -526,7 +526,7 @@ For example, to access the value of the HOME environment variable on the managem
         local_home: "{{ lookup('env','HOME') }}"
 
 
-**On target machines :** Environment variables are available via facts in the ``ansible_env`` variable:
+**On target machines :** Environment variables are available through facts in the ``ansible_env`` variable:
 
 .. code-block:: jinja
 
@@ -678,7 +678,7 @@ The ``no_log`` attribute can also apply to an entire play::
 
 Though this will make the play somewhat difficult to debug. It's recommended that this
 be applied to single tasks only, once a playbook is completed. Note that the use of the
-``no_log`` attribute does not prevent data from being shown when debugging Ansible itself via
+``no_log`` attribute does not prevent data from being shown when debugging Ansible itself through
 the :envvar:`ANSIBLE_DEBUG` environment variable.
 
 
@@ -724,7 +724,7 @@ How do I get the original ansible_host when I delegate a task?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
-but you can still access the original via ``hostvars``::
+but you can still access the original through ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
