@@ -215,8 +215,8 @@ The value for ``ansible_shell_type`` should either be ``cmd`` or ``powershell``.
 Use ``cmd`` if the ``DefaultShell`` has not been configured on the SSH service
 and ``powershell`` if that has been set as the ``DefaultShell``.
 
-Why is connecting to a Windows host via SSH failing?
-````````````````````````````````````````````````````
+Why is connecting to a Windows host through SSH failing?
+````````````````````````````````````````````````````````
 Unless you are using ``Win32-OpenSSH`` as described above, you must connect to
 Windows hosts using :ref:`windows_winrm`. If your Ansible output indicates that
 SSH was used, either you did not set the connection vars properly or the host is not inheriting them correctly.

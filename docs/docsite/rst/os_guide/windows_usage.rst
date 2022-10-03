@@ -35,12 +35,12 @@ Below are some examples of using all three options to install 7-Zip:
 .. code-block:: yaml+jinja
 
     # Install/uninstall with chocolatey
-    - name: Ensure 7-Zip is installed via Chocolatey
+    - name: Ensure 7-Zip is installed through Chocolatey
       win_chocolatey:
         name: 7zip
         state: present
 
-    - name: Ensure 7-Zip is not installed via Chocolatey
+    - name: Ensure 7-Zip is not installed through Chocolatey
       win_chocolatey:
         name: 7zip
         state: absent
@@ -51,12 +51,12 @@ Below are some examples of using all three options to install 7-Zip:
         url: https://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
 
-    - name: Ensure 7-Zip is installed via win_package
+    - name: Ensure 7-Zip is installed through win_package
       win_package:
         path: C:\temp\7z.msi
         state: present
 
-    - name: Ensure 7-Zip is not installed via win_package
+    - name: Ensure 7-Zip is not installed through win_package
       win_package:
         path: C:\temp\7z.msi
         state: absent
@@ -72,11 +72,11 @@ Below are some examples of using all three options to install 7-Zip:
         name: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
       register: 7zip_installed
 
-    - name: Ensure 7-Zip is installed via win_command
+    - name: Ensure 7-Zip is installed through win_command
       win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
       when: 7zip_installed.exists == false
 
-    - name: Ensure 7-Zip is uninstalled via win_command
+    - name: Ensure 7-Zip is uninstalled through win_command
       win_command: C:\Windows\System32\msiexec.exe /x {23170F69-40C1-2702-1701-000001000000} /qn /norestart
       when: 7zip_installed.exists == true
 
