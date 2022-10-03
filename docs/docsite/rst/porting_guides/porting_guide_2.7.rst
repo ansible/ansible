@@ -123,7 +123,7 @@ If you are the author of a third-party module which uses ``__file__`` with ``Ans
     +    package = os.path.join(module.tmpdir, to_native(deb.rsplit('/', 1)[1]))
 
 
-Using a loop on a package module by squash_actions
+Using a loop on a package module through squash_actions
 -------------------------------------------------------
 
 The use of ``squash_actions`` to invoke a package module, such as "yum", to only invoke the module once is deprecated, and will be removed in Ansible 2.11.
