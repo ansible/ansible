@@ -24,7 +24,7 @@ Connections available
                                                                       present
                           accepts ``-u myuser -k`` if using password
 
-    Indirect Access       via a bastion (jump host)                   via a web proxy
+    Indirect Access       by a bastion (jump host)                    by a web proxy
 
     Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
                             ``ansible.netcommon.network_cli``             ``ansible.netcommon.httpapi``
@@ -61,7 +61,7 @@ Example CLI ``group_vars/nxos.yml``
 
 - If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
-- If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
+- If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords through environment variables.
 
 Example CLI task
 ----------------
@@ -82,7 +82,7 @@ Using NX-API in Ansible
 Enabling NX-API
 ---------------
 
-Before you can use NX-API to connect to a switch, you must enable NX-API. To enable NX-API on a new switch via Ansible, use the ``nxos_nxapi`` module via the CLI connection. Set up group_vars/nxos.yml just like in the CLI example above, then run a playbook task like this:
+Before you can use NX-API to connect to a switch, you must enable NX-API. To enable NX-API on a new switch through Ansible, use the ``nxos_nxapi`` module through the CLI connection. Set up group_vars/nxos.yml just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 

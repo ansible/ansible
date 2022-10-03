@@ -24,7 +24,7 @@ Connections available
 
                           accepts ``-u myuser -k`` if using password
 
-    Indirect Access       via a bastion (jump host)
+    Indirect Access       by a bastion (jump host)
 
     Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
@@ -61,7 +61,7 @@ Example CLI ``group_vars/enos.yml``
 
 - If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
-- If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
+- If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords through environment variables.
 
 Example CLI task
 ----------------
