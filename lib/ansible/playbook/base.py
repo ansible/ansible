@@ -670,7 +670,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
                                             extend=attribute.extend,
                                             prepend=attribute.prepend,
                                             static=attribute.static,
-                                           )
+                                            )
                         setattr(self, name, _x.value)
                     else:
                         if callable(attribute.default):
