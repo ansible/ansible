@@ -83,7 +83,6 @@ def get_test_scenarios() -> list[TestScenario]:
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
-            keep_image = False
             expose_cgroup_v1 = cgroup == 'v1' and get_docker_info(engine).cgroup_version != 1
 
             user_names = [
@@ -107,7 +106,6 @@ def get_test_scenarios() -> list[TestScenario]:
                         disable_selinux=disable_selinux,
                         container_name=container_name,
                         image=image,
-                        keep_image=keep_image,
                         expose_cgroup_v1=expose_cgroup_v1,
                     )
                 )
@@ -232,7 +230,6 @@ def run_test(scenario: TestScenario) -> TestResult:
 
             CGROUP_SYSTEMD.rmdir()
 
-    if not scenario.keep_image:
         cleanup_command = [scenario.engine, 'rmi', '-f', scenario.image]
 
         try:
@@ -307,7 +304,6 @@ class TestScenario:
     user_name: str
     container_name: str
     image: str
-    keep_image: bool
     disable_selinux: bool
     expose_cgroup_v1: bool
 
