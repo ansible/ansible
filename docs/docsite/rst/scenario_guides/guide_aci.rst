@@ -237,7 +237,7 @@ HTTP redirects can redirect from HTTP to HTTPS so ensure that the proxy environm
 
 If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: false`` to avoid accidental system proxy usage.
 
-.. hint:: Selective proxy support using the ``false_proxy`` environment variable is also supported.
+.. hint:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
 
 
 Return values
