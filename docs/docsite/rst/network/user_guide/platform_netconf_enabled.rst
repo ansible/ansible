@@ -26,7 +26,7 @@ Connections available
 
                           accepts ``-u myuser -k`` if using password
 
-    Indirect Access       via a bastion (jump host)
+    Indirect Access       through a bastion (jump host)
 
     Connection Settings   ``ansible_connection: ansible.netcommon.netconf``
     ====================  ==========================================
@@ -45,7 +45,7 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` Python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Junos OS device(s)
 
-To enable NETCONF on a new switch via Ansible, use the platform specific module via the CLI connection or set it manually.
+To enable NETCONF on a new switch through Ansible, use the platform specific module through the CLI connection or set it manually.
 For example set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
