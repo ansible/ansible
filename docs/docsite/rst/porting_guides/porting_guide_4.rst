@@ -194,7 +194,7 @@ Breaking Changes
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
-- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See https://github.com/ansible-collections/community.zabbix/pull/477).
+- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (see `issue 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
 
 Deprecated Features
 -------------------
@@ -522,7 +522,7 @@ Known Issues
 Ansible-core
 ~~~~~~~~~~~~
 
-- ansible-test - The ``pylint`` sanity test no longer correctly detects "bad" variable names for non-constants. See https://github.com/PyCQA/pylint/issues/3701 for additional details.
+- ansible-test - The ``pylint`` sanity test no longer correctly detects "bad" variable names for non-constants. See `issue 3701 <https://github.com/PyCQA/pylint/issues/3701>`_ for additional details.
 
 dellemc.openmanage
 ~~~~~~~~~~~~~~~~~~
@@ -547,7 +547,7 @@ Ansible-core
 - NetBSD virtualization facts (specifically ``ansible_virtualization_type``) now returns a more accurate value by checking the value of the ``machdep.hypervisor`` ``sysctl`` key. This change is breaking because in some cases previously, we would erroneously report ``xen`` even when the target is not running on Xen. This prevents that behavior in most cases. (https://github.com/ansible/ansible/issues/69352)
 - Replaced the in-tree dependency resolver with an external implementation that pip >= 20.3 uses now by default — ``resolvelib``. (https://github.com/ansible/ansible/issues/71784)
 - The ``meta`` module now supports tags for user-defined tasks. Internal ``meta`` tasks continue to always run. (https://github.com/ansible/ansible/issues/64558)
-- ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)
+- ansible-galaxy login command has been removed (see `issue 71560 <https://github.com/ansible/ansible/issues/71560>`_)
 
 ansible.netcommon
 ~~~~~~~~~~~~~~~~~
