@@ -545,7 +545,6 @@ class FieldAttributeBase:
                 # or default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
                     self.set_to_context(name)
-                    self._finalized = True
                     continue
 
                 # and make sure the attribute is of the type it should be
