@@ -121,7 +121,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     commands = [
         [*integration, *integration_options],
-        [*integration, '--controller', 'docker:default', *integration_options],
+        [*integration, '--controller', 'docker:alpine3', *integration_options],  # use alpine3 for the controller since it doesn't require the cgroup v1 hack
     ]
 
     env: dict[str, str] = {}
