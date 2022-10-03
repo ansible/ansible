@@ -418,7 +418,7 @@ An .ini file will contain the following:
     #locations=
 
     # Include powerstate. If you don't need powerstate information, turning it off improves runtime performance.
-    # Valid values: true, false, true, false, True, False, 0, 1.
+    # Valid values: yes, no, true, false, True, False, 0, 1.
     include_powerstate=true
 
     # Control grouping with the following boolean flags. Valid values: true, false, true, false, True, False, 0, 1.
