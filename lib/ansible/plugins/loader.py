@@ -872,16 +872,9 @@ class PluginLoader:
         path = plugin_load_context.plugin_resolved_path
         redirected_names = plugin_load_context.redirect_list or []
 
-        try:
-            if path not in self._module_cache:
-                self._module_cache[path] = self._load_module_source(name, path)
-                found_in_cache = False
-        except Exception as e:
-            if self.type in ('filter', 'test'):
-                # missing and broken filters/tests are handled a bit differently
-                # raise an AnsibleError to reflect this is a broken plugin
-                raise AnsibleError(to_native(e))
-            raise
+        if path not in self._module_cache:
+            self._module_cache[path] = self._load_module_source(name, path)
+            found_in_cache = False
 
         self._load_config_defs(name, self._module_cache[path], path)
 
@@ -1227,7 +1220,7 @@ class Jinja2Loader(PluginLoader):
         try:
             pkg = import_module(acr.n_python_package_name)
         except ImportError as e:
-            raise AnsibleError(to_native(e))
+            raise KeyError(to_native(e))
 
         parent_prefix = acr.collection
         if acr.subdirs:
@@ -1242,8 +1235,6 @@ class Jinja2Loader(PluginLoader):
                     # use 'parent' loader class to find files, but cannot return this as it can contain
                     # multiple plugins per file
                     plugin_impl = super(Jinja2Loader, self).get_with_context(module_name, *args, **kwargs)
-                except AnsibleError:
-                    raise
                 except Exception as e:
                     raise KeyError(to_native(e))
 
