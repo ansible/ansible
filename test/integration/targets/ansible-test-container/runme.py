@@ -180,11 +180,9 @@ def run_test(scenario: TestScenario) -> TestResult:
         CGROUP_SYSTEMD.mkdir()
 
         run_command('mount', 'cgroup', '-t', 'cgroup', str(CGROUP_SYSTEMD), '-o', 'none,name=systemd,xattr', capture=True)
-        run_command('find', str(CGROUP_SYSTEMD), '-type', 'f', '-exec', 'ls', '-l', '{}', ';')
 
         if scenario.user == UNPRIVILEGED_USER_NAME and scenario.engine == 'podman':
             run_command('chown', '-R', f'{UNPRIVILEGED_USER_NAME}:{UNPRIVILEGED_USER_NAME}', str(CGROUP_SYSTEMD))
-            run_command('find', str(CGROUP_SYSTEMD), '-type', 'f', '-exec', 'ls', '-l', '{}', ';')
 
     try:
         if prime_storage_command:
@@ -203,8 +201,6 @@ def run_test(scenario: TestScenario) -> TestResult:
             run_command('setenforce', 'enforcing')
 
         if scenario.expose_cgroup_v1:
-            run_command('find', str(CGROUP_SYSTEMD), '-type', 'f', '-exec', 'ls', '-l', '{}', ';')
-
             if scenario.user == UNPRIVILEGED_USER_NAME and scenario.engine == 'podman':
                 run_command('chown', '-R', 'root:root', str(CGROUP_SYSTEMD))
 
@@ -225,7 +221,6 @@ def run_test(scenario: TestScenario) -> TestResult:
 
                 time.sleep(sleep_seconds)
 
-            run_command('find', str(CGROUP_SYSTEMD), '-type', 'f', '-exec', 'ls', '-l', '{}', ';')
             run_command('umount', str(CGROUP_SYSTEMD))
 
             CGROUP_SYSTEMD.rmdir()
@@ -598,7 +593,6 @@ class Bootstrapper(metaclass=abc.ABCMeta):
             CGROUP_SYSTEMD.mkdir()
 
             run_command('mount', 'cgroup', '-t', 'cgroup', str(CGROUP_SYSTEMD), '-o', 'none,name=systemd,xattr', capture=True)
-            run_command('find', str(CGROUP_SYSTEMD), '-type', 'f', '-exec', 'ls', '-l', '{}', ';')
 
             CGROUP_SYSTEMD.chmod(0o777)
 
