@@ -460,7 +460,7 @@ Here is a simple playbook to exercise the Azure inventory script:
     - name: Test the inventory script
       hosts: azure
       connection: local
-      gather_facts: no
+      gather_facts: false
       tasks:
         - debug:
             msg: "{{ inventory_hostname }} has powerstate {{ powerstate }}"

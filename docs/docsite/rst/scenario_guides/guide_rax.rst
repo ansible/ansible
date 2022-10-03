@@ -118,7 +118,7 @@ Here's what it would look like in a playbook, assuming the parameters were defin
             image: "{{ rax_image }}"
             count: "{{ rax_count }}"
             group: "{{ group }}"
-            wait: yes
+            wait: true
         register: rax
         delegate_to: localhost
 
@@ -442,9 +442,9 @@ Create an isolated cloud network and build a server
             region: IAD
             state: present
             count: 5
-            exact_count: yes
+            exact_count: true
             group: web
-            wait: yes
+            wait: true
             wait_timeout: 360
           register: rax
           delegate_to: localhost
@@ -473,7 +473,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             type: PUBLIC
             timeout: 30
             region: IAD
-            wait: yes
+            wait: true
             state: present
             meta:
               app: my-cool-app
@@ -502,9 +502,9 @@ Build a complete webserver environment with servers, custom networks and load ba
             region: IAD
             state: present
             count: 5
-            exact_count: yes
+            exact_count: true
             group: web
-            wait: yes
+            wait: true
           register: rax
 
         - name: Add servers to web host group
@@ -525,7 +525,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             port: 80
             condition: enabled
             type: primary
-            wait: yes
+            wait: true
             region: IAD
           loop: "{{ rax.success }}"
           when: rax.action == 'create'
@@ -583,9 +583,9 @@ Using a Control Machine
             region: DFW
             state: present
             count: 1
-            exact_count: yes
+            exact_count: true
             group: web
-            wait: yes
+            wait: true
           register: rax
 
         - name: Add servers to in memory groups
@@ -676,7 +676,7 @@ Using Ansible Pull
             - name: Wait for rackconnect automation to complete
               uri:
                 url: "https://{{ rax_region.stdout|trim }}.api.rackconnect.rackspace.com/v1/automation_status?format=json"
-                return_content: yes
+                return_content: true
               register: automation_status
               when: bootstrap.stat.exists != True
               until: automation_status['automation_status']|default('') == 'DEPLOYED'

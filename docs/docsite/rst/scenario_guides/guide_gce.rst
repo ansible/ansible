@@ -89,7 +89,7 @@ you can use the following configuration:
 
    - name: Create IP address
      hosts: localhost
-     gather_facts: no
+     gather_facts: false
 
      vars:
        service_account_file: /home/my_account.json
@@ -168,7 +168,7 @@ rest.
 
    - name: Create an instance
      hosts: localhost
-     gather_facts: no
+     gather_facts: false
      vars:
          gcp_project: my-project
          gcp_cred_kind: serviceaccount
