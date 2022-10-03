@@ -41,7 +41,7 @@ All tasks in a block inherit directives applied at the block level. Most of what
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
-      ignore_errors: yes
+      ignore_errors: true
 
 In the example above, the 'when' condition will be evaluated before Ansible runs each of the three tasks in the block. All three tasks also inherit the privilege escalation directives, running as the root user. Finally, ``ignore_errors: yes`` ensures that Ansible continues to execute the playbook even if some of the tasks fail.
 
@@ -153,7 +153,7 @@ You can use blocks with ``flush_handlers`` in a rescue task to ensure that all h
         - name: Print a message
           ansible.builtin.debug:
             msg: 'I execute normally'
-          changed_when: yes
+          changed_when: true
           notify: run me even after an error
 
         - name: Force a failure
