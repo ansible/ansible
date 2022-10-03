@@ -104,16 +104,14 @@ class BaseService(object):
 class ServiceScanService(BaseService):
 
     def _list_sysvinit(self, services):
-
-        rc, stdout, stderr = self.module.run_command("%s --status-all 2>&1 | grep -E \"\\[ (\\+|\\-) \\]\"" % self.service_path, use_unsafe_shell=True)
+        # not Red Hat
+        rc, stdout, stderr = self.module.run_command("%s --status-all" % self.service_path)
         if rc != 0:
             self.module.warn("Unable to query 'service' tool (%s): %s" % (rc, stderr))
-        for line in stdout.split("\n"):
-            line_data = line.split()
-            if len(line_data) < 4:
-                continue  # Skipping because we expected more data
-            service_name = " ".join(line_data[3:])
-            if line_data[1] == "+":
+        p = re.compile(r'^\s*\[ (?P<state>\+|\-) \]\s+(?P<name>.+)$', flags=re.M)
+        for match in p.finditer(stdout):
+            service_name = match.group('name')
+            if match.group('state') == "+":
                 service_state = "running"
             else:
                 service_state = "stopped"
