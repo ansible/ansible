@@ -40,7 +40,7 @@ One thing that this does affect is the ability to use :command:`/usr/bin/ansible
 a host which has Python-2.6.  ``ansible-pull`` runs on the host being managed but it is a controller
 script, not a module so it will need an updated Python.  Actively developed Linux distros which ship
 with Python-2.6 have some means to install newer Python versions (For instance, you can install
-Python-2.7 via an SCL on RHEL-6) but you may need to also install Python bindings for many common
+Python-2.7 through an SCL on RHEL-6) but you may need to also install Python bindings for many common
 modules to work (For RHEL-6, for instance, selinux bindings and yum would have to be installed for
 the updated Python install).
 
@@ -123,7 +123,7 @@ If you are the author of a third-party module which uses ``__file__`` with ``Ans
     +    package = os.path.join(module.tmpdir, to_native(deb.rsplit('/', 1)[1]))
 
 
-Using a loop on a package module via squash_actions
+Using a loop on a package module by squash_actions
 ---------------------------------------------------
 
 The use of ``squash_actions`` to invoke a package module, such as "yum", to only invoke the module once is deprecated, and will be removed in Ansible 2.11.
