@@ -42,7 +42,7 @@ uses key=value escaping which has not changed.  The other option is to check for
 "{{ (ansible_version|version_compare('2.0', 'ge'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
 
 * trailing newline When a string with a trailing newline was specified in the
-  playbook via yaml dict format, the trailing newline was stripped. When
+  playbook through yaml dict format, the trailing newline was stripped. When
   specified in key=value format, the trailing newlines were kept. In v2, both
   methods of specifying the string will keep the trailing newlines. If you
   relied on the trailing newline being stripped, you can change your playbook
