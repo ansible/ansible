@@ -661,19 +661,19 @@ class FieldAttributeBase(metaclass=BaseMeta):
                     if attribute.inherit:
                         # force process parent by recreating
                         _x = FieldAttribute(
-                                isa=attribute.isa,
-                                default=attribute.default,
-                                inherit=attribute.inherit,
-                                private=attribute.private,
-                                required=attribute.requied,
-                                listof=attribute.listof,
-                                priority=attribute.priority,
-                                class_type=attribute.class_type,
-                                always_post_validate=attribute.always_post_validate,
-                                alias=attribute.alias,
-                                extend=attribute.extend,
-                                prepend=attribute.prepend,
-                                static=attribute.static,
+                              isa=attribute.isa,
+                              default=attribute.default,
+                              inherit=attribute.inherit,
+                              private=attribute.private,
+                              required=attribute.requied,
+                              listof=attribute.listof,
+                              priority=attribute.priority,
+                              class_type=attribute.class_type,
+                              always_post_validate=attribute.always_post_validate,
+                              alias=attribute.alias,
+                              extend=attribute.extend,
+                              prepend=attribute.prepend,
+                              static=attribute.static,
                             )
                         setattr(self, name, _x.value)
                     else:
