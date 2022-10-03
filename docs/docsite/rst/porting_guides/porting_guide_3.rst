@@ -207,7 +207,7 @@ Breaking Changes
 Ansible-base
 ~~~~~~~~~~~~
 
-- ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)
+- ansible-galaxy login command has been removed ( see `issue 71560 <https://github.com/ansible/ansible/issues/71560>`_)
 
 ansible.utils
 ~~~~~~~~~~~~~
