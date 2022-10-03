@@ -11,6 +11,7 @@ import json
 import os
 import pathlib
 import pwd
+import signal
 import secrets
 import shlex
 import shutil
@@ -51,10 +52,12 @@ def main() -> None:
     display.section(f'Test Results ({error_count=}/{len(results)})')
 
     for result in results:
+        notes = f' <cleanup: {", ".join(result.cleanup)}>' if result.cleanup else ''
+
         if result.message:
-            display.fatal(f'{result.scenario} {result.message}')
+            display.fatal(f'{result.scenario} {result.message}{notes}')
         else:
-            display.show(f'PASS: {result.scenario}')
+            display.show(f'PASS: {result.scenario}{notes}')
 
     if error_count:
         sys.exit(1)
@@ -84,6 +87,9 @@ def get_test_scenarios() -> list[TestScenario]:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
             expose_cgroup_v1 = cgroup == 'v1' and get_docker_info(engine).cgroup_version != 1
+
+            if cgroup != 'none' and get_docker_info(engine).cgroup_version == 1 and not pathlib.Path(CGROUP_SYSTEMD).is_dir():
+                expose_cgroup_v1 = True  # the host uses cgroup v1 but there is no systemd cgroup and the container requires cgroup support
 
             user_names = [
                 # TODO: add testing for rootless docker
@@ -232,9 +238,29 @@ def run_test(scenario: TestScenario) -> TestResult:
         except SubprocessError as ex:
             display.error(str(ex))
 
+        cleanup = []
+
+        if scenario.engine == 'podman':
+            processes = [(int(item[0]), item[1]) for item in
+                         [item.split(maxsplit=1) for item in run_command('ps', '-A', '-o', 'pid,comm', capture=True).stdout.splitlines()]
+                         if item[0] != 'PID']
+
+            for pid, name in processes:
+                if name not in (
+                        'catatonit',
+                        'podman',
+                ):
+                    continue
+
+                display.info(f'Killing "{name}" ({pid}) ...')
+                os.kill(pid, signal.SIGTERM)
+
+                cleanup.append(name)
+
     return TestResult(
         scenario=scenario,
         message=message,
+        cleanup=tuple(sorted(set(cleanup))),
     )
 
 
@@ -348,6 +374,7 @@ class TestScenario:
 class TestResult:
     scenario: TestScenario
     message: str
+    cleanup: tuple[str, ...]
 
 
 def parse_completion_entry(value: str) -> tuple[str, dict[str, str]]:
@@ -528,7 +555,6 @@ class Bootstrapper(metaclass=abc.ABCMeta):
         """Run the bootstrapper."""
         cls.configure_root_user()
         cls.configure_unprivileged_user()
-        cls.configure_alpine()
         cls.configure_source_trees()
         cls.configure_ssh_keys()
         cls.configure_podman_remote()
@@ -580,31 +606,6 @@ class Bootstrapper(metaclass=abc.ABCMeta):
                 id_range,
                 UNPRIVILEGED_USER_NAME,
             )
-
-    @classmethod
-    def configure_alpine(cls) -> None:
-        """Make configuration adjustments specific to Alpine Linux."""
-        if os_release.id != 'alpine':
-            return
-
-        if not CGROUP_SYSTEMD.is_dir():
-            # Alpine uses cgroup v2 (hybrid), but doesn't use systemd, so we need to expose cgroup v1 for containers that use systemd.
-            # Enabling and disabling this on a per-test basis doesn't work reliably, for unknown reasons, so we'll do it once for the entire test run.
-            CGROUP_SYSTEMD.mkdir()
-
-            run_command('mount', 'cgroup', '-t', 'cgroup', str(CGROUP_SYSTEMD), '-o', 'none,name=systemd,xattr', capture=True)
-
-            CGROUP_SYSTEMD.chmod(0o777)
-
-        # Alpine defaults to a 4K hard limit, which prevents non-root users from setting a higher limit.
-        # This condition is detected by ansible-test and the current hard limit is used instead of the preferred value.
-        # The following code could be used to change the limit if the fallback behavior is unwanted.
-
-        # By raising the current hard limit (as root) and restarting SSHD, the limit of regular users logging in using SSH will increase.
-        # import resource
-        #
-        # resource.setrlimit(resource.RLIMIT_NOFILE, (1024, 10240))
-        # run_command('service', 'sshd', 'restart')
 
     @classmethod
     def configure_source_trees(cls):
