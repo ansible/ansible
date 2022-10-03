@@ -124,7 +124,7 @@ If you are the author of a third-party module which uses ``__file__`` with ``Ans
 
 
 Using a loop on a package module by squash_actions
----------------------------------------------------
+-------------------------------------------------------
 
 The use of ``squash_actions`` to invoke a package module, such as "yum", to only invoke the module once is deprecated, and will be removed in Ansible 2.11.
 
