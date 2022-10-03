@@ -37,14 +37,14 @@ For example:
   tasks:
     - name: This task will always make changes to the system
       ansible.builtin.command: /something/to/run --even-in-check-mode
-      check_mode: no
+      check_mode: false
 
     - name: This task will never make changes to the system
       ansible.builtin.lineinfile:
         line: "important config"
         dest: /path/to/myconfig.conf
         state: present
-      check_mode: yes
+      check_mode: true
       register: changes_to_important_config
 
 Running single tasks with ``check_mode: yes`` can be useful for testing Ansible modules, either to test the module itself or to test the conditions under which a module would make changes. You can register variables (see :ref:`playbooks_conditionals`) on these tasks for even more detail on the potential changes.
@@ -104,4 +104,4 @@ Because the ``--diff`` option can reveal sensitive information, you can disable 
         owner: root
         group: root
         mode: '0600'
-      diff: no
+      diff: false

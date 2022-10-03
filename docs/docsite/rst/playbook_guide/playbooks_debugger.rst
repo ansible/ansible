@@ -138,7 +138,7 @@ After Ansible invokes the debugger, you can use the seven :ref:`debugger command
 
     - hosts: test
       debugger: on_failed
-      gather_facts: no
+      gather_facts: false
       vars:
         var1: value1
       tasks:
@@ -253,7 +253,7 @@ Update args command
 
     - hosts: test
       strategy: debug
-      gather_facts: yes
+      gather_facts: true
       vars:
         pkg_name: not_exist
       tasks:
