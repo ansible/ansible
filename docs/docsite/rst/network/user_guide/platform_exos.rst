@@ -25,7 +25,7 @@ Connections available
 
                           accepts ``-u myuser -k`` if using password
 
-    Indirect Access       by a bastion (jump host)                   through a web proxy
+    Indirect Access       by a bastion (jump host)                    through a web proxy
 
     Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
                             ``ansible.netcommon.network_cli``           ``ansible.netcommon.httpapi``

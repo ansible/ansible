@@ -27,7 +27,7 @@ Connections available
 
                           accepts ``-u myuser -k`` if using password  accepts ``-u myuser -k`` if using password
 
-    Indirect Access       by a bastion (jump host)                   by a bastion (jump host)
+    Indirect Access       by a bastion (jump host)                    by a bastion (jump host)
 
     Connection Settings   ``ansible_connection:                       ``ansible_connection:
                           ``ansible.netcommon.network_cli``           ``ansible.netcommon.netconf``
