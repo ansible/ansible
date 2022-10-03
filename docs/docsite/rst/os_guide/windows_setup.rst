@@ -495,7 +495,7 @@ Ansible, select one of these installation options:
     # main.yml
     - name: install Win32-OpenSSH service
       hosts: windows
-      gather_facts: no
+      gather_facts: false
       roles:
       - role: jborean93.win_openssh
         opt_openssh_setup_service: True
