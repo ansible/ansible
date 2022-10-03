@@ -149,7 +149,7 @@ Should now be::
         a: 1
 
 * Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only.
-* Bare variables in the `environment` dictionary (for plays/tasks/etc.) are no longer supported. Variables specified there should use the full variable syntax: '{{foo}}'.
+* Bare variables in the `environment` dictionary (for plays/tasks and so on) are no longer supported. Variables specified there should use the full variable syntax: '{{foo}}'.
 * Tags (or any directive) should no longer be specified with other parameters in a task include. Instead, they should be specified as an option on the task.
   For example::
 
