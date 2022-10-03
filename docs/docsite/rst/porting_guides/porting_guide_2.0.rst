@@ -92,7 +92,7 @@ uses key=value escaping which has not changed.  The other option is to check for
 
 * porting task includes
 * More dynamic. Corner-case formats that were not supposed to work now do not, as expected.
-* variables defined in the yaml dict format https://github.com/ansible/ansible/issues/13324
+* variables defined in the yaml dict format see `issue 13324 <https://github.com/ansible/ansible/issues/13324>`_
 * templating (variables in playbooks and template lookups) has improved with regard to keeping the original instead of turning everything into a string.
   If you need the old behavior, quote the value to pass it around as a string.
 * Empty variables and variables set to null in yaml are no longer converted to empty strings. They will retain the value of `None`.
