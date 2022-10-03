@@ -489,10 +489,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
         # Resolve extended groups last, after caching the group in case they recursively refer to each other
         for include_group in include_groups:
             if not AnsibleCollectionRef.is_valid_fqcr(include_group):
-                include_group_collection = collection_name
                 include_group = collection_name + '.' + include_group
-            else:
-                include_group_collection = '.'.join(include_group.split('.')[0:2])
 
             dummy, group_actions = self._resolve_group(include_group, mandatory=False)
 
@@ -660,21 +657,20 @@ class FieldAttributeBase(metaclass=BaseMeta):
                 if omit_value is not None and value == omit_value:
                     if attribute.inherit:
                         # force process parent by recreating
-                        _x = FieldAttribute(
-                              isa=attribute.isa,
-                              default=attribute.default,
-                              inherit=attribute.inherit,
-                              private=attribute.private,
-                              required=attribute.requied,
-                              listof=attribute.listof,
-                              priority=attribute.priority,
-                              class_type=attribute.class_type,
-                              always_post_validate=attribute.always_post_validate,
-                              alias=attribute.alias,
-                              extend=attribute.extend,
-                              prepend=attribute.prepend,
-                              static=attribute.static,
-                            )
+                        _x = FieldAttribute(isa=attribute.isa,
+                                            default=attribute.default,
+                                            inherit=attribute.inherit,
+                                            private=attribute.private,
+                                            required=attribute.requied,
+                                            listof=attribute.listof,
+                                            priority=attribute.priority,
+                                            class_type=attribute.class_type,
+                                            always_post_validate=attribute.always_post_validate,
+                                            alias=attribute.alias,
+                                            extend=attribute.extend,
+                                            prepend=attribute.prepend,
+                                            static=attribute.static,
+                             )
                         setattr(self, name, _x.value)
                     else:
                         if callable(attribute.default):
