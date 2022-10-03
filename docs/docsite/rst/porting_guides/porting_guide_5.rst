@@ -441,7 +441,7 @@ Known Issues
 Ansible-core
 ~~~~~~~~~~~~
 
-- ansible-test - Tab completion anywhere other than the end of the command with the new composite options will provide incorrect results. See https://github.com/kislyuk/argcomplete/issues/351 for additional details.
+- ansible-test - Tab completion anywhere other than the end of the command with the new composite options will provide incorrect results. See `issue 351 <https://github.com/kislyuk/argcomplete/issues/351>`_ for additional details.
 
 dellemc.openmanage
 ~~~~~~~~~~~~~~~~~~
@@ -572,7 +572,7 @@ community.routeros
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
-- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See https://github.com/ansible-collections/community.zabbix/pull/477).
+- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See `issue 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
 
 kubernetes.core
 ~~~~~~~~~~~~~~~
