@@ -187,7 +187,7 @@ For example:
     SourceCredential_username: AdminUser
     SourceCredential_password: PasswordForAdminUser
 
-.. Note:: On versions of Ansible older than 2.8, you should set ``no_log: yes``
+.. Note:: On versions of Ansible older than 2.8, you should set ``no_log: true``
     on the task definition in Ansible to ensure any credentials used are not
     stored in any log file or console output.
 
