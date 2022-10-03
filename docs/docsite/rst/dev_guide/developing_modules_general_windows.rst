@@ -412,7 +412,9 @@ PowerShell utils, these are stored in a folder called ``module_utils`` and the f
 
 The below example is a role structure that contains two PowerShell custom module_utils called
 ``Ansible.ModuleUtils.ModuleUtil1``, ``Ansible.ModuleUtils.ModuleUtil2``, and a C# util containing the namespace
-``Ansible.CustomUtil``::
+``Ansible.CustomUtil``:
+
+.. code-block:: console
 
     meta/
       main.yml
@@ -561,7 +563,9 @@ You can test a module with an Ansible playbook. For example:
 - Create a playbook in any directory ``touch testmodule.yml``.
 - Create an inventory file in the same directory ``touch hosts``.
 - Populate the inventory file with the variables required to connect to a Windows host(s).
-- Add the following to the new playbook file::
+- Add the following to the new playbook file:
+
+.. code-block:: yaml
 
     ---
     - name: test out windows module
