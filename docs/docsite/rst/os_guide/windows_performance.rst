@@ -48,7 +48,7 @@ to pre-emptively create native images for the assemblies that PowerShell relies 
 Fix high-CPU-on-boot for VMs/cloud instances
 --------------------------------------------
 If you are creating golden images to spawn instances from, you can avoid a disruptive
-high CPU task near startup via `processing the ngen queue <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-image-service>`_
+high CPU task near startup through `processing the ngen queue <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-image-service>`_
 within your golden image creation, if you know the CPU types won't change between
 golden image build process and runtime.
 

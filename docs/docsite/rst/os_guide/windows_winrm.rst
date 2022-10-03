@@ -341,28 +341,28 @@ Some system dependencies that must be installed prior to using Kerberos. The scr
 
 .. code-block:: shell
 
-    # Via Yum (RHEL/Centos/Fedora for the older version)
+    # Through Yum (RHEL/Centos/Fedora for the older version)
     yum -y install gcc python-devel krb5-devel krb5-libs krb5-workstation
 
-    # Via DNF (RHEL/Centos/Fedora for the newer version)
+    # Through DNF (RHEL/Centos/Fedora for the newer version)
     dnf -y install gcc python3-devel krb5-devel krb5-libs krb5-workstation
 
-    # Via Apt (Ubuntu)
+    # Through Apt (Ubuntu)
     sudo apt-get install python-dev libkrb5-dev krb5-user
 
-    # Via Portage (Gentoo)
+    # Through Portage (Gentoo)
     emerge -av app-crypt/mit-krb5
     emerge -av dev-python/setuptools
 
-    # Via Pkg (FreeBSD)
+    # Through Pkg (FreeBSD)
     sudo pkg install security/krb5
 
-    # Via OpenCSW (Solaris)
+    # Through OpenCSW (Solaris)
     pkgadd -d http://get.opencsw.org/now
     /opt/csw/bin/pkgutil -U
     /opt/csw/bin/pkgutil -y -i libkrb5_3
 
-    # Via Pacman (Arch Linux)
+    # Through Pacman (Arch Linux)
     pacman -S krb5
 
 
@@ -441,7 +441,7 @@ expiration. The temporary credential caches are deleted after each task
 completes and will not interfere with the default credential cache.
 
 To disable automatic ticket management, set ``ansible_winrm_kinit_mode=manual``
-via the inventory.
+through the inventory.
 
 Automatic ticket management requires a standard ``kinit`` binary on the control
 host system path. To specify a different location or binary name, set the
@@ -678,7 +678,7 @@ When setting up the inventory, the following variables are required:
     # ansible-vault edit group_vars/windows.yml
     ansible_connection: winrm
 
-    # May also be passed on the command-line via --user
+    # May also be passed on the command-line through --user
     ansible_user: Administrator
 
     # May also be supplied at runtime with --ask-pass
