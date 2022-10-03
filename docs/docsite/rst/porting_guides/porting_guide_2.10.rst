@@ -43,8 +43,8 @@ Command Line
 ============
 
 * The ``ansible-galaxy login`` command has been removed, as the underlying API it used for GitHub auth is being shut down. Publishing roles or
-  collections to Galaxy via ``ansible-galaxy`` now requires that a Galaxy API token be passed to the CLI via a token file (default location
-  ``~/.ansible/galaxy_token``) or (insecurely) via the ``--token`` argument to ``ansible-galaxy``.
+  collections to Galaxy through ``ansible-galaxy`` now requires that a Galaxy API token be passed to the CLI through a token file (default location
+  ``~/.ansible/galaxy_token``) or (insecurely) using the ``--token`` argument to ``ansible-galaxy``.
 
 
 Deprecated
@@ -80,7 +80,7 @@ Plugins
 Lookup plugin names case-sensitivity
 ------------------------------------
 
-* Prior to Ansible ``2.10`` lookup plugin names passed in as an argument to the ``lookup()`` function were treated as case-insensitive as opposed to lookups invoked via ``with_<lookup_name>``. ``2.10`` brings consistency to ``lookup()`` and ``with_`` to be both case-sensitive.
+* Prior to Ansible ``2.10`` lookup plugin names passed in as an argument to the ``lookup()`` function were treated as case-insensitive as opposed to lookups invoked through ``with_<lookup_name>``. ``2.10`` brings consistency to ``lookup()`` and ``with_`` to be both case-sensitive.
 
 Noteworthy plugin changes
 -------------------------
@@ -232,7 +232,7 @@ netbox.netbox
 - nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwrite. (#377)
 - nb_inventory - Services are now a list of integers due to NetBox 2.10 changes. (#396)
 - nb_lookup - Allow ID to be passed in and use ``.get`` instead of ``.filter``. (#376)
-- nb_lookup - Allow ``api_endpoint`` and ``token`` to be found via env. (#391)
+- nb_lookup - Allow ``api_endpoint`` and ``token`` to be found through env. (#391)
 
 Deprecated Features
 -------------------
@@ -567,7 +567,7 @@ netbox.netbox
   ``netbox.netbox.netbox`` would be used for both inventory plugin and lookup plugin, but in different contexts so no collision will arise, but confusion will.
   I renamed the lookup plugin to ``nb_lookup`` so it will be used with the FQCN ``netbox.netbox.nb_lookup``.
   The inventory plugin will now be called within an inventory file by ``netbox.netbox.nb_inventory``
-- To pass in integers via Ansible Jinja filters for a key in ``data`` that
+- To pass in integers through Ansible Jinja filters for a key in ``data`` that
   requires querying an endpoint is now done by making it a dictionary with
   an ``id`` key. The previous behavior was to just pass in an integer and
   it was converted when normalizing the data, but some people may have names
@@ -674,7 +674,7 @@ community.kubernetes
 - k8s - Module migrated from Ansible 2.9 to Kubernetes collection.
 - k8s_auth - Module migrated from Ansible 2.9 to Kubernetes collection.
 - k8s_config_resource_name - Filter plugin migrated from Ansible 2.9 to Kubernetes collection.
-- k8s_exec - New module for executing commands on pods via Kubernetes API (https://github.com/ansible-collections/community.kubernetes/pull/14).
+- k8s_exec - New module for executing commands on pods through Kubernetes API (https://github.com/ansible-collections/community.kubernetes/pull/14).
 - k8s_exec - Return rc for the command executed (https://github.com/ansible-collections/community.kubernetes/pull/158).
 - k8s_info - Module migrated from Ansible 2.9 to Kubernetes collection.
 - k8s_log - New module for retrieving pod logs (https://github.com/ansible-collections/community.kubernetes/pull/16).
@@ -952,7 +952,7 @@ community.vmware
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
-- zabbix_proxy (module) - deprecates ``interface`` sub-options ``type`` and ``main`` when proxy type is set to passive via ``status=passive``. Make sure these suboptions are removed from your playbook as they were never supported by Zabbix in the first place.
+- zabbix_proxy (module) - deprecates ``interface`` sub-options ``type`` and ``main`` when proxy type is set to passive through ``status=passive``. Make sure these suboptions are removed from your playbook as they were never supported by Zabbix in the first place.
 
 f5networks.f5_modules
 ~~~~~~~~~~~~~~~~~~~~~
