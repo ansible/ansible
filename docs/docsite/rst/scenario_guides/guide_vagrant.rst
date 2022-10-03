@@ -79,7 +79,7 @@ illustrated by this example:
 
 .. code-block:: bash
 
-      $ PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ANSIBLE_HOST_KEY_CHECKING=false ANSIBLE_SSH_ARGS='-o UserKnownHostsFile=/dev/null -o IdentitiesOnly=true -o ControlMaster=auto -o ControlPersist=60s' ansible-playbook --connection=ssh --timeout=30 --limit="default" --inventory-file=/home/someone/coding-in-a-project/.vagrant/provisioners/ansible/inventory -v playbook.yml
+      $ PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ANSIBLE_HOST_KEY_CHECKING=false ANSIBLE_SSH_ARGS='-o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o ControlMaster=auto -o ControlPersist=60s' ansible-playbook --connection=ssh --timeout=30 --limit="default" --inventory-file=/home/someone/coding-in-a-project/.vagrant/provisioners/ansible/inventory -v playbook.yml
 
 This information can be quite useful to debug integration issues and can also
 be used to manually execute Ansible from a shell, as explained in the next
