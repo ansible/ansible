@@ -440,7 +440,7 @@ class JinjaPluginIntercept(MutableMapping):
                 self._delegatee[key] = plugin.j2_function
                 self._loaded_builtins.add(key)
 
-        # let it trigger keyerror if we could not find ours or jinja2 one
+        # raise template syntax error if we could not find ours or jinja2 one
         try:
             func = self._delegatee[key]
         except KeyError as e:
