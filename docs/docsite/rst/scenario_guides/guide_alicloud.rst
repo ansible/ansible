@@ -44,7 +44,9 @@ To store authentication credentials in a vars_files, encrypt them with :ref:`Ans
     alicloud_access_key: "--REMOVED--"
     alicloud_secret_key: "--REMOVED--"
 
-Note that if you store your credentials in a vars_files, you need to refer to them in each Alicloud module. For example::
+Note that if you store your credentials in a vars_files, you need to refer to them in each Alicloud module. For example:
+
+.. code-block:: yaml
 
     - ali_instance:
         alicloud_access_key: "{{alicloud_access_key}}"
