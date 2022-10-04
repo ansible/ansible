@@ -394,7 +394,7 @@ This is an example using an extract from a  YAML inventory, as the INI format do
    ...
 
 To use an inline vaulted variables with an INI inventory you need to store it in a 'vars' file in YAML format,
-it can reside in host_vars/ or group_vars/ to be automatically picked up or referenced from a play via ``vars_files`` or ``include_vars``.
+it can reside in host_vars/ or group_vars/ to be automatically picked up or referenced from a play through ``vars_files`` or ``include_vars``.
 
 To run a playbook with this setup, drop the ``-k`` flag and add a flag for your ``vault-id``:
 

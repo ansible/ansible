@@ -8,7 +8,7 @@ Ansible collections support a wide range of vendors, device types, and actions, 
 
 - Automate repetitive tasks to speed routine network changes and free up your time for more strategic work
 - Leverage the same simple, powerful, and agentless automation tool for network tasks that operations and development use
-- Separate the data model (in a playbook or role) from the execution layer (via Ansible modules) to manage heterogeneous network devices
+- Separate the data model (in a playbook or role) from the execution layer (through Ansible modules) to manage heterogeneous network devices
 - Benefit from community and vendor-generated sample playbooks and roles to help accelerate network automation projects
 - Communicate securely with network hardware over SSH or HTTPS
 
