@@ -32,4 +32,4 @@
     that:
       - result is failed
       - >-
-        "TemplateRuntimeError: No test named 'asdf '" in result.msg
+        "TemplateSyntaxError: Could not load \"asdf \": 'invalid plugin name: ansible.builtin.asdf '" in result.msg
