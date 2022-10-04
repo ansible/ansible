@@ -37,7 +37,8 @@ Let's say we want to test the ``postgresql_user`` module invoked with the ``name
         - result is changed
 
   - name: Check actual system state with another module, in other words, that the user exists
-    communnity.postgresql.postgresql_query:
+
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user'
     register: query_result
 

@@ -25,7 +25,7 @@ Ansible will not support Python 2.4 or 2.5 on the target hosts anymore. Going fo
 Inventory
 =========
 
-Inventory has been refactored to be implemented via plugins and now allows for multiple sources. This change is mostly transparent to users.
+Inventory has been refactored to be implemented through plugins and now allows for multiple sources. This change is mostly transparent to users.
 
 One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally.
 This means you can no longer use it early in plays to determine ``hosts:`` or similar keywords.
@@ -63,7 +63,7 @@ Use of multiple tags
 
 Specifying ``--tags`` (or ``--skip-tags``) multiple times on the command line currently leads to the last one overriding all the previous ones. This behavior is deprecated. In the future, if you specify --tags multiple times the tags will be merged together. From now on, using ``--tags`` multiple times on one command line will emit a deprecation warning. Setting the ``merge_multiple_cli_tags`` option to True in the ``ansible.cfg`` file will enable the new behavior.
 
-In 2.4, the default has change to merge the tags. You can enable the old overwriting behavior via the config option.
+In 2.4, the default has change to merge the tags. You can enable the old overwriting behavior through the config option.
 
 In 2.5, multiple ``--tags`` options will be merged with no way to go back to the old behavior.
 
@@ -124,7 +124,7 @@ The most notable difference to users is that vars plugins now get invoked on dem
 Inventory plugins
 -----------------
 
-Developers should start migrating from hardcoded inventory with dynamic inventory scripts to the new Inventory Plugins. The scripts will still work via the ``script`` inventory plugin but Ansible development efforts will now concentrate on writing plugins rather than enhancing existing scripts.
+Developers should start migrating from hardcoded inventory with dynamic inventory scripts to the new Inventory Plugins. The scripts will still work through the ``script`` inventory plugin but Ansible development efforts will now concentrate on writing plugins rather than enhancing existing scripts.
 
 Both users and developers should look into the new plugins because they are intended to alleviate the need for many of the hacks and workarounds found in the dynamic inventory scripts.
 
@@ -138,7 +138,7 @@ Users:
 
 Developers:
 
-* If your callback does not inherit from ``CallbackBase`` (directly or indirectly via another callback), it will still work, but issue a deprecation notice.
+* If your callback does not inherit from ``CallbackBase`` (directly or indirectly through another callback), it will still work, but issue a deprecation notice.
   To avoid this and ensure it works in the future change it to inherit from ``CallbackBase`` so it has the new options handling methods and properties.
   You can also implement the new options handling methods and properties but that won't automatically inherit changes added in the future.  You can look at ``CallbackBase`` itself and/or ``AnsiblePlugin`` for details.
 * Any callbacks inheriting from other callbacks might need to also be updated to contain the same documented options
