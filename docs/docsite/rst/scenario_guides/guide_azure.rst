@@ -77,20 +77,20 @@ order of precedence is parameters, then environment variables, and finally a fil
 Using Environment Variables
 ```````````````````````````
 
-To pass service principal credentials via the environment, define the following variables:
+To pass service principal credentials through the environment, define the following variables:
 
 * AZURE_CLIENT_ID
 * AZURE_SECRET
 * AZURE_SUBSCRIPTION_ID
 * AZURE_TENANT
 
-To pass Active Directory username/password via the environment, define the following variables:
+To pass Active Directory username/password through the environment, define the following variables:
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
 * AZURE_SUBSCRIPTION_ID
 
-To pass Active Directory username/password in ADFS via the environment, define the following variables:
+To pass Active Directory username/password in ADFS through the environment, define the following variables:
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
@@ -478,7 +478,7 @@ Disabling certificate validation on Azure endpoints
 When an HTTPS proxy is present, or when using Azure Stack, it may be necessary to disable certificate validation for
 Azure endpoints in the Azure modules. This is not a recommended security practice, but may be necessary when the system
 CA store cannot be altered to include the necessary CA certificate. Certificate validation can be controlled by setting
-the "cert_validation_mode" value in a credential profile, via the "AZURE_CERT_VALIDATION_MODE" environment variable, or
+the "cert_validation_mode" value in a credential profile, through the "AZURE_CERT_VALIDATION_MODE" environment variable, or
 by passing the "cert_validation_mode" argument to any Azure module. The default value is "validate"; setting the value
 to "ignore" will prevent all certificate validation. The module argument takes precedence over a credential profile value,
 which takes precedence over the environment value.
