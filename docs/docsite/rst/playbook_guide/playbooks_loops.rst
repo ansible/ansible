@@ -468,7 +468,7 @@ Accessing the name of your loop_var
 
 As of Ansible 2.8 you can get the name of the value provided to ``loop_control.loop_var`` using the ``ansible_loop_var`` variable
 
-For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value via the following
+For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value through the following
 
 .. code-block:: yaml+jinja
 

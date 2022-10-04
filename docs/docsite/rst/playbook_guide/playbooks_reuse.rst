@@ -17,7 +17,7 @@ Ansible offers four distributed, re-usable artifacts: variables files, task file
   - A variables file contains only variables.
   - A task file contains only tasks.
   - A playbook contains at least one play, and may contain variables, tasks, and other content. You can re-use tightly focused playbooks, but you can only re-use them statically, not dynamically.
-  - A role contains a set of related tasks, variables, defaults, handlers, and even modules or other plugins in a defined file-tree. Unlike variables files, task files, or playbooks, roles can be easily uploaded and shared via Ansible Galaxy. See :ref:`playbooks_reuse_roles` for details about creating and using roles.
+  - A role contains a set of related tasks, variables, defaults, handlers, and even modules or other plugins in a defined file-tree. Unlike variables files, task files, or playbooks, roles can be easily uploaded and shared through Ansible Galaxy. See :ref:`playbooks_reuse_roles` for details about creating and using roles.
 
 .. versionadded:: 2.4
 
