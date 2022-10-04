@@ -1,0 +1,2 @@
+bugfixes:
+  - "Do not crash when templating an expression with a test or filter that is not a valid Ansible filter name (https://github.com/ansible/ansible/issues/78912, https://github.com/ansible/ansible/pull/78913)."
