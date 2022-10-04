@@ -118,6 +118,7 @@ class Attribute:
             # Leaving it here for test_attr_method from
             # test/units/playbook/test_base.py to pass and for backwards compat.
             value = getattr(obj, method)()
+            setattr(obj, f'_{self.name}', value)
         else:
             value = getattr(obj, f'_{self.name}', Sentinel)
 
