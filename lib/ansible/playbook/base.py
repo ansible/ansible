@@ -479,24 +479,18 @@ class FieldAttributeBase:
         return value
 
     def set_to_context(self, name):
+        ''' set to parent inherited value or Sentinel as appropriate'''
 
         attribute = self.fattributes[name]
         if isinstance(attribute, NonInheritableFieldAttribute):
-            self.set_to_default(name)
+            # setting to sentinel will trigger 'default/default()' on getter
+            setattr(self, name, Sentinel)
         else:
             try:
-                setattr(self, name, self._get_parent_attribute(name))
+                setattr(self, name, self._get_parent_attribute(name, omit=True))
             except AttributeError:
-                # mostly playcontext as only tasks/handlers really resolve to parent
-                self.set_to_default(name)
-
-    def set_to_default(self, name):
-
-        attribute = self.fattributes[name]
-        if callable(attribute.default):
-            setattr(self, name, attribute.default())
-        else:
-            setattr(self, name, attribute.default)
+                # mostly playcontext as only tasks/handlers/blocks really resolve parent
+                setattr(self, name, Sentinel)
 
     def post_validate(self, templar):
         '''
@@ -545,7 +539,6 @@ class FieldAttributeBase:
                 # or default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
                     self.set_to_context(name)
-                    self._finalized = True
                     continue
 
                 # and make sure the attribute is of the type it should be

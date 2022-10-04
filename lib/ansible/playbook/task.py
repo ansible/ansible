@@ -457,14 +457,20 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._parent:
             self._parent.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False, prepend=False):
+    def _get_parent_attribute(self, attr, omit=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
         extend = self.fattributes.get(attr).extend
         prepend = self.fattributes.get(attr).prepend
+
         try:
-            value = getattr(self, f'_{attr}', Sentinel)
+            # omit self, and only get parent values
+            if omit:
+                value = Sentinel
+            else:
+                value = getattr(self, f'_{attr}', Sentinel)
+
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
             if getattr(self._parent, 'statically_loaded', True):
