@@ -29,7 +29,7 @@ ansible_limit
     Contents of the ``--limit`` CLI option for the current execution of Ansible
 
 ansible_loop
-    A dictionary/map containing extended loop information when enabled via ``loop_control.extended``
+    A dictionary/map containing extended loop information when enabled through ``loop_control.extended``
 
 ansible_loop_var
     The name of the value provided to ``loop_control.loop_var``. Added in ``2.8``
@@ -58,7 +58,7 @@ ansible_play_hosts_all
 
 ansible_play_role_names
     The names of the roles currently imported into the current play. This list does **not** contain the role names that are
-    implicitly included via dependencies.
+    implicitly included through dependencies.
 
 ansible_playbook_python
     The path to the python interpreter being used by Ansible on the controller
