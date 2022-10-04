@@ -89,6 +89,7 @@ ansible_facts:
 '''
 
 
+import os
 import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
@@ -104,8 +105,13 @@ class BaseService(object):
 class ServiceScanService(BaseService):
 
     def _list_sysvinit(self, services):
-        # not Red Hat
         rc, stdout, stderr = self.module.run_command("%s --status-all" % self.service_path)
+        if rc == 4 and not os.path.exists('/etc/init.d'):
+            # This function is not intended to run on Red Hat but it could happen
+            # if `chkconfig` is not installed. `service` on RHEL9 returns rc 4
+            # when /etc/init.d is missing, add the extra guard of checking /etc/init.d
+            # instead of solely relying on rc == 4
+            return
         if rc != 0:
             self.module.warn("Unable to query 'service' tool (%s): %s" % (rc, stderr))
         p = re.compile(r'^\s*\[ (?P<state>\+|\-) \]\s+(?P<name>.+)$', flags=re.M)
