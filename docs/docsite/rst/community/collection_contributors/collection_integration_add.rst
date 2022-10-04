@@ -189,7 +189,7 @@ With all of the targets now removed, the current state is as if we do not have a
       creates: /etc/postgresql/12/
 
   - name: Start PostgreSQL service
-    service:
+    ansible.builtin.service:
       name: postgresql
       state: started
 
@@ -213,9 +213,9 @@ That is enough for our very basic example.
 .. code-block:: yaml
 
   - name: Test postgresql_info module
-    become: yes
+    become: true
     become_user: postgres
-    postgresql_info:
+    community.postgresql.postgresql_info:
       login_user: postgres
       login_db: postgres
     register: result
