@@ -384,7 +384,9 @@ class VaultCLI(CLI):
                 sys.stderr.write(err)
             b_outs.append(to_bytes(out))
 
-        self.editor.write_data(b'\n'.join(b_outs) + b'\n', context.CLIARGS['output_file'] or '-')
+        # Output must end with a newline to prevent bug #78932
+        b_outs.append(b'')
+        self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
