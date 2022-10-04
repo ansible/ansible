@@ -139,7 +139,7 @@ Example:
     abstract_module:
         ...
     register: result
-    ignore_errors: true
+  
 
   - name: Check the task fails and its error message
     assert:

@@ -215,7 +215,7 @@ That is enough for our very basic example.
   - name: Test postgresql_info module
     become: true
     become_user: postgres
-    postgresql_info:
+    community.postregsql.postgresql_info:
       login_user: postgres
       login_db: postgres
     register: result

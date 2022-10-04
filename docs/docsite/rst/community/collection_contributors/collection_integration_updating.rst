@@ -110,7 +110,7 @@ We will add the following code to the file.
   - name: Test for new_option, create new user WITHOUT the attribute
     community.postgresql.postgresql_user:
       name: test_user
-      add_attribute: false
+      
     register: result
 
   - name: Check the module returns what we expect
@@ -131,7 +131,7 @@ We will add the following code to the file.
   - name: Test for new_option, create new user WITH the attribute
     community.postgresql.postgresql_user:
       name: test_user
-      add_attribute: true
+    
     register: result
 
   - name: Check the module returns what we expect
