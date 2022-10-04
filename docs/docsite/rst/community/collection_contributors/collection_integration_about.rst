@@ -27,7 +27,7 @@ Let's say we want to test the ``postgresql_user`` module invoked with the ``name
 .. code-block:: yaml
 
   - name: Create PostgreSQL user and store module's output to the result variable
-    postgresql_user:
+    communnity.postgresql.postgresql_user:
       name: test_user
     register: result
 
@@ -37,7 +37,7 @@ Let's say we want to test the ``postgresql_user`` module invoked with the ``name
         - result is changed
 
   - name: Check actual system state with another module, in other words, that the user exists
-    postgresql_query:
+    communnity.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user'
     register: query_result
 
@@ -139,7 +139,6 @@ Example:
     abstract_module:
         ...
     register: result
-  
 
   - name: Check the task fails and its error message
     assert:
