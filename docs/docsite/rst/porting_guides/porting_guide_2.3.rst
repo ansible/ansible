@@ -219,8 +219,8 @@ Will result in:
          transport: cli
          host: "{{ ansible_host }}"
 
-delegate_to against ProxyCommand
---------------------------------
+ProxyCommand replaces delegate_to
+--------------------------------------------------
 
 The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
 no longer supports the use of the ``delegate_to`` directive.
