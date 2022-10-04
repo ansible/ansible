@@ -39,7 +39,6 @@ To store authentication credentials in a vars_files, encrypt them with :ref:`Ans
 
 .. code-block:: yaml
 
-
     ---
     alicloud_access_key: "--REMOVED--"
     alicloud_secret_key: "--REMOVED--"
