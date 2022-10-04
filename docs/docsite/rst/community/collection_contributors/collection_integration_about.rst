@@ -27,7 +27,7 @@ Let's say we want to test the ``postgresql_user`` module invoked with the ``name
 .. code-block:: yaml
 
   - name: Create PostgreSQL user and store module's output to the result variable
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
     register: result
 
@@ -37,7 +37,7 @@ Let's say we want to test the ``postgresql_user`` module invoked with the ``name
         - result is changed
 
   - name: Check actual system state with another module, in other words, that the user exists
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user'
     register: query_result
 
@@ -129,7 +129,7 @@ To check a task:
 
 2. If the module changes the system state, check the actual system state using at least one other module. For example, if the module changes a file, we can check that the file has been changed by checking its checksum with the :ref:`stat <ansible_collections.ansible.builtin.stat_module>` module before and after the test tasks.
 3. Run the same task with ``check_mode: yes`` if check-mode is supported by the module. Check with other modules that the actual system state has not been changed.
-4. Cover cases when the module must fail. Use the ``ignore_errors: yes`` option and check the returned message with the ``assert`` module.
+4. Cover cases when the module must fail. Use the ``ignore_errors: true`` option and check the returned message with the ``assert`` module.
 
 Example:
 
@@ -139,7 +139,6 @@ Example:
     abstract_module:
         ...
     register: result
-    ignore_errors: yes
 
   - name: Check the task fails and its error message
     assert:

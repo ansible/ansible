@@ -44,7 +44,7 @@ We will add the following code to the file.
 
   # https://github.com/ansible-collections/community.postgresql/issues/NUM
   - name: Test user name containing underscore
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: underscored_user
     register: result
 
@@ -54,7 +54,7 @@ We will add the following code to the file.
         - result is changed
 
   - name: Query the database if the user exists
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'underscored_user'
     register: result
 
@@ -108,9 +108,8 @@ We will add the following code to the file.
   # https://github.com/ansible-collections/community.postgresql/issues/NUM
   # We should also run the same tasks with check_mode: yes. We omit it here for simplicity.
   - name: Test for new_option, create new user WITHOUT the attribute
-    postgresql_user:
-      name: test_user
-      add_attribute: no
+    community.postgresql.postgresql_user:
+      name: test_user      
     register: result
 
   - name: Check the module returns what we expect
@@ -119,7 +118,7 @@ We will add the following code to the file.
         - result is changed
 
   - name: Query the database if the user exists but does not have the attribute (it is NULL)
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user' AND attribute = NULL
     register: result
 
@@ -129,9 +128,8 @@ We will add the following code to the file.
         - result.query_result.rowcount == 1
 
   - name: Test for new_option, create new user WITH the attribute
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
-      add_attribute: yes
     register: result
 
   - name: Check the module returns what we expect
@@ -140,7 +138,7 @@ We will add the following code to the file.
         - result is changed
 
   - name: Query the database if the user has the attribute (it is TRUE)
-    postgresql_query:
+    community.postgresql.postgresql_query:
       query: SELECT * FROM pg_authid WHERE rolename = 'test_user' AND attribute = 't'
     register: result
 
@@ -153,16 +151,16 @@ Then we :ref:`run the tests<collection_run_integration_tests>` with ``postgresql
 
 In reality, we would alternate the tasks above with the same tasks run with the ``check_mode: yes`` option to be sure our option works as expected in check-mode as well. See :ref:`Recommendations on coverage<collection_integration_recommendations>` for details.
 
-If we expect a task to fail, we use the ``ignore_errors: yes`` option and check that the task actually failed and returned the message we expect:
+If we expect a task to fail, we use the ``ignore_errors: true`` option and check that the task actually failed and returned the message we expect:
 
 .. code-block:: yaml
 
   - name: Test for fail_when_true option
-    postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
-      fail_when_true: yes
+      fail_when_true: true
     register: result
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Check the module fails and returns message we expect
     assert:
