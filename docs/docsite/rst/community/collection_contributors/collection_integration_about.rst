@@ -27,7 +27,7 @@ Let's say we want to test the ``postgresql_user`` module invoked with the ``name
 .. code-block:: yaml
 
   - name: Create PostgreSQL user and store module's output to the result variable
-    communnity.postgresql.postgresql_user:
+    community.postgresql.postgresql_user:
       name: test_user
     register: result
 
