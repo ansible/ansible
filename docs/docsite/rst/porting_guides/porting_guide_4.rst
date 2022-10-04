@@ -194,7 +194,7 @@ Breaking Changes
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
-- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (see `issue 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
+- all roles now reference other roles and modules through their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (see `issue 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
 
 Deprecated Features
 -------------------
@@ -464,7 +464,7 @@ fortinet.fortios
 netbox.netbox
 ~~~~~~~~~~~~~
 
-- packages is now a required Python package and gets installed via Ansible 2.10+.
+- packages is now a required Python package and gets installed through Ansible 2.10+.
 
 Removed Features
 ----------------
