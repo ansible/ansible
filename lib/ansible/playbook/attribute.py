@@ -124,10 +124,7 @@ class Attribute:
             value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
-            value = self.default
-            if callable(value):
-                value = value()
-                setattr(obj, f'_{self.name}', value)
+            value = self._set_default(obj)
 
         return value
 
@@ -142,12 +139,23 @@ class Attribute:
     def __delete__(self, obj):
         delattr(obj, f'_{self.name}')
 
+    def _set_default(self, obj):
+        ''' handles value/callable defauts '''
+        value = self.default
+        if callable(value):
+            value = value()
+
+        setattr(obj, f'_{self.name}', value)
+        return value
+
 
 class NonInheritableFieldAttribute(Attribute):
+    ''' relies on using the base Attribute __get__ which does not use parent values '''
     ...
 
 
 class FieldAttribute(Attribute):
+
     def __init__(self, extend=False, prepend=False, **kwargs):
         super().__init__(**kwargs)
 
@@ -159,44 +167,37 @@ class FieldAttribute(Attribute):
             value = getattr(obj, f'_{self.name}', Sentinel)
         else:
             try:
+                # attempt inheritance
                 value = obj._get_parent_attribute(self.name)
             except AttributeError:
-                method = f'_get_attr_{self.name}'
-                if hasattr(obj, method):
-                    # NOTE this appears to be not needed in the codebase,
-                    # _get_attr_connection has been replaced by ConnectionFieldAttribute.
-                    # Leaving it here for test_attr_method from
-                    # test/units/playbook/test_base.py to pass and for backwards compat.
-                    if getattr(obj, '_squashed', False):
-                        value = getattr(obj, f'_{self.name}', Sentinel)
-                    else:
-                        value = getattr(obj, method)()
-                else:
-                    value = getattr(obj, f'_{self.name}', Sentinel)
+                # just get value fomr attribute itself as normal
+                value = super(FieldAttribute, self).__get__(obj, obj_type=obj_type)
 
         if value is Sentinel:
-            value = self.default
-            if callable(value):
-                value = value()
-                setattr(obj, f'_{self.name}', value)
+            value = self._set_default(obj)
 
         return value
 
 
 class ConnectionFieldAttribute(FieldAttribute):
     def __get__(self, obj, obj_type=None):
+
         from ansible.module_utils.compat.paramiko import paramiko
         from ansible.utils.ssh_functions import check_for_controlpersist
+
         value = super().__get__(obj, obj_type)
 
+        # process 'special values'
         if value == 'smart':
             value = 'ssh'
             # see if SSH can support ControlPersist if not use paramiko
             if not check_for_controlpersist('ssh') and paramiko is not None:
                 value = "paramiko"
+            setattr(obj, f'_{self.name}', value)
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
         elif value == 'persistent' and paramiko is not None:
             value = 'paramiko'
+            setattr(obj, f'_{self.name}', value)
 
         return value
