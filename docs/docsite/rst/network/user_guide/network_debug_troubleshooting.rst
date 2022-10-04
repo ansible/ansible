@@ -326,7 +326,7 @@ Error: "Authentication failed"
 
 **Platforms:** Any
 
-Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (via ``ansible`` or ``ansible-playbook``) can not be used to connect to the remote device.
+Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (through ``ansible`` or ``ansible-playbook``) can not be used to connect to the remote device.
 
 
 
@@ -340,7 +340,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable `ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
+If you are specifying credentials through ``password:`` (either directly or through ``provider:``) or the environment variable `ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
@@ -728,9 +728,9 @@ Example Ansible inventory file
     ansible_password=!vault...
 
 
-.. note:: Using ``ProxyCommand`` with passwords via variables
+.. note:: Using ``ProxyCommand`` with passwords through variables
 
-   By design, SSH doesn't support providing passwords via environment variables.
+   By design, SSH doesn't support providing passwords through environment variables.
    This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
    We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.
