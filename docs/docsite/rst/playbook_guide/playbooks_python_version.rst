@@ -16,7 +16,7 @@ Dictionary views
 ================
 
 In Python2, the :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items`
-methods return a list.  Jinja2 returns that to Ansible via a string
+methods return a list.  Jinja2 returns that to Ansible using a string
 representation that Ansible can turn back into a list.
 
 In Python3, those methods return a :ref:`dictionary view <python3:dict-views>` object. The
