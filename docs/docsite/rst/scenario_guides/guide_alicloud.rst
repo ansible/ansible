@@ -35,7 +35,10 @@ To pass authentication credentials as environment variables::
     export ALICLOUD_ACCESS_KEY='Alicloud123'
     export ALICLOUD_SECRET_KEY='AlicloudSecret123'
 
-To store authentication credentials in a vars_files, encrypt them with :ref:`Ansible Vault<vault>` to keep them secure, then list them::
+To store authentication credentials in a vars_files, encrypt them with :ref:`Ansible Vault<vault>` to keep them secure, then list them:
+
+.. code-block:: yaml
+
 
     ---
     alicloud_access_key: "--REMOVED--"
