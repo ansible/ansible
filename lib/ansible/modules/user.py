@@ -91,8 +91,7 @@ options:
             - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
             - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
-              for details on various ways to generate these password values. For instance, to get a sha512 password
-              hash you may use the password_hash('sha512') filter.
+              for details on various ways to generate these password values.
         type: str
     state:
         description:
