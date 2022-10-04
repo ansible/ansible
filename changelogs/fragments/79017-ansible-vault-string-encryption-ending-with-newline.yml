@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-vault encrypt_string - output had no newline at the end which caused broken output to stdout in some shells (e.g., trailing '%' sign in zsh). Fix now adds the newline character to the output by appending an additional element to the ``b_outs`` list (https://github.com/ansible/ansible/issues/78932)."
