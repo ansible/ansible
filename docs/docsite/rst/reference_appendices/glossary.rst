@@ -126,12 +126,12 @@ when a term comes up on the mailing list.
         executing the internal :ref:`setup module <setup_module>` on the remote nodes.  You
         never have to call the setup module explicitly, it just runs, but it
         can be disabled to save time if it is not needed or you can tell
-        ansible to collect only a subset of the full facts via the
+        ansible to collect only a subset of the full facts through the
         ``gather_subset:`` option. For the convenience of users who are
         switching from other configuration management systems, the fact module
         will also pull in facts from the :program:`ohai` and :program:`facter`
         tools if they are installed.  These are fact libraries from Chef and
-        Puppet, respectively. (These may also be disabled via
+        Puppet, respectively. (These may also be disabled through
         ``gather_subset:``)
 
     Filter Plugin
@@ -233,7 +233,7 @@ when a term comes up on the mailing list.
     Inventory
         A file (by default, Ansible uses a simple INI format) that describes
         :term:`Hosts <Host>` and :term:`Groups <Group>` in Ansible.  Inventory
-        can also be provided via an :term:`Inventory Script` (sometimes called
+        can also be provided through an :term:`Inventory Script` (sometimes called
         an "External Inventory Script").
 
     Inventory Script
@@ -460,7 +460,7 @@ when a term comes up on the mailing list.
     SSH (Native)
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
         (or a config file, or a keyword in the :term:`playbook <playbooks>`)
-        and can be useful if wanting to login via Kerberized SSH or using SSH
+        and can be useful if wanting to login through Kerberized SSH or using SSH
         jump hosts, and so on.  In 1.2.1, ``ssh`` will be used by default if the
         OpenSSH binary on the control machine is sufficiently new.
         Previously, Ansible selected ``paramiko`` as a default.  Using
