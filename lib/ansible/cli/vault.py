@@ -384,6 +384,11 @@ class VaultCLI(CLI):
                 sys.stderr.write(err)
             b_outs.append(to_bytes(out))
 
+        # The output must end with a newline to play nice with terminal representation.
+        # Refs:
+        # * https://stackoverflow.com/a/729795/595220
+        # * https://github.com/ansible/ansible/issues/78932
+        b_outs.append(b'')
         self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
