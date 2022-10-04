@@ -110,16 +110,14 @@ class Attribute:
         return other.priority >= self.priority
 
     def __get__(self, obj, obj_type=None):
+
         method = f'_get_attr_{self.name}'
-        if hasattr(obj, method):
+        if hasattr(obj, method) and not getattr(obj, '_squashed', False):
             # NOTE this appears to be not used in the codebase,
             # _get_attr_connection has been replaced by ConnectionFieldAttribute.
             # Leaving it here for test_attr_method from
             # test/units/playbook/test_base.py to pass and for backwards compat.
-            if getattr(obj, '_squashed', False):
-                value = getattr(obj, f'_{self.name}', Sentinel)
-            else:
-                value = getattr(obj, method)()
+            value = getattr(obj, method)()
         else:
             value = getattr(obj, f'_{self.name}', Sentinel)
 
@@ -141,6 +139,7 @@ class Attribute:
 
     def _set_default(self, obj):
         ''' handles value/callable defauts '''
+
         value = self.default
         if callable(value):
             value = value()
@@ -163,6 +162,7 @@ class FieldAttribute(Attribute):
         self.prepend = prepend
 
     def __get__(self, obj, obj_type=None):
+
         if getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False):
             value = getattr(obj, f'_{self.name}', Sentinel)
         else:
@@ -180,6 +180,7 @@ class FieldAttribute(Attribute):
 
 
 class ConnectionFieldAttribute(FieldAttribute):
+
     def __get__(self, obj, obj_type=None):
 
         from ansible.module_utils.compat.paramiko import paramiko
