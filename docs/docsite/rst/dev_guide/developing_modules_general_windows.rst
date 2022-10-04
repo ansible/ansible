@@ -691,7 +691,7 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file_check
-      check_mode: yes
+      check_mode: true
 
     - name: get result of remove a file (check mode)
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
