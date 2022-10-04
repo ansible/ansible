@@ -1,0 +1,44 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Make sure foo is gone
+      file:
+        path: foo
+        state: absent
+    - name: Create foo - should only be changed in first iteration
+      copy:
+        dest: foo
+        content: foo
+      check_mode: '{{ omit }}'
+      register: cmode
+      loop:
+        - 1
+        - 2
+
+    - when: ansible_check_mode
+      block:
+      - name: stat foo
+        stat: path=foo
+        register: foo
+        check_mode: off
+      - debug: var=foo
+      - name: validate expected outcomes when in check mode and file does not exist
+        assert:
+          that:
+            - cmode['results'][0] is changed
+            - cmode['results'][1] is changed
+        when: not foo['stat']['exists']
+
+      - name: validate expected outcomes when in check mode and file exists
+        assert:
+          that:
+            - cmode['results'][0] is not changed
+            - cmode['results'][1] is not changed
+        when: foo['stat']['exists']
+
+    - name: validate expected outcomes when not in check mode (file is always deleted)
+      assert:
+        that:
+          - cmode['results'][0] is changed
+          - cmode['results'][1] is not changed
+      when: not ansible_check_mode
