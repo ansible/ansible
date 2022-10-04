@@ -347,7 +347,7 @@ Deprecated
      removed in 2.12.  If you need the old behavior switch to ``FactCache.first_order_merge()``
      instead.
 
-* Supporting file-backed caching via self.cache is deprecated and will
+* Supporting file-backed caching through self.cache is deprecated and will
   be removed in Ansible 2.12. If you maintain an inventory plugin, update it to use ``self._cache`` as a dictionary. For implementation details, see
   the :ref:`developer guide on inventory plugins<inventory_plugin_caching>`.
 
@@ -543,7 +543,7 @@ Plugins
 
 * ``osx_say`` callback plugin was renamed into :ref:`say <say_callback>`.
 
-* Inventory plugins now support caching via cache plugins. To start using a cache plugin with your inventory see the section on caching in the :ref:`inventory guide<using_inventory>`. To port a custom cache plugin to be compatible with inventory see :ref:`developer guide on cache plugins<developing_cache_plugins>`.
+* Inventory plugins now support caching through cache plugins. To start using a cache plugin with your inventory see the section on caching in the :ref:`inventory guide<using_inventory>`. To port a custom cache plugin to be compatible with inventory see :ref:`developer guide on cache plugins<developing_cache_plugins>`.
 
 Porting custom scripts
 ======================
