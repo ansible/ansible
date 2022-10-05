@@ -114,7 +114,9 @@ to the relevant host(s). Consider the following inventory group:
     foo ansible_host=192.0.2.1
     bar ansible_host=192.0.2.2
 
-You can create `group_vars/gatewayed.yml` with the following contents::
+You can create `group_vars/gatewayed.yml` with the following contents:
+
+.. code-block:: yaml
 
     ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
 
@@ -274,17 +276,23 @@ is likely the problem. There are several workarounds:
 
 * You can set ``remote_tmp`` to a path that will expand correctly with the shell you are using
   (see the plugin documentation for :ref:`C shell<csh_shell>`, :ref:`fish shell<fish_shell>`,
-  and :ref:`Powershell<powershell_shell>`). For example, in the ansible config file you can set::
+  and :ref:`Powershell<powershell_shell>`). For example, in the ansible config file you can set:
+
+  .. code-block:: ini
 
     remote_tmp=$HOME/.ansible/tmp
 
-  In Ansible 2.5 and later, you can also set it per-host in inventory like this::
+  In Ansible 2.5 and later, you can also set it per-host in inventory like this:
+
+  .. code-block:: ini
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 
 * You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell. For
   instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
-  this in inventory like so::
+  this in inventory like so:
+
+  .. code-block:: ini
 
     solaris1 ansible_shell_executable=/usr/xpg4/bin/sh
 
@@ -313,6 +321,8 @@ There are a few common errors that one might run into when trying to execute Ans
 
   To fix this set the path to the python installation in your inventory like so::
 
+  .. code-block:: ini
+
     zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
 
 * Start of python fails with ``The module libpython2.7.so was not found.``
@@ -320,7 +330,9 @@ There are a few common errors that one might run into when trying to execute Ans
   .. error::
     EE3501S The module libpython2.7.so was not found.
 
-  On z/OS, you must execute python from gnu bash. If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+  On z/OS, you must execute python from gnu bash. If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``:
+
+  .. code-block:: ini
 
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
@@ -333,7 +345,9 @@ It is known that it will not correctly expand the default tmp directory Ansible 
 If you see module failures, this is likely the problem.
 The simple workaround is to set ``remote_tmp`` to a path that will expand correctly (see documentation of the shell plugin you are using for specifics).
 
-For example, in the ansible config file (or through environment variable) you can set::
+For example, in the ansible config file (or through environment variable) you can set:
+
+.. code-block:: ini
 
     remote_tmp=$HOME/.ansible/tmp
 
@@ -429,7 +443,9 @@ file with a list of servers. To do this, you can just access the "$groups" dicti
     {% endfor %}
 
 If you need to access facts about these hosts, for instance, the IP address of each hostname,
-you need to make sure that the facts have been populated. For example, make sure you have a play that talks to db_servers::
+you need to make sure that the facts have been populated. For example, make sure you have a play that talks to db_servers:
+
+.. code-block:: yaml
 
     - hosts:  db_servers
       tasks:
@@ -495,7 +511,9 @@ Anyway, here's the trick:
     {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
 
 Notice how we're pulling out the hostname of the first machine of the webservers group. If you are doing this in a template, you
-could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact::
+could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact:
+
+.. code-block:: yaml+jinja
 
     - set_fact: headnode={{ groups['webservers'][0] }}
 
@@ -518,7 +536,9 @@ How do I access shell environment variables?
 
 
 **On controller machine :** Access existing variables from controller use the ``env`` lookup plugin.
-For example, to access the value of the HOME environment variable on the management machine::
+For example, to access the value of the HOME environment variable on the management machine:
+
+.. code-block:: yaml+jinja
 
    ---
    # ...
@@ -613,7 +633,9 @@ When is it unsafe to bulk-set task arguments from a variable?
 You can set all of a task's arguments from a dictionary-typed variable. This
 technique can be useful in some dynamic execution scenarios. However, it
 introduces a security risk. We do not recommend it, so Ansible issues a
-warning when you do something like this::
+warning when you do something like this:
+
+.. code-block:: yaml+jinja
 
     #...
     vars:
@@ -663,7 +685,9 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :ref:`playbooks_vault`.
 
-If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful:
+
+.. code-block:: yaml+jinja
 
     - name: secret task
       shell: /usr/bin/do_something --value={{ secret_value }}
@@ -671,7 +695,9 @@ If you have a task that you don't want to show the results or command given to i
 
 This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
 
-The ``no_log`` attribute can also apply to an entire play::
+The ``no_log`` attribute can also apply to an entire play:
+
+.. code-block:: yaml
 
     - hosts: all
       no_log: True
@@ -724,7 +750,9 @@ How do I get the original ansible_host when I delegate a task?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
-but you can still access the original through ``hostvars``::
+but you can still access the original through ``hostvars``:
+
+.. code-block:: yaml+jinja
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
@@ -737,7 +765,9 @@ How do I fix 'protocol error: filename does not match request' when fetching a f
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Since release ``7.9p1`` of OpenSSH there is a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_
-in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
+in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism:
+
+.. error::
 
     failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
 
