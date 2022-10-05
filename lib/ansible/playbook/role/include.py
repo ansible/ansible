@@ -25,6 +25,7 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.module_utils._text import to_native
+from ansible.utils.sentinel import Sentinel
 
 
 __all__ = ['RoleInclude']
@@ -55,3 +56,33 @@ class RoleInclude(RoleDefinition):
 
         ri = RoleInclude(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader, collection_list=collection_list)
         return ri.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    def _get_parent_attribute(self, attr, omit=False):
+        '''
+        Generic logic to get the attribute or parent attribute for a block value.
+        '''
+
+        extend = self.fattributes.get(attr).extend
+        prepend = self.fattributes.get(attr).prepend
+
+        try:
+            # omit self, and only get parent values
+            if omit:
+                value = Sentinel
+            else:
+                value = getattr(self, f'_{attr}', Sentinel)
+
+            if self._play and (value is Sentinel or extend):
+                try:
+                    play_value = getattr(self._play, f'{attr}', Sentinel)
+                    if play_value is not Sentinel:
+                        if extend:
+                            value = self._extend_value(value, play_value, prepend)
+                        else:
+                            value = play_value
+                except AttributeError:
+                    pass
+        except KeyError:
+            pass
+
+        return value
