@@ -13,7 +13,9 @@ All Alicloud modules require ``footmark`` - install it on your control machine w
 
 Cloud modules, including Alicloud modules, execute on your local machine (the control machine) with ``connection: local``, rather than on remote machines defined in your hosts.
 
-Normally, you'll use the following pattern for plays that provision Alicloud resources::
+Normally, you'll use the following pattern for plays that provision Alicloud resources:
+
+.. code-block:: yaml
 
     - hosts: localhost
       connection: local
@@ -30,7 +32,9 @@ Authentication
 You can specify your Alicloud authentication credentials (access key and secret key) by passing them as
 environment variables or by storing them in a vars file.
 
-To pass authentication credentials as environment variables::
+To pass authentication credentials as environment variables:
+
+.. code-block:: yaml
 
     export ALICLOUD_ACCESS_KEY='Alicloud123'
     export ALICLOUD_SECRET_KEY='AlicloudSecret123'
@@ -66,7 +70,7 @@ creates 3 more. If there are 8 instances with that tag, the task terminates 3 of
 
 If you do not specify a ``count_tag``, the task creates the number of instances you specify in ``count`` with the ``instance_name`` you provide.
 
-::
+.. code-block:: yaml
 
     # alicloud_setup.yml
 
