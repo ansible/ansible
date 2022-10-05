@@ -164,7 +164,7 @@ A space followed by the pound sign ``" #"`` starts a comment.
 
 Because of this, the following is going to result in a YAML syntax error:
 
-.. code:: text:
+.. code:: text
 
     foo: somebody said I should put a colon here: so I did
 
