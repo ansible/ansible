@@ -72,7 +72,7 @@ Within playbook keywords, precedence flows with the playbook itself; the more sp
 - blocks/includes/imports/roles (optional and can contain tasks and each other)
 - tasks (most specific)
 
-A simple example::
+A simple example:
 
 .. code:: yaml
 
@@ -141,7 +141,9 @@ Variable values associated directly with a host or group, including variables de
 Using ``-e`` extra variables at the command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To override all other settings in all other categories, you can use extra variables: ``--extra-vars`` or ``-e`` at the command line. Values passed with ``-e`` are variables, not command-line options, and they will override configuration settings, command-line options, and playbook keywords as well as variables set elsewhere. For example, this task will connect as ``brian`` not as ``carol``::
+To override all other settings in all other categories, you can use extra variables: ``--extra-vars`` or ``-e`` at the command line. Values passed with ``-e`` are variables, not command-line options, and they will override configuration settings, command-line options, and playbook keywords as well as variables set elsewhere. For example, this task will connect as ``brian`` not as ``carol``:
+
+.. code:: shell-session
 
    ansible -u carol -e 'ansible_user=brian' -a whoami all
 
