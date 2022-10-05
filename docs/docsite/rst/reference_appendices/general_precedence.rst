@@ -49,13 +49,13 @@ You can override all other settings from all other sources in all other preceden
 
 At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``:
 
-.. code:: text
+.. code:: shell
 
       ansible -u mike -m ping myhost -u carol
 
 Some parameters allow multiple values. In this case, Ansible will append all values from the hosts listed in inventory files inventory1 and inventory2:
 
-.. code:: text
+.. code:: shell
 
    ansible -i /path/inventory1 -i /path/inventory2 -m ping all
 
@@ -143,7 +143,7 @@ Using ``-e`` extra variables at the command line
 
 To override all other settings in all other categories, you can use extra variables: ``--extra-vars`` or ``-e`` at the command line. Values passed with ``-e`` are variables, not command-line options, and they will override configuration settings, command-line options, and playbook keywords as well as variables set elsewhere. For example, this task will connect as ``brian`` not as ``carol``:
 
-.. code:: text
+.. code:: shell
 
    ansible -u carol -e 'ansible_user=brian' -a whoami all
 
