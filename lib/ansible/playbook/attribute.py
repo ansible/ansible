@@ -151,7 +151,6 @@ class Attribute:
 
 class NonInheritableFieldAttribute(Attribute):
     ''' relies on using the base Attribute __get__ which does not use parent values '''
-    ...
 
 
 class FieldAttribute(Attribute):
