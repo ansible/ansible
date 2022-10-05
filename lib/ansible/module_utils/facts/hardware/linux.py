@@ -672,6 +672,24 @@ class LinuxHardware(Hardware):
         except OSError:
             return device_facts
 
+        disk_scsi_data = {}
+
+        try:
+            for device in os.listdir('/sys/bus/scsi/devices'):
+                match = re.search('(\d{1,}):(\d{1,}):(\d{1,}):(\d{1,})', device)
+                if match:
+                    disk_name = os.listdir(os.path.join('/sys/bus/scsi/devices', device, 'block'))[0]
+                    host_controller_name = get_file_content('/sys/class/scsi_host/host{id}/proc_name'.format(id=match.group(1)))
+                    disk_scsi_data[disk_name] = {
+                        'scsi_host_id': match.group(1),
+                        'scsi_host_name' : host_controller_name,
+                        'scsi_channel_number': match.group(2),
+                        'scsi_target_number': match.group(3),
+                        'lun_number': match.group(4)
+                    }
+        except:
+            pass
+
         devs_wwn = {}
         try:
             devs_by_id = os.listdir("/dev/disk/by-id")
@@ -792,6 +810,9 @@ class LinuxHardware(Hardware):
             self.get_holders(d, sysdir)
 
             device_facts['devices'][diskname] = d
+
+            if disk_scsi_data.get(diskname):
+                device_facts['devices'][diskname]['scsi_disk_data'] = disk_scsi_data[diskname]
 
         return device_facts
 

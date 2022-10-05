@@ -1,0 +1,32 @@
+---
+
+- name: check whether we can see the /sys/bus/scsi/devices
+  ansible.builtin.find:
+    path: '/sys/bus/scsi/devices'
+  register: pathstat
+
+- debug:
+    msg: "This test will work on a linux server, with --docker-privileged. Tests are abandoned."
+  when: pathstat.examined == 0
+
+- block:
+    - name: run matched facts 
+      ansible.builtin.setup:
+        gather_subset:
+          - hardware
+          - '!all'
+      register: setup
+
+    - debug:
+        var: ansible_facts.devices
+    
+    - name: assert 
+      assert:
+        success_msg: success
+        that:
+          - ansible_facts.devices.sda.scsi_disk_data.lun_number is defined
+          - ansible_facts.devices.sda.scsi_disk_data.scsi_channel_number is defined
+          - ansible_facts.devices.sda.scsi_disk_data.scsi_host_id is defined
+          - ansible_facts.devices.sda.scsi_disk_data.scsi_host_name is defined
+          - ansible_facts.devices.sda.scsi_disk_data.scsi_target_number is defined
+  when: pathstat.examined != 0
