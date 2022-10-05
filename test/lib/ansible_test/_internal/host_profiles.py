@@ -72,6 +72,7 @@ from .docker_util import (
     detect_host_audit_status,
     detect_container_loginuid,
     run_utility_container,
+    SystemdControlGroupV1Status,
 )
 
 from .bootstrap import (
@@ -125,21 +126,32 @@ class HostConnectionError(ApplicationError):
 
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
-    def __init__(self, reason: str) -> None:
-        message = (
-            f'{reason}\n'
-            '\n'
-            'This can usually be resolved by running the following commands as root on the container host:\n'
-            '\n'
-            '  mkdir /sys/fs/cgroup/systemd\n'
-            '  mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr\n'
-            '  chown -R {user}:{group} /sys/fs/cgroup/systemd  # only required when running rootless\n'
-        )
+    def __init__(self, reason: str, cgroup_v1: SystemdControlGroupV1Status, engine: str) -> None:
+        message = f'''
+{reason}
+{cgroup_v1.value}
 
-        message += (
-            '\n'
-            'NOTE: This change must be applied each time the container host is rebooted.'
-        )
+Run the following commands as root on the container host to resolve this issue:
+
+  mkdir /sys/fs/cgroup/systemd
+  mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
+  chown -R {{user}}:{{group}} /sys/fs/cgroup/systemd  # only when rootless
+
+NOTE: These changes must be applied each time the container host is rebooted.
+'''.strip()
+
+        podman_message = '''
+      Mount changes will not be seen by rootless Podman if it is running [1],
+      unless shared mount propagation was enabled first.
+
+Check mount propagation: findmnt -no PROPAGATION /
+Enable shared mount propagation as root: mount --make-rshared /
+
+[1] Check for 'podman' and 'catatonit' processes.
+'''
+
+        if engine == 'podman':
+            message += podman_message
 
         message = message.strip()
 
@@ -516,7 +528,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             # The container requires cgroup v1 or the container host is using cgroup v1 (and the container requires cgroup support).
             # Make sure that the systemd cgroup is present.
             # If not, raise an exception that explains the requirement and provides a possible solution.
-            if not detect_host_systemd_cgroup_v1(self.args):
+            if (cgroup_v1 := detect_host_systemd_cgroup_v1(self.args)) != SystemdControlGroupV1Status.VALID:
                 if self.args.explain:
                     return  # assume the detection succeeded, since we can't run it in explain mode (can't pull the container)
 
@@ -528,7 +540,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 else:
                     reason = 'The container host provides cgroup v1, but does not appear to be running systemd.'
 
-                raise ControlGroupError(reason)
+                raise ControlGroupError(reason, cgroup_v1, require_docker().command)
 
     def setup(self) -> None:
         """Perform out-of-band setup before delegation."""

@@ -1,6 +1,7 @@
 """Functions for accessing docker via the docker cli."""
 from __future__ import annotations
 
+import enum
 import errno
 import json
 import os
@@ -107,25 +108,64 @@ def get_docker_info(args: CommonConfig) -> DockerInfo:
     return info
 
 
+class SystemdControlGroupV1Status(enum.Enum):
+    """The state of the cgroup v1 systemd hierarchy on the container host."""
+    DIRECTORY_NOT_FOUND = 'The "/sys/fs/cgroup/systemd" directory was not found.'
+    FILESYSTEM_NOT_MOUNTED = 'The "/sys/fs/cgroup/systemd" filesystem is not mounted.'
+    MOUNT_TYPE_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount type is not correct.'
+    OWNERSHIP_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount ownership is not correct.'
+    VALID = 'The "/sys/fs/cgroup/systemd" mount is valid.'
+
+
 @mutex
-def detect_host_systemd_cgroup_v1(args: EnvironmentConfig) -> bool:
-    """
-    Return True if the container host is using cgroup v1 with systemd, otherwise return False.
-    Detection of cgroup v1 relies on the fact that cgroup v2 removed the 'tasks' file:
-    See: https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#deprecated-v1-core-features
-    """
+def detect_host_systemd_cgroup_v1(args: EnvironmentConfig) -> SystemdControlGroupV1Status:
+    """Detect the state of the cgroup v1 systemd hierarchy on the container host."""
     try:
         return detect_host_systemd_cgroup_v1.cgroup_v1  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
-    path = '/sys/fs/cgroup/systemd/tasks'
-    options = ['--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro']
-    cmd = ['sh', '-c', f'ls {path} || true']
-    stdout = run_utility_container(args, f'ansible-test-cgroup-{args.session_name}', options=options, cmd=cmd)
-    cgroup_v1 = detect_host_systemd_cgroup_v1.cgroup_v1 = stdout == path  # type: ignore[attr-defined]
+    cgroup_host_path = '/sys/fs/cgroup'
+    cgroup_container_path = '/probe'
 
-    display.info(f'Container host systemd cgroup v1: {cgroup_v1}', verbosity=1)
+    systemd_cgroup_v1_dir = 'systemd'
+    systemd_cgroup_v1_type = 'cgroup'
+    systemd_cgroup_v1_path = f'{cgroup_container_path}/{systemd_cgroup_v1_dir}'
+
+    options = ['--volume', f'{cgroup_host_path}:{cgroup_container_path}:ro']
+
+    # pipeline the commands to speed up execution
+    cmd = ['sh', '-c', f'cat /proc/self/mounts && echo "-" && ls -ln {cgroup_container_path}']
+    stdout = run_utility_container(args, f'ansible-test-cgroup-{args.session_name}', options=options, cmd=cmd).strip()
+    display.info(stdout, verbosity=4)
+
+    lines = stdout.splitlines()
+    split_index = lines.index('-')
+    mount_lines = lines[:split_index]
+    directory_lines = lines[split_index + 2:]  # skip separator and first line of 'ls' output
+
+    mounts = {item[1]: item for item in [line.split() for line in mount_lines]} if not args.explain else {}
+    mount = mounts.get(systemd_cgroup_v1_path)
+    display.info(f'Container host systemd cgroup mount: {mount}', verbosity=3)
+
+    directories = {item[8]: item for item in [line.split() for line in directory_lines]} if not args.explain else {}
+    directory = directories.get(systemd_cgroup_v1_dir)
+    display.info(f'Container host systemd cgroup directory: {directory}', verbosity=3)
+
+    if not directory:
+        cgroup_v1 = SystemdControlGroupV1Status.DIRECTORY_NOT_FOUND
+    elif not mount:
+        cgroup_v1 = SystemdControlGroupV1Status.FILESYSTEM_NOT_MOUNTED
+    elif mount[2] != systemd_cgroup_v1_type:
+        cgroup_v1 = SystemdControlGroupV1Status.MOUNT_TYPE_NOT_CORRECT
+    elif directory[2:4] != ['0', '0']:
+        cgroup_v1 = SystemdControlGroupV1Status.OWNERSHIP_NOT_CORRECT
+    else:
+        cgroup_v1 = SystemdControlGroupV1Status.VALID
+
+    detect_host_systemd_cgroup_v1.cgroup_v1 = cgroup_v1  # type: ignore[attr-defined]
+
+    display.info(f'Container host systemd cgroup v1: {cgroup_v1.value}', verbosity=1)
 
     return cgroup_v1
 
