@@ -47,11 +47,15 @@ When you type something directly at the command line, you may feel that your han
 
 You can override all other settings from all other sources in all other precedence categories at the command line by  :ref:`general_precedence_extra_vars`, but that is not a command-line option, it is a way of passing a :ref:`variable<general_precedence_variables>`.
 
-At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
+At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``:
+
+.. code:: text
 
       ansible -u mike -m ping myhost -u carol
 
-Some parameters allow multiple values. In this case, Ansible will append all values from the hosts listed in inventory files inventory1 and inventory2::
+Some parameters allow multiple values. In this case, Ansible will append all values from the hosts listed in inventory files inventory1 and inventory2:
+
+.. code:: text
 
    ansible -i /path/inventory1 -i /path/inventory2 -m ping all
 
@@ -68,7 +72,9 @@ Within playbook keywords, precedence flows with the playbook itself; the more sp
 - blocks/includes/imports/roles (optional and can contain tasks and each other)
 - tasks (most specific)
 
-A simple example::
+A simple example:
+
+.. code:: yaml
 
    - hosts: all
      connection: ssh
@@ -97,7 +103,9 @@ Variables that have equivalent playbook keywords, command-line options, and conf
 
 Connection variables, like all variables, can be set in multiple ways and places. You can define variables for hosts and groups in :ref:`inventory<intro_inventory>`. You can define variables for tasks and plays in ``vars:`` blocks in :ref:`playbooks<about_playbooks>`. However, they are still variables - they are data, not keywords or configuration settings. Variables that override playbook keywords, command-line options, and configuration settings follow the same rules of :ref:`variable precedence <ansible_variable_precedence>` as any other variables.
 
-When set in a playbook, variables follow the same inheritance rules as playbook keywords. You can set a value for the play, then override it in a task, block, or role::
+When set in a playbook, variables follow the same inheritance rules as playbook keywords. You can set a value for the play, then override it in a task, block, or role:
+
+.. code:: yaml
 
    - hosts: cloud
      gather_facts: false
@@ -133,7 +141,9 @@ Variable values associated directly with a host or group, including variables de
 Using ``-e`` extra variables at the command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To override all other settings in all other categories, you can use extra variables: ``--extra-vars`` or ``-e`` at the command line. Values passed with ``-e`` are variables, not command-line options, and they will override configuration settings, command-line options, and playbook keywords as well as variables set elsewhere. For example, this task will connect as ``brian`` not as ``carol``::
+To override all other settings in all other categories, you can use extra variables: ``--extra-vars`` or ``-e`` at the command line. Values passed with ``-e`` are variables, not command-line options, and they will override configuration settings, command-line options, and playbook keywords as well as variables set elsewhere. For example, this task will connect as ``brian`` not as ``carol``:
+
+.. code:: text
 
    ansible -u carol -e 'ansible_user=brian' -a whoami all
 
