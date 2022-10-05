@@ -87,7 +87,9 @@ From the log notice:
    If the log reports the port as ``None`` this means that the default port is being used.
    A future Ansible release will improve this message so that the port is always logged.
 
-Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
+Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries:
+
+.. code:: shell
 
   grep "p=28990" $ANSIBLE_LOG_PATH
 
@@ -164,7 +166,9 @@ For Ansible this can be done by ensuring you are only running against one remote
 * Using ``ansible-playbook --limit switch1.example.net...``
 * Using an ad hoc ``ansible`` command
 
-`ad hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::
+`ad hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device:
+
+.. code-block:: text
 
   ansible -m arista.eos.eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=ansible.netcommon.network_cli' -u admin -k
 
