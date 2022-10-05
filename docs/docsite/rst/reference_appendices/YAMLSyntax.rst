@@ -41,6 +41,7 @@ All members of a list are lines beginning at the same indentation level starting
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space):
 
 .. code:: yaml
+
     # An employee record
     martin:
       name: Martin D'vloper
@@ -50,6 +51,7 @@ A dictionary is represented in a simple ``key: value`` form (the colon must be f
 More complicated data structures are possible, such as lists of dictionaries, dictionaries whose values are lists or a mix of both:
 
 .. code:: yaml
+
     # Employee records
     - martin:
         name: Martin D'vloper
@@ -69,6 +71,7 @@ More complicated data structures are possible, such as lists of dictionaries, di
 Dictionaries and lists can also be represented in an abbreviated form if you really want to:
 
 .. code:: yaml
+
     ---
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
     fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
@@ -161,7 +164,7 @@ A space followed by the pound sign ``" #"`` starts a comment.
 
 Because of this, the following is going to result in a YAML syntax error:
 
-.. code:: yaml:
+.. code:: text:
 
     foo: somebody said I should put a colon here: so I did
 
