@@ -39,14 +39,18 @@ You can use lookup plugins anywhere you can use templating in Ansible: in a play
   vars:
     file_contents: "{{ lookup('file', 'path/to/file.txt') }}"
 
-Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, lookups are expected to output lists; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
+Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, lookups are expected to output lists; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup:
+
+.. code-block:: YAML+Jinja
 
   tasks:
     - name: count to 3
       debug: msg={{ item }}
       with_items: [1, 2, 3]
 
-You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <playbooks_tests>` and even each other to do some complex data generation and manipulation. For example::
+You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <playbooks_tests>` and even each other to do some complex data generation and manipulation. For example:
+
+.. code-block:: YAML+Jinja
 
   tasks:
     - name: valid but useless and over complicated chained lookups and filters
@@ -60,7 +64,9 @@ You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <pl
 
 You can control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail if the lookup returns an error. For example:
 
-To ignore lookup errors::
+To ignore lookup errors:
+
+.. code-block:: YAML+Jinja
 
     - name: if this file does not exist, I do not care .. file plugin itself warns anyway ...
       debug: msg="{{ lookup('file', '/nosuchfile', errors='ignore') }}"
@@ -74,7 +80,9 @@ To ignore lookup errors::
     }
 
 
-To get a warning instead of a failure::
+To get a warning instead of a failure:
+
+.. code-block:: YAML+Jinja
 
     - name: if this file does not exist, let me know, but continue
       debug: msg="{{ lookup('file', '/nosuchfile', errors='warn') }}"
@@ -90,7 +98,9 @@ To get a warning instead of a failure::
     }
 
 
-To get a fatal error (the default)::
+To get a fatal error (the default):
+
+.. code-block:: YAML+Jinja
 
     - name: if this file does not exist, FAIL (this is the default)
       debug: msg="{{ lookup('file', '/nosuchfile', errors='strict') }}"
