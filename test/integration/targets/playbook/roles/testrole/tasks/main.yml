@@ -1,0 +1,6 @@
+- name: whoami
+  command: whoami
+  register: whoami
+- name: verify
+  assert:
+    that: whoami.stdout == "root"

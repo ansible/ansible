@@ -1,0 +1,31 @@
+- name: top play
+  hosts: localhost
+  become: true
+  gather_facts: no
+  pre_tasks:
+
+    - name: guess who
+      command: whoami
+      register: whoami
+
+    - name: iknowwho
+      assert:
+        that: whoami.stdout == "root"
+
+    - name: pre include
+      include_role: name=testrole
+
+    - name: pre import
+      import_role: name=testrole
+
+  roles:
+    - testrole
+
+  tasks:
+
+    - name: tasks import
+      import_role: name=testrole
+
+    - name: tasks include
+      include_role: name=testrole
+

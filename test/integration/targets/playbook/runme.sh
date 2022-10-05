@@ -90,3 +90,6 @@ ansible-playbook -i ../../inventory vars_files_null.yml -v "$@"
 
 # test vars_files: filename.yml
 ansible-playbook -i ../../inventory vars_files_string.yml -v "$@"
+
+# test keyword inheritance in roles
+ansible-playbook keyword_inheritance.yml -v "$@"
