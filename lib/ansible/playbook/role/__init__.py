@@ -578,6 +578,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''
         from ansible.playbook.block import Block
         from ansible.playbook.task import Task
+        from ansible.playbook.base import get_unique_id
 
         block_list = []
 
@@ -595,6 +596,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             new_task_block = task_block.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
+            new_task_block._uuid = get_unique_id()
             block_list.append(new_task_block)
 
         eor_block = Block(play=play)
