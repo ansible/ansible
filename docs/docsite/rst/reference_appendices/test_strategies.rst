@@ -47,9 +47,7 @@ existing system, using the ``--check`` flag to the `ansible` command will report
 bring the system into a desired state.
 
 This can let you know up front if there is any need to deploy onto the given system.  Ordinarily, scripts and commands don't run in check mode, so if you
-want certain steps to execute in normal mode even when the ``--check`` flag is used, such as calls to the script module, disable check mode for those tasks:
-
-.. code:: yaml
+want certain steps to execute in normal mode even when the ``--check`` flag is used, such as calls to the script module, disable check mode for those tasks::
 
 
    roles:
@@ -62,9 +60,7 @@ want certain steps to execute in normal mode even when the ``--check`` flag is u
 Modules That Are Useful for Testing
 ```````````````````````````````````
 
-Certain playbook modules are particularly good for testing.  Below is an example that ensures a port is open:
-
-.. code:: yaml
+Certain playbook modules are particularly good for testing.  Below is an example that ensures a port is open::
 
    tasks:
 
@@ -73,9 +69,7 @@ Certain playbook modules are particularly good for testing.  Below is an example
          port: 22
        delegate_to: localhost
       
-Here's an example of using the URI module to make sure a web service returns:
-
-.. code:: yaml
+Here's an example of using the URI module to make sure a web service returns::
 
    tasks:
 
@@ -86,9 +80,7 @@ Here's an example of using the URI module to make sure a web service returns:
          msg: 'service is not happy'
        when: "'AWESOME' not in webpage.content"
 
-It's easy to push an arbitrary script (in any language) on a remote host and the script will automatically fail if it has a non-zero return code:
-
-.. code:: yaml
+It's easy to push an arbitrary script (in any language) on a remote host and the script will automatically fail if it has a non-zero return code::
 
    tasks:
 
@@ -97,9 +89,7 @@ It's easy to push an arbitrary script (in any language) on a remote host and the
 
 If using roles (you should be, roles are great!), scripts pushed by the script module can live in the 'files/' directory of a role.
 
-And the assert module makes it very easy to validate various kinds of truth:
-
-.. code:: yaml
+And the assert module makes it very easy to validate various kinds of truth::
 
    tasks:
 
@@ -111,9 +101,7 @@ And the assert module makes it very easy to validate various kinds of truth:
             - "'not ready' not in cmd_result.stderr"
             - "'gizmo enabled' in cmd_result.stdout"
 
-Should you feel the need to test for the existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice:
-
-.. code:: yaml
+Should you feel the need to test for the existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice::
 
    tasks:
 
@@ -140,9 +128,7 @@ If writing some degree of basic validation of your application into your playboo
 As such, deploying into a local development VM and a staging environment will both validate that things are according to plan
 ahead of your production deploy.
 
-Your workflow may be something like this:
-
-.. code:: text
+Your workflow may be something like this::
 
     - Use the same playbook all the time with embedded tests in development
     - Use the playbook to deploy to a staging environment (with the same playbooks) that simulates production
@@ -161,9 +147,7 @@ Integrating Testing With Rolling Updates
 If you have read into :ref:`playbooks_delegation` it may quickly become apparent that the rolling update pattern can be extended, and you
 can use the success or failure of the playbook run to decide whether to add a machine into a load balancer or not. 
 
-This is the great culmination of embedded tests:
-
-.. code:: yaml
+This is the great culmination of embedded tests::
 
     ---
 
@@ -198,9 +182,7 @@ the machine will not go back into the pool.
 Read the delegation chapter about "max_fail_percentage" and you can also control how many failing tests will stop a rolling update
 from proceeding.
 
-This above approach can also be modified to run a step from a testing machine remotely against a machine:
-
-.. code:: yaml
+This above approach can also be modified to run a step from a testing machine remotely against a machine::
 
     ---
 
@@ -239,9 +221,7 @@ Achieving Continuous Deployment
 
 If desired, the above techniques may be extended to enable continuous deployment practices.
 
-The workflow may look like this:
-
-.. code:: text
+The workflow may look like this::
 
     - Write and use automation to deploy local development VMs
     - Have a CI system like Jenkins deploy to a staging environment on every code change

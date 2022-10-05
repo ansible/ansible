@@ -518,9 +518,7 @@ How do I access shell environment variables?
 
 
 **On controller machine :** Access existing variables from controller use the ``env`` lookup plugin.
-For example, to access the value of the HOME environment variable on the management machine:
-
-.. code:: yaml
+For example, to access the value of the HOME environment variable on the management machine::
 
    ---
    # ...
@@ -665,9 +663,7 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :ref:`playbooks_vault`.
 
-If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful:
-
-.. code:: yaml
+If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
       shell: /usr/bin/do_something --value={{ secret_value }}
@@ -675,9 +671,7 @@ If you have a task that you don't want to show the results or command given to i
 
 This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
 
-The ``no_log`` attribute can also apply to an entire play:
-
-.. code:: yaml
+The ``no_log`` attribute can also apply to an entire play::
 
     - hosts: all
       no_log: True
@@ -730,9 +724,7 @@ How do I get the original ansible_host when I delegate a task?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
-but you can still access the original through ``hostvars``:
-
-.. code:: yaml
+but you can still access the original through ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
@@ -745,9 +737,7 @@ How do I fix 'protocol error: filename does not match request' when fetching a f
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Since release ``7.9p1`` of OpenSSH there is a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_
-in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism:
-
-.. code:: shell
+in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
 
     failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
 
