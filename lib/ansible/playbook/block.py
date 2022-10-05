@@ -298,8 +298,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
-        extend = self.fattributes.get(attr).extend
-        prepend = self.fattributes.get(attr).prepend
+        fattr = self.fattributes[attr]
+
+        extend = getattr(fattr, 'extend', False)
+        prepend = getattr(fattr, 'prepend', False)
 
         try:
             # omit self, and only get parent values
