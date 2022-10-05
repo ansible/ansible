@@ -655,28 +655,20 @@ class FieldAttributeBase(metaclass=BaseMeta):
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
+                    done = False
                     if attribute.inherit:
-                        # force process parent by recreating
-                        _x = FieldAttribute(isa=attribute.isa,
-                                            default=attribute.default,
-                                            inherit=attribute.inherit,
-                                            private=attribute.private,
-                                            required=attribute.required,
-                                            listof=attribute.listof,
-                                            priority=attribute.priority,
-                                            class_type=attribute.class_type,
-                                            always_post_validate=attribute.always_post_validate,
-                                            alias=attribute.alias,
-                                            extend=attribute.extend,
-                                            prepend=attribute.prepend,
-                                            static=attribute.static,
-                                            )
-                        setattr(self, name, _x.value)
-                    else:
+                        parent = getattr(obj, '_parent', getattr(obj, '_role', getattr(obj, '_play', None)))
+                        if parent is not None:
+                            value = getattr(parent, name, None)
+                            if value is not None:
+                                setattr(self, name, value)
+                                done = True
+                    if not done:
                         if callable(attribute.default):
                             setattr(self, name, attribute.default())
                         else:
                             setattr(self, name, attribute.default)
+
                     continue
 
                 # and make sure the attribute is of the type it should be
