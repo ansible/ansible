@@ -165,8 +165,6 @@ def detect_host_systemd_cgroup_v1(args: EnvironmentConfig) -> SystemdControlGrou
 
     detect_host_systemd_cgroup_v1.cgroup_v1 = cgroup_v1  # type: ignore[attr-defined]
 
-    display.info(f'Container host systemd cgroup v1: {cgroup_v1.value}', verbosity=1)
-
     return cgroup_v1
 
 
