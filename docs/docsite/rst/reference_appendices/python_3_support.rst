@@ -21,7 +21,7 @@ version of pip.  This will make the default :command:`/usr/bin/ansible` run with
       python version = 3.6.2 (default, Sep 22 2017, 08:28:09) [GCC 7.2.1 20170915 (Red Hat 7.2.1-2)]
 
 If you are running Ansible :ref:`from_source` and want to use Python 3 with your source checkout, run your
-command via ``python3``.  For example:
+command through ``python3``.  For example:
 
 .. code-block:: shell
 
@@ -32,7 +32,7 @@ command via ``python3``.  For example:
 .. note:: Individual Linux distribution packages may be packaged for Python2 or Python3.  When running from
     distro packages you'll only be able to use Ansible with the Python version for which it was
     installed.  Sometimes distros will provide a means of installing for several Python versions
-    (via a separate package or via some commands that are run after install).  You'll need to check
+    (through a separate package or through some commands that are run after install).  You'll need to check
     with your distro to see if that applies in your case.
 
 

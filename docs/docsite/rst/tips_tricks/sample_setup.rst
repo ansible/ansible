@@ -188,10 +188,10 @@ Ansible loads any file called ``main.yml`` in a role sub-directory. This sample 
       tags: ntp
 
     - name: be sure ntpd is running and enabled
-      service:
+      ansible.builtin.service:
         name: ntpd
         state: started
-        enabled: yes
+        enabled: true
       tags: ntp
 
 Here is an example handlers file. Handlers are only triggered when certain tasks report changes. Handlers run at the end of each play:
@@ -201,7 +201,7 @@ Here is an example handlers file. Handlers are only triggered when certain tasks
     ---
     # file: roles/common/handlers/main.yml
     - name: restart ntpd
-      service:
+      ansible.builtin.service:
         name: ntpd
         state: restarted
 
