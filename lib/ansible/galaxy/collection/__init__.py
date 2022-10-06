@@ -1381,8 +1381,8 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
             base_directories.append(src_file)
             os.mkdir(dest_file, mode)
         else:
-            if os.path.isfile(src_file) and os.path.islink(src_path):
-                b_link_target = os.path.realpath(src_path)
+            if os.path.isfile(src_file) and os.path.islink(src_file):
+                b_link_target = os.path.realpath(src_file)
                 if not _is_child_path(b_link_target, b_collection_path):
                     continue
 

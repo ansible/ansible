@@ -780,17 +780,34 @@
     - name: create symlink_dirs collection
       command: ansible-galaxy collection init symlink_dirs.symlink_dirs --init-path "{{ galaxy_dir }}/scratch"
 
+    - name: create directory and file outside the collection to test excluding those symlinks
+      file:
+        path: "{{ item.path }}"
+        state: "{{ item.state }}"
+      loop:
+        - path: "{{ galaxy_dir }}/scratch/external_folder"
+          state: directory
+        - path: "{{ galaxy_dir }}/scratch/external_file"
+          state: touch
+
     - name: create directory in collection
       file:
         path: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderA"
         state: directory
 
-    - name: create symlink to folderA
+    - name: create symlinks
       file:
-        dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderB"
-        src: ./folderA
+        dest: "{{ item.dest }}"
+        src: "{{ item.src }}"
         state: link
         force: yes
+      loop:
+        - dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderB"
+          src: ./folderA
+        - dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderC"
+          src: "{{ galaxy_dir }}/scratch/external_folder"
+        - dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/fileA"
+          src: "{{ galaxy_dir }}/scratch/external_file"
 
     - name: install symlink_dirs collection from source
       command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/
@@ -807,6 +824,8 @@
       loop:
       - folderA
       - folderB
+      - folderC
+      - fileA
 
     - name: assert install collection with symlink_dirs - {{ test_id }}
       assert:
@@ -815,6 +834,8 @@
         - install_symlink_dirs_actual.results[0].stat.isdir
         - install_symlink_dirs_actual.results[1].stat.islnk
         - install_symlink_dirs_actual.results[1].stat.lnk_target == './folderA'
+        - install_symlink_dirs_actual.results[2].stat.exists == false
+        - install_symlink_dirs_actual.results[3].stat.exists == false
   always:
     - name: clean up symlink_dirs collection directory
       file:
