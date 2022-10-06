@@ -28,7 +28,7 @@ Modules and plugins: what is the difference?
 ============================================
 If you are looking to add functionality to Ansible, you might wonder whether you need a module or a plugin. Here is a quick overview to help you understand what you need:
 
-* :ref:`Plugins <working_with_plugins>` extend Ansible's core functionality, most plugin types execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more.
+* :ref:`Plugins <working_with_plugins>` extend Ansible's core functionality. Most plugin types execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible: transforming data, logging output, connecting to inventory, and more.
 * Modules are a type of plugin, the major difference is that they are meant for executions on the 'target' (usually that means on a remote system), they work as standalone scripts that Ansible executes in their own process outside of the controller. Modules interface with Ansible mosttly via JSON, accepting arguments and returning information by printing a JSON string to stdout before exiting. Unlike the other plugins (which must be written in Python) modules can be written in any language, though the Ansible projects only ships those written in Python or Powershell.
 
 .. _use_collections:
