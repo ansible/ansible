@@ -14,7 +14,7 @@ Most plugins in Ansible contain the documentation in the same file as the code, 
   * when multiple plugins are defined in the same file (like tests and filters).
   * when the plugins are written in a language other than Python (modules). Until now we required an adjacent ``.py`` file to contain the documentation
 
-Since ansible-core 2.14 we have added the ability to have adjacent YAML files to contain the documenbtation.
+Since ansible-core 2.14 we have added the ability to have adjacent YAML files to contain the documentation.
 The format of these files is almost identical to the documentation in existing Python files, the major difference, it is pure YAML.
 
 
