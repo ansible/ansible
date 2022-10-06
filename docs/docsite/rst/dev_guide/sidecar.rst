@@ -9,7 +9,7 @@ Alternate YAML documentation files
 
 For reasons
 -----------
-Most plugins in Ansible contain the documentation in the same file as the code, this is very convinient for many reasons but does not work well for all cases:
+Most plugins in Ansible contain the documentation in the same file as the code, this is very convenient for many reasons but does not work well for all cases:
 
   * when multiple plugins are defined in the same file (like tests and filters).
   * when the plugins are written in a language other than Python (modules). Until now we required an adjacent ``.py`` file to contain the documentation
