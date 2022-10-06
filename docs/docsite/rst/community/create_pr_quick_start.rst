@@ -155,6 +155,8 @@ See :ref:`module_contribution` for some general guidelines about Ansible module 
 Test your changes
 =================
 
+	If using the ``docker`` CLI program, the host must be configured to use cgroupsv1 (this is not required for ``podman``). This can be done by adding ``systemd.unified_cgroup_hierarchy=0`` to the kernel boot arguments (requires bootloader config update and reboot).
+
 1. Install ``flake8`` (``pip install flake8``, or install the corresponding package on your operating system).
 
 1. Run ``flake8`` against a changed file:
