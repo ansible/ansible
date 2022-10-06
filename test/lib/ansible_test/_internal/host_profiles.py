@@ -497,7 +497,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         else:
             cmd = None
 
-            if require_docker().command == 'docker' or self.config.cgroup == 'v1':
+            if require_docker().command == 'docker':
                 options.extend(('--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro'))
 
         container = run_support_container(
