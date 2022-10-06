@@ -35,7 +35,7 @@ from ansible.utils.path import unfrackpath
 display = Display()
 
 
-def yaml_dump(data, default_flow_style=True):
+def yaml_dump(data, default_flow_style=False):
     return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style="''")
 
 
