@@ -6,7 +6,7 @@
 Testing module documentation
 ****************************
 
-A quick test while developing is to use ``ansible-doc <module>`` to see if it renders, you might need to add ``-M` /path/to/module `` if the module is not somewhere Ansible expects to find it.
+A quick test while developing is to use ``ansible-doc <module>`` to see if it renders, you might need to add ``-M /path/to/module `` if the module is not somewhere Ansible expects to find it.
 
 Before you submit a module for inclusion in the main Ansible repo, you must test your module documentation for correct HTML rendering and to ensure that the argspec matches the documentation in your Python file. The community pages offer more information on :ref:`testing reStructuredText documentation <testing_documentation_locally>`.
 

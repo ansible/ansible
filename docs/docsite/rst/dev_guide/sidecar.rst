@@ -20,7 +20,7 @@ The format of these files is almost identical to the documentation in existing P
 
 The format
 -----------
-The short of it, in Python you had each section as a Python variable ``DOCUMENTATION = r""" ....`` while in YAML it is just a mapping key ``DOCUMENTATION: ``.
+The short of it, in Python you had each section as a Python variable ``DOCUMENTATION = r""" ... """`` while in YAML it is just a mapping key ``DOCUMENTATION: ...``.
 
 Longer example, this would be the documentation as embeded in the Python file:
 
