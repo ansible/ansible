@@ -589,8 +589,8 @@ ansible-vault encrypt salted_test3 --vault-password-file example1_password "$@"
 
 # should be the same
 diff salted_test1 salted_test2 2>&1 | tee diff_12.txt
-[ $(stat -c '%b' diff_12.txt) -eq 0 ]
+[ "$(stat -c '%b' diff_12.txt)" -eq "0" ]
 
 # shoudl be diff
 diff salted_test1 salted_test3 2>&1 |tee diff_13.txt
-[ $(stat -c '%b' diff_13.txt) -ne 0 ]
+[ "$(stat -c '%b' diff_13.txt)" -ne "0" ]
