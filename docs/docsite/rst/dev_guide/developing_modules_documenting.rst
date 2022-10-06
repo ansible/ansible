@@ -21,12 +21,20 @@ Every Ansible module written in Python must begin with seven standard sections i
 
   Some older Ansible modules have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``DOCUMENTATION`` fields in the wrong order. These are legacy files that need updating - do not copy them into new modules. Over time we are updating and correcting older modules. Please follow the guidelines on this page!
 
+.. note:: For non Python modules you still create a ``.py`` file for documentation purposes, but starting at ansible-core 2.14 you can opt to create a ``.yml`` file instead that has the same structure of data but in pure YAML.
+          With YAML files, the examples below are easy to use by removing Python quoting and substituting ``=`` for ``:``, for example ``DOCUMENTATION = r'''` ` to ``DOCUMENTATION: `` and removing closign quotes.
+
+
 .. _shebang:
 
 Python shebang & UTF-8 coding
 ===============================
 
 Begin your Ansible module with ``#!/usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work. Follow the shebang immediately with ``# -*- coding: utf-8 -*-`` to clarify that the file is UTF-8 encoded.
+
+.. note:: Using ``#!/usr/bin/env``, makes ``env`` the interpreter and bypasses ``ansilbe_<interpreter>_interpreter`` logic.
+.. note:: If you develop the module using a different scripting language, adjust the interpreter accordingly (``#!/usr/bin/<interpreter>``) so ``ansible_<interpreter>_interpreter`` can work for that specific language.
+.. note:: Binary modules do not require a shebang nor an interpreter.
 
 .. _copyright:
 
@@ -48,7 +56,7 @@ Additions to the module (for instance, rewrites) are not permitted to add additi
 .. code-block:: python
 
     # Copyright: Contributors to the Ansible project
-    
+
 Any legal review will include the source control history, so an exhaustive copyright header is not necessary.
 Please do not include a copyright year. If the existing copyright statement includes a year, do not edit the existing copyright year. Any existing copyright header should not be modified without permission from the copyright author.
 
@@ -81,6 +89,7 @@ Each documentation field is described below. Before committing your module docum
 
 * As long as your module file is :ref:`available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation at the command line. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command.
 * You should also :ref:`test the HTML output <testing_module_documentation>` of your module documentation.
+
 
 Documentation fields
 --------------------
