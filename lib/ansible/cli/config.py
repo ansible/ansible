@@ -35,8 +35,8 @@ from ansible.utils.path import unfrackpath
 display = Display()
 
 
-def yaml_dump(data, default_flow_style=True):
-    return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style="''")
+def yaml_dump(data, default_flow_style=False, default_style=None):
+    return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style=default_style)
 
 
 def get_constants():
@@ -305,7 +305,7 @@ class ConfigCLI(CLI):
                 elif subkey == 'vars':
                     if entry.startswith('_ansible_'):
                         continue
-                    data.append(prefix + '%s: %s' % (entry, to_text(yaml_dump(default), errors='surrogate_or_strict')))
+                    data.append(prefix + '%s: %s' % (entry, to_text(yaml_dump(default, default_flow_style=True, default_style="''"), errors='surrogate_or_strict')))
                 data.append('')
 
         return data
