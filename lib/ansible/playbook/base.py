@@ -657,7 +657,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
                 if omit_value is not None and value == omit_value:
                     done = False
                     if attribute.inherit:
-                        parent = getattr(obj, '_parent', getattr(obj, '_role', getattr(obj, '_play', None)))
+                        parent = getattr(self, '_parent', getattr(self, '_role', getattr(self, '_play', None)))
                         if parent is not None:
                             value = getattr(parent, name, None)
                             if value is not None:
