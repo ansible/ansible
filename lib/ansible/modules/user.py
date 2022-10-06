@@ -86,10 +86,10 @@ options:
         version_added: "2.0"
     password:
         description:
-            - Optionally set the user's password to this crypted value.
+            - Optionally set the user's password to this encrypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
-            - To create a an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
-            - To create a an account with a locked/disabled password on OpenBSD, set this to C('*************').
+            - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
+            - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
