@@ -118,7 +118,7 @@ class StrategyModule(StrategyBase):
         # once hosts synchronize on 'flush_handlers' lockstep enters
         # '_in_handlers' phase where handlers are run instead of tasks
         # until at least one host is in IteratingStates.HANDLERS
-        if (not self._in_handlers and cur_task.action == 'meta' and
+        if (not self._in_handlers and cur_task.action in C._ACTION_META and
                 cur_task.args.get('_raw_params') == 'flush_handlers'):
             self._in_handlers = True
 
