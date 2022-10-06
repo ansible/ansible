@@ -211,7 +211,7 @@ class FieldAttributeBase:
                     method(attribute, name, getattr(self, name))
                 else:
                     # and make sure the attribute is of the type it should be
-                    value = getattr(self, name)
+                    value = getattr(self, f'_{name}', Sentinel)
                     if value is not None:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(

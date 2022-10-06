@@ -1,0 +1,3 @@
+bugfixes:
+- keyword inheritance - Ensure that we do not squash keywords in validate
+  (https://github.com/ansible/ansible/issues/79021)

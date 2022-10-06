@@ -1,0 +1,3 @@
+- command: whoami
+  register: result
+  failed_when: result.stdout_lines|first != 'ansibletest0'

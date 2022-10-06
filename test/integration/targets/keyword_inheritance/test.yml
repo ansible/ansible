@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: false
+  become_user: ansibletest0
+  become: yes
+  roles:
+    - role: setup_test_user
+      become_user: root
+    - role: whoami
