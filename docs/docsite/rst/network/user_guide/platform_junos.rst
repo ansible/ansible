@@ -27,7 +27,7 @@ Connections available
 
                           accepts ``-u myuser -k`` if using password  accepts ``-u myuser -k`` if using password
 
-    Indirect Access       via a bastion (jump host)                   via a bastion (jump host)
+    Indirect Access       by a bastion (jump host)                    by a bastion (jump host)
 
     Connection Settings   ``ansible_connection:                       ``ansible_connection:
                           ``ansible.netcommon.network_cli``           ``ansible.netcommon.netconf``
@@ -62,7 +62,7 @@ Example CLI inventory ``[junos:vars]``
 
 - If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
-- If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
+- If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords through environment variables.
 
 Example CLI task
 ----------------
@@ -86,7 +86,7 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Junos OS device(s)
 
-To enable NETCONF on a new switch via Ansible, use the ``junipernetworks.junos.junos_netconf`` module through the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
+To enable NETCONF on a new switch through Ansible, use the ``junipernetworks.junos.junos_netconf`` module through the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
