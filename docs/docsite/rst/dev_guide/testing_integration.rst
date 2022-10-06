@@ -122,7 +122,7 @@ and enable PowerShell Remoting to continue.
 Running these tests may result in changes to your Windows host, so don't run
 them against a production/critical Windows environment.
 
-Enable PowerShell Remoting (run on the Windows host via Remote Desktop):
+Enable PowerShell Remoting (run on the Windows host by a Remote Desktop):
 
 .. code-block:: shell-session
 

@@ -328,7 +328,7 @@ importing a module. This lets Ansible run both the wrapper script and the module
           Python module into the Python interpreter on the remote node. Python
           understands scripts on stdin but does not understand zip files.
 
-    * Prior to Ansible 2.7, the module was executed via a second Python interpreter instead of being
+    * Prior to Ansible 2.7, the module was executed by a second Python interpreter instead of being
       executed inside of the same process. This change was made once Python-2.4 support was dropped
       to speed up module execution.
 
@@ -513,14 +513,14 @@ Ansible can transfer a module to a remote machine in one of two ways:
 Pipelining only works with modules written in Python at this time because
 Ansible only knows that Python supports this mode of operation. Supporting
 pipelining means that whatever format the module payload takes before being
-sent over the wire must be executable by Python via stdin.
+sent over the wire must be executable by Python through stdin.
 
 .. _flow_args_over_stdin:
 
 Why pass args over stdin?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Passing arguments via stdin was chosen for the following reasons:
+Passing arguments through stdin was chosen for the following reasons:
 
 * When combined with :ref:`ANSIBLE_PIPELINING`, this keeps the module's arguments from
   temporarily being saved onto disk on the remote machine. This makes it
@@ -818,7 +818,7 @@ The following are optional arguments for ``AnsibleModule()``:
 
   In this example, if the user specifies ``state=present``, at least one of the options ``path`` and ``content`` must be supplied (or both). To make sure that precisely one can be specified, combine ``required_if`` with ``mutually_exclusive``.
 
-  On the other hand, if ``force`` (a boolean parameter) is set to ``true``, ``yes`` etc., both ``force_reason`` and ``force_code`` must be specified.
+  On the other hand, if ``force`` (a boolean parameter) is set to ``true``, ``yes`` and so on, both ``force_reason`` and ``force_code`` must be specified.
 
 :required_by:
 
