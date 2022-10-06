@@ -187,7 +187,7 @@ For example:
     SourceCredential_username: AdminUser
     SourceCredential_password: PasswordForAdminUser
 
-.. Note:: On versions of Ansible older than 2.8, you should set ``no_log: yes``
+.. Note:: On versions of Ansible older than 2.8, you should set ``no_log: true``
     on the task definition in Ansible to ensure any credentials used are not
     stored in any log file or console output.
 
@@ -205,10 +205,10 @@ For example, to define a ``[CimInstance]`` value in Ansible:
 
     # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
     AuthenticationInfo:
-      Anonymous: no
-      Basic: yes
-      Digest: no
-      Windows: yes
+      Anonymous: false
+      Basic: true
+      Digest: false
+      Windows: true
 
 In the above example, the CIM instance is a representation of the class
 `MSFT_xWebAuthenticationInformation <https://github.com/dsccommunity/xWebAdministration/blob/master/source/DSCResources/MSFT_xWebSite/MSFT_xWebSite.schema.mof>`_.
@@ -317,7 +317,7 @@ to access the ``HKEY_CURRENT_USER`` hive of the Ansible user:
         ValueData: TestData
         PsDscRunAsCredential_username: '{{ ansible_user }}'
         PsDscRunAsCredential_password: '{{ ansible_password }}'
-      no_log: yes
+      no_log: true
 
 Custom DSC Resources
 ````````````````````
@@ -435,7 +435,7 @@ Interact with Azure
         ServiceName: ServiceName
         StorageAccountName: StorageAccountName
         InstanceSize: Medium
-        Windows: yes
+        Windows: true
         Ensure: Present
         Credential_username: '{{ ansible_user }}'
         Credential_password: '{{ ansible_password }}'
@@ -489,10 +489,10 @@ Setup IIS Website
           Port: 8080
           IPAddress: '*'
         AuthenticationInfo:
-          Anonymous: no
-          Basic: yes
-          Digest: no
-          Windows: yes
+          Anonymous: false
+          Basic: true
+          Digest: false
+          Windows: true
 
 .. seealso::
 
