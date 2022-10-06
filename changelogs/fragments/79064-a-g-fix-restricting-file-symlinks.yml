@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection install - exclude symlinks to files outside of the collection when installing a directory/git repository.
