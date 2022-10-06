@@ -771,6 +771,48 @@
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
+# Test installing a collection from source excludes symlinks to external files
+- name: test excluding symlinks to external files
+  vars:
+    ns: external_symlink
+    col: symlink
+  block:
+    - name: create symlink_dirs collection
+      command: "ansible-galaxy collection init {{ ns }}.{{ col }} --init-path {{ galaxy_dir }}/scratch"
+
+    - name: create directory and file outside the collection to test excluding those symlinks
+      file:
+        path: "{{ galaxy_dir }}/scratch/external_file"
+        state: touch
+
+    - name: create symlink
+      file:
+        dest: "{{ galaxy_dir }}/scratch/{{ ns }}/{{ col }}/fileA"
+        src: "{{ galaxy_dir }}/scratch/external_file"
+        state: link
+        force: yes
+
+    - name: install symlink_dirs collection from source
+      command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/{{ ns }}/
+      environment:
+        ANSIBLE_COLLECTIONS_PATHS: "{{ galaxy_dir }}/ansible_collections"
+      register: install_symlink_dirs
+
+    - name: get result of installed collection - {{ test_id }}
+      stat:
+        path: "{{ galaxy_dir }}/ansible_collections/{{ ns }}/{{ col }}/fileA"
+      register: install_symlink_dirs_actual
+
+    - name: verify symlink outside of the collection was not included - {{ test_id }}
+      assert:
+        that:
+        - '"Installing ''{{ ns }}.{{ col }}:1.0.0'' to" in install_symlink_dirs.stdout'
+        - install_symlink_dirs_actual.stat.exists == false
+  always:
+    - name: clean up symlink_dirs collection directory
+      file:
+        path: "{{ galaxy_dir }}/scratch/{{ ns }}"
+        state: absent
 
 # Testing an install from source to check that symlinks to directories
 # are preserved (see issue https://github.com/ansible/ansible/issues/78442)
@@ -780,34 +822,17 @@
     - name: create symlink_dirs collection
       command: ansible-galaxy collection init symlink_dirs.symlink_dirs --init-path "{{ galaxy_dir }}/scratch"
 
-    - name: create directory and file outside the collection to test excluding those symlinks
-      file:
-        path: "{{ item.path }}"
-        state: "{{ item.state }}"
-      loop:
-        - path: "{{ galaxy_dir }}/scratch/external_folder"
-          state: directory
-        - path: "{{ galaxy_dir }}/scratch/external_file"
-          state: touch
-
     - name: create directory in collection
       file:
         path: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderA"
         state: directory
 
-    - name: create symlinks
+    - name: create symlink to folderA
       file:
-        dest: "{{ item.dest }}"
-        src: "{{ item.src }}"
+        dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderB"
+        src: ./folderA
         state: link
         force: yes
-      loop:
-        - dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderB"
-          src: ./folderA
-        - dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderC"
-          src: "{{ galaxy_dir }}/scratch/external_folder"
-        - dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/fileA"
-          src: "{{ galaxy_dir }}/scratch/external_file"
 
     - name: install symlink_dirs collection from source
       command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/
@@ -824,8 +849,6 @@
       loop:
       - folderA
       - folderB
-      - folderC
-      - fileA
 
     - name: assert install collection with symlink_dirs - {{ test_id }}
       assert:
@@ -834,8 +857,6 @@
         - install_symlink_dirs_actual.results[0].stat.isdir
         - install_symlink_dirs_actual.results[1].stat.islnk
         - install_symlink_dirs_actual.results[1].stat.lnk_target == './folderA'
-        - install_symlink_dirs_actual.results[2].stat.exists == false
-        - install_symlink_dirs_actual.results[3].stat.exists == false
   always:
     - name: clean up symlink_dirs collection directory
       file:
