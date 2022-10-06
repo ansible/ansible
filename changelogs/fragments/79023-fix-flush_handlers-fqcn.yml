@@ -1,0 +1,2 @@
+bugfixes:
+  - "handlers - fix an issue where the ``flush_handlers`` meta task could not be used with FQCN: ``ansible.builtin.meta`` (https://github.com/ansible/ansible/issues/79023)"
