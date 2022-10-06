@@ -463,8 +463,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
         fattr = self.fattributes[attr]
 
-        extend = getattr(fattr, 'extend', False)
-        prepend = getattr(fattr, 'prepend', False)
+        extend = fattr.extend
+        prepend = fattr.prepend
 
         try:
             # omit self, and only get parent values
