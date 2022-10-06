@@ -1372,17 +1372,24 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         src_file = os.path.join(b_collection_path, to_bytes(file_info['name'], errors='surrogate_or_strict'))
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
-        existing_is_exec = os.stat(src_file).st_mode & stat.S_IXUSR
+        existing_is_exec = os.stat(src_file, follow_symlinks=False).st_mode & stat.S_IXUSR
         mode = 0o0755 if existing_is_exec else 0o0644
 
-        if os.path.isdir(src_file):
+        # ensure symlinks to dirs are not translated to empty dirs
+        if os.path.isdir(src_file) and not os.path.islink(src_file):
             mode = 0o0755
             base_directories.append(src_file)
             os.mkdir(dest_file, mode)
         else:
-            shutil.copyfile(src_file, dest_file)
+            # do not follow symlinks to ensure the original link is used
+            shutil.copyfile(src_file, dest_file, follow_symlinks=False)
 
-        os.chmod(dest_file, mode)
+        # avoid setting specific permission on symlinks since it does not
+        # support avoid following symlinks and will thrown an exception if the
+        # symlink target does not exist
+        if not os.path.islink(dest_file):
+            os.chmod(dest_file, mode)
+
     collection_output = to_text(b_collection_output)
     return collection_output
 
