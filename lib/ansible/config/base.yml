@@ -1150,7 +1150,7 @@ DEFAULT_VAULT_IDENTITY:
 VAULT_ENCRYPT_SALT:
   name: Vault salt to use for encryption
   default: ~
-  description: 'The salt to use for the vault encryption. If is not provided, random salt will be used.'
+  description: 'The salt to use for the vault encryption. If it is not provided, a random salt will be used.'
   env: [{name: ANSIBLE_VAULT_ENCRYPT_SALT}]
   ini:
   - {key: vault_encrypt_salt, section: defaults}
