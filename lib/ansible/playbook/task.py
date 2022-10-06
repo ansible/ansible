@@ -461,8 +461,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-        extend = self.fattributes.get(attr).extend
-        prepend = self.fattributes.get(attr).prepend
+        fattr = self.fattributes[attr]
+
+        extend = fattr.extend
+        prepend = fattr.prepend
 
         try:
             # omit self, and only get parent values
