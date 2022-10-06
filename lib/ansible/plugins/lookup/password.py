@@ -110,7 +110,7 @@ EXAMPLES = """
 
 - name: create random but idempotent password
   ansible.builtin.set_fact:
-    password: "{{ lookup('ansible.builtin.password', '/dev/null', seed=inventory_hostname) }}"
+    password: "{{ lookup('ansible.builtin.password', '/dev/null seed=' + inventory_hostname) }}"
 """
 
 RETURN = """
