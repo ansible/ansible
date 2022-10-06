@@ -1,0 +1,14 @@
+- hosts: A
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify: handler
+
+    - ansible.builtin.meta: flush_handlers
+
+    - debug:
+        msg: after flush
+  handlers:
+    - name: handler
+      debug:
+        msg: handler ran
