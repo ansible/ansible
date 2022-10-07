@@ -75,6 +75,7 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_python_3
    debugging
    developing_modules_documenting
+   sidecar
    developing_modules_general_windows
    developing_modules_general_aci
    platforms/aws_guidelines
