@@ -1,0 +1,4 @@
+bugfixes:
+  - copy remote_src=true - fix copying subdirs recursively when the dest exists and the src and dest have
+    multiple common subdirectories in a common directory (https://github.com/ansible/ansible/issues/74536).
+  - copy remote_src=true - fix reporting changed for copying empty directories.

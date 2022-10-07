@@ -420,6 +420,80 @@
        - "stat_results2.stat.mode == '0547'"
 
 #
+# test copying an empty dir to a dest dir with remote_src=True
+#
+
+- name: create empty test dir
+  file:
+    path: '{{ remote_dir }}/testcase_empty_dir'
+    state: directory
+
+- name: test copying an empty dir to a dir that does not exist (dest ends with slash)
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+
+- name: get stat of newly created dir
+  stat:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: stat_result
+
+- assert:
+    that:
+      - copy_result.changed
+      - stat_result.stat.exists
+      - stat_result.stat.isdir
+
+- name: test no change is made running the task twice
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+  failed_when: copy_result is changed
+
+- name: remove to test dest with no trailing slash
+  file:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest/'
+    state: absent
+
+- name: test copying an empty dir to a dir that does not exist (both src/dest have no trailing slash)
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: copy_result
+
+- name: get stat of newly created dir
+  stat:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: stat_result
+
+- assert:
+    that:
+      - copy_result.changed
+      - stat_result.stat.exists
+      - stat_result.stat.isdir
+
+- name: test no change is made running the task twice
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+  failed_when: copy_result is changed
+
+- name: clean up src and dest
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '{{ remote_dir }}/testcase_empty_dir'
+    - '{{ remote_dir }}/testcase_empty_dir_dest'
+
+#
 # test recursive copy local_follow=False, no trailing slash
 #
 
@@ -2284,3 +2358,81 @@
     that:
     - fail_copy_directory_with_enc_file is failed
     - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
+#
+# Test for issue 74536: recursively copy all nested directories with remote_src=yes and src='dir/' when dest exists
+#
+- vars:
+    src: '{{ remote_dir }}/testcase_74536'
+  block:
+    - name: create source dir with 3 nested subdirs
+      file:
+        path: '{{ src }}/a/b1/c1'
+        state: directory
+
+    - name: copy the source dir with a trailing slash
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+      failed_when: copy_result is not changed
+
+    - name: remove the source dir to recreate with different subdirs
+      file:
+        path: '{{ src }}'
+        state: absent
+
+    - name: recreate source dir
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - '{{ src }}/a/b1/c2'
+        - '{{ src }}/a/b2/c3'
+
+    - name: copy the source dir containing new subdirs into the existing dest dir
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+
+    - name: stat each directory that should exist
+      stat:
+        path: '{{ item }}'
+      register: stat_result
+      loop:
+        - '{{ src }}_dest'
+        - '{{ src }}_dest/a'
+        - '{{ src }}_dest/a/b1'
+        - '{{ src }}_dest/a/b2'
+        - '{{ src }}_dest/a/b1/c1'
+        - '{{ src }}_dest/a/b1/c2'
+        - '{{ src }}_dest/a/b2/c3'
+
+    - debug: msg="{{ stat_result }}"
+
+    - assert:
+        that:
+          - copy_result is changed
+          # all paths exist
+          - stat_result.results | map(attribute='stat') | map(attribute='exists') | unique == [true]
+          # all paths are dirs
+          - stat_result.results | map(attribute='stat') | map(attribute='isdir') | unique == [true]
+
+    - name: copy the src again to verify no changes will be made
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+      failed_when: copy_result is changed
+
+    - name: clean up src and dest
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ src }}'
+        - '{{ src }}_dest'
