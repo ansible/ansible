@@ -1196,13 +1196,20 @@ class VaultAES256:
         return to_bytes(hexlify(b_hmac), errors='surrogate_or_strict'), hexlify(b_ciphertext)
 
     @classmethod
+    def _get_salt(cls):
+        custom_salt = C.config.get_config_value('VAULT_ENCRYPT_SALT')
+        if not custom_salt:
+            custom_salt = os.urandom(32)
+        return to_bytes(custom_salt)
+
+    @classmethod
     def encrypt(cls, b_plaintext, secret, salt=None):
 
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
 
         if salt is None:
-            b_salt = os.urandom(32)
+            b_salt = cls._get_salt()
         elif not salt:
             raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:
