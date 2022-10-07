@@ -305,7 +305,7 @@ class ConfigCLI(CLI):
                 elif subkey == 'vars':
                     if entry.startswith('_ansible_'):
                         continue
-                    shorthand =  to_text(yaml_dump(default, default_flow_style=True, default_style="''"), errors='surrogate_or_strict')
+                    shorthand = to_text(yaml_dump(default, default_flow_style=True, default_style="''"), errors='surrogate_or_strict')
                     data.append(prefix + '%s: %s' % (entry, shorthand))
                 data.append('')
 
