@@ -127,6 +127,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
     """
 
     data = _init_doc_dict()
+
     try:
         with open(filename, 'rb') as b_module_data:
             M = ast.parse(b_module_data.read())
@@ -141,8 +142,8 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                         display.warning("Building documentation, failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
-                    if theid in DOCSTRING_TO_VAR:
-                        varkey = DOCSTRING_TO_VAR[theid]
+                    if theid in string_to_vars:
+                        varkey = string_to_vars[theid]
                         if isinstance(child.value, ast.Dict):
                             data[varkey] = ast.literal_eval(child.value)
                         else:

@@ -11,7 +11,7 @@ from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
-from ansible.parsing.plugin_docs import read_docstring
+from ansible.parsing.plugin_docs import read_docstring, string_to_vars
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
 
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -234,7 +234,7 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
     for section in FRAGMENTS:
-        key = DOCSTRING_TO_VAR[section]
+        key = string_to_vars[section]
 
         if data.get(key, False):
             # add fragments to documentation
@@ -281,12 +281,7 @@ def get_versioned_doclink(path):
         return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))
 
 
-<<<<<<< HEAD
 def _find_adjacent(path, plugin, extensions):
-=======
-def get_pymodule_docs(pymodule, path=None, section=None, floader=None):
-    ''' faster method that gets docs from loaded python module '''
->>>>>>> af01693d20 (add path to keep it 'relative')
 
     adjacent = Path(path)
 
