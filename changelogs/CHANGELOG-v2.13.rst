@@ -5,13 +5,13 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
-v2.13.5rc1
-==========
+v2.13.5
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2022-10-03
+| Release Date: 2022-10-10
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -21,7 +21,10 @@ Bugfixes
 - ``ansible-galaxy`` - remove extra server api call during dependency resolution for requirements and dependencies that are already satisfied (https://github.com/ansible/ansible/issues/77443).
 - ansible-test - Allow disabled, unsupported, unstable and destructive integration test targets to be selected using their respective prefixes.
 - ansible-test - Allow unstable tests to run when targeted changes are made and the ``--allow-unstable-changed`` option is specified (resolves https://github.com/ansible/ansible/issues/74213).
+- apt - Fix module failure when a package is not installed and only_upgrade=True. Skip that package and check the remaining requested packages for upgrades. (https://github.com/ansible/ansible/issues/78762)
+- apt module should not traceback on invalid type given as package. issue 78663.
 - known_hosts - do not return changed status when a non-existing key is removed (https://github.com/ansible/ansible/issues/78598)
+- paramiko - Add back support for ``ssh_args``, ``ssh_common_args``, and ``ssh_extra_args`` for parsing the ``ProxyCommand`` (https://github.com/ansible/ansible/issues/78750)
 - plugin loader, fix detection for existing configuration before initializing for a plugin
 
 v2.13.4

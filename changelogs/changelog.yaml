@@ -1050,6 +1050,27 @@ releases:
     - ansible-test-self-change-classification.yml
     - v2.13.4rc1_summary.yaml
     release_date: '2022-09-06'
+  2.13.5:
+    changes:
+      bugfixes:
+      - apt - Fix module failure when a package is not installed and only_upgrade=True.
+        Skip that package and check the remaining requested packages for upgrades.
+        (https://github.com/ansible/ansible/issues/78762)
+      - apt module should not traceback on invalid type given as package. issue 78663.
+      - paramiko - Add back support for ``ssh_args``, ``ssh_common_args``, and ``ssh_extra_args``
+        for parsing the ``ProxyCommand`` (https://github.com/ansible/ansible/issues/78750)
+      release_summary: '| Release Date: 2022-10-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 78750-paramiko-ssh-args-compat.yml
+    - 78781-fix-apt-only_upgrade-behavior.yml
+    - apt_notb.yml
+    - v2.13.5_summary.yaml
+    release_date: '2022-10-10'
   2.13.5rc1:
     changes:
       bugfixes:
