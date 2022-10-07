@@ -744,15 +744,40 @@ releases:
     - plugin_loader_fix.yml
     - v2.14.0b2_summary.yaml
     - validate-modules-sidecar.yml
+    release_date: '2022-10-03'
+  2.14.0b3:
+    changes:
+      bugfixes:
+      - Do not crash when templating an expression with a test or filter that is not
+        a valid Ansible filter name (https://github.com/ansible/ansible/issues/78912,
+        https://github.com/ansible/ansible/pull/78913).
+      - 'handlers - fix an issue where the ``flush_handlers`` meta task could not
+        be used with FQCN: ``ansible.builtin.meta`` (https://github.com/ansible/ansible/issues/79023)'
+      - keyword inheritance - Ensure that we do not squash keywords in validate (https://github.com/ansible/ansible/issues/79021)
+      - omit on keywords was resetting to default value, ignoring inheritance.
+      - service_facts - Use python re to parse service output instead of grep (https://github.com/ansible/ansible/issues/78541)
+      release_summary: '| Release Date: 2022-10-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 78541-service-facts-re.yml
+    - 78913-template-missing-filter-test.yml
+    - 79021-dont-squash-in-validate.yml
+    - 79023-fix-flush_handlers-fqcn.yml
+    - fix_omit_key.yml
+    - v2.14.0b3_summary.yaml
     plugins:
       test:
       - description: is the string a valid URI
-        name: ansible.builtin.uri
+        name: uri
         namespace: null
       - description: is the string a valid URL
-        name: ansible.builtin.url
+        name: url
         namespace: null
       - description: is the string a valid URN
-        name: ansible.builtin.urn
+        name: urn
         namespace: null
-    release_date: '2022-10-03'
+    release_date: '2022-10-10'
