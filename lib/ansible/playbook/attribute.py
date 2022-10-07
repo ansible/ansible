@@ -139,7 +139,7 @@ class Attribute:
         delattr(obj, f'_{self.name}')
 
     def _set_default(self, obj):
-        ''' handles value/callable defauts '''
+        ''' handles value/callable defaults '''
 
         value = self.default
         if callable(value):
@@ -170,8 +170,8 @@ class FieldAttribute(Attribute):
                 # attempt inheritance
                 value = obj._get_parent_attribute(self.name)
             except AttributeError:
-                # just get value fomr attribute itself as normal
-                value = super(FieldAttribute, self).__get__(obj, obj_type=obj_type)
+                # just get value from attribute itself as normal
+                value = super().__get__(obj, obj_type=obj_type)
 
         if value is Sentinel:
             value = self._set_default(obj)
