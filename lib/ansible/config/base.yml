@@ -1147,6 +1147,14 @@ DEFAULT_VAULT_IDENTITY:
   ini:
   - {key: vault_identity, section: defaults}
   yaml: {key: defaults.vault_identity}
+VAULT_ENCRYPT_SALT:
+  name: Vault salt to use for encryption
+  default: ~
+  description: 'The salt to use for the vault encryption. If it is not provided, a random salt will be used.'
+  env: [{name: ANSIBLE_VAULT_ENCRYPT_SALT}]
+  ini:
+  - {key: vault_encrypt_salt, section: defaults}
+  version_added: '2.15'
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
   description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The --encrypt-vault-id cli option overrides the configured value.'

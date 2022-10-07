@@ -574,3 +574,23 @@ ansible-playbook realpath.yml "$@" --vault-password-file symlink/get-password-sy
 
 # using symlink
 ansible-playbook symlink.yml "$@" --vault-password-file script/vault-secret.sh 2>&1 |grep "${ER}"
+
+### SALT TESTING ###
+# prep files for encryption
+for salted in test1 test2 test3
+do
+    echo 'this is salty' > "salted_${salted}"
+done
+
+# encrypt files
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-password-file example1_password "$@"
+ansible-vault encrypt salted_test3 --vault-password-file example1_password "$@"
+
+# should be the same
+out=$(diff salted_test1 salted_test2)
+[ "${out}" == "" ]
+
+# shoudl be diff
+out=$(diff salted_test1 salted_test3 || true)
+[ "${out}" != "" ]
