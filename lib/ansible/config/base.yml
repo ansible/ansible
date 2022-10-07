@@ -491,7 +491,7 @@ DEFAULT_BECOME_EXE:
   - {key: become_exe, section: privilege_escalation}
 DEFAULT_BECOME_FLAGS:
   name: Set 'become' executable options
-  default: ~
+  default: ''
   description: Flags to pass to the privilege escalation executable.
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
