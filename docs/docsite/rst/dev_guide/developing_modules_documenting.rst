@@ -22,7 +22,7 @@ Every Ansible module written in Python must begin with seven standard sections i
   Some older Ansible modules have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``DOCUMENTATION`` fields in the wrong order. These are legacy files that need updating - do not copy them into new modules. Over time we are updating and correcting older modules. Please follow the guidelines on this page!
 
 .. note:: For non Python modules you still create a ``.py`` file for documentation purposes, but starting at ansible-core 2.14 you can opt to create a ``.yml`` file instead that has the same structure of data but in pure YAML.
-          With YAML files, the examples below are easy to use by removing Python quoting and substituting ``=`` for ``:``, for example ``DOCUMENTATION = r''' ... '''` ` to ``DOCUMENTATION: ...`` and removing closign quotes.
+          With YAML files, the examples below are easy to use by removing Python quoting and substituting ``=`` for ``:``, for example ``DOCUMENTATION = r''' ... '''` ` to ``DOCUMENTATION: ...`` and removing closign quotes. :ref:`adjacent_yaml_doc`
 
 
 .. _shebang:

@@ -73,7 +73,7 @@ To confirm that ``my_local_module`` is available:
 .. note:: The same can be done for all plugin types, but using the specific configuration and/or adjacent directories for that plugin type, see below.
 .. note::
 
-   The ``ansible-doc`` command can parse module documentation from modules written in Python or an adjacent YAML file. If you have a module written in a programming language other than Python, please write the documentation in a Python or YAML file adjacent to the module file.
+   The ``ansible-doc`` command can parse module documentation from modules written in Python or an adjacent YAML file. If you have a module written in a programming language other than Python, please write the documentation in a Python or YAML file adjacent to the module file. :ref:`adjacent_yaml_doc`
 
 Adding standalone local modules for selected playbooks or a single role
 -----------------------------------------------------------------------

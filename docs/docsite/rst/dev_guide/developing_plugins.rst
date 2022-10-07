@@ -81,7 +81,8 @@ Configuration sources follow the precedence rules for values in Ansible. When th
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either through a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
-In ansible-core 2.14 we added support for documenting filter and test plugins, since they are unique in that you can define multiple of them in one file, we had to do some adjustments but now you have two options:
+In ansible-core 2.14 we added support for documenting filter and test plugins, since they are unique in that you can define multiple of them in one file :ref:`adjacent_yaml_doc`,
+we had to do some adjustments but now you have two options:
   - define a file per plugin and include the documentation inline.
   - keep multiple plugins per Python file and create adjacent YAML files per plugin documenting them.
 
@@ -551,3 +552,5 @@ For example vars plugins, see the source code for the `vars plugins included wit
        The development mailing list
    :ref:`communication_irc`
        How to join Ansible chat channels
+   :ref:`adjacent_yaml_doc`
+       Alternate YAML files as documentation
