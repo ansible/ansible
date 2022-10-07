@@ -38,8 +38,10 @@ display = Display()
 def yaml_dump(data, default_flow_style=False, default_style=None):
     return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style=default_style)
 
+
 def yaml_short(data):
     return yaml_dump(data, default_flow_style=True, default_style="''")
+
 
 def get_constants():
     ''' helper method to ensure we can template based on existing constants '''
