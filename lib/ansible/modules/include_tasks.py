@@ -18,9 +18,7 @@ version_added: '2.4'
 options:
   file:
     description:
-      - The name of the imported file is specified directly without any other option.
-      - Unlike M(ansible.builtin.import_tasks), most keywords, including loop, with_items, and conditionals, apply to this statement.
-      - The do until loop is not supported on M(ansible.builtin.include_tasks).
+      - Specifies the name of the file that lists tasks to add to the current playbook.
     type: str
     version_added: '2.7'
   apply:
@@ -60,7 +58,8 @@ EXAMPLES = r'''
         msg: task1
 
     - name: Include task list in play
-      ansible.builtin.include_tasks: stuff.yaml
+      ansible.builtin.include_tasks:
+        file: stuff.yaml
 
     - ansible.builtin.debug:
         msg: task10
