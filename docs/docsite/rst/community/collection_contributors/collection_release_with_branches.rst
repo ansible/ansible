@@ -213,7 +213,7 @@ Publishing the collection
 Releasing patch versions
 -------------------------
 
-The new version is assumed to be ``X.Y.Z``, and the previous patch version is assumed to be ``X.Y.z`` with ``z < Z``.  ``z`` is frequently``0`` snce patch releases are uncommon.
+The new version is assumed to be ``X.Y.Z``, and the previous patch version is assumed to be ``X.Y.z`` with ``z < Z``.  ``z`` is frequently``0`` since patch releases are uncommon.
 
 Releasing when more minor versions are expected
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
