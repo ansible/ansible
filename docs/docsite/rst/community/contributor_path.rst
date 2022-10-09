@@ -48,7 +48,7 @@ You should understand at least *basics* of the following tools:
 You can learn these tools more in depth when working on your first contributions.
 
 
-Each Ansible project has its own set of contributor guidelines. Familarize yourself with these as you prepare your first contributions.
+Each Ansible project has its own set of contributor guidelines. Familiarize yourself with these as you prepare your first contributions.
 
 * :ref:`Ansible Core development <developer_guide>`.
 * :ref:`Ansible collection development <developing_collections>` and the collection-level contributor guidelines in the collection repository.
@@ -72,7 +72,7 @@ See :ref:`communication` for ways to communicate and engage with the Ansible com
 Teach others
 ============
 
-Share your experience with other contributors through `improving documentation <ommunity_documentation_contributions>`, answering question from other contributors and users  on `Matrix/Libera.Chat IRC <communicate>`, giving advice in issues and pull requests, and discussing the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
+Share your experience with other contributors through `improving documentation <community_documentation_contributions>`, answering question from other contributors and users  on `Matrix/Libera.Chat IRC <communicate>`, giving advice in issues and pull requests, and discussing the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
 
 Become a collection maintainer
 ===============================
