@@ -764,7 +764,7 @@ class StrategyBase:
             # If this is a role task, mark the parent role as being run (if
             # the task was ok or failed, but not skipped or unreachable)
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action not in C._ACTION_INCLUDE_ROLE:?
-                # lookup the role in the ROLE_CACHE to make sure we're dealing
+                # lookup the role in the role cache to make sure we're dealing
                 # with the correct object and mark it as executed
                 role_obj = self._get_cached_role(original_task, iterator._play)
                 role_obj._had_task_run[original_host.name] = True
