@@ -28,7 +28,7 @@ attributes:
         platforms: debian
 notes:
     - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
-      This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.
+      This module is kept for backwards compatibility for systems that still use apt-key as the main way to manage apt repository keys.
     - As a sanity check, downloaded key id must match the one specified.
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
@@ -160,7 +160,7 @@ key_id:
     type: str
     sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 short_id:
-    description: caclulated short key id
+    description: calculated short key id
     returned: always
     type: str
     sample: "A88D21E9"
