@@ -5,6 +5,35 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.0b3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2022-10-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Do not crash when templating an expression with a test or filter that is not a valid Ansible filter name (https://github.com/ansible/ansible/issues/78912, https://github.com/ansible/ansible/pull/78913).
+- handlers - fix an issue where the ``flush_handlers`` meta task could not be used with FQCN: ``ansible.builtin.meta`` (https://github.com/ansible/ansible/issues/79023)
+- keyword inheritance - Ensure that we do not squash keywords in validate (https://github.com/ansible/ansible/issues/79021)
+- omit on keywords was resetting to default value, ignoring inheritance.
+- service_facts - Use python re to parse service output instead of grep (https://github.com/ansible/ansible/issues/78541)
+
+New Plugins
+-----------
+
+Test
+~~~~
+
+- uri - is the string a valid URI
+- url - is the string a valid URL
+- urn - is the string a valid URN
+
 v2.14.0b2
 =========
 
@@ -34,16 +63,6 @@ Bugfixes
 - apt module should not traceback on invalid type given as package. issue 78663.
 - known_hosts - do not return changed status when a non-existing key is removed (https://github.com/ansible/ansible/issues/78598)
 - plugin loader, fix detection for existing configuration before initializing for a plugin
-
-New Plugins
------------
-
-Test
-~~~~
-
-- ansible.builtin.uri - is the string a valid URI
-- ansible.builtin.url - is the string a valid URL
-- ansible.builtin.urn - is the string a valid URN
 
 v2.14.0b1
 =========
