@@ -101,6 +101,13 @@ options:
     type: str
     default: utf-8
     version_added: "2.4"
+  numberofmatches:
+    description:
+      - Takes an int of value 'n' and replaces the 'first n number' of matches. 
+        Default is set to '0' that means all the matches will get replaced.
+    type: int
+    default: 0
+    version_added: "2.15"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
   - As of Ansible 2.7.10, the combined use of I(before) and I(after) works properly. If you were relying on the
@@ -175,6 +182,15 @@ EXAMPLES = r'''
     path: /etc/ssh/sshd_config
     regexp: '^(?P<dctv>ListenAddress[ ]+)(?P<host>[^\n]+)$'
     replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
+
+- name: Replacing first 2 matches
+  ansible.builtin.replace:
+    path: "/etc/httpd/conf.d/auth.conf"
+    after: "<Location /2>"
+    regexp: 'Require\s+[^\n]+$'
+    replace: 'Require ip {{ ips | join(" ") }}'
+    numberofmatches: 1
+    
 '''
 
 RETURN = r'''#'''
@@ -233,6 +249,7 @@ def main():
             backup=dict(type='bool', default=False),
             validate=dict(type='str'),
             encoding=dict(type='str', default='utf-8'),
+            numberofmatches=dict(type='int', default=0)
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -283,7 +300,7 @@ def main():
         section = contents
 
     mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], section, 0)
+    result = re.subn(mre, params['replace'], section, params['numberofmatches'])
 
     if result[1] > 0 and section != result[0]:
         if pattern:
