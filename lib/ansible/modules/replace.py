@@ -103,7 +103,7 @@ options:
     version_added: "2.4"
   numberofmatches:
     description:
-      - Takes an int of value 'n' and replaces the 'first n number' of matches. 
+      - Takes an int of value 'n' and replaces the 'first n number' of matches.
         Default is set to '0' that means all the matches will get replaced.
     type: int
     default: 0
@@ -190,7 +190,7 @@ EXAMPLES = r'''
     regexp: 'Require\s+[^\n]+$'
     replace: 'Require ip {{ ips | join(" ") }}'
     numberofmatches: 1
-    
+
 '''
 
 RETURN = r'''#'''

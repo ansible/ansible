@@ -1,0 +1,2 @@
+minor_changes:
+        - added new `numberofmatches` paramter to replace function to replace the first n number of occurances (https://github.com/ansible/ansible/issues/78866)
