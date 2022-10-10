@@ -45,7 +45,8 @@ display = Display()
 
 
 class RoleAPI:
-    def __init__(self, api_servers):
+    def __init__(self, preferred_api, api_servers):
+        self._api = preferred_api
         self.api_servers = api_servers
 
     @property

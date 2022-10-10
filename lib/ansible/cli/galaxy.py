@@ -1275,7 +1275,7 @@ class GalaxyCLI(CLI):
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
         # delay equivalent of self.api, so the GalaxyRole checks api versions once it's making an api call
-        role_api = RoleAPI(self.api_servers)
+        role_api = RoleAPI(self._api, self.api_servers)
 
         two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
                            "run 'ansible-galaxy {0} install -r' or to install both at the same time run " \
