@@ -74,8 +74,15 @@ class FieldAttributeBase:
 
     @classmethod
     @property
-    @cache
     def fattributes(cls):
+        return cls._fattributes()
+
+    # mypy complains with "misc: Decorated property not supported"
+    # when @property and @cache are used together,
+    # split fattributes above into two methods
+    @classmethod
+    @cache
+    def _fattributes(cls):
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
