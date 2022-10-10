@@ -32,3 +32,6 @@ ansible-playbook vars_scope.yml -i ../../inventory "$@"
 
 # test nested includes get parent roles greater than a depth of 3
 [ "$(ansible-playbook 47023.yml -i ../../inventory "$@" | grep '\<\(Default\|Var\)\>' | grep -c 'is defined')" = "2" ]
+
+# ensure import_role called from include_role has the include_role in the dep chain
+ansible-playbook role_dep_chain.yml -i ../../inventory "$@"
