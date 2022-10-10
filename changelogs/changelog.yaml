@@ -1094,6 +1094,21 @@ releases:
     fragments:
     - v2.12.1_summary.yaml
     release_date: '2021-12-06'
+  2.12.10:
+    changes:
+      bugfixes:
+      - paramiko - Add back support for ``ssh_args``, ``ssh_common_args``, and ``ssh_extra_args``
+        for parsing the ``ProxyCommand`` (https://github.com/ansible/ansible/issues/78750)
+      release_summary: '| Release Date: 2022-10-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - 78750-paramiko-ssh-args-compat.yml
+    - v2.12.10_summary.yaml
+    release_date: '2022-10-10'
   2.12.10rc1:
     changes:
       release_summary: '| Release Date: 2022-10-03

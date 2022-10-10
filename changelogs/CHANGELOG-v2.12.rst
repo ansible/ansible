@@ -5,15 +5,20 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
-v2.12.10rc1
-===========
+v2.12.10
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2022-10-03
+| Release Date: 2022-10-10
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
+
+Bugfixes
+--------
+
+- paramiko - Add back support for ``ssh_args``, ``ssh_common_args``, and ``ssh_extra_args`` for parsing the ``ProxyCommand`` (https://github.com/ansible/ansible/issues/78750)
 
 v2.12.9
 =======
