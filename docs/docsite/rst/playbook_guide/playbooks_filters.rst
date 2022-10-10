@@ -2132,7 +2132,9 @@ To format a date using a string (like with the shell date command), use the "str
 
 .. versionadded:: 2.13
 
-strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone::
+strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone:
+
+.. code-block:: yaml+jinja
 
     {{ '%H:%M:%S' | strftime }}           # time now in local timezone
     {{ '%H:%M:%S' | strftime(utc=True) }} # time now in UTC
