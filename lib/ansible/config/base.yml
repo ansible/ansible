@@ -924,7 +924,7 @@ DEFAULT_NO_TARGET_SYSLOG:
   default: False
   description:
   - Toggle Ansible logging to syslog on the target when it executes tasks. On Windows hosts this will disable a newer
-    style PowerShell modules from writting to the event log.
+    style PowerShell modules from writing to the event log.
   env: [{name: ANSIBLE_NO_TARGET_SYSLOG}]
   ini:
   - {key: no_target_syslog, section: defaults}
@@ -1457,7 +1457,7 @@ GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
   - section: galaxy
     key: ignore_signature_status_codes
   description:
-  - A list of GPG status codes to ignore during GPG signature verfication.
+  - A list of GPG status codes to ignore during GPG signature verification.
     See L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes) for status code descriptions.
   - If fewer signatures successfully verify the collection than `GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`,
     signature verification will fail even if all error codes are ignored.
