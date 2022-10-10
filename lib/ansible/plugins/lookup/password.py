@@ -138,7 +138,6 @@ from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_
 from ansible.utils.path import makedirs_safe
 
 
-DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
 
 
