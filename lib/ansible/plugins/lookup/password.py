@@ -54,6 +54,7 @@ DOCUMENTATION = """
           - "when using a comma separated string, to enter comma use two commas ',,' somewhere - preferably at the end.
              Quotes and double quotes are not supported."
         type: list
+        elements: str
         default: ['ascii_letters', 'digits', ".,:-_"]
       length:
         description: The length of the generated password.
