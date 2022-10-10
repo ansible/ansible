@@ -29,6 +29,7 @@ import tarfile
 import tempfile
 
 from collections.abc import MutableSequence
+from dataclasses import dataclass
 from shutil import rmtree
 
 from ansible import context
@@ -44,10 +45,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
+@dataclass
 class RoleAPI:
-    def __init__(self, preferred_api, api_servers):
-        self._api = preferred_api
-        self.api_servers = api_servers
+    from ansible.galaxy.api import GalaxyAPI
+
+    _api: str|None
+    api_servers: list[GalaxyAPI]|None
 
     @property
     def api(self):

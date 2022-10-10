@@ -103,7 +103,8 @@ f_ansible_galaxy_status "install of local git repo"
 mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
-    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@"
+    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@" -vvvv 2>&1 | tee out.txt
+    grep out.txt -e "https://galaxy.ansible.com" && "$(cat out.txt; exit 1)"  # should not call Galaxy
 
     # Test that the role was installed to the expected directory
     [[ -d "${HOME}/.ansible/roles/${galaxy_local_test_role}" ]]
