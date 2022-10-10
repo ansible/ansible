@@ -51,7 +51,8 @@ DOCUMENTATION = """
             'ascii_lowercase', 'ascii_uppercase', 'digits', 'hexdigits', 'octdigits', 'printable', 'punctuation' and 'whitespace'."
           - Be aware that Python's 'hexdigits' includes lower and upper case versions of a-f, so it is not a good choice as it doubles
             the chances of those values for systems that won't distinguish case, distorting the expected entropy.
-          - "when using a comma separated string, to enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
+          - "when using a comma separated string, to enter comma use two commas ',,' somewhere - preferably at the end.
+             Quotes and double quotes are not supported."
         type: list
         default: ['ascii_letters', 'digits', ".,:-_"]
       length:
