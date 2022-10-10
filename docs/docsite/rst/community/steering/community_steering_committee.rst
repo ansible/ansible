@@ -55,6 +55,8 @@ The following table lists the current Steering Committee members. See :ref:`stee
   +------------------+---------------+-------------+
   | Markus Bergholz  | markuman      | 2022        |
   +------------------+---------------+-------------+
+  | Maxwell G        | gotmax23      | 2022        |
+  +------------------+---------------+-------------+
   | Sorin Sbarnea    | ssbarnea      | 2021        |
   +------------------+---------------+-------------+
 
