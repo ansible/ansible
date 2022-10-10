@@ -439,7 +439,7 @@ Parsing with textfsm
 
 ``textfsm`` is a Python module which implements a template-based state machine for parsing semi-formatted text.
 
-The following sample``textfsm`` template is stored as ``templates/nxos_show_interface.textfsm``
+The following sample ``textfsm`` template is stored as ``templates/nxos_show_interface.textfsm``
 
 .. code-block:: text
 
