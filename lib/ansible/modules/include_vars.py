@@ -90,7 +90,7 @@ extends_documentation_fragment:
     - action_core
 attributes:
     action:
-        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overriden
+        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overridden
         support: partial
     bypass_host_loop:
         support: none

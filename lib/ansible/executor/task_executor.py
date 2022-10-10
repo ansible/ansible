@@ -556,7 +556,7 @@ class TaskExecutor:
         plugin_vars = self._set_connection_options(cvars, templar)
 
         # make a copy of the job vars here, as we update them here and later,
-        # but don't want to polute original
+        # but don't want to pollute original
         vars_copy = variables.copy()
         # update with connection info (i.e ansible_host/ansible_user)
         self._connection.update_vars(vars_copy)
@@ -578,7 +578,7 @@ class TaskExecutor:
             setattr(self._connection, '_socket_path', socket_path)
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
-        # special handling for python interpreter for network_os, default to ansible python unless overriden
+        # special handling for python interpreter for network_os, default to ansible python unless overridden
         if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
             # this also avoids 'python discovery'
             cvars['ansible_python_interpreter'] = sys.executable
@@ -802,7 +802,7 @@ class TaskExecutor:
 
         # add the delegated vars to the result, so we can reference them
         # on the results side without having to do any further templating
-        # also now add conneciton vars results when delegating
+        # also now add connection vars results when delegating
         if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
             for k in plugin_vars:
