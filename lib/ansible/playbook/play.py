@@ -108,6 +108,10 @@ class Play(Base, Taggable, CollectionSearch):
     def ROLE_CACHE(self):
         """Backwards compat for custom strategies using ``play.ROLE_CACHE``
         """
+        display.deprecated(
+            'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
+            version='2.18',
+        )
         cache = {}
         for path, roles in self.role_cache.items():
             for role in roles:
