@@ -10,6 +10,7 @@ import operator
 import os
 
 from copy import copy as shallowcopy
+from functools import cache
 
 from jinja2.exceptions import UndefinedError
 
@@ -73,8 +74,8 @@ class FieldAttributeBase:
 
     @classmethod
     @property
+    @cache
     def fattributes(cls):
-        # FIXME is this worth caching?
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
