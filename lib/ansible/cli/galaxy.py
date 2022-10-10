@@ -43,7 +43,7 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
 from ansible.galaxy.collection.gpg import GPG_ERROR_MAP
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
-from ansible.galaxy.role import GalaxyRole
+from ansible.galaxy.role import GalaxyRole, RoleAPI
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
@@ -701,7 +701,7 @@ class GalaxyCLI(CLI):
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
 
-    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, validate_signature_options=True):
+    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, validate_signature_options=True, role_api=None):
         """
         Parses an Ansible requirement.yml file and returns all the roles and/or collections defined in it. There are 2
         requirements file format:
@@ -757,7 +757,7 @@ class GalaxyCLI(CLI):
                 display.vvv("found role %s in yaml file" % to_text(role))
                 if "name" not in role and "src" not in role:
                     raise AnsibleError("Must specify name or src for role")
-                return [GalaxyRole(self.galaxy, self.api, **role)]
+                return [GalaxyRole(self.galaxy, role_api, **role)]
             else:
                 b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
                 if not os.path.isfile(b_include_path):
@@ -766,7 +766,7 @@ class GalaxyCLI(CLI):
 
                 with open(b_include_path, 'rb') as f_include:
                     try:
-                        return [GalaxyRole(self.galaxy, self.api, **r) for r in
+                        return [GalaxyRole(self.galaxy, role_api, **r) for r in
                                 (RoleRequirement.role_yaml_parse(i) for i in yaml_load(f_include))]
                     except Exception as e:
                         raise AnsibleError("Unable to load data from include requirements file: %s %s"
@@ -1274,6 +1274,9 @@ class GalaxyCLI(CLI):
         if requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
+        # delay equivalent of self.api, so the GalaxyRole checks api versions once it's making an api call
+        role_api = RoleAPI(self.api_servers)
+
         two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
                            "run 'ansible-galaxy {0} install -r' or to install both at the same time run " \
                            "'ansible-galaxy install -r' without a custom install path." % to_text(requirements_file)
@@ -1307,6 +1310,7 @@ class GalaxyCLI(CLI):
                     requirements_file,
                     artifacts_manager=artifacts_manager,
                     validate_signature_options=will_install_collections,
+                    role_api=role_api,
                 )
                 role_requirements = requirements['roles']
 
@@ -1327,7 +1331,7 @@ class GalaxyCLI(CLI):
                 # (and their dependencies, unless the user doesn't want us to).
                 for rname in context.CLIARGS['args']:
                     role = RoleRequirement.role_yaml_parse(rname.strip())
-                    role_requirements.append(GalaxyRole(self.galaxy, self.api, **role))
+                    role_requirements.append(GalaxyRole(self.galaxy, role_api, **role))
 
         if not role_requirements and not collection_requirements:
             display.display("Skipping install, no requirements found")
@@ -1335,7 +1339,7 @@ class GalaxyCLI(CLI):
 
         if role_requirements:
             display.display("Starting galaxy role install process")
-            self._execute_install_role(role_requirements)
+            self._execute_install_role(role_requirements, role_api)
 
         if collection_requirements:
             display.display("Starting galaxy collection install process")
@@ -1389,7 +1393,7 @@ class GalaxyCLI(CLI):
 
         return 0
 
-    def _execute_install_role(self, requirements):
+    def _execute_install_role(self, requirements, role_api):
         role_file = context.CLIARGS['requirements']
         no_deps = context.CLIARGS['no_deps']
         force_deps = context.CLIARGS['force_with_deps']
@@ -1438,7 +1442,7 @@ class GalaxyCLI(CLI):
                         display.debug('Installing dep %s' % dep)
                         dep_req = RoleRequirement()
                         dep_info = dep_req.role_yaml_parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, self.api, **dep_info)
+                        dep_role = GalaxyRole(self.galaxy, role_api, **dep_info)
                         if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
                             # we know we can skip this, as it's not going to
                             # be found on galaxy.ansible.com

@@ -44,6 +44,29 @@ from ansible.utils.display import Display
 display = Display()
 
 
+class RoleAPI:
+    def __init__(self, api_servers):
+        self.api_servers = api_servers
+
+    @property
+    def api(self):
+        if self._api:
+            return self._api
+
+        for server in self.api_servers:
+            try:
+                if u'v1' in server.available_api_versions:
+                    self._api = server
+                    break
+            except Exception:
+                continue
+
+        if not self._api:
+            self._api = self.api_servers[0]
+
+        return self._api
+
+
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
@@ -63,7 +86,7 @@ class GalaxyRole(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.galaxy = galaxy
-        self.api = api
+        self._api = api
 
         self.name = name
         self.version = version
@@ -102,6 +125,12 @@ class GalaxyRole(object):
 
     def __eq__(self, other):
         return self.name == other.name
+
+    @property
+    def api(self):
+        if isinstance(self._api, RoleAPI):
+            return self._api.api
+        return self._api
 
     @property
     def metadata(self):
