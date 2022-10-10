@@ -1280,10 +1280,10 @@ class Jinja2Loader(PluginLoader):
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
         found = set()
-        # get plugins from files in configured paths (mulitple in each)
+        # get plugins from files in configured paths (multiple in each)
         for p_map in self._j2_all_file_maps(*args, **kwargs):
 
-            # p_map is really object from file with class that holds mulitple plugins
+            # p_map is really object from file with class that holds multiple plugins
             plugins_list = getattr(p_map, self.method_map_name)
             try:
                 plugins = plugins_list()

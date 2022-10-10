@@ -56,6 +56,6 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
         else:
             module.debug('Failed to get locale information: %s' % to_native(e))
 
-    module.debug('Matched prefered locale to: %s' % found)
+    module.debug('Matched preferred locale to: %s' % found)
 
     return found

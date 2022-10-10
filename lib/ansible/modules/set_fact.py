@@ -33,7 +33,7 @@ options:
         (by 7 steps) of the variable created.
         U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable)
       - "This actually creates 2 copies of the variable, a normal 'set_fact' host variable with high precedence and
-        a lower 'ansible_fact' one that is available for persistance via the facts cache plugin.
+        a lower 'ansible_fact' one that is available for persistence via the facts cache plugin.
         This creates a possibly confusing interaction with C(meta: clear_facts) as it will remove the 'ansible_fact' but not the host variable."
     type: bool
     default: no

@@ -193,7 +193,7 @@ class _ComputedReqKindsMixin:
         falls back to guessing the FQCN based on the directory path and
         sets the version to "*".
 
-        It raises a ValueError immediatelly if the input is not an
+        It raises a ValueError immediately if the input is not an
         existing directory path.
         """
         if not os.path.isdir(dir_path):
