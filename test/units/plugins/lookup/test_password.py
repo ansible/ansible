@@ -37,7 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins
 from ansible.module_utils._text import to_bytes
-from ansible.plugins.loader import PluginLoader
+from ansible.plugins.loader import PluginLoader, lookup_loader
 from ansible.plugins.lookup import password
 
 
@@ -210,9 +210,14 @@ old_style_params_data = (
 
 
 class TestParseParameters(unittest.TestCase):
+
+    def setUp(self):
+        self.pwd = lookup_loader.get('ansible.builtin.password')
+        self.pwd.set_options(var_options={})
+
     def test(self):
         for testcase in old_style_params_data:
-            filename, params = password._parse_parameters(testcase['term'])
+            filename, params = self.pwd._parse_parameters(testcase['term'])
             params['chars'].sort()
             self.assertEqual(filename, testcase['filename'])
             self.assertEqual(params, testcase['params'])
@@ -222,14 +227,14 @@ class TestParseParameters(unittest.TestCase):
                         filename=u'/path/to/file',
                         params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ']),
                         candidate_chars=u'くらとみ')
-        self.assertRaises(AnsibleError, password._parse_parameters, testcase['term'])
+        self.assertRaises(AnsibleError, self.pwd._parse_parameters, testcase['term'])
 
     def test_invalid_params(self):
         testcase = dict(term=u'/path/to/file chars=くらとみi  somethign_invalid=123',
                         filename=u'/path/to/file',
                         params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ']),
                         candidate_chars=u'くらとみ')
-        self.assertRaises(AnsibleError, password._parse_parameters, testcase['term'])
+        self.assertRaises(AnsibleError, self.pwd._parse_parameters, testcase['term'])
 
 
 class TestReadPasswordFile(unittest.TestCase):
@@ -391,7 +396,8 @@ class TestWritePasswordFile(unittest.TestCase):
 class BaseTestLookupModule(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({'/path/to/somewhere': 'sdfsdf'})
-        self.password_lookup = password.LookupModule(loader=self.fake_loader)
+        self.password_lookup = lookup_loader.get('ansible.builtin.password')
+        self.password_lookup._loader = self.fake_loader
         self.os_path_exists = password.os.path.exists
         self.os_open = password.os.open
         password.os.open = lambda path, flag: None
