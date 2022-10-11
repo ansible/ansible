@@ -27,10 +27,8 @@ import datetime
 import os
 import tarfile
 import tempfile
-import typing as t
 
 from collections.abc import MutableSequence
-from dataclasses import dataclass
 from shutil import rmtree
 
 from ansible import context
@@ -44,34 +42,6 @@ from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 
 display = Display()
-
-
-@dataclass
-class RoleAPI:
-    # prevent recursive import
-    from ansible.galaxy.api import GalaxyAPI
-
-    _api: t.Union[str, None]
-    api_servers: list[GalaxyAPI]
-
-    # a copy of GalaxyCLI.api
-    @property
-    def api(self):
-        if self._api:
-            return self._api
-
-        for server in self.api_servers:
-            try:
-                if u'v1' in server.available_api_versions:
-                    self._api = server
-                    break
-            except Exception:
-                continue
-
-        if not self._api:
-            self._api = self.api_servers[0]
-
-        return self._api
 
 
 class GalaxyRole(object):
@@ -135,7 +105,9 @@ class GalaxyRole(object):
 
     @property
     def api(self):
-        if isinstance(self._api, RoleAPI):
+        # prevent recursive imports
+        from ansible.cli.galaxy import RoleDistributionServer
+        if isinstance(self._api, RoleDistributionServer):
             return self._api.api
         return self._api
 
