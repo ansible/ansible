@@ -39,6 +39,7 @@ from ansible.module_utils.six.moves import builtins
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import PluginLoader, lookup_loader
 from ansible.plugins.lookup import password
+from ansible.utils import path as upath
 
 
 DEFAULT_LENGTH = 20
@@ -396,8 +397,6 @@ class TestWritePasswordFile(unittest.TestCase):
 class BaseTestLookupModule(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({'/path/to/somewhere': 'sdfsdf'})
-        self.password_lookup = lookup_loader.get('ansible.builtin.password')
-        self.password_lookup._loader = self.fake_loader
         self.os_path_exists = password.os.path.exists
         self.os_open = password.os.open
         password.os.open = lambda path, flag: None
@@ -405,15 +404,17 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.close = lambda fd: None
         self.os_remove = password.os.remove
         password.os.remove = lambda path: None
-        self.makedirs_safe = password.makedirs_safe
-        password.makedirs_safe = lambda path, mode: None
+        self.makedirs_safe = upath.makedirs_safe
+        upath.makedirs_safe = lambda path, mode: None
+        self.password_lookup = lookup_loader.get('ansible.builtin.password')
+        self.password_lookup._loader = self.fake_loader
 
     def tearDown(self):
         password.os.path.exists = self.os_path_exists
         password.os.open = self.os_open
         password.os.close = self.os_close
         password.os.remove = self.os_remove
-        password.makedirs_safe = self.makedirs_safe
+        upath.makedirs_safe = self.makedirs_safe
 
 
 class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
