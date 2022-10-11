@@ -494,14 +494,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
         # get exported variables from meta/dependencies
-        seen = set()
+        seen = []
         for dep in self.get_all_dependencies():
             # Avoid reruning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
             if dep not in seen:
                 # only take 'exportable' vars from deps
                 all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
-                seen.add(dep)
+                seen.append(dep)
 
         # role_vars come from vars/ in a role
         all_vars = combine_vars(all_vars, self._role_vars)
