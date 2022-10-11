@@ -53,6 +53,7 @@ class RoleAPI:
     _api: t.Union[str, None]
     api_servers: list[GalaxyAPI]
 
+    # a copy of GalaxyCLI.api
     @property
     def api(self):
         if self._api:
