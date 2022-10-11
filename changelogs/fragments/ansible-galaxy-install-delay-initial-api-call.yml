@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy role install - determine the best distribution server for roles when a GalaxyRole needs to make an API call.
