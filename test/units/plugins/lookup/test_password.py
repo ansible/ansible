@@ -27,6 +27,7 @@ except ImportError:
     passlib = None
     pbkdf2 = None
 
+import os
 import pytest
 
 from units.mock.loader import DictDataLoader
@@ -213,12 +214,13 @@ old_style_params_data = (
 class TestParseParameters(unittest.TestCase):
 
     def setUp(self):
-        self.pwd = lookup_loader.get('ansible.builtin.password')
-        self.pwd.set_options(var_options={})
+        self.fake_loader = DictDataLoader({'/path/to/somewhere': 'sdfsdf'})
+        self.password_lookup = lookup_loader.get('password')
+        self.password_lookup._loader = self.fake_loader
 
     def test(self):
         for testcase in old_style_params_data:
-            filename, params = self.pwd._parse_parameters(testcase['term'])
+            filename, params = self.password_lookup._parse_parameters(testcase['term'])
             params['chars'].sort()
             self.assertEqual(filename, testcase['filename'])
             self.assertEqual(params, testcase['params'])
@@ -228,14 +230,14 @@ class TestParseParameters(unittest.TestCase):
                         filename=u'/path/to/file',
                         params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ']),
                         candidate_chars=u'くらとみ')
-        self.assertRaises(AnsibleError, self.pwd._parse_parameters, testcase['term'])
+        self.assertRaises(AnsibleError, self.password_lookup._parse_parameters, testcase['term'])
 
     def test_invalid_params(self):
         testcase = dict(term=u'/path/to/file chars=くらとみi  somethign_invalid=123',
                         filename=u'/path/to/file',
                         params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ']),
                         candidate_chars=u'くらとみ')
-        self.assertRaises(AnsibleError, self.pwd._parse_parameters, testcase['term'])
+        self.assertRaises(AnsibleError, self.password_lookup._parse_parameters, testcase['term'])
 
 
 class TestReadPasswordFile(unittest.TestCase):
@@ -328,6 +330,7 @@ class TestRandomPassword(unittest.TestCase):
 
 
 class TestParseContent(unittest.TestCase):
+
     def test_empty_password_file(self):
         plaintext_password, salt = password._parse_content(u'')
         self.assertEqual(plaintext_password, u'')
@@ -376,14 +379,17 @@ class TestFormatContent(unittest.TestCase):
 
 class TestWritePasswordFile(unittest.TestCase):
     def setUp(self):
-        self.makedirs_safe = password.makedirs_safe
-        self.os_chmod = password.os.chmod
-        password.makedirs_safe = lambda path, mode: None
-        password.os.chmod = lambda path, mode: None
+        self.makedirs_safe = upath.makedirs_safe
+        self.os_chmod = os.chmod
+        os.chmod = lambda path, mode: None
+        self.os_makedirs = os.makedirs
+        os.makedirs = lambda fd, mode: None
+        upath.makedirs_safe = lambda path, mode: None
 
     def tearDown(self):
-        password.makedirs_safe = self.makedirs_safe
-        password.os.chmod = self.os_chmod
+        upath.makedirs_safe = self.makedirs_safe
+        os.chmod = self.os_chmod
+        os.makedirs = self.os_makedirs
 
     def test_content_written(self):
 
@@ -397,23 +403,29 @@ class TestWritePasswordFile(unittest.TestCase):
 class BaseTestLookupModule(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({'/path/to/somewhere': 'sdfsdf'})
-        self.os_path_exists = password.os.path.exists
-        self.os_open = password.os.open
-        password.os.open = lambda path, flag: None
-        self.os_close = password.os.close
-        password.os.close = lambda fd: None
-        self.os_remove = password.os.remove
-        password.os.remove = lambda path: None
+        self.password_lookup = lookup_loader.get('password')
+        self.password_lookup._loader = self.fake_loader
+        self.os_path_exists = os.path.exists
+        self.os_open = os.open
+        os.open = lambda path, flag: None
+        self.os_close = os.close
+        os.close = lambda fd: None
+        self.os_mkdir = os.mkdir
+        os.mkdir = lambda fd, mode: None
+        self.os_makedirs = os.makedirs
+        os.makedirs = lambda fd, mode: None
+        self.os_remove = os.remove
+        os.remove = lambda path: None
         self.makedirs_safe = upath.makedirs_safe
         upath.makedirs_safe = lambda path, mode: None
-        self.password_lookup = lookup_loader.get('ansible.builtin.password')
-        self.password_lookup._loader = self.fake_loader
 
     def tearDown(self):
-        password.os.path.exists = self.os_path_exists
-        password.os.open = self.os_open
-        password.os.close = self.os_close
-        password.os.remove = self.os_remove
+        os.path.exists = self.os_path_exists
+        os.open = self.os_open
+        os.close = self.os_close
+        os.remove = self.os_remove
+        os.mkdir = self.os_mkdir
+        os.makedirs = self.os_makedirs
         upath.makedirs_safe = self.makedirs_safe
 
 
