@@ -10,6 +10,7 @@ import operator
 import os
 
 from copy import copy as shallowcopy
+from functools import cache
 
 from jinja2.exceptions import UndefinedError
 
@@ -74,7 +75,14 @@ class FieldAttributeBase:
     @classmethod
     @property
     def fattributes(cls):
-        # FIXME is this worth caching?
+        return cls._fattributes()
+
+    # mypy complains with "misc: Decorated property not supported"
+    # when @property and @cache are used together,
+    # split fattributes above into two methods
+    @classmethod
+    @cache
+    def _fattributes(cls):
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
