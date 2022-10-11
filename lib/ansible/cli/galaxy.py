@@ -1199,7 +1199,7 @@ class GalaxyCLI(CLI):
         for role in context.CLIARGS['args']:
 
             role_info = {'path': roles_path}
-            gr = GalaxyRole(self.galaxy, self.api, role)
+            gr = GalaxyRole(self.galaxy, self.lazy_role_api, role)
 
             install_info = gr.install_info
             if install_info:
@@ -1539,7 +1539,7 @@ class GalaxyCLI(CLI):
 
             if role_name:
                 # show the requested role, if it exists
-                gr = GalaxyRole(self.galaxy, self.api, role_name, path=os.path.join(role_path, role_name))
+                gr = GalaxyRole(self.galaxy, self.lazy_role_api, role_name, path=os.path.join(role_path, role_name))
                 if os.path.isdir(gr.path):
                     role_found = True
                     display.display('# %s' % os.path.dirname(gr.path))
@@ -1558,7 +1558,7 @@ class GalaxyCLI(CLI):
                 display.display('# %s' % role_path)
                 path_files = os.listdir(role_path)
                 for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
+                    gr = GalaxyRole(self.galaxy, self.lazy_role_api, path_file, path=path)
                     if gr.metadata:
                         _display_role(gr)
 
