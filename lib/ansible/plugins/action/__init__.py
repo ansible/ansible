@@ -1097,7 +1097,8 @@ class ActionBase(ABC):
                 self._transfer_data(args_file_path, json.dumps(module_args))
             display.debug("done transferring module to remote")
 
-        if module_style != 'new':
+        # TODO: if async, compute a string with just ANSIBLE_ASYNC_DIR
+        if module_style != 'new' or wrap_async:
             environment_string = self._compute_environment_string()
         else:
             environment_string = ''
