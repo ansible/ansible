@@ -311,7 +311,7 @@ def _ansiballz_main():
     ANSIBALLZ_PARAMS = %(params)s
     if PY3:
         ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
-    environment = %(environment)r
+    environment = {k: os.path.expandvars(str(v)) for k, v in (%(environment)r).items()}
     try:
         # There's a race condition with the controller removing the
         # remote_tmpdir and this module executing under async.  So we cannot
