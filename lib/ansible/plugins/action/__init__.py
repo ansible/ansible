@@ -1097,7 +1097,10 @@ class ActionBase(ABC):
                 self._transfer_data(args_file_path, json.dumps(module_args))
             display.debug("done transferring module to remote")
 
-        environment_string = self._compute_environment_string()
+        if module_style != 'new':
+            environment_string = self._compute_environment_string()
+        else:
+            environment_string = ''
 
         # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
         # the async_wrapper task.

@@ -169,7 +169,7 @@ def _ansiballz_main():
     ZIPDATA = """%(zipdata)s"""
 
     # Note: temp_path isn't needed once we switch to zipimport
-    def invoke_module(modlib_path, temp_path, json_params):
+    def invoke_module(modlib_path, temp_path, json_params, environment):
         # When installed via setuptools (including python setup.py install),
         # ansible may be installed with an easy-install.pth file.  That file
         # may load the system-wide install of ansible rather than the one in
@@ -195,6 +195,8 @@ def _ansiballz_main():
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
+        # Export environment variables
+        os.environ.update(environment)
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
         runpy.run_module(mod_name='%(module_fqn)s', init_globals=dict(_module_fqn='%(module_fqn)s', _modlib_path=modlib_path),
                          run_name='__main__', alter_sys=True)
@@ -203,7 +205,7 @@ def _ansiballz_main():
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
         sys.exit(1)
 
-    def debug(command, zipped_mod, json_params):
+    def debug(command, zipped_mod, json_params, environment):
         # The code here normally doesn't run.  It's only used for debugging on the
         # remote machine.
         #
@@ -286,6 +288,9 @@ def _ansiballz_main():
             from ansible.module_utils import basic
             basic._ANSIBLE_ARGS = json_params
 
+            # Export environment variables
+            os.environ.update(environment)
+
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
             runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=True)
 
@@ -306,6 +311,7 @@ def _ansiballz_main():
     ANSIBALLZ_PARAMS = %(params)s
     if PY3:
         ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
+    environment = %(environment)r
     try:
         # There's a race condition with the controller removing the
         # remote_tmpdir and this module executing under async.  So we cannot
@@ -320,10 +326,10 @@ def _ansiballz_main():
             modlib.write(base64.b64decode(ZIPDATA))
 
         if len(sys.argv) == 2:
-            exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
+            exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS, environment)
         else:
             # Note: temp_path isn't needed once we switch to zipimport
-            invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
+            invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS, environment)
     finally:
         try:
             shutil.rmtree(temp_path)
@@ -1257,6 +1263,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             second=now.second,
             coverage=coverage,
             rlimit=rlimit,
+            environment=environment,
         )))
         b_module_data = output.getvalue()
 
