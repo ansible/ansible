@@ -224,7 +224,6 @@ class GalaxyCLI(CLI):
 
         self.api_servers = []
         self.galaxy = None
-        self._api = None
         self.lazy_role_api = None
         super(GalaxyCLI, self).__init__(args)
 
@@ -707,7 +706,7 @@ class GalaxyCLI(CLI):
 
         # checks api versions once a GalaxyRole makes an api call
         # self.api can be used to evaluate the best server immediately
-        self.lazy_role_api = RoleDistributionServer(self._api, self.api_servers)
+        self.lazy_role_api = RoleDistributionServer(None, self.api_servers)
 
         return context.CLIARGS['func']()
 
