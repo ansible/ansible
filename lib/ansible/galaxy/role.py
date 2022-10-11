@@ -27,6 +27,7 @@ import datetime
 import os
 import tarfile
 import tempfile
+import typing as t
 
 from collections.abc import MutableSequence
 from dataclasses import dataclass
@@ -49,8 +50,8 @@ display = Display()
 class RoleAPI:
     from ansible.galaxy.api import GalaxyAPI
 
-    _api: str|None
-    api_servers: list[GalaxyAPI]|None
+    _api: t.Union[str, None]
+    api_servers: list[GalaxyAPI]
 
     @property
     def api(self):
