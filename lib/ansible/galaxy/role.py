@@ -48,6 +48,7 @@ display = Display()
 
 @dataclass
 class RoleAPI:
+    # prevent recursive import
     from ansible.galaxy.api import GalaxyAPI
 
     _api: t.Union[str, None]
