@@ -383,6 +383,15 @@ options:
     type: bool
     default: false
     version_added: "2.13"
+  numeric:
+    description:
+      - This parameter controls the running of the list -action of iptables, which is used internally by the module
+      - Does not affect the actual functionality. Use this if iptables hangs when creating chain or altering policy 
+      - If C(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
+      - Listing is used internally for example when setting a policy or creting of a chain
+    type: bool
+    default: false
+    version_added: "2.14"
 '''
 
 EXAMPLES = r'''
