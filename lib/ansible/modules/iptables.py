@@ -383,6 +383,15 @@ options:
     type: bool
     default: false
     version_added: "2.13"
+  numeric:
+    description:
+      - This parameter controls the running of the list -action of iptables, which is used internally by the module
+      - Does not affect the actual functionality. Use this if iptables hangs when creating chain or altering policy
+      - If C(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
+      - Listing is used internally for example when setting a policy or creting of a chain
+    type: bool
+    default: false
+    version_added: "2.15"
 '''
 
 EXAMPLES = r'''
@@ -721,6 +730,8 @@ def set_chain_policy(iptables_path, module, params):
 
 def get_chain_policy(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
+    if module.params['numeric']:
+        cmd.append('--numeric')
     rc, out, _ = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
     result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
@@ -742,6 +753,8 @@ def create_chain(iptables_path, module, params):
 
 def check_chain_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
+    if module.params['numeric']:
+        cmd.append('--numeric')
     rc, _, __ = module.run_command(cmd, check_rc=False)
     return (rc == 0)
 
@@ -809,6 +822,7 @@ def main():
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
             chain_management=dict(type='bool', default=False),
+            numeric=dict(type='bool', default=False),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
