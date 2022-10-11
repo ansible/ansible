@@ -18,8 +18,8 @@ version_added: "2.4"
 options:
   free-form:
     description:
-      - The name of the imported file is specified directly without any other option.
-      - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
+      - Specifies the name of the imported file directly without any other option C(- import_tasks: file.yml).
+      - Most keywords, including loops and conditionals, only apply to the imported tasks, not to this statement itself.
       - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
   file:
     description:

@@ -28,9 +28,10 @@ options:
     version_added: '2.7'
   free-form:
     description:
-      - |
-        Supplying a file name via free-form C(- include_tasks: file.yml) of a file to be included is the equivalent
-        of specifying an argument of I(file).
+      - Specifies the name of the imported file directly without any other option C(- include_tasks: file.yml).
+      - Is the equivalent of specifying an argument for the I(file) parameter.
+      - Most keywords, including loop, with_items, and conditionals, apply to this statement unlike M(ansible.builtin.import_tasks).
+      - The do-until loop is not supported.
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
