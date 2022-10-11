@@ -793,7 +793,7 @@
         force: yes
 
     - name: install symlink_dirs collection from source
-      command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/
+      command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/
       environment:
         ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
       register: install_symlink_dirs
