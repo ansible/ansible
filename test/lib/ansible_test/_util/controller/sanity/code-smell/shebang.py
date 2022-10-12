@@ -13,6 +13,8 @@ def main():
         b'#!/bin/bash -eu',
         b'#!/bin/bash -eux',
         b'#!/bin/sh',
+        b'#!/bin/sh -eu',
+        b'#!/bin/sh -eux',
         b'#!/usr/bin/env bash',
         b'#!/usr/bin/env fish',
         b'#!/usr/bin/env pwsh',
