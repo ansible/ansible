@@ -95,7 +95,7 @@ The playbook contains one play with two tasks, and should generate output like t
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos.vyos.vyos first_playbook.yml
 
-   PLAY [First Playbook]
+   PLAY [Network Getting Started First Playbook]
    ***************************************************************************************************************************
 
    TASK [Get config for VyOS devices]
@@ -119,7 +119,7 @@ The extended first playbook has five tasks in a single play. Run it with the sam
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos.vyos.vyos first_playbook_ext.yml
 
-   PLAY [First Playbook]
+   PLAY [Network Getting Started First Playbook Extended]
    ************************************************************************************************************************************
 
    TASK [Get config for VyOS devices]
