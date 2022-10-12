@@ -22,7 +22,7 @@
 
 - assert:
     that:
-        - 'string_sum == "12"'
+        - string_sum == "'12'"
         - 'string_sum|type_debug in ["str", "unicode"]'
 
 - name: add two lists
