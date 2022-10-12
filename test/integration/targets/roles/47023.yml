@@ -1,0 +1,5 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - include_role: name=47023_role1

@@ -442,6 +442,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     def get_parents(self):
         return self._parents
 
+    def get_dep_chain(self):
+        dep_chain = []
+        for parent in self._parents:
+            dep_chain.extend(parent.get_dep_chain())
+            dep_chain.append(parent)
+        return dep_chain
+
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
 
