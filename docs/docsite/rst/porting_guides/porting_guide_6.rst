@@ -99,6 +99,30 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.5.0
+========================
+
+Major Changes
+-------------
+
+infoblox.nios_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Feature for extra layer security , with ``cert`` and ``key`` parameters in playbooks for authenticating using certificate and key ``*.pem`` file absolute path `#154 <https://github.com/infobloxopen/infoblox-ansible/pull/154>`_
+- Fix to remove issue causing due to template attr in deleting network using Ansible module nios network `#147 <https://github.com/infobloxopen/infoblox-ansible/pull/147>`_
+
+Deprecated Features
+-------------------
+
+- The dellemc.os10 collection is considered unmaintained and will be removed from Ansible 8 if no one starts maintaining it again before Ansible 8. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/134).
+- The dellemc.os6 collection is considered unmaintained and will be removed from Ansible 8 if no one starts maintaining it again before Ansible 8. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/132).
+- The dellemc.os9 collection is considered unmaintained and will be removed from Ansible 8 if no one starts maintaining it again before Ansible 8. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/133).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- lxc_container - the module will no longer make any effort to support Python 2 (https://github.com/ansible-collections/community.general/pull/5304).
+
 Porting Guide for v6.4.0
 ========================
 
@@ -471,7 +495,7 @@ cisco.ios
 
 - Minimum required ansible.netcommon version is 2.5.1.
 - Updated base plugin references to ansible.netcommon.
-- `facts` - default value for `gather_subset` is changed to min instead of !config.
+- facts - default value for gather_subset is changed to min instead of !config.
 
 cisco.iosxr
 ~~~~~~~~~~~
@@ -771,7 +795,7 @@ cisco.ios
 ~~~~~~~~~
 
 - Deprecates lldp module.
-- `ios_acls` - Deprecated fragment attribute added boolean alternate as enable_fragment.
+- ios_acls - Deprecated fragment attribute added boolean alternate as enable_fragment.
 
 cisco.nxos
 ~~~~~~~~~~
