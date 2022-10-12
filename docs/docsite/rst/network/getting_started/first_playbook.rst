@@ -113,7 +113,7 @@ The playbook contains one play with two tasks, and should generate output like t
 .. literalinclude:: sample_files/first_playbook_ext.yml
    :language: YAML
 
-The extended first playbook has four tasks in a single play. Run it with the same command you used above. The output shows you the change Ansible made to the config:
+The extended first playbook has five tasks in a single play. Run it with the same command you used above. The output shows you the change Ansible made to the config:
 
 .. code-block:: bash
 
