@@ -128,7 +128,7 @@ def ansible_native_concat(nodes):
         out = ''.join([to_text(v) for v in nodes])
 
     try:
-        return ast.literal_eval(
+        evaled = ast.literal_eval(
             # In Python 3.10+ ast.literal_eval removes leading spaces/tabs
             # from the given string. For backwards compatibility we need to
             # parse the string ourselves without removing leading spaces/tabs.
@@ -136,3 +136,9 @@ def ansible_native_concat(nodes):
         )
     except (ValueError, SyntaxError, MemoryError):
         return out
+
+    if isinstance(evaled, string_types):
+        quote = out[0]
+        return f'{quote}{evaled}{quote}'
+
+    return evaled
