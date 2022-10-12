@@ -699,7 +699,8 @@ class GalaxyCLI(CLI):
         return self._api
 
     def _get_default_collection_path(self):
-        return C.COLLECTIONS_PATHS[0]
+        if C.COLLECTIONS_PATHS:
+            return C.COLLECTIONS_PATHS[0]
 
     def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, validate_signature_options=True):
         """
@@ -1264,6 +1265,9 @@ class GalaxyCLI(CLI):
 
         :param artifacts_manager: Artifacts manager.
         """
+        if context.CLIARGS['collections_path'] is None:
+            raise AnsibleOptionsError("- you must specify a valid collection path to install collections")
+
         install_items = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
         collection_path = None
@@ -1575,9 +1579,11 @@ class GalaxyCLI(CLI):
 
         warnings = []
         path_found = False
+        non_default_provided = False
         collection_found = False
         for path in collections_search_paths:
             collection_path = GalaxyCLI._resolve_path(path)
+            non_default_provided |= path not in default_collections_path  # -p
             if not os.path.exists(path):
                 if path in default_collections_path:
                     # don't warn for missing default paths
@@ -1588,8 +1594,6 @@ class GalaxyCLI(CLI):
             if not os.path.isdir(collection_path):
                 warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                 continue
-
-            path_found = True
 
             if collection_name:
                 # list a specific collection
@@ -1603,6 +1607,8 @@ class GalaxyCLI(CLI):
                 if not os.path.exists(b_collection_path):
                     warnings.append("- unable to find {0} in collection paths".format(collection_name))
                     continue
+
+                path_found = True
 
                 if not os.path.isdir(collection_path):
                     warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
@@ -1635,6 +1641,7 @@ class GalaxyCLI(CLI):
                 collection_path = validate_collection_path(path)
                 if os.path.isdir(collection_path):
                     display.vvv("Searching {0} for collections".format(collection_path))
+                    path_found = True
                     collections = list(find_existing_collections(
                         collection_path, artifacts_manager,
                     ))
@@ -1670,7 +1677,7 @@ class GalaxyCLI(CLI):
         for w in warnings:
             display.warning(w)
 
-        if not path_found:
+        if not path_found and (C.COLLECTIONS_PATHS or non_default_provided):
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
         if output_format == 'json':

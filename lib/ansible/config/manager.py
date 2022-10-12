@@ -122,7 +122,7 @@ def ensure_type(value, value_type, origin=None):
 
         elif value_type == 'pathspec':
             if isinstance(value, string_types):
-                value = value.split(os.pathsep)
+                value = value.split(os.pathsep) if value else ''
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
