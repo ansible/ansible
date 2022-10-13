@@ -1062,9 +1062,10 @@ class StrategyBase:
 
     def _get_cached_role(self, task, play):
         role_path = task._role.get_role_path()
+        role_cache = play.role_cache[role_path]
         try:
-            idx = play.role_cache[role_path].index(task._role)
-            return play.role_cache[role_path][idx]
+            idx = role_cache.index(task._role)
+            return role_cache[idx]
         except ValueError:
             return None
 
