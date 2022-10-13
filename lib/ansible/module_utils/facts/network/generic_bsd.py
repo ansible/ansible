@@ -221,24 +221,35 @@ class GenericBsdIfconfigNetwork(Network):
                 address['broadcast'] = words[3]
 
         else:
+            # Don't just assume columns, use "netmask" as the index for the prior column
+            try:
+                netmask_idx = words.index('netmask') + 1
+            except ValueError:
+                netmask_idx = 3
+
             # deal with hex netmask
-            if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:
-                words[3] = '0x' + words[3]
-            if words[3].startswith('0x'):
-                address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
+            if re.match('([0-9a-f]){8}$', words[netmask_idx]):
+                netmask = '0x' + words[netmask_idx]
+            else:
+                netmask = words[netmask_idx]
+
+            if netmask.startswith('0x'):
+                address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(netmask, base=16)))
             else:
                 # otherwise assume this is a dotted quad
-                address['netmask'] = words[3]
+                address['netmask'] = netmask
         # calculate the network
         address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]
         netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]
         address['network'] = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
         if 'broadcast' not in address:
             # broadcast may be given or we need to calculate
-            if len(words) > 5:
-                address['broadcast'] = words[5]
-            else:
+            try:
+                broadcast_idx = words.index('broadcast') + 1
+            except ValueError:
                 address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))
+            else:
+                address['broadcast'] = words[broadcast_idx]
 
         # add to our list of addresses
         if not words[1].startswith('127.'):

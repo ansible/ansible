@@ -173,3 +173,45 @@ class TestGenericBsdNetworkNetBSD(unittest.TestCase):
                               'filter': '*'}
         mock_module.get_bin_path = Mock(return_value=None)
         return mock_module
+
+    def test_ensure_correct_netmask_parsing(self):
+        n = generic_bsd.GenericBsdIfconfigNetwork(None)
+        lines = [
+            'inet 192.168.7.113 netmask 0xffffff00 broadcast 192.168.7.255',
+            'inet 10.109.188.206 --> 10.109.188.206 netmask 0xffffe000',
+        ]
+        expected = [
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '192.168.7.113',
+                            'netmask': '255.255.255.0',
+                            'network': '192.168.7.0',
+                            'broadcast': '192.168.7.255'
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['192.168.7.113']},
+            ),
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '10.109.188.206',
+                            'netmask': '255.255.224.0',
+                            'network': '10.109.160.0',
+                            'broadcast': '10.109.191.255'
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['10.109.188.206']},
+            ),
+        ]
+        for i, line in enumerate(lines):
+            words = line.split()
+            current_if = {'ipv4': []}
+            ips = {'all_ipv4_addresses': []}
+            n.parse_inet_line(words, current_if, ips)
+            self.assertDictEqual(current_if, expected[i][0])
+            self.assertDictEqual(ips, expected[i][1])
