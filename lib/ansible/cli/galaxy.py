@@ -1265,9 +1265,6 @@ class GalaxyCLI(CLI):
 
         :param artifacts_manager: Artifacts manager.
         """
-        if context.CLIARGS['collections_path'] is None:
-            raise AnsibleOptionsError("- you must specify a valid collection path to install collections")
-
         install_items = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
         collection_path = None
@@ -1286,6 +1283,8 @@ class GalaxyCLI(CLI):
         collection_requirements = []
         role_requirements = []
         if context.CLIARGS['type'] == 'collection':
+            if context.CLIARGS['collections_path'] is None:
+                raise AnsibleOptionsError("- you must specify a valid collection path to install collections")
             collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
             requirements = self._require_one_of_collections_requirements(
                 install_items, requirements_file,
@@ -1325,6 +1324,8 @@ class GalaxyCLI(CLI):
                     display_func(two_type_warning.format('collection'))
                 else:
                     collection_path = self._get_default_collection_path()
+                    if collection_path is None:
+                        raise AnsibleOptionsError("- you must specify a valid collection path to install collections")
                     collection_requirements = requirements['collections']
             else:
                 # roles were specified directly, so we'll just go out grab them

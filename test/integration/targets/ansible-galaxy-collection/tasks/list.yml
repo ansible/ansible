@@ -142,7 +142,7 @@
 - assert:
     that:
       - "'{}' not in list_result_error.stdout"
-      - list_result_error.stderr.search("None of the provided paths were usable.")
+      - list_result_error.stderr is search("None of the provided paths were usable.")
 
 - name: test json is emitted when configured collection paths are empty
   command: "ansible-galaxy collection list --format json"
