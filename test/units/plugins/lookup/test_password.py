@@ -27,7 +27,6 @@ except ImportError:
     passlib = None
     pbkdf2 = None
 
-import os
 import pytest
 
 from units.mock.loader import DictDataLoader
@@ -40,7 +39,6 @@ from ansible.module_utils.six.moves import builtins
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import PluginLoader, lookup_loader
 from ansible.plugins.lookup import password
-from ansible.utils import path as upath
 
 
 DEFAULT_LENGTH = 20
@@ -379,17 +377,14 @@ class TestFormatContent(unittest.TestCase):
 
 class TestWritePasswordFile(unittest.TestCase):
     def setUp(self):
-        self.makedirs_safe = upath.makedirs_safe
-        self.os_chmod = os.chmod
-        os.chmod = lambda path, mode: None
-        self.os_makedirs = os.makedirs
-        os.makedirs = lambda fd, mode: None
-        upath.makedirs_safe = lambda path, mode: None
+        self.makedirs_safe = password.makedirs_safe
+        self.os_chmod = password.os.chmod
+        password.makedirs_safe = lambda path, mode: None
+        password.os.chmod = lambda path, mode: None
 
     def tearDown(self):
-        upath.makedirs_safe = self.makedirs_safe
-        os.chmod = self.os_chmod
-        os.makedirs = self.os_makedirs
+        password.makedirs_safe = self.makedirs_safe
+        password.os.chmod = self.os_chmod
 
     def test_content_written(self):
 
@@ -405,28 +400,22 @@ class BaseTestLookupModule(unittest.TestCase):
         self.fake_loader = DictDataLoader({'/path/to/somewhere': 'sdfsdf'})
         self.password_lookup = lookup_loader.get('password')
         self.password_lookup._loader = self.fake_loader
-        self.os_path_exists = os.path.exists
-        self.os_open = os.open
-        os.open = lambda path, flag: None
-        self.os_close = os.close
-        os.close = lambda fd: None
-        self.os_mkdir = os.mkdir
-        os.mkdir = lambda fd, mode: None
-        self.os_makedirs = os.makedirs
-        os.makedirs = lambda fd, mode: None
-        self.os_remove = os.remove
-        os.remove = lambda path: None
-        self.makedirs_safe = upath.makedirs_safe
-        upath.makedirs_safe = lambda path, mode: None
+        self.os_path_exists = password.os.path.exists
+        self.os_open = password.os.open
+        password.os.open = lambda path, flag: None
+        self.os_close = password.os.close
+        password.os.close = lambda fd: None
+        self.os_remove = password.os.remove
+        password.os.remove = lambda path: None
+        self.makedirs_safe = password.makedirs_safe
+        password.makedirs_safe = lambda path, mode: None
 
     def tearDown(self):
-        os.path.exists = self.os_path_exists
-        os.open = self.os_open
-        os.close = self.os_close
-        os.remove = self.os_remove
-        os.mkdir = self.os_mkdir
-        os.makedirs = self.os_makedirs
-        upath.makedirs_safe = self.makedirs_safe
+        password.os.path.exists = self.os_path_exists
+        password.os.open = self.os_open
+        password.os.close = self.os_close
+        password.os.remove = self.os_remove
+        password.makedirs_safe = self.makedirs_safe
 
 
 class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
