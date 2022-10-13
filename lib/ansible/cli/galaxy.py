@@ -261,6 +261,7 @@ class GalaxyCLI(CLI):
         collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
+        self.collection_parser = collection_parser
         self.add_download_options(collection_parser, parents=[common, cache_options])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
@@ -1580,11 +1581,9 @@ class GalaxyCLI(CLI):
 
         warnings = []
         path_found = False
-        non_default_provided = False
         collection_found = False
         for path in collections_search_paths:
             collection_path = GalaxyCLI._resolve_path(path)
-            non_default_provided |= path not in default_collections_path  # -p
             if not os.path.exists(path):
                 if path in default_collections_path:
                     # don't warn for missing default paths
@@ -1678,8 +1677,10 @@ class GalaxyCLI(CLI):
         for w in warnings:
             display.warning(w)
 
-        if not path_found and (C.COLLECTIONS_PATHS or non_default_provided):
-            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+        if not path_found:
+            cli_option_provided = any(not arg.sentinel for arg in self.collection_parser.choices['list']._actions if arg.dest == 'collections_path')
+            if C.COLLECTIONS_PATHS or cli_option_provided:
+                raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
         if output_format == 'json':
             display.display(json.dumps(collections_in_paths))

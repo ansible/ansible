@@ -147,7 +147,6 @@
 - name: test json is emitted when configured collection paths are empty
   command: "ansible-galaxy collection list --format json"
   register: empty_list_result
-  ignore_errors: True
   environment:
     ANSIBLE_COLLECTIONS_PATH: ""
 

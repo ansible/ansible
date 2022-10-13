@@ -71,11 +71,13 @@ class PrependListAction(argparse.Action):
             help=help,
             metavar=metavar
         )
+        self.sentinel = True
 
     def __call__(self, parser, namespace, values, option_string=None):
         items = copy.copy(ensure_value(namespace, self.dest, []))
         items[0:0] = values
         setattr(namespace, self.dest, items)
+        self.sentinel = False
 
 
 def ensure_value(namespace, name, value):
