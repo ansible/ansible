@@ -342,7 +342,7 @@ class ActionBase(ABC):
                 final_environment.update(temp_environment)
 
         if len(final_environment) > 0:
-            final_environment = self._templar.template(final_environment)
+            final_environment = {to_text(k): to_text(v) for k, v in self._templar.template(final_environment).items()}
 
         if isinstance(raw_environment_out, dict):
             raw_environment_out.clear()
@@ -1097,8 +1097,9 @@ class ActionBase(ABC):
                 self._transfer_data(args_file_path, json.dumps(module_args))
             display.debug("done transferring module to remote")
 
-        # TODO: if async, compute a string with just ANSIBLE_ASYNC_DIR
-        if module_style != 'new' or wrap_async:
+        if wrap_async:
+            environment_string = self._connection._shell.env_prefix(ANSIBLE_ASYNC_DIR=async_dir)
+        elif module_style != 'new':
             environment_string = self._compute_environment_string()
         else:
             environment_string = ''
