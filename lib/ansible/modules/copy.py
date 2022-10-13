@@ -685,7 +685,7 @@ def main():
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
 
                 b_mysrc = b_src
-                if remote_src and os.path.isfile(b_mysrc):
+                if remote_src and os.path.isfile(b_src):
 
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
