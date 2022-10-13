@@ -1,0 +1,4 @@
+bugfixes:
+- BSD network facts - Do not assume column indexes, look for ``netmask`` and
+  ``broadcast`` for determining the correct columns when parsing ``inet`` line
+  (https://github.com/ansible/ansible/issues/79117)
