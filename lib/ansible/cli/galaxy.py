@@ -1678,9 +1678,11 @@ class GalaxyCLI(CLI):
             display.warning(w)
 
         if not path_found:
-            cli_option_provided = any(not arg.sentinel for arg in self.collection_parser.choices['list']._actions if arg.dest == 'collections_path')
-            if C.COLLECTIONS_PATHS or cli_option_provided:
-                raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+            error_msg = "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            if C.COLLECTIONS_PATHS:
+                raise AnsibleOptionsError(error_msg)
+            elif any(not arg.sentinel for arg in self.collection_parser.choices['list']._actions if arg.dest == 'collections_path'):
+                raise AnsibleOptionsError(error_msg)
 
         if output_format == 'json':
             display.display(json.dumps(collections_in_paths))
