@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - cloud/scaleway - Add support for project ID in config

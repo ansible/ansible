@@ -11,3 +11,4 @@
 [default]
 key = @KEY
 org = @ORG
+project = @PROJECT
