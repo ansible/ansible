@@ -18,9 +18,15 @@ version_added: "2.4"
 options:
   free-form:
     description:
-      - The name of the imported file is specified directly without any other option.
-      - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
+      - |
+        Specifies the name of the imported file directly without any other option C(- import_tasks: file.yml).
+      - Most keywords, including loops and conditionals, only apply to the imported tasks, not to this statement itself.
       - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
+  file:
+    description:
+      - Specifies the name of the file that lists tasks to add to the current playbook.
+    type: str
+    version_added: '2.7'
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
@@ -50,7 +56,8 @@ EXAMPLES = r'''
         msg: task1
 
     - name: Include task list in play
-      ansible.builtin.import_tasks: stuff.yaml
+      ansible.builtin.import_tasks:
+        file: stuff.yaml
 
     - ansible.builtin.debug:
         msg: task10
