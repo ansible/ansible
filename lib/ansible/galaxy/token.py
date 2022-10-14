@@ -24,6 +24,8 @@ __metaclass__ = type
 import base64
 import os
 import json
+
+from datetime import datetime, timedelta
 from stat import S_IRUSR, S_IWUSR
 
 from ansible import constants as C
@@ -34,6 +36,9 @@ from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 
 display = Display()
+
+
+ISO_8601_FORMAT_STR = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 
 class NoTokenSentinel(object):
@@ -54,10 +59,26 @@ class KeycloakToken(object):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
+        self._issued_at = None
+        self._expires_in = None
         self.validate_certs = validate_certs
         self.client_id = client_id
         if self.client_id is None:
             self.client_id = 'cloud-services'
+
+    @property
+    def expired(self):
+        if None in (self._issued_at, self._expires_in):
+            return False
+        try:
+            issue_time = datetime.strptime(self._issued_at, ISO_8601_FORMAT_STR)
+        except ValueError:
+            display.warning(f"KeycloakToken issued at unknown time format {self._issued_at}")
+            return False
+
+        # expire a few seconds before to handle proactively
+        almost_expiration = issue_time + timedelta(seconds=self._expires_in - 3)
+        return datetime.now(tz=issue_time.tzinfo) > almost_expiration
 
     def _form_payload(self):
         return 'grant_type=refresh_token&client_id=%s&refresh_token=%s' % (self.client_id,
@@ -87,8 +108,10 @@ class KeycloakToken(object):
 
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
 
-        # - extract 'access_token'
+        # - extract token details
         self._token = data.get('access_token')
+        self._issued_at = data.get('issued_at')
+        self._expires_in = int(data.get('expires_in'))
 
         return self._token
 

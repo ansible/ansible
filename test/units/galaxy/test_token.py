@@ -8,11 +8,16 @@ __metaclass__ = type
 
 import os
 import pytest
+
+from datetime import datetime, timedelta, timezone
+from io import StringIO
 from unittest.mock import MagicMock
 
 import ansible.constants as C
+import ansible.galaxy.token as token_lib
 from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
-from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
+from ansible.galaxy.token import GalaxyToken, NoTokenSentinel, KeycloakToken
+from ansible.galaxy.token import ISO_8601_FORMAT_STR as time_format
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
@@ -96,3 +101,35 @@ def test_token_from_file_missing(b_token_file):
 @pytest.mark.parametrize('b_token_file', ['file'], indirect=True)
 def test_token_none(b_token_file):
     assert GalaxyToken(token=NoTokenSentinel).get() is None
+
+
+def test_expired_keycloak_token(monkeypatch):
+    # test long-expired token
+    response1 = u'{{"access_token": "token", "issued_at": "{0}", "expires_in": "{1}"}}'.format(
+        "2020-11-27T13:50:51.925209Z", "300"
+    )
+    # test token that will expire in a few seconds
+    response2 = u'{{"access_token": "token", "issued_at": "{0}", "expires_in": "{1}"}}'.format(
+        (datetime.now(timezone.utc) - timedelta(seconds=298)).strftime(time_format), "300"
+    )
+    mock_open = MagicMock(side_effect=[StringIO(response1), StringIO(response2)])
+    monkeypatch.setattr(token_file, 'open_url', mock_open)
+
+    token = KeycloakToken(access_token='', auth_url='')
+    token.get()
+    assert token.expired
+    token.get()
+    assert token.expired
+
+
+def test_non_expired_keycloak_token(monkeypatch):
+    # test token that expires in 10 seconds
+    response = u'{{"access_token": "token", "issued_at": "{0}", "expires_in": "{1}"}}'.format(
+        (datetime.now(timezone.utc) - timedelta(seconds=290)).strftime(time_format), "300"
+    )
+    mock_open = MagicMock(return_value=StringIO(response))
+    monkeypatch.setattr(token_lib, 'open_url', mock_open)
+
+    token = KeycloakToken(access_token='', auth_url='')
+    token.get()
+    assert token.expired is False

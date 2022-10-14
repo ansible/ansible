@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection publish - fix refreshing the KeycloakToken when waiting for publish results (https://github.com/ansible/ansible/issues/70019).
