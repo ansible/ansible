@@ -161,7 +161,7 @@ def validate_signature_count(value):
 @dataclass
 class RoleDistributionServer:
     _api: t.Union[GalaxyAPI, None]
-    api_servers: list[GalaxyAPI]
+    api_servers: t.List[GalaxyAPI]
 
     @property
     def api(self):
