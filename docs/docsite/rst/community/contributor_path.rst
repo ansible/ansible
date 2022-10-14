@@ -57,7 +57,9 @@ Each Ansible project has its own set of contributor guidelines. Familiarize your
 Making your first contribution
 ==============================
 
-You can find some ideas on how you can contribute in :ref:`how_can_i_help` and the `collection repository <https://github.com/ansible-collections/>`_  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
+You can find some ideas on how you can contribute in :ref:`how_can_i_help`.
+
+If you are interested in contributing to collections, take a look at :ref:`collection contributions<collections_contributions>` and the `collection repository <https://github.com/ansible-collections/>`_'s  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
 
 You can also look for GitHub issues labeled with the ``easyfix``, ``good_first_issue``, and ``docs`` labels.  Add a comment on the GitHub issue to say you are looking at it and to ask for help if you need it.
 
