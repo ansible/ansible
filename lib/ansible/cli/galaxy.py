@@ -1162,11 +1162,16 @@ class GalaxyCLI(CLI):
                         df.write(b_rendered)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
-                    shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
+                    shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path), follow_symlinks=False)
 
             for d in dirs:
                 b_dir_path = to_bytes(os.path.join(obj_path, rel_root, d), errors='surrogate_or_strict')
-                if not os.path.exists(b_dir_path):
+                if os.path.exists(b_dir_path):
+                    continue
+                b_src_dir = to_bytes(os.path.join(root, d), errors='surrogate_or_strict')
+                if os.path.islink(b_src_dir):
+                    shutil.copyfile(b_src_dir, b_dir_path, follow_symlinks=False)
+                else:
                     os.makedirs(b_dir_path)
 
         display.display("- %s %s was created successfully" % (galaxy_type.title(), obj_name))
