@@ -60,7 +60,7 @@ class GalaxyRole(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.galaxy = galaxy
-        self.api = api
+        self._api = api
 
         self.name = name
         self.version = version
@@ -99,6 +99,14 @@ class GalaxyRole(object):
 
     def __eq__(self, other):
         return self.name == other.name
+
+    @property
+    def api(self):
+        # prevent recursive imports
+        from ansible.cli.galaxy import RoleDistributionServer
+        if isinstance(self._api, RoleDistributionServer):
+            return self._api.api
+        return self._api
 
     @property
     def metadata(self):
