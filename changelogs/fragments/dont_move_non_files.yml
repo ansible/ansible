@@ -1,0 +1,2 @@
+bugfixes:
+  - copy module will no longer move 'non files' set as src when remote_src=true.
