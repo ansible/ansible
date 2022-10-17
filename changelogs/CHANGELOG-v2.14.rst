@@ -5,6 +5,23 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-10-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- BSD network facts - Do not assume column indexes, look for ``netmask`` and ``broadcast`` for determining the correct columns when parsing ``inet`` line (https://github.com/ansible/ansible/issues/79117)
+- ansible-config limit shorthand format to assigned values
+- ansible-test - Update the ``pylint`` sanity test to use version 2.15.4.
+
 v2.14.0b3
 =========
 

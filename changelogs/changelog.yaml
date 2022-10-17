@@ -781,3 +781,23 @@ releases:
         name: urn
         namespace: null
     release_date: '2022-10-10'
+  2.14.0rc1:
+    changes:
+      bugfixes:
+      - BSD network facts - Do not assume column indexes, look for ``netmask`` and
+        ``broadcast`` for determining the correct columns when parsing ``inet`` line
+        (https://github.com/ansible/ansible/issues/79117)
+      - ansible-config limit shorthand format to assigned values
+      - ansible-test - Update the ``pylint`` sanity test to use version 2.15.4.
+      release_summary: '| Release Date: 2022-10-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 79117-bsd-ifconfig-inet-fix.yml
+    - adjust_config_list.yml
+    - ansible-test-pylint-2.15.4.yml
+    - v2.14.0rc1_summary.yaml
+    release_date: '2022-10-13'
