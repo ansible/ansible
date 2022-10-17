@@ -576,23 +576,24 @@ def main():
         module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
     mode = module.params['mode']
 
+    changed = False
+
     checksum_dest = None
+    checksum_src = None
+    md5sum_src = None
 
     if os.path.isfile(src):
-        checksum_src = module.sha1(src)
-    else:
-        checksum_src = None
-
-    # Backwards compat only.  This will be None in FIPS mode
-    try:
-        if os.path.isfile(src):
+        try:
+            checksum_src = module.sha1(src)
+        except (OSError, IOError) as e:
+            module.warn("Unable to calculate src checksum, assuming change: %s" % to_native(e))
+        try:
+            # Backwards compat only.  This will be None in FIPS mode
             md5sum_src = module.md5(src)
-        else:
-            md5sum_src = None
-    except ValueError:
-        md5sum_src = None
-
-    changed = False
+        except ValueError:
+            pass
+    elif remote_src and not os.path.isdir(src):
+        module.fail_json("Cannot copy invalid source '%s': not a file" % to_native(src))
 
     if checksum and checksum_src != checksum:
         module.fail_json(
@@ -658,6 +659,7 @@ def main():
 
     backup_file = None
     if checksum_src != checksum_dest or os.path.islink(b_dest):
+
         if not module.check_mode:
             try:
                 if backup:
@@ -681,8 +683,10 @@ def main():
                     (rc, out, err) = module.run_command(validate % src)
                     if rc != 0:
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
+
                 b_mysrc = b_src
                 if remote_src and os.path.isfile(b_src):
+
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
                     shutil.copyfile(b_src, b_mysrc)
@@ -702,6 +706,7 @@ def main():
                         # assume unwanted ACLs by default
                         src_has_acls = True
 
+                # at this point we should always have tmp file
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
 
                 if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
