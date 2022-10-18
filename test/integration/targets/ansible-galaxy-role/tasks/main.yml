@@ -1,3 +1,6 @@
+- name: Install role from Galaxy (should not fail with AttributeError)
+  command: ansible-galaxy role install ansible.nope -vvvv --ignore-errors
+
 - name: Archive directories
   file:
     state: directory
