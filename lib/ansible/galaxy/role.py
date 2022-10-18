@@ -32,6 +32,7 @@ from shutil import rmtree
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
@@ -102,9 +103,7 @@ class GalaxyRole(object):
 
     @property
     def api(self):
-        # prevent recursive imports
-        from ansible.cli.galaxy import RoleDistributionServer
-        if isinstance(self._api, RoleDistributionServer):
+        if not isinstance(self._api, GalaxyAPI):
             return self._api.api
         return self._api
 
