@@ -14,7 +14,7 @@ Testing tools
 =============
 
 The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing` and provided by both the ``ansible`` and ``ansible-core`` packages.
-
+Use ansible-test tool from your collection directory, which must include ansible_collections in the path, for example collections/ansible_collections/community.general for the community.general collection. See :ref:testing_collections_guide for more details.
 You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``. When you test collections, test against the ansible-core version(s) you are targeting.
 
 You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Azure Pipelines both in the ansible/ansible GitHub repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.

@@ -6,6 +6,7 @@ Contributing to collections
 
 If you want to add functionality to an existing collection, modify a collection you are using to fix a bug, or change the behavior of a module in a collection, clone the git repository for that collection and make changes on a branch. You can combine changes to a collection with a local checkout of Ansible (``source hacking/env-setup``).
 You should first check the collection repository to see if it has specific contribution guidelines. These are typically listed in the README.md or CONTRIBUTING.md files within the repository.
+See :ref:collection_quickstart for more general guidelines.
 
 Contributing to a collection: community.general
 ===============================================
