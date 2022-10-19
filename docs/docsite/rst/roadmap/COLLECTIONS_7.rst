@@ -19,7 +19,7 @@ Release schedule
 :2022-09-27: Ansible-7.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.14`` pre-releases).
 :2022-10-12: Community topic: List any backwards incompatible collection releases that beta1 should try to accommodate.
 :2022-10-17: First ansible-core 2.14 release candidate.
-:2022-10-18: Ansible-7.0.0 alpha2.
+:2022-10-25: Ansible-7.0.0 alpha2.
 :2022-10-26: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2022-11-07: Ansible-core-2.14.0 released.
 :2022-11-07: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-7. This includes adding new collections to Ansible 7.0.0; from now on new collections have to wait for 7.1.0 or later.
