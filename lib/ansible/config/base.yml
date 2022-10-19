@@ -407,6 +407,17 @@ INVENTORY_UNPARSED_WARNING:
   - {key: inventory_unparsed_warning, section: inventory}
   type: boolean
   version_added: "2.14"
+INVENTORY_LIMIT_EMPTY:
+  name: What to do when the `--limit` expression returns an emtpy host list
+  default: 'error'
+  description:
+      - Decide how to react when ansible is invoked with a 'limit' host pattern and it results in no hosts being selected for the run.
+  choices: ['error', 'warn', 'ignore', 'log']
+  env: [{name: ANSIBLE_INVENTORY_LIMIT_EMPTY}]
+  ini:
+  - {key: limit_empty, section: inventory}
+  type: string
+  version_added: "2.15"
 DOC_FRAGMENT_PLUGIN_PATH:
   name: documentation fragment plugins path
   default: '{{ ANSIBLE_HOME ~ "/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments" }}'

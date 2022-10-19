@@ -286,6 +286,20 @@ class Display(metaclass=Singleton):
             # actually log
             logger.log(lvl, msg2)
 
+    def handle(self, msg, setting, host=None, exc=None):
+        ''' handle messages that have conditional toggle '''
+        if setting == 'error':
+            if exc is not None:
+                raise exc(msg)
+            else:
+                self.error(msg, host=host)
+        elif setting == 'warn':
+            self.warning(msg, host=host)
+        elif setting == 'log':
+            self.display(msg, host=host, log_only=True)
+        elif setting != 'ignore':
+            raise AnsibleError("Invalid option '%s' used for error message handling" % setting)
+
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
 

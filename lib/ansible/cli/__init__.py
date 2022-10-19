@@ -571,8 +571,9 @@ class CLI(ABC):
 
         hosts = inventory.list_hosts(pattern)
         if not hosts and no_hosts is False:
-            raise AnsibleError("Specified inventory, host pattern and/or --limit leaves us with no hosts to target.")
-
+            msg = "Specified inventory, host pattern and/or --limit leaves us with no hosts to target.")
+            handle = C.config.get_config_value('INVENTORY_LIMIT_EMPTY')
+            display.handle(msg, handle, exc=AnsibleOptionsError)
         return hosts
 
     @staticmethod
