@@ -1,6 +1,7 @@
 
 
-By default, ``ansible-galaxy collection install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the
+By default, Ansible installs the collection in ~/.ansible/collections under the ansible_collections directory.
+``ansible-galaxy collection install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the
 :file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any
 further configuration.
 
