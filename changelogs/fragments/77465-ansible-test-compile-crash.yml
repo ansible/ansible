@@ -1,2 +1,0 @@
-bugfixes:
-  - "ansible-test compile sanity test - do not crash if a column could not be determined for an error (https://github.com/ansible/ansible/pull/77465)."

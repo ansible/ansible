@@ -1,0 +1,60 @@
+DOCUMENTATION:
+  name: comment
+  version_added: 'historical'
+  short_description: comment out a string
+  description:
+    - Use programming language conventions to turn the input string into an embeddable comment.
+  positional: _input, style
+  options:
+    _input:
+      description: String to comment.
+      type: string
+      required: true
+    style:
+      description: Comment style to use.
+      type: string
+      default: plain
+      choices: ['plain', 'decoration', 'erlang', 'c', 'cblock', 'xml']
+    decoration:
+      description: Indicator for comment or intermediate comment depending on the style.
+      type: string
+    begining:
+      description: Indicator of the start of a comment block, only available for styles that support multiline comments.
+      type: string
+    end:
+      description: Indicator the end of a comment block, only available for styles that support multiline comments.
+      type: string
+    newline:
+      description: Indicator of comment end of line, only available for styles that support multiline comments.
+      type: string
+      default: '\n'
+    prefix:
+      description: Token to start each line inside a comment block, only available for styles that support multiline comments.
+      type: string
+    prefix_count:
+      description: Number of times to add a prefix at the start of a line, when a prefix exists and is usable.
+      type: int
+      default: 1
+    postfix:
+      description: Indicator of the end of each line inside a comment block, only available for styles that support multiline comments.
+      type: string
+    protfix_count:
+      description: Number of times to add a postfix at the end of a line, when a prefix exists and is usable.
+      type: int
+      default: 1
+
+EXAMPLES: |
+
+    # commented =>  #
+    #               # Plain style (default)
+    #               #
+    commented: "{{ 'Plain style (default)' | comment }}"
+
+    # not going to show that here ...
+    verycustom: "{{ "Custom style" | comment('plain', prefix='#######\n#', postfix='#\n#######\n   ###\n    #') }}"
+
+
+RETURN:
+  _value:
+    description: The 'commented out' string.
+    type: string

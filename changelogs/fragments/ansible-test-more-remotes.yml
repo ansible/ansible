@@ -1,5 +1,0 @@
-minor_changes:
-  - ansible-test - Add support for provisioning remotes which require ``doas`` for become.
-  - ansible-test - Add support for provisioning Ubuntu 20.04 remote instances.
-  - ansible-test - Add support for provisioning Alpine 3.16 remote instances.
-  - ansible-test - Add support for provisioning Fedora 35 and 36 remote instances.

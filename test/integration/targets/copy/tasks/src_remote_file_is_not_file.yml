@@ -1,0 +1,39 @@
+- name: test remote src non files
+  vars:
+    destfile: '{{remote_dir}}/whocares'
+  block:
+  - name: mess with dev/null
+    copy:
+      src: /dev/null
+      dest: "{{destfile}}"
+      remote_src: true
+    become: true
+    register: dev_null_fail
+    ignore_errors: true
+
+  - name: ensure we failed
+    assert:
+      that:
+        - dev_null_fail is failed
+        - "'not a file' in dev_null_fail.msg"
+
+  - name: now with file existing
+    file: state=touch path="{{destfile}}"
+
+  - name: mess with dev/null again
+    copy:
+      src: /dev/null
+      dest: "{{destfile}}"
+      remote_src: true
+    become: true
+    register: dev_null_fail
+    ignore_errors: true
+
+  - name: ensure we failed, again
+    assert:
+      that:
+        - dev_null_fail is failed
+        - "'not a file' in dev_null_fail.msg"
+  always:
+  - name: cleanup
+    file: state=absent path="{{destfile}}"

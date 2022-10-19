@@ -55,6 +55,8 @@ The following table lists the current Steering Committee members. See :ref:`stee
   +------------------+---------------+-------------+
   | Markus Bergholz  | markuman      | 2022        |
   +------------------+---------------+-------------+
+  | Maxwell G        | gotmax23      | 2022        |
+  +------------------+---------------+-------------+
   | Sorin Sbarnea    | ssbarnea      | 2021        |
   +------------------+---------------+-------------+
 
@@ -105,6 +107,26 @@ Votes must always have "no change" as an option.
 In case of equal numbers of votes for and against a topic, the chairperson's vote will break the tie. For example, if there are six votes for and six votes against a topic, and the chairperson's vote is among those six which are for the topic, the final decision will be positive. If the chairperson has not voted yet, other members ask them to vote.
 
 For votes with more than two options, one choice must have at least half of the votes. If two choices happen to both have half of the votes, the chairperson's vote will break the tie. If no choice has at least half of the votes, the vote choices have to be adjusted so that a majority can be found for a choice in a new vote.
+
+Community topics triage
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The Committee conducts a triage of `community topics <https://github.com/ansible-community/community-topics/issues>`_ periodically (every three to six months).
+
+The triage goals are:
+
+* Sparking interest for forgotten topics.
+* Identifying and closing irrelevant topics, for example, when the reason of the topic does not exist anymore or the topic is out of the Committee responsibilities scope.
+* Identifying and closing topics that the Community are not interested in discussing. As indicators, it can be absence of comments or no activity in comments, at least, for the last six months.
+* Identifying and closing topics that were solved and implemented but not closed (in this case, such a topic can be closed on the spot with a comment that it has been implemented).
+* Identifying topics that have been in pending state for a long time, for example, when it is waiting for actions from someone for several months or when the topics were solved but not implemented.
+
+A person starting the triage:
+
+#. Identifies the topics mentioned above.
+#. Creates a special triage topic containing an enumerated list of the topics-candidates for closing.
+#. Establishes a vote date considering a number of topics, their complexity and comment-history size giving the Community sufficient time to go through and discuss them.
+#. The Community and the Committee vote on each topic-candidate listed in the triage topic whether to close it or keep it open.
 
 Collection inclusion requests workflow
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

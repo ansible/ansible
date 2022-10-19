@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix bug in `vars` applied to roles, they were being incorrectly exported among others while only vars/main.yml was meant to be. Also adjusted the precedence to act the same as inline params.

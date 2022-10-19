@@ -1,2 +1,0 @@
-bugfixes:
-  - items2dict - Handle error if an item is not a dictionary or is missing the required keys (https://github.com/ansible/ansible/issues/70337).

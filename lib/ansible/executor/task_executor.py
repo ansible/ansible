@@ -262,35 +262,18 @@ class TaskExecutor:
         into an array named 'results' which is inserted into the final result
         along with the item for which the loop ran.
         '''
-
-        results = []
-
-        # make copies of the job vars and task so we can add the item to
-        # the variables and re-validate the task with the item variable
-        # task_vars = self._job_vars.copy()
         task_vars = self._job_vars
+        templar = Templar(loader=self._loader, variables=task_vars)
 
-        loop_var = 'item'
-        index_var = None
-        label = None
-        loop_pause = 0
-        extended = False
-        templar = Templar(loader=self._loader, variables=self._job_vars)
+        self._task.loop_control.post_validate(templar=templar)
 
-        # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
-        if self._task.loop_control:
-            loop_var = templar.template(self._task.loop_control.loop_var)
-            index_var = templar.template(self._task.loop_control.index_var)
-            loop_pause = templar.template(self._task.loop_control.pause)
-            extended = templar.template(self._task.loop_control.extended)
-            extended_allitems = templar.template(self._task.loop_control.extended_allitems)
-
-            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
-            label = self._task.loop_control.label
-
+        loop_var = self._task.loop_control.loop_var
+        index_var = self._task.loop_control.index_var
+        loop_pause = self._task.loop_control.pause
+        extended = self._task.loop_control.extended
+        extended_allitems = self._task.loop_control.extended_allitems
         # ensure we always have a label
-        if label is None:
-            label = '{{' + loop_var + '}}'
+        label = self._task.loop_control.label or '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
             display.warning(u"%s: The loop variable '%s' is already in use. "
@@ -298,9 +281,9 @@ class TaskExecutor:
                             u" to something else to avoid variable collisions and unexpected behavior." % (self._task, loop_var))
 
         ran_once = False
-
         no_log = False
         items_len = len(items)
+        results = []
         for item_index, item in enumerate(items):
             task_vars['ansible_loop_var'] = loop_var
 
@@ -333,10 +316,7 @@ class TaskExecutor:
 
             # pause between loop iterations
             if loop_pause and ran_once:
-                try:
-                    time.sleep(float(loop_pause))
-                except ValueError as e:
-                    raise AnsibleError('Invalid pause value: %s, produced error: %s' % (loop_pause, to_native(e)))
+                time.sleep(loop_pause)
             else:
                 ran_once = True
 
@@ -562,7 +542,7 @@ class TaskExecutor:
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
-                self._connection._load_name != current_connection or
+                not self._connection.matches_name([current_connection]) or
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
@@ -571,11 +551,12 @@ class TaskExecutor:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
+            self._set_become_plugin(cvars, templar, self._connection)
 
         plugin_vars = self._set_connection_options(cvars, templar)
 
         # make a copy of the job vars here, as we update them here and later,
-        # but don't want to polute original
+        # but don't want to pollute original
         vars_copy = variables.copy()
         # update with connection info (i.e ansible_host/ansible_user)
         self._connection.update_vars(vars_copy)
@@ -597,7 +578,7 @@ class TaskExecutor:
             setattr(self._connection, '_socket_path', socket_path)
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
-        # special handling for python interpreter for network_os, default to ansible python unless overriden
+        # special handling for python interpreter for network_os, default to ansible python unless overridden
         if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
             # this also avoids 'python discovery'
             cvars['ansible_python_interpreter'] = sys.executable
@@ -821,7 +802,7 @@ class TaskExecutor:
 
         # add the delegated vars to the result, so we can reference them
         # on the results side without having to do any further templating
-        # also now add conneciton vars results when delegating
+        # also now add connection vars results when delegating
         if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
             for k in plugin_vars:
@@ -972,6 +953,14 @@ class TaskExecutor:
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
+        self._set_become_plugin(cvars, templar, connection)
+
+        # Also backwards compat call for those still using play_context
+        self._play_context.set_attributes_from_plugin(connection)
+
+        return connection
+
+    def _set_become_plugin(self, cvars, templar, connection):
         # load become plugin if needed
         if cvars.get('ansible_become') is not None:
             become = boolean(templar.template(cvars['ansible_become']))
@@ -984,27 +973,28 @@ class TaskExecutor:
             else:
                 become_plugin = self._get_become(self._task.become_method)
 
-            try:
-                connection.set_become_plugin(become_plugin)
-            except AttributeError:
-                # Older connection plugin that does not support set_become_plugin
-                pass
+        else:
+            # If become is not enabled on the task it needs to be removed from the connection plugin
+            # https://github.com/ansible/ansible/issues/78425
+            become_plugin = None
 
+        try:
+            connection.set_become_plugin(become_plugin)
+        except AttributeError:
+            # Older connection plugin that does not support set_become_plugin
+            pass
+
+        if become_plugin:
             if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
                 raise AnsibleError(
                     "The '%s' connection does not provide a TTY which is required for the selected "
-                    "become plugin: %s." % (conn_type, become_plugin.name)
+                    "become plugin: %s." % (connection._load_name, become_plugin.name)
                 )
 
             # Backwards compat for connection plugins that don't support become plugins
             # Just do this unconditionally for now, we could move it inside of the
             # AttributeError above later
             self._play_context.set_become_plugin(become_plugin.name)
-
-        # Also backwards compat call for those still using play_context
-        self._play_context.set_attributes_from_plugin(connection)
-
-        return connection
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:

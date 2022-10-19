@@ -1,0 +1,31 @@
+- name: omit should reset to 'absent' or same context, not just 'default' value
+  hosts: testhost
+  gather_facts: false
+  become: yes
+  # become_user needed at play level for testing this behavior
+  become_user: nobody
+  roles:
+    - name: setup_test_user
+      become_user: root
+  tasks:
+    - shell: whoami
+      register: inherited
+
+    - shell: whoami
+      register: explicit_no
+      become: false
+
+    - shell: whoami
+      register: omited_inheritance
+      become: '{{ omit }}'
+
+    - shell: whoami
+      register: explicit_yes
+      become: yes
+
+    - name: ensure omit works with inheritance
+      assert:
+        that:
+          - inherited.stdout == omited_inheritance.stdout
+          - inherited.stdout == explicit_yes.stdout
+          - inherited.stdout != explicit_no.stdout

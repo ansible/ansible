@@ -1,2 +1,0 @@
-bugfixes:
-  - "Properly send a skipped message when a list in a ``loop`` is empty and comes from a template (https://github.com/ansible/ansible/issues/77934)"

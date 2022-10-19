@@ -114,7 +114,7 @@ Plugins
 
 * ``unique`` filter with Jinja2 < 2.10 is case-sensitive and now raise coherently an error if ``case_sensitive=False`` instead of when ``case_sensitive=True``.
 * Set theory filters (``intersect``, ``difference``, ``symmetric_difference`` and ``union``) are now case-sensitive. Explicitly use ``case_sensitive=False`` to keep previous behavior. Note: with Jinja2 < 2.10, the filters were already case-sensitive by default.
-* ``password_hash``` now uses ``passlib`` defaults when an option is unspecified, e.g. ``bcrypt_sha256`` now default to the "2b" format and if the "2a" format is required it must be specified.
+* ``password_hash``` now uses ``passlib`` defaults when an option is unspecified, for example ``bcrypt_sha256``, now default to the "2b" format and if the "2a" format is required it must be specified.
 
 Porting custom scripts
 ======================
@@ -441,7 +441,7 @@ Known Issues
 Ansible-core
 ~~~~~~~~~~~~
 
-- ansible-test - Tab completion anywhere other than the end of the command with the new composite options will provide incorrect results. See https://github.com/kislyuk/argcomplete/issues/351 for additional details.
+- ansible-test - Tab completion anywhere other than the end of the command with the new composite options will provide incorrect results. See `issue 351 <https://github.com/kislyuk/argcomplete/issues/351>`_ for additional details.
 
 dellemc.openmanage
 ~~~~~~~~~~~~~~~~~~
@@ -572,7 +572,7 @@ community.routeros
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
-- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See https://github.com/ansible-collections/community.zabbix/pull/477).
+- all roles now reference other roles and modules through their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See `issue 477 <https://github.com/ansible-collections/community.zabbix/pull/477>`_).
 
 kubernetes.core
 ~~~~~~~~~~~~~~~
@@ -784,7 +784,7 @@ netapp.cloudmanager
 netbox.netbox
 ~~~~~~~~~~~~~
 
-- packages is now a required Python package and gets installed via Ansible 2.10+.
+- packages is now a required Python package and gets installed through Ansible 2.10+.
 
 openvswitch.openvswitch
 ~~~~~~~~~~~~~~~~~~~~~~~

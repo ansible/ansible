@@ -1,0 +1,30 @@
+DOCUMENTATION:
+  name: path_join
+  author: Anthony Bourguignon (@Toniob)
+  version_added: "2.10"
+  short_description: Join one or more path components
+  positional: _input
+  description:
+    - Returns a path obtained by joining one or more path components.
+  options:
+    _input:
+      description: A path, or a list of paths.
+      type: list
+      elements: str
+      required: true
+
+EXAMPLES: |
+
+  # If path == 'foo/bar' and file == 'baz.txt', the result is '/etc/foo/bar/subdir/baz.txt'
+  {{ ('/etc', path, 'subdir', file) | path_join }}
+
+  # equivalent to '/etc/subdir/{{filename}}'
+  wheremyfile: "{{ ['/etc', 'subdir', filename] | path_join }}"
+
+  # trustme => '/etc/apt/trusted.d/mykey.gpgp'
+  trustme: "{{ ['/etc', 'apt', 'trusted.d', 'mykey.gpg'] | path_join }}"
+
+RETURN:
+  _value:
+    description: The concatenated path.
+    type: str

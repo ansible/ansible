@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: checksum
+  version_added: "1.9"
+  short_description: checksum of input data
+  description:
+    - Returns a checksum (L(SHA-1, https://en.wikipedia.org/wiki/SHA-1)) hash of the input data.
+  positional: _input
+  options:
+    _input:
+      description: Data to checksum.
+      type: raw
+      required: true
+
+EXAMPLES: |
+    # csum => "109f4b3c50d7b0df729d299bc6f8e9ef9066971f"
+    csum: "{{ 'test2' | checksum }}"
+
+RETURN:
+  _value:
+    description: The checksum (SHA-1) of the input.
+    type: string

@@ -39,6 +39,10 @@ from ansible.plugins.vars import BaseVarsPlugin
 
 class VarsModule(BaseVarsPlugin):
 
+    # Vars plugins in collections are only loaded when they are enabled by the user.
+    # If a vars plugin sets REQUIRES_ENABLED = False, a warning should occur (assuming it is loaded).
+    REQUIRES_ENABLED = False
+
     def get_vars(self, loader, path, entities, cache=True):
         super(VarsModule, self).get_vars(loader, path, entities)
         return {'collection': 'collection_root_user'}

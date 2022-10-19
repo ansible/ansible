@@ -57,11 +57,22 @@ class AnsiblePlugin(ABC):
 
     def __init__(self):
         self._options = {}
+        self._defs = None
+
+    def matches_name(self, possible_names):
+        possible_fqcns = set()
+        for name in possible_names:
+            if '.' not in name:
+                possible_fqcns.add(f"ansible.builtin.{name}")
+            elif name.startswith("ansible.legacy."):
+                possible_fqcns.add(name.removeprefix("ansible.legacy."))
+            possible_fqcns.add(name)
+        return bool(possible_fqcns.intersection(set(self.ansible_aliases)))
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
             try:
-                option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self._load_name, variables=hostvars)
+                option_value = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
             except AnsibleError as e:
                 raise KeyError(to_native(e))
             self.set_option(option, option_value)
@@ -69,8 +80,7 @@ class AnsiblePlugin(ABC):
 
     def get_options(self, hostvars=None):
         options = {}
-        defs = C.config.get_configuration_definitions(plugin_type=get_plugin_class(self), name=self._load_name)
-        for option in defs:
+        for option in self.option_definitions.keys():
             options[option] = self.get_option(option, hostvars=hostvars)
         return options
 
@@ -85,7 +95,7 @@ class AnsiblePlugin(ABC):
         :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         '''
-        self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
@@ -97,6 +107,37 @@ class AnsiblePlugin(ABC):
             self.set_options()
         return option in self._options
 
+    @property
+    def plugin_type(self):
+        return self.__class__.__name__.lower().replace('module', '')
+
+    @property
+    def option_definitions(self):
+        if self._defs is None:
+            self._defs = C.config.get_configuration_definitions(plugin_type=self.plugin_type, name=self._load_name)
+        return self._defs
+
     def _check_required(self):
         # FIXME: standardize required check based on config
         pass
+
+
+class AnsibleJinja2Plugin(AnsiblePlugin):
+
+    def __init__(self, function):
+
+        super(AnsibleJinja2Plugin, self).__init__()
+        self._function = function
+
+    @property
+    def plugin_type(self):
+        return self.__class__.__name__.lower().replace('ansiblejinja2', '')
+
+    def _no_options(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    has_option = get_option = get_options = option_definitions = set_option = set_options = _no_options
+
+    @property
+    def j2_function(self):
+        return self._function

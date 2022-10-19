@@ -1,7 +1,0 @@
-minor_changes:
-  - ansible-test - Add support for running non-interactive commands with ``ansible-test shell``.
-  - ansible-test - Add support for exporting inventory with ``ansible-test shell --export {path}``.
-  - ansible-test - The ``shell`` command can be used outside a collection if no controller delegation is required.
-  - ansible-test - Improve consistency of output messages by using stdout or stderr for most output, but not both.
-bugfixes:
-  - ansible-test - Sanity test output with the ``--lint`` option is no longer mixed in with bootstrapping output.

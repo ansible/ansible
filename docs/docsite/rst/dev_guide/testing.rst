@@ -41,16 +41,6 @@ At a high level we have the following classifications of tests:
   * Tests directly against individual parts of the code base.
 
 
-If you're a developer, one of the most valuable things you can do is look at the GitHub
-issues list and help fix bugs.  We almost always prioritize bug fixing over feature
-development.
-
-Even for non developers, helping to test pull requests for bug fixes and features is still
-immensely valuable.  Ansible users who understand writing playbooks and roles should be
-able to add integration tests and so GitHub pull requests with integration tests that show
-bugs in action will also be a great way to help.
-
-
 Testing within GitHub & Azure Pipelines
 =======================================
 
@@ -139,7 +129,9 @@ Create a fresh area to work:
    git clone https://github.com/ansible/ansible.git ansible-pr-testing
    cd ansible-pr-testing
 
-Next, find the pull request you'd like to test and make note of its number. It will look something like this::
+Next, find the pull request you'd like to test and make note of its number. It will look something like this:
+
+.. code-block:: text
 
    Use os.path.sep instead of hardcoding / #65381
 
@@ -214,7 +206,9 @@ More information: :ref:`testing_integration`
 
 Any potential issues should be added as comments on the pull request (and it's acceptable to comment if the feature works as well), remembering to include the output of ``ansible --version``
 
-Example::
+Example:
+
+.. code-block:: text
 
    Works for me! Tested on `Ansible 2.3.0`.  I verified this on CentOS 6.5 and also Ubuntu 14.04.
 

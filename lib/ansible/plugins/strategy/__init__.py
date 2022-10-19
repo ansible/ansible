@@ -560,21 +560,17 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    # grab the current state and if we're iterating on the rescue portion
-                    # of a block then we save the failed task in a special var for use
-                    # within the rescue/always
                     state, _ = iterator.get_next_task_for_host(original_host, peek=True)
 
                     if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
 
-                    # Use of get_active_state() here helps detect proper state if, say, we are in a rescue
-                    # block from an included file (include_tasks). In a non-included rescue case, a rescue
-                    # that starts with a new 'block' will have an active state of IteratingStates.TASKS, so we also
-                    # check the current state block tree to see if any blocks are rescuing.
-                    if state and (iterator.get_active_state(state).run_state == IteratingStates.RESCUE or
-                                  iterator.is_any_block_rescuing(state)):
+                    # if we're iterating on the rescue portion of a block then
+                    # we save the failed task in a special var for use
+                    # within the rescue/always
+                    if iterator.is_any_block_rescuing(state):
                         self._tqm._stats.increment('rescued', original_host.name)
+                        iterator._play._removed_hosts.remove(original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(
@@ -916,7 +912,7 @@ class StrategyBase:
             return task.evaluate_conditional(templar, all_vars)
 
         skipped = False
-        msg = ''
+        msg = meta_action
         skip_reason = '%s conditional evaluated to False' % meta_action
         if isinstance(task, Handler):
             self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
@@ -1053,7 +1049,9 @@ class StrategyBase:
         else:
             result['changed'] = False
 
-        display.vv("META: %s" % msg)
+        if not task.implicit:
+            header = skip_reason if skipped else msg
+            display.vv(f"META: {header}")
 
         if isinstance(task, Handler):
             task.remove_host(target_host)

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Remove support for Python 3.8 on the controller.

@@ -1,0 +1,28 @@
+DOCUMENTATION:
+  name: bool
+  version_added: "historical"
+  short_description: cast into a boolean
+  description:
+    - Attempt to cast the input into a boolean (C(True) or C(False)) value.
+  positional: _input
+  options:
+    _input:
+      description: Data to cast.
+      type: raw
+      required: true
+
+EXAMPLES: |
+
+  # simply encrypt my key in a vault
+  vars:
+    isbool: "{{ (a == b)|bool }} "
+    otherbool: "{{ anothervar|bool }} "
+
+  # in a task
+  ...
+  when: some_string_value | bool
+
+RETURN:
+  _value:
+    description: The boolean resulting of casting the input expression into a C(True) or C(False) value.
+    type: bool

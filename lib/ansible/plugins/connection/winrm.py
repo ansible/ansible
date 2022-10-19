@@ -128,8 +128,29 @@ DOCUMENTATION = """
         type: str
       connection_timeout:
         description:
-            - Sets the operation and read timeout settings for the WinRM
+            - Despite its name, sets both the 'operation' and 'read' timeout settings for the WinRM
               connection.
+            - The operation timeout belongs to the WS-Man layer and runs on the winRM-service on the
+              managed windows host.
+            - The read timeout belongs to the underlying python Request call (http-layer) and runs
+              on the ansible controller.
+            - The operation timeout sets the WS-Man 'Operation timeout' that runs on the managed
+              windows host. The operation timeout specifies how long a command will run on the
+              winRM-service before it sends the message 'WinRMOperationTimeoutError' back to the
+              client. The client (silently) ignores this message and starts a new instance of the
+              operation timeout, waiting for the command to finish (long running commands).
+            - The read timeout sets the client HTTP-request timeout and specifies how long the
+              client (ansible controller) will wait for data from the server to come back over
+              the HTTP-connection (timeout for waiting for in-between messages from the server).
+              When this timer expires, an exception will be thrown and the ansible connection
+              will be terminated with the error message 'Read timed out'
+            - To avoid the above exception to be thrown, the read timeout will be set to 10
+              seconds higher than the WS-Man operation timeout, thus make the connection more
+              robust on networks with long latency and/or many hops between server and client
+              network wise.
+            - Setting the difference bewteen the operation and the read timeout to 10 seconds
+              alligns it to the defaults used in the winrm-module and the PSRP-module which also
+              uses 10 seconds (30 seconds for read timeout and 20 seconds for operation timeout)
             - Corresponds to the C(operation_timeout_sec) and
               C(read_timeout_sec) args in pywinrm so avoid setting these vars
               with this one.
@@ -443,7 +464,7 @@ class Connection(ConnectionBase):
                 winrm_kwargs = self._winrm_kwargs.copy()
                 if self._winrm_connection_timeout:
                     winrm_kwargs['operation_timeout_sec'] = self._winrm_connection_timeout
-                    winrm_kwargs['read_timeout_sec'] = self._winrm_connection_timeout + 1
+                    winrm_kwargs['read_timeout_sec'] = self._winrm_connection_timeout + 10
                 protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
                 # open the shell from connect so we know we're able to talk to the server

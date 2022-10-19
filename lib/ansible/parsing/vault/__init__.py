@@ -57,7 +57,7 @@ from ansible import constants as C
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.display import Display
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import makedirs_safe, unfrackpath
 
 display = Display()
 
@@ -349,17 +349,25 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    this_path = os.path.realpath(os.path.expanduser(filename))
+    ''' Get secret from file content or execute file and get secret from stdout '''
 
+    # we unfrack but not follow the full path/context to possible vault script
+    # so when the script uses 'adjacent' file for configuration or similar
+    # it still works (as inventory scripts often also do).
+    # while files from --vault-password-file are already unfracked, other sources are not
+    this_path = unfrackpath(filename, follow=False)
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
 
+    # it is a script?
     if loader.is_executable(this_path):
+
         if script_is_client(filename):
-            display.vvvv(u'The vault password file %s is a client script.' % to_text(filename))
+            # this is special script type that handles vault ids
+            display.vvvv(u'The vault password file %s is a client script.' % to_text(this_path))
             # TODO: pass vault_id_name to script via cli
-            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
-                                           encoding=encoding, loader=loader)
+            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id, encoding=encoding, loader=loader)
+
         # just a plain vault password script. No args, returns a byte array
         return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
@@ -432,8 +440,7 @@ class ScriptVaultSecret(FileVaultSecret):
         vault_pass = stdout.strip(b'\r\n')
 
         empty_password_msg = 'Invalid vault password was provided from script (%s)' % filename
-        verify_secret_is_not_empty(vault_pass,
-                                   msg=empty_password_msg)
+        verify_secret_is_not_empty(vault_pass, msg=empty_password_msg)
 
         return vault_pass
 
@@ -659,8 +666,7 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % to_native(filename)
             raise AnsibleError(msg)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
-                                                                             filename=filename)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
@@ -1117,7 +1123,7 @@ class VaultEditor:
             os.chown(dest, prev.st_uid, prev.st_gid)
 
     def _editor_shell_command(self, filename):
-        env_editor = os.environ.get('EDITOR', 'vi')
+        env_editor = C.config.get_config_value('EDITOR')
         editor = shlex.split(env_editor)
         editor.append(filename)
 
@@ -1190,13 +1196,20 @@ class VaultAES256:
         return to_bytes(hexlify(b_hmac), errors='surrogate_or_strict'), hexlify(b_ciphertext)
 
     @classmethod
+    def _get_salt(cls):
+        custom_salt = C.config.get_config_value('VAULT_ENCRYPT_SALT')
+        if not custom_salt:
+            custom_salt = os.urandom(32)
+        return to_bytes(custom_salt)
+
+    @classmethod
     def encrypt(cls, b_plaintext, secret, salt=None):
 
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
 
         if salt is None:
-            b_salt = os.urandom(32)
+            b_salt = cls._get_salt()
         elif not salt:
             raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:

@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - ansible-doc sanity test - Correctly determine the fully-qualified collection name for plugins in 
-    subdirectories, resolving https://github.com/ansible/ansible/issues/78490.

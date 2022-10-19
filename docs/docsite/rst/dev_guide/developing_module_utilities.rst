@@ -20,7 +20,9 @@ resolving those matching the namespace against a :ref:`search path <ansible_sear
 active configuration.
 
 To reduce the maintenance burden in a collection or in local modules, you can extract
-duplicated code into one or more module utilities and import them into your modules. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file like this::
+duplicated code into one or more module utilities and import them into your modules. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file like this:
+
+.. code-block:: python
 
   from ansible.module_utils.my_shared_code import MySharedCodeClient
 
@@ -68,4 +70,4 @@ Several commonly-used utilities migrated to collections in Ansible 2.10, includi
 - ``ismount.py`` migrated to ``ansible.posix.plugins.module_utils.mount.py`` - Single helper function that fixes os.path.ismount
 - ``known_hosts.py`` migrated to ``community.general.plugins.module_utils.known_hosts.py`` - utilities for working with known_hosts file
 
-For a list of migrated content with destination collections, see https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml.
+For a list of migrated content with destination collections, see the `runtime.yml file <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_.

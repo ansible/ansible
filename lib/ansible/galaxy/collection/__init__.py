@@ -532,6 +532,7 @@ def download_collections(
             upgrade=False,
             # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
             include_signatures=False,
+            offline=False,
         )
 
     b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
@@ -657,6 +658,7 @@ def install_collections(
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
         disable_gpg_verify,  # type: bool
+        offline,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -734,6 +736,7 @@ def install_collections(
             allow_pre_release=allow_pre_release,
             upgrade=upgrade,
             include_signatures=not disable_gpg_verify,
+            offline=offline,
         )
 
     keyring_exists = artifacts_manager.keyring is not None
@@ -1369,17 +1372,24 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         src_file = os.path.join(b_collection_path, to_bytes(file_info['name'], errors='surrogate_or_strict'))
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
-        existing_is_exec = os.stat(src_file).st_mode & stat.S_IXUSR
+        existing_is_exec = os.stat(src_file, follow_symlinks=False).st_mode & stat.S_IXUSR
         mode = 0o0755 if existing_is_exec else 0o0644
 
-        if os.path.isdir(src_file):
+        # ensure symlinks to dirs are not translated to empty dirs
+        if os.path.isdir(src_file) and not os.path.islink(src_file):
             mode = 0o0755
             base_directories.append(src_file)
             os.mkdir(dest_file, mode)
         else:
-            shutil.copyfile(src_file, dest_file)
+            # do not follow symlinks to ensure the original link is used
+            shutil.copyfile(src_file, dest_file, follow_symlinks=False)
 
-        os.chmod(dest_file, mode)
+        # avoid setting specific permission on symlinks since it does not
+        # support avoid following symlinks and will thrown an exception if the
+        # symlink target does not exist
+        if not os.path.islink(dest_file):
+            os.chmod(dest_file, mode)
+
     collection_output = to_text(b_collection_output)
     return collection_output
 
@@ -1732,6 +1742,7 @@ def _resolve_depenency_map(
         allow_pre_release,  # type: bool
         upgrade,  # type: bool
         include_signatures,  # type: bool
+        offline,  # type: bool
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
     if not HAS_RESOLVELIB:
@@ -1767,6 +1778,7 @@ def _resolve_depenency_map(
         with_pre_releases=allow_pre_release,
         upgrade=upgrade,
         include_signatures=include_signatures,
+        offline=offline,
     )
     try:
         return collection_dep_resolver.resolve(

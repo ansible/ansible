@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - fix listing collections that contains metadata but the namespace or name are not strings.

@@ -5,6 +5,57 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = r'''
+  name: urlsplit
+  version_added: "2.4"
+  short_description: get components from URL
+  description:
+    - Split a URL into its component parts.
+  positional: _input, query
+  options:
+    _input:
+      description: URL string to split.
+      type: str
+      required: true
+    query:
+      description: Specify a single component to return.
+      type: str
+      choices: ["fragment", "hostname", "netloc", "password",  "path",  "port",  "query", "scheme",  "username"]
+'''
+
+EXAMPLES = r'''
+
+    parts: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}'
+    # =>
+    #   {
+    #       "fragment": "fragment",
+    #       "hostname": "www.acme.com",
+    #       "netloc": "user:password@www.acme.com:9000",
+    #       "password": "password",
+    #       "path": "/dir/index.html",
+    #       "port": 9000,
+    #       "query": "query=term",
+    #       "scheme": "http",
+    #       "username": "user"
+    #   }
+
+    hostname: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit("hostname") }}'
+    # => 'www.acme.com'
+
+    query: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit("query") }}'
+    # => 'query=term'
+
+    path: '{{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit("path") }}'
+    # => '/dir/index.html'
+'''
+
+RETURN = r'''
+  _value:
+    description:
+      - A dictionary with components as keyword and their value.
+      - If I(query) is provided, a string or integer will be returned instead, depending on I(query).
+    type: any
+'''
 
 from urllib.parse import urlsplit
 

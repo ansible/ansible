@@ -48,7 +48,7 @@ You should understand at least *basics* of the following tools:
 You can learn these tools more in depth when working on your first contributions.
 
 
-Each Ansible project has its own set of contributor guidelines. Familarize yourself with these as you prepare your first contributions.
+Each Ansible project has its own set of contributor guidelines. Familiarize yourself with these as you prepare your first contributions.
 
 * :ref:`Ansible Core development <developer_guide>`.
 * :ref:`Ansible collection development <developing_collections>` and the collection-level contributor guidelines in the collection repository.
@@ -57,7 +57,9 @@ Each Ansible project has its own set of contributor guidelines. Familarize yours
 Making your first contribution
 ==============================
 
-You can find some ideas on how you can contribute in :ref:`how_can_i_help` and the `collection repository <https://github.com/ansible-collections/>`_  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
+You can find some ideas on how you can contribute in :ref:`how_can_i_help`.
+
+If you are interested in contributing to collections, take a look at :ref:`collection contributions<collections_contributions>` and the `collection repository <https://github.com/ansible-collections/>`_'s  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
 
 You can also look for GitHub issues labeled with the ``easyfix``, ``good_first_issue``, and ``docs`` labels.  Add a comment on the GitHub issue to say you are looking at it and to ask for help if you need it.
 
@@ -72,7 +74,7 @@ See :ref:`communication` for ways to communicate and engage with the Ansible com
 Teach others
 ============
 
-Share your experience with other contributors through `improving documentation <ommunity_documentation_contributions>`, answering question from other contributors and users  on `Matrix/Libera.Chat IRC <communicate>`, giving advice in issues and pull requests, and discussing the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
+Share your experience with other contributors through :ref:`improving documentation<community_documentation_contributions>`, answering question from other contributors and users  on :ref:`Matrix/Libera.Chat IRC<communication>`, giving advice in issues and pull requests, and discussing the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
 
 Become a collection maintainer
 ===============================
@@ -81,7 +83,7 @@ If you are a code contributor to a collection, you can get extended permissions 
 
 For some collections that use the `collection bot <https://github.com/ansible-community/collection_bot>`_ , such as  `community.general <https://github.com/ansible-collections/community.general>`_ and `community.network <https://github.com/ansible-collections/community.network>`_, you can have different levels of access and permissions.
 
-* `module_maintainers` - The stage prior to becoming a collection maintainer. The file is usually a module or plugin. File maintainers have indirect commit rights.
+* :ref:`module_maintainers` - The stage prior to becoming a collection maintainer. The file is usually a module or plugin. File maintainers have indirect commit rights.
 * supershipit permissions - Similar to being a file maintainer but the scope where a maintainer has the indirect commit is the whole repository.
 * ``triage``  - Access to the repository that allows contributors manage issues and pull requests.
 * ``write`` access to the repository also known as ``commit``. In other words, become a committer. This access level allows contributors to merge pull requests to the development branch as well as perform all the other activities listed in the :ref:`maintainers`.

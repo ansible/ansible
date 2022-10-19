@@ -1,4 +1,0 @@
-deprecated_features:
-  - listify_lookup_plugin_terms, deprecate 'loader/dataloader' parameter as it not used.
-minor_changes:
-  - calls to listify_lookup_plugin_terms in core do not pass in loader/dataloader anymore.

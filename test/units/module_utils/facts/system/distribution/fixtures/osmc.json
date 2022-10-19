@@ -1,0 +1,23 @@
+{
+    "name": "OSMC",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Open Source Media Center\"\nNAME=\"OSMC\"\nVERSION=\"March 2022\"\nVERSION_ID=\"2022.03-1\"\nID=osmc\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.osmc.tv\"\nSUPPORT_URL=\"https://www.osmc.tv\"\nBUG_REPORT_URL=\"https://www.osmc.tv\""
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "osmc",
+        "name": "OSMC",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "OSMC",
+        "distribution_major_version": "NA",
+        "distribution_release": "NA",
+        "os_family": "Debian",
+        "distribution_version": "March 2022"
+    }
+}

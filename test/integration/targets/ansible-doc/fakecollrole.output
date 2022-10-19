@@ -9,7 +9,6 @@ OPTIONS (= is mandatory):
 
 = altopt1
         altopt1 description
-
         type: int
 
 

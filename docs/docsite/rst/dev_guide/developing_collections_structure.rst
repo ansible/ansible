@@ -94,7 +94,9 @@ plugins directory
 
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
-Vars plugins are supported in collections as long as they require being explicitly enabled (using ``REQUIRES_ENABLED``) and they are included using their fully qualified collection name. See :ref:`enable_vars` and :ref:`developing_vars_plugins` for details. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
+Vars plugins in collections are not loaded automatically, and always require being explicitly enabled by using their fully qualified collection name. See :ref:`enable_vars` for details.
+
+Cache plugins in collections may be used for fact caching, but are not supported for inventory plugins.
 
 .. _collection_module_utils:
 
@@ -187,21 +189,21 @@ You can have most of the subdirectories you would expect, such ``files/``, ``var
 
 Also, playbooks within a collection follow the same guidelines as any playbooks except for these few adjustments:
 
- - Directory: It must be in ``/playbooks directory``.
+ - Directory: It must be in the ``playbooks/`` directory.
  - Hosts: The host should be defined as a variable so the users of a playbook do not mistakenly run the plays against their entire inventory (if the host is set to all). For example - ``hosts: '{{target|default("all")}}'``.
 
-To run the plays, users can now use such commands as ``ansible-playbook --e 'targets=webservers'`` or ``ansible-playbook --limit webservers``. Either way, the collection owner should document their playbooks and how to use them in the ``/docs`` folder or ``README`` file.
+To run the plays, users can now use such commands as ``ansible-playbook --e 'targets=webservers'`` or ``ansible-playbook --limit webservers``. Either way, the collection owner should document their playbooks and how to use them in the ``docs/`` folder or ``README`` file.
 
 .. _developing_collections_tests_directory:
 
 tests directory
 ----------------
 
-Ansible Collections are tested much like Ansible itself, by using the `ansible-test` utility which is released as part of Ansible, version 2.9.0 and newer. Because Ansible Collections are tested using the same tooling as Ansible itself, via `ansible-test`, all Ansible developer documentation for testing is applicable for authoring Collections Tests with one key concept to keep in mind.
+Ansible Collections are tested much like Ansible itself, by using the `ansible-test` utility which is released as part of Ansible, version 2.9.0 and newer. Because Ansible Collections are tested using the same tooling as Ansible itself, by using the `ansible-test`, all Ansible developer documentation for testing is applicable for authoring Collections Tests with one key concept to keep in mind.
 
 See :ref:`testing_collections` for specific information on how to test collections with ``ansible-test``.
 
-When reading the :ref:`developing_testing` documentation, there will be content that applies to running Ansible from source code via a git clone, which is typical of an Ansible developer. However, it's not always typical for an Ansible Collection author to be running Ansible from source but instead from a stable release, and to create Collections it is not necessary to run Ansible from source. Therefore, when references of dealing with `ansible-test` binary paths, command completion, or environment variables are presented throughout the :ref:`developing_testing` documentation; keep in mind that it is not needed for Ansible Collection Testing because the act of installing the stable release of Ansible containing `ansible-test` is expected to setup those things for you.
+When reading the :ref:`developing_testing` documentation, there will be content that applies to running Ansible from source code through a git clone, which is typical of an Ansible developer. However, it's not always typical for an Ansible Collection author to be running Ansible from source but instead from a stable release, and to create Collections it is not necessary to run Ansible from source. Therefore, when references of dealing with `ansible-test` binary paths, command completion, or environment variables are presented throughout the :ref:`developing_testing` documentation; keep in mind that it is not needed for Ansible Collection Testing because the act of installing the stable release of Ansible containing `ansible-test` is expected to setup those things for you.
 
 .. _meta_runtime_yml:
 

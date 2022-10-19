@@ -31,7 +31,7 @@
   - assert:
       that:
         - redirect_failure is failed
-        - '"No filter named ''testns.testredirect.dead_end''" in redirect_failure.msg'
+        - "'Could not load \"testns.testredirect.dead_end\"' in redirect_failure.msg"
   # recursive filter redirect
   - debug: msg="{{ 'data' | testns.testredirect.recursive_redirect }}"
     ignore_errors: yes
@@ -40,6 +40,16 @@
       that:
         - redirect_failure is failed
         - '"recursive collection redirect found for ''testns.testredirect.recursive_redirect''" in redirect_failure.msg'
+  # invalid filter redirect
+  - debug: msg="{{ 'data' | testns.testredirect.invalid_redirect }}"
+    ignore_errors: yes
+    register: redirect_failure
+  - assert:
+      that:
+        - redirect_failure is failed
+        - error in redirect_failure.msg
+    vars:
+      error: "Collection testns.testredirect contains invalid redirect for testns.testredirect.invalid_redirect: contextual_redirect"
   # legacy filter should mask redirected
   - assert:
       that: ('' | formerly_core_masked_filter) == 'hello from overridden formerly_core_masked_filter'

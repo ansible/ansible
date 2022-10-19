@@ -8,7 +8,7 @@ plugin_routing:
       deprecation:
         warning_text: deprecation1
     redirect_filter1:
-      redirect: redirect_filter2
+      redirect: testns.testredirect.redirect_filter2
       deprecation:
         warning_text: deprecation2
     redirect_filter2:
@@ -16,6 +16,8 @@ plugin_routing:
       deprecation:
         warning_text: deprecation3
     dead_end:
-      redirect: bad_redirect
+      redirect: testns.testredirect.bad_redirect
     recursive_redirect:
-      redirect: recursive_redirect
+      redirect: testns.testredirect.recursive_redirect
+    invalid_redirect:
+      redirect: contextual_redirect

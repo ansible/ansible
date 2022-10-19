@@ -29,3 +29,4 @@ You can also learn how to use Ansible playbooks more effectively by creating re-
    playbooks
    playbooks_execution
    playbooks_advanced_syntax
+   complex_data_manipulation

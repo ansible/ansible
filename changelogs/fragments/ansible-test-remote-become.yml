@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Alpine remotes now use ``sudo`` for tests, using ``doas`` only for bootstrapping.
-  - ansible-test - FreeBSD remotes now use ``sudo`` for tests, using ``su`` only for bootstrapping.

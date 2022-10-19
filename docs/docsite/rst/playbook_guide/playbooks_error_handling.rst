@@ -20,7 +20,7 @@ By default Ansible stops executing tasks on a host when a task fails on that hos
 
     - name: Do not count this as a failure
       ansible.builtin.command: /bin/false
-      ignore_errors: yes
+      ignore_errors: true
 
 The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, connection failures, execution issues (for example, missing packages), or syntax errors.
 
@@ -37,7 +37,7 @@ You can ignore a task failure due to the host instance being 'UNREACHABLE' with 
 
     - name: This executes, fails, and the failure is ignored
       ansible.builtin.command: /bin/true
-      ignore_unreachable: yes
+      ignore_unreachable: true
 
     - name: This executes, fails, and ends the play for this host
       ansible.builtin.command: /bin/true
@@ -47,14 +47,14 @@ And at the playbook level:
 .. code-block:: yaml
 
     - hosts: all
-      ignore_unreachable: yes
+      ignore_unreachable: true
       tasks:
       - name: This executes, fails, and the failure is ignored
         ansible.builtin.command: /bin/true
 
       - name: This executes, fails, and ends the play for this host
         ansible.builtin.command: /bin/true
-        ignore_unreachable: no
+        ignore_unreachable: false
 
 .. _resetting_unreachable:
 

@@ -16,7 +16,7 @@ We believe simplicity is relevant to all sizes of environments, so we design for
 
 You can learn more at `AnsibleFest <https://www.ansible.com/ansiblefest>`_, the annual event for all Ansible contributors, users, and customers hosted by Red Hat. AnsibleFest is the place to connect with others, learn new skills, and find a new friend to automate with.
 
-Ansible manages machines in an agent-less manner. There is never a question of how to upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled. Also, security exposure is greatly reduced because Ansible uses OpenSSH — the open source connectivity tool for remote login with the SSH (Secure Shell) protocol. 
+Ansible manages machines in an agent-less manner. There is never a question of how to upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled. Also, security exposure is greatly reduced because Ansible uses OpenSSH — the open source connectivity tool for remote login with the SSH (Secure Shell) protocol.
 
 Ansible is decentralized--it relies on your existing OS credentials to control access to remote machines. And if needed, Ansible can easily connect with Kerberos, LDAP, and other centralized authentication management systems.
 
@@ -41,10 +41,12 @@ Ansible releases a new major release approximately twice a year. The core applic
    :maxdepth: 2
    :caption: Using Ansible
 
-   user_guide/index
    inventory_guide/index
    command_guide/index
    playbook_guide/index
+   vault_guide/index
+   module_plugin_guide/index
+   collections_guide/index
    os_guide/index
    tips_tricks/index
 

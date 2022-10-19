@@ -17,6 +17,16 @@ description:
   - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 version_added: "1.1"
 options:
+  ciphers:
+    description:
+      - SSL/TLS Ciphers to use for the request.
+      - 'When a list is provided, all ciphers are joined in order with C(:)'
+      - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
+        for more details.
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+    type: list
+    elements: str
+    version_added: '2.14'
   decompress:
     description:
       - Whether to attempt to decompress gzip content-encoded responses
@@ -205,6 +215,14 @@ options:
     type: bool
     default: no
     version_added: '2.11'
+  use_netrc:
+    description:
+      - Determining whether to use credentials from ``~/.netrc`` file
+      - By default .netrc is used with Basic authentication headers
+      - When set to False, .netrc credentials are ignored
+    type: bool
+    default: true
+    version_added: '2.14'
 extends_documentation_fragment:
   - action_common_attributes
   - files
@@ -342,44 +360,25 @@ EXAMPLES = r'''
   retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
   delay: 5 # Every 5 seconds
 
-# There are issues in a supporting Python library that is discussed in
-# https://github.com/ansible/ansible/issues/52705 where a proxy is defined
-# but you want to bypass proxy use on CIDR masks by using no_proxy
-- name: Work around a python issue that doesn't support no_proxy envvar
-  ansible.builtin.uri:
-    follow_redirects: none
-    validate_certs: false
-    timeout: 5
-    url: "http://{{ ip_address }}:{{ port | default(80) }}"
-  register: uri_data
-  failed_when: false
-  changed_when: false
-  vars:
-    ip_address: 192.0.2.1
-  environment: |
-      {
-        {% for no_proxy in (lookup('ansible.builtin.env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
-          {% if no_proxy | regex_search('\/') and
-                no_proxy | ipaddr('net') != '' and
-                no_proxy | ipaddr('net') != false and
-                ip_address | ipaddr(no_proxy) is not none and
-                ip_address | ipaddr(no_proxy) != false %}
-            'no_proxy': '{{ ip_address }}'
-          {% elif no_proxy | regex_search(':') != '' and
-                  no_proxy | regex_search(':') != false and
-                  no_proxy == ip_address + ':' + (port | default(80)) %}
-            'no_proxy': '{{ ip_address }}:{{ port | default(80) }}'
-          {% elif no_proxy | ipaddr('host') != '' and
-                  no_proxy | ipaddr('host') != false and
-                  no_proxy == ip_address %}
-            'no_proxy': '{{ ip_address }}'
-          {% elif no_proxy | regex_search('^(\*|)\.') != '' and
-                  no_proxy | regex_search('^(\*|)\.') != false and
-                  no_proxy | regex_replace('\*', '') in ip_address %}
-            'no_proxy': '{{ ip_address }}'
-          {% endif %}
-        {% endfor %}
-      }
+- name: Provide SSL/TLS ciphers as a list
+  uri:
+    url: https://example.org
+    ciphers:
+      - '@SECLEVEL=2'
+      - ECDH+AESGCM
+      - ECDH+CHACHA20
+      - ECDH+AES
+      - DHE+AES
+      - '!aNULL'
+      - '!eNULL'
+      - '!aDSS'
+      - '!SHA1'
+      - '!AESCCM'
+
+- name: Provide SSL/TLS ciphers as an OpenSSL formatted cipher list
+  uri:
+    url: https://example.org
+    ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
 '''
 
 RETURN = r'''
@@ -553,7 +552,8 @@ def form_urlencoded(body):
     return body
 
 
-def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress):
+def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress,
+        ciphers, use_netrc):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
 
@@ -578,7 +578,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -612,6 +612,8 @@ def main():
         ca_path=dict(type='path', default=None),
         unredirected_headers=dict(type='list', elements='str', default=[]),
         decompress=dict(type='bool', default=True),
+        ciphers=dict(type='list', elements='str'),
+        use_netrc=dict(type='bool', default=True),
     )
 
     module = AnsibleModule(
@@ -634,6 +636,8 @@ def main():
     dict_headers = module.params['headers']
     unredirected_headers = module.params['unredirected_headers']
     decompress = module.params['decompress']
+    ciphers = module.params['ciphers']
+    use_netrc = module.params['use_netrc']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -677,7 +681,7 @@ def main():
     start = datetime.datetime.utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
-                  decompress)
+                  decompress, ciphers, use_netrc)
 
     elapsed = (datetime.datetime.utcnow() - start).seconds
 

@@ -1,0 +1,30 @@
+DOCUMENTATION:
+  name: to_uuid
+  version_added: "2.9"
+  short_description: namespaced UUID generator
+  description:
+    - Use to generate namespeced Universal Unique ID.
+  positional: _input, namespace
+  options:
+    _input:
+      description: String to use as base fo the UUID.
+      type: str
+      required: true
+    namespace:
+      description: UUID namespace to use.
+      type: str
+      default: 361E6D51-FAEC-444A-9079-341386DA8E2E
+
+EXAMPLES: |
+
+  # To create a namespaced UUIDv5
+  uuid: "{{ string | to_uuid(namespace='11111111-2222-3333-4444-555555555555') }}"
+
+
+  # To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC-444A-9079-341386DA8E2E'
+  uuid: "{{ string | to_uuid }}"
+
+RETURN:
+  _value:
+    description: Generated UUID.
+    type: string

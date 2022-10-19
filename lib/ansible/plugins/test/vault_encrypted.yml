@@ -1,0 +1,19 @@
+DOCUMENTATION:
+  name: truthy
+  author: Ansible Core
+  version_added: "2.10"
+  short_description: Is this an encrypted vault
+  description:
+    - Verifies if the input is an Ansible vault.
+  options:
+    _input:
+      description: The possible vault.
+      type: string
+      required: True
+EXAMPLES: |
+    thisisfalse: '{{ "any string" is ansible_vault }}'
+    thisistrue: '{{ "$ANSIBLE_VAULT;1.2;AES256;dev...." is ansible_vault }}'
+RETURN:
+  _value:
+    description: Returns C(True) if the input is a valid ansible vault, C(False) otherwise.
+    type: boolean

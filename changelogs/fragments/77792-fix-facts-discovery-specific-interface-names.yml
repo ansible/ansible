@@ -1,2 +1,0 @@
-bugfixes:
-  - facts - fix IP address discovery for specific interface names (https://github.com/ansible/ansible/issues/77792).

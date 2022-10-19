@@ -1,4 +1,0 @@
-breaking_changes:
-  - The default ansible-galaxy role skeletons no longer contain .travis.yml files.
-    You can configure ansible-galaxy to use a custom role skeleton that contains a .travis.yml file
-    to continue using Galaxy's integration with Travis CI.

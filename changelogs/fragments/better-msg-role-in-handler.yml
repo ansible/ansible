@@ -1,2 +1,0 @@
-minor_changes:
-  - Raise a proper error when ``include_role`` or ``import_role`` is used as a handler.

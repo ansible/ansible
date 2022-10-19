@@ -350,7 +350,7 @@ Combining and selecting data
 
 You can combine data from multiple sources and types, and select values from large data structures, giving you precise control over complex data.
 
-.. _zip_filter:
+.. _zip_filter_example:
 
 Combining items from multiple lists: zip and zip_longest
 --------------------------------------------------------
@@ -1008,7 +1008,7 @@ As of Ansible version 2.9, you can also initialize the random number generator f
     "{{ '52:54:00' | community.general.random_mac(seed=inventory_hostname) }}"
 
 
-.. _random_filter:
+.. _random_filter_example:
 
 Random items or numbers
 -----------------------
@@ -2106,7 +2106,7 @@ To get a date object from a string use the `to_datetime` filter:
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
 
-.. note:: For a full list of format codes for working with python date format strings, see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
+.. note:: For a full list of format codes for working with python date format strings, see the `python datetime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_.
 
 .. versionadded:: 2.4
 
@@ -2132,7 +2132,9 @@ To format a date using a string (like with the shell date command), use the "str
 
 .. versionadded:: 2.13
 
-strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone::
+strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone:
+
+.. code-block:: yaml+jinja
 
     {{ '%H:%M:%S' | strftime }}           # time now in local timezone
     {{ '%H:%M:%S' | strftime(utc=True) }} # time now in UTC

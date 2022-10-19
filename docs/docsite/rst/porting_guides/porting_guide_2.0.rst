@@ -42,7 +42,7 @@ uses key=value escaping which has not changed.  The other option is to check for
 "{{ (ansible_version|version_compare('2.0', 'ge'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
 
 * trailing newline When a string with a trailing newline was specified in the
-  playbook via yaml dict format, the trailing newline was stripped. When
+  playbook through yaml dict format, the trailing newline was stripped. When
   specified in key=value format, the trailing newlines were kept. In v2, both
   methods of specifying the string will keep the trailing newlines. If you
   relied on the trailing newline being stripped, you can change your playbook
@@ -92,7 +92,7 @@ uses key=value escaping which has not changed.  The other option is to check for
 
 * porting task includes
 * More dynamic. Corner-case formats that were not supposed to work now do not, as expected.
-* variables defined in the yaml dict format https://github.com/ansible/ansible/issues/13324
+* variables defined in the yaml dict format see `issue 13324 <https://github.com/ansible/ansible/issues/13324>`_
 * templating (variables in playbooks and template lookups) has improved with regard to keeping the original instead of turning everything into a string.
   If you need the old behavior, quote the value to pass it around as a string.
 * Empty variables and variables set to null in yaml are no longer converted to empty strings. They will retain the value of `None`.
@@ -149,7 +149,7 @@ Should now be::
         a: 1
 
 * Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only.
-* Bare variables in the `environment` dictionary (for plays/tasks/etc.) are no longer supported. Variables specified there should use the full variable syntax: '{{foo}}'.
+* Bare variables in the `environment` dictionary (for plays/tasks/and so on) are no longer supported. Variables specified there should use the full variable syntax: '{{foo}}'.
 * Tags (or any directive) should no longer be specified with other parameters in a task include. Instead, they should be specified as an option on the task.
   For example::
 

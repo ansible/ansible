@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vaulted.yml
+  tasks:
+    - name: see if we can decrypt
+      assert:
+        that:
+          - control is defined
+          - symlink == 'this is a test'

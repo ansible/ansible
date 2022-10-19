@@ -1,2 +1,0 @@
-removed_features:
-  - Remove deprecated ``ALLOW_WORLD_READABLE_TMPFILES`` configuration option (https://github.com/ansible/ansible/issues/77393)

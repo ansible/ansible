@@ -75,7 +75,7 @@ class DistributionFiles:
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
+        {'path': '/etc/os-release', 'name': 'Flatcar'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
@@ -453,14 +453,16 @@ class DistributionFiles:
         flatcar_facts = {}
         distro = get_distribution()
 
-        if distro.lower() == 'flatcar':
-            if not data:
-                return False, flatcar_facts
-            release = re.search("^GROUP=(.*)", data)
-            if release:
-                flatcar_facts['distribution_release'] = release.group(1).strip('"')
-        else:
+        if distro.lower() != 'flatcar':
             return False, flatcar_facts
+
+        if not data:
+            return False, flatcar_facts
+
+        version = re.search("VERSION=(.*)", data)
+        if version:
+            flatcar_facts['distribution_major_version'] = version.group(1).strip('"').split('.')[0]
+            flatcar_facts['distribution_version'] = version.group(1).strip('"')
 
         return True, flatcar_facts
 
@@ -514,7 +516,7 @@ class Distribution(object):
                                 'EuroLinux', 'Kylin Linux Advanced Server'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],

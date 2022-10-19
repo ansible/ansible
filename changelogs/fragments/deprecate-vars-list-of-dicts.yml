@@ -1,0 +1,2 @@
+deprecated_features:
+- vars - Specifying a list of dictionaries for ``vars:`` is deprecated in favor of specifying a dictionary.

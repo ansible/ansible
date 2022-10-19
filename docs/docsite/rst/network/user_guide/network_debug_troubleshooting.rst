@@ -87,7 +87,9 @@ From the log notice:
    If the log reports the port as ``None`` this means that the default port is being used.
    A future Ansible release will improve this message so that the port is always logged.
 
-Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
+Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries:
+
+.. code:: shell
 
   grep "p=28990" $ANSIBLE_LOG_PATH
 
@@ -164,7 +166,9 @@ For Ansible this can be done by ensuring you are only running against one remote
 * Using ``ansible-playbook --limit switch1.example.net...``
 * Using an ad hoc ``ansible`` command
 
-`ad hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::
+`ad hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device:
+
+.. code-block:: text
 
   ansible -m arista.eos.eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=ansible.netcommon.network_cli' -u admin -k
 
@@ -322,7 +326,7 @@ Error: "Authentication failed"
 
 **Platforms:** Any
 
-Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (via ``ansible`` or ``ansible-playbook``) can not be used to connect to the remote device.
+Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (through ``ansible`` or ``ansible-playbook``) can not be used to connect to the remote device.
 
 
 
@@ -336,7 +340,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable `ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
+If you are specifying credentials through ``password:`` (either directly or through ``provider:``) or the environment variable `ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
@@ -724,9 +728,9 @@ Example Ansible inventory file
     ansible_password=!vault...
 
 
-.. note:: Using ``ProxyCommand`` with passwords via variables
+.. note:: Using ``ProxyCommand`` with passwords through variables
 
-   By design, SSH doesn't support providing passwords via environment variables.
+   By design, SSH doesn't support providing passwords through environment variables.
    This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
    We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.

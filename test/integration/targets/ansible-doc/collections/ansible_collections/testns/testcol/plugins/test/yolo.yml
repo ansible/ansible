@@ -1,0 +1,18 @@
+DOCUMENTATION:
+  name: yolo
+  short_description: you only live once
+  description:
+    - This is always true
+  options:
+    _input:
+      description: does not matter
+      type: raw
+      required: true
+
+EXAMPLES: |
+  {{ 'anything' is yolo }}
+
+RETURN:
+  output:
+    type: boolean
+    description: always true

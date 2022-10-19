@@ -54,8 +54,27 @@ def get_vars_from_path(loader, path, entities, stage):
                 vars_plugin_list.append(vars_plugin)
 
     for plugin in vars_plugin_list:
-        if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
-            # 2.x plugins shipped with ansible should require enabling, older or non shipped should load automatically
+        # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
+
+        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
+
+        # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
+        needs_enabled = not builtin_or_legacy
+        if hasattr(plugin, 'REQUIRES_ENABLED'):
+            needs_enabled = plugin.REQUIRES_ENABLED
+        elif hasattr(plugin, 'REQUIRES_WHITELIST'):
+            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+            needs_enabled = plugin.REQUIRES_WHITELIST
+
+        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
+        # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
+        if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+            display.warning(
+                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
+                "This should be removed from the plugin %s." % plugin.ansible_name
+            )
+        elif builtin_or_legacy and needs_enabled and not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
             continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')

@@ -35,7 +35,7 @@ from ansible.module_utils.six import text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode
-from ansible.plugins import AnsiblePlugin, get_plugin_class
+from ansible.plugins import AnsiblePlugin
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, NativeJinjaUnsafeText
@@ -178,7 +178,7 @@ class CallbackBase(AnsiblePlugin):
         '''
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
     @staticmethod
     def host_label(result):

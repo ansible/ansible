@@ -1,5 +1,0 @@
-bugfixes:
-  - >-
-     module_utils - Make distro.id() report newer versions of OpenSuSE
-     (at least >=15) also report as ``opensuse``. They report themselves as
-     ``opensuse-leap``.

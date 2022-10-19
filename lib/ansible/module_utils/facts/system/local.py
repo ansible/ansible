@@ -50,8 +50,15 @@ class LocalFactCollector(BaseFactCollector):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # use filename for key where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact', '')
-            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
-                failed = None
+            failed = None
+            try:
+                executable_fact = stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]
+            except OSError as e:
+                failed = 'Could not stat fact (%s): %s' % (fn, to_text(e))
+                local[fact_base] = failed
+                module.warn(failed)
+                continue
+            if executable_fact:
                 try:
                     # run it
                     rc, out, err = module.run_command(fn)

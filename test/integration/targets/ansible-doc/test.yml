@@ -15,8 +15,8 @@
             "ERROR! Unable to retrieve documentation from 'test_docs_missing_description' due to: All (sub-)options and return values must have a 'description' field"
             in result.stderr
 
-    - name: module with suboptions
-      command: ansible-doc test_docs_suboptions
+    - name: module with suboptions (avoid first line as it has full path)
+      shell: ansible-doc test_docs_suboptions| tail -n +2
       register: result
       ignore_errors: true
 
@@ -31,7 +31,7 @@
           - actual_output == expected_output
 
     - name: module with return docs
-      command: ansible-doc test_docs_returns
+      shell: ansible-doc test_docs_returns| tail -n +2
       register: result
       ignore_errors: true
 
@@ -53,14 +53,14 @@
     - assert:
         that:
           - result is failed
-          - '"ERROR! module test_docs_returns_broken missing documentation (or could not parse documentation)" in result.stderr'
+          - '"module test_docs_returns_broken missing documentation (or could not parse documentation)" in result.stderr'
 
     - name: non-existent module
       command: ansible-doc test_does_not_exist
       register: result
     - assert:
         that:
-          - '"[WARNING]: module test_does_not_exist not found in:" in result.stderr'
+          - '"test_does_not_exist was not found" in result.stderr'
 
     - name: documented module
       command: ansible-doc test_docs
@@ -138,7 +138,7 @@
           - '"Alternatives: new_module" in result.stdout'
 
     - name: documented module with YAML anchors
-      command: ansible-doc test_docs_yaml_anchors
+      shell: ansible-doc test_docs_yaml_anchors |tail -n +2
       register: result
     - set_fact:
         actual_output: >-
@@ -147,3 +147,26 @@
     - assert:
         that:
           - actual_output == expected_output
+
+    - name: ensure 'donothing' adjacent filter is loaded
+      assert:
+        that:
+          - "'x' == ('x'|donothing)"
+
+    - name: docs for deprecated plugin
+      command: ansible-doc deprecated_with_docs -t lookup
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"DEPRECATED_WITH_DOCS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: adjacent docs for deprecated plugin
+      command: ansible-doc deprecated_with_adj_docs -t lookup
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"DEPRECATED_WITH_ADJ_DOCS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'

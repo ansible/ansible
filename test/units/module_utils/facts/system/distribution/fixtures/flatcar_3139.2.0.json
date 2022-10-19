@@ -1,0 +1,43 @@
+{
+    "name": "Flatcar Container Linux by Kinvolk 3139.2.0",
+    "distro": {
+        "codename": "",
+        "id": "flatcar",
+        "name": "Flatcar Container Linux by Kinvolk",
+        "version": "3139.2.0",
+        "version_best": "3139.2.0",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "Flatcar Container Linux by Kinvolk",
+            "id": "flatcar",
+            "id_like": "coreos",
+            "version": "3139.2.0",
+            "version_id": "3139.2.0",
+            "build_id": "2022-04-05-1803",
+            "pretty_name": "Flatcar Container Linux by Kinvolk 3139.2.0 (Oklo)",
+            "ansi_color": "38;5;75",
+            "home_url": "https://flatcar-linux.org/",
+            "bug_report_url": "https://issues.flatcar-linux.org",
+            "flatcar_board": "amd64-usr",
+            "cpe_name": "cpe:2.3:o:flatcar-linux:flatcar_linux:3139.2.0:*:*:*:*:*:*:*"
+        }
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Flatcar Container Linux by Kinvolk\"\nID=flatcar\nID_LIKE=coreos\nVERSION=3139.2.0\nVERSION_ID=3139.2.0\nBUILD_ID=2022-04-05-1803\nPRETTY_NAME=\"Flatcar Container Linux by Kinvolk 3139.2.0 (Oklo)\"\nANSI_COLOR=\"38;5;75\"\nHOME_URL=\"https://flatcar-linux.org/\"\nBUG_REPORT_URL=\"https://issues.flatcar-linux.org\"\nFLATCAR_BOARD=\"amd64-usr\"\nCPE_NAME=\"cpe:2.3:o:flatcar-linux:flatcar_linux:3139.2.0:*:*:*:*:*:*:*\"\n",
+        "/etc/lsb-release": "DISTRIB_ID=\"Flatcar Container Linux by Kinvolk\"\nDISTRIB_RELEASE=3139.2.0\nDISTRIB_CODENAME=\"Oklo\"\nDISTRIB_DESCRIPTION=\"Flatcar Container Linux by Kinvolk 3139.2.0 (Oklo)\"\n",
+        "/usr/lib/os-release": "NAME=\"Flatcar Container Linux by Kinvolk\"\nID=flatcar\nID_LIKE=coreos\nVERSION=3139.2.0\nVERSION_ID=3139.2.0\nBUILD_ID=2022-04-05-1803\nPRETTY_NAME=\"Flatcar Container Linux by Kinvolk 3139.2.0 (Oklo)\"\nANSI_COLOR=\"38;5;75\"\nHOME_URL=\"https://flatcar-linux.org/\"\nBUG_REPORT_URL=\"https://issues.flatcar-linux.org\"\nFLATCAR_BOARD=\"amd64-usr\"\nCPE_NAME=\"cpe:2.3:o:flatcar-linux:flatcar_linux:3139.2.0:*:*:*:*:*:*:*\"\n"
+    },
+    "platform.dist": [
+        "flatcar",
+        "3139.2.0",
+        ""
+    ],
+    "result": {
+        "distribution": "Flatcar",
+        "distribution_version": "3139.2.0",
+        "distribution_release": "NA",
+        "distribution_major_version": "3139",
+        "os_family": "Flatcar"
+    },
+    "platform.release": "5.15.32-flatcar"
+}

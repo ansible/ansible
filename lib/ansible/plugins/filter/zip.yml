@@ -1,0 +1,43 @@
+DOCUMENTATION:
+  name: zip
+  version_added: "2.3"
+  short_description: combine list elements
+  positional: _input, _additional_lists
+  description: Iterate over several iterables in parallel, producing tuples with an item from each one.
+  notes:
+    - This is mostly a passhtrough to Python's C(zip) function.
+  options:
+    _input:
+      description: Original list.
+      type: list
+      elements: any
+      required: yes
+    _additional_lists:
+      description: Additional list(s).
+      type: list
+      elements: any
+      required: yes
+    strict:
+      description: If C(True) return an error on mismatching list length, otherwise shortest list determines output.
+      type: bool
+      default: no
+
+EXAMPLES: |
+
+    # two => [[1, "a"], [2, "b"], [3, "c"], [4, "d"], [5, "e"], [6, "f"]]
+    two: "{{ [1,2,3,4,5,6] | zip(['a','b','c','d','e','f']) }}"
+
+    # three => [ [ 1, "a", "d" ], [ 2, "b", "e" ], [ 3, "c", "f" ] ]
+    three: "{{ [1,2,3] | zip(['a','b','c'], ['d','e','f']) }}"
+
+    # shorter => [[1, "a"], [2, "b"], [3, "c"]]
+    shorter: "{{ [1,2,3] | zip(['a','b','c','d','e','f']) }}"
+
+    # compose dict from lists of keys and values
+    mydcit: "{{ dict(keys_list | zip(values_list)) }}"
+
+RETURN:
+  _value:
+    description: List of lists made of elements matching the positions of the input lists.
+    type: list
+    elements: list

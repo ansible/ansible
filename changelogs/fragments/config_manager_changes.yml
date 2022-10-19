@@ -1,3 +1,0 @@
-minor_changes:
-  - config manager, move templating into main query function in config instead of constants
-  - config manager, remove updates to configdata as it is mostly unused

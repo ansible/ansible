@@ -1,2 +1,0 @@
-bugfixes:
-  - "dnf - fix output parsing on systems with ``LANGUAGE`` set to a language other than English (https://github.com/ansible/ansible/issues/78193)"

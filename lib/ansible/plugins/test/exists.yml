@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: exists
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: does the path exist, follow symlinks
+  description:
+    - Check if the provided path maps to an existing filesystem object on the controller (localhost).
+    - Follows symlinks and checks the target of the symlink instead of the link itself, use the C(link) or C(link_exists) tests to check on the link.
+  options:
+    _input:
+      description: a path
+      type: path
+
+EXAMPLES: |
+  vars:
+    my_etc_hosts_exists: "{{ '/etc/hosts' is exist }}"
+    list_of_local_files_to_copy_to_remote: "{{ list_of_all_possible_files | select('exists') }}"
+
+RETURN:
+  _value:
+    description: Returns C(True) if the path corresponds to an existing filesystem object on the controller (after following symlinks), C(False) if otherwise.
+    type: boolean

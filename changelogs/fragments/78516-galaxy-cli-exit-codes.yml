@@ -1,3 +1,0 @@
-bugfixes:
-- ansible-galaxy - Fix exit codes for role search and delete
-  (https://github.com/ansible/ansible/issues/78516)

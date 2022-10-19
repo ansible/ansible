@@ -1,0 +1,23 @@
+DOCUMENTATION:
+  name: abs
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: is the path absolute
+  aliases: [is_abs]
+  description:
+    - Check if the provided path is absolute, not relative.
+    - An absolute path expresses the location of a filesystem object starting at the filesystem root and requires no context.
+    - A relative path does not start at the filesystem root and requires a 'current' directory as a context to resolve.
+  options:
+    _input:
+      description: A path.
+      type: path
+
+EXAMPLES: |
+    is_path_absolute: "{{ '/etc/hosts' is abs }}}"
+    relative_paths: "{{ all_paths | reject('abs') }}"
+
+RETURN:
+  _value:
+    description: Returns C(True) if the path is absolute, C(False) if it is relative.
+    type: boolean

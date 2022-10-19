@@ -68,6 +68,7 @@
     - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles', 'meta']
     - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles', 'meta']
     - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
 
 - name: create collection in cwd with custom init path
   command: ansible-galaxy collection init ansible_test2.my_collection --init-path ../../ --force {{ galaxy_verbosity }}
@@ -89,6 +90,7 @@
     - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles', 'meta']
     - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles', 'meta']
     - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
 
 - name: create collection for ignored files and folders
   command: ansible-galaxy collection init ansible_test.ignore

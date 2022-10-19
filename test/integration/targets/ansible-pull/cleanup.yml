@@ -1,6 +1,6 @@
 - hosts: localhost
   vars:
-    git_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/git_install.json") | from_json }}'
+    git_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/git_install.json") }}'
   tasks:
     - name: remove unwanted packages
       package:

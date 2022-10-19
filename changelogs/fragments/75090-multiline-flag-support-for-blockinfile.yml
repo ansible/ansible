@@ -1,2 +1,0 @@
-minor_changes:
-  - blockinfile - The presence of the multiline flag (?m) in the regular expression for insertafter opr insertbefore controls whether the match is done line by line or with multiple lines (https://github.com/ansible/ansible/pull/75090).

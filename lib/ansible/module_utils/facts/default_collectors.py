@@ -44,6 +44,7 @@ from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
+from ansible.module_utils.facts.system.loadavg import LoadAvgFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
@@ -116,6 +117,7 @@ _general = [
     CmdLineFactCollector,
     DateTimeFactCollector,
     EnvFactCollector,
+    LoadAvgFactCollector,
     SshPubKeyFactCollector,
     UserFactCollector
 ]  # type: t.List[t.Type[BaseFactCollector]]

@@ -1,0 +1,34 @@
+DOCUMENTATION:
+  name: human_to_bytes
+  version_added: "historical"
+  short_description: Get bytes from string
+  description:
+    - Convert a human readable byte or bit string into a number bytes.
+  positional: _input, default_unit, isbits
+  options:
+    _input:
+      description: Human readable description of a number of bytes.
+      type: int
+      required: true
+    default_unit:
+      description: Unit to assume when input does not specify it.
+      type: str
+      choices: ['Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'K', 'B']
+    isbits:
+      description: If C(True), force to interpret only bit input; if C(False), force bytes. Otherwise use the notation to guess.
+      type: bool
+EXAMPLES: |
+
+  # size => 1234803098
+  size: '{{ "1.15 GB" | human_to_bytes }}'
+
+  # size => 1234803098
+  size: '{{ "1.15" | human_to_bytes(deafult_unit="G") }}'
+
+  # this is an error, wants bits, got bytes
+  ERROR: '{{ "1.15 GB" | human_to_bytes(isbits=true) }}'
+
+RETURN:
+  _value:
+    description: Integer representing the bytes from the input.
+    type: int

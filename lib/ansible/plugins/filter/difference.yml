@@ -7,11 +7,11 @@ DOCUMENTATION:
     - Provide a unique list of all the elements of the first list that do not appear in the second one.
   options:
     _input:
-      description: A list
+      description: A list.
       type: list
       required: true
     _second_list:
-      description: A list
+      description: A list.
       type: list
       required: true
   seealso:
@@ -31,5 +31,5 @@ EXAMPLES: |
   # => [10]
 RETURN:
   _value:
-    description: A unique list of the elements from the first list that do not appear on the 2nd
+    description: A unique list of the elements from the first list that do not appear on the second.
     type: list

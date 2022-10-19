@@ -26,6 +26,16 @@ description:
      - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 version_added: '0.6'
 options:
+  ciphers:
+    description:
+      - SSL/TLS Ciphers to use for the request
+      - 'When a list is provided, all ciphers are joined in order with C(:)'
+      - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
+        for more details.
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+    type: list
+    elements: str
+    version_added: '2.14'
   decompress:
     description:
       - Whether to attempt to decompress gzip content-encoded responses
@@ -179,6 +189,14 @@ options:
     type: bool
     default: no
     version_added: '2.11'
+  use_netrc:
+    description:
+      - Determining whether to use credentials from ``~/.netrc`` file
+      - By default .netrc is used with Basic authentication headers
+      - When set to False, .netrc credentials are ignored
+    type: bool
+    default: true
+    version_added: '2.14'
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -370,7 +388,7 @@ def url_filename(url):
 
 
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
-            decompress=True):
+            decompress=True, ciphers=None, use_netrc=True):
     """
     Download data from the url and store in a temporary file.
 
@@ -379,7 +397,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     start = datetime.datetime.utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
-                          unredirected_headers=unredirected_headers, decompress=decompress)
+                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
@@ -465,6 +483,8 @@ def main():
         tmp_dest=dict(type='path'),
         unredirected_headers=dict(type='list', elements='str', default=[]),
         decompress=dict(type='bool', default=True),
+        ciphers=dict(type='list', elements='str'),
+        use_netrc=dict(type='bool', default=True),
     )
 
     module = AnsibleModule(
@@ -485,6 +505,8 @@ def main():
     tmp_dest = module.params['tmp_dest']
     unredirected_headers = module.params['unredirected_headers']
     decompress = module.params['decompress']
+    ciphers = module.params['ciphers']
+    use_netrc = module.params['use_netrc']
 
     result = dict(
         changed=False,
@@ -509,7 +531,7 @@ def main():
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
             checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                                     unredirected_headers=unredirected_headers)
+                                                     unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
@@ -587,7 +609,7 @@ def main():
     start = datetime.datetime.utcnow()
     method = 'HEAD' if module.check_mode else 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
-                           unredirected_headers=unredirected_headers, decompress=decompress)
+                           unredirected_headers=unredirected_headers, decompress=decompress, use_netrc=use_netrc)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
 

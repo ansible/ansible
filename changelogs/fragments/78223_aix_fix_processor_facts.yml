@@ -1,2 +1,0 @@
-bugfixes:
-  - "facts - fix processor facts on AIX: correctly detect number of cores and threads, turn ``processor`` into a list (https://github.com/ansible/ansible/pull/78223)."

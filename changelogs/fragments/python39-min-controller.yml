@@ -1,4 +1,0 @@
-major_changes:
-  - ansible - Increase minimum Python requirement to Python 3.9 for CLI utilities and controller code
-breaking_changes:
-  - ansible - Increase minimum Python requirement to Python 3.9 for CLI utilities and controller code

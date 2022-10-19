@@ -113,6 +113,21 @@ options:
     ini:
         - section: url_lookup
           key: use_gssapi
+  use_netrc:
+    description:
+    - Determining whether to use credentials from ``~/.netrc`` file
+    - By default .netrc is used with Basic authentication headers
+    - When set to False, .netrc credentials are ignored
+    type: boolean
+    version_added: "2.14"
+    default: True
+    vars:
+        - name: ansible_lookup_url_use_netrc
+    env:
+        - name: ANSIBLE_LOOKUP_URL_USE_NETRC
+    ini:
+        - section: url_lookup
+          key: use_netrc
   unix_socket:
     description: String of file system path to unix socket file to use when establishing connection to the provided url
     type: string
@@ -147,6 +162,23 @@ options:
     ini:
         - section: url_lookup
           key: unredirected_headers
+  ciphers:
+    description:
+      - SSL/TLS Ciphers to use for the request
+      - 'When a list is provided, all ciphers are joined in order with C(:)'
+      - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
+        for more details.
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+    type: list
+    elements: string
+    version_added: '2.14'
+    vars:
+        - name: ansible_lookup_url_ciphers
+    env:
+        - name: ANSIBLE_LOOKUP_URL_CIPHERS
+    ini:
+        - section: url_lookup
+          key: ciphers
 """
 
 EXAMPLES = """
@@ -197,20 +229,24 @@ class LookupModule(LookupBase):
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
             try:
-                response = open_url(term, validate_certs=self.get_option('validate_certs'),
-                                    use_proxy=self.get_option('use_proxy'),
-                                    url_username=self.get_option('username'),
-                                    url_password=self.get_option('password'),
-                                    headers=self.get_option('headers'),
-                                    force=self.get_option('force'),
-                                    timeout=self.get_option('timeout'),
-                                    http_agent=self.get_option('http_agent'),
-                                    force_basic_auth=self.get_option('force_basic_auth'),
-                                    follow_redirects=self.get_option('follow_redirects'),
-                                    use_gssapi=self.get_option('use_gssapi'),
-                                    unix_socket=self.get_option('unix_socket'),
-                                    ca_path=self.get_option('ca_path'),
-                                    unredirected_headers=self.get_option('unredirected_headers'))
+                response = open_url(
+                    term, validate_certs=self.get_option('validate_certs'),
+                    use_proxy=self.get_option('use_proxy'),
+                    url_username=self.get_option('username'),
+                    url_password=self.get_option('password'),
+                    headers=self.get_option('headers'),
+                    force=self.get_option('force'),
+                    timeout=self.get_option('timeout'),
+                    http_agent=self.get_option('http_agent'),
+                    force_basic_auth=self.get_option('force_basic_auth'),
+                    follow_redirects=self.get_option('follow_redirects'),
+                    use_gssapi=self.get_option('use_gssapi'),
+                    unix_socket=self.get_option('unix_socket'),
+                    ca_path=self.get_option('ca_path'),
+                    unredirected_headers=self.get_option('unredirected_headers'),
+                    ciphers=self.get_option('ciphers'),
+                    use_netrc=self.get_option('use_netrc')
+                )
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:

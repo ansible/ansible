@@ -1,2 +1,0 @@
-removed_features:
-  - PlayIterator - remove deprecated ``PlayIterator.ITERATING_*`` and ``PlayIterator.FAILED_*``

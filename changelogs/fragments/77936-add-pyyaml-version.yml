@@ -1,2 +1,0 @@
-bugfixes:
-  - Add PyYAML >= 5.1 as a dependency of ansible-core to be compatible with Python 3.8+.

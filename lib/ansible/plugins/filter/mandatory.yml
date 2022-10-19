@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: mandatory
+  version_added: "historical"
+  short_description: make a variable's existance mandatory
+  description:
+    - Depending on context undefined variables can be ignored or skipped, this ensures they force an error.
+  positional: _input
+  options:
+    _input:
+      description: Mandatory expression.
+      type: raw
+      required: true
+EXAMPLES: |
+
+    # results in a Filter Error
+    {{ notdefined | mandatory }}
+
+RETURN:
+  _value:
+    description: The input if defined, otherwise an error.
+    type: raw

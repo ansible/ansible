@@ -292,6 +292,7 @@ DOCUMENTATION = '''
         description:
             - "Preferred method to use when transferring files over ssh"
             - Setting to 'smart' (default) will try them in order, until one succeeds or they all fail
+            - For OpenSSH >=9.0 you must add an additional option to enable scp (scp_extra_args="-O")
             - Using 'piped' creates an ssh pipe with C(dd) on either side to copy the data
         choices: ['sftp', 'scp', 'piped', 'smart']
         env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
@@ -310,6 +311,7 @@ DOCUMENTATION = '''
           - "Preferred method to use when transferring files over SSH."
           - When set to I(smart), Ansible will try them until one succeeds or they all fail.
           - If set to I(True), it will force 'scp', if I(False) it will use 'sftp'.
+          - For OpenSSH >=9.0 you must add an additional option to enable scp (scp_extra_args="-O")
           - This setting will overridden by ssh_transfer_method if set.
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:

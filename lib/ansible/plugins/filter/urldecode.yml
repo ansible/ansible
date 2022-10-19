@@ -1,0 +1,48 @@
+DOCUMENTATION:
+  name: urlsplit
+  version_added: "2.4"
+  short_description: get components from URL
+  description:
+    - Split a URL into its component parts.
+  positional: _input, query
+  options:
+    _input:
+      description: URL string to split.
+      type: str
+      required: true
+    query:
+      description: Specify a single component to return.
+      type: str
+      choices: ["fragment", "hostname", "netloc", "password",  "path",  "port",  "query", "scheme",  "username"]
+
+RETURN:
+  _value:
+    description:
+      - A dictionary with components as keyword and their value.
+      - If I(query) is provided, a string or integer will be returned instead, depending on I(query).
+    type: any
+
+EXAMPLES: |
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}
+    # =>
+    #   {
+    #       "fragment": "fragment",
+    #       "hostname": "www.acme.com",
+    #       "netloc": "user:password@www.acme.com:9000",
+    #       "password": "password",
+    #       "path": "/dir/index.html",
+    #       "port": 9000,
+    #       "query": "query=term",
+    #       "scheme": "http",
+    #       "username": "user"
+    #   }
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('hostname') }}
+    # => 'www.acme.com'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('query') }}
+    # => 'query=term'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('path') }}
+    # => '/dir/index.html'

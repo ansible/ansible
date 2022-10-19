@@ -1,0 +1,2 @@
+bugfixes:
+  - known_hosts - do not return changed status when a non-existing key is removed (https://github.com/ansible/ansible/issues/78598)

@@ -17,7 +17,9 @@ import shutil
 import sys
 import textwrap
 import time
+import typing as t
 
+from dataclasses import dataclass
 from yaml.error import YAMLError
 
 import ansible.constants as C
@@ -170,6 +172,30 @@ def validate_signature_count(value):
     return value
 
 
+@dataclass
+class RoleDistributionServer:
+    _api: t.Union[GalaxyAPI, None]
+    api_servers: list[GalaxyAPI]
+
+    @property
+    def api(self):
+        if self._api:
+            return self._api
+
+        for server in self.api_servers:
+            try:
+                if u'v1' in server.available_api_versions:
+                    self._api = server
+                    break
+            except Exception:
+                continue
+
+        if not self._api:
+            self._api = self.api_servers[0]
+
+        return self._api
+
+
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
@@ -198,7 +224,7 @@ class GalaxyCLI(CLI):
 
         self.api_servers = []
         self.galaxy = None
-        self._api = None
+        self.lazy_role_api = None
         super(GalaxyCLI, self).__init__(args)
 
     def init_parser(self):
@@ -498,6 +524,10 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
                                         help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                         choices=list(GPG_ERROR_MAP.keys()))
+            install_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
+                                        help='Install collection artifacts (tarballs) without contacting any distribution servers. '
+                                             'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
+                                        )
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -674,25 +704,15 @@ class GalaxyCLI(CLI):
                 **galaxy_options
             ))
 
+        # checks api versions once a GalaxyRole makes an api call
+        # self.api can be used to evaluate the best server immediately
+        self.lazy_role_api = RoleDistributionServer(None, self.api_servers)
+
         return context.CLIARGS['func']()
 
     @property
     def api(self):
-        if self._api:
-            return self._api
-
-        for server in self.api_servers:
-            try:
-                if u'v1' in server.available_api_versions:
-                    self._api = server
-                    break
-            except Exception:
-                continue
-
-        if not self._api:
-            self._api = self.api_servers[0]
-
-        return self._api
+        return self.lazy_role_api.api
 
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
@@ -753,7 +773,7 @@ class GalaxyCLI(CLI):
                 display.vvv("found role %s in yaml file" % to_text(role))
                 if "name" not in role and "src" not in role:
                     raise AnsibleError("Must specify name or src for role")
-                return [GalaxyRole(self.galaxy, self.api, **role)]
+                return [GalaxyRole(self.galaxy, self.lazy_role_api, **role)]
             else:
                 b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
                 if not os.path.isfile(b_include_path):
@@ -762,7 +782,7 @@ class GalaxyCLI(CLI):
 
                 with open(b_include_path, 'rb') as f_include:
                     try:
-                        return [GalaxyRole(self.galaxy, self.api, **r) for r in
+                        return [GalaxyRole(self.galaxy, self.lazy_role_api, **r) for r in
                                 (RoleRequirement.role_yaml_parse(i) for i in yaml_load(f_include))]
                     except Exception as e:
                         raise AnsibleError("Unable to load data from include requirements file: %s %s"
@@ -1178,7 +1198,7 @@ class GalaxyCLI(CLI):
         for role in context.CLIARGS['args']:
 
             role_info = {'path': roles_path}
-            gr = GalaxyRole(self.galaxy, self.api, role)
+            gr = GalaxyRole(self.galaxy, self.lazy_role_api, role)
 
             install_info = gr.install_info
             if install_info:
@@ -1323,7 +1343,7 @@ class GalaxyCLI(CLI):
                 # (and their dependencies, unless the user doesn't want us to).
                 for rname in context.CLIARGS['args']:
                     role = RoleRequirement.role_yaml_parse(rname.strip())
-                    role_requirements.append(GalaxyRole(self.galaxy, self.api, **role))
+                    role_requirements.append(GalaxyRole(self.galaxy, self.lazy_role_api, **role))
 
         if not role_requirements and not collection_requirements:
             display.display("Skipping install, no requirements found")
@@ -1380,6 +1400,7 @@ class GalaxyCLI(CLI):
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
             disable_gpg_verify=disable_gpg_verify,
+            offline=context.CLIARGS.get('offline', False),
         )
 
         return 0
@@ -1433,7 +1454,7 @@ class GalaxyCLI(CLI):
                         display.debug('Installing dep %s' % dep)
                         dep_req = RoleRequirement()
                         dep_info = dep_req.role_yaml_parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, self.api, **dep_info)
+                        dep_role = GalaxyRole(self.galaxy, self.lazy_role_api, **dep_info)
                         if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
                             # we know we can skip this, as it's not going to
                             # be found on galaxy.ansible.com
@@ -1517,7 +1538,7 @@ class GalaxyCLI(CLI):
 
             if role_name:
                 # show the requested role, if it exists
-                gr = GalaxyRole(self.galaxy, self.api, role_name, path=os.path.join(role_path, role_name))
+                gr = GalaxyRole(self.galaxy, self.lazy_role_api, role_name, path=os.path.join(role_path, role_name))
                 if os.path.isdir(gr.path):
                     role_found = True
                     display.display('# %s' % os.path.dirname(gr.path))
@@ -1536,7 +1557,7 @@ class GalaxyCLI(CLI):
                 display.display('# %s' % role_path)
                 path_files = os.listdir(role_path)
                 for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
+                    gr = GalaxyRole(self.galaxy, self.lazy_role_api, path_file, path=path)
                     if gr.metadata:
                         _display_role(gr)
 

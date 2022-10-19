@@ -1,0 +1,45 @@
+DOCUMENTATION:
+  name: strftime
+  version_added: "2.4"
+  short_description: date formating
+  description:
+    - Using Python's C(strftime) function, take a data formating string and a date/time to create a formated date.
+  notes:
+    - This is a passthrough to Python's C(stftime).
+  positional: _input, second, utc
+  options:
+    _input:
+      description:
+        - A formating string following C(stftime) conventions.
+        - See L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior) for a reference.
+      type: str
+      required: true
+    second:
+      description: Datetime in seconds from C(epoch) to format, if not supplied C(gmttime/localtime) will be used.
+      type: int
+    utc:
+      description: Whether time supplied is in UTC.
+      type: bool
+      default: false
+
+EXAMPLES: |
+  # Display year-month-day
+  {{ '%Y-%m-%d' | strftime }}
+  # => "2021-03-19"
+
+  # Display hour:min:sec
+  {{ '%H:%M:%S' | strftime }}
+  # => "21:51:04"
+
+  # Use ansible_date_time.epoch fact
+  {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
+  # => "2021-03-19 21:54:09"
+
+  # Use arbitrary epoch value
+  {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
+  {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+RETURN:
+  _value:
+    description: A formatted date/time string.
+    type: str

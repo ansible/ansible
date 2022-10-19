@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    ansible-galaxy - fix installing collections that have dependencies in the metadata set to
-    null instead of an empty dictionary (https://github.com/ansible/ansible/issues/77560).

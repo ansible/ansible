@@ -1,3 +1,0 @@
-minor_changes:
-- Jinja version test - Add pep440 version_type for version test.
-  (https://github.com/ansible/ansible/issues/78288)

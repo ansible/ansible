@@ -9,7 +9,7 @@ Scaleway Guide
 Introduction
 ============
 
-`Scaleway <https://scaleway.com>`_ is a cloud provider supported by Ansible, version 2.6 or higher via a dynamic inventory plugin and modules.
+`Scaleway <https://scaleway.com>`_ is a cloud provider supported by Ansible, version 2.6 or higher through a dynamic inventory plugin and modules.
 Those modules are:
 
 - :ref:`scaleway_sshkey_module`: adds a public SSH key from a file or value to the Packet infrastructure. Every subsequently-created device will have this public key installed in .ssh/authorized_keys.
@@ -27,7 +27,7 @@ Requirements
 
 The Scaleway modules and inventory script connect to the Scaleway API using `Scaleway REST API <https://developer.scaleway.com>`_.
 To use the modules and inventory script you'll need a Scaleway API token.
-You can generate an API token via the Scaleway console `here <https://cloud.scaleway.com/#/credentials>`__.
+You can generate an API token through the Scaleway console `here <https://cloud.scaleway.com/#/credentials>`__.
 The simplest way to authenticate yourself is to set the Scaleway API token in an environment variable:
 
 .. code-block:: bash
@@ -70,7 +70,7 @@ The ``ssh_pub_key`` parameter contains your ssh public key as a string. Here is 
 
     - name: Test SSH key lifecycle on a Scaleway account
       hosts: localhost
-      gather_facts: no
+      gather_facts: false
       environment:
         SCW_API_KEY: ""
 
@@ -120,7 +120,7 @@ Take a look at this short playbook to see a working example using ``scaleway_com
 
     - name: Test compute instance lifecycle on a Scaleway account
       hosts: localhost
-      gather_facts: no
+      gather_facts: false
       environment:
         SCW_API_KEY: ""
 

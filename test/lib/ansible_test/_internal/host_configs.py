@@ -337,6 +337,7 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context: HostContext) -> PosixRemoteCompletionConfig:
         """Return the default settings."""
+        # pylint: disable=unexpected-keyword-arg  # see: https://github.com/PyCQA/pylint/issues/7434
         return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
             name=self.name,
             placeholder=True,

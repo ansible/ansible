@@ -6,7 +6,7 @@ set -eux
 for test_strategy in linear free; do
   out="$(ansible-playbook test_end_host.yml -i inventory.yml -e test_strategy=$test_strategy -vv "$@")"
 
-  grep -q "META: end_host conditional evaluated to false, continuing execution for testhost" <<< "$out"
+  grep -q "META: end_host conditional evaluated to False, continuing execution for testhost" <<< "$out"
   grep -q "META: ending play for testhost2" <<< "$out"
   grep -q '"skip_reason": "end_host conditional evaluated to False, continuing execution for testhost"' <<< "$out"
   grep -q "play not ended for testhost" <<< "$out"
@@ -14,7 +14,7 @@ for test_strategy in linear free; do
 
   out="$(ansible-playbook test_end_host_fqcn.yml -i inventory.yml -e test_strategy=$test_strategy -vv "$@")"
 
-  grep -q "META: end_host conditional evaluated to false, continuing execution for testhost" <<< "$out"
+  grep -q "META: end_host conditional evaluated to False, continuing execution for testhost" <<< "$out"
   grep -q "META: ending play for testhost2" <<< "$out"
   grep -q '"skip_reason": "end_host conditional evaluated to False, continuing execution for testhost"' <<< "$out"
   grep -q "play not ended for testhost" <<< "$out"

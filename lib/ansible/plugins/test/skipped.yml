@@ -2,7 +2,8 @@ DOCUMENTATION:
   name: skipped
   author: Ansible Core
   version_added: "1.9"
-  short_description: check if task was skipped
+  short_description: Was task skipped
+  aliases: [skip]
   description:
     - Tests if task was skipped
     - This test checks for the existance of a C(skipped) key in the input dictionary and that it is C(True) if present

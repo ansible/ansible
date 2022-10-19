@@ -1,2 +1,0 @@
-bugfixes:
-  - include module - add docs url to include deprecation message (https://github.com/ansible/ansible/issues/76684).

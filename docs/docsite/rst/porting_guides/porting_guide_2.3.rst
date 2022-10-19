@@ -92,7 +92,7 @@ Use of multiple tags
 
 Specifying ``--tags`` (or ``--skip-tags``) multiple times on the command line currently leads to the last specified tag overriding all the other specified tags. This behaviour is deprecated. In the future, if you specify --tags multiple times the tags will be merged together. From now on, using ``--tags`` multiple times on one command line will emit a deprecation warning. Setting the ``merge_multiple_cli_tags`` option to True in the ``ansible.cfg`` file will enable the new behaviour.
 
-In 2.4, the default will be to merge the tags. You can enable the old overwriting behavior via the config option.
+In 2.4, the default will be to merge the tags. You can enable the old overwriting behavior through the config option.
 In 2.5, multiple ``--tags`` options will be merged with no way to go back to the old behaviour.
 
 
@@ -219,8 +219,8 @@ Will result in:
          transport: cli
          host: "{{ ansible_host }}"
 
-delegate_to vs ProxyCommand
----------------------------
+ProxyCommand replaces delegate_to
+---------------------------------
 
 The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
 no longer supports the use of the ``delegate_to`` directive.
@@ -228,6 +228,6 @@ In order to use a bastion or intermediate jump host to connect to network device
 transport, network modules now support the use of ``ProxyCommand``.
 
 To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
-file to specify the proxy host via ``ansible_ssh_common_args``.
+file to specify the proxy host through ``ansible_ssh_common_args``.
 
 For details on how to do this see the :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>`.

@@ -1,2 +1,0 @@
-bugfixes:
-  - "yum - fix traceback when ``releasever`` is specified with ``latest`` (https://github.com/ansible/ansible/issues/78058)"

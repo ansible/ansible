@@ -168,7 +168,7 @@ When creating a new module there are a few things to keep in mind:
 - Avoid using try/catch statements over a large code block, rather use them for individual calls so the error message can be more descriptive
 - Try and catch specific exceptions when using try/catch statements
 - Avoid using PSCustomObjects unless necessary
-- Look for common functions in ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work. These can be imported by adding the line ``#Requires -Module *`` where * is the filename to import, and will be automatically included with the module code sent to the Windows target when run via Ansible
+- Look for common functions in ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work. These can be imported by adding the line ``#Requires -Module *`` where * is the filename to import, and will be automatically included with the module code sent to the Windows target when run through Ansible
 - As well as PowerShell module utils, C# module utils are stored in ``./lib/ansible/module_utils/csharp/`` and are automatically imported in a module execution if the line ``#AnsibleRequires -CSharpUtil *`` is present
 - C# and PowerShell module utils achieve the same goal but C# allows a developer to implement low level tasks, such as calling the Win32 API, and can be faster in some cases
 - Ensure the code runs under Powershell v3 and higher on Windows Server 2012 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
@@ -412,7 +412,9 @@ PowerShell utils, these are stored in a folder called ``module_utils`` and the f
 
 The below example is a role structure that contains two PowerShell custom module_utils called
 ``Ansible.ModuleUtils.ModuleUtil1``, ``Ansible.ModuleUtils.ModuleUtil2``, and a C# util containing the namespace
-``Ansible.CustomUtil``::
+``Ansible.CustomUtil``:
+
+.. code-block:: console
 
     meta/
       main.yml
@@ -561,7 +563,9 @@ You can test a module with an Ansible playbook. For example:
 - Create a playbook in any directory ``touch testmodule.yml``.
 - Create an inventory file in the same directory ``touch hosts``.
 - Populate the inventory file with the variables required to connect to a Windows host(s).
-- Add the following to the new playbook file::
+- Add the following to the new playbook file:
+
+.. code-block:: yaml
 
     ---
     - name: test out windows module
@@ -691,7 +695,7 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file_check
-      check_mode: yes
+      check_mode: true
 
     - name: get result of remove a file (check mode)
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"

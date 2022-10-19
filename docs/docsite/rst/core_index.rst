@@ -48,10 +48,12 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
    :maxdepth: 2
    :caption: Using Ansible Core
 
-   user_guide/index
    inventory_guide/index
    command_guide/index
    playbook_guide/index
+   vault_guide/index
+   module_plugin_guide/index
+   collections_guide/index
    os_guide/index
    tips_tricks/index
 
@@ -70,6 +72,12 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
 
    dev_guide/index
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Ansible Galaxy
+
+   galaxy/user_guide.rst
+   galaxy/dev_guide.rst
 
 .. toctree::
    :maxdepth: 1

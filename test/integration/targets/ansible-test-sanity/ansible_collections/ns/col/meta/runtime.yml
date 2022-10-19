@@ -2,4 +2,11 @@ requires_ansible: '>=2.11'  # force ansible-doc to check the Ansible version (re
 plugin_routing:
   modules:
     hi:
-      redirect: hello
+      redirect: ns.col2.hello
+    hiya:
+      redirect: ns.col2.package.subdir.hiya
+  module_utils:
+    hi:
+      redirect: ansible_collections.ns.col2.plugins.module_utils
+    hello:
+      redirect: ns.col2.hiya

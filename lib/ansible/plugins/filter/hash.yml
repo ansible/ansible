@@ -1,0 +1,28 @@
+DOCUMENTATION:
+  name: checksum
+  version_added: "1.9"
+  short_description: hash of input data
+  description:
+    - Returns a configurable hash of the input data. Uses L(SHA-1, https://en.wikipedia.org/wiki/SHA-1) by default.
+  positional: _input
+  options:
+    _input:
+      description: Data to checksum.
+      type: raw
+      required: true
+    hashtype:
+      description:
+        - Type of algorithm to produce the hash.
+        - The list of available choices depends on the installed Python's hashlib.
+      type: string
+      default: sha1
+EXAMPLES: |
+    # sha1_hash => "109f4b3c50d7b0df729d299bc6f8e9ef9066971f"
+    sha1_hash: {{ 'test2' | hash('sha1') }}
+    # md5 => "5a105e8b9d40e1329780d62ea2265d8a"
+    md5: {{ 'test2' | hash('md5') }}
+
+RETURN:
+  _value:
+    description: The checksum of the input, as configured in I(hashtype).
+    type: string

@@ -1,2 +1,0 @@
-bugfixes:
-  - yaml inventory plugin - fix the error message for non-string hostnames (https://github.com/ansible/ansible/issues/77519).

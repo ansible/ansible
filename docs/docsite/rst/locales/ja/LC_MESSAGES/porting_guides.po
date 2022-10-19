@@ -3134,95 +3134,95 @@ msgstr "キーワードの完全なリストは、「:ref:`playbook_keywords`」
 msgid "Migrating from with_X to loop"
 msgstr "with_X から loop への移行"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:1
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:1
 msgid "In most cases, loops work best with the ``loop`` keyword instead of ``with_X`` style loops. The ``loop`` syntax is usually best expressed using filters instead of more complex use of ``query`` or ``lookup``."
 msgstr "ほとんどの場合、ループは、``with_X`` スタイルのループではなく、``loop`` キーワードで最適に機能します。``loop`` 構文は通常、``query`` や ``lookup`` の複雑な使用ではなく、フィルターを使用して表現できます。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:3
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:3
 msgid "These examples show how to convert many common ``with_`` style loops to ``loop`` and filters."
 msgstr "以下の例では、一般的な ``with_`` スタイルのループを ``loop`` およびフィルターに変換する方法を示しています。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:6
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:6
 msgid "with_list"
 msgstr "with_list"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:8
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:8
 msgid "``with_list`` is directly replaced by ``loop``."
 msgstr "``with_list`` は、直接 ``loop`` に置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:27
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:27
 msgid "with_items"
 msgstr "with_items"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:29
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:29
 msgid "``with_items`` is replaced by ``loop`` and the ``flatten`` filter."
 msgstr "``with_items`` は、``loop`` および ``flatten`` フィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:44
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:44
 msgid "with_indexed_items"
 msgstr "with_indexed_items"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:46
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:46
 msgid "``with_indexed_items`` is replaced by ``loop``, the ``flatten`` filter and ``loop_control.index_var``."
 msgstr "``with_indexed_items`` は、``loop``、``flatten`` フィルター、および ``loop_control.index_var`` に置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:63
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:63
 msgid "with_flattened"
 msgstr "with_flattened"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:65
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:65
 msgid "``with_flattened`` is replaced by ``loop`` and the ``flatten`` filter."
 msgstr "``with_flattened`` は、``loop`` および ``flatten`` フィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:80
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:80
 msgid "with_together"
 msgstr "with_together"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:82
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:82
 msgid "``with_together`` is replaced by ``loop`` and the ``zip`` filter."
 msgstr "``with_together`` は、``loop`` および ``zip`` フィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:98
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:98
 msgid "Another example with complex data"
 msgstr "複雑なデータがある別の例"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:113
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:113
 msgid "with_dict"
 msgstr "with_dict"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:115
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:115
 msgid "``with_dict`` can be substituted by ``loop`` and either the ``dictsort`` or ``dict2items`` filters."
 msgstr "``with_dict`` は、``loop`` と、``dictsort`` または``dict2items`` のいずれかのフィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:135
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:135
 msgid "with_sequence"
 msgstr "with_sequence"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:137
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:137
 msgid "``with_sequence`` is replaced by ``loop`` and the ``range`` function, and potentially the ``format`` filter."
 msgstr "``with_sequence`` は、``loop`` と``range`` の関数、そして潜在的には``format`` フィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:153
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:153
 msgid "with_subelements"
 msgstr "with_subelements"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:155
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:155
 msgid "``with_subelements`` is replaced by ``loop`` and the ``subelements`` filter."
 msgstr "``with_subelements`` は、``loop`` および ``subelements`` フィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:172
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:172
 msgid "with_nested/with_cartesian"
 msgstr "with_nested/with_cartesian"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:174
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:174
 msgid "``with_nested`` and ``with_cartesian`` are replaced by loop and the ``product`` filter."
 msgstr "``with_nested`` と``with_cartesian`` は、ループと ``product`` のフィルターに置き換えられました。"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:191
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:191
 msgid "with_random_choice"
 msgstr "with_random_choice"
 
-#: ../../rst/user_guide/shared_snippets/with2loop.txt:193
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:193
 msgid "``with_random_choice`` is replaced by just use of the ``random`` filter, without need of ``loop``."
 msgstr "``with_random_choice`` は、``random`` フィルターを使用するだけで、``loop`` を必要とせずに置き換えることができます。"
 

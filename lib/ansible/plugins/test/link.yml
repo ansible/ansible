@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: link
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: does the path reference existing symbolic link
+  aliases: [islink]
+  description:
+    - Check if the provided path maps to an existing symlink on the controller's filesystem (localhost).
+  options:
+    _input:
+      description: A path.
+      type: path
+
+EXAMPLES: |
+    ismyhostsalink: "{{ '/etc/hosts' is link}}"
+    list_of_symlinks: "{{ list_of_paths | select('link') }}"
+
+RETURN:
+  _value:
+    description: Returns C(True) if the path corresponds to an existing symlink on the filesystem on the controller, C(False) if otherwise.
+    type: boolean

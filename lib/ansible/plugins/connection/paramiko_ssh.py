@@ -58,6 +58,20 @@ DOCUMENTATION = """
             - name: ansible_paramiko_pass
             - name: ansible_paramiko_password
               version_added: '2.5'
+      use_rsa_sha2_algorithms:
+        description:
+            - Whether or not to enable RSA SHA2 algorithms for pubkeys and hostkeys
+            - On paramiko versions older than 2.9, this only affects hostkeys
+            - For behavior matching paramiko<2.9 set this to C(False)
+        vars:
+            - name: ansible_paramiko_use_rsa_sha2_algorithms
+        ini:
+            - {key: use_rsa_sha2_algorithms, section: paramiko_connection}
+        env:
+            - {name: ANSIBLE_PARAMIKO_USE_RSA_SHA2_ALGORITHMS}
+        default: True
+        type: boolean
+        version_added: '2.14'
       host_key_auto_add:
         description: 'Automatically add host keys'
         env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
@@ -79,6 +93,60 @@ DOCUMENTATION = """
         env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
         ini:
           - {key: proxy_command, section: paramiko_connection}
+        vars:
+          - name: ansible_paramiko_proxy_command
+            version_added: '2.15'
+      ssh_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          default: ''
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_args'
+          env:
+              - name: ANSIBLE_SSH_ARGS
+          vars:
+              - name: ansible_ssh_args
+                version_added: '2.7'
+          deprecated:
+              why: In favor of the "proxy_command" option.
+              version: "2.18"
+              alternatives: proxy_command
+      ssh_common_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_common_args'
+                version_added: '2.7'
+          env:
+              - name: ANSIBLE_SSH_COMMON_ARGS
+                version_added: '2.7'
+          vars:
+              - name: ansible_ssh_common_args
+          cli:
+              - name: ssh_common_args
+          default: ''
+          deprecated:
+              why: In favor of the "proxy_command" option.
+              version: "2.18"
+              alternatives: proxy_command
+      ssh_extra_args:
+          description: Only used in parsing ProxyCommand for use in this plugin.
+          vars:
+              - name: ansible_ssh_extra_args
+          env:
+            - name: ANSIBLE_SSH_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: ssh_extra_args
+              section: ssh_connection
+              version_added: '2.7'
+          cli:
+            - name: ssh_extra_args
+          default: ''
+          deprecated:
+              why: In favor of the "proxy_command" option.
+              version: "2.18"
+              alternatives: proxy_command
       pty:
         default: True
         description: 'SUDO usually requires a PTY, True to give a PTY and False to not give a PTY.'
@@ -267,9 +335,9 @@ class Connection(ConnectionBase):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', '') or '',
-            getattr(self._play_context, 'ssh_common_args', '') or '',
-            getattr(self._play_context, 'ssh_args', '') or '',
+            self.get_option('ssh_extra_args'),
+            self.get_option('ssh_common_args'),
+            self.get_option('ssh_args', ''),
         ]
 
         args = self._split_ssh_args(' '.join(ssh_args))
@@ -287,7 +355,7 @@ class Connection(ConnectionBase):
             if proxy_command:
                 break
 
-        proxy_command = proxy_command or self.get_option('proxy_command')
+        proxy_command = self.get_option('proxy_command') or proxy_command
 
         sock_kwarg = {}
         if proxy_command:
@@ -319,6 +387,18 @@ class Connection(ConnectionBase):
                     host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
+
+        # Set pubkey and hostkey algorithms to disable, the only manipulation allowed currently
+        # is keeping or omitting rsa-sha2 algorithms
+        paramiko_preferred_pubkeys = getattr(paramiko.Transport, '_preferred_pubkeys', ())
+        paramiko_preferred_hostkeys = getattr(paramiko.Transport, '_preferred_keys', ())
+        use_rsa_sha2_algorithms = self.get_option('use_rsa_sha2_algorithms')
+        disabled_algorithms = {}
+        if not use_rsa_sha2_algorithms:
+            if paramiko_preferred_pubkeys:
+                disabled_algorithms['pubkeys'] = tuple(a for a in paramiko_preferred_pubkeys if 'rsa-sha2' in a)
+            if paramiko_preferred_hostkeys:
+                disabled_algorithms['keys'] = tuple(a for a in paramiko_preferred_hostkeys if 'rsa-sha2' in a)
 
         # override paramiko's default logger name
         if self._log_channel is not None:
@@ -369,7 +449,8 @@ class Connection(ConnectionBase):
                 password=conn_password,
                 timeout=self._play_context.timeout,
                 port=port,
-                **ssh_connect_kwargs
+                disabled_algorithms=disabled_algorithms,
+                **ssh_connect_kwargs,
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)

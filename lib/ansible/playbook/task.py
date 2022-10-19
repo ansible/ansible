@@ -76,7 +76,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     delegate_facts = FieldAttribute(isa='bool')
     failed_when = FieldAttribute(isa='list', default=list)
     loop = FieldAttribute()
-    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl)
+    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     notify = FieldAttribute(isa='list')
     poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = FieldAttribute(isa='string', static=True)
@@ -457,14 +457,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._parent:
             self._parent.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False, prepend=False):
+    def _get_parent_attribute(self, attr, omit=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-        extend = self.fattributes.get(attr).extend
-        prepend = self.fattributes.get(attr).prepend
+        fattr = self.fattributes[attr]
+
+        extend = fattr.extend
+        prepend = fattr.prepend
+
         try:
-            value = getattr(self, f'_{attr}', Sentinel)
+            # omit self, and only get parent values
+            if omit:
+                value = Sentinel
+            else:
+                value = getattr(self, f'_{attr}', Sentinel)
+
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
             if getattr(self._parent, 'statically_loaded', True):

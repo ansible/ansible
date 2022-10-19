@@ -1,4 +1,3 @@
-> TEST_DOCS_RETURNS    (library/test_docs_returns.py)
 
         Test module
 
@@ -12,14 +11,12 @@ EXAMPLES:
 RETURN VALUES:
 - a_first
         A first result.
-
         returned: success
         type: str
 
 - m_middle
         This should be in the middle.
         Has some more data
-
         returned: success and 1st of month
         type: dict
 
@@ -27,11 +24,10 @@ RETURN VALUES:
 
         - suboption
             A suboption.
-            (Choices: ARF, BARN, c_without_capital_first_letter)
+            choices: [ARF, BARN, c_without_capital_first_letter]
             type: str
 
 - z_last
         A last result.
-
         returned: success
         type: str

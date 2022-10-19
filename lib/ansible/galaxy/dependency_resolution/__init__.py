@@ -33,6 +33,7 @@ def build_collection_dependency_resolver(
         with_pre_releases=False,  # type: bool
         upgrade=False,  # type: bool
         include_signatures=True,  # type: bool
+        offline=False,  # type: bool
 ):  # type: (...) -> CollectionDependencyResolver
     """Return a collection dependency resolver.
 
@@ -41,7 +42,7 @@ def build_collection_dependency_resolver(
     """
     return CollectionDependencyResolver(
         CollectionDependencyProvider(
-            apis=MultiGalaxyAPIProxy(galaxy_apis, concrete_artifacts_manager),
+            apis=MultiGalaxyAPIProxy(galaxy_apis, concrete_artifacts_manager, offline=offline),
             concrete_artifacts_manager=concrete_artifacts_manager,
             user_requirements=user_requirements,
             preferred_candidates=preferred_candidates,

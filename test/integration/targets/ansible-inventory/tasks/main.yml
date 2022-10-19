@@ -96,11 +96,11 @@
     command: ansible-inventory --list --output unicode_inventory.json -i {{ role_path }}/files/unicode.yml
 
   - set_fact:
-      json_inventory_file: "{{ lookup('file', 'unicode_inventory.json') | string }}"
+      json_inventory_file: "{{ lookup('file', 'unicode_inventory.json') }}"
 
   - assert:
       that:
-          - json_inventory_file is contains('příbor')
+          - json_inventory_file|string is contains('příbor')
   always:
     - file:
         name: unicode_inventory.json

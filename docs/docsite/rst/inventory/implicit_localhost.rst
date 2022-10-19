@@ -5,7 +5,9 @@
 Implicit 'localhost'
 ====================
 
-When you try to reference a ``localhost`` and you don't have it defined in inventory, Ansible will create an implicit one for you.::
+When you try to reference a ``localhost`` and you don't have it defined in inventory, Ansible will create an implicit one for you.:
+
+.. code-block:: yaml
 
     - hosts: all
       tasks:
@@ -13,7 +15,9 @@ When you try to reference a ``localhost`` and you don't have it defined in inven
           stat: path=/var/log/hosts/{{inventory_hostname}}.log
           delegate_to: localhost
 
-In a case like this (or ``local_action``) when Ansible needs to contact a 'localhost' but you did not supply one, we create one for you. This host is defined with specific connection variables equivalent to this in an inventory::
+In a case like this (or ``local_action``) when Ansible needs to contact a 'localhost' but you did not supply one, we create one for you. This host is defined with specific connection variables equivalent to this in an inventory:
+
+.. code-block:: yaml
 
    ...
 
@@ -27,6 +31,7 @@ This ensures that the proper connection and Python are used to execute your task
 You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory. At that point, all implicit behaviors are ignored; the ``localhost`` in inventory is treated just like any other host. Group and host vars will apply, including connection vars, which includes the ``ansible_python_interpreter`` setting. This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
 
 .. note::
+
   - This host is not targetable via any group, however it will use vars from ``host_vars`` and from the 'all' group.
   - Implicit localhost does not appear in the ``hostvars`` magic variable unless demanded, such as by ``"{{ hostvars['localhost'] }}"``.
   - The ``inventory_file`` and ``inventory_dir`` magic variables are not available for the implicit localhost as they are dependent on **each inventory host**.
