@@ -2,7 +2,7 @@
 Contributor path
 ****************
 
-This section describes the contributor journey from the beginning to becoming a leader who helps shape the future of Ansible. You can use this path as a roadmap for your long-term participation.
+This section describes the contributor's journey from the beginning to becoming a leader who helps shape the future of Ansible. You can use this path as a roadmap for your long-term participation.
 
 Any contribution to the project, even a small one, is very welcome and valuable. Any contribution counts, whether it's feedback on an issue, a pull request, a topic or documentation change, or a coding contribution. When you contribute regularly, your proficiency and judgment in the related area increase and, along with this, the importance of your presence in the project.
 
@@ -39,13 +39,13 @@ Specific knowledge for code developers
 Code development requires the most technical knowledge. Let's sort out what an Ansible developer should learn.
 
 
-You should understand at least *basics* of the following tools:
+You should understand at least the *basics* of the following tools:
 
 - `Python programming language <https://docs.python.org/3/tutorial/>`_
 - `Git <https://git-scm.com/docs/gittutorial>`_
 - `GitHub collaborative development model through forks and pull requests <https://docs.github.com/en/github/collaborating-with-pull-requests/getting-started/about-collaborative-development-models>`_
 
-You can learn these tools more in depth when working on your first contributions.
+You can learn these tools more in-depth when working on your first contributions.
 
 
 Each Ansible project has its own set of contributor guidelines. Familiarize yourself with these as you prepare your first contributions.
@@ -74,18 +74,18 @@ See :ref:`communication` for ways to communicate and engage with the Ansible com
 Teach others
 ============
 
-Share your experience with other contributors through :ref:`improving documentation<community_documentation_contributions>`, answering question from other contributors and users  on :ref:`Matrix/Libera.Chat IRC<communication>`, giving advice in issues and pull requests, and discussing the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
+Share your experience with other contributors through :ref:`improving documentation<community_documentation_contributions>`, and answering questions from other contributors and users  on :ref:`Matrix/Libera.Chat IRC<communication>`, giving advice on issues and pull requests, and discussing `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
 
 Become a collection maintainer
 ===============================
 
 If you are a code contributor to a collection, you can get extended permissions in the repository and become a maintainer. A collection maintainer is a contributor trusted by the community who makes significant and regular contributions to the project and showed themselves as a specialist in the related area. See :ref:`maintainers` for details.
 
-For some collections that use the `collection bot <https://github.com/ansible-community/collection_bot>`_ , such as  `community.general <https://github.com/ansible-collections/community.general>`_ and `community.network <https://github.com/ansible-collections/community.network>`_, you can have different levels of access and permissions.
+For some collections that use the `collection bot <https://github.com/ansible-community/collection_bot>`_, such as  `community.general <https://github.com/ansible-collections/community.general>`_ and `community.network <https://github.com/ansible-collections/community.network>`_, you can have different levels of access and permissions.
 
 * :ref:`module_maintainers` - The stage prior to becoming a collection maintainer. The file is usually a module or plugin. File maintainers have indirect commit rights.
 * supershipit permissions - Similar to being a file maintainer but the scope where a maintainer has the indirect commit is the whole repository.
-* ``triage``  - Access to the repository that allows contributors manage issues and pull requests.
+* ``triage``  - Access to the repository that allows contributors to manage issues and pull requests.
 * ``write`` access to the repository also known as ``commit``. In other words, become a committer. This access level allows contributors to merge pull requests to the development branch as well as perform all the other activities listed in the :ref:`maintainers`.
 
 For information about permission levels, see  the `GitHub official documentation <https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-permission-levels-for-an-organization>`_.
@@ -97,7 +97,7 @@ Become a steering committee member
 
   You do NOT have to be a programmer to become a steering committee member.
 
-The :ref:`Steering Committee <community_steering_committee>` member status reflects the highest level of trust which allows contributors to lead the project through making very important `decisions <https://github.com/ansible-community/community-topics/issues>`_ for the Ansible project. The Committee members are the community leaders who shape the project's future and the future of automation in the IT world in general.
+The :ref:`Steering Committee <community_steering_committee>` member status reflects the highest level of trust which allows contributors to lead the project by making very important `decisions <https://github.com/ansible-community/community-topics/issues>`_ for the Ansible project. The Committee members are the community leaders who shape the project's future and the future of automation in the IT world in general.
 
 To reach the status, as the current Committee members did before getting it, along with the things mentioned in this document, you should:
 
