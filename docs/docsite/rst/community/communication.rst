@@ -67,7 +67,7 @@ The Ansible community maintains several IRC channels on `irc.libera.chat <https:
 
 IRC chat supports:
 
-* no persistence (you only see messages when you are logged on, unless you add a bouncer)
+* no persistence (you only see messages when you are logged on unless you add a bouncer)
 * simple text interface
 * bridging from Matrix
 
