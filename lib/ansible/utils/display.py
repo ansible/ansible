@@ -320,7 +320,7 @@ class Display(metaclass=Singleton):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None):
+    def get_deprecation_message(self, msg, version=None, removed=False, warn_change=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
         msg = msg.strip()
         if msg and msg[-1] not in ['!', '?', '.']:
@@ -333,6 +333,12 @@ class Display(metaclass=Singleton):
             header = '[DEPRECATED]: {0}'.format(msg)
             removal_fragment = 'This feature was removed'
             help_text = 'Please update your playbooks.'
+
+        elif warn_change:
+            header = '[DEPRECATION WARNING]: {0}'.format(msg)
+            removal_fragment = 'This feature will change'
+            help_text = 'Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.'
+
         else:
             header = '[DEPRECATION WARNING]: {0}'.format(msg)
             removal_fragment = 'This feature will be removed'
@@ -340,9 +346,12 @@ class Display(metaclass=Singleton):
             help_text = 'Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.'
 
         if collection_name:
-            from_fragment = 'from {0}'.format(collection_name)
+            if warn_change:
+                collection_fragment = 'in {0}'.format(collection_name)
+            else:
+                collection_fragment = 'from {0}'.format(collection_name)
         else:
-            from_fragment = ''
+            collection_fragment = ''
 
         if date:
             when = 'in a release after {0}.'.format(date)
@@ -351,15 +360,15 @@ class Display(metaclass=Singleton):
         else:
             when = 'in a future release.'
 
-        message_text = ' '.join(f for f in [header, removal_fragment, from_fragment, when, help_text] if f)
+        message_text = ' '.join(f for f in [header, removal_fragment, collection_fragment, when, help_text] if f)
 
         return message_text
 
-    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
+    def deprecated(self, msg, version=None, removed=False, warn_change=False, date=None, collection_name=None):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
-        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
+        message_text = self.get_deprecation_message(msg, version=version, removed=removed, warn_change=warn_change, date=date, collection_name=collection_name)
 
         if removed:
             raise AnsibleError(message_text)
