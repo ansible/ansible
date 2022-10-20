@@ -353,9 +353,7 @@ EXAMPLES = '''
   ansible.builtin.yum:
     name: '*'
     state: latest
-    exclude:
-      - kernel*
-      - foo*
+    exclude: kernel*,foo*
 
 - name: Install the nginx rpm from a remote repo
   ansible.builtin.yum:
