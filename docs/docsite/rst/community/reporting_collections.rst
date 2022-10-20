@@ -31,6 +31,6 @@ Requesting a feature
 ====================
 
 Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`.
-The best way to get a feature into an Ansible collection is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`.
+The best way to get a feature into an Ansible collection is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also the :ref:`ansible_collection_merge_requirements`.
 
-You can also submit a feature request through opening an issue in the collection repository.
+You can also submit a feature request by opening an issue in the collection repository.
