@@ -12,7 +12,7 @@ Ansible Community Guide
 
 Welcome to the Ansible Community Guide!
 
-The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and necessary to Ansible's continued success.
+The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and necessary for Ansible's continued success.
 
 
 .. _community_toc:
