@@ -6,7 +6,7 @@ Ansible 2.5 and above work with Python 3. Previous to 2.5, using Python 3 was
 considered a tech preview.  This topic discusses how to set up your controller and managed machines
 to use Python 3.
 
-.. note:: On the controller we support Python 3.5 or greater and Python 2.7 or greater. Module-side, we support Python 3.5 or greater and Python 2.6 or greater.
+See :ref: `Control Node Requirements <control_node_requirements>` and :ref: `Managed Node Requirements <managed_node_requirements>` for the specific versions supported.
 
 On the controller side
 ----------------------
@@ -18,7 +18,7 @@ version of pip.  This will make the default :command:`/usr/bin/ansible` run with
 
     $ pip3 install ansible
     $ ansible --version | grep "python version"
-      python version = 3.6.2 (default, Sep 22 2017, 08:28:09) [GCC 7.2.1 20170915 (Red Hat 7.2.1-2)]
+      python version = 3.10.5 (main, Jun 9 2022, 00:00:00) [GCC 12.1.1 20220507 (Red Hat 12.1.1-1)] (/usr/bin/python)
 
 If you are running Ansible :ref:`from_source` and want to use Python 3 with your source checkout, run your
 command through ``python3``.  For example:
