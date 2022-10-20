@@ -95,7 +95,7 @@ The playbook contains one play with two tasks, and should generate output like t
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos.vyos.vyos first_playbook.yml
 
-   PLAY [First Playbook]
+   PLAY [Network Getting Started First Playbook]
    ***************************************************************************************************************************
 
    TASK [Get config for VyOS devices]
@@ -113,13 +113,13 @@ The playbook contains one play with two tasks, and should generate output like t
 .. literalinclude:: sample_files/first_playbook_ext.yml
    :language: YAML
 
-The extended first playbook has four tasks in a single play. Run it with the same command you used above. The output shows you the change Ansible made to the config:
+The extended first playbook has five tasks in a single play. Run it with the same command you used above. The output shows you the change Ansible made to the config:
 
 .. code-block:: bash
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos.vyos.vyos first_playbook_ext.yml
 
-   PLAY [First Playbook]
+   PLAY [Network Getting Started First Playbook Extended]
    ************************************************************************************************************************************
 
    TASK [Get config for VyOS devices]
