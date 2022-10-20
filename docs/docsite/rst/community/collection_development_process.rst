@@ -46,6 +46,8 @@ We do not merge every PR. See :ref:`collection_quickstart` for  tips to make you
 Creating changelog fragments
 -----------------------------
 
+Most changelogs should emphasize the impact of the change on the end user of the feature or collection, unless the change impacts developers directly. Consider what the user needs to know about this change and write the changelog to convey that detail.
+
 Changelogs help users and developers keep up with changes to Ansible collections. Many collections build changelogs for each release from fragments. For collections that use this model, you **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
 
 You do not need a changelog fragment for PRs that:
