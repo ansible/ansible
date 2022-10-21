@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    Restrict ``wheel`` below v0.38.0 in ``pip`` integration test when
+    running under Python 3.6 and older.
