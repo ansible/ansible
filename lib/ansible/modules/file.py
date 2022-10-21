@@ -15,7 +15,7 @@ version_added: historical
 short_description: Manage files and file properties
 extends_documentation_fragment: [files, action_common_attributes]
 description:
-- Set attributes of files, symlinks or directories.
+- Set attributes of files, symlinks, their targets, or directories.
 - Alternatively, remove files, symlinks or directories.
 - Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
   M(ansible.builtin.template), and M(ansible.builtin.assemble).
@@ -70,8 +70,9 @@ options:
     type: bool
     default: no
   follow:
-    description:
+    description
     - This flag indicates that filesystem links, if they exist, should be followed.
+    - If I(follow=yes) and I(state=link), then I(src) may be impacted.
     - Previous to Ansible 2.5, this was C(no) by default.
     type: bool
     default: yes
