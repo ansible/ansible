@@ -70,7 +70,7 @@ options:
     type: bool
     default: no
   follow:
-    description
+    description:
     - This flag indicates that filesystem links, if they exist, should be followed.
     - If I(follow=yes) and I(state=link), then I(src) may be impacted.
     - Previous to Ansible 2.5, this was C(no) by default.
