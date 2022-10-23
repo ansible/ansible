@@ -320,7 +320,7 @@ class Display(metaclass=Singleton):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None,  warn_change=False):
+    def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None, warn_change=False):
         ''' used to print out a deprecation message.'''
         msg = msg.strip()
         if msg and msg[-1] not in ['!', '?', '.']:
