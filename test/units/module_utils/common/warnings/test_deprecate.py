@@ -99,3 +99,9 @@ def test_get_deprecation_messages(deprecation_messages, reset):
 def test_deprecate_failure(test_case):
     with pytest.raises(TypeError, match='deprecate requires a string not a %s' % type(test_case)):
         deprecate(test_case)
+
+
+def test_deprecate_warn_changes():
+    deprecate(msg='Feature will change.', version='1.0.0', collection_name='test.test', warn_change=True)
+    assert warnings._global_deprecations == [
+        {'msg': 'Feature will change.', 'version': '1.0.0', 'collection_name': 'test.test', 'warn_change': True}]
