@@ -37,6 +37,7 @@
     - name: ensure wheel is installed
       pip:
         name: wheel
+        extra_args: "-c {{ remote_constraints }}"
 
     - include_tasks: pip.yml
   always:
