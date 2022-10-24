@@ -14,3 +14,4 @@ mock >= 2.0.0 # needed for features backported from Python 3.6 unittest.mock (as
 pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option
 setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require python 3.5 or later
 pyspnego >= 0.1.6 ; python_version >= '3.10' # bug in older releases breaks on Python 3.10
+wheel < 0.38.0 ; python_version < '3.7' # wheel 0.38.0 and later require python 3.7 or later
