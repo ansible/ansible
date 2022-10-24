@@ -1721,8 +1721,8 @@ class GalaxyCLI(CLI):
                                          tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'], page_size=page_size)
 
         if response['count'] == 0:
-            display.display("No roles match your search.", color=C.COLOR_ERROR)
-            return 1
+            display.warning("No roles match your search.")
+            return 0
 
         data = [u'']
 
