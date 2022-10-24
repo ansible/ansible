@@ -1,4 +1,4 @@
 minor_changes:
 - deprecate - add ``warn_change`` parameter to warn users about deprecations 
-  that don't remove features. New wording `This feature will change in 
-  test.test in version 1.0.0.`
+  that don't remove features. New wording ``This feature will change in 
+  test.test in version 1.0.0.`` (https://github.com/ansible/ansible/pull/79181).
