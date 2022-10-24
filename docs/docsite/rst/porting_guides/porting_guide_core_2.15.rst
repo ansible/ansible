@@ -25,7 +25,7 @@ No notable changes
 Command Line
 ============
 
-No notable changes
+* The return code of ``ansible-galaxy search`` is now 0 instead of 1 when results are empty to align with other CLI commands.
 
 
 Deprecated
