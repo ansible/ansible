@@ -6,6 +6,7 @@ jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
 pywinrm >= 0.3.0 # message encryption support
 wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
+wheel < 0.38.0 ; python_version >= '2.7' and python_version < '3.7' # wheel 0.38.0 and later require python 3.7 or later
 idna < 2.6, >= 2.5 # linode requires idna < 2.9, >= 2.5, requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
 pytest < 3.3.0, >= 3.1.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
