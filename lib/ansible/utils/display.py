@@ -364,7 +364,7 @@ class Display(metaclass=Singleton):
 
         return message_text
 
-    def deprecated(self, msg, version=None, removed=False, warn_change=False, date=None, collection_name=None):
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None, warn_change=False):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
