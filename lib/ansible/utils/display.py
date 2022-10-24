@@ -368,7 +368,7 @@ class Display(metaclass=Singleton):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
-        message_text = self.get_deprecation_message(msg, version=version, removed=removed, warn_change=warn_change, date=date, collection_name=collection_name)
+        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name, warn_change=warn_change)
 
         if removed:
             raise AnsibleError(message_text)
