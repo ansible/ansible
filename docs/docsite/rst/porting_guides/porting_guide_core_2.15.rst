@@ -25,7 +25,7 @@ No notable changes
 Command Line
 ============
 
-* The return code of ``ansible-galaxy search`` is now 0 instead of 1 when results are empty to align with other ``ansible-galaxy`` commands.
+* The return code of ``ansible-galaxy search`` is now 0 instead of 1 and the stdout is empty when results are empty to align with other ``ansible-galaxy`` commands.
 
 
 Deprecated
