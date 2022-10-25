@@ -10,20 +10,20 @@ Reviewing bug reports
 
 When users report bugs, verify the behavior reported. Remember always to be kind with your feedback.
 
-*  Did the user made a mistake in the code they put in the Steps to reproduce issue's section? We often see user errors reported as bugs.
+*  Did the user make a mistake in the code they put in the Steps to Reproduce issue section? We often see user errors reported as bugs.
 *  Did the user assume an unexpected behavior? Ensure that the related documentation is clear. If not, the issue is useful to help us improve documentation.
 *  Is there a minimal reproducer? If not, ask the reporter to reduce the complexity to help pinpoint the issue.
-*  Is the issue a consequence of wrong-configured environment?
-*  If it seems to be real bug, does the behaviour still exist in the most recent release or the development branch?
+*  Is the issue a consequence of a wrongly-configured environment?
+*  If it seems to be a real bug, does the behaviour still exist in the most recent release or the development branch?
 *  Reproduce the bug, or if you do not have a suitable infrastructure, ask other contributors to reproduce the bug.
 
 
 Reviewing suggested changes
 ---------------------------
 
-When reviewing PRs, verify the suggested changes first. Do not:
+When reviewing PRs, verify the suggested changes first. Verify that suggested changes do not:
 
-*  Unnecessarily break backwards compatibility.
+*  Unnecessarily break backward compatibility.
 *  Bring more harm than value.
 *  Introduce non-idempotent solutions.
 *  Duplicate already existing features (inside or outside the collection).
@@ -32,7 +32,7 @@ When reviewing PRs, verify the suggested changes first. Do not:
 
 Other standards to check for in a PR include:
 
-*  A pull request MUST NOT contain a mix of bugfixes and new features that are not tightly related. If yes, ask the author to split the pull request into separate PRs.
+*  A pull request MUST NOT contain a mix of bug fixes and new features that are not tightly related. If yes, ask the author to split the pull request into separate PRs.
 *  If the pull request is not a documentation fix, it must include a :ref:`changelog fragment <collection_changelog_fragments>`. Check the format carefully as follows:
 
   * New modules and plugins (that are not jinja2 filter and test plugins) do not need changelog fragments.
@@ -45,7 +45,7 @@ Other standards to check for in a PR include:
 *  If a new plugin is added, it is one of the `allowed plugin types <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules-plugins>`_.
 *  Documentation, examples, and return sections use FQCNs for the ``M(..)`` :ref:`format macros <module_documents_linking>` when referring to modules.
 *  Modules and plugins from ansible-core use ``ansible.builtin.`` as an FQCN prefix when mentioned.
-*  When a new option, module, plugin, or return value is added, the corresponding documentation or return sections use ``version_added:`` containing the *collection* version which they will be first released in.
+*  When a new option, module, plugin, or return value is added, the corresponding documentation or return sections use ``version_added:`` containing the *collection* version in which they will be first released in.
 
   * This  is typically the next minor release, sometimes the next major release. For example: if 2.7.5 is the current release, the next minor release will be 2.8.0, and the next major release will be 3.0.0).
 
@@ -70,5 +70,5 @@ Review for merge commits and breaking changes
 ---------------------------------------------
 
 *  The pull request does not contain merge commits. See the GitHub warnings at the bottom of the pull request. If merge commits are present, ask the author to rebase the pull request branch.
-*  If the pull request contains breaking changes, ask the author and the collection maintainers if it really is needed, and there is a way not to introduce breaking changes. If breaking changes are present, they MUST only appear in the next major release and MUST NOT appear in a minor or patch release. The only exception is breaking changes caused by security fixes that are absolutely necessary to fix the security issue.
+*  If the pull request contains breaking changes, ask the author and the collection maintainers if it really is needed, and if there is a way not to introduce breaking changes. If breaking changes are present, they MUST only appear in the next major release and MUST NOT appear in a minor or patch release. The only exception is breaking changes caused by security fixes that are absolutely necessary to fix the security issue.
 
