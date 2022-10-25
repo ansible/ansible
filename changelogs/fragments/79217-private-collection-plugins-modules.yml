@@ -1,0 +1,3 @@
+minor_changes:
+  - "ansible-doc - consider plugins whose name starts with an underscore inside collections as
+     private in the collection. Use extra verbosity (``-v``) to still list these (https://github.com/ansible/ansible/pull/79217)."

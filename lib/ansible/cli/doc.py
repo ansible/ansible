@@ -637,7 +637,7 @@ class DocCLI(CLI, RoleMixin):
 
         return coll_filter
 
-    def _list_plugins(self, plugin_type, content):
+    def _list_plugins(self, plugin_type, content, include_private=True):
 
         results = {}
         self.plugins = {}
@@ -645,6 +645,13 @@ class DocCLI(CLI, RoleMixin):
 
         coll_filter = self._get_collection_filter()
         self.plugins.update(list_plugins(plugin_type, coll_filter))
+
+        if not include_private:
+            for plugin in list(self.plugins):
+                if not plugin.startswith('ansible.builtin.'):
+                    idx = plugin.rfind('.')
+                    if idx >= 0 and plugin[idx:idx + 2] == '._':
+                        del self.plugins[plugin]
 
         # get appropriate content depending on option
         if content == 'dir':
@@ -783,7 +790,7 @@ class DocCLI(CLI, RoleMixin):
             elif plugin_type == 'role':
                 docs = self._create_role_list()
             else:
-                docs = self._list_plugins(plugin_type, content)
+                docs = self._list_plugins(plugin_type, content, include_private=(context.CLIARGS['verbosity'] > 0))
         else:
             # here we require a name
             if len(context.CLIARGS['args']) == 0:
