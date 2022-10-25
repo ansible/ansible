@@ -137,7 +137,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - 31 Oct 2019
      - 13 Aug 2020
      - 26 Apr 2021
-     - | EOL
+     - | **EOL**
        | 23 May 2022
      - | Python 2.7
        | Python 3.5 - 3.8
@@ -148,7 +148,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - 13 Aug 2020
      - 26 Apr 2021
      - 08 Nov 2021
-     - | EOL
+     - | **EOL**
        | 23 May 2022
      - | Python 2.7
        | Python 3.5 - 3.9
@@ -159,7 +159,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - 26 Apr 2021
      - 08 Nov 2021
      - 23 May 2022
-     - | EOL
+     - | **EOL**
        | 07 Nov 2022
      - | Python 2.7
        | Python 3.5 - 3.9
