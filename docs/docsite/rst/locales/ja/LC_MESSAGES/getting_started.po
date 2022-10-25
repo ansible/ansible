@@ -1,0 +1,479 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/getting_started/basic_concepts.rst:5
+msgid "Ansible concepts"
+msgstr "Ansible の概念"
+
+#: ../../rst/getting_started/basic_concepts.rst:7
+msgid "These concepts are common to all uses of Ansible. You should understand them before using Ansible or reading the documentation."
+msgstr "これらの概念は、Ansible のすべての用途に共通しています。Ansible を使用する前に、またはドキュメントを読む前に理解しておく必要があります。"
+
+#: ../../rst/getting_started/index.rst:13
+#: ../../rst/shared_snippets/basic_concepts.txt:2
+msgid "Control node"
+msgstr "コントロールノード"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:3
+msgid "The machine from which you run the Ansible CLI tools (``ansible-playbook`` , ``ansible``, ``ansible-vault`` and others). You can use any computer that meets the software requirements as a control node - laptops, shared desktops, and servers can all run Ansible. Multiple control nodes are possible, but Ansible itself does not coordinate across them, see ``AAP`` for such features."
+msgstr "Ansible CLI ツールを実行するマシン (``ansible-playbook``、``ansible``、``ansible-vault``、その他)。ソフトウェア要件を満たす任意のコンピューターをコントロールノードとして使用できます。ラップトップ、共有デスクトップ、サーバーはすべて Ansible を実行できます。複数のコントロールノードが可能ですが、Ansible 自体はそれらの間で調整されません。この機能については ``AAP`` を参照してください。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:9
+msgid "Managed nodes"
+msgstr "管理ノード"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:10
+msgid "Also referred to as 'hosts', these are the target devices (servers, network appliances or any computer) you aim to manage with Ansible. Ansible is not normally installed on managed nodes, unless you are using ``ansible-pull``, but this is rare and not the recommended setup."
+msgstr "ホストとも呼ばれ、Ansible で管理することを目的としたターゲットデバイス (サーバー、ネットワークアプライアンス、または任意のコンピューター) です。通常 Ansible は管理ノードにインストールされません。``ansible-pull`` を使用している場合は除きますが、それは稀なケースであり、推奨される設定ではありません。"
+
+#: ../../rst/getting_started/index.rst:20
+#: ../../rst/shared_snippets/basic_concepts.txt:15
+msgid "Inventory"
+msgstr "インベントリー"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:16
+msgid "A list of managed nodes provided by one or more 'inventory sources'. Your inventory can specify information specific to each node, like IP address. It is also used for assigning groups, that both allow for node selection in the Play and bulk variable assignment. To learn more about inventory, see :ref:`the Working with Inventory<intro_inventory>` section. Sometimes an inventory source file is also referred to as a 'hostfile'."
+msgstr "1 つ以上の「インベントリーソース」で提供される管理ノードの一覧。インベントリーは、IP アドレスなどの各ノードに固有の情報を指定できます。また、プレイおよび一括変数割り当てでノードの選択を可能にするグループの割り当てにも使用されます。インベントリーの詳細は、:ref:`the Working with Inventory<intro_inventory>` セクションを参照してください。インベントリーソースファイルは「hostfile」と呼ばれる場合もあります。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:22
+msgid "Playbooks"
+msgstr "Playbook"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:23
+msgid "They contain Plays (which are the basic unit of Ansible execution). This is both an 'execution concept' and how we describe the files on which ``ansible-playbook`` operates. Playbooks are written in YAML and are easy to read, write, share and understand. To learn more about playbooks, see :ref:`about_playbooks`."
+msgstr "プレイ (Ansible 実行の基本単位) が含まれています。これは「実行の概念」であり、``ansible-playbook`` が動作するファイルの記述方法でもあります。Playbook は YAML で書かれており、簡単に読み書き、共有、理解できます。Playbook の詳細については、:ref:`about_playbooks` を参照してください。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:27
+msgid "Plays"
+msgstr "プレイ"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:28
+msgid "The main context for Ansible execution, this playbook object maps managed nodes (hosts) to tasks. The Play contains variables, roles and an ordered lists of tasks and can be run repeatedly. It basically consists of an implicit loop over the mapped hosts and tasks and defines how to iterate over them."
+msgstr "Ansible 実行のメインコンテキストであるこの Playbook オブジェクトは、管理ノード (ホスト) をタスクにマップします。プレイには、変数、ロール、およびタスクの順序付きリストが含まれており、繰り返し実行できます。これは基本的に、マップされたホストとタスクの暗黙的なループで設定され、それらを反復処理する方法を定義します。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:33
+msgid "Roles"
+msgstr "ロール"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:34
+msgid "A limited distribution of reusable Ansible content (tasks, handlers, variables, plugins, templates and files) for use inside of a Play. To use any Role resource, the Role itself must be imported into the Play."
+msgstr "プレイ内で使用するための再利用可能な Ansible コンテンツ (タスク、ハンドラー、変数、プラグイン、テンプレート、およびファイル) の限定ディストリビューション。ロールリソースを使用するには、ロール自体をプレイにインポートする必要があります。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:38
+msgid "Tasks"
+msgstr "タスク"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:39
+msgid "The definition of an 'action' to be applied to the managed host. Tasks must always be contained in a Play, directly or indirectly (Role, or imported/included task list file). You can execute a single task once with an ad hoc command using ``ansible`` or ``ansible-console`` (both create a virtual Play)."
+msgstr "管理ホストに適用される「アクション」の定義。タスクは、常に直接または間接的にプレイに含まれている必要があります (ロール、またはインポート/インクルードされたタスクリストファイル)。アドホックコマンド ``ansible`` または ``ansible-console`` (どちらも仮想プレイを作成) を使用して、1 つのタスクを 1 回実行できます。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:43
+msgid "Handlers"
+msgstr "ハンドラー"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:44
+msgid "A special form of a Task, that only executes when notified by a previous task which resulted in a 'changed' status."
+msgstr "特別な形式のタスク。前のタスクから通知されたときにのみ実行され、'changed' ステータスになります。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:48
+msgid "Modules"
+msgstr "モジュール"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:49
+msgid "The code or binaries that Ansible copies to and executes on each managed node (when needed) to accomplish the action defined in each Task. Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device. You can invoke a single module with a task, or invoke several different modules in a playbook. Ansible modules are grouped in collections. For an idea of how many collections Ansible includes, see the :ref:`list_of_collections`."
+msgstr "Ansible が、各タスクで定義されたアクションを実行するために、各管理ノードで (必要に応じて) コピーおよび実行するコードまたはバイナリー。各モジュールは、特定タイプのデータベースのユーザーを管理したり、特定タイプのネットワークデバイスの VLAN インターフェースを管理するなど、特定の用途に使用されます。タスクで 1 つのモジュールを起動したり、Playbook で複数のモジュールを起動したりすることができます。Ansible モジュールはコレクションとしてまとめられています。Ansible に含まれるコレクションの数は、:ref:`list_of_collections` を参照してください。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:56
+msgid "Plugins"
+msgstr "プラグイン"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:57
+msgid "Pieces of code that expand Ansible's core capabilities, they can control how you connect to a managed node (connection plugins), manipulate data (filter plugins) and even control what is displayed in the console (callback plugins). See :ref:`working_with_plugins` for details."
+msgstr "Ansible のコア機能を拡張するコードの一部であり、管理ノードへの接続方法 (接続プラグイン)、データの操作 (フィルタープラグイン)、さらにはコンソールに表示される内容 (コールバックプラグイン) を制御できます。詳細は :ref:`working_with_plugins` を参照してください。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:63
+msgid "Collections"
+msgstr "コレクション"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:64
+msgid "A format in which Ansible content is distributed that can contain playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Collection resources can be used independently and discretely from each other."
+msgstr "コレクションは、Playbook、ロール、モジュール、プラグインなどの Ansible コンテンツのディストリビューション形式です。`Ansible Galaxy <https://galaxy.ansible.com>`_ でコレクションをインストールして使用することができます。コレクションの詳細は、:ref:`collections` を参照してください。コレクションリソースは、互いに依存せず、個別に使用できます。"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:68
+msgid "AAP"
+msgstr "AAP"
+
+#: ../../rst/shared_snippets/basic_concepts.txt:69
+msgid "Short for 'Ansible Automation Platform'. This is a product that includes enterprise level features and integrates many tools of the Ansible ecosystem: ansible-core, awx, galaxyNG, and so on."
+msgstr "Ansible Automation Platform の略です。これは、エンタープライズレベルの機能が含まれ、Ansible エコシステムの多くツール (ansible-core、awx、galaxyNG など) を統合する製品です。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:5
+msgid "Building an inventory"
+msgstr "インベントリーのビルド"
+
+#: ../../rst/getting_started/get_started_inventory.rst:7
+msgid "Inventories organize managed nodes in centralized files that provide Ansible with system information and network locations. Using an inventory file, Ansible can manage a large number of hosts with a single command. Inventories also help you use Ansible more efficiently by reducing the number of command-line options you need to specify. For example, inventories usually contain the SSH user so you do not need to include the ``-u`` flag when running Ansible commands."
+msgstr "インベントリーは、Ansible にシステム情報やネットワークの場所を提供する一元化されたファイルに管理対象ノードを整理します。インベントリーファイルを使用すると、Ansible は 1 つのコマンドで多数のホストを管理できます。インベントリーを使用すると、指定する必要のあるコマンドラインオプションの数が減少するため、Ansible をより効率的に使用できます。たとえば、通常インベントリーには SSH ユーザーが含まれるため、Ansible コマンドの実行時に ``-u`` フラグを含める必要はありません。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:12
+msgid "In the previous section, you added managed nodes directly to the ``/etc/ansible/hosts`` file. Now let's create an inventory file that you can add to source control for flexibility, reuse, and for sharing with other users."
+msgstr "前のセクションでは、管理対象ノードを ``/etc/ansible/hosts`` ファイルに直接追加しました。次は、柔軟性の向上、再利用、他のユーザーとの共有を可能にするため、ソース管理に追加できるインベントリーファイルを作成します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:16
+msgid "Inventory files can be in ``INI`` or ``YAML`` format. For demonstration purposes this section uses ``YAML`` format only."
+msgstr "インベントリーファイルは ``INI`` または ``YAML`` 形式を使用できます。デモンストレーションとして、ここでは ``YAML`` 形式のみを使用します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:19
+#: ../../rst/getting_started/get_started_playbook.rst:25
+msgid "Complete the following steps:"
+msgstr "以下の手順を実行します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:21
+#: ../../rst/getting_started/get_started_playbook.rst:27
+msgid "Open a terminal window on your control node."
+msgstr "コントロールノードでターミナルウィンドウを開きます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:22
+msgid "Create a new inventory file named ``inventory.yaml`` in any directory and open it for editing."
+msgstr "任意のディレクトリーに ``inventory.yaml`` という名前の新しいインベントリーファイルを作成し、そのファイルを開いて編集します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:23
+msgid "Add a new group for your hosts then specify the IP address or fully qualified domain name (FQDN) of each managed node with the ``ansible_host`` field. The following example adds the IP addresses of three virtual machines in KVM:"
+msgstr "ホストの新規グループを追加してから、``ansible_host`` フィールドで各管理対象ノードの IP アドレスまたは完全修飾ドメイン名( FQDN) を指定します。以下の例では、KVM に 3 つの仮想マシンの IP アドレスを追加します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:29
+msgid "Verify your inventory. If you created your inventory in a directory other than your home directory, specify the full path with the ``-i`` option."
+msgstr "インベントリーを検証します。ホームディレクトリー以外のディレクトリーにインベントリーを作成した場合は、``-i`` オプションで完全パスを指定します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:36
+msgid "Ping the managed nodes in your inventory. In this example, the group name is ``virtualmachines`` which you can specify with the ``ansible`` command instead of ``all``."
+msgstr "インベントリーの管理ノードに ping します。この例では、グループ名は ``virtualmachines`` で、``all`` ではなく ``ansible`` コマンドで指定できます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:46
+msgid "Congratulations! You have successfully built an inventory."
+msgstr "おめでとうございます。インベントリーのビルドに成功しました。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:49
+msgid "Tips for building inventories"
+msgstr "インベントリーのビルドに関するヒント"
+
+#: ../../rst/getting_started/get_started_inventory.rst:51
+msgid "Ensure that group names are meaningful and unique. Group names are also case sensitive."
+msgstr "グループ名が意味を持ち、一意であることを確認します。グループ名でも大文字と小文字が区別されます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:52
+msgid "Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor``) in group names."
+msgstr "グループ名で、スペース、ハイフン、先行する数字 (``19th_floor``ではなく ``floor_19`` を使用) は使用しないでください。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:53
+msgid "Group hosts in your inventory logically according to their **What**, **Where**, and **When**."
+msgstr "**What**、**Where**、および **When** に従って、インベントリー内のホストを論理的にグループ化します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:55
+msgid "What"
+msgstr "確認対象"
+
+#: ../../rst/getting_started/get_started_inventory.rst:56
+msgid "Group hosts according to the topology, for example: db, web, leaf, spine."
+msgstr "トポロジーに従ってホストを分類します (例: db、web、leaf、spine)。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:57
+msgid "Where"
+msgstr "Where"
+
+#: ../../rst/getting_started/get_started_inventory.rst:58
+msgid "Group hosts by geographic location, for example: datacenter, region, floor, building."
+msgstr "地理的な場所でホストを分類します (例: datacenter、region、floor、build)。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:60
+msgid "When"
+msgstr "When"
+
+#: ../../rst/getting_started/get_started_inventory.rst:60
+msgid "Group hosts by stage, for example: development, test, staging, production."
+msgstr "ステージごとにホストを分類します (例: development、test、staging、production)。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:63
+msgid "Use metagroups"
+msgstr "メタグループの使用"
+
+#: ../../rst/getting_started/get_started_inventory.rst:65
+msgid "Create a metagroup that organizes multiple groups in your inventory with the following syntax:"
+msgstr "以下の構文を使用して、インベントリー内に複数のグループを整理するメタグループを作成します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:72
+msgid "The following inventory illustrates a basic structure for a data center. This example inventory contains a ``network`` metagroup that includes all network devices and a ``datacenter`` metagroup that includes the ``network`` group and all webservers."
+msgstr "以下のインベントリーは、データセンターの基本構造を示しています。このインベントリーの例には、すべてのネットワークデバイスを含む ``network`` メタグループと、``network`` グループとすべての Web サーバー含む ``datacenter`` メタグループが含まれます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:79
+msgid "Create variables"
+msgstr "変数の作成"
+
+#: ../../rst/getting_started/get_started_inventory.rst:81
+msgid "Variables set values for managed nodes, such as the IP address, FQDN, operating system, and SSH user, so you do not need to pass them when running Ansible commands."
+msgstr "変数は、IP アドレス、FQDN、オペレーティングシステム、SSH ユーザーなどの管理対象ノードの値を設定するため、Ansible コマンドの実行時に渡す必要はありません。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:83
+msgid "Variables can apply to specific hosts."
+msgstr "変数は特定のホストに適用できます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:88
+msgid "Variables can also apply to all hosts in a group."
+msgstr "変数は、グループ内のすべてのホストにも適用できます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:93
+msgid "Now that you know how to build an inventory, continue by :ref:`learning how to create a playbook<get_started_playbook>`."
+msgstr "インベントリーのビルド方法を把握したので、:ref:`learning how to create a playbook<get_started_playbook>` に進みます。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:97
+msgid ":ref:`intro_inventory`"
+msgstr ":ref:`intro_inventory`"
+
+#: ../../rst/getting_started/get_started_inventory.rst:98
+msgid "Learn more about inventories in ``YAML`` or ``INI`` format."
+msgstr "インベントリーの詳細は、``YAML`` または ``INI`` 形式で確認します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:99
+msgid ":ref:`variables_in_inventory`"
+msgstr ":ref:`variables_in_inventory`"
+
+#: ../../rst/getting_started/get_started_inventory.rst:100
+msgid "Find out more about inventory variables and their syntax."
+msgstr "インベントリー変数とその構文について詳細を確認します。"
+
+#: ../../rst/getting_started/get_started_inventory.rst:101
+msgid ":ref:`vault`"
+msgstr ":ref:`vault`"
+
+#: ../../rst/getting_started/get_started_inventory.rst:102
+msgid "Find out how to encrypt sensitive content in your inventory such as passwords and keys."
+msgstr "パスワードやキーなど、インベントリー内の機密コンテンツを暗号化する方法を確認します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:5
+msgid "Creating a playbook"
+msgstr "Playbook の作成"
+
+#: ../../rst/getting_started/get_started_playbook.rst:7
+msgid "Playbooks are automation blueprints, in ``YAML`` format, that Ansible uses to deploy and configure managed nodes."
+msgstr "Playbook は、Ansible が管理ノードのデプロイおよび設定に使用する、``YAML`` 形式の自動 Blueprint です。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:10
+msgid "Playbook"
+msgstr "Playbook"
+
+#: ../../rst/getting_started/get_started_playbook.rst:10
+msgid "A list of plays that define the order in which Ansible performs operations, from top to bottom, to achieve an overall goal."
+msgstr "全体的な目標を達成するために、Ansible が上から下に操作を実行する順序を定義するプレイのリスト。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:13
+msgid "Play"
+msgstr "プレイ"
+
+#: ../../rst/getting_started/get_started_playbook.rst:13
+msgid "An ordered list of tasks that maps to managed nodes in an inventory."
+msgstr "インベントリーの管理対象ノードにマップするタスクの順序付きリスト。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:16
+msgid "Task"
+msgstr "タスク"
+
+#: ../../rst/getting_started/get_started_playbook.rst:16
+msgid "A list of one or more modules that defines the operations that Ansible performs."
+msgstr "Ansible が実行する操作を定義する 1 つ以上のモジュールの一覧。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:20
+msgid "Module"
+msgstr "モジュール"
+
+#: ../../rst/getting_started/get_started_playbook.rst:19
+msgid "A unit of code or binary that Ansible runs on managed nodes. Ansible modules are grouped in collections with a :term:`Fully Qualified Collection Name (FQCN)` for each module."
+msgstr "Ansible が管理対象ノードで実行するコードまたはバイナリーの単位。Ansible モジュールは、各モジュールの :term:`Fully Qualified Collection Name (FQCN)` でコレクションにグループ化されます。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:22
+msgid "In the previous section, you used the ``ansible`` command to ping hosts in your inventory. Now let's create a playbook that pings your hosts and also prints a \"Hello world\" message."
+msgstr "前のセクションでは、``ansible`` コマンドを使用してインベントリー内のホストに ping を送信しました。次に、ホストに ping し、「Hello world」というメッセージも出力する Playbook を作成してみましょう。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:28
+msgid "Create a new playbook file named ``playbook.yaml`` in any directory and open it for editing."
+msgstr "任意のディレクトリーに ``playbook.yaml`` という名前の新しい Playbook ファイルを作成し、そのファイルを開いて編集します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:29
+msgid "Add the following content to ``playbook.yaml``:"
+msgstr "``playbook.yaml`` に以下の内容を追加します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:34
+msgid "Run your playbook."
+msgstr "Playbook を実行します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:40
+msgid "Ansible returns the following output:"
+msgstr "Ansible は次の出力を返します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:45
+msgid "In this output you can see:"
+msgstr "この出力で、以下を確認できます。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:47
+msgid "The names that you give the play and each task. You should always use descriptive names that make it easy to verify and troubleshoot playbooks."
+msgstr "プレイと各タスクを指定する名前。Playbook の検証とトラブルシューティングを容易にする説明的な名前を常に使用する必要があります。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:50
+msgid "The ``Gather Facts`` task runs implicitly. By default Ansible gathers information about your inventory that it can use in the playbook."
+msgstr "``Gather Facts`` タスクは暗黙的に実行されます。デフォルトでは、Ansible は Playbook で使用できるインベントリーに関する情報を収集します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:53
+msgid "The status of each task. Each task has a status of ``ok`` which means it ran successfully."
+msgstr "各タスクのステータス。各タスクのステータスは ``ok`` で、正常に実行されたことを意味します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:56
+msgid "The play recap that summarizes results of all tasks in the playbook per host. In this example, there are three tasks so ``ok=3`` indicates that each task ran successfully."
+msgstr "ホストごとに Playbook のすべてのタスクの結果をまとめたプレイの要約。この例では、3 つのタスクがあり、``ok=3`` は各タスクが正常に実行されたことを示しています。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:59
+msgid "Congratulations! You have just created your first Ansible playbook."
+msgstr "おめでとうございます。最初の Ansible Playbook を作成しました。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:63
+msgid ":ref:`playbooks_intro`"
+msgstr ":ref:`playbooks_intro`"
+
+#: ../../rst/getting_started/get_started_playbook.rst:64
+msgid "Start building playbooks for real world scenarios."
+msgstr "実際のシナリオ用の Playbook のビルドを開始します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:65
+msgid ":ref:`working_with_playbooks`"
+msgstr ":ref:`working_with_playbooks`"
+
+#: ../../rst/getting_started/get_started_playbook.rst:66
+msgid "Go into more detail with Ansible playbooks."
+msgstr "Ansible Playbook について詳しく説明します。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:67
+msgid ":ref:`playbooks_best_practices`"
+msgstr ":ref:`playbooks_best_practices`"
+
+#: ../../rst/getting_started/get_started_playbook.rst:68
+msgid "Get tips and tricks for using playbooks."
+msgstr "Playbook の使用に関するヒント。"
+
+#: ../../rst/getting_started/get_started_playbook.rst:69
+msgid ":ref:`vars_and_facts`"
+msgstr ":ref:`vars_and_facts`"
+
+#: ../../rst/getting_started/get_started_playbook.rst:70
+msgid "Learn more about the ``gather_facts`` keyword in playbooks."
+msgstr "Playbook の ``gather_facts`` キーワードの詳細を確認できます。"
+
+#: ../../rst/getting_started/index.rst:5
+msgid "Getting started with Ansible"
+msgstr "MySQL のスタートガイド"
+
+#: ../../rst/getting_started/index.rst:7
+msgid "Ansible automates the management of remote systems and controls their desired state. A basic Ansible environment has three main components:"
+msgstr "Ansible はリモートシステムの管理を自動化し、必要な状態を制御します。基本的な Ansible 環境には、以下の 3 つの主要コンポーネントがあります。"
+
+#: ../../rst/getting_started/index.rst:12
+msgid "A system on which Ansible is installed. You run Ansible commands such as ``ansible`` or ``ansible-inventory`` on a control node."
+msgstr "Ansible がインストールされているシステム。コントロールノードで ``ansible`` や ``ansible-inventory`` などの Ansible コマンドを実行します。"
+
+#: ../../rst/getting_started/index.rst:16
+msgid "Managed node"
+msgstr "管理対象ノード"
+
+#: ../../rst/getting_started/index.rst:16
+msgid "A remote system, or host, that Ansible controls."
+msgstr "Ansible が制御するリモートシステムまたはホスト。"
+
+#: ../../rst/getting_started/index.rst:19
+msgid "A list of managed nodes that are logically organized. You create an inventory on the control node to describe host deployments to Ansible."
+msgstr "論理的に編成される管理対象ノードの一覧。コントロールノードにインベントリーを作成し、Ansible にホストのデプロイメントを記述します。"
+
+#: ../../rst/getting_started/index.rst:28
+msgid "Ready to start using Ansible? Complete the following steps to get up and running:"
+msgstr "Ansible の使用を開始する準備ができましたか。それでは、以下の手順を実行して起動しましょう。"
+
+#: ../../rst/getting_started/index.rst:31
+msgid "Install Ansible. Visit the :ref:`installation guide<installation_guide>` for complete details."
+msgstr "Ansible をインストールします。詳細は、:ref:`installation guide<installation_guide>` を参照してください。"
+
+#: ../../rst/getting_started/index.rst:37
+msgid "Create an inventory by adding the IP address or fully qualified domain name (FQDN) of one or more remote systems to ``/etc/ansible/hosts``. The following example adds the IP addresses of three virtual machines in KVM:"
+msgstr "1 つ以上のリモートシステムの IP アドレスまたは完全修飾ドメイン名 (FQDN) を ``/etc/ansible/hosts`` に追加してインベントリーを作成します。以下の例では、KVM に 3 つの仮想マシンの IP アドレスを追加します。"
+
+#: ../../rst/getting_started/index.rst:47
+msgid "Verify the hosts in your inventory."
+msgstr "インベントリー内のホストを確認します。"
+
+#: ../../rst/getting_started/index.rst:60
+msgid "Set up SSH connections so Ansible can connect to the managed nodes."
+msgstr "Ansible が管理対象ノードに接続できるように SSH 接続を設定します。"
+
+#: ../../rst/getting_started/index.rst:62
+msgid "Add your public SSH key to the ``authorized_keys`` file on each remote system."
+msgstr "公開 SSH キーを各リモートシステムの ``authorized_keys`` ファイルに追加します。"
+
+#: ../../rst/getting_started/index.rst:63
+msgid "Test the SSH connections, for example:"
+msgstr "SSH 接続をテストします。以下はその例です。"
+
+#: ../../rst/getting_started/index.rst:69
+msgid "If the username on the control node is different on the host, you need to pass the ``-u`` option with the ``ansible`` command."
+msgstr "コントロールノードのユーザー名がホストで異なる場合は、``ansible`` コマンドで ``-u`` オプションを指定する必要があります。"
+
+#: ../../rst/getting_started/index.rst:71
+msgid "Ping the managed nodes."
+msgstr "管理対象ノードを ping します。"
+
+#: ../../rst/getting_started/index.rst:80
+msgid "Congratulations! You are now using Ansible. Continue by :ref:`learning how to build an inventory<get_started_inventory>`."
+msgstr "おめでとうございます。これで Ansible を使用している状態になりました。:ref:`learning how to build an inventory<get_started_inventory>` に進んでください。"
+
+#: ../../rst/getting_started/index.rst:85
+msgid "`Ansible Demos <https://github.com/ansible/product-demos>`_"
+msgstr "`Ansible Demos <https://github.com/ansible/product-demos>`_"
+
+#: ../../rst/getting_started/index.rst:86
+msgid "Demonstrations of different Ansible usecases"
+msgstr "各種 Ansible のユースケースのデモ"
+
+#: ../../rst/getting_started/index.rst:87
+msgid "`RHEL Labs <https://katacoda.com/rhel-labs>`_"
+msgstr "`RHEL Labs <https://katacoda.com/rhel-labs>`_"
+
+#: ../../rst/getting_started/index.rst:88
+msgid "Labs to provide further knowledge on different topics"
+msgstr "さまざまなトピックでの詳細な知識を提供するラボ"
+
+#: ../../rst/getting_started/index.rst:89
+msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+
+#: ../../rst/getting_started/index.rst:90
+msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
+msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
+
+#: ../../rst/getting_started/index.rst:91
+msgid ":ref:`communication_irc`"
+msgstr ":ref:`communication_irc`"
+
+#: ../../rst/getting_started/index.rst:92
+msgid "How to join Ansible chat channels"
+msgstr "Ansible チャットチャンネルへの参加方法"
+
+

@@ -1,0 +1,307 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/command_guide/cheatsheet.rst:5
+msgid "Ansible CLI cheatsheet"
+msgstr "Ansible CLI のチートシート"
+
+#: ../../rst/command_guide/cheatsheet.rst:7
+msgid "This page shows one or more examples of each Ansible command line utility with some common flags added and a link to the full documentation for the command. This page offers a quick reminder of some common use cases only - it may be out of date or incomplete or both. For canonical documentation, follow the links to the CLI pages."
+msgstr "このページには、一般的なフラグが追加された各 Ansible コマンドラインユーティリティーの 1 つ以上の例と、コマンドの完全なドキュメントへのリンクが表示されます。このページでは、いくつかの一般的なユースケースのクイックリマインダーだけを提供します。このページの情報は、古かったり、不完全だったり、あるいはその両方である可能性があります。正規のドキュメントについては、CLI ページへのリンクに従ってください。"
+
+#: ../../rst/command_guide/cheatsheet.rst:15
+msgid "ansible-playbook"
+msgstr "ansible-playbook"
+
+#: ../../rst/command_guide/cheatsheet.rst:30
+msgid "Loads ``my_playbook.yml`` from the current working directory and:"
+msgstr "現在の作業ディレクトリーから``my_playbook.yml``を読み込みます。ここで、"
+
+#: ../../rst/command_guide/cheatsheet.rst:22
+msgid "``-i`` - uses ``my_inventory_file`` in the path provided for :ref:`inventory <intro_inventory>` to match the :ref:`pattern <intro_patterns>`."
+msgstr "``-i`` - :ref:`インベントリー <intro_inventory>` に指定されるパスの``my_inventory_file`` を使用して、:ref:`パターン <intro_patterns>` を照合します。"
+
+#: ../../rst/command_guide/cheatsheet.rst:23
+msgid "``-u`` - connects :ref:`over SSH <connections>` as ``my_connection_user``."
+msgstr "``-u`` - ``my_connection_user`` として :ref:`SSH 経由で <connections>` 接続します。"
+
+#: ../../rst/command_guide/cheatsheet.rst:24
+msgid "``-k`` - asks for password which is then provided to SSH authentication."
+msgstr "``-k`` : パスワードを求め、このパスワードを SSH 認証に渡します。"
+
+#: ../../rst/command_guide/cheatsheet.rst:25
+msgid "``-f`` - allocates 3 :ref:`forks <playbooks_strategies>`."
+msgstr "``-f`` - 3 つの:ref:`フォーク <playbooks_strategies>` を割り当てます。"
+
+#: ../../rst/command_guide/cheatsheet.rst:26
+msgid "``-T`` - sets a 30-second timeout."
+msgstr "``-T`` - 30 秒のタイムアウトを設定します。"
+
+#: ../../rst/command_guide/cheatsheet.rst:27
+msgid "``-t`` - runs only tasks marked with the :ref:`tag <tags>` ``my_tag``."
+msgstr "``-t`` - :ref:`タグ <tags>` ``my_tag`` でマークされたタスクのみを実行します。"
+
+#: ../../rst/command_guide/cheatsheet.rst:28
+msgid "``-m`` - loads :ref:`local modules <developing_locally>` from ``/path/to/my/modules``."
+msgstr "``-m`` - ``/path/to/my/modules``から:ref:`ローカルモジュール <developing_locally>` を読み込みます。"
+
+#: ../../rst/command_guide/cheatsheet.rst:29
+msgid "``-b`` - executes with elevated privileges (uses :ref:`become <become>`)."
+msgstr "``-b`` - 権限が昇格された状態で実行します（:ref:`become <become>`を使用）。"
+
+#: ../../rst/command_guide/cheatsheet.rst:30
+msgid "``-K`` - prompts the user for the become password."
+msgstr "``-K`` - ユーザーに対し、become パスワードを要求します。"
+
+#: ../../rst/command_guide/cheatsheet.rst:32
+msgid "See :ref:`ansible-playbook` for detailed documentation."
+msgstr "詳細なドキュメントは、「:ref:`ansible-playbook`」を参照してください。"
+
+#: ../../rst/command_guide/command_line_tools.rst:4
+msgid "Working with command line tools"
+msgstr "コマンドラインツールの使用"
+
+#: ../../rst/command_guide/command_line_tools.rst:6
+msgid "Most users are familiar with `ansible` and `ansible-playbook`, but those are not the only utilities Ansible provides. Below is a complete list of Ansible utilities. Each page contains a description of the utility and a listing of supported parameters."
+msgstr "ほとんどのユーザーは、`ansible` および `ansible-playbook` に精通していますが、これらは、Ansible が提供する唯一のユーティリティーではありません。以下は、Ansible ユーティリティーの完全なリストです。各ページには、ユーティリティーの説明と、サポートされるパラメーター一覧が含まれています。"
+
+#: ../../rst/command_guide/index.rst:5
+msgid "Using Ansible command line tools"
+msgstr "Ansible コマンドラインツールの使用"
+
+#: ../../rst/command_guide/index.rst:9
+msgid "**Making Open Source More Inclusive**"
+msgstr "**多様性を受け入れるオープンソースの強化**"
+
+#: ../../rst/command_guide/index.rst:11
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_ を参照してください。"
+
+#: ../../rst/command_guide/index.rst:13
+msgid "Welcome to the guide for using Ansible command line tools. Ansible provides ad hoc commands and several utilities for performing various operations and automation tasks."
+msgstr "Ansible コマンドラインツールの使用ガイドへようこそ。Ansible には、アドホックコマンドと、さまざまな操作および自動化タスクを実行するユーティリティーが同梱されています。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:5
+msgid "Introduction to ad hoc commands"
+msgstr "アドホックコマンドの概要"
+
+#: ../../rst/command_guide/intro_adhoc.rst:7
+msgid "An Ansible ad hoc command uses the `/usr/bin/ansible` command-line tool to automate a single task on one or more managed nodes. ad hoc commands are quick and easy, but they are not reusable. So why learn about ad hoc commands? ad hoc commands demonstrate the simplicity and power of Ansible. The concepts you learn here will port over directly to the playbook language. Before reading and executing these examples, please read :ref:`intro_inventory`."
+msgstr "Ansible アドホックコマンドは、`/usr/bin/ansible` コマンドラインツールを使用して、1 つまたは複数の管理ノード上の単一タスクを自動化します。アドホックコマンドは素早く簡単に実行できますが、再利用はできません。では、なぜ最初にアドホックコマンドを学ぶのかというと、アドホックコマンドは Ansible の簡易さと性能を実証するものだからです。ここで学んだ概念は、そのまま Playbook 言語に移植されます。これらの例を読んで実行する前に、「:ref:`intro_inventory`」を参照してください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:18
+msgid "Why use ad hoc commands?"
+msgstr "アドホックコマンドを使用する理由"
+
+#: ../../rst/command_guide/intro_adhoc.rst:20
+msgid "ad hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad hoc command looks like this:"
+msgstr "アドホックコマンドは、めったに繰り返さないタスクに最適です。たとえば、クリスマス休暇中に研究室のすべてのマシンの電源を切りたい場合は、Playbook を作成せず、Ansible で 1 行の簡単なコマンドを実行できます。アドホックコマンドは次のようなものです。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:26
+msgid "The ``-a`` option accepts options either through the  ``key=value`` syntax or a JSON string starting with ``{`` and ending with ``}`` for more complex option structure. You can learn more about :ref:`patterns<intro_patterns>` and :ref:`modules<working_with_modules>` on other pages."
+msgstr "``-a`` オプションは、``key=value`` 構文または、``{`` で開始して ``}`` で終わる Json 文字列 (複雑なオプション構造向け) のいずれかを使用できます。他のページで :ref:`patterns<intro_patterns>` および :ref:`modules<working_with_modules>` について確認できます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:30
+msgid "Use cases for ad hoc tasks"
+msgstr "アドホックタスクのユースケース"
+
+#: ../../rst/command_guide/intro_adhoc.rst:32
+msgid "ad hoc tasks can be used to reboot servers, copy files, manage packages and users, and much more. You can use any Ansible module in an ad hoc task. ad hoc tasks, like playbooks, use a declarative model, calculating and executing the actions required to reach a specified final state. They achieve a form of idempotence by checking the current state before they begin and doing nothing unless the current state is different from the specified final state."
+msgstr "アドホックタスクは、サーバーの再起動、ファイルのコピー、パッケージやユーザーの管理など、さまざまな用途に使用できます。Ansible モジュールはアドホックタスクで使用できます。アドホックタスクは、Playbook と同様に、宣言型モデルを使用し、指定された最終状態に到達するために必要なアクションを計算して実行します。アドホックタスクは、開始前に現在の状態をチェックし、現在の状態が指定された最終状態と異なる場合を除いて何もしないことで、一種の冪等性を実現しています。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:37
+msgid "Rebooting servers"
+msgstr "サーバーの再起動"
+
+#: ../../rst/command_guide/intro_adhoc.rst:39
+msgid "The default module for the ``ansible`` command-line utility is the :ref:`ansible.builtin.command module<command_module>`. You can use an ad hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group:"
+msgstr "``ansible`` コマンドラインユーティリティーのデフォルトモジュールは、:ref:`ansible.builtin.command モジュール<command_module>` です。アドホックタスクを使用してコマンドモジュールを呼び出し、Atlanta のすべての Web サーバを一度に 10 台ずつ再起動することができます。Ansible がこれを行う前に、インベントリー内の [atlanta] というグループに Atlanta にあるすべてのサーバーが記載されている必要があり、そのグループ内の各マシンの SSH 認証情報が有効でなければなりません。[atlanta] グループのすべてのサーバーを再起動するには、次のようにします。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:45
+msgid "By default Ansible uses only 5 simultaneous processes. If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will take a little longer. To reboot the [atlanta] servers with 10 parallel forks:"
+msgstr "デフォルトでは、Ansible は 5 つの同時プロセスのみを使用します。フォーク数に設定された値よりも多くのホストがある場合、Ansible はそれらのホストと対話しますが、少し時間がかかります。10 個の並列フォークで [atlanta] サーバーを再起動する場合は、以下のようにします。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:51
+msgid "/usr/bin/ansible will default to running from your user account. To connect as a different user:"
+msgstr "usr/bin/ansible はデフォルトで自身のユーザーアカウントから実行されます。別のユーザーとして接続するには、以下を行います。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:57
+msgid "Rebooting probably requires privilege escalation. You can connect to the server as ``username`` and run the command as the ``root`` user by using the :ref:`become <become>` keyword:"
+msgstr "再起動には、おそらく権限昇格が必要です。``username`` としてサーバーに接続し、:ref:`become <become>` キーワードを使用して ``root`` ユーザーとしてコマンドを実行できます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:63
+msgid "If you add ``--ask-become-pass`` or ``-K``, Ansible prompts you for the password to use for privilege escalation (sudo/su/pfexec/doas/etc)."
+msgstr "``--ask-become-pass`` または ``-K`` を追加します。Ansible により、権限昇格に使用するパスワード (sudo/su/pfexec/doas など) の入力が求められます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:66
+msgid "The :ref:`command module <command_module>` does not support extended shell syntax like piping and redirects (although shell variables will always work). If your command requires shell-specific syntax, use the `shell` module instead. Read more about the differences on the :ref:`working_with_modules` page."
+msgstr ":ref:`command モジュール <command_module>` は、piping や redirects のような拡張シェル構文をサポートしていません (ただし、シェル変数は常に動作します)。シェル特有の構文を必要とするコマンドの場合は、代わりに `shell` モジュールを使用してください。その違いについては「:ref:`working_with_modules`」のページをご覧ください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:71
+msgid "So far all our examples have used the default 'command' module. To use a different module, pass ``-m`` for module name. For example, to use the :ref:`ansible.builtin.shell module <shell_module>`:"
+msgstr "この例では、デフォルトの「command」モジュールを使用しています。別のモジュールを使用するには、モジュール名に ``-m`` を渡します。たとえば、:ref:`ansible.builtin.shell モジュール <shell_module>` を使用します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:77
+msgid "When running any command with the Ansible *ad hoc* CLI (as opposed to :ref:`Playbooks <working_with_playbooks>`), pay particular attention to shell quoting rules, so the local shell retains the variable and passes it to Ansible. For example, using double rather than single quotes in the above example would evaluate the variable on the box you were on."
+msgstr "(:ref:`Playbooks <working_with_playbooks>` とは異なり) Ansible の *アドホック* CLI を使用してコマンドを実行する場合は、ローカルシェルが変数を保持して Ansible に渡すように、シェルの引用規則に特に注意してください。たとえば、上記の例で一重引用符ではなく二重引用符を使用すると、指定しているそのボックスの変数が評価されます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:86
+msgid "Managing files"
+msgstr "ファイルの管理"
+
+#: ../../rst/command_guide/intro_adhoc.rst:88
+msgid "An ad hoc task can harness the power of Ansible and SCP to transfer many files to multiple machines in parallel. To transfer a file directly to all servers in the [atlanta] group:"
+msgstr "アドホックタスクでは、Ansible と SCP の力を利用して、多数のファイルを複数のマシンに並行して転送することができます。[atlanta] グループのすべてのサーバーに直接ファイルを転送するには、次のようにします。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:94
+msgid "If you plan to repeat a task like this, use the :ref:`ansible.builtin.template<template_module>` module in a playbook."
+msgstr "このようなタスクを繰り返す場合は、Playbook で :ref:`ansible.builtin.template<template_module>` モジュールを使用します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:96
+msgid "The :ref:`ansible.builtin.file<file_module>` module allows changing ownership and permissions on files. These same options can be passed directly to the ``copy`` module as well:"
+msgstr ":ref:`ansible.builtin.file<file_module>` モジュールにより、ファイルの所有権およびパーミッションを変更できます。同じオプションを ``copy`` モジュールに直接渡すことができます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:104
+msgid "The ``file`` module can also create directories, similar to ``mkdir -p``:"
+msgstr "``file`` モジュールは、``mkdir -p`` と同様、ディレクトリーも作成できます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:110
+msgid "As well as delete directories (recursively) and delete files:"
+msgstr "ディレクトリーを (再帰的に) 削除し、ファイルを削除します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:119
+msgid "Managing packages"
+msgstr "パッケージの管理"
+
+#: ../../rst/command_guide/intro_adhoc.rst:121
+msgid "You might also use an ad hoc task to install, update, or remove packages on managed nodes using a package management module such as  ``yum``.  Package management modules support common functions to install, remove, and generally manage packages. Some specific functions for a package manager might not be present in the Ansible module since they are not part of general package management."
+msgstr "また、アドホックタスクを使用して、``yum`` などのパッケージ管理モジュールを使用して、管理対象ノードにパッケージをインストール、更新、または削除することもできます。パッケージ管理モジュールは、パッケージのインストール、削除、および一般的な管理を行う一般的な機能をサポートします。パッケージマネージャーの特定の機能によっては、一般的なパッケージ管理に含まれていないので、Ansible モジュールには存在しない可能性があります。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:123
+msgid "To ensure a package is installed without updating it:"
+msgstr "パッケージを更新せずにインストールできるようにするには、次のコマンドを実行します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:129
+msgid "To ensure a specific version of a package is installed:"
+msgstr "パッケージの特定バージョンがインストールされていることを確認するには、次のコマンドを実行します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:135
+msgid "To ensure a package is at the latest version:"
+msgstr "パッケージが最新バージョンであることを確認するには、次のコマンドを実行します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:141
+msgid "To ensure a package is not installed:"
+msgstr "パッケージがインストールされていないことを確認するには、次のコマンドを実行します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:147
+msgid "Ansible has modules for managing packages under many platforms. If there is no module for your package manager, you can install packages using the command module or create a module for your package manager."
+msgstr "Ansible には、多くのプラットフォームでパッケージを管理するためのモジュールが用意されています。お使いのパッケージマネージャー用のモジュールがない場合は、コマンドモジュールを使用してパッケージをインストールするか、パッケージマネージャー用のモジュールを作成してください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:152
+msgid "Managing users and groups"
+msgstr "ユーザーおよびグループの管理"
+
+#: ../../rst/command_guide/intro_adhoc.rst:154
+msgid "You can create, manage, and remove user accounts on your managed nodes with ad hoc tasks:"
+msgstr "アドホックタスクを使用すると、管理ノードでユーザーアカウントを作成、管理、および削除できます。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:162
+msgid "See the :ref:`ansible.builtin.user <user_module>` module documentation for details on all of the available options, including how to manipulate groups and group membership."
+msgstr "グループやグループメンバーシップの操作方法など、利用可能なすべてのオプションの詳細は、:ref:`ansible.builtin.user <user_module>` モジュールのドキュメントを参照してください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:168
+msgid "Managing services"
+msgstr "サービスの管理"
+
+#: ../../rst/command_guide/intro_adhoc.rst:170
+msgid "Ensure a service is started on all webservers:"
+msgstr "サービスがすべての Web サーバーで起動していることを確認します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:176
+msgid "Alternatively, restart a service on all webservers:"
+msgstr "または、すべての Web サーバーでサービスを再起動します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:182
+msgid "Ensure a service is stopped:"
+msgstr "サービスが停止していることを確認します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:191
+msgid "Gathering facts"
+msgstr "ファクトの収集"
+
+#: ../../rst/command_guide/intro_adhoc.rst:193
+msgid "Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad hoc information about your systems. To see all facts:"
+msgstr "ファクトは、検出されたシステムに関する変数を表します。ファクトを使用して、タスクの条件付き実行を実装することもできますが、システムに関するアドホック情報を取得することもできます。すべてのファクトを表示するには、以下を実行します。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:199
+msgid "You can also filter this output to display only certain facts, see the :ref:`ansible.builtin.setup <setup_module>` module documentation for details."
+msgstr "この出力をフィルターで絞り込んで、特定のファクトのみを表示することもできます。詳細は :ref:`ansible.builtin.setup <setup_module>` モジュールのドキュメントを参照してください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:202
+msgid "Patterns and ad-hoc commands"
+msgstr "パターンおよびアドホックコマンド"
+
+#: ../../rst/command_guide/intro_adhoc.rst:204
+msgid "See the :ref:`patterns <intro_patterns>` documentation for details on all of the available options, including how to limit using patterns in ad-hoc commands."
+msgstr "アドホックコマンドでパターンの使用を制限する方法など、利用可能なすべてのオプションの詳細は、:ref:`patterns <intro_patterns>` のドキュメントを参照してください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:207
+msgid "Now that you understand the basic elements of Ansible execution, you are ready to learn to automate repetitive tasks using :ref:`Ansible Playbooks <playbooks_intro>`."
+msgstr "これで、Ansible を実行する基本要素を理解し、:ref:`Ansible Playbook <playbooks_intro>` を使用して反復タスクを自動化する方法を学ぶ準備が整いました。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:211
+msgid ":ref:`intro_configuration`"
+msgstr ":ref:`intro_configuration`"
+
+#: ../../rst/command_guide/intro_adhoc.rst:212
+msgid "All about the Ansible config file"
+msgstr "Ansible 設定ファイルの詳細"
+
+#: ../../rst/command_guide/intro_adhoc.rst:213
+msgid ":ref:`list_of_collections`"
+msgstr ":ref:`list_of_collections`"
+
+#: ../../rst/command_guide/intro_adhoc.rst:214
+msgid "Browse existing collections, modules, and plugins"
+msgstr "既存のコレクション、モジュール、およびプラグインの閲覧"
+
+#: ../../rst/command_guide/intro_adhoc.rst:215
+msgid ":ref:`working_with_playbooks`"
+msgstr ":ref:`working_with_playbooks`"
+
+#: ../../rst/command_guide/intro_adhoc.rst:216
+msgid "Using Ansible for configuration management & deployment"
+msgstr "設定管理およびデプロイメントに Ansible の使用"
+
+#: ../../rst/command_guide/intro_adhoc.rst:217
+msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+
+#: ../../rst/command_guide/intro_adhoc.rst:218
+msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
+msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
+
+#: ../../rst/command_guide/intro_adhoc.rst:219
+msgid ":ref:`communication_irc`"
+msgstr ":ref:`communication_irc`"
+
+#: ../../rst/command_guide/intro_adhoc.rst:220
+msgid "How to join Ansible chat channels"
+msgstr "Ansible チャットチャンネルへの参加方法"
+
+

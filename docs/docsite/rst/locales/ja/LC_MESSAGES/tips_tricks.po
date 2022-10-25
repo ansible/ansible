@@ -1,0 +1,457 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:4
+msgid "General tips"
+msgstr "一般的なヒント"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:6
+msgid "These concepts apply to all Ansible activities and artifacts."
+msgstr "この概念は、すべての Ansible アクティビティーおよびアーティファクトに適用されます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:9
+msgid "Keep it simple"
+msgstr "シンプルに"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:11
+msgid "Whenever you can, do things simply. Use advanced features only when necessary, and select the feature that best matches your use case. For example, you will probably not need ``vars``, ``vars_files``, ``vars_prompt`` and ``--extra-vars`` all at once, while also using an external inventory file. If something feels complicated, it probably is. Take the time to look for a simpler solution."
+msgstr "できる限りシンプルに。高度な機能は必要な場合にのみ使用し、自身のユースケースに最も一致した機能を選択してください。たとえば、外部のインベントリーファイルを使用しながら、``vars``、``vars_files``、``vars_prompt``、および ``--extra-vars`` を一度に使用することはないでしょう。何かが複雑に感じられる場合は、おそらく複雑なのです。時間をかけて、よりシンプルなソリューションを探してみてください。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:16
+msgid "Use version control"
+msgstr "バージョン制御を使用する"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:18
+msgid "Keep your playbooks, roles, inventory, and variables files in git or another version control system and make commits to the repository when you make changes. Version control gives you an audit trail describing when and why you changed the rules that automate your infrastructure."
+msgstr "Playbook、ロール、インベントリー、変数などのファイルを git などのバージョン管理システムで管理し、変更があった場合はリポジトリーにコミットします。バージョン管理は、インフラストラクチャーを自動化するルールをいつ、なぜ変更したかを示す監査証跡となります。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:22
+msgid "Customize the CLI output"
+msgstr "CLI 出力のカスタマイズ"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:24
+msgid "You can change the output from Ansible CLI commands using :ref:`callback_plugins`."
+msgstr ":ref:`callback_plugins` を使用して、Ansible CLI コマンドからの出力を変更できます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:29
+msgid "Playbook tips"
+msgstr "Playbook のヒント"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:31
+msgid "These tips help make playbooks and roles easier to read, maintain, and debug."
+msgstr "このヒントは、Playbook とロールの読み取り、維持、およびデバッグを容易にするのに役立ちます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:34
+msgid "Use whitespace"
+msgstr "空白を使用する"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:36
+msgid "Generous use of whitespace, for example, a blank line before each block or task, makes a playbook easy to scan."
+msgstr "各ブロックやタスクの前に空の行など、空白を使用すると Playbook を簡単にスキャンできます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:39
+msgid "Always name tasks"
+msgstr "常にタスクに名前を付ける"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:41
+msgid "Task names are optional, but extremely useful. In its output, Ansible shows you the name of each task it runs. Choose names that describe what each task does and why."
+msgstr "タスク名は任意ですが、非常に便利なものになります。その出力で、Ansible では、実行する各タスクの名前が記載されます。各タスクの機能や理由を説明する名前を選択します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:45
+msgid "Always mention the state"
+msgstr "状態について常に言及する"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:47
+msgid "For many modules, the 'state' parameter is optional. Different modules have different default settings for 'state', and some modules support several 'state' settings. Explicitly setting 'state=present' or 'state=absent' makes playbooks and roles clearer."
+msgstr "多くのモジュールでは、「state」パラメーターは任意です。モジュールによって「state」のデフォルト設定は異なり、複数の「state」設定をサポートしているモジュールもあります。「state=present」や「state=absent」を明示的に設定することで、Playbook やロールがより明確になります。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:52
+msgid "Use comments"
+msgstr "コマンドを使用する"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:54
+msgid "Even with task names and explicit state, sometimes a part of a playbook or role (or inventory/variable file) needs more explanation. Adding a comment (any line starting with '#') helps others (and possibly yourself in future) understand what a play or task (or variable setting) does, how it does it, and why."
+msgstr "タスク名や状態が明示されていても、Playbook やロール (またはインベントリー/変数ファイル) の一部にさらに説明が必要な場合があります。コメント (「#」で始まる行) を追加することで、プレイやタスク (または変数設定) が何をどのように行うのか、またその理由を他のユーザー (そして将来的には自分自身) が理解するのに役立ちます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:60
+msgid "Inventory tips"
+msgstr "インベントリーのヒント"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:62
+msgid "These tips help keep your inventory well organized."
+msgstr "これらのヒントは、インベントリーを十分に整理するのに役に立ちます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:65
+msgid "Use dynamic inventory with clouds"
+msgstr "クラウドでの動的インベントリーの使用"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:67
+msgid "With cloud providers and other systems that maintain canonical lists of your infrastructure, use :ref:`dynamic inventory <intro_dynamic_inventory>` to retrieve those lists instead of manually updating static inventory files. With cloud resources, you can use tags to differentiate production and staging environments."
+msgstr "クラウドプロバイダーやその他のシステムがインフラストラクチャーの正規のリストを管理している場合は、静的なインベントリーファイルを手動で更新する代わりに、:ref:`動的インベントリー <intro_dynamic_inventory>` を使用してこれらのリストを取得します。クラウドリソースでは、タグを使用して本番環境とステージング環境を区別することができます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:71
+msgid "Group inventory by function"
+msgstr "機能別にインベントリーのグループ化"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:73
+msgid "A system can be in multiple groups.  See :ref:`intro_inventory` and :ref:`intro_patterns`. If you create groups named for the function of the nodes in the group, for example *webservers* or *dbservers*, your playbooks can target machines based on function. You can assign function-specific variables using the group variable system, and design Ansible roles to handle function-specific use cases. See :ref:`playbooks_reuse_roles`."
+msgstr "1 つのシステムは複数のグループに属することができます。「:ref:`intro_inventory`」および「:ref:`intro_patterns`」を参照してください。*webservers*、*dbservers* など、グループ内のノードの機能に応じた名前のグループを作成すると、Playbook で機能に応じてマシンをターゲットにすることができます。グループ変数システムを使用して機能固有の変数を割り当て、機能固有のユースケースを処理するために Ansible ロールを設計することができます。「:ref:`playbooks_reuse_roles`」を参照してください。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:79
+msgid "Separate production and staging inventory"
+msgstr "別個の実稼働およびステージングのインベントリー"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:81
+msgid "You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises! For example, all vault passwords used in an inventory need to be available when using that inventory. If an inventory contains both production and development environments, developers using that inventory would be able to access production secrets."
+msgstr "実稼働を開発環境、テスト環境、ステージング環境から分離するには、それぞれの環境に個別のインベントリーファイルまたはディレクトリーを使用します。この方法では、-i で対象となるものを選ぶことができます。すべての環境を 1 つのファイルにまとめておくと、驚くようなことが起こります。たとえば、インベントリーで使用するすべての Vault パスワードは、そのインベントリーの使用時に利用可能でなければなりません。インベントリーに実稼働環境と開発環境の両方が含まれる場合、そのインベントリーを使用する開発者は実稼働シークレットにアクセスできます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:90
+msgid "Keep vaulted variables safely visible"
+msgstr "Vault 処理された変数を安全に表示"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:92
+msgid "You should encrypt sensitive or secret variables with Ansible Vault. However, encrypting the variable names as well as the variable values makes it hard to find the source of the values. To circumvent this, you can encrypt the variables individually using ``ansible-vault encrypt_string``, or add the following layer of indirection to keep the names of your variables accessible (by ``grep``, for example) without exposing any secrets:"
+msgstr "機密性の高い変数や秘密の変数は、Ansible Vault で暗号化する必要があります。しかし、変数名だけでなく変数の値も暗号化すると、どこから値を取得しているかを見つけるのが難しくなります。これを回避するには、``ansible-vault encrypt_string``を使用して変数を個別に暗号化するか、以下の間接層を追加して、秘密を公開することなく、変数の名前を (たとえば ``grep`` で) アクセスできる状態に維持することができます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:96
+msgid "Create a ``group_vars/`` subdirectory named after the group."
+msgstr "グループの名前が付けられた ``group_vars/`` サブディレクトリーを作成します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:97
+msgid "Inside this subdirectory, create two files named ``vars`` and ``vault``."
+msgstr "このサブディレクトリー内に、``vars`` と ``vault`` という名前のファイルを作成します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:98
+msgid "In the ``vars`` file, define all of the variables needed, including any sensitive ones."
+msgstr "``vars`` ファイルで、機密性の高い変数など、必要な変数をすべて定義します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:99
+msgid "Copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``."
+msgstr "すべての機密変数を ``vault`` ファイルにコピーし、この変数の前に ``vault_`` を付けます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:100
+msgid "Adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables using jinja2 syntax: ``db_password: {{ vault_db_password }}``."
+msgstr "jinja2 構文を使用して一致する ``vault_`` 変数を参照するように、``vars`` ファイルの変数を調整します (``db_password: {{ vault_db_password }}``)。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:101
+msgid "Encrypt the ``vault`` file to protect its contents."
+msgstr "``vault`` ファイルを暗号化することで、そのコンテンツを保護します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:102
+msgid "Use the variable name from the ``vars`` file in your playbooks."
+msgstr "Playbook の ``vars`` ファイルの変数名を使用します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:104
+msgid "When running a playbook, Ansible finds the variables in the unencrypted file, which pulls the sensitive variable values from the encrypted file. There is no limit to the number of variable and vault files or their names."
+msgstr "Playbook を実行する際、Ansible は暗号化されていないファイルの変数を見つけ、暗号化されたファイルから機密性の高い変数の値を引き出します。変数ファイルと Vault ファイルの数や名前に制限はありません。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:107
+msgid "Note that using this strategy in your inventory still requires *all vault passwords to be available* (for example for ``ansible-playbook`` or `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_) when run with that inventory."
+msgstr "インベントリーでこのストラテジーを使用するには、そのインベントリーで実行する場合は *すべての Vault パスワードが利用可能でなければなりません*（例：``ansible-playbook`` または `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_）。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:112
+msgid "Execution tricks"
+msgstr "実行トリック"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:114
+msgid "These tips apply to using Ansible, rather than to Ansible artifacts."
+msgstr "このヒントは、Ansible アーティファクトではなく Ansible の使用に適用されます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:117
+msgid "Try it in staging first"
+msgstr "最初にステージングで試す"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:119
+msgid "Testing changes in a staging environment before rolling them out in production is always a great idea. Your environments need not be the same size and you can use group variables to control the differences between those environments."
+msgstr "変更を実稼働環境に展開する前にステージング環境でテストすることは、常に素晴らしい考えです。環境は同じ大きさである必要はなく、グループ変数を使用して環境間の違いを制御することができます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:123
+msgid "Update in batches"
+msgstr "バッチの更新"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:125
+msgid "Use the 'serial' keyword to control how many machines you update at once in the batch. See :ref:`playbooks_delegation`."
+msgstr "「serial」キーワードを使用して、バッチで一度にアップデートするマシンの数を制御します。「:ref:`playbooks_delegation`」を参照してください。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:131
+msgid "Handling OS and distro differences"
+msgstr "OS とディストリビューションの相違点の処理"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:133
+msgid "Group variables files and the ``group_by`` module work together to help Ansible execute across a range of operating systems and distributions that require different settings, packages, and tools. The ``group_by`` module creates a dynamic group of hosts that match certain criteria. This group does not need to be defined in the inventory file. This approach lets you execute different tasks on different operating systems or distributions."
+msgstr "グループ変数ファイルと ``group_by`` モジュールが連携することで、Ansible は、異なる設定、パッケージ、ツールを必要とするさまざまなオペレーティングシステムやディストリビューションに対応して実行することができます。``group_by`` モジュールは、特定の条件に一致するホストの動的グループを作成します。このグループは、インベントリーファイルで定義する必要はありません。この方法では、異なるオペレーティングシステムやディストリビューション上で異なるタスクを実行することができます。以下に例を示します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:138
+msgid "For example, the following play categorizes all systems into dynamic groups based on the operating system name:"
+msgstr "たとえば、以下のプレイでは、オペレーティングシステムの名前に基づいてすべてのシステムを動的グループに分類します。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:143
+msgid "Subsequent plays can use these groups as patterns on the ``hosts`` line as follows:"
+msgstr "以降のプレイでは、以下のように ``hosts`` の行にパターンとしてこれらのグループを使用することができます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:148
+msgid "You can also add group-specific settings in group vars files. In the following example, CentOS machines get the value of '42' for `asdf` but other machines get '10'. You can also use group vars files to apply roles to systems as well as set variables."
+msgstr "グループ変数ファイルにグループ固有の設定を追加することもできます。以下の例では、CentOS マシンでは `asdf` に 42 の値を取得しますが、他のマシンは '10' を取得します。また、グループ変数ファイルを使用してロールをシステムに適用したり、変数を設定したりすることもできます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:163
+msgid "All three names must match: the name created by the ``group_by`` task, the name of the pattern in subsequent plays, and the name of the group vars file."
+msgstr "``group_by`` タスクで作成された名前、後続のプレイのパターンの名前、およびグループ変数ファイルの名前の 3 つの名前がすべて一致している必要があります。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:165
+msgid "You can use the same setup with ``include_vars`` when you only need OS-specific variables, not tasks:"
+msgstr "タスクではなく、OS 固有の変数のみを必要とする場合は、``include_vars`` で同じ設定を使用できます。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:170
+msgid "This pulls in variables from the `group_vars/os_CentOS.yml` file."
+msgstr "`group_vars/os_CentOS.yml` ファイルから変数をプルします。"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:174
+#: ../../rst/tips_tricks/sample_setup.rst:282
+msgid ":ref:`yaml_syntax`"
+msgstr ":ref:`yaml_syntax`"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:175
+#: ../../rst/tips_tricks/sample_setup.rst:283
+msgid "Learn about YAML syntax"
+msgstr "YAML 構文について"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:176
+#: ../../rst/tips_tricks/sample_setup.rst:284
+msgid ":ref:`working_with_playbooks`"
+msgstr ":ref:`working_with_playbooks`"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:177
+#: ../../rst/tips_tricks/sample_setup.rst:285
+msgid "Review the basic playbook features"
+msgstr "基本的な Playbook 機能の確認"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:178
+#: ../../rst/tips_tricks/sample_setup.rst:286
+msgid ":ref:`list_of_collections`"
+msgstr ":ref:`list_of_collections`"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:179
+#: ../../rst/tips_tricks/sample_setup.rst:287
+msgid "Browse existing collections, modules, and plugins"
+msgstr "既存のコレクション、モジュール、およびプラグインの閲覧"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:180
+#: ../../rst/tips_tricks/sample_setup.rst:288
+msgid ":ref:`developing_modules`"
+msgstr ":ref:`developing_modules`"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:181
+#: ../../rst/tips_tricks/sample_setup.rst:289
+msgid "Learn how to extend Ansible by writing your own modules"
+msgstr "独自のモジュールを作成して Ansible を拡張する方法について"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:182
+#: ../../rst/tips_tricks/sample_setup.rst:290
+msgid ":ref:`intro_patterns`"
+msgstr ":ref:`intro_patterns`"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:183
+#: ../../rst/tips_tricks/sample_setup.rst:291
+msgid "Learn about how to select hosts"
+msgstr "ホストの選択方法について"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:184
+#: ../../rst/tips_tricks/sample_setup.rst:292
+msgid "`GitHub examples directory <https://github.com/ansible/ansible-examples>`_"
+msgstr "`GitHub examples ディレクトリー <https://github.com/ansible/ansible-examples>`_"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:185
+#: ../../rst/tips_tricks/sample_setup.rst:293
+msgid "Complete playbook files from the github project source"
+msgstr "Github プロジェクトソースの完全な Playbook ファイル"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:186
+#: ../../rst/tips_tricks/sample_setup.rst:294
+msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+
+#: ../../rst/tips_tricks/ansible_tips_tricks.rst:187
+#: ../../rst/tips_tricks/sample_setup.rst:295
+msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
+msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
+
+#: ../../rst/tips_tricks/index.rst:6
+msgid "Ansible tips and tricks"
+msgstr "Ansible のヒントと裏技"
+
+#: ../../rst/tips_tricks/index.rst:10
+msgid "**Making Open Source More Inclusive**"
+msgstr "**多様性を受け入れるオープンソースの強化**"
+
+#: ../../rst/tips_tricks/index.rst:12
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_ を参照してください。"
+
+#: ../../rst/tips_tricks/index.rst:14
+msgid "Welcome to the Ansible tips and tricks guide. These tips and tricks have helped us optimize our Ansible usage and we offer them here as suggestions. We hope they will help you organize content, write playbooks, maintain inventory, and execute Ansible. Ultimately, though, you should use Ansible in the way that makes most sense for your organization and your goals."
+msgstr "Ansible のヒントと裏技ガイドへようこそ。これらのヒントとコツは、Ansible の使用法を最適化するのに役に立ったため、提案としてここに示します。コンテンツの整理、Playbook の作成、インベントリーの維持、Ansible の実行に役立つことを願っています。ただし、最終的には、自身の組織と目標に最も適した方法で Ansible を使用する必要があります。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:5
+msgid "Sample Ansible setup"
+msgstr "Ansible 設定の例"
+
+#: ../../rst/tips_tricks/sample_setup.rst:7
+msgid "You have learned about playbooks, inventory, roles, and variables. This section combines all those elements, and outlines a sample setup for automating a web service. You can find more example playbooks that illustrate these patterns in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_. (NOTE: These examples do not use all of the latest features, but are still an excellent reference.)."
+msgstr "ここまで、Playbook、インベントリー、ロール、および変数について学んできました。このセクションでは、これらの要素をまとめて、Web サービスを自動化するためのセットアップのサンプルを紹介します。これらのパターンを示す Playbook の例は、`ansible-examples repository <https://github.com/ansible/ansible-examples>`_ を参照してください (注: 最新のリリースではすべての機能を使用していない場合がありますが、それでも優れた参考資料となります)。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:9
+msgid "The sample setup organizes playbooks, roles, inventory, and files with variables by function. Tags at the play and task level provide greater granularity and control. This is a powerful and flexible approach, but there are other ways to organize Ansible content. Your usage of Ansible should fit your needs, so feel free to modify this approach and organize your content accordingly."
+msgstr "サンプルの設定では、機能別に Playbook、ロール、インベントリー、変数が含まれるファイルを整理します。プレイやタスクのレベルのタグを使用すると、より詳細にわたり制御できるようになります。これは強力で柔軟なアプローチですが、Ansible コンテンツの整理には他の方法があります。Ansible は、ニーズに合わせて使用するべきであるため、このアプローチを自由に変更して、自分のコンテンツに合わせて整理してください。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:15
+msgid "Sample directory layout"
+msgstr "ディレクトリーレイアウトの例"
+
+#: ../../rst/tips_tricks/sample_setup.rst:17
+msgid "This layout organizes most tasks in roles, with a single inventory file for each environment and a few playbooks in the top-level directory:"
+msgstr "このレイアウトでは、ほとんどのタスクがロールごとに整理されており、環境ごとに 1 つのインベントリーファイルを作成し、トップレベルのディレクトリーにいくつかの Playbook を置いています。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:42
+msgid "By default, Ansible assumes your playbooks are stored in one directory with roles stored in a sub-directory called ``roles/``. With more tasks to automate, you can consider moving your playbooks into a sub-directory called ``playbooks/``. If you do this, you must configure the path to your ``roles/`` directory using the ``roles_path`` setting in the ``ansible.cfg`` file."
+msgstr "デフォルトでは、Ansible は、Playbook が ``roles/`` という名前のサブディレクトリーに保存されているロールを持つ 1 つのディレクトリーに保存されていることを前提とします。自動化するタスクが増えると、Playbook を ``playbooks/`` というサブディレクトリーに移動することを検討してください。移動する場合には、``ansible.cfg`` ファイルの ``roles_path`` 設定を使用して ``roles/`` ディレクトリーにパスを設定する必要があります。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:45
+msgid "Alternative directory layout"
+msgstr "代替ディレクトリーレイアウト"
+
+#: ../../rst/tips_tricks/sample_setup.rst:47
+msgid "You can also put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` do not have that much in common in different environments. The layout could look like this example:"
+msgstr "また、``group_vars``/``host_vars`` を含む各インベントリーファイルを別のディレクトリーに置くこともできます。これは、``group_vars``/``host_vars`` が異なる環境であまり共通していない場合に特に有効です。レイアウトは以下の例のようになります。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:84
+msgid "This layout gives you more flexibility for larger environments, as well as a total separation of inventory variables between different environments. However, this approach is harder to maintain, because there are more files. For more information on organizing group and host variables, see :ref:`splitting_out_vars`."
+msgstr "このレイアウトにより、大規模な環境にも柔軟に対応することができ、異なる環境間でインベントリー変数を完全に分離することができます。しかし、この方法では、ファイル数が多くなるため、メンテナンスが難しくなります。グループ変数とホスト変数の整理の詳細は、「:ref:`splitting_out_vars`」を参照してください。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:89
+msgid "Sample group and host variables"
+msgstr "グループ変数およびホスト変数の例"
+
+#: ../../rst/tips_tricks/sample_setup.rst:91
+msgid "These sample group and host files with variables contain the values that apply to each machine or a group of machines. For instance, the data center in Atlanta has its own NTP servers. As a result, when setting up the ``ntp.conf`` file, you could use similar code as in this example:"
+msgstr "変数を含めたこれらのサンプルグループおよびホストファイルには、各マシンまたはマシングループに適用する値が含まれます。たとえば、アトランタのデータセンターには、独自の NTP サーバーがあります。そのため、``ntp.conf`` ファイルを設定すると、この例のように類似するコードを使用できます。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:100
+msgid "Similarly, hosts in the webservers group have some configuration that does not apply to the database servers:"
+msgstr "同様に、Web サーバーグループのホストには、データベースサーバーには適用されない以下のような設定があります。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:109
+msgid "Default values, or values that are universally true, belong in a file called ``group_vars/all``:"
+msgstr "デフォルト値または汎用的に true である値がある場合は、それらを ``group_vars/all`` というファイルに配置します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:118
+msgid "If necessary, you can define specific hardware variance in systems in the ``host_vars`` directory:"
+msgstr "必要に応じて、システムの特定のハードウェアの差異を ``host_vars`` ファイルに定義することができます。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:127
+msgid "If you use :ref:`dynamic inventory <dynamic_inventory>`, Ansible creates many dynamic groups automatically. As a result, a tag like ``class:webserver`` will load in variables from the file ``group_vars/ec2_tag_class_webserver`` automatically."
+msgstr "これにより、Ansible は多くの動的グループを自動的に作成します。その結果、:ref:などのタグは、自動的にファイル`dynamic inventory <dynamic_inventory>` から変数に読み込まれます。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:129
+msgid "You can access host variables with a special variable called ``hostvars``. See :ref:`special_variables` for a list of these variables. The ``hostvars`` variable can access only host-specific variables, not group variables."
+msgstr "ホスト変数は、``hostvars`` と呼ばれる特別な変数を使用してアクセスできます。これらの変数の一覧は :ref:`special_variables` を参照してください。``hostvars`` 変数は、グループ変数ではなく、ホスト固有の変数のみにアクセスできます。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:135
+msgid "Sample playbooks organized by function"
+msgstr "関数別に整理された Playbook のサンプル"
+
+#: ../../rst/tips_tricks/sample_setup.rst:137
+msgid "With this setup, a single playbook can define the entire infrastructure. The ``site.yml`` playbook imports two other playbooks. One for the webservers and one for the database servers:"
+msgstr "この設定では、1 つの Playbook ですべてのインフラストラクチャーを定義することができます。``site.yml`` Playbook  は、Web サーバー用とデータベースサーバー用の 2 つの Playbook をインポートしています。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:146
+msgid "The ``webservers.yml`` playbook, also at the top level, maps the configuration of the webservers group to the roles related to the webservers group:"
+msgstr "同じくトップレベルにある ``webservers.yml`` Playbook は、webservers グループの設定を、webservers グループに関連するロールにマッピングします。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:157
+msgid "With this setup, you can configure your entire infrastructure by running ``site.yml``. Alternatively, to configure just a portion of your infrastructure, run ``webservers.yml``. This is similar to the Ansible ``--limit`` parameter but a little more explicit:"
+msgstr "この設定では、``site.yml`` を実行してインフラストラクチャー全体を設定できます。または、インフラストラクチャーの一部を設定するには、``webservers.yml`` を実行します。これは Ansible ``--limit`` パラメーターに似ていますが、もう少し明示的です。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:167
+msgid "Sample task and handler files in a function-based role"
+msgstr "関数ベースのロール内のタスクおよびハンドラーのサンプルファイル"
+
+#: ../../rst/tips_tricks/sample_setup.rst:169
+msgid "Ansible loads any file called ``main.yml`` in a role sub-directory. This sample ``tasks/main.yml`` file configures NTP:"
+msgstr "Ansible は、ロールのサブディレクトリーに ``main.yml`` というファイルをすべて読み込みます。このサンプル ``tasks/main.yml`` ファイルは NTP を設定します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:197
+msgid "Here is an example handlers file. Handlers are only triggered when certain tasks report changes. Handlers run at the end of each play:"
+msgstr "ハンドラーファイルの例を紹介します。ハンドラーは特定のタスクが変更を報告したときにのみ起動し、各プレイの最後に実行します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:208
+msgid "See :ref:`playbooks_reuse_roles` for more information."
+msgstr "詳細は、「:ref:`playbooks_reuse_roles`」を参照してください。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:214
+msgid "What the sample setup enables"
+msgstr "設定例の有効化"
+
+#: ../../rst/tips_tricks/sample_setup.rst:216
+msgid "The basic organizational structure described above enables a lot of different automation options. To reconfigure your entire infrastructure:"
+msgstr "上記の基本的な組織構造により、多くの異なる自動化オプションが可能になります。インフラストラクチャー全体を再構成するには、以下のようになります。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:222
+msgid "To reconfigure NTP on everything:"
+msgstr "全面的に NTP を再設定するには、以下を実行します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:228
+msgid "To reconfigure only the webservers:"
+msgstr "webservers のみを再設定するには、以下を実行します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:234
+msgid "To reconfigure only the webservers in Boston:"
+msgstr "Boston で webservers のみを再設定するには、以下を実行します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:240
+msgid "To reconfigure only the first 10 webservers in Boston, and then the next 10:"
+msgstr "Boston で最初の 10 台の webservers だけを再設定し、次の 10 台は、以下のようにします。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:247
+msgid "The sample setup also supports basic ad hoc commands:"
+msgstr "設定例では、基本的なアドホックコマンドもサポートします。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:254
+msgid "To discover what tasks would run or what hostnames would be affected by a particular Ansible command:"
+msgstr "実行するタスクまたは特定の Ansible コマンドの影響を受けるホスト名を検出するには、以下を実行します。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:267
+msgid "Organizing for deployment or configuration"
+msgstr "デプロイメントまたは設定の整理"
+
+#: ../../rst/tips_tricks/sample_setup.rst:269
+msgid "The sample setup illustrates a typical configuration topology. When you do multi-tier deployments, you will likely need some additional playbooks that hop between tiers to roll out an application. In this case, you can augment ``site.yml`` with playbooks like ``deploy_exampledotcom.yml``. However, the general concepts still apply. With Ansible you can deploy and configure using the same utility. Therefore, you will probably reuse groups and keep the OS configuration in separate playbooks or roles from the application deployment."
+msgstr "サンプルの設定は、一般的な設定トポロジーを示しています。多層デプロイメントを行う場合、アプリケーションをロールアウトするために改装間を移動する追加の Playbook が必要になる可能性があります。この場合、``deploy_exampledotcom.yml`` のような Playbook で ``site.yml`` を補完できます。ただし、一般的な概念は引き続き適用されます。Ansible では、同じユーティリティーを使用してデプロイおよび設定できるので、グループを再利用し、OS の設定をアプリケーションのデプロイメントとは別の Playbook やロールにまとめたりできます。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:271
+msgid "Consider \"playbooks\" as a sports metaphor -- you can have one set of plays to use against all your infrastructure. Then you have situational plays that you use at different times and for different purposes."
+msgstr "Playbook をスポーツに例えて考えてみましょう。すべてのインフラストラクチャーに対して使用する 1 セットのプレイと、時と場合に応じて使用する状況に応じたプレイがあります。"
+
+#: ../../rst/tips_tricks/sample_setup.rst:276
+msgid "Using local Ansible modules"
+msgstr "ローカル Ansible モジュールの使用"
+
+#: ../../rst/tips_tricks/sample_setup.rst:278
+msgid "If a playbook has a :file:`./library` directory relative to its YAML file, you can use this directory to add Ansible modules automatically to the module path. This organizes modules with playbooks. For example, see the directory structure at the start of this section."
+msgstr "Playbook に、YAML ファイルと相対的な :file:`./library` ディレクトリーがある場合は、このディレクトリーを使用して、Ansible モジュールを自動的にモジュールパスに追加できます。これは Playbook でモジュールを整理します。たとえば、このセクションの最初にあるディレクトリー構造を参照してください。"
+
+

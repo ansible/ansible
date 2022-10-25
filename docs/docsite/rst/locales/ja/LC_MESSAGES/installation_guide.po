@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-23 10:50+0100\n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.0\n"
+"Generated-By: Babel 2.8.1\n"
 
 #: ../../rst/installation_guide/index.rst:3
 msgid "Installation Guide"
@@ -23,6 +23,127 @@ msgstr "インストールガイド"
 #: ../../rst/installation_guide/index.rst:5
 msgid "Welcome to the Ansible Installation Guide!"
 msgstr "本ガイドは Ansible インストールガイドです。"
+
+#: ../../rst/installation_guide/installation_distros.rst:4
+msgid "Installing Ansible on specific operating systems"
+msgstr "特定のオペレーティングシステムへの Ansible のインストール"
+
+#: ../../rst/installation_guide/installation_distros.rst:6
+msgid "The ``ansible`` package can always be :ref:`installed from PyPI using pip <intro_installation_guide>` on most systems but it is also packaged and maintained by the community for a variety of Linux distributions."
+msgstr "ほとんどのシステムで ``ansible`` パッケージは常に :ref:`installed from PyPI using pip <intro_installation_guide>` できますが、コミュニティーによってさまざまな Linux ディストリビューション用にパッケージ化および維持されます。"
+
+#: ../../rst/installation_guide/installation_distros.rst:8
+msgid "The following instructions will guide you through installing the ``ansible`` package with your preferred distribution's package manager."
+msgstr "次の手順は、ご希望のディストリビューションのパッケージマネージャーを使用して ``ansible`` パッケージをインストールする方法について説明しています。"
+
+#: ../../rst/installation_guide/installation_distros.rst:14
+msgid "Installing Ansible on Fedora or CentOS"
+msgstr "Fedora または CentOS への Ansible のインストール"
+
+#: ../../rst/installation_guide/installation_distros.rst:16
+msgid "On Fedora:"
+msgstr "Fedora の場合:"
+
+#: ../../rst/installation_guide/installation_distros.rst:22
+msgid "On CentOS:"
+msgstr "CentOS の場合:"
+
+#: ../../rst/installation_guide/installation_distros.rst:29
+msgid "RPMs for currently supported versions of CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_."
+msgstr "現在サポートされている CentOS バージョンの RPM は、`EPEL <https://fedoraproject.org/wiki/EPEL>`_ からも利用できます。"
+
+#: ../../rst/installation_guide/installation_distros.rst:35
+msgid "Installing Ansible on Ubuntu"
+msgstr "Ubuntu への Ansible のインストール"
+
+#: ../../rst/installation_guide/installation_distros.rst:37
+msgid "Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_."
+msgstr "Ubuntu ビルドは `PPA <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_ で利用できます。"
+
+#: ../../rst/installation_guide/installation_distros.rst:39
+msgid "To configure the PPA on your system and install Ansible run these commands:"
+msgstr "使用しているシステム上で PPA を設定して Ansible をインストールするには、次のコマンドを実行します。"
+
+#: ../../rst/installation_guide/installation_distros.rst:48
+msgid "On older Ubuntu distributions, \"software-properties-common\" is called \"python-software-properties\". You may want to use ``apt-get`` rather than ``apt`` in older versions. Also, be aware that only newer distributions (that is, 18.04, 18.10, and later) have a ``-u`` or ``--update`` flag. Adjust your script as needed."
+msgstr "以前の Ubuntu ディストリビューションでは、「software-properties-common」は「python-software-properties」と呼ばれているため、過去のバージョンでは ``apt`` ではなく ``apt-get`` を使用するほうが適している場合があります。また、``-u`` フラグまたは ``--update`` フラグを使用できるのは新しいディストリビューション (18.04、18.10 以降) に限定されることに注意し、必要に応じてスクリプトを調整してください。"
+
+#: ../../rst/installation_guide/installation_distros.rst:54
+msgid "Installing Ansible on Debian"
+msgstr "Ansible の Debian へのインストール"
+
+#: ../../rst/installation_guide/installation_distros.rst:56
+msgid "Debian users can use the same source as the Ubuntu PPA (using the following table)."
+msgstr "Debian ユーザーは Ubuntu PPA と同じソースを使用できます (以下の表を使用)。"
+
+#: ../../rst/installation_guide/installation_distros.rst:61
+msgid "Debian"
+msgstr "Debian"
+
+#: ../../rst/installation_guide/installation_distros.rst:63
+msgid "Ubuntu"
+msgstr "Ubuntu"
+
+#: ../../rst/installation_guide/installation_distros.rst:64
+msgid "Debian 11 (Bullseye)"
+msgstr "Debian 11 (Bullseye)"
+
+#: ../../rst/installation_guide/installation_distros.rst:65
+#: ../../rst/installation_guide/installation_distros.rst:68
+msgid "->"
+msgstr "->"
+
+#: ../../rst/installation_guide/installation_distros.rst:66
+msgid "Ubuntu 20.04 (Focal)"
+msgstr "Ubuntu 20.04 (Focal)"
+
+#: ../../rst/installation_guide/installation_distros.rst:67
+msgid "Debian 10 (Buster)"
+msgstr "Debian 10 (Buster)"
+
+#: ../../rst/installation_guide/installation_distros.rst:69
+msgid "Ubuntu 18.04 (Bionic)"
+msgstr "Ubuntu 18.04 (Bionic)"
+
+#: ../../rst/installation_guide/installation_distros.rst:74
+msgid "Ansible releases are only built for Ubuntu 18.04 (Bionic) or later releases."
+msgstr "Ansible リリースは、Ubuntu 18.04 (Bionic) 以降のリリース用にビルドされています。"
+
+#: ../../rst/installation_guide/installation_distros.rst:76
+msgid "Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d/ansible.list``:"
+msgstr "以下の行を ``/etc/apt/sources.list`` または ``/etc/apt/sources.list.d/ansible.list`` に追加します。"
+
+#: ../../rst/installation_guide/installation_distros.rst:82
+msgid "Example for Debian 11 (Bullseye)"
+msgstr "Debian 11 の例 (Bullseye)"
+
+#: ../../rst/installation_guide/installation_distros.rst:88
+msgid "Then run these commands:"
+msgstr "次に、以下のコマンドを実行します。"
+
+#: ../../rst/installation_guide/installation_distros.rst:101
+msgid "Installing Ansible on Windows"
+msgstr "Ansible の Windows へのインストール"
+
+#: ../../rst/installation_guide/installation_distros.rst:103
+msgid "You cannot use a Windows system for the Ansible control node. See :ref:`windows_faq_ansible`"
+msgstr "Ansible コントロールノードに Windows システムは使用できません。:ref:`windows_faq_ansible` を参照してください。"
+
+#: ../../rst/installation_guide/installation_distros.rst:107
+msgid "`Installing Ansible on ARch Linux <https://wiki.archlinux.org/title/Ansible#Installation>`_"
+msgstr "`Installing Ansible on ARch Linux <https://wiki.archlinux.org/title/Ansible#Installation>`_"
+
+#: ../../rst/installation_guide/installation_distros.rst:108
+msgid "Distro-specific installation on Arch Linux"
+msgstr "Arch Linux へのディストリビューション固有のインストール"
+
+#: ../../rst/installation_guide/installation_distros.rst:109
+msgid "`Installing Ansible on Clear Linux <https://clearlinux.org/software/bundle/ansible>`_"
+msgstr "`Installing Ansible on Clear Linux <https://clearlinux.org/software/bundle/ansible>`_"
+
+#: ../../rst/installation_guide/installation_distros.rst:110
+msgid "Distro-specific installation on Clear Linux"
+msgstr "Clear Linux へのディストリビューション固有のインストール"
 
 #: ../../rst/installation_guide/intro_configuration.rst:5
 msgid "Configuring Ansible"
@@ -92,565 +213,618 @@ msgstr "すべての設定オプションがコマンドラインに表示され
 msgid "The full list of options available is in :ref:`ansible-playbook` and :ref:`ansible`."
 msgstr "利用可能なオプションの詳細な一覧は「:ref:`ansible-playbook`」および「:ref:`ansible`」にあります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:5
+#: ../../rst/installation_guide/intro_installation.rst:6
+#: ../../rst/installation_guide/intro_installation.rst:109
 msgid "Installing Ansible"
 msgstr "Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:7
-msgid "This page describes how to install Ansible on different platforms. Ansible is an agentless automation tool that by default manages machines over the SSH protocol. Once installed, Ansible does not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version."
-msgstr "ここでは、さまざまなプラットフォームに Ansible をインストールする方法を説明します。Ansible は、デフォルトで SSH プロトコルを介してマシンを管理するエージェントレス自動化ツールです。インストールしても、Ansible はデータベースを追加せず、起動または稼働し続けるデーモンもありません。Ansible を 1 台のマシン (ラップトップでも可) にインストールするだけで、そのマシンからリモートマシン全体を一元管理できます。Ansible がリモートマシンを管理する場合は、ソフトウェアをマシンにインストールしたまま、あるいは実行したままにすることがないため、新しいバージョンに移行する際に Ansible のアップグレードが問題になることはありません。"
+#: ../../rst/installation_guide/intro_installation.rst:8
+msgid "Ansible is an agentless automation tool that you install on a single host (referred to as the control node). From the control node, Ansible can manage an entire fleet of machines and other devices (referred to as managed nodes) remotely with SSH, Powershell remoting, and numerous other transports, all from a simple command-line interface with no databases or daemons required."
+msgstr "Ansible は、単一のホスト (コントロールノードと呼ばれる) にインストールするエージェントレス自動化ツールです。Ansible は、コントロールノードから、SSH、Powershell リモート処理、およびその他多数のトランスポートを使用して、マシンやその他のデバイス (管理対象ノードと呼ばれる) のフリート全体をリモートで管理できます。これらはすべて、データベースやデーモンを必要としないシンプルなコマンドラインインターフェイスから実行できます。"
 
 #: ../../rst/installation_guide/intro_installation.rst:16
-msgid "Prerequisites"
-msgstr "要件"
-
-#: ../../rst/installation_guide/intro_installation.rst:18
-msgid "You install Ansible on a control node, which then uses SSH (by default) to communicate with your managed nodes (those end devices you want to automate)."
-msgstr "Ansible をコントロールノードにインストールし、SSH (デフォルト) を使用して管理ノード (自動化するエンドデバイス) と通信します。"
-
-#: ../../rst/installation_guide/intro_installation.rst:23
 msgid "Control node requirements"
 msgstr "コントロールノードの要件"
 
-#: ../../rst/installation_guide/intro_installation.rst:25
-msgid "Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer. This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on. Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_."
-msgstr "現在、Ansible は、Python 2 (バージョン 2.7) または Python 3 (バージョン 3.5 以降) がインストールされていればどのマシンからでも実行できます。Ansible 2.11 は、Python 3.8 をコントロールノードのソフト依存関係にしますが、前述の要件で機能します。Ansible 2.12 のコントロールノードで機能するには、Python 3.8 以降が必要です。Ansible 2.11 以降では、このプロジェクトは Python 3.8 以降に対してのみパッケージ化されます。これには、Red Hat、Debian、CentOS、MacOS をはじめ、各種 BSD などが含まれます。コントロールノードでは、Windows のサポートはありません。詳細は、`Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ を参照してください。"
+#: ../../rst/installation_guide/intro_installation.rst:18
+msgid "For your *control* node (the machine that runs Ansible), you can use nearly any UNIX-like machine with Python 3.9 or newer installed. This includes Red Hat, Debian, Ubuntu, macOS, BSDs, and Windows under a `Windows Subsystem for Linux (WSL) distribution <https://docs.microsoft.com/en-us/windows/wsl/about>`_. Windows without WSL is not natively supported as a control node; see `Matt Davis' blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ for more information."
+msgstr "*コントロール* ノード (Ansible を実行するマシン) には、Python 3.9 以降がインストールされている UNIX のようなマシンをほぼすべて使用できます。これには、`Windows Subsystem for Linux (WSL) distribution <https://docs.microsoft.com/en-us/windows/wsl/about>`_ に該当する Red Hat、Debian、Ubuntu、macOS、BSD、および Windows が含まれます。WSL のない Windows は、コントロールノードとしてネイティブにサポートされていません。詳細は `Matt Davis' blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:29
-msgid "When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet."
-msgstr "コントロールノードを選択するときは、管理対象のマシンの近くで実行することに利点があることを念頭に置いてください。Ansible をクラウドで実行している場合は、そのクラウド内のマシンから実行することを検討してください。ほとんどの場合は、オープンなインターネット上で実行するよりも、同じクラウド内から実行するほうが適切です。"
-
-#: ../../rst/installation_guide/intro_installation.rst:33
-msgid "macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any \"Too many open files\" error."
-msgstr "MacOS はデフォルトで、少数のファイルハンドル向けに設定されているため、15 個以上のフォークを使用する場合は、``sudo launchctl limit maxfiles unlimited`` を使用して ulimit を増やす必要があります。このコマンドは、「Too many open files」エラーを修正することもできます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:38
-msgid "Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer."
-msgstr "Ansible 2.11 は、Python 3.8 をコントロールノードのソフト依存関係にしますが、前述の要件で機能します。Ansible 2.12 では、コントロールノードで機能するために Python3.8 以降が必要です。Ansible 2.11 以降、プロジェクトは Python 3.8 以降でのみパッケージ化されます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:42
-msgid "Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine (the managed node) and should be listed in the module specific docs."
-msgstr "モジュールやプラグインには追加の要件があることに注意してください。モジュールについては、「ターゲット」マシン (管理対象ノード) でこの追加要件を満たす必要があります。これについては各モジュールのドキュメントに記載されています。"
-
-#: ../../rst/installation_guide/intro_installation.rst:47
+#: ../../rst/installation_guide/intro_installation.rst:23
 msgid "Managed node requirements"
 msgstr "管理ノードの要件"
 
+#: ../../rst/installation_guide/intro_installation.rst:25
+msgid "The *managed* node (the machine that Ansible is managing) does not require Ansible to be installed, but requires Python 2.7, or Python 3.5 - 3.11 to run Ansible library code."
+msgstr "*マネージド* ノード (Ansible が管理しているマシン) には Ansible をインストールする必要はありませんが、Ansible ライブラリーコードを実行するには Python 2.7 または Python 3.5 - 3.11 が必要です。"
+
+#: ../../rst/installation_guide/intro_installation.rst:29
+msgid "Network modules are an exception and do not require Python on the managed device.  See :ref:`network_modules`."
+msgstr "ネットワークモジュールは例外で、管理デバイスに Python は必要ありません。:ref:`network_modules` を参照してください。"
+
+#: ../../rst/installation_guide/intro_installation.rst:34
+msgid "Node requirement summary"
+msgstr "ノード要件の概要"
+
+#: ../../rst/installation_guide/intro_installation.rst:36
+msgid "The table below lists the current and historical versions of Python required on control and managed nodes."
+msgstr "以下の表は、制御および管理ノードに必要な Python の現在のバージョンと過去のバージョンを示しています。"
+
+#: ../../rst/installation_guide/intro_installation.rst:42
+msgid "ansible-core Version"
+msgstr "ansible-core バージョン"
+
+#: ../../rst/installation_guide/intro_installation.rst:43
+msgid "Control node Python"
+msgstr "コントロールノード Python"
+
+#: ../../rst/installation_guide/intro_installation.rst:44
+msgid "Managed node Python"
+msgstr "管理対象ノード Python"
+
+#: ../../rst/installation_guide/intro_installation.rst:45
+msgid "2.11"
+msgstr "2.11"
+
+#: ../../rst/installation_guide/intro_installation.rst:46
+msgid "Python 2.7, Python 3.5 - 3.9 `[†]`_"
+msgstr "Python 2.7, Python 3.5 - 3.9 `[†]`_"
+
+#: ../../rst/installation_guide/intro_installation.rst:47
+msgid "Python 2.6 - 2.7, Python 3.5 - 3.9"
+msgstr "Python 2.6 - 2.7, Python 3.5 - 3.9"
+
+#: ../../rst/installation_guide/intro_installation.rst:48
+msgid "2.12"
+msgstr "2.12"
+
 #: ../../rst/installation_guide/intro_installation.rst:49
-msgid "On the managed nodes, you need a way to communicate, which is normally SSH. By default this uses SFTP. If that's not available, you can switch to SCP in :ref:`ansible.cfg <ansible_configuration_settings>`.  You also need Python 2 (version 2.6 or later) or Python 3 (version 3.5 or later)."
-msgstr "管理ノードでは通信手段が必要です。通常は SSH が使用されます。デフォルトでは SFTP が使用されます。SFTP を使用できない場合は、:ref:`ansible.cfg <ansible_configuration_settings>` で SCP に切り替えることができます。Python 2 (バージョン 2.6 以降) または Python 3 (バージョン 3.5 以降) も 必要になります。"
+#: ../../rst/installation_guide/intro_installation.rst:52
+msgid "Python 3.8 - 3.10"
+msgstr "Python 3.8 - 3.10"
+
+#: ../../rst/installation_guide/intro_installation.rst:50
+msgid "Python 2.6 - 2.7, Python 3.5 - 3.10"
+msgstr "Python 2.6 - 2.7, Python 3.5 - 3.10"
+
+#: ../../rst/installation_guide/intro_installation.rst:51
+msgid "2.13"
+msgstr "2.13"
+
+#: ../../rst/installation_guide/intro_installation.rst:53
+msgid "Python 2.7, Python 3.5 - 3.10"
+msgstr "Python 2.7, Python 3.5 - 3.10"
+
+#: ../../rst/installation_guide/intro_installation.rst:54
+msgid "2.14"
+msgstr "2.14"
+
+#: ../../rst/installation_guide/intro_installation.rst:55
+msgid "Python 3.9 - 3.11"
+msgstr "Python 3.9 - 3.11"
 
 #: ../../rst/installation_guide/intro_installation.rst:56
-msgid "If you have SELinux enabled on remote nodes, you will also want to install libselinux-python on them before using any copy/file/template related functions in Ansible. You can use the :ref:`yum module<yum_module>` or :ref:`dnf module<dnf_module>` in Ansible to install this package on remote systems that do not have it."
-msgstr "リモートノードで SELinux を有効にしている場合は、Ansible でコピー/ファイル/テンプレート関連の機能を使用する前に、libselinux-python をインストールすることもできます。リモートシステムにこのパッケージがインストールされていない場合は、Ansible で :ref:`yum モジュール<yum_module>` または :ref:`dnf モジュール<dnf_module>` を使用してインストールできます。"
+msgid "Python 2.7, Python 3.5 - 3.11"
+msgstr "Python 2.7, Python 3.5 - 3.11"
 
-#: ../../rst/installation_guide/intro_installation.rst:61
-msgid "By default, before the first Python module in a playbook runs on a host, Ansible attempts to discover a suitable Python interpreter on that host. You can override the discovery behavior by setting the :ref:`ansible_python_interpreter<ansible_python_interpreter>` inventory variable to a specific interpreter, and in other ways. See :ref:`interpreter_discovery` for details."
-msgstr "デフォルトでは、Playbook の最初の Python モジュールがホストで実行される前に、Ansible はそのホストで適切な Python インタープリターを検出しようとします。検出動作は、:ref:`ansible_python_interpreter<ansible_python_interpreter>` インベントリー変数を特定のインタープリターに設定でき、その他の方法で無効にできます。詳細は、「:ref:`interpreter_discovery`」を参照してください。"
+#: ../../rst/installation_guide/intro_installation.rst:58
+msgid "_`[†]`: Has a soft requirement of Python 3.8 as not packaged for older versions"
+msgstr "_`[†]`: 古いバージョンにはパッケージ化されていないため、Python 3.8 のソフト要件があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:63
-msgid "Ansible's :ref:`raw module<raw_module>`, and the :ref:`script module<script_module>`, do not depend on a client side install of Python to run.  Technically, you can use Ansible to install a compatible version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else. For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it as follows:"
-msgstr "Ansible の :ref:`raw モジュール<raw_module>` および :ref:`script モジュール<script_module>` は、実行する Python のクライアント側インストールに依存しません。技術的には、Ansible を使用して :ref:`raw モジュール<raw_module>` を使用して互換性のあるバージョンの Python をインストールできます。これ以外のものをすべて使用できます。たとえば、Python 2 を RHEL ベースのシステムにブートストラップする必要がある場合は、以下のようにインストールできます。"
+#: ../../rst/installation_guide/intro_installation.rst:65
+msgid "Selecting an Ansible package and version to install"
+msgstr "インストールする Ansible パッケージおよびバージョンの選択"
 
-#: ../../rst/installation_guide/intro_installation.rst:76
-msgid "Selecting an Ansible version to install"
-msgstr "インストールする Ansible バージョンの選択"
+#: ../../rst/installation_guide/intro_installation.rst:67
+msgid "Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger \"batteries included\" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; The following instructions  use ``ansible``, but  you can substitute ``ansible-core``  if you prefer to start with a more minimal package and separately install only the Ansible Collections you require. The ``ansible`` or ``ansible-core`` packages may be available in your operating systems package manager, and you are free to install these packages with your preferred method. These installation instructions only cover the officially supported means of installing the python package with ``pip``."
+msgstr "Ansible のコミュニティーパッケージは、``ansible-core`` と呼ばれる最小言語およびランタイムパッケージと、``ansible`` と呼ばれる大きな「バッテリー付き」パッケージの 2 つの方法で配布されています。これには、幅広いデバイスの自動化のためにコミュニティーが厳選した :ref:`Ansible Collections <collections>` が追加されています。ニーズに合わせてパッケージを選択してください。以下の手順では ``ansible`` を使用していますが、最小限のパッケージで開始して必要な Ansible コレクションのみ個別にインストールする場合は ``ansible-core`` を使用できます。``ansible`` パッケージまたは ``ansible-core`` パッケージは、お使いのオペレーティングシステムパッケージマネージャーで使用できる場合があります。お好みの方法でパッケージをインストールしてください。これらのインストール手順は、``pip`` を使用して Python パッケージをインストールする、正式なサポート対象の方法に限定されています。"
+
+#: ../../rst/installation_guide/intro_installation.rst:70
+msgid "Installing and upgrading Ansible"
+msgstr "Ansible のインストールとアップグレード"
+
+#: ../../rst/installation_guide/intro_installation.rst:73
+msgid "Locating Python"
+msgstr "Python の検索"
+
+#: ../../rst/installation_guide/intro_installation.rst:75
+msgid "Locate and remember the path to the Python interpreter you wish to use to run Ansible. The following instructions refer to this Python  as ``python3``. For example, if you've determined that you want the Python at ``/usr/bin/python3.9`` to be the one that you'll install Ansible under, specify that instead of ``python3``."
+msgstr "Ansible の実行に使用する Python インタープリターへのパスを見つけて覚えておいてください。以下の手順は、この Python を ``python3`` として参照します。たとえば、``/usr/bin/python3.9`` の Python に Ansible をインストールする場合は、``python3`` の代わりにその Python を指定します。"
 
 #: ../../rst/installation_guide/intro_installation.rst:78
-msgid "Which Ansible version to install is based on your particular needs. You can choose any of the following ways to install Ansible:"
-msgstr "インストールする Ansible バージョンは、特定のニーズに基づいて決定します。Ansible をインストールするには、以下のいずれかの方法を選択できます。"
+msgid "Ensuring ``pip`` is available"
+msgstr "``pip`` が利用可能か確認しています"
 
 #: ../../rst/installation_guide/intro_installation.rst:80
-msgid "Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu)."
-msgstr "OS パッケージマネージャー (Red Hat Enterprise Linux (TM)、CentOS、Fedora、Debian、または Ubuntu の場合) を使用して最新リリースをインストールします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:81
-msgid "Install with ``pip`` (the Python package manager)."
-msgstr "``pip`` (Python パッケージマネージャー) でインストールします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:82
-msgid "Install ``ansible-base`` from source to access the development (``devel``) version to develop or test the latest features."
-msgstr "ソースから ``ansible-base`` インストールして開発 (``devel``) バージョンにアクセスし、最新の機能を開発またはテストします。"
+msgid "To verify whether ``pip`` is already installed for your preferred Python:"
+msgstr "目的の Python 用に ``pip`` がすでにインストールされているか確認するには、以下を実行します。"
 
 #: ../../rst/installation_guide/intro_installation.rst:86
-msgid "You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point."
-msgstr "``devel`` から ``ansible-base`` を実行するのは、``ansible-base`` を変更する場合や、開発時に機能を試す場合にしてください。これはコードのソースが素早く変更し、いつでも不安定になる可能性があります。"
+msgid "If all is well, you should see something like the following:"
+msgstr "すべてが正常な場合は、以下のように表示されます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:89
-msgid "Ansible creates new releases two to three times a year. Due to this short release cycle, minor bugs will generally be fixed in the next release rather than maintaining backports on the stable branch. Major bugs will still have maintenance releases when needed, though these are infrequent."
-msgstr "Ansible のリリースは、年に 2 ~ 3 回作成されます。リリースサイクルがこのように短いため、マイナーなバグは通常、安定したブランチでバックポートを維持するのではなく、次のリリースで修正されます。メジャーバグについては、必要なときにメンテナンスリリースが行われますが、このようなことはあまり頻繁には起こりません。"
+#: ../../rst/installation_guide/intro_installation.rst:93
+msgid "If so, ``pip`` is available, and you can move on to the :ref:`next step <pip_install>`."
+msgstr "その場合は ``pip`` が利用可能です。:ref:`next step <pip_install>` に進んでください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:98
-msgid "Installing Ansible on RHEL, CentOS, or Fedora"
-msgstr "RHEL、CentOS、または Fedora への Ansible のインストール"
+#: ../../rst/installation_guide/intro_installation.rst:95
+msgid "If you see an error like ``No module named pip``, you'll need to install ``pip`` under your chosen Python interpreter before proceeding. This may mean installing an additional OS package (for example, ``python3-pip``), or installing the latest ``pip`` directly from the Python Packaging Authority by running the following:"
+msgstr "``No module named pip`` のようなエラーが表示された場合は、続行する前に、選択した Python インタープリターに ``pip`` をインストールする必要があります。そうなると、追加の OS パッケージ (例: ``python3-pip``) をインストールするか、以下を実行して Python Packaging Authority から直接最新の ``pip`` をインストールすることになります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:100
-#: ../../rst/installation_guide/intro_installation.rst:534
-msgid "On Fedora:"
-msgstr "Fedora の場合:"
+#: ../../rst/installation_guide/intro_installation.rst:102
+msgid "You may need to perform some additional configuration before you are able to run Ansible. See the Python documentation on `installing to the user site`_ for more information."
+msgstr "Ansible を実行する前に追加の設定が必要になる場合があります。詳細は、Python ドキュメント「`ユーザーサイトへのインストール`_」を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:106
-msgid "On RHEL:"
-msgstr "RHEL の場合:"
+#: ../../rst/installation_guide/intro_installation.rst:111
+msgid "Use ``pip`` in your selected Python environment to install the Ansible package of your choice for the current user:"
+msgstr "選択した Python 環境で ``pip`` を使用し、現在のユーザー用に選択した Ansible パッケージをインストールします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:112
-msgid "On CentOS:"
-msgstr "CentOS の場合:"
+#: ../../rst/installation_guide/intro_installation.rst:117
+msgid "Alternately, you can install a specific version of ``ansible-core`` in this Python environment:"
+msgstr "または、この Python 環境に特定のバージョンの ``ansible-core`` をインストールすることもできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:119
-msgid "RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_."
-msgstr "RHEL 7 および RHEL 8 の RPM は、`Ansible Engine リポジトリー <https://access.redhat.com/articles/3174981>`_ から入手できます。"
+#: ../../rst/installation_guide/intro_installation.rst:126
+msgid "Upgrading Ansible"
+msgstr "Ansible のアップグレード"
 
-#: ../../rst/installation_guide/intro_installation.rst:121
-msgid "To enable the Ansible Engine repository for RHEL 8, run the following command:"
-msgstr "RHEL 8 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
+#: ../../rst/installation_guide/intro_installation.rst:128
+msgid "To upgrade an existing Ansible installation in this Python environment to the latest released version, simply add ``--upgrade`` to the command above:"
+msgstr "この Python 環境の既存の Ansible インストールを最新のリリースバージョンにアップグレードするには、上記のコマンドに ``--upgrade`` を追加します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:127
-msgid "To enable the Ansible Engine repository for RHEL 7, run the following command:"
-msgstr "RHEL 7 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
-
-#: ../../rst/installation_guide/intro_installation.rst:133
-msgid "RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_."
-msgstr "現在サポートされているバージョンの RHEL および CentOS の場合は、`EPEL <https://fedoraproject.org/wiki/EPEL>`_ からも利用できます。"
+#: ../../rst/installation_guide/intro_installation.rst:135
+msgid "Confirming your installation"
+msgstr "インストールの確認"
 
 #: ../../rst/installation_guide/intro_installation.rst:137
-msgid "Since Ansible 2.10 for RHEL is not available at this time,  continue to use Ansible 2.9."
-msgstr "現在、RHEL では Ansible 2.10 が利用できないため、引き続き Ansible 2.9 を使用してください。"
+msgid "You can test that Ansible is installed correctly by checking the version:"
+msgstr "バージョンを確認して、Ansible が正しくインストールされたことをテストできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:139
-msgid "Ansible can manage older operating systems that contain Python 2.6 or higher."
-msgstr "Ansible は、Python 2.6 以降が含まれる古いオペレーティングシステムを管理できます。"
+#: ../../rst/installation_guide/intro_installation.rst:143
+msgid "The version displayed by this command is for the associated ``ansible-core`` package that has been installed."
+msgstr "このコマンドで表示されるバージョンは、関連するインストール済みの ``ansible-core`` パッケージです。"
 
-#: ../../rst/installation_guide/intro_installation.rst:144
-msgid "Installing Ansible on Ubuntu"
-msgstr "Ubuntu への Ansible のインストール"
+#: ../../rst/installation_guide/intro_installation.rst:145
+msgid "To check the version of the ``ansible`` package that has been installed:"
+msgstr "インストールされている ``ansible`` パッケージのバージョンを確認するには、以下を実行します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:146
-msgid "Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_."
-msgstr "Ubuntu ビルドは `PPA <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_ で利用できます。"
+#: ../../rst/installation_guide/intro_installation.rst:154
+msgid "Installing for development"
+msgstr "開発用のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:148
-msgid "To configure the PPA on your machine and install Ansible run these commands:"
-msgstr "自分のマシンに PPA を設定して Ansible をインストールするには、次のコマンドを実行します。"
+#: ../../rst/installation_guide/intro_installation.rst:156
+msgid "If you are testing new features, fixing bugs, or otherwise working with the development team on changes to the core code, you can install and run the source from GitHub."
+msgstr "新機能のテスト、バグの修正、またはコアコードへの変更に対して開発チームでの作業を行う場合は、GitHub からソースをインストールして実行できます。て実行できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:157
-msgid "On older Ubuntu distributions, \"software-properties-common\" is called \"python-software-properties\". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly."
-msgstr "以前の Ubuntu ディストリビューションでは、「software-properties-common」は「python-software-properties」と呼ばれるため、過去のバージョンでは ``apt`` ではなく ``apt-get`` を使用するほうが適している場合があります。また、``-u`` フラグまたは ``--update`` フラグが指定できるのは、新しいディストリビューション (18.04、18.10 など) に限定されることに注意し、スクリプトを調整してください。"
+#: ../../rst/installation_guide/intro_installation.rst:160
+msgid "You should only install and run the ``devel`` branch if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point."
+msgstr "開発時に ``ansible-core`` を変更し、機能を試す場合は、``devel`` ブランチのみをインストールし、実行してください。このソースコードは急速に変化するため、いつでも不安定になる可能性があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:159
-msgid "Debian/Ubuntu packages can also be built from the source checkout, run:"
-msgstr "Debian/Ubuntu パッケージは、ソースチェックアウトから構築することもできます。以下を実行します。"
+#: ../../rst/installation_guide/intro_installation.rst:162
+msgid "For more information on getting involved in the Ansible project, see the :ref:`ansible_community_guide`. For more information on creating Ansible modules and Collections, see the :ref:`developer_guide`."
+msgstr "Ansible プロジェクトへの貢献の詳細は、「:ref:`ansible_community_guide`」を参照してください。Ansible モジュールおよびコレクションの作成方法は、「:ref:`developer_guide`」を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:165
-msgid "You may also wish to run from source to get the development branch, which is covered below."
-msgstr "ソースから実行して開発ブランチを取得することも可能です。この点については以下で説明します。"
+#: ../../rst/installation_guide/intro_installation.rst:167
+msgid "Installing ``devel`` from GitHub with ``pip``"
+msgstr "``pip`` を使用した GitHub からの ``devel`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:168
-msgid "Installing Ansible on Debian"
-msgstr "Debian への Ansible のインストール"
+#: ../../rst/installation_guide/intro_installation.rst:169
+msgid "You can install the ``devel`` branch of ``ansible-core`` directly from GitHub with ``pip``:"
+msgstr "``pip`` を使用して、``ansible-core`` の ``devel`` ブランチを直接 GitHub からインストールできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:170
-msgid "Debian users may leverage the same source as the Ubuntu PPA."
-msgstr "Debian を使用している場合は Ubuntu PPA と同じソースを使用できます。"
+#: ../../rst/installation_guide/intro_installation.rst:175
+msgid "You can replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install older versions of Ansible, tagged alpha or beta versions, and release candidates."
+msgstr "上記の URL の ``devel`` を、他のブランチまたは GitHub のタグに置き換えて、古いバージョンの Ansible、タグ付けされた alpha または beta バージョン、およびリリース候補をインストールします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:172
-msgid "Add the following line to ``/etc/apt/sources.list``:"
-msgstr "以下の行を ``/etc/apt/sources.list`` に追加します。"
+#: ../../rst/installation_guide/intro_installation.rst:180
+msgid "Running the ``devel`` branch from a clone"
+msgstr "クローンからの ``devel`` ブランチの実行"
 
-#: ../../rst/installation_guide/intro_installation.rst:178
-msgid "Then run these commands:"
-msgstr "次に、以下のコマンドを実行します。"
+#: ../../rst/installation_guide/intro_installation.rst:182
+msgid "``ansible-core`` is easy to run from source. You do not need ``root`` permissions to use it and there is no software to actually install. No daemons or database setup are required."
+msgstr "``ansible-core`` ソースからの実行は簡単です。``root`` パーミッションは必要ありません。実際にインストールするソフトウェアはありません。デーモンやデータベース設定は必要ありません。"
 
-#: ../../rst/installation_guide/intro_installation.rst:186
-msgid "This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions."
-msgstr "このメソッドは、Debian Jessie および Stretch の Trusty ソースで検証されていますが、以前のバージョンではサポートされない場合があります。以前のバージョンでは、``apt`` の代わりに ``apt-get`` を使用できます。"
+#: ../../rst/installation_guide/intro_installation.rst:184
+msgid "Clone the ``ansible-core`` repository"
+msgstr "``ansible-core`` リポジトリーのクローンを作成します"
 
-#: ../../rst/installation_guide/intro_installation.rst:189
-msgid "Installing Ansible on Gentoo with portage"
-msgstr "portage を使用した Gentoo への Ansible のインストール"
+#: ../../rst/installation_guide/intro_installation.rst:191
+msgid "Setup the Ansible environment"
+msgstr "Ansible 環境を設定します"
 
-#: ../../rst/installation_guide/intro_installation.rst:195
-msgid "To install the newest version, you may need to unmask the Ansible package prior to emerging:"
-msgstr "最新バージョンをインストールするには、インストールする前に Ansible パッケージのマスク解除が必要になる場合があります。"
+#: ../../rst/installation_guide/intro_installation.rst:193
+msgid "Using Bash"
+msgstr "Bash の使用"
 
-#: ../../rst/installation_guide/intro_installation.rst:202
-msgid "Installing Ansible on FreeBSD"
-msgstr "FreeBSD への Ansible のインストール"
+#: ../../rst/installation_guide/intro_installation.rst:199
+msgid "Using Fish"
+msgstr "Fish の使用"
 
-#: ../../rst/installation_guide/intro_installation.rst:204
-msgid "Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version. So to install you can use:"
-msgstr "Ansible は Python 2 および 3 の両バージョンで動作しますが、FreeBSD パッケージは各 Python バージョンで異なります。したがって、インストールには、以下を使用できます。"
+#: ../../rst/installation_guide/intro_installation.rst:205
+msgid "To suppress spurious warnings/errors, use ``-q``"
+msgstr "誤った警告やエラーが表示されないようにするには、``-q`` を使用します"
 
 #: ../../rst/installation_guide/intro_installation.rst:211
-msgid "or:"
-msgstr "または"
+msgid "Install Python dependencies"
+msgstr "Python の依存関係をインストールします"
 
-#: ../../rst/installation_guide/intro_installation.rst:218
-msgid "You may also wish to install from ports, run:"
-msgstr "ポートからインストールすることもできます。以下を実行します。"
+#: ../../rst/installation_guide/intro_installation.rst:217
+msgid "Update the ``devel`` branch of ``ansible-core`` on your local machine"
+msgstr "ローカルマシンで ``ansible-core`` の ``devel`` ブランチを更新します"
 
-#: ../../rst/installation_guide/intro_installation.rst:224
-msgid "You can also choose a specific version, for example ``ansible25``."
-msgstr "特定のバージョン (例: ``ansible25``) を選択することもできます。"
+#: ../../rst/installation_guide/intro_installation.rst:219
+msgid "Use pull-with-rebase so any local changes are replayed."
+msgstr "pull-with-rebase を使用してローカルの変更がリプレイされるようにします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:226
-msgid "Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):"
-msgstr "以前のバージョンの FreeBSD は、以下のようなもので動作します (パッケージマネージャーの代わりです)。"
+#: ../../rst/installation_guide/intro_installation.rst:228
+msgid "Adding Ansible command shell completion"
+msgstr "Ansible コマンドシェル補完の追加"
+
+#: ../../rst/installation_guide/intro_installation.rst:230
+msgid "You can add shell completion of the Ansible command line utilities by installing an optional dependency called ``argcomplete``. ``argcomplete`` supports bash, and has limited support for zsh and tcsh."
+msgstr "``argcomplete`` と呼ばれる任意の依存関係をインストールして、Ansible コマンドラインユーティリティーのシェル補完を追加できます。``argcomplete`` は bash をサポートし、制限付きで zsh および tcsh のサポートをサポートします。"
+
+#: ../../rst/installation_guide/intro_installation.rst:232
+msgid "For more information about installation and configuration, see the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_."
+msgstr "インストールと設定の詳細は、`argcomplete ドキュメント <https://kislyuk.github.io/argcomplete/>`_ を参照してください。"
 
 #: ../../rst/installation_guide/intro_installation.rst:235
-msgid "Installing Ansible on macOS"
-msgstr "MacOS への Ansible のインストール"
+msgid "Installing ``argcomplete``"
+msgstr "``argcomplete`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:237
-msgid "The preferred way to install Ansible on a Mac is with ``pip``."
-msgstr "Mac に Ansible をインストールするには ``pip`` を使用することが推奨されます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:239
-msgid "The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that."
-msgstr "手順は「:ref:`from_pip`」を参照してください。MacOS バージョン 10.12 以前を実行している場合に、Python Package Index に安全に接続するには最新の ``pip`` にアップグレードする必要があります。pip は、MacOS でモジュールとして実行する必要があり、リンクされている ``pip`` の手順にその実行方法が示されることに注意してください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:243
-#: ../../rst/installation_guide/intro_installation.rst:316
-#: ../../rst/installation_guide/intro_installation.rst:389
-#: ../../rst/installation_guide/intro_installation.rst:413
-msgid "If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it."
-msgstr "Ansible 2.9 以前のバージョンをインストールしている場合は、先に ``pip uninstall ansible`` を使用して古いバージョンの Ansible を削除してから再インストールする必要があります。"
-
-#: ../../rst/installation_guide/intro_installation.rst:245
-msgid "If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::"
-msgstr "MacOS Mavericks (10.9) にインストールする場合は、コンパイラーから何らかの問題が発生する可能性があります。回避策として、以下を行います。"
-
-#: ../../rst/installation_guide/intro_installation.rst:253
-msgid "Installing Ansible on Solaris"
-msgstr "Solaris への Ansible のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:255
-msgid "Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_."
-msgstr "Solaris では、`SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_ として Ansible を利用できます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:265
-msgid "Installing Ansible on Arch Linux"
-msgstr "Arch Linux への Ansible のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:267
-msgid "Ansible is available in the Community repository::"
-msgstr "Ansible は、コミュニティーリポジトリーから入手できます::"
-
-#: ../../rst/installation_guide/intro_installation.rst:271
-msgid "The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_."
-msgstr "AUR には、(`ansible-git <https://aur.archlinux.org/packages/ansible-git>`_ と呼ばれている) GitHub から直接プルするための PKGBUILD があります。"
-
-#: ../../rst/installation_guide/intro_installation.rst:273
-msgid "Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki."
-msgstr "ArchWiki の「`Ansible <https://wiki.archlinux.org/index.php/Ansible>`_」ページを参照してください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:278
-msgid "Installing Ansible on Slackware Linux"
-msgstr "Slackware Linux への Ansible のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:280
-msgid "Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository. Can be built and installed using `sbopkg <https://sbopkg.org/>`_."
-msgstr "Ansible ビルドスクリプトは `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ リポジトリーから利用できます。`sbopkg <https://sbopkg.org/>`_ を使用してビルドおよびインストールできます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:283
-msgid "Create queue with Ansible and all dependencies::"
-msgstr "Ansible およびすべての依存関係を含むキューを作成します::"
-
-#: ../../rst/installation_guide/intro_installation.rst:287
-msgid "Build and install packages from a created queuefile (answer Q for question if sbopkg should use queue or package)::"
-msgstr "作成した queuefile からパッケージを構築してインストールします (sbopkg がキューまたはパッケージを使用する必要がある場合の問題への回答 Q)::"
-
-#: ../../rst/installation_guide/intro_installation.rst:294
-msgid "Installing Ansible on Clear Linux"
-msgstr "Clear Linux への Ansible のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:296
-msgid "Ansible and its dependencies are available as part of the sysadmin host management bundle::"
-msgstr "Ansible およびその依存関係は、sysadmin ホスト管理バンドルの一部として利用できます::"
-
-#: ../../rst/installation_guide/intro_installation.rst:300
-msgid "Update of the software will be managed by the swupd tool::"
-msgstr "ソフトウェアの更新は、swupd ツールにより管理されます::"
-
-#: ../../rst/installation_guide/intro_installation.rst:307
-msgid "Installing Ansible with ``pip``"
-msgstr "``pip`` を使用した Ansible のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:309
-msgid "Ansible can be installed with ``pip``, the Python package manager. If ``pip`` isn't already available on your system of Python, run the following commands to install it::"
-msgstr "Python パッケージマネージャーである ``pip`` で Ansible をインストールできます。``pip`` が Python のシステムで利用できない場合は、以下のコマンドを実行してインストールします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:318
-msgid "Then install Ansible [1]_::"
-msgstr "次に Ansible [1]_ をインストールします::"
-
-#: ../../rst/installation_guide/intro_installation.rst:325
-msgid "If this is your first time installing packages with pip, you may need to perform some additional configuration before you are able to run Ansible. See the Python documentation on `installing to the user site`_ for more information."
-msgstr "pip でパッケージを初めてインストールする場合は、Ansible を実行する前に追加の設定が必要になる場合があります。詳細は、Python ドキュメント「`ユーザーサイトへのインストール`_ を参照してください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:330
-msgid "In order to use the ``paramiko`` connection plugin or modules that require ``paramiko``, install the required module [2]_::"
-msgstr "``paramiko`` を必要とする ``paramiko`` 接続プラグインまたはモジュールを使用するには、必要なモジュール [2]_ をインストールします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:334
-msgid "If you wish to install Ansible globally, run the following commands::"
-msgstr "Ansible をグローバルにインストールする場合は、以下のコマンドを実行します::"
-
-#: ../../rst/installation_guide/intro_installation.rst:341
-msgid "Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to your system that leaves it in an inconsistent or non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system."
-msgstr "``sudo`` で ``pip`` を実行すると、システムにグローバルの変更が行われます。``pip`` はシステムパッケージマネージャーと連携しないため、システムに変更が加えられ、システムが一貫性のない状態または機能しない状態になる可能性があります。これは特に MacOS に当てはまります。システム上のグローバルファイルを変更した場合の影響を完全に理解していない限り、``--user`` でインストールすることが推奨されます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:345
-msgid "Older versions of ``pip`` default to http://pypi.python.org/simple, which no longer works. Please make sure you have the latest version of ``pip`` before installing Ansible. If you have an older version of ``pip`` installed, you can upgrade by following `pip's upgrade instructions <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ ."
-msgstr "古いバージョンの ``pip`` は、http://pypi.python.org/simple がデフォルトとなります。これは有効ではなくなりました。Ansible をインストールする前に、``pip`` の最新バージョンをお持ちであることを確認してください。古いバージョンの ``pip`` がインストールされている場合は、`pip のアップグレード手順 <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ でアップグレードできます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:350
-msgid "Upgrading Ansible from version 2.9 and older to version 2.10 or later"
-msgstr "Ansible のバージョン 2.9 以前から 2.10 以降へのアップグレード"
-
-#: ../../rst/installation_guide/intro_installation.rst:352
-msgid "Starting in version 2.10, Ansible is made of two packages. You need to first uninstall the old Ansible version (2.9 or earlier) before upgrading. If you do not uninstall the older version of Ansible, you will see the following message, and no change will be performed:"
-msgstr "バージョン 2.10 以降では、Ansible は 2 つのパッケージで構成されています。最初にアップグレードの前に、古い Ansible バージョン (2.9 以前) をアンインストールする必要があります。古いバージョンの Ansible をアンインストールしない場合は、以下のメッセージが表示され、変更が実行されません。"
-
-#: ../../rst/installation_guide/intro_installation.rst:368
-msgid "As explained by the message, to upgrade you must first remove the version of Ansible installed and then install it to the latest version."
-msgstr "メッセージで説明されているように、アップグレードするには、最初にインストールした Ansible のバージョンを削除してから、最新バージョンにインストールする必要があります。"
-
-#: ../../rst/installation_guide/intro_installation.rst:379
-msgid "Installing the development version of ``ansible-base``"
-msgstr "開発バージョンの ``ansible-base`` のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:381
-#: ../../rst/installation_guide/intro_installation.rst:426
-msgid "In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``."
-msgstr "Ansible 2.10 以降では、`ansible/ansible リポジトリー <https://github.com/ansible/ansible>`_ には、モジュールコードを管理対象ノードにコピーするなど、基本的な機能や関数のコードが含まれています。このコードは ``ansible-base`` としても知られています。"
-
-#: ../../rst/installation_guide/intro_installation.rst:385
-#: ../../rst/installation_guide/intro_installation.rst:430
-msgid "You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point."
-msgstr "``ansible-base`` を変更する場合や、開発時に機能を試す場合にのみ、``devel`` から ``ansible-base`` を実行する必要があります。これはコードのソースが素早く変更し、いつでも不安定になる可能性があります。"
-
-#: ../../rst/installation_guide/intro_installation.rst:392
-msgid "You can install the development version of ``ansible-base`` directly from GitHub with pip."
-msgstr "開発バージョンの ``ansible-base`` は、pip を使用して GitHub から直接インストールできます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:398
-msgid "Replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install older versions of Ansible (prior to ``ansible-base`` 2.10.) This installs all of Ansible."
-msgstr "上記の URL の ``devel`` を GitHub の他のブランチまたはタグに置き換え、古いバージョンの Ansible（``ansible-base`` 2.10 以前) をインストールします。これにより、すべての Ansible がインストールされます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:404
-msgid "See :ref:`from_source` for instructions on how to run ``ansible-base`` directly from source, without the requirement of installation."
-msgstr "インストールの必要がなく、ソースから ``ansible-base`` を直接実行する方法については、「:ref:`from_source`」を参照してください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:409
-msgid "Virtual Environments"
-msgstr "仮想環境"
-
-#: ../../rst/installation_guide/intro_installation.rst:415
-msgid "Ansible can also be installed inside a new or existing ``virtualenv``::"
-msgstr "Ansible は、新規または既存の ``virtualenv`` 内にもインストールできます::"
-
-#: ../../rst/installation_guide/intro_installation.rst:424
-msgid "Running ``ansible-base`` from source (devel)"
-msgstr "ソース (devel) から ``ansible-base`` の実行"
-
-#: ../../rst/installation_guide/intro_installation.rst:432
-msgid "``ansible-base`` is easy to run from source. You do not need ``root`` permissions to use it and there is no software to actually install. No daemons or database setup are required."
-msgstr "``ansible-base`` ソースからの実行は簡単です。``root`` パーミッションは必要ありません。実際にインストールするソフトウェアはありません。デーモンやデータベース設定は必要ありません。"
-
-#: ../../rst/installation_guide/intro_installation.rst:438
-msgid "If you want to use Ansible Tower as the control node, do not use a source installation of Ansible. Please use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version."
-msgstr "Ansible Tower をコントロールノードとして使用する場合は、Ansible のソースインストールは使用せず、OS パッケージマネージャー (``apt`` や ``yum`` など) を使用するか、``pip`` を使用して安定したバージョンをインストールしてください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:441
-msgid "To install from source, clone the ``ansible-base`` git repository:"
-msgstr "ソースからインストールするには、git リポジトリー ``ansible-base`` のクローンを作成します。"
-
-#: ../../rst/installation_guide/intro_installation.rst:448
-msgid "Once ``git`` has cloned the ``ansible-base`` repository, setup the Ansible environment:"
-msgstr "``git`` が ``ansible-base`` リポジトリーのクローンを作成したら、Ansible 環境を設定します。"
-
-#: ../../rst/installation_guide/intro_installation.rst:450
-msgid "Using Bash:"
-msgstr "Bash の使用:"
-
-#: ../../rst/installation_guide/intro_installation.rst:456
-msgid "Using Fish::"
-msgstr "Fish の使用::"
-
-#: ../../rst/installation_guide/intro_installation.rst:460
-msgid "If you want to suppress spurious warnings/errors, use::"
-msgstr "誤った警告やエラーが表示されないようにするには、以下を使用します::"
-
-#: ../../rst/installation_guide/intro_installation.rst:464
-msgid "If you don't have ``pip`` installed in your version of Python, install it::"
-msgstr "お使いのバージョンの Python に ``pip`` がインストールされていない場合は、インストールします::"
-
-#: ../../rst/installation_guide/intro_installation.rst:469
-msgid "Ansible also uses the following Python modules that need to be installed [1]_:"
-msgstr "Ansible は、以下の Python モジュールも使用し、このモジュールもインストールする必要があります [1]_。"
-
-#: ../../rst/installation_guide/intro_installation.rst:475
-msgid "To update ``ansible-base`` checkouts, use pull-with-rebase so any local changes are replayed."
-msgstr "``ansible-base`` チェックアウトを更新するには、pull-with-rebase を使用してローカルの変更がリプレイされるようにします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:486
-msgid "Once running the env-setup script you'll be running from checkout and the default inventory file will be ``/etc/ansible/hosts``. You can optionally specify an inventory file (see :ref:`inventory`) other than ``/etc/ansible/hosts``:"
-msgstr "env-setup スクリプトを実行すると、チェックアウトから実行が行われ、デフォルトのインベントリーファイルが ``/etc/ansible/hosts`` になります。必要に応じて、``/etc/ansible/hosts`` 以外のインベントリーファイル (「:ref:`inventory`」を参照) を指定できます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:495
-msgid "You can read more about the inventory file at :ref:`inventory`."
-msgstr "インベントリーファイルの詳細は、:ref:`inventory`を参照してください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:497
-msgid "Now let's test things with a ping command:"
-msgstr "では、ping コマンドを使ってテストしていきましょう。"
-
-#: ../../rst/installation_guide/intro_installation.rst:503
-msgid "You can also use \"sudo make install\"."
-msgstr "「sudo make install」も使用できます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:508
-msgid "Finding tarballs of tagged releases"
-msgstr "タグ付けされたリリースの tarball の場所"
-
-#: ../../rst/installation_guide/intro_installation.rst:510
-msgid "Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available from ``pypi`` as https://pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz. You can make VERSION a variable in your package managing system that you update in one place whenever you package a new version. Alternately, you can download https://pypi.python.org/project/ansible  to get the latest stable release."
-msgstr "git チェックアウトせずに、Ansible をパッケージ化したり、ローカルパッケージをご自身で構築する場合があります。リリースの tarball は、``pypi`` で https://pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz から入手できます。VERSION は、新しいバージョンをパッケージ化するたびに 1 カ所で更新するパッケージ管理システムの変数にすることができます。また、最新の安定版リリースを入手するには、https://pypi.python.org/project/ansible をダウンロードします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:514
-msgid "If you are creating your own Ansible package, you must also download or package ``ansible-base`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz."
-msgstr "独自の Ansible パッケージを作成する場合は、Ansible パッケージの一部として ``ansible-base`` をダウンロードまたはパッケージ化する必要があります。これは、https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz としてダウンロードすることができます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:516
-msgid "These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version."
-msgstr "これらのリリースは、`git リポジトリー <https://github.com/ansible/ansible/releases>`_ でもリリースバージョンでタグ付けされます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:522
-msgid "Ansible command shell completion"
-msgstr "Ansible コマンドシェルの完了"
-
-#: ../../rst/installation_guide/intro_installation.rst:524
-msgid "As of Ansible 2.9, shell completion of the Ansible command line utilities is available and provided through an optional dependency called ``argcomplete``. ``argcomplete`` supports bash, and has limited support for zsh and tcsh."
-msgstr "Ansible 2.9 の時点では、Ansible コマンドラインユーティリティーのシェル補完を利用できます。これは、``argcomplete`` というオプションの依存関係を使用して提供されます。``argcomplete`` は bash をサポートし、また制限付きで zsh および tcsh もサポートします。"
-
-#: ../../rst/installation_guide/intro_installation.rst:527
-msgid "You can install ``python-argcomplete`` from EPEL on Red Hat Enterprise based distributions, and or from the standard OS repositories for many other distributions."
-msgstr "``python-argcomplete`` は、Red Hat Enterprise ベースのディストリビューションでは EPEL からインストールでき、その他の多くのディストリビューションでは標準 OS リポジトリーで入手できます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:529
-msgid "For more information about installing and configuration see the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_."
-msgstr "インストールおよび設定の詳細は、`argcomplete ドキュメント <https://argcomplete.readthedocs.io/en/latest/>`_ を参照してください。"
-
-#: ../../rst/installation_guide/intro_installation.rst:532
-msgid "Installing ``argcomplete`` on RHEL, CentOS, or Fedora"
-msgstr "RHEL、CentOS、または Fedora への ``argcomplete`` のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:540
-msgid "On RHEL and CentOS:"
-msgstr "RHEL および CentOS の場合:"
-
-#: ../../rst/installation_guide/intro_installation.rst:549
-msgid "Installing ``argcomplete`` with ``apt``"
-msgstr "``apt`` を使用した ``argcomplete`` のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:557
-msgid "Installing ``argcomplete`` with ``pip``"
-msgstr "``pip`` を使用した ``argcomplete`` のインストール"
-
-#: ../../rst/installation_guide/intro_installation.rst:564
+#: ../../rst/installation_guide/intro_installation.rst:242
 msgid "Configuring ``argcomplete``"
 msgstr "``argcomplete`` の設定"
 
-#: ../../rst/installation_guide/intro_installation.rst:566
+#: ../../rst/installation_guide/intro_installation.rst:244
 msgid "There are 2 ways to configure ``argcomplete`` to allow shell completion of the Ansible command line utilities: globally or per command."
 msgstr "Ansible コマンドラインユーティリティーのシェル補完を可能にする ``argcomplete`` の設定方法は、2 通りあります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:569
-msgid "Globally"
-msgstr "グローバル"
+#: ../../rst/installation_guide/intro_installation.rst:247
+msgid "Global configuration"
+msgstr "グローバル設定"
 
-#: ../../rst/installation_guide/intro_installation.rst:571
+#: ../../rst/installation_guide/intro_installation.rst:249
 msgid "Global completion requires bash 4.2."
 msgstr "グローバル補完には bash 4.2 が必要です。"
 
-#: ../../rst/installation_guide/intro_installation.rst:577
-msgid "This will write a bash completion file to a global location. Use ``--dest`` to change the location."
-msgstr "これにより、bash 補完ファイルがグローバルロケーションに書き込まれます。ロケーションを変更するには ``--dest`` を使用します。"
+#: ../../rst/installation_guide/intro_installation.rst:255
+msgid "This will write a bash completion file to a user location. Use ``--dest`` to change the location or ``sudo`` to set up the completion globally."
+msgstr "これにより、bash 補完ファイルがユーザーのロケーションに書き込まれます。ロケーションを変更するには ``--dest`` を使用し、補完の設定は ``sudo`` を使用します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:580
-msgid "Per command"
-msgstr "コマンド単位"
+#: ../../rst/installation_guide/intro_installation.rst:258
+msgid "Per command configuration"
+msgstr "コマンドごとの設定"
 
-#: ../../rst/installation_guide/intro_installation.rst:582
+#: ../../rst/installation_guide/intro_installation.rst:260
 msgid "If you do not have bash 4.2, you must register each script independently."
 msgstr "bash 4.2 がない場合は、各スクリプトを個別に登録する必要があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:596
+#: ../../rst/installation_guide/intro_installation.rst:274
 msgid "You should place the above commands into your shells profile file such as ``~/.profile`` or ``~/.bash_profile``."
 msgstr "上記のコマンドを、``~/.profile``、``~/.bash_profile`` などのシェルプロファイルファイルに置く必要があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:599
-msgid "``argcomplete`` with zsh or tcsh"
-msgstr "zsh または tcsh での ``argcomplete``"
+#: ../../rst/installation_guide/intro_installation.rst:277
+msgid "Using ``argcomplete`` with zsh or tcsh"
+msgstr "zsh または tcsh で ``argcomplete`` を使用"
 
-#: ../../rst/installation_guide/intro_installation.rst:601
-msgid "See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_."
-msgstr "`argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_ を参照してください。"
+#: ../../rst/installation_guide/intro_installation.rst:279
+msgid "See the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_."
+msgstr "`argcomplete ドキュメント <https://kislyuk.github.io/argcomplete/>`_ を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:606
-msgid "``ansible-base`` on GitHub"
-msgstr "GitHub の ``ansible-base``"
-
-#: ../../rst/installation_guide/intro_installation.rst:608
-msgid "You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if you have a GitHub account. This is also where we keep the issue tracker for sharing bugs and feature ideas."
-msgstr "GitHub アカウントがある場合は、`GitHub project <https://github.com/ansible/ansible>`_ をフォローすることが推奨されます。これは、バグや機能に関するアイディアを共有するための問題追跡システムを維持する場所でもあります。"
-
-#: ../../rst/installation_guide/intro_installation.rst:615
+#: ../../rst/installation_guide/intro_installation.rst:284
 msgid ":ref:`intro_adhoc`"
 msgstr ":ref:`intro_adhoc`"
 
-#: ../../rst/installation_guide/intro_installation.rst:616
+#: ../../rst/installation_guide/intro_installation.rst:285
 msgid "Examples of basic commands"
 msgstr "基本コマンドの例"
 
-#: ../../rst/installation_guide/intro_installation.rst:617
+#: ../../rst/installation_guide/intro_installation.rst:286
 msgid ":ref:`working_with_playbooks`"
 msgstr ":ref:`working_with_playbooks`"
 
-#: ../../rst/installation_guide/intro_installation.rst:618
+#: ../../rst/installation_guide/intro_installation.rst:287
 msgid "Learning ansible's configuration management language"
 msgstr "Ansible の設定管理言語の概要"
 
-#: ../../rst/installation_guide/intro_installation.rst:619
+#: ../../rst/installation_guide/intro_installation.rst:288
 msgid ":ref:`installation_faqs`"
 msgstr ":ref:`installation_faqs`"
 
-#: ../../rst/installation_guide/intro_installation.rst:620
+#: ../../rst/installation_guide/intro_installation.rst:289
 msgid "Ansible Installation related to FAQs"
 msgstr "FAQ に関連する Ansible インストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:621
+#: ../../rst/installation_guide/intro_installation.rst:290
 msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`メーリングリスト <https://groups.google.com/group/ansible-project>`_"
 
-#: ../../rst/installation_guide/intro_installation.rst:622
+#: ../../rst/installation_guide/intro_installation.rst:291
 msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:623
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+#: ../../rst/installation_guide/intro_installation.rst:292
+msgid ":ref:`communication_irc`"
+msgstr ":ref:`communication_irc`"
 
-#: ../../rst/installation_guide/intro_installation.rst:624
-msgid "#ansible IRC chat channel"
-msgstr "IRC チャットチャネル (#ansible)"
+#: ../../rst/installation_guide/intro_installation.rst:293
+msgid "How to join Ansible chat channels"
+msgstr "Ansible チャットチャンネルへの参加方法"
 
-#: ../../rst/installation_guide/intro_installation.rst:626
-msgid "If you have issues with the \"pycrypto\" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``."
-msgstr "MacOS への「pycrypto」パッケージのインストールに問題がある場合は、``CC=clang sudo -E pip install pycrypto`` の試行が必要になる場合があります。"
+#~ msgid "This page describes how to install Ansible on different platforms. Ansible is an agentless automation tool that by default manages machines over the SSH protocol. Once installed, Ansible does not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version."
+#~ msgstr "ここでは、さまざまなプラットフォームに Ansible をインストールする方法を説明します。Ansible は、デフォルトで SSH プロトコルを介してマシンを管理するエージェントレス自動化ツールです。インストールしても、Ansible はデータベースを追加せず、起動または稼働し続けるデーモンもありません。Ansible を 1 台のマシン (ラップトップでも可) にインストールするだけで、そのマシンからリモートマシン全体を一元管理できます。Ansible がリモートマシンを管理する場合は、ソフトウェアをマシンにインストールしたまま、あるいは実行したままにすることがないため、新しいバージョンに移行する際に Ansible のアップグレードが問題になることはありません。"
 
-#: ../../rst/installation_guide/intro_installation.rst:627
-msgid "``paramiko`` was included in Ansible's ``requirements.txt`` prior to 2.8."
-msgstr "``paramiko`` は、2.8 以前の Ansible の ``requirements.txt`` に同梱されています。"
+#~ msgid "Prerequisites"
+#~ msgstr "要件"
+
+#~ msgid "You install Ansible on a control node, which then uses SSH (by default) to communicate with your managed nodes (those end devices you want to automate)."
+#~ msgstr "Ansible をコントロールノードにインストールし、SSH (デフォルト) を使用して管理ノード (自動化するエンドデバイス) と通信します。"
+
+#~ msgid "Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer. This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on. Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_."
+#~ msgstr "現在、Ansible は、Python 2 (バージョン 2.7) または Python 3 (バージョン 3.5 以降) がインストールされていればどのマシンからでも実行できます。Ansible 2.11 は、Python 3.8 をコントロールノードのソフト依存関係にしますが、前述の要件で機能します。Ansible 2.12 のコントロールノードで機能するには、Python 3.8 以降が必要です。Ansible 2.11 以降では、このプロジェクトは Python 3.8 以降に対してのみパッケージ化されます。これには、Red Hat、Debian、CentOS、MacOS をはじめ、各種 BSD などが含まれます。コントロールノードでは、Windows のサポートはありません。詳細は、`Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ を参照してください。"
+
+#~ msgid "When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet."
+#~ msgstr "コントロールノードを選択するときは、管理対象のマシンの近くで実行することに利点があることを念頭に置いてください。Ansible をクラウドで実行している場合は、そのクラウド内のマシンから実行することを検討してください。ほとんどの場合は、オープンなインターネット上で実行するよりも、同じクラウド内から実行するほうが適切です。"
+
+#~ msgid "macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any \"Too many open files\" error."
+#~ msgstr "MacOS はデフォルトで、少数のファイルハンドル向けに設定されているため、15 個以上のフォークを使用する場合は、``sudo launchctl limit maxfiles unlimited`` を使用して ulimit を増やす必要があります。このコマンドは、「Too many open files」エラーを修正することもできます。"
+
+#~ msgid "Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer."
+#~ msgstr "Ansible 2.11 は、Python 3.8 をコントロールノードのソフト依存関係にしますが、前述の要件で機能します。Ansible 2.12 では、コントロールノードで機能するために Python3.8 以降が必要です。Ansible 2.11 以降、プロジェクトは Python 3.8 以降でのみパッケージ化されます。"
+
+#~ msgid "Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine (the managed node) and should be listed in the module specific docs."
+#~ msgstr "モジュールやプラグインには追加の要件があることに注意してください。モジュールについては、「ターゲット」マシン (管理対象ノード) でこの追加要件を満たす必要があります。これについては各モジュールのドキュメントに記載されています。"
+
+#~ msgid "On the managed nodes, you need a way to communicate, which is normally SSH. By default this uses SFTP. If that's not available, you can switch to SCP in :ref:`ansible.cfg <ansible_configuration_settings>`.  You also need Python 2 (version 2.6 or later) or Python 3 (version 3.5 or later)."
+#~ msgstr "管理ノードでは通信手段が必要です。通常は SSH が使用されます。デフォルトでは SFTP が使用されます。SFTP を使用できない場合は、:ref:`ansible.cfg <ansible_configuration_settings>` で SCP に切り替えることができます。Python 2 (バージョン 2.6 以降) または Python 3 (バージョン 3.5 以降) も 必要になります。"
+
+#~ msgid "If you have SELinux enabled on remote nodes, you will also want to install libselinux-python on them before using any copy/file/template related functions in Ansible. You can use the :ref:`yum module<yum_module>` or :ref:`dnf module<dnf_module>` in Ansible to install this package on remote systems that do not have it."
+#~ msgstr "リモートノードで SELinux を有効にしている場合は、Ansible でコピー/ファイル/テンプレート関連の機能を使用する前に、libselinux-python をインストールすることもできます。リモートシステムにこのパッケージがインストールされていない場合は、Ansible で :ref:`yum モジュール<yum_module>` または :ref:`dnf モジュール<dnf_module>` を使用してインストールできます。"
+
+#~ msgid "By default, before the first Python module in a playbook runs on a host, Ansible attempts to discover a suitable Python interpreter on that host. You can override the discovery behavior by setting the :ref:`ansible_python_interpreter<ansible_python_interpreter>` inventory variable to a specific interpreter, and in other ways. See :ref:`interpreter_discovery` for details."
+#~ msgstr "デフォルトでは、Playbook の最初の Python モジュールがホストで実行される前に、Ansible はそのホストで適切な Python インタープリターを検出しようとします。検出動作は、:ref:`ansible_python_interpreter<ansible_python_interpreter>` インベントリー変数を特定のインタープリターに設定でき、その他の方法で無効にできます。詳細は、「:ref:`interpreter_discovery`」を参照してください。"
+
+#~ msgid "Ansible's :ref:`raw module<raw_module>`, and the :ref:`script module<script_module>`, do not depend on a client side install of Python to run.  Technically, you can use Ansible to install a compatible version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else. For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it as follows:"
+#~ msgstr "Ansible の :ref:`raw モジュール<raw_module>` および :ref:`script モジュール<script_module>` は、実行する Python のクライアント側インストールに依存しません。技術的には、Ansible を使用して :ref:`raw モジュール<raw_module>` を使用して互換性のあるバージョンの Python をインストールできます。これ以外のものをすべて使用できます。たとえば、Python 2 を RHEL ベースのシステムにブートストラップする必要がある場合は、以下のようにインストールできます。"
+
+#~ msgid "Which Ansible version to install is based on your particular needs. You can choose any of the following ways to install Ansible:"
+#~ msgstr "インストールする Ansible バージョンは、特定のニーズに基づいて決定します。Ansible をインストールするには、以下のいずれかの方法を選択できます。"
+
+#~ msgid "Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu)."
+#~ msgstr "OS パッケージマネージャー (Red Hat Enterprise Linux (TM)、CentOS、Fedora、Debian、または Ubuntu の場合) を使用して最新リリースをインストールします。"
+
+#~ msgid "Install with ``pip`` (the Python package manager)."
+#~ msgstr "``pip`` (Python パッケージマネージャー) でインストールします。"
+
+#~ msgid "Install ``ansible-base`` from source to access the development (``devel``) version to develop or test the latest features."
+#~ msgstr "ソースから ``ansible-base`` インストールして開発 (``devel``) バージョンにアクセスし、最新の機能を開発またはテストします。"
+
+#~ msgid "You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point."
+#~ msgstr "``devel`` から ``ansible-base`` を実行するのは、``ansible-base`` を変更する場合や、開発時に機能を試す場合にしてください。これはコードのソースが素早く変更し、いつでも不安定になる可能性があります。"
+
+#~ msgid "Ansible creates new releases two to three times a year. Due to this short release cycle, minor bugs will generally be fixed in the next release rather than maintaining backports on the stable branch. Major bugs will still have maintenance releases when needed, though these are infrequent."
+#~ msgstr "Ansible のリリースは、年に 2 ~ 3 回作成されます。リリースサイクルがこのように短いため、マイナーなバグは通常、安定したブランチでバックポートを維持するのではなく、次のリリースで修正されます。メジャーバグについては、必要なときにメンテナンスリリースが行われますが、このようなことはあまり頻繁には起こりません。"
+
+#~ msgid "Installing Ansible on RHEL, CentOS, or Fedora"
+#~ msgstr "RHEL、CentOS、または Fedora への Ansible のインストール"
+
+#~ msgid "On RHEL:"
+#~ msgstr "RHEL の場合:"
+
+#~ msgid "RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_."
+#~ msgstr "RHEL 7 および RHEL 8 の RPM は、`Ansible Engine リポジトリー <https://access.redhat.com/articles/3174981>`_ から入手できます。"
+
+#~ msgid "To enable the Ansible Engine repository for RHEL 8, run the following command:"
+#~ msgstr "RHEL 8 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
+
+#~ msgid "To enable the Ansible Engine repository for RHEL 7, run the following command:"
+#~ msgstr "RHEL 7 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
+
+#~ msgid "Since Ansible 2.10 for RHEL is not available at this time,  continue to use Ansible 2.9."
+#~ msgstr "現在、RHEL では Ansible 2.10 が利用できないため、引き続き Ansible 2.9 を使用してください。"
+
+#~ msgid "Ansible can manage older operating systems that contain Python 2.6 or higher."
+#~ msgstr "Ansible は、Python 2.6 以降が含まれる古いオペレーティングシステムを管理できます。"
+
+#~ msgid "Debian/Ubuntu packages can also be built from the source checkout, run:"
+#~ msgstr "Debian/Ubuntu パッケージは、ソースチェックアウトから構築することもできます。以下を実行します。"
+
+#~ msgid "You may also wish to run from source to get the development branch, which is covered below."
+#~ msgstr "ソースから実行して開発ブランチを取得することも可能です。この点については以下で説明します。"
+
+#~ msgid "This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions."
+#~ msgstr "このメソッドは、Debian Jessie および Stretch の Trusty ソースで検証されていますが、以前のバージョンではサポートされない場合があります。以前のバージョンでは、``apt`` の代わりに ``apt-get`` を使用できます。"
+
+#~ msgid "Installing Ansible on Gentoo with portage"
+#~ msgstr "portage を使用した Gentoo への Ansible のインストール"
+
+#~ msgid "To install the newest version, you may need to unmask the Ansible package prior to emerging:"
+#~ msgstr "最新バージョンをインストールするには、インストールする前に Ansible パッケージのマスク解除が必要になる場合があります。"
+
+#~ msgid "Installing Ansible on FreeBSD"
+#~ msgstr "FreeBSD への Ansible のインストール"
+
+#~ msgid "Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version. So to install you can use:"
+#~ msgstr "Ansible は Python 2 および 3 の両バージョンで動作しますが、FreeBSD パッケージは各 Python バージョンで異なります。したがって、インストールには、以下を使用できます。"
+
+#~ msgid "or:"
+#~ msgstr "または"
+
+#~ msgid "You may also wish to install from ports, run:"
+#~ msgstr "ポートからインストールすることもできます。以下を実行します。"
+
+#~ msgid "You can also choose a specific version, for example ``ansible25``."
+#~ msgstr "特定のバージョン (例: ``ansible25``) を選択することもできます。"
+
+#~ msgid "Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):"
+#~ msgstr "以前のバージョンの FreeBSD は、以下のようなもので動作します (パッケージマネージャーの代わりです)。"
+
+#~ msgid "Installing Ansible on macOS"
+#~ msgstr "MacOS への Ansible のインストール"
+
+#~ msgid "The preferred way to install Ansible on a Mac is with ``pip``."
+#~ msgstr "Mac に Ansible をインストールするには ``pip`` を使用することが推奨されます。"
+
+#~ msgid "The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that."
+#~ msgstr "手順は「:ref:`from_pip`」を参照してください。MacOS バージョン 10.12 以前を実行している場合に、Python Package Index に安全に接続するには最新の ``pip`` にアップグレードする必要があります。pip は、MacOS でモジュールとして実行する必要があり、リンクされている ``pip`` の手順にその実行方法が示されることに注意してください。"
+
+#~ msgid "If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it."
+#~ msgstr "Ansible 2.9 以前のバージョンをインストールしている場合は、先に ``pip uninstall ansible`` を使用して古いバージョンの Ansible を削除してから再インストールする必要があります。"
+
+#~ msgid "If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::"
+#~ msgstr "MacOS Mavericks (10.9) にインストールする場合は、コンパイラーから何らかの問題が発生する可能性があります。回避策として、以下を行います。"
+
+#~ msgid "Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_."
+#~ msgstr "Solaris では、`SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_ として Ansible を利用できます。"
+
+#~ msgid "Installing Ansible on Arch Linux"
+#~ msgstr "Arch Linux への Ansible のインストール"
+
+#~ msgid "Ansible is available in the Community repository::"
+#~ msgstr "Ansible は、コミュニティーリポジトリーから入手できます::"
+
+#~ msgid "The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_."
+#~ msgstr "AUR には、(`ansible-git <https://aur.archlinux.org/packages/ansible-git>`_ と呼ばれている) GitHub から直接プルするための PKGBUILD があります。"
+
+#~ msgid "Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki."
+#~ msgstr "ArchWiki の「`Ansible <https://wiki.archlinux.org/index.php/Ansible>`_」ページを参照してください。"
+
+#~ msgid "Installing Ansible on Slackware Linux"
+#~ msgstr "Slackware Linux への Ansible のインストール"
+
+#~ msgid "Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository. Can be built and installed using `sbopkg <https://sbopkg.org/>`_."
+#~ msgstr "Ansible ビルドスクリプトは `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ リポジトリーから利用できます。`sbopkg <https://sbopkg.org/>`_ を使用してビルドおよびインストールできます。"
+
+#~ msgid "Create queue with Ansible and all dependencies::"
+#~ msgstr "Ansible およびすべての依存関係を含むキューを作成します::"
+
+#~ msgid "Build and install packages from a created queuefile (answer Q for question if sbopkg should use queue or package)::"
+#~ msgstr "作成した queuefile からパッケージを構築してインストールします (sbopkg がキューまたはパッケージを使用する必要がある場合の問題への回答 Q)::"
+
+#~ msgid "Installing Ansible on Clear Linux"
+#~ msgstr "Clear Linux への Ansible のインストール"
+
+#~ msgid "Ansible and its dependencies are available as part of the sysadmin host management bundle::"
+#~ msgstr "Ansible およびその依存関係は、sysadmin ホスト管理バンドルの一部として利用できます::"
+
+#~ msgid "Update of the software will be managed by the swupd tool::"
+#~ msgstr "ソフトウェアの更新は、swupd ツールにより管理されます::"
+
+#~ msgid "Installing Ansible with ``pip``"
+#~ msgstr "``pip`` を使用した Ansible のインストール"
+
+#~ msgid "Ansible can be installed with ``pip``, the Python package manager. If ``pip`` isn't already available on your system of Python, run the following commands to install it::"
+#~ msgstr "Python パッケージマネージャーである ``pip`` で Ansible をインストールできます。``pip`` が Python のシステムで利用できない場合は、以下のコマンドを実行してインストールします。"
+
+#~ msgid "Then install Ansible [1]_::"
+#~ msgstr "次に Ansible [1]_ をインストールします::"
+
+#~ msgid "In order to use the ``paramiko`` connection plugin or modules that require ``paramiko``, install the required module [2]_::"
+#~ msgstr "``paramiko`` を必要とする ``paramiko`` 接続プラグインまたはモジュールを使用するには、必要なモジュール [2]_ をインストールします。"
+
+#~ msgid "If you wish to install Ansible globally, run the following commands::"
+#~ msgstr "Ansible をグローバルにインストールする場合は、以下のコマンドを実行します::"
+
+#~ msgid "Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to your system that leaves it in an inconsistent or non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system."
+#~ msgstr "``sudo`` で ``pip`` を実行すると、システムにグローバルの変更が行われます。``pip`` はシステムパッケージマネージャーと連携しないため、システムに変更が加えられ、システムが一貫性のない状態または機能しない状態になる可能性があります。これは特に MacOS に当てはまります。システム上のグローバルファイルを変更した場合の影響を完全に理解していない限り、``--user`` でインストールすることが推奨されます。"
+
+#~ msgid "Older versions of ``pip`` default to http://pypi.python.org/simple, which no longer works. Please make sure you have the latest version of ``pip`` before installing Ansible. If you have an older version of ``pip`` installed, you can upgrade by following `pip's upgrade instructions <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ ."
+#~ msgstr "古いバージョンの ``pip`` は、http://pypi.python.org/simple がデフォルトとなります。これは有効ではなくなりました。Ansible をインストールする前に、``pip`` の最新バージョンをお持ちであることを確認してください。古いバージョンの ``pip`` がインストールされている場合は、`pip のアップグレード手順 <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ でアップグレードできます。"
+
+#~ msgid "Upgrading Ansible from version 2.9 and older to version 2.10 or later"
+#~ msgstr "Ansible のバージョン 2.9 以前から 2.10 以降へのアップグレード"
+
+#~ msgid "Starting in version 2.10, Ansible is made of two packages. You need to first uninstall the old Ansible version (2.9 or earlier) before upgrading. If you do not uninstall the older version of Ansible, you will see the following message, and no change will be performed:"
+#~ msgstr "バージョン 2.10 以降では、Ansible は 2 つのパッケージで構成されています。最初にアップグレードの前に、古い Ansible バージョン (2.9 以前) をアンインストールする必要があります。古いバージョンの Ansible をアンインストールしない場合は、以下のメッセージが表示され、変更が実行されません。"
+
+#~ msgid "As explained by the message, to upgrade you must first remove the version of Ansible installed and then install it to the latest version."
+#~ msgstr "メッセージで説明されているように、アップグレードするには、最初にインストールした Ansible のバージョンを削除してから、最新バージョンにインストールする必要があります。"
+
+#~ msgid "Installing the development version of ``ansible-base``"
+#~ msgstr "開発バージョンの ``ansible-base`` のインストール"
+
+#~ msgid "In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``."
+#~ msgstr "Ansible 2.10 以降では、`ansible/ansible リポジトリー <https://github.com/ansible/ansible>`_ には、モジュールコードを管理対象ノードにコピーするなど、基本的な機能や関数のコードが含まれています。このコードは ``ansible-base`` としても知られています。"
+
+#~ msgid "See :ref:`from_source` for instructions on how to run ``ansible-base`` directly from source, without the requirement of installation."
+#~ msgstr "インストールの必要がなく、ソースから ``ansible-base`` を直接実行する方法については、「:ref:`from_source`」を参照してください。"
+
+#~ msgid "Ansible can also be installed inside a new or existing ``virtualenv``::"
+#~ msgstr "Ansible は、新規または既存の ``virtualenv`` 内にもインストールできます::"
+
+#~ msgid "Running ``ansible-base`` from source (devel)"
+#~ msgstr "ソース (devel) から ``ansible-base`` の実行"
+
+#~ msgid "If you want to use Ansible Tower as the control node, do not use a source installation of Ansible. Please use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version."
+#~ msgstr "Ansible Tower をコントロールノードとして使用する場合は、Ansible のソースインストールは使用せず、OS パッケージマネージャー (``apt`` や ``yum`` など) を使用するか、``pip`` を使用して安定したバージョンをインストールしてください。"
+
+#~ msgid "Once ``git`` has cloned the ``ansible-base`` repository, setup the Ansible environment:"
+#~ msgstr "``git`` が ``ansible-base`` リポジトリーのクローンを作成したら、Ansible 環境を設定します。"
+
+#~ msgid "If you don't have ``pip`` installed in your version of Python, install it::"
+#~ msgstr "お使いのバージョンの Python に ``pip`` がインストールされていない場合は、インストールします::"
+
+#~ msgid "Ansible also uses the following Python modules that need to be installed [1]_:"
+#~ msgstr "Ansible は、以下の Python モジュールも使用し、このモジュールもインストールする必要があります [1]_。"
+
+#~ msgid "Once running the env-setup script you'll be running from checkout and the default inventory file will be ``/etc/ansible/hosts``. You can optionally specify an inventory file (see :ref:`inventory`) other than ``/etc/ansible/hosts``:"
+#~ msgstr "env-setup スクリプトを実行すると、チェックアウトから実行が行われ、デフォルトのインベントリーファイルが ``/etc/ansible/hosts`` になります。必要に応じて、``/etc/ansible/hosts`` 以外のインベントリーファイル (「:ref:`inventory`」を参照) を指定できます。"
+
+#~ msgid "You can read more about the inventory file at :ref:`inventory`."
+#~ msgstr "インベントリーファイルの詳細は、:ref:`inventory`を参照してください。"
+
+#~ msgid "Now let's test things with a ping command:"
+#~ msgstr "では、ping コマンドを使ってテストしていきましょう。"
+
+#~ msgid "You can also use \"sudo make install\"."
+#~ msgstr "「sudo make install」も使用できます。"
+
+#~ msgid "Finding tarballs of tagged releases"
+#~ msgstr "タグ付けされたリリースの tarball の場所"
+
+#~ msgid "Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available from ``pypi`` as https://pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz. You can make VERSION a variable in your package managing system that you update in one place whenever you package a new version. Alternately, you can download https://pypi.python.org/project/ansible  to get the latest stable release."
+#~ msgstr "git チェックアウトせずに、Ansible をパッケージ化したり、ローカルパッケージをご自身で構築する場合があります。リリースの tarball は、``pypi`` で https://pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz から入手できます。VERSION は、新しいバージョンをパッケージ化するたびに 1 カ所で更新するパッケージ管理システムの変数にすることができます。また、最新の安定版リリースを入手するには、https://pypi.python.org/project/ansible をダウンロードします。"
+
+#~ msgid "If you are creating your own Ansible package, you must also download or package ``ansible-base`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz."
+#~ msgstr "独自の Ansible パッケージを作成する場合は、Ansible パッケージの一部として ``ansible-base`` をダウンロードまたはパッケージ化する必要があります。これは、https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz としてダウンロードすることができます。"
+
+#~ msgid "These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version."
+#~ msgstr "これらのリリースは、`git リポジトリー <https://github.com/ansible/ansible/releases>`_ でもリリースバージョンでタグ付けされます。"
+
+#~ msgid "As of Ansible 2.9, shell completion of the Ansible command line utilities is available and provided through an optional dependency called ``argcomplete``. ``argcomplete`` supports bash, and has limited support for zsh and tcsh."
+#~ msgstr "Ansible 2.9 の時点では、Ansible コマンドラインユーティリティーのシェル補完を利用できます。これは、``argcomplete`` というオプションの依存関係を使用して提供されます。``argcomplete`` は bash をサポートし、また制限付きで zsh および tcsh もサポートします。"
+
+#~ msgid "You can install ``python-argcomplete`` from EPEL on Red Hat Enterprise based distributions, and or from the standard OS repositories for many other distributions."
+#~ msgstr "``python-argcomplete`` は、Red Hat Enterprise ベースのディストリビューションでは EPEL からインストールでき、その他の多くのディストリビューションでは標準 OS リポジトリーで入手できます。"
+
+#~ msgid "Installing ``argcomplete`` on RHEL, CentOS, or Fedora"
+#~ msgstr "RHEL、CentOS、または Fedora への ``argcomplete`` のインストール"
+
+#~ msgid "On RHEL and CentOS:"
+#~ msgstr "RHEL および CentOS の場合:"
+
+#~ msgid "Installing ``argcomplete`` with ``apt``"
+#~ msgstr "``apt`` を使用した ``argcomplete`` のインストール"
+
+#~ msgid "Globally"
+#~ msgstr "グローバル"
+
+#~ msgid "Per command"
+#~ msgstr "コマンド単位"
+
+#~ msgid "``ansible-base`` on GitHub"
+#~ msgstr "GitHub の ``ansible-base``"
+
+#~ msgid "You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if you have a GitHub account. This is also where we keep the issue tracker for sharing bugs and feature ideas."
+#~ msgstr "GitHub アカウントがある場合は、`GitHub project <https://github.com/ansible/ansible>`_ をフォローすることが推奨されます。これは、バグや機能に関するアイディアを共有するための問題追跡システムを維持する場所でもあります。"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+
+#~ msgid "If you have issues with the \"pycrypto\" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``."
+#~ msgstr "MacOS への「pycrypto」パッケージのインストールに問題がある場合は、``CC=clang sudo -E pip install pycrypto`` の試行が必要になる場合があります。"
+
+#~ msgid "``paramiko`` was included in Ansible's ``requirements.txt`` prior to 2.8."
+#~ msgstr "``paramiko`` は、2.8 以前の Ansible の ``requirements.txt`` に同梱されています。"
+
 
