@@ -3,7 +3,7 @@
 Running integration tests
 ============================
 
-In the following examples, we will use ``Docker`` to run integration tests locally. Ensure you have :ref:`collection_prepare_environment` first.
+In the following examples, we will use ``Docker`` to run integration tests locally. Ensure you :ref:`collection_prepare_environment` first.
 
 We assume that you are in the ``~/ansible_collections/NAMESPACE/COLLECTION`` directory.
 
@@ -25,7 +25,7 @@ In the examples above, the ``fedora34`` test image will be automatically downloa
 
 See the :ref:`list of supported container images <test_container_images>`.
 
-In some cases, for example, for platform independent tests, the ``default`` test image is required. Use the ``--docker default`` or just ``--docker`` option without specifying a distribution in this case.
+In some cases, for example, for platform-independent tests, the ``default`` test image is required. Use the ``--docker default`` or just ``--docker`` option without specifying a distribution in this case.
 
 .. note::
 
