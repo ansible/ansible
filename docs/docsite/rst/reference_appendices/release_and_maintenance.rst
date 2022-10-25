@@ -202,6 +202,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - | Python 2.7
        | Python 3.5 - 3.11
      - PowerShell 3 - 5.1
+..    Remove the preceeding ``.. `` (dot-dot-space) to uncomment these lines, this comment should move when doing so
 ..    * - 2.16
 ..      - 06 Nov 2023
 ..      - 20 May 2024
