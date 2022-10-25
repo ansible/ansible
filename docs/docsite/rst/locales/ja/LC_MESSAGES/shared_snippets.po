@@ -1,0 +1,31 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/shared_snippets/installing_collections_file.rst:1
+msgid "Ansible can also install from a source directory in several ways:"
+msgstr "Ansible は、複数の方法でソースディレクトリーからインストールすることもできます。"
+
+#: ../../rst/shared_snippets/installing_collections_file.rst:14
+msgid "Ansible can also install a collection collected with ``ansible-galaxy collection build`` or downloaded from Galaxy for offline use by specifying the output file directly:"
+msgstr "出力ファイルを直接指定して、Ansible は``ansible-galaxy collection build`` で収集したコレクションまたは Galaxy からダウンロードしたコレクションをオフライン用にインストールすることもできます。"
+
+#: ../../rst/shared_snippets/installing_collections_file.rst:24
+msgid "Relative paths are calculated from the current working directory (where you are invoking ``ansible-galaxy install -r`` from). They are not taken relative to the ``requirements.yml`` file."
+msgstr "相対パスは、現在の作業ディレクトリー（``ansible-galaxy install -r`` を呼び出しているディレクトリー）から計算されます。これは、``requirements.yml`` ファイルからの相対パスではありません。"
+
+

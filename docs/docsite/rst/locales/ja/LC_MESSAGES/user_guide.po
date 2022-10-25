@@ -1,0 +1,493 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/user_guide/basic_concepts.rst:5
+msgid "Ansible concepts"
+msgstr "Ansible の概念"
+
+#: ../../rst/user_guide/basic_concepts.rst:7
+msgid "This page has moved to :ref:`Getting started with Ansible<basic_concepts>`."
+msgstr "このページは :ref:`Getting started with Ansible<basic_concepts>` に移動しました。"
+
+#: ../../rst/user_guide/become.rst:5
+msgid "Understanding privilege escalation: become"
+msgstr "権限昇格の理解: become"
+
+#: ../../rst/user_guide/become.rst:7
+msgid "This page has moved to :ref:`playbooks_privilege_escalation`."
+msgstr "このページは :ref:`playbooks_privilege_escalation` に移動しました。"
+
+#: ../../rst/user_guide/cheatsheet.rst:5
+msgid "Ansible CLI cheatsheet"
+msgstr "Ansible CLI のチートシート"
+
+#: ../../rst/user_guide/cheatsheet.rst:7
+msgid "This page has moved to :ref:`cheatsheet`."
+msgstr "このページは :ref:`cheatsheet` に移動しました。"
+
+#: ../../rst/user_guide/collections_using.rst:6
+msgid "Using collections"
+msgstr "コレクションの使用"
+
+#: ../../rst/user_guide/collections_using.rst:8
+msgid "This page has moved to :ref:`collections_index`."
+msgstr "このページは :ref:`collections_index` に移動しました。"
+
+#: ../../rst/user_guide/command_line_tools.rst:4
+msgid "Working with command line tools"
+msgstr "コマンドラインツールの使用"
+
+#: ../../rst/user_guide/command_line_tools.rst:6
+msgid "This page has moved to :ref:`command_line_tools`."
+msgstr "このページは :ref:`command_line_tools` に移動しました。"
+
+#: ../../rst/user_guide/complex_data_manipulation.rst:4
+msgid "Data manipulation"
+msgstr "データ操作"
+
+#: ../../rst/user_guide/complex_data_manipulation.rst:6
+msgid "This page has moved to :ref:`complex_data_manipulation`."
+msgstr "このページは :ref:`complex_data_manipulation` に移動しました。"
+
+#: ../../rst/user_guide/connection_details.rst:5
+msgid "Connection methods and details"
+msgstr "接続方法および詳細"
+
+#: ../../rst/user_guide/connection_details.rst:7
+msgid "This page has moved to :ref:`connections`."
+msgstr "このページは :ref:`connections` に移動しました。"
+
+#: ../../rst/user_guide/index.rst:7
+msgid "User Guide"
+msgstr "ユーザーガイド"
+
+#: ../../rst/user_guide/index.rst:11
+msgid "**Making Open Source More Inclusive**"
+msgstr "**多様性を受け入れるオープンソースの強化**"
+
+#: ../../rst/user_guide/index.rst:13
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_ を参照してください。"
+
+#: ../../rst/user_guide/index.rst:15
+msgid "Welcome to the Ansible User Guide! This guide is now deprecated to improve navigation and organization. You can find all the user guide content in the following sections:"
+msgstr "Ansible ユーザーガイドへようこそ! このガイドは、ナビゲーションと組織を改善するために非推奨になりました。すべてのユーザーガイドの内容は、以下のセクションで確認できます。"
+
+#: ../../rst/user_guide/index.rst:19
+msgid ":ref:`inventory_guide_index`"
+msgstr ":ref:`inventory_guide_index`"
+
+#: ../../rst/user_guide/index.rst:20
+msgid ":ref:`command_guide_index`"
+msgstr ":ref:`command_guide_index`"
+
+#: ../../rst/user_guide/index.rst:21
+msgid ":ref:`playbook_guide_index`"
+msgstr ":ref:`playbook_guide_index`"
+
+#: ../../rst/user_guide/index.rst:22
+msgid ":ref:`vault_guide_index`"
+msgstr ":ref:`vault_guide_index`"
+
+#: ../../rst/user_guide/index.rst:23
+msgid ":ref:`modules_plugins_index`"
+msgstr ":ref:`modules_plugins_index`"
+
+#: ../../rst/user_guide/index.rst:24
+msgid ":ref:`collections_index`"
+msgstr ":ref:`collections_index`"
+
+#: ../../rst/user_guide/index.rst:25
+msgid ":ref:`os_guide_index`"
+msgstr ":ref:`os_guide_index`"
+
+#: ../../rst/user_guide/index.rst:26
+msgid ":ref:`tips_tricks_index`"
+msgstr ":ref:`tips_tricks_index`"
+
+#: ../../rst/user_guide/intro.rst:4
+msgid "Introduction"
+msgstr "はじめに"
+
+#: ../../rst/user_guide/intro.rst:6
+msgid "Before we start exploring the main components of Ansible -- playbooks, configuration management, deployment, and orchestration -- we'll learn how to get Ansible installed and cover some basic concepts.  We'll also go over how to execute ad hoc commands in parallel across your nodes using /usr/bin/ansible, and see what modules are available in Ansible's core (you can also write your own, which is covered later)."
+msgstr "ここでは、Ansible の主なコンポーネントである Playbook、構成管理、デプロイメント、オーケストレーションについて説明しますが、その前に、Ansible のインストール方法と基本的な概念について説明します。また、/usr/bin/ansible を使用してノード間でアドホックコマンドを並列実行する方法や、Ansible のコアにはどのようなモジュールが用意されているかを見ていきます (自分で作成することもできますが、これは後で説明します)。"
+
+#: ../../rst/user_guide/intro_adhoc.rst:5
+msgid "Introduction to ad hoc commands"
+msgstr "アドホックコマンドの概要"
+
+#: ../../rst/user_guide/intro_adhoc.rst:7
+msgid "This page has moved to :ref:`intro_adhoc`."
+msgstr "このページは :ref:`intro_adhoc` に移動しました。"
+
+#: ../../rst/user_guide/intro_bsd.rst:4
+msgid "Ansible and BSD"
+msgstr "Ansible および BSD"
+
+#: ../../rst/user_guide/intro_bsd.rst:6
+msgid "This page has moved to :ref:`working_with_bsd`."
+msgstr "このページは :ref:`working_with_bsd` に移動しました。"
+
+#: ../../rst/user_guide/intro_dynamic_inventory.rst:5
+msgid "Working with dynamic inventory"
+msgstr "動的インベントリーの使用"
+
+#: ../../rst/user_guide/intro_dynamic_inventory.rst:7
+msgid "This page has moved to :ref:`intro_dynamic_inventory`."
+msgstr "このページは :ref:`intro_dynamic_inventory` に移動しました。"
+
+#: ../../rst/user_guide/intro_inventory.rst:5
+msgid "How to build your inventory"
+msgstr "インベントリーの構築方法"
+
+#: ../../rst/user_guide/intro_inventory.rst:7
+msgid "This page has moved to :ref:`intro_inventory`."
+msgstr "このページは :ref:`intro_inventory` に移動しました。"
+
+#: ../../rst/user_guide/intro_patterns.rst:4
+msgid "Patterns: targeting hosts and groups"
+msgstr "パターン: ホストおよびグループを対象とする"
+
+#: ../../rst/user_guide/intro_patterns.rst:6
+msgid "This page has moved to :ref:`intro_patterns`."
+msgstr "このページは :ref:`intro_patterns` に移動しました。"
+
+#: ../../rst/user_guide/intro_windows.rst:2
+msgid "Windows Support"
+msgstr "Windows サポート"
+
+#: ../../rst/user_guide/intro_windows.rst:4 ../../rst/user_guide/windows.rst:6
+msgid "You can find documentation for using Ansible on Windows at :ref:`os_guide_index`."
+msgstr "Windows で Ansible を使用するドキュメントは、:ref:`os_guide_index` で参照できます。"
+
+#: ../../rst/user_guide/modules.rst:4
+msgid "Working With Modules"
+msgstr "モジュールの使用"
+
+#: ../../rst/user_guide/modules.rst:6 ../../rst/user_guide/modules_intro.rst:6
+#: ../../rst/user_guide/modules_support.rst:7
+#: ../../rst/user_guide/plugin_filtering_config.rst:6
+msgid "This page has moved to :ref:`modules_plugins_index`."
+msgstr "このページは :ref:`modules_plugins_index` に移動しました。"
+
+#: ../../rst/user_guide/modules_intro.rst:4
+msgid "Introduction to modules"
+msgstr "モジュールの概要"
+
+#: ../../rst/user_guide/modules_support.rst:5
+msgid "Module Maintenance & Support"
+msgstr "モジュールのメンテナンスおよびサポート"
+
+#: ../../rst/user_guide/playbooks.rst:4
+msgid "Working with playbooks"
+msgstr "Playbook の操作"
+
+#: ../../rst/user_guide/playbooks.rst:6
+msgid "This page has moved to :ref:`working_with_playbooks`."
+msgstr "このページは :ref:`working_with_playbooks` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_advanced_syntax.rst:5
+msgid "Advanced Syntax"
+msgstr "高度な構文"
+
+#: ../../rst/user_guide/playbooks_advanced_syntax.rst:7
+msgid "This page has moved to :ref:`playbooks_advanced_syntax`."
+msgstr "このページは :ref:`playbooks_advanced_syntax` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_async.rst:4
+msgid "Asynchronous actions and polling"
+msgstr "非同期アクションおよびポーリング"
+
+#: ../../rst/user_guide/playbooks_async.rst:6
+msgid "This page has moved to :ref:`playbooks_async`."
+msgstr "このページは :ref:`playbooks_async` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_best_practices.rst:5
+msgid "Tips and tricks"
+msgstr "ヒントと裏技"
+
+#: ../../rst/user_guide/playbooks_best_practices.rst:7
+msgid "This page has moved to :ref:`tips_and_tricks`."
+msgstr "このページは :ref:`tips_and_tricks` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_blocks.rst:5
+msgid "Blocks"
+msgstr "ブロック"
+
+#: ../../rst/user_guide/playbooks_blocks.rst:7
+msgid "This page has moved to :ref:`playbooks_blocks`."
+msgstr "このページは :ref:`playbooks_blocks` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_checkmode.rst:5
+msgid "Validating tasks: check mode and diff mode"
+msgstr "タスクの検証: チェックモードと差分モード"
+
+#: ../../rst/user_guide/playbooks_checkmode.rst:7
+msgid "This page has moved to :ref:`check_mode_dry`."
+msgstr "このページは :ref:`check_mode_dry` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_conditionals.rst:5
+msgid "Conditionals"
+msgstr "条件分岐 (Conditional)"
+
+#: ../../rst/user_guide/playbooks_conditionals.rst:7
+msgid "This page has moved to :ref:`playbooks_conditionals`."
+msgstr "このページは :ref:`playbooks_conditionals` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_debugger.rst:5
+msgid "Debugging tasks"
+msgstr "タスクのデバッグ"
+
+#: ../../rst/user_guide/playbooks_debugger.rst:7
+msgid "This page has moved to :ref:`playbook_debugger`."
+msgstr "このページは :ref:`playbook_debugger` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_delegation.rst:4
+msgid "Controlling where tasks run: delegation and local actions"
+msgstr "タスクの実行場所の制御: 委譲およびローカルアクション"
+
+#: ../../rst/user_guide/playbooks_delegation.rst:6
+msgid "This page has moved to :ref:`playbooks_delegation`."
+msgstr "このページは :ref:`playbooks_delegation` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_environment.rst:4
+msgid "Setting the remote environment"
+msgstr "リモート環境の設定"
+
+#: ../../rst/user_guide/playbooks_environment.rst:6
+msgid "This page has moved to :ref:`playbooks_environment`."
+msgstr "このページは :ref:`playbooks_environment` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_error_handling.rst:5
+msgid "Error handling in playbooks"
+msgstr "Playbook でのエラー処理"
+
+#: ../../rst/user_guide/playbooks_error_handling.rst:7
+msgid "This page has moved to :ref:`playbooks_error_handling`."
+msgstr "このページは :ref:`playbooks_error_handling` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_filters.rst:5
+msgid "Using filters to manipulate data"
+msgstr "フィルターを使用したデータの操作"
+
+#: ../../rst/user_guide/playbooks_filters.rst:7
+msgid "This page has moved to :ref:`playbooks_filters`."
+msgstr "このページは :ref:`playbooks_filters` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_filters_ipaddr.rst:6
+msgid "ipaddr filter"
+msgstr "ipaddr フィルター"
+
+#: ../../rst/user_guide/playbooks_filters_ipaddr.rst:8
+msgid "This document has moved to :ref:`plugins_in_ansible.utils`."
+msgstr "このドキュメントは :ref:`plugins_in_ansible.utils` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_handlers.rst:4
+msgid "Handlers: running operations on change"
+msgstr "ハンドラー: 変更時に実行する操作"
+
+#: ../../rst/user_guide/playbooks_handlers.rst:6
+msgid "This page has moved to :ref:`handlers`."
+msgstr "このページは :ref:`handlers` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_intro.rst:5
+msgid "Intro to playbooks"
+msgstr "Playbook の概要"
+
+#: ../../rst/user_guide/playbooks_intro.rst:7
+msgid "This page has moved to :ref:`playbooks_intro`."
+msgstr "このページは :ref:`playbooks_intro` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_lookups.rst:5
+msgid "Lookups"
+msgstr "ルックアップ (lookup)"
+
+#: ../../rst/user_guide/playbooks_lookups.rst:7
+msgid "This page has moved to :ref:`playbooks_lookups`."
+msgstr "このページは :ref:`playbooks_lookups` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_loops.rst:5
+msgid "Loops"
+msgstr "ループ"
+
+#: ../../rst/user_guide/playbooks_loops.rst:7
+msgid "This page has moved to :ref:`playbooks_loops`."
+msgstr "このページは :ref:`playbooks_loops` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_module_defaults.rst:4
+msgid "Module defaults"
+msgstr "モジュールのデフォルト"
+
+#: ../../rst/user_guide/playbooks_module_defaults.rst:6
+msgid "This page has moved to :ref:`module_defaults`."
+msgstr "このページは :ref:`module_defaults` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_prompts.rst:5
+msgid "Interactive input: prompts"
+msgstr "インタラクティブな入力: prompt"
+
+#: ../../rst/user_guide/playbooks_prompts.rst:7
+msgid "This page has moved to :ref:`playbooks_prompts`."
+msgstr "このページは :ref:`playbooks_prompts` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_reuse.rst:5
+msgid "Re-using Ansible artifacts"
+msgstr "Ansible アーティファクトの再利用"
+
+#: ../../rst/user_guide/playbooks_reuse.rst:7
+msgid "This page has moved to :ref:`playbooks_reuse`."
+msgstr "このページは :ref:`playbooks_reuse` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_reuse_includes.rst:4
+msgid "Including and importing"
+msgstr "インクルードおよびインポート"
+
+#: ../../rst/user_guide/playbooks_reuse_includes.rst:6
+msgid "The content on this page has been moved to :ref:`playbooks_reuse`."
+msgstr "このページのコンテンツは :ref:`playbooks_reuse` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_reuse_roles.rst:5
+msgid "Roles"
+msgstr "ロール"
+
+#: ../../rst/user_guide/playbooks_reuse_roles.rst:7
+msgid "This page has moved to :ref:`playbooks_reuse_roles`."
+msgstr "このページは :ref:`playbooks_reuse_roles` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_startnstep.rst:5
+msgid "Executing playbooks for troubleshooting"
+msgstr "トラブルシューティングのための Playbook の実行"
+
+#: ../../rst/user_guide/playbooks_startnstep.rst:7
+msgid "This page has moved to :ref:`playbooks_start_and_step`."
+msgstr "このページは :ref:`playbooks_start_and_step` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_strategies.rst:4
+msgid "Controlling playbook execution: strategies and more"
+msgstr "Playbook の実行の制御: strategy など"
+
+#: ../../rst/user_guide/playbooks_strategies.rst:6
+msgid "This page has moved to :ref:`playbooks_strategies`."
+msgstr "このページは :ref:`playbooks_strategies` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_tags.rst:5
+msgid "Tags"
+msgstr "タグ"
+
+#: ../../rst/user_guide/playbooks_tags.rst:7
+msgid "This page has moved to :ref:`tags`."
+msgstr "このページは :ref:`tags` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_tests.rst:5
+msgid "Tests"
+msgstr "テスト"
+
+#: ../../rst/user_guide/playbooks_tests.rst:7
+msgid "This page has moved to :ref:`playbooks_tests`."
+msgstr "このページは :ref:`playbooks_tests` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_variables.rst:5
+msgid "Using Variables"
+msgstr "変数の使用"
+
+#: ../../rst/user_guide/playbooks_variables.rst:7
+msgid "This page has moved to :ref:`playbooks_variables`."
+msgstr "このページは :ref:`playbooks_variables` に移動しました。"
+
+#: ../../rst/user_guide/playbooks_vars_facts.rst:5
+msgid "Discovering variables: facts and magic variables"
+msgstr "変数の検出: ファクトおよびマジック変数"
+
+#: ../../rst/user_guide/playbooks_vars_facts.rst:7
+msgid "This page has moved to :ref:`vars_and_facts`."
+msgstr "このページは :ref:`vars_and_facts` に移動しました。"
+
+#: ../../rst/user_guide/plugin_filtering_config.rst:4
+msgid "Rejecting modules"
+msgstr "モジュールの拒否"
+
+#: ../../rst/user_guide/sample_setup.rst:5
+msgid "Sample Ansible setup"
+msgstr "Ansible 設定の例"
+
+#: ../../rst/user_guide/sample_setup.rst:7
+msgid "This page has moved to :ref:`sample_setup`."
+msgstr "このページは :ref:`sample_setup` に移動しました。"
+
+#: ../../rst/user_guide/vault.rst:5
+msgid "Encrypting content with Ansible Vault"
+msgstr "Ansible Vault を使用したコンテンツの暗号化"
+
+#: ../../rst/user_guide/vault.rst:7
+msgid "This page has moved to :ref:`vault_guide_index`."
+msgstr "このページは :ref:`vault_guide_index` に移動しました。"
+
+#: ../../rst/user_guide/windows.rst:4
+msgid "Windows Guides"
+msgstr "Windows ガイド"
+
+#: ../../rst/user_guide/windows_dsc.rst:4
+msgid "Desired State Configuration"
+msgstr "Desired State Configuration"
+
+#: ../../rst/user_guide/windows_dsc.rst:6
+msgid "This page has moved to :ref:`windows_dsc`."
+msgstr "このページは :ref:`windows_dsc` に移動しました。"
+
+#: ../../rst/user_guide/windows_faq.rst:4
+msgid "Windows Frequently Asked Questions"
+msgstr "Windows に関するよくある質問 (FAQ)"
+
+#: ../../rst/user_guide/windows_faq.rst:6
+msgid "This page has moved to :ref:`windows_faq`."
+msgstr "このページは :ref:`windows_faq` に移動しました。"
+
+#: ../../rst/user_guide/windows_performance.rst:4
+msgid "Windows performance"
+msgstr "Windows パフォーマンス"
+
+#: ../../rst/user_guide/windows_performance.rst:6
+msgid "This page has moved to :ref:`windows_performance`."
+msgstr "このページは :ref:`windows_performance` に移動しました。"
+
+#: ../../rst/user_guide/windows_setup.rst:4
+msgid "Setting up a Windows Host"
+msgstr "Windows ホストのセットアップ"
+
+#: ../../rst/user_guide/windows_setup.rst:6
+msgid "This page has moved to :ref:`windows_setup`."
+msgstr "このページは :ref:`windows_setup` に移動しました。"
+
+#: ../../rst/user_guide/windows_usage.rst:4
+msgid "Using Ansible and Windows"
+msgstr "Ansible および Windows の使用"
+
+#: ../../rst/user_guide/windows_usage.rst:6
+msgid "This page has moved to :ref:`windows_usage`."
+msgstr "このページは :ref:`windows_usage` に移動しました。"
+
+#: ../../rst/user_guide/windows_winrm.rst:4
+msgid "Windows Remote Management"
+msgstr "Windows リモート管理"
+
+#: ../../rst/user_guide/windows_winrm.rst:6
+msgid "This page has moved to :ref:`windows_winrm`."
+msgstr "このページは :ref:`windows_winrm` に移動しました。"
+
+

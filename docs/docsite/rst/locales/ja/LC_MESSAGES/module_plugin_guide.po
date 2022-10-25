@@ -1,0 +1,289 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/module_plugin_guide/index.rst:5
+msgid "Using Ansible modules and plugins"
+msgstr "Ansible モジュールおよびプラグインの使用"
+
+#: ../../rst/module_plugin_guide/index.rst:9
+msgid "**Making Open Source More Inclusive**"
+msgstr "**多様性を受け入れるオープンソースの強化**"
+
+#: ../../rst/module_plugin_guide/index.rst:11
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_ を参照してください。"
+
+#: ../../rst/module_plugin_guide/index.rst:13
+msgid "Welcome to the Ansible guide for working with modules, plugins, and collections."
+msgstr "モジュール、プラグイン、およびコレクションの Ansible 操作ガイドへようこそ。"
+
+#: ../../rst/module_plugin_guide/index.rst:15
+msgid "Ansible modules are units of code that can control system resources or execute system commands. Ansible provides a module library that you can execute directly on remote hosts or through playbooks. You can also write custom modules."
+msgstr "Ansible モジュールは、システムリソースを制御したり、システムコマンドを実行したりできるコードの単位です。Ansible は、リモートホストまたは Playbook から直接実行できるモジュールライブラリーを提供します。カスタムモジュールを作成することもできます。"
+
+#: ../../rst/module_plugin_guide/index.rst:19
+msgid "Similar to modules are plugins, which are pieces of code that extend core Ansible functionality. Ansible uses a plugin architecture to enable a rich, flexible, and expandable feature set. Ansible ships with several plugins and lets you easily use your own plugins."
+msgstr "モジュールに似ているのは、Ansible のコア機能を拡張するコードに含まれるプラグインです。Ansible は、プラグインアーキテクチャーを使用して、豊富で柔軟で拡張可能な機能セットを有効にします。Ansible にはいくつかのプラグインが同梱されており、独自のプラグインを簡単に使用できます。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:4
+msgid "Introduction to modules"
+msgstr "モジュールの概要"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:6
+msgid "Modules (also referred to as \"task plugins\" or \"library plugins\") are discrete units of code that can be used from the command line or in a playbook task. Ansible executes each module, usually on the remote managed node, and collects return values. In Ansible 2.10 and later, most modules are hosted in collections."
+msgstr "モジュール (「タスクプラグイン」または「ライブラリープラグイン」とも呼ばれる) は、コマンドラインまたは Playbook タスクで使用可能なコードの個別単位です。Ansible は、各モジュールを実行し、通常のリモート管理ノードで実行し、戻り値を収集します。Ansible 2.10 以降では、ほとんどのモジュールはコレクションでホストされます。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:8
+msgid "You can execute modules from the command line."
+msgstr "コマンドラインからモジュールを実行できます。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:16
+msgid "Each module supports taking arguments.  Nearly all modules take ``key=value`` arguments, space delimited.  Some modules take no arguments, and the command/shell modules simply take the string of the command you want to run."
+msgstr "各モジュールは、引数を取ることをサポートしています。ほぼすべてのモジュールは、スペースで区切られた ``key=value`` の引数を取ります。一部のモジュールは引数を取らず、コマンド/シェルモジュールは単に実行したいコマンドの文字列を取ります。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:18
+msgid "From playbooks, Ansible modules are executed in a very similar way."
+msgstr "Playbook から、Ansible モジュールは同じような方法で実行されます。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:25
+msgid "Another way to pass arguments to a module is using YAML syntax, also called 'complex args'."
+msgstr "もしくは、「complex args」とも呼ばれる YAML 構文を使用して、モジュールに引数を渡します。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:34
+msgid "All modules return JSON format data. This means modules can be written in any programming language. Modules should be idempotent, and should avoid making any changes if they detect that the current state matches the desired final state. When used in an Ansible playbook, modules can trigger 'change events' in the form of notifying :ref:`handlers <handlers>` to run additional tasks."
+msgstr "すべてのモジュールは JSON 形式のデータを返します。これは、どのプログラミング言語でもモジュールを作成できます。モジュールは冪等であり、現在の状態が必要な最終状態と一致することを検知すると、変更は回避する必要があります。Ansible Playbook で使用すると、モジュールは :ref:`handlers <handlers>` に通知する形式で「変更イベント」をトリガーして追加のタスクを実行できます。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:36
+msgid "You can access the documentation for each module from the command line with the ansible-doc tool."
+msgstr "各モジュールのドキュメントは、ansible-doc ツールを使用してコマンドラインからアクセスできます。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:42
+msgid "For a list of all available modules, see the :ref:`Collection docs <list_of_collections>`, or run the following at a command prompt."
+msgstr "利用可能なモジュールの一覧は、「:ref:`Collection docs <list_of_collections>`」を参照してください。または、コマンドプロンプトで次のコマンドを実行します。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:51
+#: ../../rst/module_plugin_guide/modules_support.rst:63
+msgid ":ref:`intro_adhoc`"
+msgstr ":ref:`intro_adhoc`"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:52
+#: ../../rst/module_plugin_guide/modules_support.rst:64
+msgid "Examples of using modules in /usr/bin/ansible"
+msgstr "/usr/bin/ansible におけるモジュールの使用例"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:53
+#: ../../rst/module_plugin_guide/modules_support.rst:65
+msgid ":ref:`working_with_playbooks`"
+msgstr ":ref:`working_with_playbooks`"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:54
+#: ../../rst/module_plugin_guide/modules_support.rst:66
+msgid "Examples of using modules with /usr/bin/ansible-playbook"
+msgstr "/usr/bin/ansible-playbook でモジュールを使用する例"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:55
+msgid ":ref:`developing_modules`"
+msgstr ":ref:`developing_modules`"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:56
+msgid "How to write your own modules"
+msgstr "独自のモジュールの作成方法"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:57
+msgid ":ref:`developing_api`"
+msgstr ":ref:`developing_api`"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:58
+msgid "Examples of using modules with the Python API"
+msgstr "Python API でモジュールを使用する例"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:59
+#: ../../rst/module_plugin_guide/modules_support.rst:67
+msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:60
+#: ../../rst/module_plugin_guide/modules_support.rst:68
+msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
+msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:61
+#: ../../rst/module_plugin_guide/modules_support.rst:69
+msgid ":ref:`communication_irc`"
+msgstr ":ref:`communication_irc`"
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:62
+#: ../../rst/module_plugin_guide/modules_support.rst:70
+msgid "How to join Ansible chat channels"
+msgstr "Ansible チャットチャンネルへの参加方法"
+
+#: ../../rst/module_plugin_guide/modules_plugins_index.rst:4
+msgid "Modules and plugins index"
+msgstr "モジュールおよびプラグインのインデックス"
+
+#: ../../rst/module_plugin_guide/modules_plugins_index.rst:6
+msgid "You can find an index of modules and plugins at :ref:`all_modules_and_plugins`."
+msgstr "モジュールおよびプラグインのインデックスは :ref:`all_modules_and_plugins` にあります。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:5
+msgid "Module maintenance and support"
+msgstr "モジュールメンテナンスとサポート"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:7
+msgid "If you are using a module and you discover a bug, you may want to know where to report that bug, who is responsible for fixing it, and how you can track changes to the module. If you are a Red Hat subscriber, you may want to know whether you can get support for the issue you are facing."
+msgstr "モジュールを使用し、バグを発見した場合は、そのバグの報告場所、修正を行う担当者、およびモジュールへの変更を追跡する方法を把握することが推奨されます。Red Hat のサブスクリプションをお持ちの場合は、アクセスする問題のサポートを取得できるかどうかを認識できます。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:9
+msgid "Starting in Ansible 2.10, most modules live in collections. The distribution method for each collection reflects the maintenance and support for the modules in that collection."
+msgstr "Ansible 2.10 以降、ほとんどのモジュールはコレクションに存在します。各コレクションのディストリビューション方法は、そのコレクションのモジュールに対するメンテナンスとサポートを反映しています。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:15
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:21
+msgid "Collection"
+msgstr "コレクション"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:21
+msgid "Code location"
+msgstr "コードの場所"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:21
+msgid "Maintained by"
+msgstr "メンテナンス担当"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:23
+msgid "ansible.builtin"
+msgstr "ansible.builtin"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:23
+msgid "`ansible/ansible repo`_ on GitHub"
+msgstr "GitHub の `ansible/ansible repo`_"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:23
+msgid "core team"
+msgstr "core チーム"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:25
+msgid "distributed on Galaxy"
+msgstr "Galaxy への配布"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:25
+#: ../../rst/module_plugin_guide/modules_support.rst:27
+msgid "various; follow ``repo`` link"
+msgstr "さまざま。``repo`` リンクに従ってください。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:25
+msgid "community or partners"
+msgstr "コミュニティーまたはパートナー"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:27
+msgid "distributed on Automation Hub"
+msgstr "Automation Hub への配布"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:27
+msgid "content team or partners"
+msgstr "コンテンツチームまたはパートナー"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:33
+msgid "Issue Reporting"
+msgstr "問題の報告"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:35
+msgid "If you find a bug that affects a plugin in the main Ansible repo, also known as ``ansible-core``:"
+msgstr "Ansible メインリポジトリー (``ansible-core`` とも知られている) のプラグインに影響するバグを見つけた場合は、以下を行います。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:37
+msgid "Confirm that you are running the latest stable version of Ansible or the devel branch."
+msgstr "Ansible の最新の安定版または devel ブランチを実行していることを確認します。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:38
+msgid "Look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed."
+msgstr "`Ansible リポジトリーの問題トラッカー <https://github.com/ansible/ansible/issues>`_ を確認して、問題がすでに報告されているかどうかを確認します。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:39
+#: ../../rst/module_plugin_guide/modules_support.rst:46
+msgid "Create an issue if one does not already exist. Include as much detail as you can about the behavior you discovered."
+msgstr "問題が存在しない場合は、問題を作成してください。発見した動作について、できる限り詳細に記述してください。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:41
+msgid "If you find a bug that affects a plugin in a Galaxy collection:"
+msgstr "Galaxy コレクションでプラグインに影響を与えるバグを見つけた場合は、以下を行います。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:43
+msgid "Find the collection on Galaxy."
+msgstr "Galaxy のコレクションを見つけます。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:44
+msgid "Find the issue tracker for the collection."
+msgstr "コレクションの問題トラッカーの検索"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:45
+msgid "Look there to see if an issue has already been filed."
+msgstr "問題がすでに報告されているかどうかを確認します。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:48
+msgid "Some partner collections may be hosted in private repositories."
+msgstr "一部のパートナーコレクションは、プライベートリポジトリーでホストされる場合があります。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:50
+msgid "If you are not sure whether the behavior you see is a bug, if you have questions, if you want to discuss development-oriented topics, or if you just want to get in touch, use one of our Google mailing lists or chat channels (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) to :ref:`communicate with Ansiblers <communication>`."
+msgstr "ご覧になった動作がバグなのかどうかわからない場合、質問がある場合、開発関連のトピックについて議論したい場合、または単に連絡を取りたい場合は、Google メーリングリストまたはチャットチャンネル (ansible.im の Matrix または `irc.libera.chat <https://libera.chat/>`_ の IRC を使用) のいずれかを使用して :ref:`Ansible のメンバーにご連絡ください <communication>` ください。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:52
+msgid "If you find a bug that affects a module in an Automation Hub collection:"
+msgstr "Automation Hub コレクションでモジュールに影響するバグを見つけた場合は、以下を行います。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:54
+msgid "If the collection offers an Issue Tracker link on Automation Hub, click there and open an issue on the collection repository. If it does not, follow the standard process for reporting issues on the `Red Hat Customer Portal <https://access.redhat.com/>`_. You must have a subscription to the Red Hat Ansible Automation Platform to create an issue on the portal."
+msgstr "コレクションで Automation Hub 上の Issue Tracker リンクが提供されている場合、そこをクリックして、コレクションのリポジトリーに問題を作成します。指定していない場合は、`Red Hat カスタマーポータル <https://access.redhat.com/>`_ で問題を報告するための標準的なプロセスに従ってください。ポータルで問題を作成するには、Red Hat Ansible Automation Platform のサブスクリプションが必要です。"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:57
+msgid "Support"
+msgstr "サポート"
+
+#: ../../rst/module_plugin_guide/modules_support.rst:59
+msgid "All plugins that remain in ``ansible-core`` and all collections hosted in Automation Hub are supported by Red Hat. No other plugins or collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_"
+msgstr "``ansible-core`` にあるすべてのプラグインと、Automation Hub でホストされるすべてのプラグインは Red Hat によってサポートされます。その他のプラグインまたはコレクションは Red Hat ではサポートされません。Red Hat Ansible Automation Platform にサブスクリプションがある場合は、`Red Hat カスタマーポータル <https://access.redhat.com/>`_ に関する詳細情報とリソースを確認できます。"
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:4
+msgid "Rejecting modules"
+msgstr "モジュールの拒否"
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:6
+msgid "If you want to avoid using certain modules, you can add them to a reject list to prevent Ansible from loading them. To reject plugins, create a yaml configuration file. The default location for this file is :file:`/etc/ansible/plugin_filters.yml`. You can select a different path for the reject list using the :ref:`PLUGIN_FILTERS_CFG` setting in the ``defaults`` section of your ansible.cfg. Here is an example reject list:"
+msgstr "特定のモジュールの使用を回避したい場合は、そのモジュールを拒否リストに追加して、Ansible がそのモジュールを読み込まないようにすることができます。プラグインを拒否するには、yaml 設定ファイルを作成します。このファイルのデフォルトの場所は :file:`/etc/ansible/plugin_filters.yml` です。ansible.cfg の ``defaults`` セクションにある :ref:`PLUGIN_FILTERS_CFG` の設定を使用して、拒否リストの別のパスを選択できます。以下に拒否リストの例を示します。"
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:18
+msgid "The file contains two fields:"
+msgstr "このファイルには、2 つのフィールドが含まれています。"
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:20
+msgid "A file version so that you can update the format while keeping backwards compatibility in the future. The present version should be the string, ``\"1.0\"``"
+msgstr "将来的に後方互換性を保ちながら形式を更新できるようにするファイルのバージョン。現在のバージョンは ``\"1.0\"`` 文字列とします。"
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:22
+msgid "A list of modules to reject. Ansible will not load any module in this list when it searches for a module to invoke for a task."
+msgstr "拒否するモジュールのリスト。Ansible は、モジュールを検索してタスクを呼び出すときに、このリストのモジュールを読み込みません。"
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:26
+msgid "The ``stat`` module is required for Ansible to run. Do not add this module to your reject list."
+msgstr "Ansible を実行するには、``stat`` モジュールが必要です。このモジュールを拒否リストに追加しないでください。"
+
+

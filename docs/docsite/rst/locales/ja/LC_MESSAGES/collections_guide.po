@@ -1,0 +1,707 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.1\n"
+
+#: ../../rst/collections_guide/collections_downloading.rst:4
+msgid "Downloading collections"
+msgstr "コレクションのダウンロード"
+
+#: ../../rst/collections_guide/collections_downloading.rst:6
+msgid "To download a collection and its dependencies for an offline install, run ``ansible-galaxy collection download``. This downloads the collections specified and their dependencies to the specified folder and creates a ``requirements.yml`` file which can be used to install those collections on a host without access to a Galaxy server. All the collections are downloaded by default to the ``./collections`` folder."
+msgstr "オフラインインストール用のコレクションとその依存関係をダウンロードするには、``ansible-galaxy collection download`` を実行します。これにより、指定されたコレクションとその依存関係を指定のディレクトリーにダウンロードして、Galaxy サーバーにアクセスせずに、ホストにこれらのコレクションをインストールするのに使用できる ``requirements.yml`` ファイルを作成します。すべてのコレクションは、デフォルトで ``./collections`` ディレクトリーにダウンロードされます。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:11
+msgid "Just like the ``install`` command, the collections are sourced based on the :ref:`configured galaxy server config <galaxy_server_config>`. Even if a collection to download was specified by a URL or path to a tarball, the collection will be redownloaded from the configured Galaxy server."
+msgstr "``install`` コマンドと同様、コレクションは :ref:`configured galaxy server config <galaxy_server_config>` に基づいて取得されます。ダウンロードするコレクションが URL や tarball へのパスで指定されていた場合でも、設定された Galaxy サーバーからコレクションが再ダウンロードされます。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:15
+msgid "Collections can be specified as one or multiple collections or with a ``requirements.yml`` file just like ``ansible-galaxy collection install``."
+msgstr "コレクションは、1 つまたは複数のコレクションとして、または ``ansible-galaxy collection install`` のように ``requirements.yml`` ファイルで指定できます。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:18
+msgid "To download a single collection and its dependencies:"
+msgstr "1 つのコレクションとその依存関係をダウンロードするには、以下を行います。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:24
+msgid "To download a single collection at a specific version:"
+msgstr "特定のバージョンで単一のコレクションをダウンロードするには、以下を実行します。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:30
+msgid "To download multiple collections either specify multiple collections as command line arguments as shown above or use a requirements file in the format documented with :ref:`collection_requirements_file`."
+msgstr "複数のコレクションをダウンロードするには、上記のように複数のコレクションをコマンドライン引数として指定するか、:ref:`collection_requirements_file` に記載されている形式で要件ファイルを使用します。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:37
+msgid "You can also download a source collection directory. The collection is built with the mandatory ``galaxy.yml`` file."
+msgstr "ソースコレクションディレクトリーをダウンロードすることもできます。コレクションは必須の ``galaxy.yml`` ファイルでビルドされます。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:45
+msgid "You can download multiple source collections from a single namespace by providing the path to the namespace."
+msgstr "名前空間へのパスを指定すると、単一の名前空間から複数のソースコレクションをダウンロードできます。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:61
+msgid "All the collections are downloaded by default to the ``./collections`` folder but you can use ``-p`` or ``--download-path`` to specify another path:"
+msgstr "コレクションはすべて、デフォルトで ``./collections`` ディレクトリーにダウンロードされますが、``-p`` または ``--download-path`` を使用して別のパスを指定することもできます。"
+
+#: ../../rst/collections_guide/collections_downloading.rst:68
+msgid "Once you have downloaded the collections, the folder contains the collections specified, their dependencies, and a ``requirements.yml`` file. You can use this folder as is with ``ansible-galaxy collection install`` to install the collections on a host without access to a Galaxy server."
+msgstr "コレクションをダウンロードした後、ディレクトリーには指定されたコレクション、その依存関係、および ``requirements.yml`` ファイルが含まれます。このディレクトリーは、``ansible-galaxy collection install`` と同じように、Galaxy サーバーにアクセスせずにホストにコレクションをインストールできます。"
+
+#: ../../rst/collections_guide/collections_index.rst:4
+msgid "Collections index"
+msgstr "コレクションのインデックス"
+
+#: ../../rst/collections_guide/collections_index.rst:6
+msgid "You can find an index of collections at :ref:`list_of_collections`."
+msgstr "コレクションのインデックスは :ref:`list_of_collections` にあります。"
+
+#: ../../rst/collections_guide/collections_installing.rst:4
+msgid "Installing collections"
+msgstr "コレクションのインストール"
+
+#: ../../rst/collections_guide/collections_installing.rst:8
+msgid "If you install a collection manually as described in this paragraph, the collection will not be upgraded automatically when you upgrade the ``ansible`` package or ``ansible-core``."
+msgstr "この段落で説明されているように、コレクションを手動でインストールした場合には、``ansible`` パッケージまたは ``ansible-core`` をアップグレードしたときに、コレクションが自動的にアップグレードされません。"
+
+#: ../../rst/collections_guide/collections_installing.rst:11
+msgid "Installing collections with ``ansible-galaxy``"
+msgstr "``ansible-galaxy`` でコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_collections.txt:3
+msgid "By default, ``ansible-galaxy collection install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any further configuration."
+msgstr "デフォルトでは、``ansible-galaxy collection install`` は https://galaxy.ansible.com を Galaxy サーバーとして使用します (:ref:`galaxy_server` の :file:`ansible.cfg` ファイルに記載)。追加設定は必要ありません。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:7
+msgid "See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub."
+msgstr "Red Hat Automation Hub などの他の Galaxy サーバーを使用している場合は、「:ref:`ansible-galaxy クライアントの設定 <galaxy_server_config>`」を参照してください。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:9
+msgid "To install a collection hosted in Galaxy:"
+msgstr "Galaxy でホストされるコレクションをインストールするには、以下を実行します。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:15
+msgid "To upgrade a collection to the latest available version from the Galaxy server you can use the ``--upgrade`` option:"
+msgstr "コレクションを Galaxy サーバーから利用可能な最新バージョンにアップグレードするには、``--upgrade`` オプションを使用します。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:21
+msgid "You can also directly use the tarball from your build:"
+msgstr "ビルドから tarball を直接使用することもできます。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:27
+msgid "You can build and install a collection from a local source directory. The ``ansible-galaxy`` utility builds the collection using the ``MANIFEST.json`` or ``galaxy.yml`` metadata in the directory."
+msgstr "ローカルソースディレクトリーからコレクションを構築してインストールできます。``ansible-galaxy`` ユーティリティーは、ディレクトリー内の ``MANIFEST.json`` または ``galaxy.yml`` メタデータを使用してコレクションを構築します。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:34
+msgid "You can also install multiple collections in a namespace directory."
+msgstr "名前空間ディレクトリーに複数のコレクションをインストールすることもできます。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:51
+msgid "The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the parent directory is already in a folder called ``ansible_collections``."
+msgstr "install コマンドは、親ディレクトリーが ``ansible_collections`` ディレクトリーに含まれている場合を除き、``-p`` オプションで指定したものに、パス ``ansible_collections`` を自動的に追加します。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:55
+msgid "When using the ``-p`` option to specify the install path, use one of the values configured in :ref:`COLLECTIONS_PATHS`, as this is where Ansible itself will expect to find collections. If you don't specify a path, ``ansible-galaxy collection install`` installs the collection to the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``"
+msgstr "``-p`` オプションを使用してインストールパスを指定する場合は、Ansible 自体がコレクションを見つけることが予想される場所であるため、:ref:`COLLECTIONS_PATHS` に設定された値のいずれかを使用します。パスを指定しないと、``ansible-galaxy collection install`` は、:ref:`COLLECTIONS_PATHS` で定義されている最初のパスにコレクションをインストールします。これは、デフォルトでは ``~/.ansible/collections`` です。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:59
+msgid "You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure."
+msgstr "また、``collections/ansible_collections/`` ディレクトリー構造の下で、コレクションを現在の Playbook の横に維持することもできます。"
+
+#: ../../rst/shared_snippets/installing_collections.txt:71
+msgid "See :ref:`collection_structure` for details on the collection directory structure."
+msgstr "コレクションディレクトリー構造の詳細は、「:ref:`collection_structure`」を参照してください。"
+
+#: ../../rst/collections_guide/collections_installing.rst:18
+msgid "Installing collections with signature verification"
+msgstr "署名の検証によるコレクションのインストール"
+
+#: ../../rst/collections_guide/collections_installing.rst:20
+msgid "If a collection has been signed by a :term:`distribution server`, the server will provide ASCII armored, detached signatures to verify the authenticity of the ``MANIFEST.json`` before using it to verify the collection's contents. This option is not available on all distribution servers. See :ref:`distributing_collections` for a table listing which servers support collection signing."
+msgstr "コレクションが :term:`distribution server` で署名された場合には、サーバーは ASCII 形式の分離署名を提供し、``MANIFEST.json`` の信頼性を確認してから、この署名を使用してコレクションのコンテンツを検証します。このオプションはすべての配信サーバーで利用できるわけではありません。コレクション署名をサポートするサーバーをリストする表については、:ref:`distributing_collections` を参照してください。"
+
+#: ../../rst/collections_guide/collections_installing.rst:22
+msgid "To use signature verification for signed collections:"
+msgstr "署名付きコレクションに署名の検証を使用するには、以下を実行します。"
+
+#: ../../rst/collections_guide/collections_installing.rst:24
+msgid ":ref:`Configured a GnuPG keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or provide the path to the keyring with the ``--keyring`` option when you install the signed collection."
+msgstr "``ansible-galaxy`` の場合は :ref:`Configured a GnuPG keyring <galaxy_gpg_keyring>` を、それ以外の場合は、署名ずいのコレクションをインストールするときに ``--keyring`` オプションを使用してキーリングへのパスを指定します。"
+
+#: ../../rst/collections_guide/collections_installing.rst:27
+msgid "Import the public key from the distribution server into that keyring."
+msgstr "配信サーバーからキーリングに公開鍵をインポートします。"
+
+#: ../../rst/collections_guide/collections_installing.rst:34
+msgid "Verify the signature when you install the collection."
+msgstr "コレクションをインストールするときに署名を確認します。"
+
+#: ../../rst/collections_guide/collections_installing.rst:40
+msgid "The ``--keyring`` option is not necessary if you have :ref:`configured a GnuPG keyring <galaxy_gpg_keyring>`."
+msgstr ":ref:`configured a GnuPG keyring <galaxy_gpg_keyring>` がある場合は、``--keyring`` オプションは必要ありません。"
+
+#: ../../rst/collections_guide/collections_installing.rst:42
+msgid "Optionally, verify the signature at any point after installation to prove the collection has not been tampered with. See :ref:`verify_signed_collections` for details."
+msgstr "必要に応じて、インストール後に署名を確認して、コレクションが改ざんされていないことを証明します。詳細は、:ref:`verify_signed_collections` を参照してください。"
+
+#: ../../rst/collections_guide/collections_installing.rst:45
+msgid "You can also include signatures in addition to those provided by the distribution server. Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with these additional signatures. Supplemental signatures should be provided as URIs."
+msgstr "配信サーバーが追加した署名以外にも署名を追加できます。``--signature`` オプションを使用して、これらの追加の署名を使用してコレクションの ``MANIFEST.json`` を検証します。補足の署名は、URI として指定します。"
+
+#: ../../rst/collections_guide/collections_installing.rst:51
+msgid "GnuPG verification only occurs for collections installed from a distribution server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files."
+msgstr "GnuPG 検証は、配信サーバーからインストールされたコレクションでのみ発生します。ユーザーが提供した署名は、git リポジトリー、ソースディレクトリー、または URL/tar.gzファイルへのパスからインストールされたコレクションの検証には使用されません。"
+
+#: ../../rst/collections_guide/collections_installing.rst:53
+msgid "You can also include additional signatures in the collection ``requirements.yml`` file under the ``signatures`` key."
+msgstr "``signatures`` キーのコレクション ``requirements.yml`` ファイルに追加の署名を含めることもできます。"
+
+#: ../../rst/collections_guide/collections_installing.rst:65
+msgid "See :ref:`collection requirements file <collection_requirements_file>` for details on how to install collections with this file."
+msgstr "このファイルでコレクションをインストールする方法は、:ref:`collection requirements file <collection_requirements_file>` を参照してください。"
+
+#: ../../rst/collections_guide/collections_installing.rst:67
+msgid "By default, verification is considered successful if a minimum of 1 signature successfully verifies the collection. The number of required signatures can be configured with ``--required-valid-signature-count`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. All signatures can be required by setting the option to ``all``. To fail signature verification if no valid signatures are found, prepend the value with ``+``, such as ``+all`` or ``+1``."
+msgstr "デフォルトでは、1 つ以上の署名がコレクションを正常に検証した場合に、検証が成功したとみなされます。必要な署名の数は、``--required-valid-signature-count`` または :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` で設定できます。オプションを ``all`` に設定して、すべての署名を要求できます。有効な署名が見つからない場合に、署名の検証に失敗するには、``+all`` や ``+1`` のように値の前に ``+`` を追加します。"
+
+#: ../../rst/collections_guide/collections_installing.rst:75
+msgid "Certain GnuPG errors can be ignored with ``--ignore-signature-status-code`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` should be a list, and ``--ignore-signature-status-code`` can be provided multiple times to ignore multiple additional error status codes."
+msgstr "特定の GnuPG エラーは ``--ignore-signature-status-code`` または :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` により無視できます。:ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` は一覧である必要があり、``--ignore-signature-status-code`` を複数回指定して複数の追加エラーステータスコードを無視することができます。"
+
+#: ../../rst/collections_guide/collections_installing.rst:77
+msgid "This example requires any signatures provided by the distribution server to verify the collection except if they fail due to NO_PUBKEY:"
+msgstr "NO_PUBKEY が原因で失敗しない限り、この例では、コレクションを検証するために配信サーバーが提供する署名が必要です。"
+
+#: ../../rst/collections_guide/collections_installing.rst:85
+msgid "If verification fails for the example above, only errors other than NO_PUBKEY will be displayed."
+msgstr "上記の例で検証に失敗すると、NO_PUBKEY 以外のエラーのみが表示されます。"
+
+#: ../../rst/collections_guide/collections_installing.rst:87
+msgid "If verification is unsuccessful, the collection will not be installed. GnuPG signature verification can be disabled with ``--disable-gpg-verify`` or by configuring :ref:`GALAXY_DISABLE_GPG_VERIFY`."
+msgstr "検証に失敗した場合は、コレクションはインストールされません。GnuPG の署名検証は ``--disable-gpg-verify`` で、あるいは :ref:`GALAXY_DISABLE_GPG_VERIFY` を設定して無効にすることができます。"
+
+#: ../../rst/collections_guide/collections_installing.rst:93
+msgid "Installing an older version of a collection"
+msgstr "古いバージョンのコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:2
+msgid "You can only have one version of a collection installed at a time. By default ``ansible-galaxy`` installs the latest available version. If you want to install a specific version, you can add a version range identifier. For example, to install the 1.0.0-beta.1 version of the collection:"
+msgstr "一度にインストールするコレクションのバージョンは 1 つだけです。デフォルトでは、``ansible-galaxy`` により利用可能な最新バージョンがインストールされます。特定のバージョンをインストールする場合は、バージョン範囲識別子を追加できます。たとえば、コレクションの 1.0.0-beta.1 バージョンをインストールするには、以下を実行します。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:8
+msgid "You can specify multiple range identifiers separated by ``,``. Use single quotes so the shell passes the entire command, including ``>``, ``!``, and other operators, along. For example, to install the most recent version that is greater than or equal to 1.0.0 and less than 2.0.0:"
+msgstr "``,`` で区切って複数の範囲識別子を指定できます。シェルが、``>``、``!``、およびその他の演算子を含むコマンド全体を渡すように、一重引用符を使用します。たとえば、1.0.0 以上 2.0.0 未満の最新バージョンをインストールするには、次を実行します。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:14
+msgid "Ansible will always install the most recent version that meets the range identifiers you specify. You can use the following range identifiers:"
+msgstr "Ansible は、指定する範囲識別子を満たす最新バージョンを常にインストールします。以下の範囲識別子を使用できます。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:16
+msgid "``*``: The most recent version. This is the default."
+msgstr "``*``: 最新バージョンです。これがデフォルトです。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:17
+msgid "``!=``: Not equal to the version specified."
+msgstr "``!=``: 指定されたバージョンと同等ではありません。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:18
+msgid "``==``: Exactly the version specified."
+msgstr "``==``: 指定されたバージョンそのものになります。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:19
+msgid "``>=``: Greater than or equal to the version specified."
+msgstr "``>=``: 指定されたバージョン以上になります。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:20
+msgid "``>``: Greater than the version specified."
+msgstr "``>``: 指定されたバージョンよりも大きくなります。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:21
+msgid "``<=``: Less than or equal to the version specified."
+msgstr "``<=``: 指定されたバージョン以下になります。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:22
+msgid "``<``: Less than the version specified."
+msgstr "``<``: 指定されたバージョンよりも小さくなります。"
+
+#: ../../rst/shared_snippets/installing_older_collection.txt:25
+msgid "By default ``ansible-galaxy`` ignores pre-release versions. To install a pre-release version, you must use the ``==`` range identifier to require it explicitly."
+msgstr "デフォルトでは、``ansible-galaxy`` はリリース前のバージョンを無視します。リリース前のバージョンをインストールするには、``==`` 範囲識別子を使用して明示的に要求する必要があります。"
+
+#: ../../rst/collections_guide/collections_installing.rst:100
+msgid "Install multiple collections with a requirements file"
+msgstr "要件ファイルを使用した複数のコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:2
+msgid "You can set up a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:"
+msgstr "``requirements.yml`` ファイルを設定して、1 つのコマンドで複数のコレクションをインストールできます。このファイルは、以下の形式の YAML ファイルです。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:16
+msgid "You can specify the following keys for each collection entry:"
+msgstr "各コレクションエントリーに以下のキーを指定できます。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:18
+msgid "``name``"
+msgstr "``name``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:19
+msgid "``version``"
+msgstr "``version``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:20
+msgid "``signatures``"
+msgstr "``signatures``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:21
+msgid "``source``"
+msgstr "``source``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:22
+msgid "``type``"
+msgstr "``type``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:24
+msgid "The ``version`` key uses the same range identifier format documented in :ref:`collections_older_version`."
+msgstr "``version`` キーは、:ref:`collections_older_version` に記載されているものと同じ範囲識別子形式を使用します。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:26
+msgid "The ``signatures`` key accepts a list of signature sources that are used to supplement those found on the Galaxy server during collection installation and ``ansible-galaxy collection verify``. Signature sources should be URIs that contain the detached signature. The ``--keyring`` CLI option must be provided if signatures are specified."
+msgstr "``signatures`` キーは、コレクションのインストール時および``ansible-galaxy collection verify``時に Galaxy サーバーで見つけられたものを補足するために使用される署名ソースの一覧を受け入れます。署名ソースは、デタッチされた署名が含まれる URI である必要があります。署名が指定されている場合は、``--keyring`` CLI オプションを指定する必要があります。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:28
+msgid "Signatures are only used to verify collections on Galaxy servers. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files."
+msgstr "署名は、Galaxy サーバーのコレクションを検証するためにのみ使用されます。ユーザーが提供した署名は、git リポジトリー、ソースディレクトリー、または URL/tar.gzファイルへのパスからインストールされたコレクションの検証には使用されません。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:40
+msgid "The ``type`` key can be set to ``file``, ``galaxy``, ``git``, ``url``, ``dir``, or ``subdirs``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection."
+msgstr "``type`` キーは ``file``、``galaxy``、``git``、``url``、``dir``、または ``subdirs`` に設定できます。``type`` を省略すると、``name`` キーを使用してコレクションのソースを暗黙的に決定します。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:42
+msgid "When you install a collection with ``type: git``, the ``version`` key can refer to a branch or to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ object (commit or tag). For example:"
+msgstr "``type: git`` でコレクションをインストールする場合、``version`` キーはブランチまたは `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ オブジェクト（コミットまたはタグ）を参照できます。以下に例を示します。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:51
+msgid "You can also add roles to a ``requirements.yml`` file, under the ``roles`` key. The values follow the same format as a requirements file used in older Ansible releases."
+msgstr "``roles``キーの下にある``requirements.yml``ファイルにロールを追加することもできます。この値は、古い Ansible リリースで使用される要件ファイルと同じ形式に従います。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:67
+msgid "To install both roles and collections at the same time with one command, run the following:"
+msgstr "1 つのコマンドで、ロールとコレクションを同時にインストールするには、以下のコマンドを実行します。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:73
+msgid "Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections, or roles respectively."
+msgstr "``ansible-galaxy collection install -r`` または ``ansible-galaxy role install -r`` を実行すると、それぞれコレクションまたはロールがインストールされます。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:76
+msgid "Installing both roles and collections from the same requirements file will not work when specifying a custom collection or role install path. In this scenario the collections will be skipped and the command will process each like ``ansible-galaxy role install`` would."
+msgstr "カスタムコレクションまたはロールインストールパスを指定する場合、同じ要件ファイルからロールとコレクションの両方をインストールすることはできません。今回の例では、コレクションは省略され、コマンドは ``ansible-galaxy role install`` のように処理されます。"
+
+#: ../../rst/collections_guide/collections_installing.rst:107
+msgid "Downloading a collection for offline use"
+msgstr "オフラインで使用するコレクションのダウンロード"
+
+#: ../../rst/shared_snippets/download_tarball_collections.txt:3
+msgid "To download the collection tarball from Galaxy for offline use:"
+msgstr "オフラインで使用するために、コレクション tarball を Galaxy からダウンロードするには、以下を行います。"
+
+#: ../../rst/shared_snippets/download_tarball_collections.txt:5
+msgid "Navigate to the collection page."
+msgstr "コレクションページに移動します。"
+
+#: ../../rst/shared_snippets/download_tarball_collections.txt:6
+msgid "Click on :guilabel:`Download tarball`."
+msgstr ":guilabel:`Download tarball` をクリックします。"
+
+#: ../../rst/shared_snippets/download_tarball_collections.txt:8
+msgid "You may also need to manually download any dependent collections."
+msgstr "また、依存するコレクションを手動でダウンロードする必要がある場合があります。"
+
+#: ../../rst/collections_guide/collections_installing.rst:112
+msgid "Installing a collection from source files"
+msgstr "ソースファイルからのコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_collections_file.rst:1
+msgid "Ansible can also install from a source directory in several ways:"
+msgstr "Ansible は、複数の方法でソースディレクトリーからインストールすることもできます。"
+
+#: ../../rst/shared_snippets/installing_collections_file.rst:14
+msgid "Ansible can also install a collection collected with ``ansible-galaxy collection build`` or downloaded from Galaxy for offline use by specifying the output file directly:"
+msgstr "出力ファイルを直接指定して、Ansible は``ansible-galaxy collection build`` で収集したコレクションまたは Galaxy からダウンロードしたコレクションをオフライン用にインストールすることもできます。"
+
+#: ../../rst/shared_snippets/installing_collections_file.rst:24
+msgid "Relative paths are calculated from the current working directory (where you are invoking ``ansible-galaxy install -r`` from). They are not taken relative to the ``requirements.yml`` file."
+msgstr "相対パスは、現在の作業ディレクトリー（``ansible-galaxy install -r`` を呼び出しているディレクトリー）から計算されます。これは、``requirements.yml`` ファイルからの相対パスではありません。"
+
+#: ../../rst/collections_guide/collections_installing.rst:117
+msgid "Installing a collection from a git repository"
+msgstr "git リポジトリーからのコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:1
+msgid "You can install a collection from a git repository instead of from Galaxy or Automation Hub. As a developer, installing from a git repository lets you review your collection before you create the tarball and publish the collection. As a user, installing from a git repository lets you use collections or versions that are not in Galaxy or Automation Hub yet."
+msgstr "コレクションは、Galaxy または Automation Hub の代わりに git リポジトリーからインストールできます。開発者は、git リポジトリーからインストールし、tarball を作成してコレクションを公開する前にコレクションを確認できます。ユーザーとして git リポジトリーからインストールすることで、Galaxy または Automation Hub にないコレクションまたはバージョンを使用できます。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:3
+msgid "The repository must contain a ``galaxy.yml`` or ``MANIFEST.json`` file. This file provides metadata such as the version number and namespace of the collection."
+msgstr "リポジトリーには ``galaxy.yml`` または ``MANIFEST.json`` ファイルが含まれている必要があります。このファイルは、コレクションのバージョン番号、namespace などのメタデータを提供します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:6
+msgid "Installing a collection from a git repository at the command line"
+msgstr "コマンドガイドで git リポジトリーからのコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:8
+msgid "To install a collection from a git repository at the command line, use the URI of the repository instead of a collection name or path to a ``tar.gz`` file. Use the prefix ``git+``, unless you're using SSH authentication with the user ``git`` (for example, ``git@github.com:ansible-collections/ansible.windows.git``). You can specify a branch, commit, or tag using the comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ syntax."
+msgstr "git リポジトリーからコレクションをインストールするには、コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーの URI を使用します。ユーザー``git``でSSH認証を使用していない限り、プレフィックス``git+``を使用します(例: ``git@github.com:ansible-collections/ansible.windows.git``)。コンマ区切りの `git コミットのような <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ 構文を使用して、ブランチ、コミット、またはタグを指定できます。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:10
+msgid "For example:"
+msgstr "例:"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:25
+msgid "Embedding credentials into a git URI is not secure. Use safe authentication options to prevent your credentials from being exposed in logs or elsewhere."
+msgstr "認証情報を git URI に埋め込むことは安全ではありません。安全な認証オプションを使用して、認証情報がログに公開されないようにします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:27
+msgid "Use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ authentication"
+msgstr "`SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ 認証を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:28
+msgid "Use `netrc <https://linux.die.net/man/5/netrc>`_ authentication"
+msgstr "`netrc <https://linux.die.net/man/5/netrc>`_ 認証を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:29
+msgid "Use `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ in your git configuration"
+msgstr "お使いの git 設定で `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:30
+msgid "Use `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in your git configuration"
+msgstr "お使いの git 設定で `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:33
+msgid "Specifying the collection location within the git repository"
+msgstr "git リポジトリー内でのコレクションの場所の指定"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:35
+msgid "When you install a collection from a git repository, Ansible uses the collection ``galaxy.yml`` or ``MANIFEST.json`` metadata file to build the collection. By default, Ansible searches two paths for collection ``galaxy.yml`` or ``MANIFEST.json`` metadata files:"
+msgstr "git リポジトリーからコレクションをインストールする場合、Ansible はコレクション ``galaxy.yml`` または ``MANIFEST.json`` メタデータファイルを使用してコレクションを構築します。デフォルトでは、Ansible はコレクション ``galaxy.yml`` または ``MANIFEST.json`` メタデータファイルの 2 つのパスを検索します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:37
+msgid "The top level of the repository."
+msgstr "リポジトリーのトップレベル。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:38
+msgid "Each directory in the repository path (one level deep)."
+msgstr "リポジトリーパス内の各ディレクトリー（1 レベルの深さ）"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:40
+msgid "If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in the top level of the repository, Ansible uses the collection metadata in that file to install an individual collection."
+msgstr "``galaxy.yml`` または ``MANIFEST.json`` ファイルがリポジトリーのトップレベルにある場合、Ansible はそのファイル内のコレクションメタデータを使用して個別のコレクションをインストールします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:51
+msgid "If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in one or more directories in the repository path (one level deep), Ansible installs each directory with a metadata file as a collection. For example, Ansible installs both collection1 and collection2 from this repository structure by default:"
+msgstr "リポジトリーパス内の 1 つ以上のディレクトリーに ``galaxy.yml`` または ``MANIFEST.json`` ファイルが存在する場合は、Ansible はメタデータファイルを持つ各ディレクトリーをコレクションとしてインストールします。たとえば、Ansible は、デフォルトで、このリポジトリー構造から collection1 と collection2 の両方をインストールします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:69
+msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate the location of the metadata file or files. The path should be a directory, not the metadata file itself. For example, to install only collection2 from the example repository with two collections:"
+msgstr "リポジトリ構造が異なる場合、またはコレクションのサブセットのみをインストールする場合は、URI の末尾（オプションのコンマ区切りバージョンの前）にフラグメントを追加して、メタデータファイルの場所を示すことができます。パスは、メタデータファイル自体ではなく、ディレクトリである必要があります。たとえば、2つのコレクションを持つサンプルリポジトリからcollection2のみをインストールするには、次のようにします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:75
+msgid "In some repositories, the main directory corresponds to the namespace:"
+msgstr "リポジトリーによっては、メインのディレクトリーは名前空間に対応します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:97
+msgid "You can install all collections in this repository, or install one collection from a specific commit:"
+msgstr "このリポジトリーのすべてのコレクションをインストールするか、特定のコミットから 1 つのコレクションをインストールできます。"
+
+#: ../../rst/collections_guide/collections_installing.rst:124
+msgid "Configuring the ``ansible-galaxy`` client"
+msgstr "``ansible-galaxy`` クライアントの設定"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:3
+msgid "By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`)."
+msgstr "デフォルトでは、``ansible-galaxy`` は https://galaxy.ansible.com を Galaxy サーバーとして使用します (:ref:`galaxy_server` の :file:`ansible.cfg` ファイルに記載)。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:5
+msgid "You can use either option below to configure ``ansible-galaxy collection`` to use other servers (such as a custom Galaxy server):"
+msgstr "以下のオプションを使用して、他のサーバー (カスタムの Galaxy サーバーなど) を使用するように ``ansible-galaxy collection`` を設定できます。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:7
+msgid "Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations`."
+msgstr ":ref:`ansible_configuration_settings_locations` の :ref:`galaxy_server_list` 設定オプションにサーバーリストを設定します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:8
+msgid "Use the ``--server`` command line argument to limit to an individual server."
+msgstr "``--server`` コマンドライン引数を使用して、個々のサーバーに制限します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:10
+msgid "To configure a Galaxy server list in ``ansible.cfg``:"
+msgstr "``ansible.cfg`` で Galaxy サーバー一覧を設定するには、以下を行います。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:13
+msgid "Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names."
+msgstr "``server_list`` セクションの ``[galaxy]`` オプションを 1 つ以上のサーバー名に追加します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:14
+msgid "Create a new section for each server name."
+msgstr "各サーバー名に新しいセクションを作成します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:15
+msgid "Set the ``url`` option for each server name."
+msgstr "各サーバー名に ``url`` オプションを設定します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:16
+msgid "Optionally, set the API token for each server name. Go to https://galaxy.ansible.com/me/preferences and click :guilabel:`Show API key`."
+msgstr "必要に応じて、各サーバー名の API トークンを設定します。https://galaxy.ansible.com/me/preferences に移動し、guilabel:`Show API key` をクリックします。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:19
+msgid "The ``url`` option for each server name must end with a forward slash ``/``. If you do not set the API token in your Galaxy server list, use the ``--api-key`` argument to pass in the token to  the ``ansible-galaxy collection publish`` command."
+msgstr "各サーバー名の ``url`` オプションは、スラッシュ ``/`` で終了する必要があります。Galaxy サーバー一覧の API トークンを設定しない場合は、``--api-key`` 引数を使用してトークンを ``ansible-galaxy collection publish`` コマンドに渡します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:22
+msgid "The following example shows how to configure multiple servers:"
+msgstr "以下の例は、複数のサーバーを設定する方法を示しています。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:49
+msgid "You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and the value of this argument should match the name of the server. To use a server not in the server list, set the value to the URL to access that server (all servers in the server list will be ignored). Also you cannot use the ``--api-key`` argument for any of the predefined servers. You can only use the ``api_key`` argument if you did not define a server list or if you specify a URL in the ``--server`` argument."
+msgstr "``--server`` コマンドライン引数を使用して ``server_list`` で明示的な Galaxy サーバーを選択し、この引数の値はサーバー名と一致する必要があります。サーバー一覧にないサーバーを使用する場合は、そのサーバーにアクセスする URL に値を設定します (サーバーリスト内のすべてのサーバーは無視されます)。また、事前定義されたサーバーのいずれかに ``--api-key`` 引数を使用することはできません。サーバーの一覧を定義していない場合、または ``--server`` に URL を指定した場合限り、``api_key`` 引数を使用できます。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:53
+msgid "**Galaxy server list configuration options**"
+msgstr "**Galaxy サーバー一覧設定オプション**"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:55
+msgid "The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a collection, the install process will search in that order, for example, ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and finally ``test_galaxy`` until the collection is found. The actual Galaxy instance is then defined under the section ``[galaxy_server.{{ id }}]`` where ``{{ id }}`` is the server identifier defined in the list. This section can then define the following keys:"
+msgstr ":ref:`galaxy_server_list` オプションは、優先順位が付けられたサーバー識別子の一覧です。コレクションを検索する場合、インストールプロセスは次の順序で検索します。たとえば、``automation_hub`` を検索してから、``my_org_hub``、``release_galaxy``、最後に ``test_galaxy`` で、コレクションが見つかるまで行います。次に、実際の Galaxy インスタンスが ``[galaxy_server.{{ id }}]`` セクションで定義されます。``{{ id }}`` は、一覧で定義されているサーバー識別子です。このセクションでは、次のキーを定義できます。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:61
+msgid "``url``: The URL of the Galaxy instance to connect to. Required."
+msgstr "``url``: 接続する Galaxy インスタンスの URL。必須。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:62
+msgid "``token``: An API token key to use for authentication against the Galaxy instance. Mutually exclusive with ``username``."
+msgstr "``token``: Galaxy インスタンスに対する認証に使用する API トークンキー。``username`` と相互に排他的です。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:63
+msgid "``username``: The username to use for basic authentication against the Galaxy instance. Mutually exclusive with ``token``."
+msgstr "``username``: Galaxy インスタンスに対する Basic 認証に使用するユーザー名。``token`` と相互に排他的です。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:64
+msgid "``password``: The password to use, in conjunction with ``username``, for basic authentication."
+msgstr "``password``: Basic 認証に使用するパスワード。``username`` と併用します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:65
+msgid "``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, galaxyNG). Mutually exclusive with ``username``. Requires ``token``."
+msgstr "``auth_url``: SSO 認証 (例: galaxyNG) を使用する場合は Keycloak サーバー「token_endpoint」の URL です。``username`` と相互に排他的です。``token`` が必要です。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:66
+msgid "``validate_certs``: Whether or not to verify TLS certificates for the Galaxy server. This defaults to True unless the ``--ignore-certs`` option is provided or ``GALAXY_IGNORE_CERTS`` is configured to True."
+msgstr "``validate_certs``: Galaxy サーバーの TLS 証明書を検証するかどうか。これは、``--ignore-certs`` オプションが提供されるか、``GALAXY_IGNORE_CERTS`` が True に設定されている場合を除き、デフォルトで True に設定されます。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:67
+msgid "``client_id``: The Keycloak token's client_id to use for authentication. Requires ``auth_url`` and ``token``. The default ``client_id`` is cloud-services to work with Red Hat SSO."
+msgstr "``client_id``: 認証に使用する Keycloak トークンの client_id。``auth_url`` および ``token`` が必要です。デフォルトの ``client_id`` は、Red Hat SSO と連携するクラウドサービスです。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:69
+msgid "As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables. The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper case form of the server identifier and ``{{ key }}`` is the key to define. For example I can define ``token`` for ``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``."
+msgstr "これらのサーバーオプションを ``ansible.cfg`` ファイルで定義するだけでなく、それらを環境変数として定義することもできます。環境変数は ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` の形式です。``{{ id }}`` はサーバー識別子の大文字形式であり、``{{ key }}`` は定義するキーです。たとえば、``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token`` を設定することで、``release_galaxy`` に ``token`` を定義することができます。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:74
+msgid "For operations that use only one Galaxy server (for example, the ``publish``, ``info``, or ``install`` commands). the ``ansible-galaxy collection`` command uses the first entry in the ``server_list``, unless you pass in an explicit server with the ``--server`` argument."
+msgstr "Galaxy サーバー 1 つだけを使用する操作 (例: ``publish`` コマンド、``info`` コマンド、または ``install`` コマンド) の場合、``ansible-galaxy collection`` コマンドは、``--server`` 引数を使用して明示的なサーバーに渡しない限り、``server_list`` の最初のエントリーを使用します。"
+
+#: ../../rst/shared_snippets/galaxy_server_list.txt:78
+msgid "``ansible-galaxy`` can seek out dependencies on other configured Galaxy instances to support the use case where a collection can depend on a collection from another Galaxy instance."
+msgstr "``ansible-galaxy`` は、設定済みの他の Galaxy インスタンスで依存関係を検索して、コレクションが別の Galaxy インスタンスからのコレクションに依存する可能性があるようなユースケースをサポートできます。"
+
+#: ../../rst/collections_guide/collections_listing.rst:4
+msgid "Listing collections"
+msgstr "コレクション一覧の表示"
+
+#: ../../rst/collections_guide/collections_listing.rst:6
+msgid "To list installed collections, run ``ansible-galaxy collection list``. This shows all of the installed collections found in the configured collections search paths. It will also show collections under development which contain a galaxy.yml file instead of a MANIFEST.json. The path where the collections are located are displayed as well as version information. If no version information is available, a ``*`` is displayed for the version number."
+msgstr "インストールされたコレクションを一覧表示するには、``ansible-galaxy collection list`` を実行します。これは、設定されたコレクションの検索パスにあるインストールされたコレクションをすべて表示します。これは、MANIFEST.json ではなく galaxy.yml ファイルが含まれる開発中のコレクションも表示します。コレクションが配置されているパスとバージョン情報が表示されます。バージョン情報がない場合は、``*`` がバージョン番号に表示されます。"
+
+#: ../../rst/collections_guide/collections_listing.rst:25
+msgid "Run with ``-vvv`` to display more detailed information. You may see additional collections here that were added as dependencies of your installed collections. Only use collections in your playbooks that you have directly installed."
+msgstr "``-vvv`` を指定して、詳細情報を表示します。ここでは、インストールされたコレクションの依存関係として追加された別のコレクションが表示される場合があります。直接インストールした Playbook のコレクションだけを使用してください。"
+
+#: ../../rst/collections_guide/collections_listing.rst:28
+msgid "To list a specific collection, pass a valid fully qualified collection name (FQCN) to the command ``ansible-galaxy collection list``. All instances of the collection will be listed."
+msgstr "特定のコレクションを一覧表示するには、有効な完全修飾コレクション名 (FQCN) を ``ansible-galaxy collection list`` コマンドに渡します。コレクションのインスタンス一覧が表示されます。"
+
+#: ../../rst/collections_guide/collections_listing.rst:44
+msgid "To search other paths for collections, use the ``-p`` option. Specify multiple search paths by separating them with a ``:``. The list of paths specified on the command line will be added to the beginning of the configured collections search paths."
+msgstr "他のパスのコレクションを検索するには、``-p`` オプションを使用します。複数の検索パスを指定する場合は、``:`` で区切って指定します。コマンドラインで指定されたパスのリストは、設定されたコレクションの検索パスの先頭に追加されます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:5
+msgid "Using collections in a playbook"
+msgstr "Playbook でのコレクションの使用"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:7
+msgid "Once installed, you can reference a collection content by its fully qualified collection name (FQCN):"
+msgstr "インストールが完了すると、完全修飾コレクション名 (FQCN) でコレクションコンテンツを参照できます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:16
+msgid "This works for roles or any type of plugin distributed within the collection:"
+msgstr "これは、コレクションで配布されるロールまたはすべてのタイプのプラグインで機能します。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:32
+msgid "Simplifying module names with the ``collections`` keyword"
+msgstr "``collections`` キーワードを使用したモジュール名の簡素化"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:34
+msgid "The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook."
+msgstr "``collections`` キーワードを使用すると、ロールまたは Playbook が非修飾モジュールおよびアクション名を検索する必要のあるコレクションの一覧を定義できます。つまり、``collections`` キーワードを使用すると、そのロールまたは Playbook 全体で、モジュールおよびアクションプラグインを短縮名で参照できます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:37
+msgid "If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. This is one of the reasons we recommend you always use FQCN. See below for roles details."
+msgstr "Playbook で ``collections`` キーワードと 1 つ以上のロールの両方を使用している場合、ロールは Playbook で設定されたコレクションを継承しません。これが、常に FQCN を使用することが推奨される理由の 1 つです。ロールの詳細については、以下を参照してください。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:40
+msgid "Using ``collections`` in roles"
+msgstr "ロールでの ``collections`` の使用"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:42
+msgid "Within a role, you can control which collections Ansible searches for the tasks inside the role using the ``collections`` keyword in the role's ``meta/main.yml``. Ansible will use the collections list defined inside the role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry. Roles defined inside a collection always implicitly search their own collection first, so you don't need to use the ``collections`` keyword to access modules, actions, or other roles contained in the same collection."
+msgstr "ロール内で、Ansible がロールの ``meta/main.yml`` の ``collections`` キーワードを使用して、ロール内のタスクを検索するコレクションを制御できます。Ansible は、ロールを呼び出す Playbook が別の ``collections`` キーワードエントリーで異なるコレクションを定義する場合でも、ロール内に定義されたコレクションリストを使用します。コレクション内で定義されたロールは、常に暗黙的に自身のコレクションを最初に検索するため、同じコレクションに含まれるモジュール、アクション、または他のロールにアクセスするために ``collections`` キーワードを使用する必要はありません。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:53
+msgid "Using ``collections`` in playbooks"
+msgstr "Playbook での ``collections`` の使用"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:55
+msgid "In a playbook, you can control the collections Ansible searches for modules and action plugins to execute. However, any roles you call in your playbook define their own collections search order; they do not inherit the calling playbook's settings. This is true even if the role does not define its own ``collections`` keyword."
+msgstr "Playbook では、Ansible が実行するモジュールやアクションプラグインを検索するコレクションを制御することができます。ただし、Playbook で呼び出したロールは、独自のコレクション検索順序を定義し、呼び出した Playbook の設定を継承しません。これは、ロールが独自の ``collections`` キーワードを定義していない場合でも同様です。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:73
+msgid "The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (for example, lookups, filters, tests)."
+msgstr "``collections`` キーワードは、名前空間以外のプラグインおよびロール参照に対して、順序付けされた「検索パス」を作成します。コンテンツのインストールや、プラグインやロールの読み込みに関する Ansible の動作は変更されません。非アクションやモジュールプラグイン (ルックアップ、フィルター、テストなど) が必要なことに注意してください。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:75
+msgid "When using the ``collections`` keyword, it is not necessary to add in ``ansible.builtin`` as part of the search list. When left omitted, the following content is available by default:"
+msgstr "``collections`` キーワードを使用する場合は、検索リストの一部として ``ansible.builtin`` に追加する必要はありません。省略したままにすると、以下のコンテンツがデフォルトで利用できます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:77
+msgid "Standard ansible modules and plugins available through ``ansible-base``/``ansible-core``"
+msgstr "``ansible-base``/``ansible-core`` で利用できる標準の Ansible モジュールおよびプラグイン"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:79
+msgid "Support for older 3rd party plugin paths"
+msgstr "古いサードパーティープラグインパスのサポート"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:81
+msgid "In general, it is preferable to use a module or plugin's FQCN over the ``collections`` keyword and the short name for all content in ``ansible-core``"
+msgstr "一般に、``ansible-core``のすべてのコンテンツに関して、``collections``のキーワードや短い名前よりも、モジュールやプラグインの FQCN を使用することが推奨されます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:84
+msgid "Using a playbook from a collection"
+msgstr "コレクションからの Playbook の使用"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:88
+msgid "You can also distribute playbooks in your collection and invoke them using the same semantics you use for plugins:"
+msgstr "コレクションに Playbook を分散し、プラグインに使用するのと同じセマンティクスを使用して Playbook を呼び出すこともできます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:94
+msgid "From inside a playbook:"
+msgstr "Playbook 内から、以下を実行します。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:101
+msgid "A few recommendations when creating such playbooks, ``hosts:`` should be generic or at least have a variable input."
+msgstr "このような Playbook を作成する際のいくつかの推奨事項として、``hosts:`` は一般的なものにするか、少なくとも変数入力にする必要があります。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:112
+msgid "This will have an implied entry in the ``collections:`` keyword of ``my_namespace.my_collection`` just as with roles."
+msgstr "これは、ロールと同様に、``my_namespace.my_collection`` の ``collections:`` キーワードに暗黙的なエントリーを持ちます。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:115
+msgid "Playbook names, like other collection resources, have a restricted set of valid characters. Names can contain only lowercase alphanumeric characters, plus _ and must start with an alpha character. The dash ``-`` character is not valid for playbook names in collections. Playbooks whose names contain invalid characters are not addressable: this is a limitation of the Python importer that is used to load collection resources."
+msgstr "他のコレクションリソースなどの Playbook 名では、有効な文字のセットが制限されています。名前には、小文字の英数字と _ のみを含めることができ、アルファベット記号で開始する必要があります。ダッシュ ``-`` は、コレクション内の Playbook 名には有効ではありません。名前に無効な文字が含まれるPlaybookにアドレスを指定することはできません。これは、コレクションリソースの読み込みに使用される Python インポーターの制限です。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:4
+msgid "Verifying collections"
+msgstr "コレクションの検証"
+
+#: ../../rst/collections_guide/collections_verifying.rst:7
+msgid "Verifying collections with ``ansible-galaxy``"
+msgstr "``ansible-galaxy`` でコレクションを検証"
+
+#: ../../rst/collections_guide/collections_verifying.rst:9
+msgid "Once installed, you can verify that the content of the installed collection matches the content of the collection on the server. This feature expects that the collection is installed in one of the configured collection paths and that the collection exists on one of the configured galaxy servers."
+msgstr "インストールすると、インストールしたコレクションの内容が、サーバー上のコレクションの内容と一致することを確認できます。この機能は、設定されたコレクションパスのいずれかにコレクションがインストールされ、設定された galaxy サーバーのいずれかにコレクションが存在することを想定します。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:15
+msgid "The output of the ``ansible-galaxy collection verify`` command is quiet if it is successful. If a collection has been modified, the altered files are listed under the collection name."
+msgstr "``ansible-galaxy collection verify`` コマンドの出力は、成功すると何も表示されません。コレクションを変更すると、変更したファイルがコレクション名の下に表示されます。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:25
+msgid "You can use the ``-vvv`` flag to display additional information, such as the version and path of the installed collection, the URL of the remote collection used for validation, and successful verification output."
+msgstr "``-vvv`` フラグを使用すると、インストールされたコレクションのバージョンとパス、検証に使用されるリモートコレクションの URL、正常な確認出力などの追加情報を表示できます。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:36
+msgid "If you have a pre-release or non-latest version of a collection installed you should include the specific version to verify. If the version is omitted, the installed collection is verified against the latest version available on the server."
+msgstr "プレリリースまたは最新でないバージョンのコレクションをインストールしている場合は、検証する特定のバージョンを含める必要があります。バージョンが省略された場合、インストールされたコレクションは、サーバーで利用可能な最新バージョンと比較して検証されます。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:42
+msgid "In addition to the ``namespace.collection_name:version`` format, you can provide the collections to verify in a ``requirements.yml`` file. Dependencies listed in ``requirements.yml`` are not included in the verify process and should be verified separately."
+msgstr "``namespace.collection_name:version`` 形式に加えて、``requirements.yml`` ファイルで検証するコレクションを提供することができます。``requirements.yml`` に記載されている依存関係は、検証プロセスに含まれないため、別途検証する必要があります。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:48
+msgid "Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`` contains paths to tar files or URLs for installation, you can use the ``--ignore-errors`` flag to ensure that all collections using the ``namespace.name`` format in the file are processed."
+msgstr "``tar.gz`` ファイルに対する検証はサポートされていません。``requirements.yml`` にインストール用の tar ファイルや URL へのパスが含まれている場合は、``--ignore-errors`` フラグを使用して、ファイル内で ``namespace.name`` 形式を使用しているすべてのコレクションが処理されるようにすることができます。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:53
+msgid "Verifying signed collections"
+msgstr "署名付きコレクションの確認"
+
+#: ../../rst/collections_guide/collections_verifying.rst:55
+msgid "If a collection has been signed by a :term:`distribution server`, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on all distribution servers. See :ref:`distributing_collections` for a table listing which servers support collection signing. See :ref:`installing_signed_collections` for how to verify a signed collection when you install it."
+msgstr "コレクションが :term:`distribution server` で署名された場合には、サーバーは ASCII 形式の分離署名を提供し、MANIFEST.json の信頼性を確認してから、この署名を使用してコレクションのコンテンツを検証します。このオプションはすべての配信サーバーで利用できるわけではありません。コレクション署名をサポートするサーバーをリストする表については、:ref:`distributing_collections` を、インストール時に署名済みのコレクションを検証する方法は、:ref:`installing_signed_collections` を参照してください。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:57
+msgid "To verify a signed installed collection:"
+msgstr "インストール済み署名コレクションを確認するには、以下を実行します。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:64
+msgid "Use the ``--signature`` option to verify collection name(s) provided on the CLI with an additional signature. This option can be used multiple times to provide multiple signatures."
+msgstr "``--signature`` オプションを使用して、追加の署名と共に CLI で提供されるコレクション名を検証します。このオプションを複数回使用して、複数の署名を提供することができます。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:70
+msgid "Optionally, you can verify a collection signature with a ``requirements.yml`` file."
+msgstr "オプションで、``requirements.yml`` ファイルを使用してコレクション署名を検証できます。"
+
+#: ../../rst/collections_guide/collections_verifying.rst:76
+msgid "When a collection is installed from a distribution server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the distribution server again when the ``--offline`` option is provided."
+msgstr "コレクションが配信サーバーからインストールされる場合、コレクションの信憑性を検証するためにサーバーが提供する署名は、インストールされたコレクションとともに保存されます。``--offline`` オプションが指定されている場合に、このデータを使用して、再度配信サーバーへのクエリーを行わずにコレクションの内部整合性を検証します。"
+
+#: ../../rst/collections_guide/index.rst:6
+msgid "Using Ansible collections"
+msgstr "Ansible コレクションの使用"
+
+#: ../../rst/collections_guide/index.rst:10
+msgid "**Making Open Source More Inclusive**"
+msgstr "**多様性を受け入れるオープンソースの強化**"
+
+#: ../../rst/collections_guide/index.rst:12
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_ を参照してください。"
+
+#: ../../rst/collections_guide/index.rst:14
+msgid "Welcome to the Ansible guide for working with collections."
+msgstr "Ansible でのコレクション使用ガイドへようこそ。"
+
+#: ../../rst/collections_guide/index.rst:16
+msgid "Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through a distribution server, such as Ansible Galaxy, or a Pulp 3 Galaxy server."
+msgstr "コレクションは、Playbook、ロール、モジュール、プラグインを含む Ansible コンテンツのディストリビューション形式です。Ansible Galaxy または Pulp 3 Galaxy などの配信サーバーでコレクションをインストールして使用できます。"
+
+

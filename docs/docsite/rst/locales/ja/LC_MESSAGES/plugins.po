@@ -7,182 +7,196 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-23 10:50+0100\n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.0\n"
+"Generated-By: Babel 2.8.1\n"
 
-#: ../../rst/plugins/action.rst:4
-msgid "Action Plugins"
+#: ../../rst/plugins/action.rst:4 ../../rst/plugins/cache.rst:123
+#: ../../rst/plugins/callback.rst:81
+msgid "Action plugins"
 msgstr "action プラグイン"
 
 #: ../../rst/plugins/action.rst:10
 msgid "Action plugins act in conjunction with :ref:`modules <working_with_modules>` to execute the actions required by playbook tasks. They usually execute automatically in the background doing prerequisite work before modules execute."
 msgstr "action プラグインは、:ref:`modules <working_with_modules>` と連携して、Playbook タスクに必要なアクションを実行します。これらは通常、モジュールが実行される前に、前提条件の作業を行うバックグラウンドで自動的に実行します。"
 
-#: ../../rst/plugins/action.rst:13
-msgid "The 'normal' action plugin is used for modules that do not already have an action plugin."
-msgstr "action プラグインが指定されていないモジュールには、「一般的な」action プラグインが使用されます。"
+#: ../../rst/plugins/action.rst:12
+msgid "The 'normal' action plugin is used for modules that do not already have an action plugin. If necessary, you can :ref:`create custom action plugins <developing_actions>`."
+msgstr "action プラグインが指定されていないモジュールには、「一般的な」action プラグインが使用されます。必要に応じて:ref:`create custom action plugins <developing_actions>` できます。"
 
-#: ../../rst/plugins/action.rst:18
+#: ../../rst/plugins/action.rst:17
 msgid "Enabling action plugins"
 msgstr "action プラグインの有効化"
 
-#: ../../rst/plugins/action.rst:20
+#: ../../rst/plugins/action.rst:19
 msgid "You can enable a custom action plugin by either dropping it into the ``action_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the action plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
 msgstr "カスタムの action プラグインを有効にするには、カスタムのプラグインを、ロール内のプレイの隣りにある ``action_plugins`` ディレクトリーに置くか、:ref:`ansible.cfg <ansible_configuration_settings>` に設定した action プラグインのディレクトリーソースの 1 つに配置します。"
 
-#: ../../rst/plugins/action.rst:25
+#: ../../rst/plugins/action.rst:24
 msgid "Using action plugins"
 msgstr "action プラグインの使用"
 
-#: ../../rst/plugins/action.rst:27
+#: ../../rst/plugins/action.rst:26
 msgid "Action plugin are executed by default when an associated module is used; no action is required."
 msgstr "action プラグインは、関連のモジュールを使用する場合にはデフォルトで実行するため、特に作業は必要ありません。"
 
-#: ../../rst/plugins/action.rst:30 ../../rst/plugins/callback.rst:77
-#: ../../rst/plugins/lookup.rst:136 ../../rst/plugins/strategy.rst:56
+#: ../../rst/plugins/action.rst:29 ../../rst/plugins/cache.rst:115
+#: ../../rst/plugins/callback.rst:73 ../../rst/plugins/connection.rst:55
+#: ../../rst/plugins/filter.rst:43 ../../rst/plugins/inventory.rst:159
+#: ../../rst/plugins/lookup.rst:137 ../../rst/plugins/strategy.rst:55
+#: ../../rst/plugins/test.rst:78 ../../rst/plugins/vars.rst:53
 msgid "Plugin list"
 msgstr "プラグイン一覧"
 
-#: ../../rst/plugins/action.rst:32
+#: ../../rst/plugins/action.rst:31
 msgid "You cannot list action plugins directly, they show up as their counterpart modules:"
 msgstr "直接 action プラグインの一覧を表示することはできませんが、対応のモジュールとして表示されます。"
 
-#: ../../rst/plugins/action.rst:34
+#: ../../rst/plugins/action.rst:33
 msgid "Use ``ansible-doc -l`` to see the list of available modules. Use ``ansible-doc <name>`` to see specific documentation and examples, this should note if the module has a corresponding action plugin."
 msgstr "``ansible-doc -l`` を使用して、利用可能なモジュールの一覧を表示します。特定のドキュメントおよび例を参照するには ``ansible-doc <name>`` を使用してください。モジュールに対応の action プラグインがある場合には、この点に注意してください。"
 
-#: ../../rst/plugins/action.rst:39 ../../rst/plugins/callback.rst:86
-#: ../../rst/plugins/vars.rst:64
+#: ../../rst/plugins/action.rst:38 ../../rst/plugins/callback.rst:82
+#: ../../rst/plugins/vars.rst:60
 msgid ":ref:`cache_plugins`"
 msgstr ":ref:`cache_plugins`"
 
-#: ../../rst/plugins/action.rst:40 ../../rst/plugins/vars.rst:65
-msgid "Ansible Cache plugins"
-msgstr "Ansible cache プラグイン"
+#: ../../rst/plugins/action.rst:39 ../../rst/plugins/cache.rst:4
+#: ../../rst/plugins/callback.rst:83 ../../rst/plugins/vars.rst:61
+msgid "Cache plugins"
+msgstr "Cache プラグイン"
 
-#: ../../rst/plugins/action.rst:41 ../../rst/plugins/become.rst:56
-#: ../../rst/plugins/cache.rst:125 ../../rst/plugins/connection.rst:65
-#: ../../rst/plugins/inventory.rst:147 ../../rst/plugins/lookup.rst:147
-#: ../../rst/plugins/shell.rst:42 ../../rst/plugins/strategy.rst:68
-#: ../../rst/plugins/vars.rst:66
+#: ../../rst/plugins/action.rst:40 ../../rst/plugins/become.rst:56
+#: ../../rst/plugins/cache.rst:124 ../../rst/plugins/connection.rst:65
+#: ../../rst/plugins/filter.rst:54 ../../rst/plugins/inventory.rst:168
+#: ../../rst/plugins/lookup.rst:148 ../../rst/plugins/shell.rst:42
+#: ../../rst/plugins/strategy.rst:67
 msgid ":ref:`callback_plugins`"
 msgstr ":ref:`callback_plugins`"
 
-#: ../../rst/plugins/action.rst:42 ../../rst/plugins/become.rst:57
-#: ../../rst/plugins/cache.rst:126 ../../rst/plugins/connection.rst:66
-#: ../../rst/plugins/inventory.rst:148 ../../rst/plugins/lookup.rst:148
-#: ../../rst/plugins/shell.rst:43 ../../rst/plugins/strategy.rst:69
-#: ../../rst/plugins/vars.rst:67
-msgid "Ansible callback plugins"
-msgstr "Ansible callback プラグイン"
+#: ../../rst/plugins/action.rst:41 ../../rst/plugins/become.rst:57
+#: ../../rst/plugins/cache.rst:125 ../../rst/plugins/callback.rst:4
+#: ../../rst/plugins/connection.rst:66 ../../rst/plugins/filter.rst:55
+#: ../../rst/plugins/inventory.rst:169 ../../rst/plugins/shell.rst:43
+#: ../../rst/plugins/strategy.rst:68
+msgid "Callback plugins"
+msgstr "callback プラグイン"
 
-#: ../../rst/plugins/action.rst:43 ../../rst/plugins/cache.rst:127
-#: ../../rst/plugins/callback.rst:88 ../../rst/plugins/inventory.rst:149
-#: ../../rst/plugins/vars.rst:68
+#: ../../rst/plugins/action.rst:42 ../../rst/plugins/cache.rst:126
+#: ../../rst/plugins/callback.rst:84 ../../rst/plugins/inventory.rst:170
+#: ../../rst/plugins/terminal.rst:44
 msgid ":ref:`connection_plugins`"
 msgstr ":ref:`connection_plugins`"
 
-#: ../../rst/plugins/action.rst:44 ../../rst/plugins/cache.rst:128
-#: ../../rst/plugins/callback.rst:89 ../../rst/plugins/inventory.rst:150
-#: ../../rst/plugins/vars.rst:69
-msgid "Ansible connection plugins"
-msgstr "Ansible connection プラグイン"
+#: ../../rst/plugins/action.rst:43 ../../rst/plugins/cache.rst:127
+#: ../../rst/plugins/callback.rst:85 ../../rst/plugins/connection.rst:4
+#: ../../rst/plugins/inventory.rst:171 ../../rst/plugins/terminal.rst:45
+msgid "Connection plugins"
+msgstr "connection プラグイン"
 
-#: ../../rst/plugins/action.rst:45 ../../rst/plugins/become.rst:54
-#: ../../rst/plugins/cache.rst:129 ../../rst/plugins/callback.rst:90
-#: ../../rst/plugins/lookup.rst:145 ../../rst/plugins/shell.rst:40
-#: ../../rst/plugins/strategy.rst:66 ../../rst/plugins/vars.rst:70
+#: ../../rst/plugins/action.rst:44 ../../rst/plugins/become.rst:54
+#: ../../rst/plugins/cache.rst:128 ../../rst/plugins/callback.rst:86
+#: ../../rst/plugins/filter.rst:52 ../../rst/plugins/lookup.rst:146
+#: ../../rst/plugins/shell.rst:40 ../../rst/plugins/strategy.rst:65
 msgid ":ref:`inventory_plugins`"
 msgstr ":ref:`inventory_plugins`"
 
-#: ../../rst/plugins/action.rst:46 ../../rst/plugins/become.rst:55
-#: ../../rst/plugins/cache.rst:130 ../../rst/plugins/callback.rst:91
-#: ../../rst/plugins/lookup.rst:146 ../../rst/plugins/shell.rst:41
-#: ../../rst/plugins/strategy.rst:67 ../../rst/plugins/vars.rst:71
-msgid "Ansible inventory plugins"
-msgstr "Ansible inventory プラグインの使用"
+#: ../../rst/plugins/action.rst:45 ../../rst/plugins/become.rst:55
+#: ../../rst/plugins/cache.rst:129 ../../rst/plugins/callback.rst:87
+#: ../../rst/plugins/filter.rst:53 ../../rst/plugins/inventory.rst:4
+#: ../../rst/plugins/shell.rst:41 ../../rst/plugins/strategy.rst:66
+msgid "Inventory plugins"
+msgstr "inventory プラグイン"
 
-#: ../../rst/plugins/action.rst:47 ../../rst/plugins/cache.rst:131
-#: ../../rst/plugins/callback.rst:92 ../../rst/plugins/vars.rst:72
+#: ../../rst/plugins/action.rst:46 ../../rst/plugins/cache.rst:130
+#: ../../rst/plugins/callback.rst:88
 msgid ":ref:`shell_plugins`"
 msgstr ":ref:`shell_plugins`"
 
-#: ../../rst/plugins/action.rst:48 ../../rst/plugins/cache.rst:132
-#: ../../rst/plugins/callback.rst:93 ../../rst/plugins/vars.rst:73
-msgid "Ansible Shell plugins"
-msgstr "Ansible shell プラグイン"
+#: ../../rst/plugins/action.rst:47 ../../rst/plugins/cache.rst:131
+#: ../../rst/plugins/callback.rst:89 ../../rst/plugins/shell.rst:4
+msgid "Shell plugins"
+msgstr "shell プラグイン"
 
-#: ../../rst/plugins/action.rst:49 ../../rst/plugins/cache.rst:133
-#: ../../rst/plugins/callback.rst:94 ../../rst/plugins/vars.rst:74
+#: ../../rst/plugins/action.rst:48 ../../rst/plugins/cache.rst:132
+#: ../../rst/plugins/callback.rst:90
 msgid ":ref:`strategy_plugins`"
 msgstr ":ref:`strategy_plugins`"
 
-#: ../../rst/plugins/action.rst:50 ../../rst/plugins/cache.rst:134
-#: ../../rst/plugins/callback.rst:95 ../../rst/plugins/vars.rst:75
-msgid "Ansible Strategy plugins"
-msgstr "Ansible strategy プラグイン"
+#: ../../rst/plugins/action.rst:49 ../../rst/plugins/cache.rst:133
+#: ../../rst/plugins/callback.rst:91 ../../rst/plugins/strategy.rst:4
+msgid "Strategy plugins"
+msgstr "strategy プラグイン"
 
-#: ../../rst/plugins/action.rst:51 ../../rst/plugins/cache.rst:135
-#: ../../rst/plugins/callback.rst:96 ../../rst/plugins/connection.rst:73
-#: ../../rst/plugins/inventory.rst:157
+#: ../../rst/plugins/action.rst:50 ../../rst/plugins/cache.rst:134
+#: ../../rst/plugins/callback.rst:92 ../../rst/plugins/connection.rst:73
+#: ../../rst/plugins/inventory.rst:178
 msgid ":ref:`vars_plugins`"
 msgstr ":ref:`vars_plugins`"
 
-#: ../../rst/plugins/action.rst:52 ../../rst/plugins/cache.rst:136
-#: ../../rst/plugins/callback.rst:97
-msgid "Ansible Vars plugins"
-msgstr "Ansible vars プラグイン"
+#: ../../rst/plugins/action.rst:51 ../../rst/plugins/cache.rst:135
+#: ../../rst/plugins/callback.rst:93 ../../rst/plugins/connection.rst:74
+#: ../../rst/plugins/inventory.rst:179 ../../rst/plugins/vars.rst:4
+msgid "Vars plugins"
+msgstr "vars プラグイン"
 
-#: ../../rst/plugins/action.rst:53 ../../rst/plugins/become.rst:64
+#: ../../rst/plugins/action.rst:52 ../../rst/plugins/become.rst:64
 #: ../../rst/plugins/cliconf.rst:44 ../../rst/plugins/connection.rst:75
-#: ../../rst/plugins/httpapi.rst:69 ../../rst/plugins/inventory.rst:159
-#: ../../rst/plugins/lookup.rst:155 ../../rst/plugins/netconf.rst:44
-#: ../../rst/plugins/plugins.rst:41 ../../rst/plugins/shell.rst:50
-#: ../../rst/plugins/strategy.rst:76 ../../rst/plugins/vars.rst:76
+#: ../../rst/plugins/docs_fragment.rst:32 ../../rst/plugins/filter.rst:60
+#: ../../rst/plugins/httpapi.rst:69 ../../rst/plugins/inventory.rst:180
+#: ../../rst/plugins/lookup.rst:154 ../../rst/plugins/module.rst:40
+#: ../../rst/plugins/module_util.rst:32 ../../rst/plugins/netconf.rst:44
+#: ../../rst/plugins/plugins.rst:45 ../../rst/plugins/shell.rst:50
+#: ../../rst/plugins/strategy.rst:75 ../../rst/plugins/terminal.rst:46
+#: ../../rst/plugins/test.rst:98 ../../rst/plugins/vars.rst:64
 msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 msgstr "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 
-#: ../../rst/plugins/action.rst:54 ../../rst/plugins/become.rst:65
-#: ../../rst/plugins/cache.rst:138 ../../rst/plugins/callback.rst:99
+#: ../../rst/plugins/action.rst:53 ../../rst/plugins/become.rst:65
+#: ../../rst/plugins/cache.rst:137 ../../rst/plugins/callback.rst:95
 #: ../../rst/plugins/cliconf.rst:45 ../../rst/plugins/connection.rst:76
-#: ../../rst/plugins/httpapi.rst:70 ../../rst/plugins/inventory.rst:160
-#: ../../rst/plugins/lookup.rst:156 ../../rst/plugins/netconf.rst:45
-#: ../../rst/plugins/plugins.rst:42 ../../rst/plugins/shell.rst:51
-#: ../../rst/plugins/strategy.rst:77 ../../rst/plugins/vars.rst:77
+#: ../../rst/plugins/docs_fragment.rst:33 ../../rst/plugins/filter.rst:61
+#: ../../rst/plugins/httpapi.rst:70 ../../rst/plugins/inventory.rst:181
+#: ../../rst/plugins/lookup.rst:155 ../../rst/plugins/module.rst:41
+#: ../../rst/plugins/module_util.rst:33 ../../rst/plugins/netconf.rst:45
+#: ../../rst/plugins/plugins.rst:46 ../../rst/plugins/shell.rst:51
+#: ../../rst/plugins/strategy.rst:76 ../../rst/plugins/terminal.rst:47
+#: ../../rst/plugins/test.rst:99 ../../rst/plugins/vars.rst:65
 msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
-#: ../../rst/plugins/action.rst:55 ../../rst/plugins/become.rst:66
-#: ../../rst/plugins/cliconf.rst:46 ../../rst/plugins/connection.rst:77
-#: ../../rst/plugins/httpapi.rst:71 ../../rst/plugins/inventory.rst:161
-#: ../../rst/plugins/lookup.rst:157 ../../rst/plugins/netconf.rst:46
-#: ../../rst/plugins/plugins.rst:43 ../../rst/plugins/shell.rst:52
-#: ../../rst/plugins/strategy.rst:78 ../../rst/plugins/vars.rst:78
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+#: ../../rst/plugins/action.rst:54 ../../rst/plugins/become.rst:66
+#: ../../rst/plugins/cache.rst:138 ../../rst/plugins/callback.rst:96
+#: ../../rst/plugins/connection.rst:77 ../../rst/plugins/docs_fragment.rst:34
+#: ../../rst/plugins/filter.rst:62 ../../rst/plugins/inventory.rst:182
+#: ../../rst/plugins/lookup.rst:156 ../../rst/plugins/plugins.rst:47
+#: ../../rst/plugins/shell.rst:52 ../../rst/plugins/strategy.rst:77
+#: ../../rst/plugins/test.rst:100 ../../rst/plugins/vars.rst:66
+msgid ":ref:`communication_irc`"
+msgstr ":ref:`communication_irc`"
 
-#: ../../rst/plugins/action.rst:56 ../../rst/plugins/become.rst:67
-#: ../../rst/plugins/cache.rst:140 ../../rst/plugins/callback.rst:101
-#: ../../rst/plugins/connection.rst:78 ../../rst/plugins/inventory.rst:162
-#: ../../rst/plugins/lookup.rst:158 ../../rst/plugins/plugins.rst:44
-#: ../../rst/plugins/shell.rst:53 ../../rst/plugins/strategy.rst:79
-#: ../../rst/plugins/vars.rst:79
-msgid "#ansible IRC chat channel"
-msgstr "IRC チャットチャンネル (#ansible)"
+#: ../../rst/plugins/action.rst:55 ../../rst/plugins/become.rst:67
+#: ../../rst/plugins/cache.rst:139 ../../rst/plugins/callback.rst:97
+#: ../../rst/plugins/connection.rst:78 ../../rst/plugins/docs_fragment.rst:35
+#: ../../rst/plugins/filter.rst:63 ../../rst/plugins/inventory.rst:183
+#: ../../rst/plugins/lookup.rst:157 ../../rst/plugins/plugins.rst:48
+#: ../../rst/plugins/shell.rst:53 ../../rst/plugins/strategy.rst:78
+#: ../../rst/plugins/test.rst:101 ../../rst/plugins/vars.rst:67
+msgid "How to join Ansible chat channels"
+msgstr "Ansible チャットチャンネルへの参加方法"
 
 #: ../../rst/plugins/become.rst:4
-msgid "Become Plugins"
+msgid "Become plugins"
 msgstr "become プラグイン"
 
 #: ../../rst/plugins/become.rst:12
 msgid "Become plugins work to ensure that Ansible can use certain privilege escalation systems when running the basic commands to work with the target machine as well as the modules required to execute the tasks specified in the play."
-msgstr "become プラグインは、基本的なコマンドの実行時に、Ansible が特定の特権昇格システムを使用して、プレイで指定されたタスクを実行するのに必要なモジュールやターゲットマシンと連携できるようにします。"
+msgstr "bocome プラグインは、基本的なコマンドの実行時に、Ansible が特定の特権昇格システムを使用して、プレイで指定されたタスクを実行するのに必要なモジュールやターゲットマシンと連携できるようにします。"
 
 #: ../../rst/plugins/become.rst:16
 msgid "These utilities (``sudo``, ``su``, ``doas``, and so on) generally let you 'become' another user to execute a command with the permissions of that user."
@@ -208,8 +222,7 @@ msgstr ":ref:`ansible_configuration_settings` や ``--become-method`` コマン�
 msgid "You can further control the settings for each plugin via other configuration options detailed in the plugin themselves (linked below)."
 msgstr "プラグイン自体 (以下にリンク) に詳述されているその他の設定オプションを使用して、各プラグインの設定をさらに制御できます。"
 
-#: ../../rst/plugins/become.rst:45 ../../rst/plugins/cache.rst:116
-#: ../../rst/plugins/connection.rst:55 ../../rst/plugins/inventory.rst:138
+#: ../../rst/plugins/become.rst:45
 msgid "Plugin List"
 msgstr "プラグイン一覧"
 
@@ -217,58 +230,63 @@ msgstr "プラグイン一覧"
 msgid "You can use ``ansible-doc -t become -l`` to see the list of available plugins. Use ``ansible-doc -t become <plugin name>`` to see specific documentation and examples."
 msgstr "``ansible-doc -t become -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t become <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/become.rst:52 ../../rst/plugins/inventory.rst:145
-#: ../../rst/plugins/lookup.rst:143 ../../rst/plugins/plugins.rst:35
-#: ../../rst/plugins/shell.rst:38 ../../rst/plugins/strategy.rst:64
+#: ../../rst/plugins/become.rst:52 ../../rst/plugins/filter.rst:50
+#: ../../rst/plugins/inventory.rst:166 ../../rst/plugins/lookup.rst:144
+#: ../../rst/plugins/module.rst:34 ../../rst/plugins/shell.rst:38
+#: ../../rst/plugins/strategy.rst:63 ../../rst/plugins/test.rst:86
 msgid ":ref:`about_playbooks`"
 msgstr ":ref:`about_playbooks`"
 
 #: ../../rst/plugins/become.rst:53 ../../rst/plugins/connection.rst:64
-#: ../../rst/plugins/inventory.rst:146 ../../rst/plugins/lookup.rst:144
-#: ../../rst/plugins/plugins.rst:36 ../../rst/plugins/shell.rst:39
-#: ../../rst/plugins/strategy.rst:65
+#: ../../rst/plugins/filter.rst:51 ../../rst/plugins/inventory.rst:167
+#: ../../rst/plugins/lookup.rst:145 ../../rst/plugins/module.rst:35
+#: ../../rst/plugins/shell.rst:39 ../../rst/plugins/strategy.rst:64
+#: ../../rst/plugins/test.rst:87
 msgid "An introduction to playbooks"
 msgstr "Playbook の概要"
 
-#: ../../rst/plugins/become.rst:58 ../../rst/plugins/inventory.rst:151
-#: ../../rst/plugins/lookup.rst:149 ../../rst/plugins/shell.rst:44
-#: ../../rst/plugins/strategy.rst:70
-msgid ":ref:`playbooks_filters`"
-msgstr ":ref:`playbooks_filters`"
+#: ../../rst/plugins/become.rst:58 ../../rst/plugins/connection.rst:67
+#: ../../rst/plugins/inventory.rst:172 ../../rst/plugins/lookup.rst:150
+#: ../../rst/plugins/shell.rst:44 ../../rst/plugins/strategy.rst:69
+#: ../../rst/plugins/test.rst:92
+msgid ":ref:`filter_plugins`"
+msgstr ":ref:`vars_plugins`"
 
 #: ../../rst/plugins/become.rst:59 ../../rst/plugins/connection.rst:68
-#: ../../rst/plugins/inventory.rst:152 ../../rst/plugins/lookup.rst:150
-#: ../../rst/plugins/shell.rst:45 ../../rst/plugins/strategy.rst:71
-msgid "Jinja2 filter plugins"
-msgstr "Jinja2 filter プラグイン"
+#: ../../rst/plugins/filter.rst:4 ../../rst/plugins/inventory.rst:173
+#: ../../rst/plugins/shell.rst:45 ../../rst/plugins/strategy.rst:70
+#: ../../rst/plugins/test.rst:93
+msgid "Filter plugins"
+msgstr "filter プラグイン"
 
-#: ../../rst/plugins/become.rst:60 ../../rst/plugins/inventory.rst:153
-#: ../../rst/plugins/lookup.rst:151 ../../rst/plugins/shell.rst:46
-#: ../../rst/plugins/strategy.rst:72
-msgid ":ref:`playbooks_tests`"
-msgstr ":ref:`playbooks_tests`"
+#: ../../rst/plugins/become.rst:60 ../../rst/plugins/connection.rst:69
+#: ../../rst/plugins/filter.rst:56 ../../rst/plugins/inventory.rst:174
+#: ../../rst/plugins/lookup.rst:152 ../../rst/plugins/shell.rst:46
+#: ../../rst/plugins/strategy.rst:71
+msgid ":ref:`test_plugins`"
+msgstr ":ref:`vars_plugins`"
 
 #: ../../rst/plugins/become.rst:61 ../../rst/plugins/connection.rst:70
-#: ../../rst/plugins/inventory.rst:154 ../../rst/plugins/lookup.rst:152
-#: ../../rst/plugins/shell.rst:47 ../../rst/plugins/strategy.rst:73
-msgid "Jinja2 test plugins"
-msgstr "Jinja2 test プラグイン"
+#: ../../rst/plugins/filter.rst:57 ../../rst/plugins/inventory.rst:175
+#: ../../rst/plugins/shell.rst:47 ../../rst/plugins/strategy.rst:72
+#: ../../rst/plugins/test.rst:4
+msgid "Test plugins"
+msgstr "test プラグイン"
 
-#: ../../rst/plugins/become.rst:62 ../../rst/plugins/inventory.rst:155
-#: ../../rst/plugins/lookup.rst:153 ../../rst/plugins/shell.rst:48
-#: ../../rst/plugins/strategy.rst:74
-msgid ":ref:`playbooks_lookups`"
-msgstr ":ref:`playbooks_lookups`"
+#: ../../rst/plugins/become.rst:62 ../../rst/plugins/connection.rst:71
+#: ../../rst/plugins/filter.rst:58 ../../rst/plugins/inventory.rst:176
+#: ../../rst/plugins/shell.rst:48 ../../rst/plugins/strategy.rst:73
+#: ../../rst/plugins/test.rst:96 ../../rst/plugins/vars.rst:62
+msgid ":ref:`lookup_plugins`"
+msgstr ":ref:`shell_plugins`"
 
 #: ../../rst/plugins/become.rst:63 ../../rst/plugins/connection.rst:72
-#: ../../rst/plugins/inventory.rst:156 ../../rst/plugins/lookup.rst:154
-#: ../../rst/plugins/shell.rst:49 ../../rst/plugins/strategy.rst:75
-msgid "Jinja2 lookup plugins"
-msgstr "Jinja2 lookup プラグイン"
-
-#: ../../rst/plugins/cache.rst:4
-msgid "Cache Plugins"
-msgstr "cache プラグイン"
+#: ../../rst/plugins/filter.rst:59 ../../rst/plugins/inventory.rst:177
+#: ../../rst/plugins/lookup.rst:4 ../../rst/plugins/shell.rst:49
+#: ../../rst/plugins/strategy.rst:74 ../../rst/plugins/test.rst:97
+#: ../../rst/plugins/vars.rst:63
+msgid "Lookup plugins"
+msgstr "lookup プラグイン"
 
 #: ../../rst/plugins/cache.rst:10
 msgid "Cache plugins allow Ansible to store gathered facts or inventory source data without the performance hit of retrieving them from source."
@@ -279,18 +297,18 @@ msgid "The default cache plugin is the :ref:`memory <memory_cache>` plugin, whic
 msgstr "デフォルトのキャッシュプラグインは :ref:`memory <memory_cache>` プラグインです。Ansible の現在の実行のデータのみをキャッシュします。永続ストレージを備えた他のプラグインを使用して、実行間でデータをキャッシュできます。これらのキャッシュプラグインの中にはファイルに書き込むものもあれば、データベースに書き込むものもあります。"
 
 #: ../../rst/plugins/cache.rst:14
-msgid "You can use different cache plugins for inventory and facts. If you enable inventory caching without setting an inventory-specific cache plugin, Ansible uses the fact cache plugin for both facts and inventory."
-msgstr "インベントリーとファクトにさまざまな cache プラグインを使用できます。インベントリー固有の cache プラグインを設定せずにインベントリー固有のキャッシュを有効にした場合、Ansible は、ファクトとインベントリー両方に cache プラグインを使用します。"
+msgid "You can use different cache plugins for inventory and facts. If you enable inventory caching without setting an inventory-specific cache plugin, Ansible uses the fact cache plugin for both facts and inventory. If necessary, you can :ref:`create custom cache plugins <developing_cache_plugins>`."
+msgstr "インベントリーとファクトにさまざまな cache プラグインを使用できます。インベントリー固有の cache プラグインを設定せずにインベントリー固有のキャッシュを有効にした場合、Ansible は、ファクトとインベントリー両方に cache プラグインを使用します。必要に応じて:ref:`create custom cache plugins <developing_cache_plugins>`できます。"
 
 #: ../../rst/plugins/cache.rst:19
-msgid "Enabling Fact Cache Plugins"
+msgid "Enabling fact cache plugins"
 msgstr "ファクトの cache プラグインの有効化"
 
 #: ../../rst/plugins/cache.rst:21
 msgid "Fact caching is always enabled. However, only one fact cache plugin can be active at a time. You can select the cache plugin to use for fact caching in the Ansible configuration, either with an environment variable:"
 msgstr "ファクトキャッシングは常に有効になっています。ただし、一度にアクティブにできるファクトの cache プラグインは 1 つだけです。環境変数を使用して、Ansible 設定でファクトキャッシュに使用するキャッシュプラグインを選択できます。"
 
-#: ../../rst/plugins/cache.rst:27 ../../rst/plugins/cache.rst:55
+#: ../../rst/plugins/cache.rst:27 ../../rst/plugins/cache.rst:54
 msgid "or in the ``ansible.cfg`` file:"
 msgstr "または ``ansible.cfg`` ファイルで、以下を行います。"
 
@@ -306,142 +324,124 @@ msgstr "カスタムの cache プラグインを有効にするには、ロー�
 msgid "You also need to configure other settings specific to each plugin. Consult the individual plugin documentation or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details."
 msgstr "また、各プラグインに固有の他の設定を構成する必要があります。個々のプラグインのドキュメントまたは Ansible の「:ref:`設定 <ansible_configuration_settings>`」を参照してください。"
 
-#: ../../rst/plugins/cache.rst:47
-msgid "Enabling Inventory Cache Plugins"
+#: ../../rst/plugins/cache.rst:46
+msgid "Enabling inventory cache plugins"
 msgstr "インベントリーの cache プラグインの有効化"
 
-#: ../../rst/plugins/cache.rst:49
+#: ../../rst/plugins/cache.rst:48
 msgid "Inventory caching is disabled by default. To cache inventory data, you must enable inventory caching and then select the specific cache plugin you want to use. Not all inventory plugins support caching, so check the documentation for the inventory plugin(s) you want to use. You can enable inventory caching with an environment variable:"
 msgstr "インベントリーキャッシュはデフォルトで無効になっています。インベントリーデータをキャッシュするには、インベントリーキャッシュを有効にしてから、使用する特定の cache プラグインを選択する必要があります。すべての intentory プラグインがキャッシュをサポートしているわけではないため、使用する inventory プラグインのドキュメントを確認してください。環境変数を使用してインベントリーキャッシュを有効にできます。"
 
-#: ../../rst/plugins/cache.rst:62 ../../rst/plugins/cache.rst:83
+#: ../../rst/plugins/cache.rst:61 ../../rst/plugins/cache.rst:82
 msgid "or if the inventory plugin accepts a YAML configuration source, in the configuration file:"
 msgstr "または、inventory プラグインが YAML 設定ソースに対応している場合は、設定ファイルで以下を指定します。"
 
-#: ../../rst/plugins/cache.rst:70
+#: ../../rst/plugins/cache.rst:69
 msgid "Only one inventory cache plugin can be active at a time. You can set it with an environment variable:"
 msgstr "一度にアクティブにできるインベントリーの cache プラグインは 1 つだけです。環境変数を使用して設定できます。"
 
-#: ../../rst/plugins/cache.rst:76
+#: ../../rst/plugins/cache.rst:75
 msgid "or in the ansible.cfg file:"
 msgstr "または、ansible.cfg ファイルで以下を設定します。"
 
-#: ../../rst/plugins/cache.rst:91
+#: ../../rst/plugins/cache.rst:90
 msgid "To cache inventory with a custom plugin in your plugin path, follow the :ref:`developer guide on cache plugins<developing_cache_plugins>`."
 msgstr "プラグインパスにカスタムプラグインを使用してインベントリーをキャッシュするには、「:ref:`cache プラグインの開発者ガイド<developing_cache_plugins>`」の手順に従ってください。"
 
-#: ../../rst/plugins/cache.rst:93
+#: ../../rst/plugins/cache.rst:92
 msgid "To cache inventory with a cache plugin in a collection, use the FQCN:"
 msgstr "コレクション内の cache プラグインを使用してインベントリーをキャッシュするには、FQCN を使用します。"
 
-#: ../../rst/plugins/cache.rst:100
+#: ../../rst/plugins/cache.rst:99
 msgid "If you enable caching for inventory plugins without selecting an inventory-specific cache plugin, Ansible falls back to caching inventory with the fact cache plugin you configured. Consult the individual inventory plugin documentation or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details."
 msgstr "インベントリー固有の cache プラグインを選択せずに inventory プラグインのキャッシュを有効にした場合、Ansible は、設定済みのファクトの cache プラグインでインベントリーのキャッシュが行われるようにフォールバックします。詳細は、inventory プラグインのドキュメント、または Ansible の「:ref:`設定 <ansible_configuration_settings>`」を参照してください。"
 
-#: ../../rst/plugins/cache.rst:108
-msgid "Using Cache Plugins"
+#: ../../rst/plugins/cache.rst:107
+msgid "Using cache plugins"
 msgstr "cache プラグインの使用"
 
-#: ../../rst/plugins/cache.rst:110
+#: ../../rst/plugins/cache.rst:109
 msgid "Cache plugins are used automatically once they are enabled."
 msgstr "cache プラグインは、有効になると自動的に使用されます。"
 
-#: ../../rst/plugins/cache.rst:118
+#: ../../rst/plugins/cache.rst:117
 msgid "You can use ``ansible-doc -t cache -l`` to see the list of available plugins. Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples."
 msgstr "``ansible-doc -t cache -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t cache <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/cache.rst:123 ../../rst/plugins/callback.rst:84
-#: ../../rst/plugins/vars.rst:62
+#: ../../rst/plugins/cache.rst:122 ../../rst/plugins/callback.rst:80
 msgid ":ref:`action_plugins`"
 msgstr ":ref:`action_plugins`"
 
-#: ../../rst/plugins/cache.rst:124 ../../rst/plugins/callback.rst:85
-#: ../../rst/plugins/vars.rst:63
-msgid "Ansible Action plugins"
-msgstr "Ansible action プラグイン"
-
-#: ../../rst/plugins/cache.rst:137 ../../rst/plugins/callback.rst:98
+#: ../../rst/plugins/cache.rst:136 ../../rst/plugins/callback.rst:94
 msgid "`User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_"
 msgstr "`User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_"
 
-#: ../../rst/plugins/cache.rst:139 ../../rst/plugins/callback.rst:100
-msgid "`webchat.freenode.net <https://webchat.freenode.net>`_"
-msgstr "`webchat.freenode.net <https://webchat.freenode.net>`_"
-
-#: ../../rst/plugins/callback.rst:4
-msgid "Callback Plugins"
-msgstr "callback プラグイン"
-
 #: ../../rst/plugins/callback.rst:10
-msgid "Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs, but can also be used to add additional output, integrate with other tools and marshall the events to a storage backend."
-msgstr "callback プラグインを使用すると、イベントに応答するときに Ansible に新しい動作を追加できます。デフォルトでは、callback プラグインは、コマンドラインプログラムを実行時に表示される出力の大半を制御しますが、他の出力を追加し、他のツールと統合し、ストレージバックエンドにイベントをマーシャリングすることにも使用できます。"
+msgid "Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs, but can also be used to add additional output, integrate with other tools and marshal the events to a storage backend. If necessary, you can :ref:`create custom callback plugins <developing_callbacks>`."
+msgstr "callback プラグインを使用すると、イベントに応答するときに Ansible に新しい動作を追加できます。デフォルトでは、callback プラグインは、コマンドラインプログラムを実行時に表示される出力の大半を制御しますが、他の出力を追加し、他のツールと統合し、ストレージバックエンドにイベントをマーシャリングすることにも使用できます。必要に応じて:ref:`create custom callback plugins <developing_callbacks>`できます。"
 
-#: ../../rst/plugins/callback.rst:17
+#: ../../rst/plugins/callback.rst:15
 msgid "Example callback plugins"
 msgstr "callback プラグインの例"
 
-#: ../../rst/plugins/callback.rst:19
+#: ../../rst/plugins/callback.rst:17
 msgid "The :ref:`log_plays <log_plays_callback>` callback is an example of how to record playbook events to a log file, and the :ref:`mail <mail_callback>` callback sends email on playbook failures."
 msgstr ":ref:`log_plays <log_plays_callback>` のコールバックは、Playbook のイベントをログファイルに記録する一例で、:ref:`mail <mail_callback>` コールバックは Playbook の失敗時にメールを送信します。"
 
-#: ../../rst/plugins/callback.rst:22
+#: ../../rst/plugins/callback.rst:19
 msgid "The :ref:`say <say_callback>` callback responds with computer synthesized speech in relation to playbook events."
 msgstr "また、:ref:`say <say_callback>` コールバックは、Playbook のイベントに関連して、コンピューターで合成された音声で応答します。"
 
-#: ../../rst/plugins/callback.rst:27
+#: ../../rst/plugins/callback.rst:24
 msgid "Enabling callback plugins"
 msgstr "callback プラグインの有効化"
 
-#: ../../rst/plugins/callback.rst:29
-msgid "You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the callback directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
+#: ../../rst/plugins/callback.rst:26
+msgid "You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the callback directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
 msgstr "カスタムの callback を有効にするには、その callback を、ロール内のプレイの隣りにある ``callback_plugins`` ディレクトリーに置くか、:ref:`ansible.cfg <ansible_configuration_settings>` で設定した callback ディレクトリーソースの 1 つに置きます。"
 
-#: ../../rst/plugins/callback.rst:31
+#: ../../rst/plugins/callback.rst:28
 msgid "Plugins are loaded in alphanumeric order. For example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`."
 msgstr "プラグインは英数字順に読み込まれます。たとえば、`1_first.py` という名前で実装されているプラグインは、`2_second.py` という名前のプラグインファイルより先に実行されます。"
 
-#: ../../rst/plugins/callback.rst:33
+#: ../../rst/plugins/callback.rst:30
 msgid "Most callbacks shipped with Ansible are disabled by default and need to be enabled in your :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function. For example:"
 msgstr "Ansible に同梱されるほとんどの callback プラグインはデフォルトで無効になっており、このプラグインを機能させるには、:ref:`ansible.cfg <ansible_configuration_settings>` ファイルで有効にする必要があります。以下に例を示します。"
 
-#: ../../rst/plugins/callback.rst:40
+#: ../../rst/plugins/callback.rst:37
 msgid "Setting a callback plugin for ``ansible-playbook``"
-msgstr "``ansible-playbook``の callback プラグインの設定"
+msgstr "``ansible-playbook`` の callback プラグインの設定"
 
-#: ../../rst/plugins/callback.rst:42
+#: ../../rst/plugins/callback.rst:39
 msgid "You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:"
 msgstr "コンソール出力のメインマネージャーは、1 つのプラグインのみにすることができます。デフォルトを置き換える場合は、サブクラスに CALLBACK_TYPE = stdout を定義して、:ref:`ansible.cfg <ansible_configuration_settings>` に stdout プラグインを設定する必要があります。以下に例を示します。"
 
-#: ../../rst/plugins/callback.rst:48
+#: ../../rst/plugins/callback.rst:45
 msgid "or for my custom callback:"
 msgstr "または、カスタムのコールバックの場合は以下を実行します。"
 
-#: ../../rst/plugins/callback.rst:54
+#: ../../rst/plugins/callback.rst:51
 msgid "This only affects :ref:`ansible-playbook` by default."
 msgstr "これは、デフォルトでは、:ref:`ansible-playbook` にのみ影響を及ぼします。"
 
-#: ../../rst/plugins/callback.rst:57
+#: ../../rst/plugins/callback.rst:54
 msgid "Setting a callback plugin for ad hoc commands"
 msgstr "アドホックコマンドへの callback プラグインの設定"
 
-#: ../../rst/plugins/callback.rst:59
+#: ../../rst/plugins/callback.rst:56
 msgid "The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout, so there is an extra setting in :ref:`ansible_configuration_settings` you need to add to use the stdout callback defined above:"
 msgstr ":ref:`ansible` アドホックコマンドは、特に stdout には別の callback プラグインを使用するため、上記に定義した stdout callback を使用するには、追加する必要がある :ref:`ansible_configuration_settings` にさらに設定を追加する必要があります。"
 
-#: ../../rst/plugins/callback.rst:67
+#: ../../rst/plugins/callback.rst:63
 msgid "You can also set this as an environment variable:"
 msgstr "これを環境変数として設定することもできます。"
 
-#: ../../rst/plugins/callback.rst:79
+#: ../../rst/plugins/callback.rst:75
 msgid "You can use ``ansible-doc -t callback -l`` to see the list of available plugins. Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples."
 msgstr "``ansible-doc -t callback -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t callback <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/callback.rst:87
-msgid "Ansible cache plugins"
-msgstr "Ansible cache プラグイン"
-
 #: ../../rst/plugins/cliconf.rst:4
-msgid "Cliconf Plugins"
+msgid "Cliconf plugins"
 msgstr "cliconf プラグイン"
 
 #: ../../rst/plugins/cliconf.rst:10
@@ -473,7 +473,7 @@ msgid "Most cliconf plugins can operate without configuration. A few have additi
 msgstr "ほとんどの cliconf プラグインは設定なしで動作します。タスクが CLI コマンドにどのように変換されるかに影響する追加オプションがいくつかあります。"
 
 #: ../../rst/plugins/cliconf.rst:30 ../../rst/plugins/httpapi.rst:32
-#: ../../rst/plugins/netconf.rst:30
+#: ../../rst/plugins/netconf.rst:30 ../../rst/plugins/terminal.rst:30
 msgid "Plugins are self-documenting. Each plugin should document its configuration options."
 msgstr "プラグインは自己文書化されています。プラグインごとに、設定オプションについて文書化する必要があります。"
 
@@ -486,31 +486,33 @@ msgid "These plugins have migrated to collections on `Ansible Galaxy <https://ga
 msgstr "これらのプラグインは `Ansible Galaxy <https://galaxy.ansible.com>`_ のコレクションに移行しました。``pip`` を使用して Ansible バージョン 2.10 以降をインストールしている場合は、複数の cliconf プラグインにアクセスできます。コントロールノードで利用可能な cliconf プラグインの一覧を表示するには、``ansible-doc -t cliconf -l`` と入力します。プラグイン固有のドキュメントと例を確認するには、``ansible-doc -t cliconf`` を使用します。"
 
 #: ../../rst/plugins/cliconf.rst:42 ../../rst/plugins/httpapi.rst:65
-#: ../../rst/plugins/netconf.rst:42
+#: ../../rst/plugins/netconf.rst:42 ../../rst/plugins/terminal.rst:42
 msgid ":ref:`Ansible for Network Automation<network_guide>`"
 msgstr ":ref:`Ansible for Network Automation<network_guide>`"
 
 #: ../../rst/plugins/cliconf.rst:43 ../../rst/plugins/httpapi.rst:66
-#: ../../rst/plugins/netconf.rst:43
+#: ../../rst/plugins/netconf.rst:43 ../../rst/plugins/terminal.rst:43
 msgid "An overview of using Ansible to automate networking devices."
 msgstr "Ansible を使用したネットワークデバイスの自動化の概要"
 
+#: ../../rst/plugins/cliconf.rst:46 ../../rst/plugins/httpapi.rst:71
+#: ../../rst/plugins/module.rst:42 ../../rst/plugins/module_util.rst:34
+#: ../../rst/plugins/netconf.rst:46 ../../rst/plugins/terminal.rst:48
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
+
 #: ../../rst/plugins/cliconf.rst:47 ../../rst/plugins/httpapi.rst:72
-#: ../../rst/plugins/netconf.rst:47
+#: ../../rst/plugins/netconf.rst:47 ../../rst/plugins/terminal.rst:49
 msgid "#ansible-network IRC chat channel"
 msgstr "IRC チャットチャンネル (#ansible-network)"
 
-#: ../../rst/plugins/connection.rst:4
-msgid "Connection Plugins"
-msgstr "connection プラグイン"
-
 #: ../../rst/plugins/connection.rst:10
 msgid "Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time."
-msgstr "接続プラグインにより、Ansible はターゲットホストに接続してそのホストにあるタスクを実行できるようにします。Ansible には多くの接続プラグインが同梱されていますが、一度に使用できるのは 1 つのみとなります。"
+msgstr "connection プラグインにより、Ansible はターゲットホストに接続してそのホストにあるタスクを実行できるようにします。Ansible には多くの connection プラグインが同梱されていますが、一度に使用できるのは 1 つのみとなります。"
 
 #: ../../rst/plugins/connection.rst:12
-msgid "By default, Ansible ships with several plugins. The most commonly used are the :ref:`paramiko SSH<paramiko_ssh_connection>`, native ssh (just called :ref:`ssh<ssh_connection>`), and :ref:`local<local_connection>` connection types.  All of these can be used in playbooks and with :command:`/usr/bin/ansible` to decide how you want to talk to remote machines."
-msgstr "デフォルトでは、Ansible には複数のプラグインが同梱されています。最も一般的に使用されるものは、:ref:`paramiko SSH<paramiko_ssh_connection>` ネイティブ ssh (ただ :ref:`ssh<ssh_connection>` と呼ばれます)、および :ref:`local<local_connection>` 接続タイプです。これらはすべて、リモートマシンとの通信方法を決定するために Playbook と :command:`/usr/bin/ansible` で使用できます。"
+msgid "By default, Ansible ships with several connection plugins. The most commonly used are the :ref:`paramiko SSH<paramiko_ssh_connection>`, native ssh (just called :ref:`ssh<ssh_connection>`), and :ref:`local<local_connection>` connection types.  All of these can be used in playbooks and with :command:`/usr/bin/ansible` to decide how you want to talk to remote machines. If necessary, you can :ref:`create custom connection plugins <developing_connection_plugins>`."
+msgstr "デフォルトでは、Ansible には複数の connection プラグインが同梱されています。最も一般的に使用されるものは、:ref:`paramiko SSH<paramiko_ssh_connection>` ネイティブ ssh (ただ :ref:`ssh<ssh_connection>` と呼ばれます)、および :ref:`local<local_connection>` 接続タイプです。これらはすべて、リモートマシンとの通信方法を決定するために Playbook と :command:`/usr/bin/ansible` で使用できます。必要に応じて:ref:`create custom connection plugins <developing_connection_plugins>` ができます。"
 
 #: ../../rst/plugins/connection.rst:14
 msgid "The basics of these connection types are covered in the :ref:`getting started<intro_getting_started>` section."
@@ -538,15 +540,15 @@ msgstr "connection プラグインの使用"
 
 #: ../../rst/plugins/connection.rst:36
 msgid "You can set the connection plugin globally via :ref:`configuration<ansible_configuration_settings>`, at the command line (``-c``, ``--connection``), as a :ref:`keyword <playbook_keywords>` in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory. For example, for Windows machines you might want to set the :ref:`winrm <winrm_connection>` plugin as an inventory variable."
-msgstr "接続プラグインは、:ref:`configuration<ansible_configuration_settings>`、コマンドライン (``-c``、``--connection``)を経由するか、プレイの :ref:`keyword <playbook_keywords>` として使用するか、インベントリーにある :ref:`variable<behavioral_parameters>` を設定すること (もっとも多い例) で設定できます。たとえば、Windows マシンでは :ref:`winrm <winrm_connection>` プラグインをインベントリー変数として設定できます。"
+msgstr "connection プラグインは、:ref:`設定<ansible_configuration_settings>`、コマンドライン (``-c``、``--connection``)を経由するか、プレイの :ref:`キーワード <playbook_keywords>` として使用するか、インベントリーにある :ref:`変数<behavioral_parameters>` を設定すること (もっとも多い例) で設定できます。たとえば、Windows マシンでは :ref:`winrm <winrm_connection>` プラグインをインベントリー変数として設定できます。"
 
 #: ../../rst/plugins/connection.rst:39
 msgid "Most connection plugins can operate with minimal configuration. By default they use the :ref:`inventory hostname<inventory_hostnames_lookup>` and defaults to find the target host."
-msgstr "ほとんどの接続プラグインは最小設定で動作します。デフォルトでは :ref:`inventory hostname<inventory_hostnames_lookup>` を使用し、デフォルトではターゲットホストを検索します。"
+msgstr "ほとんどの connection プラグインは最小設定で動作します。デフォルトでは :ref:`インベントリーのホスト名<inventory_hostnames_lookup>` を使用し、デフォルトではターゲットホストを検索します。"
 
 #: ../../rst/plugins/connection.rst:41
 msgid "Plugins are self-documenting. Each plugin should document its configuration options. The following are connection variables common to most connection plugins:"
-msgstr "プラグインは自己文書化されています。各プラグインは、その設定オプションを文書化する必要があります。以下は、ほとんどの接続プラグインに共通する接続変数です。"
+msgstr "プラグインは自己文書化されています。各プラグインは、その設定オプションを文書化する必要があります。以下は、ほとんどの connection プラグインに共通する接続変数です。"
 
 #: ../../rst/plugins/connection.rst:43
 msgid ":ref:`ansible_host<magic_variables_and_hostvars>`"
@@ -554,7 +556,7 @@ msgstr ":ref:`ansible_host<magic_variables_and_hostvars>`"
 
 #: ../../rst/plugins/connection.rst:44
 msgid "The name of the host to connect to, if different from the :ref:`inventory <intro_inventory>` hostname."
-msgstr "接続するホストの名前 (:ref:`inventory <intro_inventory>` のホスト名と異なる場合)。"
+msgstr "接続するホストの名前 (:ref:`インベントリー <intro_inventory>` のホスト名と異なる場合)。"
 
 #: ../../rst/plugins/connection.rst:45
 msgid ":ref:`ansible_port<faq_setting_users_and_ports>`"
@@ -584,24 +586,84 @@ msgstr "``ansible-doc -t connection -l`` を使用して、利用可能なプラ
 msgid ":ref:`Working with Playbooks<working_with_playbooks>`"
 msgstr ":ref:`Working with Playbooks<working_with_playbooks>`"
 
-#: ../../rst/plugins/connection.rst:67
-msgid ":ref:`Filters<playbooks_filters>`"
-msgstr ":ref:`Filters<playbooks_filters>`"
+#: ../../rst/plugins/docs_fragment.rst:4
+msgid "Docs fragments"
+msgstr "ドキュメントフラグメント"
 
-#: ../../rst/plugins/connection.rst:69
-msgid ":ref:`Tests<playbooks_tests>`"
-msgstr ":ref:`Tests<playbooks_tests>`"
+#: ../../rst/plugins/docs_fragment.rst:10
+msgid "Docs fragments allow you to document common parameters of multiple plugins or modules in a single place."
+msgstr "このドキュメントフラグメントを使用すると、複数のプラグインまたはモジュールの共通のパラメーターを 1 カ所で文書化できます。"
 
-#: ../../rst/plugins/connection.rst:71
-msgid ":ref:`Lookups<playbooks_lookups>`"
-msgstr ":ref:`Lookups<playbooks_lookups>`"
+#: ../../rst/plugins/docs_fragment.rst:15
+msgid "Enabling docs fragments"
+msgstr "ドキュメントフラグメントの有効化"
 
-#: ../../rst/plugins/connection.rst:74 ../../rst/plugins/inventory.rst:158
-msgid "Ansible vars plugins"
-msgstr "Ansible vars プラグイン"
+#: ../../rst/plugins/docs_fragment.rst:17
+msgid "You can add a custom docs fragment by dropping it into a ``doc_fragments`` directory adjacent to your collection or role, just like any other plugin."
+msgstr "他のプラグインと同様に、コレクションやロールに隣接する ``doc_fragments`` ディレクトリーに置くことで、カスタムドキュメントフラグメントを追加できます。"
+
+#: ../../rst/plugins/docs_fragment.rst:22
+msgid "Using docs fragments"
+msgstr "ドキュメントフラグメントの使用"
+
+#: ../../rst/plugins/docs_fragment.rst:24
+msgid "Only collection developers and maintainers use docs fragments. For more information on using docs fragments, see :ref:`module_docs_fragments` or :ref:`docfragments_collections`."
+msgstr "コレクション開発者およびメンテナンス管理者のみがドキュメントフラグメントを使用します。ドキュメントフラグメントの使用方法は、「:ref:`module_docs_fragments`」または「:ref:`docfragments_collections`」を参照してください。"
+
+#: ../../rst/plugins/docs_fragment.rst:28 ../../rst/plugins/module.rst:36
+#: ../../rst/plugins/module_util.rst:28
+msgid ":ref:`developing_modules_general`"
+msgstr ":ref:`developing_modules_general`"
+
+#: ../../rst/plugins/docs_fragment.rst:29 ../../rst/plugins/module.rst:37
+#: ../../rst/plugins/module_util.rst:29
+msgid "An introduction to creating Ansible modules"
+msgstr "Ansible モジュール作成の概要"
+
+#: ../../rst/plugins/docs_fragment.rst:30 ../../rst/plugins/module.rst:38
+#: ../../rst/plugins/module_util.rst:30
+msgid ":ref:`developing_collections`"
+msgstr ":ref:`developing_collections`"
+
+#: ../../rst/plugins/docs_fragment.rst:31 ../../rst/plugins/module.rst:39
+#: ../../rst/plugins/module_util.rst:31
+msgid "An guide to creating Ansible collections"
+msgstr "Ansible コレクションの作成ガイド"
+
+#: ../../rst/plugins/filter.rst:10
+msgid "Filter plugins manipulate data. With the right filter you can extract a particular value, transform data types and formats, perform mathematical calculations, split and concatenate strings, insert dates and times, and do much more.  Ansible uses the :ref:`standard filters <jinja2:builtin-filters>` shipped with Jinja2 and adds some specialized filter plugins. You can :ref:`create custom Ansible filters as plugins <developing_filter_plugins>`."
+msgstr "Filter プラグインはデータを操作します。適切なフィルターを使用すると、特定の値の抽出、データ型と形式の変換、数学的な計算の実行、連結文字列や連結文字列の実行、日付と時間の挿入などを行うことができます。Ansible は Jinja2 に同梱されている :ref:`standard filters <jinja2:builtin-filters>` を使用して、特別な filter プラグインを追加します。:ref:`create custom Ansible filters as plugins <developing_filter_plugins>` が可能です。"
+
+#: ../../rst/plugins/filter.rst:15
+msgid "Enabling filter plugins"
+msgstr "filter プラグインの有効化"
+
+#: ../../rst/plugins/filter.rst:17
+msgid "You can add a custom filter plugin by dropping it into a ``filter_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the filter plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
+msgstr "カスタムの filter プラグインを追加するには、そのプラグインを、ロール内のプレイの隣りにある ``filter_plugins`` ディレクトリーに置くか、:ref:`ansible.cfg <ansible_configuration_settings>` で設定したディレクトリーソースの 1 つに置きます。"
+
+#: ../../rst/plugins/filter.rst:22
+msgid "Using filter plugins"
+msgstr "filter プラグインの使用"
+
+#: ../../rst/plugins/filter.rst:24
+msgid "You can use filters anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module. For more information on using filter plugins, see :ref:`playbooks_filters`.  Filters can return any type of data, but if you want to always return a boolean (``True`` or ``False``) you should be looking at a test instead."
+msgstr "フィルターは、プレイ、変数ファイル、あるいは :ref:`template <template_module>` モジュールの Jinja2 テンプレートでクラスなど、Ansible の中でテンプレートを使用できる場所であれば使用できます。フィルタープラグインの使用の詳細は、:ref:`playbooks_filters` を参照してください。フィルターは任意のタイプのデータを返すことができますが、常にブール値 (``True`` または ``False``) を返す場合は、代わりにテストする必要があります。"
+
+#: ../../rst/plugins/filter.rst:31
+msgid "Filters are the preferred way to manipulate data in Ansible, you can identify a filter because it is normally preceded by a ``|``, with the expression on the left of it being the first input of the filter. Additional parameters may be passed into the filter itself as you would to most programming functions. These parameters can be either ``positional`` (passed in order) or ``named`` (passed as key=value pairs). When passing both types, positional arguments should go first."
+msgstr "フィルターは、Ansible でデータを操作するのに推奨される方法です。フィルターは、通常 ``|`` の前にあり、フィルターの左側にある式はフィルターの最初の入力であるため、特定できます。ほとんどのプログラミング関数と同様に、追加のパラメーターはフィルター自体に渡すことができます。これらのパラメーターは、``positional`` (順番に渡す) または ``named`` のいずれかになります。両方のタイプを渡す場合は、位置引数が最初に指定する必要があります。"
+
+#: ../../rst/plugins/filter.rst:39
+msgid "In the documentation, filters will always have a C(_input) option that corresponds to the expression to the left of c(|). A C(positional:) field in the documentation will show which options are positional and in which order they are required."
+msgstr "ドキュメントでは、フィルターには常に c(|) の左側の式に対応する C(_input) オプションがあります。ドキュメントの AC(positional:) フィールドは、どのオプションが位置引数で、どの順番に実行する必要があるかを示します。"
+
+#: ../../rst/plugins/filter.rst:45 ../../rst/plugins/test.rst:80
+msgid "You can use ``ansible-doc -t filter -l`` to see the list of available plugins. Use ``ansible-doc -t filter <plugin name>`` to see specific documents and examples."
+msgstr "``ansible-doc -t filter -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t filter <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
 #: ../../rst/plugins/httpapi.rst:4
-msgid "Httpapi Plugins"
+msgid "Httpapi plugins"
 msgstr "httpapi プラグイン"
 
 #: ../../rst/plugins/httpapi.rst:10
@@ -656,89 +718,89 @@ msgstr ":ref:`Developing network modules<developing_modules_network>`"
 msgid "How to develop network modules."
 msgstr "ネットワークモジュールの開発方法"
 
-#: ../../rst/plugins/inventory.rst:4
-msgid "Inventory Plugins"
-msgstr "inventory プラグイン"
-
 #: ../../rst/plugins/inventory.rst:10
-msgid "Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either using the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources."
-msgstr "inventory プラグインでは、``-i /path/to/file`` や ``-i 'host1, host2'`` コマンドラインパラメーターを使用したり、他の設定ソースを使用したりして、Ansible がタスクの対象として使用するホストのインベントリーをコンパイルするためのデータソースを指定できます。"
+msgid "Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either using the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources. If necessary, you can :ref:`create custom inventory plugins <developing_inventory_plugins>`."
+msgstr "inventory プラグインでは、``-i /path/to/file`` や ``-i 'host1, host2'`` コマンドラインパラメーターを使用したり、他の設定ソースを使用したりして、Ansible がタスクの対象として使用するホストのインベントリーをコンパイルするためのデータソースを指定できます。必要に応じて:ref:`create custom inventory plugins <developing_inventory_plugins>`できます。"
 
-#: ../../rst/plugins/inventory.rst:16
+#: ../../rst/plugins/inventory.rst:15
 msgid "Enabling inventory plugins"
 msgstr "inventory プラグインの有効化"
 
-#: ../../rst/plugins/inventory.rst:18
+#: ../../rst/plugins/inventory.rst:17
 msgid "Most inventory plugins shipped with Ansible are enabled by default or can be used by with the ``auto`` plugin."
 msgstr "Ansible に同梱されるほとんどの inventory プラグインはデフォルトで有効になっているか、``auto`` プラグインで使用することができます。"
 
-#: ../../rst/plugins/inventory.rst:20
+#: ../../rst/plugins/inventory.rst:19
 msgid "In some circumstances, for example, if the inventory plugin does not use a YAML configuration file, you may need to enable the specific plugin. You can do this by setting ``enable_plugins`` in your :ref:`ansible.cfg <ansible_configuration_settings>` file in the ``[inventory]`` section. Modifying this will override the default list of enabled plugins. Here is the default list of enabled plugins that ships with Ansible:"
-msgstr "たとえば、インベントリープラグインが YAML 設定ファイルを使用しない場合は、特定のプラグインを有効にする必要があります。これを行うには、``[inventory]`` セクションの :ref:`ansible.cfg <ansible_configuration_settings>`ファイルで ``enable_plugins``を設定します。これを変更すると、有効化されたプラグインのデフォルト一覧が上書きされます。以下は、Ansible に同梱される有効なプラグインのデフォルト一覧です。"
+msgstr "たとえば、インベントリープラグインが YAML 設定ファイルを使用しない場合は、特定のプラグインを有効にする必要があります。これを行うには、``[inventory]`` セクションの :ref:`ansible.cfg <ansible_configuration_settings>` ファイルで ``enable_plugins`` を設定します。これを変更すると、有効化されたプラグインのデフォルト一覧が上書きされます。以下は、Ansible に同梱される有効なプラグインのデフォルト一覧です。"
 
-#: ../../rst/plugins/inventory.rst:27
-msgid "If the plugin is in a collection, use the fully qualified name:"
-msgstr "プラグインをコレクションで使用する場合は、完全修飾名を使用してください。"
+#: ../../rst/plugins/inventory.rst:26
+msgid "If the plugin is in a collection and is not being picked up by the `auto` statement, you can append the fully qualified name:"
+msgstr "プラグインがコレクションにあり、`auto` ステートメントで取得されていない場合は、完全修飾名を追加できます。"
 
-#: ../../rst/plugins/inventory.rst:38
+#: ../../rst/plugins/inventory.rst:33
+msgid "Or, if it is a local plugin, perhaps stored in the path set by :ref:`DEFAULT_INVENTORY_PLUGIN_PATH`, you could reference it as follows:"
+msgstr "または、ローカルのプラグインdで、:ref:`DEFAULT_INVENTORY_PLUGIN_PATH` で設定されたパスに保存されている場合には、以下のように参照できます。"
+
+#: ../../rst/plugins/inventory.rst:40
+msgid "If you use a plugin that supports a YAML configuration source, make sure that the name matches the name provided in the ``plugin`` entry of the inventory source file."
+msgstr "YAML 設定ソースをサポートするプラグインを使用する場合は、名前がインベントリーソースファイルの ``plugin`` エントリーで指定された名前と一致していることを確認してください。"
+
+#: ../../rst/plugins/inventory.rst:45
 msgid "Using inventory plugins"
 msgstr "inventory プラグインの使用"
 
-#: ../../rst/plugins/inventory.rst:40
+#: ../../rst/plugins/inventory.rst:47
 msgid "To use an inventory plugin, you must provide an inventory source. Most of the time this is a file containing host information or a YAML configuration file with options for the plugin. You can use the ``-i`` flag to provide inventory sources or configure a default inventory path."
 msgstr "inventory プラグインを使用するには、インベントリーソースを指定する必要があります。そのほとんどは、プラグインのオプションを持つホスト情報または YAML 設定ファイルを含むファイルです。``-i`` フラグを使用してインベントリーソースを提供するか、デフォルトのインベントリーパスを設定することができます。"
 
-#: ../../rst/plugins/inventory.rst:46
+#: ../../rst/plugins/inventory.rst:53
 msgid "To start using an inventory plugin with a YAML configuration source, create a file with the accepted filename schema documented for the plugin in question, then add ``plugin: plugin_name``. Use the fully qualified name if the plugin is in a collection."
 msgstr "YAML 設定ソースで inventory プラグインの使用を開始するには、該当するプラグインで文書化されている受け入れ可能なファイル名のスキーマでファイルを作成し、そのファイルに ``plugin: plugin_name`` を追加します。プラグインがコレクションにある場合は、完全修飾名を使用します。"
 
-#: ../../rst/plugins/inventory.rst:53
+#: ../../rst/plugins/inventory.rst:60
 msgid "Each plugin should document any naming restrictions. In addition, the YAML config file must end with the extension ``yml`` or ``yaml`` to be enabled by default with the ``auto`` plugin (otherwise, see the section above on enabling plugins)."
 msgstr "各プラグインは命名制限について記載する必要があります。また、YAML 設定ファイルは、``auto`` プラグインでデフォルトで有効にする拡張子 ``yml`` または ``yaml`` で終了する必要があります (同様に、プラグインを有効にする際の上記のセクションを参照してください)。"
 
-#: ../../rst/plugins/inventory.rst:55
+#: ../../rst/plugins/inventory.rst:62
 msgid "After providing any required options, you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:"
 msgstr "必要なオプションを指定したら、``ansible-inventory -i demo.aws_ec2.yml --graph`` で設定され追加されたインベントリーを表示できます。"
 
-#: ../../rst/plugins/inventory.rst:65
+#: ../../rst/plugins/inventory.rst:72
 msgid "If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, use the ``--playbook-dir`` flag."
 msgstr "Playbook に隣接するコレクションで inventory プラグインを使用して、``ansible-inventory`` で設定をテストするには、``--playbook-dir`` フラグを使用する必要があります。"
 
-#: ../../rst/plugins/inventory.rst:67
+#: ../../rst/plugins/inventory.rst:74
 msgid "Your inventory source might be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). Ansible parses the directory recursively, alphabetically. You cannot configure the parsing approach, so name your files to make it work predictably. Inventory plugins that extend constructed features directly can work around that restriction by adding constructed options in addition to the inventory plugin options. Otherwise, you can use ``-i`` with multiple sources to impose a specific order, for example ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``."
-msgstr "インベントリーソースは、インベントリー設定ファイルのディレクトリーである場合があります。構築した inventory プラグインは、インベントリーにすでに存在するホストでのみ動作するため、特定のタイミング (「最後」など) で構築したインベントリー設定を解析してください。Ansible は、ディレクトリーを再帰的にアルファベットで解析します。解析アプローチは設定できないため、想定通りに機能するように、ファイルの名前を指定します。構築した機能を直接拡張したinventory プラグインは、inventory プラグインのオプションに構築したオプションを追加し、制約を回避して機能させることができます。それ以外の場合は、複数ソースに ``-i`` を使用して特定の順番を指定します (例: ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``)。"
+msgstr "インベントリーソースは、インベントリー設定ファイルのディレクトリーである場合があります。構築した inventory プラグインは、インベントリーにすでに存在するホストでのみ動作するため、特定のタイミング (「最後」など) で構築したインベントリー設定を解析してください。Ansible は、ディレクトリーを再帰的にアルファベットで解析します。解析アプローチは設定できないため、想定通りに機能するように、ファイルの名前を指定します。構築した機能を直接拡張した inventory プラグインは、inventory プラグインのオプションに構築したオプションを追加し、制約を回避して機能させることができます。それ以外の場合は、複数ソースに ``-i`` を使用して特定の順番を指定します (例: ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``)。"
 
-#: ../../rst/plugins/inventory.rst:69
+#: ../../rst/plugins/inventory.rst:76
 msgid "You can create dynamic groups using host variables with the constructed ``keyed_groups`` option. The option ``groups`` can also be used to create groups and ``compose`` creates and modifies host variables. Here is an aws_ec2 example utilizing constructed features:"
-msgstr "構築した``keyed_groups`` オプションとホスト変数を使用して、動的なグループを作成できます。``groups`` オプションを使用してグループを作成し、``compose`` でホスト変数を作成して変更できます。以下は、構築した機能を使用する aws_ec2 のサンプルです。"
+msgstr "構築した ``keyed_groups`` オプションとホスト変数を使用して、動的なグループを作成できます。``groups`` オプションを使用してグループを作成し、``compose`` でホスト変数を作成して変更できます。以下は、構築した機能を使用する aws_ec2 のサンプルです。"
 
-#: ../../rst/plugins/inventory.rst:90
+#: ../../rst/plugins/inventory.rst:109
 msgid "Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:"
 msgstr "これで、``ansible-inventory -i demo.aws_ec2.yml --graph`` の出力が表示されます。"
 
-#: ../../rst/plugins/inventory.rst:108
+#: ../../rst/plugins/inventory.rst:129
 msgid "If a host does not have the variables in the configuration above (in other words, ``tags.Name``, ``tags``, ``private_ip_address``), the host will not be added to groups other than those that the inventory plugin creates and the ``ansible_host`` host variable will not be modified."
 msgstr "上記の設定でホストに変数がない場合には (つまり ``tags.Name``、``tags``、``private_ip_address``)、ホストは inventory プラグインが作成したグループ以外には追加されず、また ``ansible_host`` のホスト変数も変更されません。"
 
-#: ../../rst/plugins/inventory.rst:110
+#: ../../rst/plugins/inventory.rst:131
 msgid "Inventory plugins that support caching can use the general settings for the fact cache defined in the ``ansible.cfg`` file's ``[defaults]`` section or define inventory-specific settings in the ``[inventory]`` section. Individual plugins can define plugin-specific cache settings in their config file:"
 msgstr "キャッシュをサポートする inventory プラグインは、``ansible.cfg`` ファイルの ``[defaults]`` セクションに定義されたファクトキャッシュの一般設定を使用するか、``[inventory]`` セクションにインベントリー固有の設定を定義することができます。個々のプラグインは、設定ファイルでプラグイン固有のキャッシュ設定を定義できます。"
 
-#: ../../rst/plugins/inventory.rst:122
+#: ../../rst/plugins/inventory.rst:143
 msgid "Here is an example of setting inventory caching with some fact caching defaults for the cache plugin used and the timeout in an ``ansible.cfg`` file:"
-msgstr "以下は、``ansible.cfg`` ファイルに、使用する cache プラグインにデフォルト設定されているファクトキャッシュの一部を使用したインベントリーキャッシュと、タイムアウトを設定する例です。"
+msgstr "以下は、``ansible.cfg`` ファイルに、使用する chache プラグインにデフォルト設定されているファクトキャッシュの一部を使用したインベントリーキャッシュと、タイムアウトを設定する例です。"
 
-#: ../../rst/plugins/inventory.rst:140
+#: ../../rst/plugins/inventory.rst:161
 msgid "You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples."
 msgstr "``ansible-doc -t inventory -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t inventory <plugin name>`` を使用して、プラグイン固有のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/lookup.rst:4
-msgid "Lookup Plugins"
-msgstr "lookup プラグイン"
-
 #: ../../rst/plugins/lookup.rst:10
-msgid "Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources."
-msgstr "lookup プラグインは、Jinja2 テンプレート言語への Ansible 固有の拡張です。lookup プラグインを使用して、Playbook 内の外部ソース (ファイル、データベース、キー/値のストア、API、その他のサービス) からデータにアクセスできます。:ref:`templating <playbooks_templating>` はすべて、Ansible 制御マシンで lookup を実行し、評価されます。Ansible は、標準の一時システムで利用可能な lookup プラグインにより返されたデータを提供します。lookup プラグインを使用すると、変数やテンプレートに外部ソースからの情報を読み込むことができます。"
+msgid "Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources. You can :ref:`create custom lookup plugins <developing_lookup_plugins>`."
+msgstr "lookup プラグインは、Jinja2 テンプレート言語への Ansible 固有の拡張です。lookup プラグインを使用して、Playbook 内の外部ソース (ファイル、データベース、キー/値のストア、API、その他のサービス) からデータにアクセスできます。:ref:`templating <playbooks_templating>` はすべて、Ansible 制御マシンで lookup を実行し、評価されます。Ansible は、標準の一時システムで利用可能な lookup プラグインにより返されたデータを提供します。lookup プラグインを使用すると、変数やテンプレートに外部ソースからの情報を読み込むことができます。:ref:`create custom lookup plugins <developing_lookup_plugins>` できます。"
 
 #: ../../rst/plugins/lookup.rst:13
 msgid "Lookups are executed with a working directory relative to the role or play, as opposed to local tasks, which are executed relative the executed script."
@@ -748,80 +810,168 @@ msgstr "ルックアップは、ロールやプレイに相対する作業ディ
 msgid "Pass ``wantlist=True`` to lookups to use in Jinja2 template \"for\" loops."
 msgstr "``wantlist=True`` を lookup に渡して、Jinja2 テンプレート「for」ループで使用できます。"
 
-#: ../../rst/plugins/lookup.rst:18
+#: ../../rst/plugins/lookup.rst:16
+msgid "By default, lookup return values are marked as unsafe for security reasons. If you trust the outside source your lookup accesses, pass ``allow_unsafe=True`` to allow Jinja2 templates to evaluate lookup values."
+msgstr "デフォルトでは、ルックアップの戻り値はセキュリティー上の理由で安全でないと識別されます。ルックアップがアクセスする外部ソースを信頼する場合は、``allow_unsafe=True`` を渡して Jinja2 テンプレートがルックアップ値を評価できるようにします。"
+
+#: ../../rst/plugins/lookup.rst:19
 msgid "Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage."
 msgstr "ルックアップの中には、シェルに引数を渡すものがあります。リモート/信頼されていないソースから変数を使用する場合には、`|quote` フィルターを使用して、安全に使用できるようにします。"
 
-#: ../../rst/plugins/lookup.rst:24
+#: ../../rst/plugins/lookup.rst:25
 msgid "Enabling lookup plugins"
 msgstr "lookup プラグインの有効化"
 
-#: ../../rst/plugins/lookup.rst:26
+#: ../../rst/plugins/lookup.rst:27
 msgid "Ansible enables all lookup plugins it can find. You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside the ``plugins/lookup/`` directory of a collection you have installed, inside a standalone role, or in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
 msgstr "Ansibleは、検出したすべての lookup プラグインを有効にします。カスタム lookup を有効にするには、プレイに隣接する ``lookup_plugins`` ディレクトリー、インストールしたコレクションの ``plugins/lookup/`` ディレクトリー、スタンドアロンロール、または :ref:`ansible.cfg <ansible_configuration_settings>` で設定したルックアップディレクトリソースのいずれかに置きます。"
 
-#: ../../rst/plugins/lookup.rst:32
+#: ../../rst/plugins/lookup.rst:33
 msgid "Using lookup plugins"
 msgstr "lookup プラグインの使用"
 
-#: ../../rst/plugins/lookup.rst:34
-msgid "You can use lookup plugins anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module."
-msgstr "lookup プラグインは、Ansible でテンプレートを使用できる場所で使用できます。これはプレイ、変数ファイル、または :ref:`template <template_module>` モジュールの Jinja2 テンプレートで使用できます。"
+#: ../../rst/plugins/lookup.rst:35
+msgid "You can use lookup plugins anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module. For more information on using lookup plugins, see :ref:`playbooks_lookups`."
+msgstr "lookup プラグインは、Ansible でテンプレートを使用できる場所で使用できます。これはプレイ、変数ファイル、または :ref:`template <template_module>` モジュールの Jinja2 テンプレートで使用できます。lookup プラグインの使用の詳細は、:ref:`playbooks_lookups` を参照してください。"
 
-#: ../../rst/plugins/lookup.rst:41
-msgid "Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::"
-msgstr "lookups はループには欠かせない要素です。``with_`` と表示される場合は、アンダースコアの後の部分がルックアップの名前になります。ほとんどのルックアップはリストを出力し、入力としてリストを受け取ります。たとえば、``with_items`` は :ref:`items <items_lookup>` lookup を使用します::"
+#: ../../rst/plugins/lookup.rst:42
+msgid "Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, lookups are expected to output lists; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::"
+msgstr "lookups はループには欠かせない要素です。``with_`` と表示される場合は、アンダースコアの後の部分がルックアップの名前になります。このような理由から、ほとんどのルックアップはリストを出力することが想定されます。たとえば、``with_items`` は :ref:`items <items_lookup>` lookup を使用します::"
 
-#: ../../rst/plugins/lookup.rst:48
+#: ../../rst/plugins/lookup.rst:49
 msgid "You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <playbooks_tests>` and even each other to do some complex data generation and manipulation. For example::"
 msgstr "lookup と :ref:`filters <playbooks_filters>`、:ref:`tests <playbooks_tests>`、またはそれぞれを組み合わせて複雑なデータ生成やデータ操作が可能です。以下に例を示します。"
 
-#: ../../rst/plugins/lookup.rst:60
+#: ../../rst/plugins/lookup.rst:61
 msgid "You can control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail if the lookup returns an error. For example:"
 msgstr "``errors`` を ``ignore``、``warn``、または ``strict`` に設定して、すべての lookup プラグインでエラーの動作を制御できます。デフォルト設定は ``strict`` で、lookup がエラーを返すとタスクは失敗します。以下に例を示します。"
 
-#: ../../rst/plugins/lookup.rst:62
+#: ../../rst/plugins/lookup.rst:63
 msgid "To ignore lookup errors::"
 msgstr "ルックアップエラーを無視するには、以下を行います。"
 
-#: ../../rst/plugins/lookup.rst:76
+#: ../../rst/plugins/lookup.rst:77
 msgid "To get a warning instead of a failure::"
 msgstr "失敗させるのではなく警告を出すには、以下を使用します。"
 
-#: ../../rst/plugins/lookup.rst:92
+#: ../../rst/plugins/lookup.rst:93
 msgid "To get a fatal error (the default)::"
 msgstr "致命的なエラーを取得する (デフォルト) には、以下を行います::"
 
-#: ../../rst/plugins/lookup.rst:107
+#: ../../rst/plugins/lookup.rst:108
 msgid "Forcing lookups to return lists: ``query`` and ``wantlist=True``"
 msgstr "ルックアップが強制的にリストを返すようにする： ``query`` および ``wantlist=True``"
 
-#: ../../rst/plugins/lookup.rst:111
+#: ../../rst/plugins/lookup.rst:112
 msgid "In Ansible 2.5, a new Jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list. The default behavior of ``lookup`` is to return a string of comma separated values. ``lookup`` can be explicitly configured to return a list using ``wantlist=True``."
 msgstr "Ansible 2.5 では、lookup プラグインを呼び出すために ``query`` と呼ばれる新しい Jinja2 関数が追加されました。``lookup`` と ``query`` の相違点は、``query`` が常にリストを返すことです。``lookup`` のデフォルト動作は、コンマ区切りの値の文字列を返すことです。``lookup`` は、``wantlist=True`` を使用してリストを返すように明示的に設定できます。"
 
-#: ../../rst/plugins/lookup.rst:114
+#: ../../rst/plugins/lookup.rst:115
 msgid "This feature provides an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibility with other uses of ``lookup``."
-msgstr "この機能により、新しい ``loop`` キーワードを操作するための、より簡単で一貫性のあるインターフェースが提供され、同時に``lookup`` の他の使い方との後方互換性も維持されます。"
+msgstr "この機能により、新しい ``loop`` キーワードを操作するための、より簡単で一貫性のあるインターフェースが提供され、同時に ``lookup`` の他の使い方との後方互換性も維持されます。"
 
-#: ../../rst/plugins/lookup.rst:116
+#: ../../rst/plugins/lookup.rst:117
 msgid "The following examples are equivalent:"
 msgstr "以下の例はどちらも同等の操作ができます。"
 
-#: ../../rst/plugins/lookup.rst:124
+#: ../../rst/plugins/lookup.rst:125
 msgid "As demonstrated above, the behavior of ``wantlist=True`` is implicit when using ``query``."
 msgstr "上記の例のように、``query`` を使用する場合、``wantlist=True`` の動作は暗黙的になります。"
 
-#: ../../rst/plugins/lookup.rst:126
+#: ../../rst/plugins/lookup.rst:127
 msgid "Additionally, ``q`` was introduced as a shortform of ``query``:"
 msgstr "また、``query`` の短縮形となる ``q`` が導入されました。"
 
-#: ../../rst/plugins/lookup.rst:138
+#: ../../rst/plugins/lookup.rst:139
 msgid "You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. Use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples."
 msgstr "``ansible-doc -t lookup -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t lookup <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
+#: ../../rst/plugins/lookup.rst:147
+msgid "Ansible inventory plugins"
+msgstr "Ansible inventory プラグインの使用"
+
+#: ../../rst/plugins/lookup.rst:149
+msgid "Ansible callback plugins"
+msgstr "Ansible callback プラグイン"
+
+#: ../../rst/plugins/lookup.rst:151
+msgid "Jinja2 filter plugins"
+msgstr "Jinja2 filter プラグイン"
+
+#: ../../rst/plugins/lookup.rst:153
+msgid "Jinja2 test plugins"
+msgstr "Jinja2 test プラグイン"
+
+#: ../../rst/plugins/module.rst:4
+msgid "Modules"
+msgstr "モジュール"
+
+#: ../../rst/plugins/module.rst:10
+msgid "Modules are the main building blocks of Ansible playbooks. Although we do not generally speak of \"module plugins\", a module is a type of plugin. For a developer-focused description of the differences between modules and other plugins, see :ref:`modules_vs_plugins`."
+msgstr "モジュールは Ansible Playbook の主なビルディングブロックです。一般的には「module プラグイン」はあまり言及されませんが、モジュールはプラグインの一種です。モジュールと他のプラグインの相違点に関する開発者向けの説明は「:ref:`modules_vs_plugins`」を参照してください。"
+
+#: ../../rst/plugins/module.rst:15
+msgid "Enabling modules"
+msgstr "モジュールの有効化"
+
+#: ../../rst/plugins/module.rst:17
+msgid "You can enable a custom module by dropping it into one of these locations:"
+msgstr "カスタムモジュールは、以下の場所のいずれかに配置します。"
+
+#: ../../rst/plugins/module.rst:19
+msgid "any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)"
+msgstr "``ANSIBLE_LIBRARY`` 環境変数に追加されたディレクトリー (``$ANSIBLE_LIBRARY`` は ``$PATH`` のようにコロンで区切った一覧)"
+
+#: ../../rst/plugins/module.rst:20
+msgid "``~/.ansible/plugins/modules/``"
+msgstr "``~/.ansible/plugins/modules/``"
+
+#: ../../rst/plugins/module.rst:21
+msgid "``/usr/share/ansible/plugins/modules/``"
+msgstr "``/usr/share/ansible/plugins/modules/``"
+
+#: ../../rst/plugins/module.rst:23
+msgid "For more information on using local custom modules, see :ref:`local_modules`."
+msgstr "ローカルカスタムモジュールの使用方法は、「:ref:`local_modules`」を参照してください。"
+
+#: ../../rst/plugins/module.rst:28
+msgid "Using modules"
+msgstr "モジュールの使用"
+
+#: ../../rst/plugins/module.rst:30
+msgid "For information on using modules in ad hoc tasks, see :ref:`intro_adhoc`. For information on using modules in playbooks, see :ref:`playbooks_intro`."
+msgstr "アドホックタスクでモジュールを使用する方法は、「:ref:`intro_adhoc`」を参照してください。Playbook でモジュールを使用する方法は、「:ref:`playbooks_intro`」を参照してください。"
+
+#: ../../rst/plugins/module.rst:43 ../../rst/plugins/module_util.rst:35
+msgid "#ansible-devel IRC chat channel"
+msgstr "IRC チャットチャンネル (#ansible-devel)"
+
+#: ../../rst/plugins/module_util.rst:4
+msgid "Module utilities"
+msgstr "モジュールユーティリティー"
+
+#: ../../rst/plugins/module_util.rst:10
+msgid "Module utilities contain shared code used by multiple plugins. You can write :ref:`custom module utilities <developing_module_utilities>`."
+msgstr "モジュールユーティリティーには、複数のプラグインが使用する共有コードが含まれています。:ref:`custom module utilities <developing_module_utilities>` を記述できます。"
+
+#: ../../rst/plugins/module_util.rst:15
+msgid "Enabling module utilities"
+msgstr "モジュールユーティリティーの有効化"
+
+#: ../../rst/plugins/module_util.rst:17
+msgid "You can add a custom module utility by dropping it into a ``module_utils`` directory adjacent to your collection or role, just like any other plugin."
+msgstr "他のプラグインと同様に、コレクションやロールに隣接する ``module_utils`` ディレクトリーに置くことで、カスタムモジュールフラグメントを追加できます。"
+
+#: ../../rst/plugins/module_util.rst:22
+msgid "Using module utilities"
+msgstr "モジュールユーティリティーの使用"
+
+#: ../../rst/plugins/module_util.rst:24
+msgid "For information on using module utilities, see :ref:`developing_module_utilities`."
+msgstr "モジュールユーティリティーの使用方法は、「:ref:`developing_module_utilities`」を参照してください。"
+
 #: ../../rst/plugins/netconf.rst:4
-msgid "Netconf Plugins"
+msgid "Netconf plugins"
 msgstr "netconf プラグイン"
 
 #: ../../rst/plugins/netconf.rst:10
@@ -860,41 +1010,45 @@ msgstr "netconf プラグインの一覧表示"
 msgid "These plugins have migrated to collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. If you installed Ansible version 2.10 or later using ``pip``, you have access to several netconf plugins. To list all available netconf plugins on your control node, type ``ansible-doc -t netconf -l``. To view plugin-specific documentation and examples, use ``ansible-doc -t netconf``."
 msgstr "これらのプラグインは `Ansible Galaxy <https://galaxy.ansible.com>`_ のコレクションに移行しました。``pip`` を使用して Ansible バージョン 2.10 以降をインストールしている場合は、複数の netconf プラグインにアクセスできます。コントロールノードで利用可能な netconf プラグインの一覧を表示するには、``ansible-doc -t netconf -l`` と入力します。プラグイン固有のドキュメントと例を確認するには、``ansible-doc -t netconf`` を使用します。"
 
-#: ../../rst/plugins/plugins.rst:5
-msgid "Working With Plugins"
+#: ../../rst/plugins/plugins.rst:6
+msgid "Working with plugins"
 msgstr "プラグインの使用"
 
-#: ../../rst/plugins/plugins.rst:7
+#: ../../rst/plugins/plugins.rst:8
 msgid "Plugins are pieces of code that augment Ansible's core functionality. Ansible uses a plugin architecture to enable a rich, flexible and expandable feature set."
 msgstr "プラグインは、Ansible のコア機能を拡張するコードの一部です。Ansible はプラグインアーキテクチャーを使用して、豊富で柔軟な拡張性のある機能セットを実現しています。"
 
-#: ../../rst/plugins/plugins.rst:9
+#: ../../rst/plugins/plugins.rst:10
 msgid "Ansible ships with a number of handy plugins, and you can easily write your own."
 msgstr "Ansible には、便利なプラグインが多数同梱されています。また、簡単に独自のプラグインを作成することもできます。"
 
-#: ../../rst/plugins/plugins.rst:11
+#: ../../rst/plugins/plugins.rst:12
 msgid "This section covers the various types of plugins that are included with Ansible:"
 msgstr "本セクションでは、Ansible に含まれるさまざまなプラグインを説明します。"
 
-#: ../../rst/plugins/plugins.rst:37
+#: ../../rst/plugins/plugins.rst:39
+msgid ":ref:`plugin_filtering_config`"
+msgstr ":ref:`plugin_filtering_config`"
+
+#: ../../rst/plugins/plugins.rst:40
+msgid "Controlling access to modules"
+msgstr "モジュールへのアクセス制御"
+
+#: ../../rst/plugins/plugins.rst:41
 msgid ":ref:`ansible_configuration_settings`"
 msgstr ":ref:`ansible_configuration_settings`"
 
-#: ../../rst/plugins/plugins.rst:38
+#: ../../rst/plugins/plugins.rst:42
 msgid "Ansible configuration documentation and settings"
 msgstr "Ansible 設定ドキュメントおよび設定"
 
-#: ../../rst/plugins/plugins.rst:39
+#: ../../rst/plugins/plugins.rst:43
 msgid ":ref:`command_line_tools`"
 msgstr ":ref:`command_line_tools`"
 
-#: ../../rst/plugins/plugins.rst:40
+#: ../../rst/plugins/plugins.rst:44
 msgid "Ansible tools, description and options"
 msgstr "Ansible ツール、説明、およびオプション"
-
-#: ../../rst/plugins/shell.rst:4
-msgid "Shell Plugins"
-msgstr "shell プラグイン"
 
 #: ../../rst/plugins/shell.rst:10
 msgid "Shell plugins work to ensure that the basic commands Ansible runs are properly formatted to work with the target machine and allow the user to configure certain behaviors related to how Ansible executes tasks."
@@ -920,13 +1074,9 @@ msgstr "shell プラグインの使用"
 msgid "In addition to the default configuration settings in :ref:`ansible_configuration_settings`, you can use the connection variable :ref:`ansible_shell_type <ansible_shell_type>` to select the plugin to use. In this case, you will also want to update the :ref:`ansible_shell_executable <ansible_shell_executable>` to match."
 msgstr ":ref:`ansible_configuration_settings` のデフォルト設定に加えて、接続プロファイル :ref:`ansible_shell_type <ansible_shell_type>` を使用して、使用するプラグインを選択できます。この場合は、一致するように :ref:`ansible_shell_executable <ansible_shell_executable>` も更新します。"
 
-#: ../../rst/plugins/strategy.rst:4
-msgid "Strategy Plugins"
-msgstr "strategy プラグイン"
-
 #: ../../rst/plugins/strategy.rst:10
-msgid "Strategy plugins control the flow of play execution by handling task and host scheduling."
-msgstr "strategy プラグインは、タスクおよびホストスケジューリングを処理し、プレイ実行のフローを制御します。"
+msgid "Strategy plugins control the flow of play execution by handling task and host scheduling. For more information on using strategy plugins and other ways to control execution order, see :ref:`playbooks_strategies`."
+msgstr "strategy プラグインは、タスクおよびホストスケジューリングを処理し、プレイ実行のフローを制御します。strategy プラグインの使用方法や、実行の順番を制御する他の方法は、「:ref:`playbooks_strategies`」を参照してください。"
 
 #: ../../rst/plugins/strategy.rst:15
 msgid "Enabling strategy plugins"
@@ -941,28 +1091,120 @@ msgid "Using strategy plugins"
 msgstr "strategy プラグインの使用"
 
 #: ../../rst/plugins/strategy.rst:25
-msgid "Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run. The default is the :ref:`linear <linear_strategy>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:"
-msgstr "プレイで使用できる strategy プラグインは 1 つだけですが、Playbook または ansible の実行でプレイごとに異なるプラグインを使用できます。デフォルトは :ref:`linear <linear_strategy>` プラグインです。環境変数を使用して、Ansible :ref:`configuration <ansible_configuration_settings>` でこのデフォルトを変更できます。"
+msgid "Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run. By default Ansible uses the :ref:`linear <linear_strategy>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:"
+msgstr "プレイで使用できる strategy プラグインは 1 つだけですが、Playbook または ansible の実行でプレイごとに異なるプラグインを使用できます。デフォルトでは Ansible は :ref:`linear <linear_strategy>` プラグインを使用します。環境変数を使用して、Ansible :ref:`configuration <ansible_configuration_settings>` でこのデフォルトを変更できます。"
 
-#: ../../rst/plugins/strategy.rst:32
+#: ../../rst/plugins/strategy.rst:31
 msgid "or in the `ansible.cfg` file:"
 msgstr "または `ansible.cfg` ファイルで、以下を行います。"
 
-#: ../../rst/plugins/strategy.rst:39
+#: ../../rst/plugins/strategy.rst:38
 msgid "You can also specify the strategy plugin in the play via the :ref:`strategy keyword <playbook_keywords>` in a play::"
 msgstr "プレイの :ref:`strategy キーワード <playbook_keywords>` を使用して、プレイの strategy プラグインを指定できます。"
 
-#: ../../rst/plugins/strategy.rst:58
+#: ../../rst/plugins/strategy.rst:57
 msgid "You can use ``ansible-doc -t strategy -l`` to see the list of available plugins. Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific documentation and examples."
 msgstr "``ansible-doc -t strategy -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t strategy <plugin name>`` を使用して、プラグイン固有のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/vars.rst:4
-msgid "Vars Plugins"
-msgstr "vars プラグイン"
+#: ../../rst/plugins/terminal.rst:4
+msgid "Terminal plugins"
+msgstr "terminal プラグイン"
+
+#: ../../rst/plugins/terminal.rst:10
+msgid "Terminal plugins contain information on how to prepare a particular network device's SSH shell is properly initialized to be used with Ansible. This typically includes disabling automatic paging, detecting errors in output, and enabling privileged mode if supported and required on the device."
+msgstr "terminal プラグインには、特定のネットワークデバイスの SSH シェルを準備する方法に関する情報が含まれています。通常、自動ページングの無効化、自動ページングの無効化、出力でエラーの検出、およびデバイスでサポートおよび必要な場合の特権モードの有効化などです。"
+
+#: ../../rst/plugins/terminal.rst:12
+msgid "These plugins correspond one-to-one to network device platforms. Ansible loads the appropriate terminal plugin automatically based on the ``ansible_network_os`` variable."
+msgstr "これらのプラグインはネットワークデバイスのプラットフォームに 1 対 1 で対応します。Ansible は ``ansible_network_os`` 変数に基づいて適切な terminal プラグインを自動的に読み込みます。"
+
+#: ../../rst/plugins/terminal.rst:17
+msgid "Adding terminal plugins"
+msgstr "terminal プラグインの追加"
+
+#: ../../rst/plugins/terminal.rst:19
+msgid "You can extend Ansible to support other network devices by dropping a custom plugin into the ``terminal_plugins`` directory."
+msgstr "``terminal_plugins`` ディレクトリーにカスタムのプラグインを置いて、Ansible が他のネットワークデバイスをサポートするように拡張できます。"
+
+#: ../../rst/plugins/terminal.rst:24
+msgid "Using terminal plugins"
+msgstr "terminal プラグイン"
+
+#: ../../rst/plugins/terminal.rst:26
+msgid "Ansible determines which terminal plugin to use automatically from the ``ansible_network_os`` variable. There should be no reason to override this functionality."
+msgstr "Ansible は、``ansible_network_os`` 変数をもとに、使用する terminal プラグインを自動的に決定します。この機能を上書きする理由はありません。"
+
+#: ../../rst/plugins/terminal.rst:28
+msgid "Terminal plugins operate without configuration. All options to control the terminal are exposed in the ``network_cli`` connection plugin."
+msgstr "terminal プラグインは、設定なしで動作します。端末を制御するオプションはすべて、``network_cli`` connection プラグインに公開されます。"
+
+#: ../../rst/plugins/terminal.rst:35
+msgid "Viewing terminal plugins"
+msgstr "terminal プラグインの表示"
+
+#: ../../rst/plugins/terminal.rst:37
+msgid "These plugins have migrated to collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. If you installed Ansible version 2.10 or later using ``pip``, you have access to several terminal plugins. To list all available terminal plugins on your control node, type ``ansible-doc -t terminal -l``. To view plugin-specific documentation and examples, use ``ansible-doc -t terminal``."
+msgstr "これらのプラグインは `Ansible Galaxy <https://galaxy.ansible.com>`_ のコレクションに移行しました。``pip`` を使用して Ansible バージョン 2.10 以降をインストールしている場合は、複数の terminal プラグインにアクセスできます。コントロールノードで利用可能な terminal プラグインの一覧を表示するには、``ansible-doc -t terminal -l`` と入力します。プラグイン固有のドキュメントと例を確認するには、``ansible-doc -t terminal`` を使用します。"
+
+#: ../../rst/plugins/test.rst:10
+msgid "Test plugins evaluate template expressions and return True or False. With test plugins you can create :ref:`conditionals <playbooks_conditionals>` to implement the logic of your tasks, blocks, plays, playbooks, and roles. Ansible uses the `standard tests `_ shipped as part of Jinja, and adds some specialized test plugins. You can :ref:`create custom Ansible test plugins <developing_test_plugins>`."
+msgstr "test プラグインは template 式を評価し、True または False を返します。test プラグインを使用すると、:ref:`conditionals <playbooks_conditionals>` を作成して、タスク、ブロック、プレイ、Playbook、およびロールのロジックを実装できます。Ansible は Jinja の一部として同梱される `standard tests `_ を使用し、特殊な tesst プラグインを追加します。:ref:`create custom Ansible test plugins <developing_test_plugins>` が可能です。"
+
+#: ../../rst/plugins/test.rst:16
+msgid "Enabling test plugins"
+msgstr "test プラグインの有効化"
+
+#: ../../rst/plugins/test.rst:18
+msgid "You can add a custom test plugin by dropping it into a ``test_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the test plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
+msgstr "カスタムの test プラグインを追加するには、そのプラグインを、ロール内のプレイの隣りにある ``test_plugins`` ディレクトリーに置くか、:ref:`ansible.cfg <ansible_configuration_settings>` で設定したディレクトリーソースの 1 つに置きます。"
+
+#: ../../rst/plugins/test.rst:24
+msgid "Using test plugins"
+msgstr "test プラグインの使用"
+
+#: ../../rst/plugins/test.rst:26
+msgid "You can use tests anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module. For more information on using test plugins, see :ref:`playbooks_tests`."
+msgstr "テストは、Ansible でテンプレートを使用できる場所で使用できます。これはプレイ、変数ファイル、または :ref:`template <template_module>` モジュールの Jinja2 テンプレートで使用できます。test プラグインの使用の詳細は、:ref:`playbooks_tests` を参照してください。"
+
+#: ../../rst/plugins/test.rst:28
+msgid "Tests always return ``True`` or ``False``, they are always a boolean, if you need a different return type, you should be looking at filters."
+msgstr "テストは常に ``True`` または ``False`` を返し、ブール型です。別の戻り型が必要な場合には、フィルターを確認する必要があります。"
+
+#: ../../rst/plugins/test.rst:30
+msgid "You can recognize test plugins by the use of the ``is`` statement in a template, they can also be used as part of the ``select`` family of filters."
+msgstr "test プラグインは、テンプレートの ``is`` ステートメントを使用して認識できます。また、フィルターの ``select`` ファミリーの一部として使用することもできます。"
+
+#: ../../rst/plugins/test.rst:42
+msgid "Tests will always have an ``_input`` and this is normally what is on the left side of ``is``. Tests can also take additional parameters as you would to most programming functions. These parameters can be either ``positional`` (passed in order) or ``named`` (passed as key=value pairs). When passing both types, positional arguments should go first."
+msgstr "テストには常に ``_input`` があり、これは通常 ``is`` の左側にあります。テストは、ほとんどのプログラミング関数と同様に追加のパラメーターを取ることもできます。これらのパラメーターは ``positional`` (key=value ペアとして渡される) または ``named`` (key=value ペアとして渡される) のいずれかになります。両方のタイプを渡す場合は、位置引数を最初に指定する必要があります。。"
+
+#: ../../rst/plugins/test.rst:61
+msgid "Using test plugins with lists"
+msgstr "リストと test プラグインの使用"
+
+#: ../../rst/plugins/test.rst:63
+msgid "As mentioned above, one way to use tests is with the ``select`` familiy of filters (``select``, ``reject``, ``selectattr``, ``rejectattr``)."
+msgstr "前述のように、テストを使用する 1 つの方法として、``select`` の フィルターファミリー (``select``、``reject``、``selectattr``、および ``rejectattr``) を使用できます。"
+
+#: ../../rst/plugins/test.rst:88 ../../rst/plugins/test.rst:94
+msgid ":ref:`playbooks_tests`"
+msgstr ":ref:`playbooks_tests`"
+
+#: ../../rst/plugins/test.rst:89 ../../rst/plugins/test.rst:95
+msgid "Using tests"
+msgstr "テストの使用"
+
+#: ../../rst/plugins/test.rst:90
+msgid ":ref:`playbooks_conditionals`"
+msgstr ":ref:`playbooks_conditionals`"
+
+#: ../../rst/plugins/test.rst:91
+msgid "Using conditional statements"
+msgstr "条件分岐文の使用"
 
 #: ../../rst/plugins/vars.rst:10
-msgid "Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins."
-msgstr "Vars プラグインは、インベントリーソース、Playbook、またはコマンドラインに組み込まれていない Ansible の実行に、変数データを追加します。「host_vars」や「group_vars」のような Playbook の構成要素は、vars プラグインを使用します。"
+msgid "Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins. For more details about variables in Ansible, see :ref:`playbooks_variables`."
+msgstr "vars プラグインは、インベントリーソース、Playbook、またはコマンドラインに組み込まれていない Ansible の実行に、変数データを追加します。「host_vars」や「group_vars」のような Playbook の構成要素は、vars プラグインを使用します。Ansible での変数の詳細は、:ref:`playbooks_variables` を参照してください。"
 
 #: ../../rst/plugins/vars.rst:12
 msgid "Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4."
@@ -972,47 +1214,92 @@ msgstr "vars プラグインは Ansible 2.0 に部分的に実装され、Ansibl
 msgid "The :ref:`host_group_vars <host_group_vars_vars>` plugin shipped with Ansible enables reading variables from :ref:`host_variables` and :ref:`group_variables`."
 msgstr "Ansible に同梱される :ref:`host_group_vars <host_group_vars_vars>` プラグインは、:ref:`host_variables` および :ref:`group_variables` から変数の読み取りを可能にします。"
 
-#: ../../rst/plugins/vars.rst:20
+#: ../../rst/plugins/vars.rst:19
 msgid "Enabling vars plugins"
 msgstr "vars プラグインの有効化"
 
-#: ../../rst/plugins/vars.rst:22
+#: ../../rst/plugins/vars.rst:21
 msgid "You can activate a custom vars plugin by either dropping it into a ``vars_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`."
 msgstr "カスタムの vars プラグインを有効にするには、カスタムのプラグインを、ロール内のプレイの隣りにある ``vars_plugins`` ディレクトリーに置くか、:ref:`ansible.cfg <ansible_configuration_settings>` で設定したディレクトリーソースの 1 つに置きます。"
 
-#: ../../rst/plugins/vars.rst:24
+#: ../../rst/plugins/vars.rst:23
 msgid "Most vars plugins are disabled by default. To enable a vars plugin, set ``vars_plugins_enabled`` in the ``defaults`` section of :ref:`ansible.cfg <ansible_configuration_settings>` or set the ``ANSIBLE_VARS_ENABLED`` environment variable to the list of vars plugins you want to execute. By default, the :ref:`host_group_vars <host_group_vars_vars>` plugin shipped with Ansible is enabled."
 msgstr "ほとんどの vars プラグインはデフォルトで無効になっています。vars プラグインを有効にするには、:ref:`ansible.cfg <ansible_configuration_settings>` の ``defaults`` セクションで ``vars_plugins_enabled`` を設定するか、実行する vars プラグインの一覧に ``ANSIBLE_VARS_ENABLED`` 環境変数を設定します。デフォルトでは、Ansible に同梱される :ref:`host_group_vars <host_group_vars_vars>` プラグインが有効になっています。"
 
-#: ../../rst/plugins/vars.rst:26
+#: ../../rst/plugins/vars.rst:25
 msgid "Starting in Ansible 2.10, you can use vars plugins in collections. All vars plugins in collections must be explicitly enabled and must use the fully qualified collection name in the format ``namespace.collection_name.vars_plugin_name``."
 msgstr "Ansible 2.10 以降では、コレクションで vars プラグインを使用できます。コレクションのすべての vars プラグインは明示的に有効で、``namespace.collection_name.vars_plugin_name`` 形式で完全修飾コレクション名を使用する必要があります。"
 
-#: ../../rst/plugins/vars.rst:36
+#: ../../rst/plugins/vars.rst:35
 msgid "Using vars plugins"
 msgstr "vars プラグインの使用"
 
-#: ../../rst/plugins/vars.rst:38
+#: ../../rst/plugins/vars.rst:37
 msgid "By default, vars plugins are used on demand automatically after they are enabled."
 msgstr "デフォルトでは、vars プラグインは、有効になった後に自動的にオンデマンドで使用されます。"
 
-#: ../../rst/plugins/vars.rst:40
+#: ../../rst/plugins/vars.rst:39
 msgid "Starting in Ansible 2.10, vars plugins can be made to run at specific times. `ansible-inventory` does not use these settings, and always loads vars plugins."
 msgstr "Ansible 2.10 以降、vars プラグインは特定のタイミングで実行できます。`ansible-inventory` はこれらの設定を使用せず、常に vars プラグインを読み込みます。"
 
-#: ../../rst/plugins/vars.rst:42
+#: ../../rst/plugins/vars.rst:41
 msgid "The global setting ``RUN_VARS_PLUGINS`` can be set in ``ansible.cfg`` using ``run_vars_plugins`` in the ``defaults`` section or by the ``ANSIBLE_RUN_VARS_PLUGINS`` environment variable. The default option, ``demand``, runs any enabled vars plugins relative to inventory sources whenever variables are demanded by tasks. You can use the option ``start`` to run any enabled vars plugins relative to inventory sources after importing that inventory source instead."
-msgstr "グローバル設定 ``RUN_VARS_PLUGINS`` は、``defaults`` セクションの ``run_vars_plugins`` を使用して、または ``ANSIBLE_RUN_VARS_PLUGINS`` 環境変数により、``ansible.cfg``に設定できます。デフォルトのオプションである ``demand`` は、タスクで変数が必要となった場合には必ず、インベントリーソースに対して有効なVars プラグインを実行します。代わりに、インベントリーソースをインポートした後に、``start`` オプションを使用して、インベントリーソースと相対的な位置にある、有効化された Vars プラグインを実行できます。"
+msgstr "グローバル設定 ``RUN_VARS_PLUGINS`` は、``defaults`` セクションの ``run_vars_plugins`` を使用して、または ``ANSIBLE_RUN_VARS_PLUGINS`` 環境変数により、``ansible.cfg``に設定できます。デフォルトのオプションである ``demand`` は、タスクで変数が必要となった場合には必ず、インベントリーソースに対して有効な vars プラグインを実行します。代わりに、インベントリーソースをインポートした後に、``start`` オプションを使用して、インベントリーソースと相対的な位置にある、有効化された Vars プラグインを実行できます。"
 
-#: ../../rst/plugins/vars.rst:44
+#: ../../rst/plugins/vars.rst:43
 msgid "You can also control vars plugin execution on a per-plugin basis for vars plugins that support the ``stage`` option. To run the :ref:`host_group_vars <host_group_vars_vars>` plugin after importing inventory you can add the following to :ref:`ansible.cfg <ansible_configuration_settings>`:"
-msgstr "また、``stage`` オプションをサポートする vars プラグインの場合は、プラグインごとに vars プラグインの実行を制御することもできます。インベントリーのインポート後に :ref:`host_group_vars <host_group_vars_vars>` プラグインを実行するには、以下を :ref:`ansible.cfg <ansible_configuration_settings>` に追加します:"
+msgstr "また、``stage`` オプションをサポートする vars プラグインの場合は、プラグインごとに vars プラグインの実行を制御することもできます。インベントリーのインポート後に :ref:`host_group_vars <host_group_vars_vars>` プラグインを実行するには、以下を :ref:`ansible.cfg <ansible_configuration_settings>` に追加します。"
 
-#: ../../rst/plugins/vars.rst:54
-msgid "Plugin Lists"
-msgstr "プラグイン一覧"
+#: ../../rst/plugins/vars.rst:55
+msgid "You can use ``ansible-doc -t vars -l`` to see the list of available vars plugins. Use ``ansible-doc -t vars <plugin name>`` to see plugin-specific documentation and examples."
+msgstr "``ansible-doc -t vars -l`` を使用して、利用可能な var プラグインの一覧を表示します。``ansible-doc -t vars <plugin name>`` を使用して、プラグイン固有のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/vars.rst:56
-msgid "You can use ``ansible-doc -t vars -l`` to see the list of available plugins. Use ``ansible-doc -t vars <plugin name>`` to see specific plugin-specific documentation and examples."
-msgstr "``ansible-doc -t vars -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t vars <plugin name>`` を使用して、プラグイン固有のドキュメントと例を参照してください。"
+#~ msgid "Ansible Cache plugins"
+#~ msgstr "Ansible cache プラグイン"
+
+#~ msgid "Ansible connection plugins"
+#~ msgstr "Ansible connection プラグイン"
+
+#~ msgid "Ansible Shell plugins"
+#~ msgstr "Ansible shell プラグイン"
+
+#~ msgid "Ansible Strategy plugins"
+#~ msgstr "Ansible strategy プラグイン"
+
+#~ msgid "Ansible Vars plugins"
+#~ msgstr "Ansible vars プラグイン"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+
+#~ msgid ":ref:`playbooks_lookups`"
+#~ msgstr ":ref:`playbooks_lookups`"
+
+#~ msgid "Jinja2 lookup plugins"
+#~ msgstr "Jinja2 lookup プラグイン"
+
+#~ msgid "Ansible Action plugins"
+#~ msgstr "Ansible action プラグイン"
+
+#~ msgid "`webchat.freenode.net <https://webchat.freenode.net>`_"
+#~ msgstr "`webchat.freenode.net <https://webchat.freenode.net>`_"
+
+#~ msgid "Ansible cache plugins"
+#~ msgstr "Ansible cache プラグイン"
+
+#~ msgid ":ref:`Filters<playbooks_filters>`"
+#~ msgstr ":ref:`Filters<playbooks_filters>`"
+
+#~ msgid ":ref:`Tests<playbooks_tests>`"
+#~ msgstr ":ref:`Tests<playbooks_tests>`"
+
+#~ msgid ":ref:`Lookups<playbooks_lookups>`"
+#~ msgstr ":ref:`Lookups<playbooks_lookups>`"
+
+#~ msgid "Ansible vars plugins"
+#~ msgstr "Ansible vars プラグイン"
+
+#~ msgid "Strategy plugins control the flow of play execution by handling task and host scheduling."
+#~ msgstr "strategy プラグインは、タスクおよびホストスケジューリングを処理し、プレイ実行のフローを制御します。"
+
 
