@@ -45,7 +45,7 @@ cd "${GIT_TOP_LEVEL}"
 git init
 
 # add submodule
-git submodule add "${WORK_DIR}/sub" "${SUBMODULE_DST}"
+git -c protocol.file.allow=always submodule add "${WORK_DIR}/sub" "${SUBMODULE_DST}"
 
 # prepare for tests
 expected="${WORK_DIR}/expected.txt"
