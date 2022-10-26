@@ -13,7 +13,7 @@ When users report bugs, verify the behavior reported. Remember always to be kind
 *  Did the user make a mistake in the code they put in the Steps to Reproduce issue section? We often see user errors reported as bugs.
 *  Did the user assume an unexpected behavior? Ensure that the related documentation is clear. If not, the issue is useful to help us improve documentation.
 *  Is there a minimal reproducer? If not, ask the reporter to reduce the complexity to help pinpoint the issue.
-*  Is the issue a consequence of a wrongly-configured environment?
+*  Is the issue a consequence of a misconfigured environment?
 *  If it seems to be a real bug, does the behaviour still exist in the most recent release or the development branch?
 *  Reproduce the bug, or if you do not have a suitable infrastructure, ask other contributors to reproduce the bug.
 
