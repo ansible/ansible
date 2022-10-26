@@ -69,7 +69,7 @@ class LookupModule(LookupBase):
             display.debug("File lookup term: %s" % term)
             # Find the file in the expected search path
             try:
-                lookupfile = self.find_file_in_search_path(variables, 'files', term)
+                lookupfile = self.find_file_in_search_path(variables, 'files', term, ignore_missing=True)
                 display.vvvv(u"File lookup using %s as file" % lookupfile)
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
