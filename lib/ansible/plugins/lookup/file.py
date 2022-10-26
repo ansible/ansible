@@ -80,7 +80,7 @@ class LookupModule(LookupBase):
                         contents = contents.rstrip()
                     ret.append(contents)
                 else:
-                    raise AnsibleError("file not found")
+                    raise AnsibleError("file not found, use -vvvvv to see paths searched")
             except AnsibleError as e:
                 raise AnsibleOptionsError("The 'file' lookup had an issue accessing the file '%s'" % term, orig_exc=e)
 
