@@ -50,7 +50,7 @@ RETURN = """
     elements: str
 """
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
@@ -67,11 +67,10 @@ class LookupModule(LookupBase):
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
-
             # Find the file in the expected search path
-            lookupfile = self.find_file_in_search_path(variables, 'files', term)
-            display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
+                lookupfile = self.find_file_in_search_path(variables, 'files', term)
+                display.vvvv(u"File lookup using %s as file" % lookupfile)
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
                     contents = to_text(b_contents, errors='surrogate_or_strict')
@@ -81,8 +80,8 @@ class LookupModule(LookupBase):
                         contents = contents.rstrip()
                     ret.append(contents)
                 else:
-                    raise AnsibleParserError()
-            except AnsibleParserError:
-                raise AnsibleError("could not locate file in lookup: %s" % term)
+                    raise AnsibleError("file not found")
+            except AnsibleError as e:
+                raise AnsibleOptionsError("The 'file' lookup had an issue accessing the file '%s'" % term, orig_exc=e)
 
         return ret
