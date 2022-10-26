@@ -74,7 +74,7 @@ See :ref:`communication` for ways to communicate and engage with the Ansible com
 Teach others
 ============
 
-Share your experience with other contributors through :ref:`improving documentation<community_documentation_contributions>`, answering question from other contributors and users  on :ref:`Matrix/Libera.Chat IRC<communication>`, giving advice in issues and pull requests, and discussing the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
+Share your experience with other contributors through :ref:`improving documentation<community_documentation_contributions>`, answering questions from other contributors and users on :ref:`Matrix/Libera.Chat IRC<communication>`, giving advice on issues and pull requests, and discussing `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
 
 Become a collection maintainer
 ===============================
