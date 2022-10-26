@@ -97,6 +97,9 @@
           - 'diff_output.diff[0].before == ""'
           - '"Ansible managed" in diff_output.diff[0].after'
 
+    - name: tests with remote_src and non files
+      import_tasks: src_remote_file_is_not_file.yml
+
   always:
     - name: Cleaning
       file:
