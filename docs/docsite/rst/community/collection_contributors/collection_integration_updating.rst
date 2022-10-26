@@ -6,7 +6,7 @@ Adding to an existing integration test
 The test tasks are stored in the ``tests/integration/targets/<target_name>/tasks`` directory.
 
 The ``main.yml`` file holds test tasks and includes other test files.
-Look for a suitable test file to integrate your tests or create and include / import a separate test file.
+Look for a suitable test file to integrate your tests or create and include or import a separate test file.
 You can use one of the existing test files as a draft.
 
 When fixing a bug
@@ -15,9 +15,9 @@ When fixing a bug
 When fixing a bug:
 
 1. :ref:`Determine if integration tests for the module exist<collection_integration_prepare>`. If they do not, see :ref:`collection_creating_integration_tests` section.
-2. Add a task which reproduces the bug to an appropriate file within the ``tests/integration/targets/<target_name>/tasks`` directory.
+2. Add a task that reproduces the bug to an appropriate file within the ``tests/integration/targets/<target_name>/tasks`` directory.
 3. :ref:`Run the tests<collection_run_integration_tests>`. The newly added task should fail.
-4. If they do not fail, re-check if your environment / test task satisfies the conditions described in the ``Steps to Reproduce`` section of the issue.
+4. If they do not fail, re-check if your environment or test task satisfies the conditions described in the ``Steps to Reproduce`` section of the issue.
 5. If you reproduce the bug and tests fail, change the code.
 6. :ref:`Run the tests<collection_run_integration_tests>` again.
 7. If they fail, repeat steps 5-6 until the tests pass.
@@ -74,7 +74,7 @@ When adding a new feature
 
   The process described in this section also applies when you want to add integration tests to a feature that already exists, but is missing integration tests.
 
-If you have not already implemented the new feature, you can start with writing the integration tests for it. Of course they will not work as the code does not yet exist, but it can help you improve your implementation design before you start writing any code.
+If you have not already implemented the new feature, you can start by writing the integration tests for it. They will not work as the code does not yet exist, but they can help you improve your implementation design before you start writing any code.
 
 When adding new features, the process of adding tests consists of the following steps:
 
