@@ -116,6 +116,10 @@ class FieldAttributeBase:
     def finalized(self):
         return self._finalized
 
+    def get_self_fa_value(self, name):
+        """Return the value of FieldAttribute of this (self) class without utilizing inheritance."""
+        return getattr(self, f'_{name}', Sentinel)
+
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
         if depth == 0:
@@ -219,7 +223,7 @@ class FieldAttributeBase:
                     method(attribute, name, getattr(self, name))
                 else:
                     # and make sure the attribute is of the type it should be
-                    value = getattr(self, f'_{name}', Sentinel)
+                    value = self.get_self_fa_value(name)
                     if value is not None:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
@@ -421,7 +425,7 @@ class FieldAttributeBase:
             raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion", orig_exc=e)
 
         for name in self.fattributes:
-            setattr(new_me, name, shallowcopy(getattr(self, f'_{name}', Sentinel)))
+            setattr(new_me, name, shallowcopy(self.get_self_fa_value(name)))
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager

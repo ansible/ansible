@@ -308,7 +308,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             if omit:
                 value = Sentinel
             else:
-                value = getattr(self, f'_{attr}', Sentinel)
+                value = self.get_self_fa_value(attr)
 
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
@@ -323,7 +323,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                         if hasattr(_parent, '_get_parent_attribute'):
                             parent_value = _parent._get_parent_attribute(attr)
                         else:
-                            parent_value = getattr(_parent, f'_{attr}', Sentinel)
+                            parent_value = _parent.get_self_fa_value(attr)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:
@@ -332,7 +332,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     pass
             if self._role and (value is Sentinel or extend):
                 try:
-                    parent_value = getattr(self._role, f'_{attr}', Sentinel)
+                    parent_value = self._role.get_self_fa_value(attr)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
@@ -342,7 +342,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     if dep_chain and (value is Sentinel or extend):
                         dep_chain.reverse()
                         for dep in dep_chain:
-                            dep_value = getattr(dep, f'_{attr}', Sentinel)
+                            dep_value = dep.get_self_fa_value(attr)
                             if extend:
                                 value = self._extend_value(value, dep_value, prepend)
                             else:
@@ -354,7 +354,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     pass
             if self._play and (value is Sentinel or extend):
                 try:
-                    play_value = getattr(self._play, f'_{attr}', Sentinel)
+                    play_value = self._play.get_self_fa_value(attr)
                     if play_value is not Sentinel:
                         if extend:
                             value = self._extend_value(value, play_value, prepend)

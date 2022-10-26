@@ -1,0 +1,2 @@
+minor_changes:
+  - Introduce a method for getting a ``FieldAttribute``'s value without inheritance, ``FieldAttributeBase.get_self_fa_value``.

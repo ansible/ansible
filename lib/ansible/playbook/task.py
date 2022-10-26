@@ -471,7 +471,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             if omit:
                 value = Sentinel
             else:
-                value = getattr(self, f'_{attr}', Sentinel)
+                value = self.get_self_fa_value(attr)
 
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
@@ -486,7 +486,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = getattr(_parent, f'_{attr}', Sentinel)
+                        parent_value = _parent.get_self_fa_value(attr)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
