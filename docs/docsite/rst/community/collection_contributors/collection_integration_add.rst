@@ -5,7 +5,7 @@ Creating new integration tests
 
 This section covers the following cases:
 
-- There are no integration tests for a collection / group of modules in a collection at all.
+- There are no integration tests for a collection or group of modules in a collection at all.
 - You are adding a new module and you want to include integration tests.
 - You want to add integration tests for a module that already exists without integration tests.
 
@@ -92,7 +92,7 @@ Add the following to ``tests/integration/targets/abstract_service_info/tasks/mai
   - name: Fetch info from abstract service
     abstract_service_info:
       host: 127.0.0.1  # We assume the service accepts local connection by default
-      port: 1234       # We assume that the service is listening this port by default
+      port: 1234       # We assume that the service is listening to this port by default
     register: result   # This variable will contain the returned JSON including the server version
 
   - name: Test the output
@@ -104,7 +104,7 @@ Add the following to ``tests/integration/targets/abstract_service_info/tasks/mai
 
 If there are any issues with connectivity (for example, the service is not accepting connections) or with the code, the play will fail.
 
-Examine the output to see at which step the failure occurred. Investigate the reason, fix, and run again. Repeat the cycle until the test passes.
+Examine the output to see at which step the failure occurred. Investigate the reason, fix it, and run again. Repeat the cycle until the test passes.
 
 8. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
 
@@ -201,7 +201,7 @@ That is enough for our very basic example.
 
   mkdir -p tests/integration/targets/postgresql_info/tasks tests/integration/targets/postgresql_info/meta
 
-11. To make the ``setup_postgresql_db`` target running before the ``postgresql_info`` target as a dependency, create the ``tests/integration/targets/postgresql_info/meta/main.yml`` file and add the following code to it:
+11. To make the ``setup_postgresql_db`` target run before the ``postgresql_info`` target as a dependency, create the ``tests/integration/targets/postgresql_info/meta/main.yml`` file and add the following code to it:
 
 .. code-block:: yaml
 
@@ -247,4 +247,4 @@ The tests should pass. If we look at the output, we should see something like th
     "msg": "All assertions passed"
   }
 
-If your tests fail when you are working on your project, examine the output to see at which step the failure occurred. Investigate the reason, fix, and run again. Repeat the cycle until the test passes. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
+If your tests fail when you are working on your project, examine the output to see at which step the failure occurred. Investigate the reason, fix it, and run again. Repeat the cycle until the test passes. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
