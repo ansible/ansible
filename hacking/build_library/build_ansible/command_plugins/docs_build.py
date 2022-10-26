@@ -68,6 +68,21 @@ def find_latest_ansible_dir(build_data_working):
     return latest
 
 
+def parse_deps_file(filename):
+    """Parse an antsibull .deps file."""
+    with open(filename, 'r', encoding='utf-8') as f:
+        contents = f.read()
+    lines = [c for line in contents.splitlines() if (c := line.strip()) and not c.startswith('#')]
+    return dict([entry.strip() for entry in line.split(':', 1)] for line in lines)
+
+
+def write_deps_file(filename, deps_data):
+    """Write an antsibull .deps file."""
+    with open(filename, 'w', encoding='utf-8') as f:
+        for key, value in deps_data.items():
+            f.write(f'{key}: {value}\n')
+
+
 def find_latest_deps_file(build_data_working, ansible_version):
     """Find the most recent ansible deps file for the given ansible major version."""
     # imports here so that they don't cause unnecessary deps for all of the plugins
@@ -82,8 +97,7 @@ def find_latest_deps_file(build_data_working, ansible_version):
     latest = None
     latest_ver = Version('0')
     for filename in deps_files:
-        with open(filename, 'r') as f:
-            deps_data = yaml.safe_load(f.read())
+        deps_data = parse_deps_file(filename)
         new_version = Version(deps_data['_ansible_version'])
         if new_version > latest_ver:
             latest_ver = new_version
@@ -158,13 +172,11 @@ def generate_full_docs(args):
             shutil.copyfile(latest_filename, modified_deps_file)
 
             # Put our version of ansible-core into the deps file
-            with open(modified_deps_file, 'r') as f:
-                deps_data = yaml.safe_load(f.read())
+            deps_data = parse_deps_file(modified_deps_file)
 
             deps_data['_ansible_core_version'] = ansible_core__version__
 
-            with open(modified_deps_file, 'w') as f:
-                f.write(yaml.dump(deps_data))
+            write_deps_file(modified_deps_file, deps_data)
 
             params = ['stable', '--deps-file', modified_deps_file]
 
