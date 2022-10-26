@@ -21,7 +21,7 @@ When users report bugs, verify the behavior reported. Remember always to be kind
 Reviewing suggested changes
 ---------------------------
 
-When reviewing PRs, verify the suggested changes first. Verify that suggested changes do not:
+When reviewing PRs, verify that the suggested changes do not:
 
 *  Unnecessarily break backward compatibility.
 *  Bring more harm than value.
@@ -45,7 +45,7 @@ Other standards to check for in a PR include:
 *  If a new plugin is added, it is one of the `allowed plugin types <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules-plugins>`_.
 *  Documentation, examples, and return sections use FQCNs for the ``M(..)`` :ref:`format macros <module_documents_linking>` when referring to modules.
 *  Modules and plugins from ansible-core use ``ansible.builtin.`` as an FQCN prefix when mentioned.
-*  When a new option, module, plugin, or return value is added, the corresponding documentation or return sections use ``version_added:`` containing the *collection* version in which they will be first released in.
+*  When a new option, module, plugin, or return value is added, the corresponding documentation or return sections use ``version_added:`` containing the *collection* version in which they will be first released.
 
   * This  is typically the next minor release, sometimes the next major release. For example: if 2.7.5 is the current release, the next minor release will be 2.8.0, and the next major release will be 3.0.0).
 
