@@ -176,6 +176,10 @@ def generate_full_docs(args):
 
             deps_data['_ansible_core_version'] = ansible_core__version__
 
+            # antsibull-docs will choke when a key `_python` is found. Remove it to work around
+            # that until antsibull-docs is fixed.
+            deps_data.pop('_python', None)
+
             write_deps_file(modified_deps_file, deps_data)
 
             params = ['stable', '--deps-file', modified_deps_file]
