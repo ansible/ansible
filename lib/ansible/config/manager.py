@@ -563,7 +563,8 @@ class ConfigManager(object):
                 try:
                     value = templar.template(value)
                 except Exception as e:
-                    warnings.add("leaving value for '%s' as is, could not template: %s" % (config, to_native(e)))
+                    pass
+                    # TOOD: warning "leaving value for '%s' as is, could not template: %s" % (config, to_native(e))
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
