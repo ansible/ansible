@@ -660,7 +660,7 @@ class ActionBase(ABC):
             res = self._remote_chmod(remote_paths, 'u+x')
             if res['rc'] != 0:
                 raise AnsibleError(
-                    'Failed to set file mode on remote temporary files '
+                    'Failed to set file mode or acl on remote temporary files '
                     '(rc: {0}, err: {1})'.format(
                         res['rc'],
                         to_native(res['stderr'])))
@@ -675,9 +675,9 @@ class ActionBase(ABC):
         if remote_user in self._get_admin_users():
             raise AnsibleError(
                 'Failed to change ownership of the temporary files Ansible '
-                'needs to create despite connecting as a privileged user. '
-                'Unprivileged become user would be unable to read the '
-                'file.')
+                '(via chmod nor setfacl) needs to create despite connecting as a '
+                'privileged user. Unprivileged become user would be unable to read'
+                ' the file.')
 
         # Step 3d: Try macOS's special chmod + ACL
         # macOS chmod's +a flag takes its own argument. As a slight hack, we
