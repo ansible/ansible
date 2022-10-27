@@ -16,7 +16,7 @@ In general, collection maintainers:
 
 - Act in accordance with the :ref:`code_of_conduct`.
 - Subscribe to the collection repository they maintain (click :guilabel:`Watch > All activity` in GitHub).
-- Keep README, development guidelines, and other general collection :ref:`maintainer_documentation` relevant.
+- Keep README, development guidelines, and other general collections :ref:`maintainer_documentation` relevant.
 - Review and commit changes made by other contributors.
 - :ref:`Backport <Backporting>` changes to stable branches.
 - Address or assign issues to appropriate contributors.
@@ -32,7 +32,7 @@ Multiple maintainers can divide responsibilities among each other.
 How to become a maintainer
 --------------------------
 
-A person interested in becoming a maintainer and satisfies the :ref:`requirements<maintainer_requirements>` may either self-nominate or be nominated by another maintainer.
+A person interested in becoming a maintainer and satisfying the :ref:`requirements<maintainer_requirements>` may either self-nominate or be nominated by another maintainer.
 
 To nominate a candidate, create a GitHub issue in the relevant collection repository. If there is no response, the repository is not actively maintained, or the current maintainers do not have permissions to add the candidate, please create the issue in the `ansible/community <https://github.com/ansible/community>`_ repository.
 
@@ -44,7 +44,7 @@ Communicating as a collection maintainer
 
 Collection contributors and maintainers should also communicate through:
 
-* :ref:`communication_irc` appropriate to their collection, or if none exist, the general community and developer chat channels
+* :ref:`communication_irc` appropriate to their collection, or if none exists, the general community and developer chat channels
 * Mailing lists such as `ansible-announce <https://groups.google.com/d/forum/ansible-announce>`_ and `ansible-devel <https://groups.google.com/d/forum/ansible-devel>`_
 * Collection project boards, issues, and GitHub discussions in corresponding repositories
 * Quarterly Contributor Summits.
@@ -65,7 +65,7 @@ Contributor Summits
 -------------------
 
 
-The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real people behind the messages on Matrix or Libera Chat IRC or GitHub. This gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
+The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real people behind the messages on Matrix or Libera Chat IRC, or GitHub. This gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
 
 Weekly community Matrix/IRC meetings
 ------------------------------------
@@ -102,13 +102,13 @@ Here are some ways you can expand the community around your collection:
 Encouraging new contributors
 -----------------------------
 
-Easy fix items are the best way to attract and mentor new contributors. You should triage incoming issues to mark them with labels such as ``easyfix``, ``waiting_on_contributor``, and ``docs``. where appropriate. Do not fix these trivial non-critical bugs yourself. Instead, mentor a person who wants to contribute.
+Easy-fix items are the best way to attract and mentor new contributors. You should triage incoming issues to mark them with labels such as ``easyfix``, ``waiting_on_contributor``, and ``docs``. where appropriate. Do not fix these trivial non-critical bugs yourself. Instead, mentor a person who wants to contribute.
 
-For some easy fix issues, you could ask the issue reporter whether they want to fix the issue themselves providing the link to a quickstart guide for creating PRs.
+For some easy-fix issues, you could ask the issue reporter whether they want to fix the issue themselves providing the link to a quick start guide for creating PRs.
 
-Conduct pull request days regularly. You could plan PR days, for example, in the last Friday of every month when you and other maintainers go through all open issues and pull requests focusing on old ones, asking people if you can help, and so on. If there are pull requests that look abandoned (for example, there is no response on your help offers since the previous PR day), announce that anyone else interested can complete the pull request.
+Conduct pull request days regularly. You could plan PR days, for example, on the last Friday of every month when you and other maintainers go through all open issues and pull requests focusing on old ones, asking people if you can help, and so on. If there are pull requests that look abandoned (for example, there is no response on your help offers since the previous PR day), announce that anyone else interested can complete the pull request.
 
-Promote active contributors satisfying :ref:`requirements<maintainer_requirements>` to maintainers. Revise contributors activity regularly.
+Promote active contributors satisfying :ref:`requirements<maintainer_requirements>` to maintainers. Revise contributors' activity regularly.
 
 If your collection found new maintainers, announce that fact in the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ and during the next Contributor Summit congratulating and thanking them for the work done. You can mention all the people promoted since the previous summit. Remember to invite the other maintainers to the Summit in advance.
 
@@ -118,8 +118,8 @@ Some other general guidelines to encourage contributors:
 * If there is a non-crucial easy-fix bug reported, politely ask the author to fix it themselves providing a link to :ref:`collection_quickstart`.
 * When suggesting changes, try to use questions, not statements.
 * When suggesting mandatory changes, do it as politely as possible providing documentation references.
-* If your suggestion is optional or a matter of personal preferences, please say it explicitly.
-* When asking for adding tests or for complex code refactoring, say that the author is welcome to ask for clarifications and help if they need.
+* If your suggestion is optional or a matter of personal preference, please say it explicitly.
+* When asking for adding tests or for complex code refactoring, say that the author is welcome to ask for clarifications and help if they need it.
 * If somebody suggests a good idea, mention it or put a thumbs up.
 * After merging, thank the author and reviewers for their time and effort.
 
@@ -140,7 +140,7 @@ A good ``README`` includes a description of the collection, a link to the :ref:`
 
  The ``CONTRIBUTING`` file includes all the details or links to the details on how a new or continuing contributor can contribute to this collection. The ``CONTRIBUTING`` file should include:
 
-* Information or links to new contributor guidelines, such as a quickstart on opening PRs.
+* Information or links to new contributor guidelines, such as a quick start on opening PRs.
 * Information or links to contributor requirements, such as unit and integration test requirements.
 
 You can optionally include a ``CONTRIBUTORS`` and ``MAINTAINERS`` file to list the collection contributors and maintainers.
