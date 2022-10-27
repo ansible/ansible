@@ -350,7 +350,8 @@ class ConfigManager(object):
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct, templar=templar)
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys,
+                                                    variables=variables, direct=direct, templar=templar)
 
         return options
 
