@@ -427,7 +427,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         assertThrowRegex(
-            'Failed to set file mode on remote temporary file',
+            'Failed to set file mode or acl on remote temporary files',
             execute=True)
         action_base._remote_chmod.return_value = {
             'rc': 0,
