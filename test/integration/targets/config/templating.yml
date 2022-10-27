@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - debug:
+      msg: "{{ lookup('url', 'https://ansible.com') }}"
+    vars:
+      ansible_lookup_url_timeout: "{{ 1 + 1 }}"

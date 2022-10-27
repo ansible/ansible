@@ -41,3 +41,6 @@ do
 	ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f "${format}" > "files/types.new.${format}"
 	diff -u "files/types.${format}" "files/types.new.${format}"
 done
+
+# does config template correctly
+ansible-playbook template.yml "$@"
