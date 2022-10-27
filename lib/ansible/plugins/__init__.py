@@ -60,6 +60,9 @@ class AnsiblePlugin(ABC):
         self._options = {}
         self._defs = None
 
+    def get_templar(self):
+        return getattr(self, '_templar', getattr(self, 'templar', None))
+
     def matches_name(self, possible_names):
         possible_fqcns = set()
         for name in possible_names:
@@ -82,7 +85,7 @@ class AnsiblePlugin(ABC):
         if option not in self._options:
             option_value, dummy = self.get_option_and_origin(option, hostvars=hostvars)
 
-        templar = getattr(self, '_templar', None)
+        templar = self.get_templar()
         if option not in self._options:
             try:
                 option_value = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars, templar=templar)
@@ -108,8 +111,7 @@ class AnsiblePlugin(ABC):
         :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         '''
-        templar = getattr(self, '_templar', None)
-        self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct, templar=templar)
+        self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct, templar=self.get_templar())
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
