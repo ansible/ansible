@@ -126,8 +126,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
    :header-rows: 1
     
    * - Version
-     - | General Availability
-       | General Support [1]_
+     - General Availability [1]_
      - Critical Support [1]_
      - Security Support [1]_
      - End Of Life [1]_
