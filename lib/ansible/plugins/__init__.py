@@ -111,7 +111,8 @@ class AnsiblePlugin(ABC):
         :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         '''
-        self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct, templar=self.get_templar())
+        self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options,
+                                                    direct=direct, templar=self.get_templar())
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
