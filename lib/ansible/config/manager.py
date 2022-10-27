@@ -345,12 +345,12 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
+    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None, templar=None):
 
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct, templar=templar)
 
         return options
 
@@ -437,19 +437,19 @@ class ConfigManager(object):
 
         return value, origin
 
-    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, templar=None):
         ''' wrapper '''
 
         try:
             value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
-                                                            keys=keys, variables=variables, direct=direct)
+                                                            keys=keys, variables=variables, direct=direct, templar=templar)
         except AnsibleError:
             raise
         except Exception as e:
             raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, templar=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
         if cfile is None:
             # use default config
@@ -556,6 +556,10 @@ class ConfigManager(object):
                             value = t.render(variables)
                         except Exception:
                             pass  # not templatable
+
+            # template if possible and needed
+            if templar is not None and value is not None:
+                value = templar.template(value)
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
