@@ -31,10 +31,10 @@ Module maintainers
 ------------------
 
 Module-scope maintainers exist in collections that have the `collection bot <https://github.com/ansible-community/collection_bot>`_,
-for example `community.general <https://github.com/ansible-collections/community.general>`_
+for example, `community.general <https://github.com/ansible-collections/community.general>`_
 and `community.network <https://github.com/ansible-collections/community.network>`_.
 
-Being a module maintainer is the stage prior to becoming a collection maintainer. Module maintainers are contributors who are listed in ``.github/BOTMETA.yml``. The scope can be any file (for example, a module or plugin), directory, or repository. Because in most cases the scope is a module or group of modules, we call these contributors module maintainers. The collection bot notifies module maintainers when issues / pull requests related to files they maintain are created.
+Being a module maintainer is the stage prior to becoming a collection maintainer. Module maintainers are contributors who are listed in ``.github/BOTMETA.yml``. The scope can be any file (for example, a module or plugin), directory, or repository. Because in most cases the scope is a module or group of modules, we call these contributors module maintainers. The collection bot notifies module maintainers when issues/pull requests related to files they maintain are created.
 
 Module maintainers have indirect commit rights implemented through the `collection bot <https://github.com/ansible-community/collection_bot>`_.
 When two module maintainers comment with the keywords ``shipit``, ``LGTM``, or ``+1`` on a pull request
@@ -47,7 +47,7 @@ see to the `Collection bot overview <https://github.com/ansible-community/collec
 Releasing a collection
 ----------------------
 
-Collection maintainers are responsible for releasing new versions of a collection. Generally, releasing in the collections consists of:
+Collection maintainers are responsible for releasing new versions of a collection. Generally, releasing a collection consists of:
 
 #. Planning and announcement.
 #. Generating a changelog.
@@ -76,14 +76,14 @@ For convenience, backporting can be implemented automatically using GitHub bots 
 Including a collection in Ansible
 -----------------------------------
 
-If a collection is not included in Ansible (not shipped with Ansible package), maintainers can submit the collection for inclusion by creating a discussion under `ansible-collections/ansible-inclusion repository <https://github.com/ansible-collections/ansible-inclusion>`_. For more information, see the `repository's README <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_, and the `Ansible community package collections requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`.
+If a collection is not included in Ansible (not shipped with Ansible package), maintainers can submit the collection for inclusion by creating a discussion under the `ansible-collections/ansible-inclusion repository <https://github.com/ansible-collections/ansible-inclusion>`_. For more information, see the `repository's README <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_, and the `Ansible community package collections requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`.
 
 Stepping down as a collection maintainer
 ===========================================
 
 Times change, and so may your ability to continue as a collection maintainer. We ask that you do not step down silently.
 
-If you feel you don't have time to maintain your collection any more, you should:
+If you feel you don't have time to maintain your collection anymore, you should:
 
 - Inform other maintainers about it.
 - If the collection is under the ``ansible-collections`` organization, also inform relevant :ref:`communication_irc`, the ``community`` chat channels on IRC or matrix, or by email ``ansible-community@redhat.com``.
