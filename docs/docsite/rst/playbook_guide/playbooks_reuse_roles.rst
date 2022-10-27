@@ -536,7 +536,7 @@ Embedding modules and plugins in roles
 ======================================
 
 .. note::
-    This applies to standalone roles, roles inside collections do not support having their own plugins, they must use the collection's structure for such plugins.
+    This applies only to standalone roles. Roles in collections do not support plugin embedding; they must use the collection's ``plugins`` structure to distribute plugins.
 
 If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you might wish to distribute it as part of a role. For example, if you write a module that helps configure your company's internal software, and you want other people in your organization to use this module, but you do not want to tell everyone how to configure their Ansible library path, you can include the module in your internal_config role.
 
