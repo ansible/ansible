@@ -131,8 +131,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - Security Support [1]_
      - End Of Life [1]_
      - Controller Python
-     - Target Python
-     - Target PowerShell
+     - Target Python / Powershell
    * - `2.9`_
      - 31 Oct 2019
      - 13 Aug 2020
@@ -143,7 +142,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
        | Python 3.5 - 3.8
      - | Python 2.6 - 2.7
        | Python 3.5 - 3.8
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
    * - `2.10`_
      - 13 Aug 2020
      - 26 Apr 2021
@@ -154,7 +153,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
        | Python 3.5 - 3.9
      - | Python 2.6 - 2.7
        | Python 3.5 - 3.9
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
    * - `2.11`_
      - 26 Apr 2021
      - 08 Nov 2021
@@ -165,7 +164,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
        | Python 3.5 - 3.9
      - | Python 2.6 - 2.7
        | Python 3.5 - 3.9
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
    * - `2.12`_
      - 08 Nov 2021
      - 23 May 2022
@@ -174,7 +173,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - | Python 3.8 - 3.10
      - | Python 2.6
        | Python 3.5 - 3.10
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
    * - `2.13`_
      - 23 May 2022
      - 07 Nov 2022
@@ -183,7 +182,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - | Python 3.8 - 3.10
      - | Python 2.7
        | Python 3.5 - 3.10
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
    * - `2.14`_
      - 07 Nov 2022
      - 22 May 2023
@@ -192,7 +191,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - | Python 3.9 - 3.11
      - | Python 2.7
        | Python 3.5 - 3.11
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
    * - `2.15`_
      - 22 May 2023
      - 06 Nov 2023
@@ -201,7 +200,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - | Python 3.9 - 3.11
      - | Python 2.7
        | Python 3.5 - 3.11
-     - PowerShell 3 - 5.1
+       | PowerShell 3 - 5.1
 ..    Remove the preceeding ``.. `` (dot-dot-space) to uncomment these lines, this comment should move when doing so
 ..    * - 2.16
 ..      - 06 Nov 2023
@@ -210,7 +209,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - May 2025
 ..      - | Python 3.10 - 3.12
 ..      - | Python 3.6 - 3.12
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.17
 ..      - 20 May 2024
 ..      - Nov 2024
@@ -218,7 +217,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - Nov 2025
 ..      - | Python 3.10 - 3.12
 ..      - | Python 3.6 - 3.12
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.18
 ..      - Nov 2024
 ..      - May 2025
@@ -226,7 +225,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - May 2026
 ..      - | Python 3.11 - 3.13
 ..      - | Python 3.6 - 3.13
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.19
 ..      - May 2025
 ..      - Nov 2025
@@ -234,7 +233,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - Nov 2026
 ..      - | Python 3.11 - 3.13
 ..      - | Python 3.6 - 3.13
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.20
 ..      - Nov 2025
 ..      - May 2026
@@ -242,7 +241,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - May 2027
 ..      - | Python 3.12 - 3.14
 ..      - | Python 3.8 - 3.14
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.21
 ..      - May 2026
 ..      - Nov 2026
@@ -250,7 +249,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - Nov 2027
 ..      - | Python 3.12 - 3.14
 ..      - | Python 3.8 - 3.14
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.22
 ..      - Nov 2026
 ..      - May 2027
@@ -258,7 +257,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - May 2028
 ..      - | Python 3.13 - 3.15
 ..      - | Python 3.8 - 3.15
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.23
 ..      - May 2027
 ..      - Nov 2027
@@ -266,7 +265,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - Nov 2028
 ..      - | Python 3.13 - 3.15
 ..      - | Python 3.8 - 3.15
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.24
 ..      - Nov 2027
 ..      - May 2028
@@ -274,7 +273,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - May 2029
 ..      - | Python 3.14 - 3.16
 ..      - | Python 3.8 - 3.16
-..      - TBD
+..        | PowerShell TBD
 ..    * - 2.25
 ..      - May 2028
 ..      - Nov 2028
@@ -282,7 +281,7 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - Nov 2029
 ..      - | Python 3.14 - 3.16
 ..      - | Python 3.8 - 3.16
-..      - TBD
+..        | PowerShell TBD
 
 .. [1] Dates indicate the start date of the maintenance cycle
 
