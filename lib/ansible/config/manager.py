@@ -559,7 +559,7 @@ class ConfigManager(object):
                             pass  # not templatable
 
             # template if possible and needed
-            if templar is not None and value is not None:
+            if templar is not None and value is not None and templar.is_template(value):
                 value = templar.template(value)
 
             # ensure correct type, can raise exceptions on mismatched types

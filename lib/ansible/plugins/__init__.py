@@ -85,8 +85,8 @@ class AnsiblePlugin(ABC):
         if option not in self._options:
             option_value, dummy = self.get_option_and_origin(option, hostvars=hostvars)
 
-        templar = self.get_templar()
         if option not in self._options:
+            templar = self.get_templar()
             try:
                 option_value = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars, templar=templar)
             except AnsibleError as e:
