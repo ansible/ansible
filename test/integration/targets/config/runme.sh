@@ -43,4 +43,4 @@ do
 done
 
 # does config template correctly
-ansible-playbook template.yml "$@"
+ansible-playbook templating.yml "$@"
