@@ -49,7 +49,7 @@ The Ansible community maintains its own Matrix homeserver at ``ansible.im``, how
 Matrix chat supports:
 
 * persistence (when you log on, you see all messages since you last logged off)
-* edits (so you can fix your typos - **NOTE** that every edit on Matrix causes the message to be sent again to IRC, so please avoid editing multiple times!)
+* edits (Lets you fix typos and so on. **NOTE** Each edit you make on Matrix re-sends the message to IRC. Please try to avoid multiple edits!)
 * replies to individual users
 * reactions/emojis
 * bridging to IRC
