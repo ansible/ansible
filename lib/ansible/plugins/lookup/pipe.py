@@ -20,14 +20,14 @@ DOCUMENTATION = r"""
         so if you need to different permissions you must change the command or run Ansible as another user.
       - Alternatively you can use a shell/command task that runs against localhost and registers the result.
       - Pipe lookup internally invokes Popen with shell=True (this is required and intentional).
-        This type of invocation is considered as security issue if appropriate care is not taken to sanitize any user provided or variable input.
+        This type of invocation is considered a security issue if appropriate care is not taken to sanitize any user provided or variable input.
         It is strongly recommended to pass user input or variable input via quote filter before using with pipe lookup.
         See example section for this.
         Read more about this L(Bandit B602 docs,https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html)
 """
 
 EXAMPLES = r"""
-- name: raw result of running date command"
+- name: raw result of running date command
   ansible.builtin.debug:
     msg: "{{ lookup('ansible.builtin.pipe', 'date') }}"
 
