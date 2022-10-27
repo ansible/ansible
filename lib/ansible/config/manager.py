@@ -560,7 +560,10 @@ class ConfigManager(object):
 
             # template if possible and needed
             if templar is not None and value is not None and templar.is_template(value):
-                value = templar.template(value)
+                try:
+                    value = templar.template(value)
+                except Exception as e:
+                    warnings.add("leaving value for '%s' as is, could not template: %s" % (config, to_native(e)))
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
