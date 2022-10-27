@@ -1,0 +1,2 @@
+bugfixes:
+  - file lookup now handles missing files more gracefully.
