@@ -18,27 +18,31 @@ from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
 
-def _warning(msg):
+def _warning(warn):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
         from ansible.utils.display import Display
-        Display().warning(msg)
+        Display().warning(warn)
     except Exception:
-        warnings.warn(msg)
+        warnings.warn(warn)
 
 def _deprecated(warn):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
 
     depdict = getattr(warn, 'ext', {})
-    msg = '%s: %s. %s' % (str(warn), depdict['why'], depdict.get('alternatives', ''))
-    try:
-        from ansible.utils.display import Display
-        Display().deprecated(msg, version=depdict.get('version'), date=depdict.get('date'), collection=depdict.get('collection'))
-    except Exception:
-        msg += ' Will be removed at %s.' % depdict['verson']
-        if 'alternatives' in depdict:
-            msg += ' See alternatives %s' % depdict['alternatives']
-        warnings.warn(msg, DeprecationWarning)
+    if depdict:
+        msg = '%s: %s. %s' % (str(warn), depdict['why'], depdict.get('alternatives', ''))
+        try:
+            from ansible.utils.display import Display
+            Display().deprecated(msg, version=depdict.get('version'), date=depdict.get('date'), collection=depdict.get('collection'))
+        except Exception:
+            msg += ' Will be removed at %s.' % depdict['verson']
+            if 'alternatives' in depdict:
+                msg += ' See alternatives %s' % depdict['alternatives']
+            warnings.warn(msg, DeprecationWarning)
+    else:
+        # not ours, pass along
+        warnings.warn(warn)
 
 
 def set_constant(name, value, export=vars()):
