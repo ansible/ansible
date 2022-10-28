@@ -11,7 +11,6 @@ import os.path
 import sys
 import stat
 import tempfile
-import traceback
 import warnings
 
 from collections import namedtuple
@@ -269,12 +268,16 @@ def _add_base_defs_deprecations(base_defs):
                 for entry in data[section]:
                     process(entry)
 
-class ConfigManager(object):
 
-    def _deprecate(name, depdict):
-        d = DeprecationWarning(name)
-        setattr(d, 'ext', depdict)
-        warnings.warn(d)
+class SettingDeprecation(DeprecationWarning):
+
+    def __init__(self, setting, depdict, *args, **kwargs):
+
+        super(SettingDeprecation, self).__init__(setting, *args, **kwargs)
+        self.extended_info = depdict
+
+
+class ConfigManager(object):
 
     def __init__(self, conf_file=None, defs_file=None):
 
@@ -428,7 +431,7 @@ class ConfigManager(object):
 
                 # deal with deprecation of setting source, if used
                 if 'deprecated' in entry:
-                    self._deprecate((entry['name'], entry['deprecated']))
+                    warnings.warn(SettingDeprecation(entry['name'], entry['deprecated']))
 
         return value, origin
 
@@ -527,7 +530,7 @@ class ConfigManager(object):
                                     value = temp_value
                                     origin = cfile
                                     if 'deprecated' in ini_entry:
-                                        self._deprecate(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                                        warnings.warn(SettingDeprecation('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                         except Exception as e:
                             sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                     elif ftype == 'yaml':
@@ -590,7 +593,7 @@ class ConfigManager(object):
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
-                self._deprecate((config, defs[config].get('deprecated')))
+                warnings.warn(SettingDeprecation(config, defs[config].get('deprecated')))
         else:
             raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 

@@ -10,9 +10,8 @@ import warnings
 
 from string import ascii_letters, digits
 
-from ansible.config.manager import ConfigManager
+from ansible.config.manager import ConfigManager, SettingDeprecation
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
@@ -20,49 +19,38 @@ from ansible.utils.fqcn import add_internal_fqcns
 
 def _warning(warn):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+
+    depdict = None
+    if isinstance(warn.category, SettingDeprecation):
+        depdict = warn.extended_info
+
+    print(warn.message, dir(warn))
+    msg = warn.message
+    if depdict:
+        msg = '%s: %s. Alternatives: %s.' % (warn.message, depdict['why'], depdict.get('alternatives', ''))
+
     try:
         from ansible.utils.display import Display
-        Display().warning(warn)
+        if depdict:
+            Display().deprecated(msg, version=depdict.get('version'), date=depdict.get('date'), collection_name=depdict.get('collection'))
+        else:
+            Display().warning(msg)
+
     except Exception:
-        warnings.warn(warn)
 
-def _deprecated(warn):
-    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+        if depdict:
+            if 'version' in depdict:
+                msg += ' %s will be removed in %s.' % (warn.message, depdict['version'])
+            elif 'date' in depdict:
+                msg += ' %s will be removed at %s.' % (warn.message, depdict['date'])
+            warn = DeprecationWarning(msg)
 
-    depdict = getattr(warn, 'ext', {})
-    if depdict:
-        msg = '%s: %s. %s' % (str(warn), depdict['why'], depdict.get('alternatives', ''))
-        try:
-            from ansible.utils.display import Display
-            Display().deprecated(msg, version=depdict.get('version'), date=depdict.get('date'), collection=depdict.get('collection'))
-        except Exception:
-            msg += ' Will be removed at %s.' % depdict['verson']
-            if 'alternatives' in depdict:
-                msg += ' See alternatives %s' % depdict['alternatives']
-            warnings.warn(msg, DeprecationWarning)
-    else:
-        # not ours, pass along
         warnings.warn(warn)
 
 
 def set_constant(name, value, export=vars()):
     ''' sets constants and returns resolved options dict '''
     export[name] = value
-
-
-class _DeprecatedSequenceConstant(Sequence):
-    def __init__(self, value, msg, version):
-        self._value = value
-        self._msg = msg
-        self._version = version
-
-    def __len__(self):
-        _deprecated(self._msg, self._version)
-        return len(self._value)
-
-    def __getitem__(self, y):
-        _deprecated(self._msg, self._version)
-        return self._value[y]
 
 
 # CONSTANTS ### yes, actual ones
@@ -200,8 +188,5 @@ with warnings.catch_warnings(record=True) as w:
         set_constant(setting, config.get_config_value(setting, variables=vars()))
 
 for warn in w:
-    if issubclass(warn.category, DeprecationWarning):
-        _deprecated(warn)
-    else:
-        _warning(warn)
+    _warning(warn)
 del w

@@ -125,8 +125,8 @@ class ConfigCLI(CLI):
                     warnings.simplefilter("module")
                     self.config = ConfigManager(self.config_file)
                 for warn in w:
-                    if not issubclass(warn.category, DeprecationWarning) or not gettattr(warn, 'ext', False):
-                        # we dont warn here about deprecated settings, but passthrough others
+                    if not issubclass(warn.category, DeprecationWarning):
+                        # we dont warn here about deprecated setting
                         display.warning(warn)
             else:
                 raise AnsibleOptionsError('The provided configuration file is missing or not accessible: %s' % to_native(self.config_file))
