@@ -118,7 +118,13 @@ class ConfigCLI(CLI):
             self.config_file = unfrackpath(context.CLIARGS['config_file'], follow=False)
             b_config = to_bytes(self.config_file)
             if os.path.exists(b_config) and os.access(b_config, os.R_OK):
-                self.config = ConfigManager(self.config_file)
+                # open our own configmanager, handle any warnings 
+                with warnings.catch_warnings(record=True) as w:
+                    # dedupe warnings
+                    warnings.simplefilter("module")
+                    self.config = ConfigManager(self.config_file)
+                for warn in w:
+                    display.warning(warn)
             else:
                 raise AnsibleOptionsError('The provided configuration file is missing or not accessible: %s' % to_native(self.config_file))
         else:

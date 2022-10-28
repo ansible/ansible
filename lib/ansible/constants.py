@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import warnings
 
 from string import ascii_letters, digits
 
@@ -23,18 +24,21 @@ def _warning(msg):
         from ansible.utils.display import Display
         Display().warning(msg)
     except Exception:
-        import sys
-        sys.stderr.write(' [WARNING] %s\n' % (msg))
+        warnings.warn(msg)
 
-
-def _deprecated(msg, version):
+def _deprecated(warn):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+
+    depdict = getattr(warn, 'ext', {})
+    msg = '%s: %s. %s' % (str(warn), depdict['why'], depdict.get('alternatives', ''))
     try:
         from ansible.utils.display import Display
-        Display().deprecated(msg, version=version)
+        Display().deprecated(msg, version=depdict.get('version'), date=depdict.get('date'), collection=depdict.get('collection'))
     except Exception:
-        import sys
-        sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
+        msg += ' Will be removed at %s.' % depdict['verson']
+        if 'alternatives' in depdict:
+            msg += ' See alternatives %s' % depdict['alternatives']
+        warnings.warn(msg, DeprecationWarning)
 
 
 def set_constant(name, value, export=vars()):
@@ -180,12 +184,20 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
-config = ConfigManager()
+with warnings.catch_warnings(record=True) as w:
+    # dedupe warnings
+    warnings.simplefilter("module")
 
-# Generate constants from config
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
+    # POPULATE SETTINGS FROM CONFIG ###
+    config = ConfigManager()
 
-for warn in config.WARNINGS:
-    _warning(warn)
+    # Generate constants from config
+    for setting in config.get_configuration_definitions():
+        set_constant(setting, config.get_config_value(setting, variables=vars()))
+
+for warn in w:
+    if issubclass(warn.category, DeprecationWarning):
+        _deprecated(warn)
+    else:
+        _warning(warn)
+del w

@@ -12,6 +12,7 @@ import sys
 import stat
 import tempfile
 import traceback
+import warnings
 
 from collections import namedtuple
 from collections.abc import Mapping, Sequence
@@ -195,13 +196,8 @@ def get_ini_config_value(p, entry):
     return value
 
 
-def find_ini_config_file(warnings=None):
+def find_ini_config_file():
     ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
-    # FIXME: eventually deprecate ini configs
-
-    if warnings is None:
-        # Note: In this case, warnings does nothing
-        warnings = set()
 
     # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
     # We can't use None because we could set path to None.
@@ -251,11 +247,11 @@ def find_ini_config_file(warnings=None):
     # * We did not use a config from ANSIBLE_CONFIG
     # * There's an ansible.cfg in the current working directory that we skipped
     if path_from_env != path and warn_cmd_public:
-        warnings.add(u"Ansible is being run in a world writable directory (%s),"
-                     u" ignoring it as an ansible.cfg source."
-                     u" For more information see"
-                     u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
-                     % to_text(cwd))
+        warnings.warn(u"Ansible is being run in a world writable directory (%s),"
+                      u" ignoring it as an ansible.cfg source."
+                      u" For more information see"
+                      u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
+                      % to_text(cwd))
 
     return path
 
@@ -273,11 +269,12 @@ def _add_base_defs_deprecations(base_defs):
                 for entry in data[section]:
                     process(entry)
 
-
 class ConfigManager(object):
 
-    DEPRECATED = []  # type: list[tuple[str, dict[str, str]]]
-    WARNINGS = set()  # type: set[str]
+    def _deprecate(name, depdict):
+        d = DeprecationWarning(name)
+        setattr(d, 'ext', depdict)
+        warnings.warn(d)
 
     def __init__(self, conf_file=None, defs_file=None):
 
@@ -292,7 +289,7 @@ class ConfigManager(object):
 
         if self._config_file is None:
             # set config using ini
-            self._config_file = find_ini_config_file(self.WARNINGS)
+            self._config_file = find_ini_config_file()
 
         # consume configuration
         if self._config_file:
@@ -419,7 +416,7 @@ class ConfigManager(object):
             try:
                 temp_value = container.get(name, None)
             except UnicodeEncodeError:
-                self.WARNINGS.add(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
+                warnings.warn(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
                 continue
             if temp_value is not None:  # only set if entry is defined in container
                 # inline vault variables should be converted to a text string
@@ -431,7 +428,7 @@ class ConfigManager(object):
 
                 # deal with deprecation of setting source, if used
                 if 'deprecated' in entry:
-                    self.DEPRECATED.append((entry['name'], entry['deprecated']))
+                    self._deprecate((entry['name'], entry['deprecated']))
 
         return value, origin
 
@@ -530,7 +527,7 @@ class ConfigManager(object):
                                     value = temp_value
                                     origin = cfile
                                     if 'deprecated' in ini_entry:
-                                        self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                                        self._deprecate(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                         except Exception as e:
                             sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                     elif ftype == 'yaml':
@@ -593,7 +590,7 @@ class ConfigManager(object):
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
-                self.DEPRECATED.append((config, defs[config].get('deprecated')))
+                self._deprecate((config, defs[config].get('deprecated')))
         else:
             raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 
