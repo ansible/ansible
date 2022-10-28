@@ -23,6 +23,7 @@ Managed node requirements
 =========================
 
 The *managed* node (the machine that Ansible is managing) does not require Ansible to be installed, but requires Python 2.7, or Python 3.5 - 3.11 to run Ansible library code.
+The managed node also needs a user account that can SSH to the node with an interactive POSIX shell.
 
 .. note::
 
