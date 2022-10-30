@@ -831,7 +831,7 @@ class TaskExecutor:
 
         delay = _task.delay
         if delay is None:
-            delay = _task._delay.default
+            delay = Task.delay.default
         if delay is None or delay < 0:
             delay = 1
 
