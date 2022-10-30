@@ -558,11 +558,11 @@ class TestTaskExecutorRetries:
     # delay
 
     def test_process_retry_parameters_no_delay_defaults_to_Task_default(self):
-        expected_delay = Task._delay.default
+        expected_delay = Task.delay.default
         self._do_retry_parameters_test(self._make_task(), expected_delay=expected_delay)
 
     def test_process_retry_parameters_null_delay_defaults(self):
-        expected_delay = Task._delay.default
+        expected_delay = Task.delay.default
         self._do_retry_parameters_test(self._make_task({"delay": None}), expected_delay=expected_delay)
 
     def test_process_retry_parameters_negative_delay_results_1(self):
