@@ -155,6 +155,8 @@ class FieldAttribute(Attribute):
         self.prepend = prepend
 
     def __get__(self, obj, obj_type=None):
+        if obj is None:
+            return self
         if getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False):
             value = getattr(obj, f'_{self.name}', Sentinel)
         else:
