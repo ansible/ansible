@@ -5,6 +5,27 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-10-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- BSD network facts - Do not assume column indexes, look for ``netmask`` and ``broadcast`` for determining the correct columns when parsing ``inet`` line (https://github.com/ansible/ansible/issues/79117)
+- ansible-galaxy - make initial call to Galaxy server on-demand only when installing, getting info about, and listing roles.
+- ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.
+- copy module will no longer move 'non files' set as src when remote_src=true.
+- file lookup now handles missing files more gracefully.
+- service_facts - Use python re to parse service output instead of grep (https://github.com/ansible/ansible/issues/78541)
+- updated error messages to include 'acl' and not just mode changes when failing to set required permissions on remote.
+
 v2.13.5
 =======
 

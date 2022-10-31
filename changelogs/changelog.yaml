@@ -1097,3 +1097,33 @@ releases:
     - plugin_loader_fix.yml
     - v2.13.5rc1_summary.yaml
     release_date: '2022-10-03'
+  2.13.6rc1:
+    changes:
+      bugfixes:
+      - BSD network facts - Do not assume column indexes, look for ``netmask`` and
+        ``broadcast`` for determining the correct columns when parsing ``inet`` line
+        (https://github.com/ansible/ansible/issues/79117)
+      - ansible-galaxy - make initial call to Galaxy server on-demand only when installing,
+        getting info about, and listing roles.
+      - ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.
+      - copy module will no longer move 'non files' set as src when remote_src=true.
+      - file lookup now handles missing files more gracefully.
+      - service_facts - Use python re to parse service output instead of grep (https://github.com/ansible/ansible/issues/78541)
+      - updated error messages to include 'acl' and not just mode changes when failing
+        to set required permissions on remote.
+      release_summary: '| Release Date: 2022-10-31
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 78541-service-facts-re.yml
+    - 79117-bsd-ifconfig-inet-fix.yml
+    - 79187--wheel-0.38.0.yml
+    - ansible-galaxy-install-delay-initial-api-call.yml
+    - dont_move_non_files.yml
+    - file_lookup_fix.yml
+    - mention_acl.yml
+    - v2.13.6rc1_summary.yaml
+    release_date: '2022-10-31'
