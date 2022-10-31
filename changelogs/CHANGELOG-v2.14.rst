@@ -5,6 +5,29 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.0rc2
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-10-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Update ``base`` and ``default`` containers to include Python 3.11.0.
+- ansible-test - Update ``default`` containers to include new ``docs-build`` sanity test requirements.
+
+Bugfixes
+--------
+
+- ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.
+- ansible-test - Update the ``pylint`` sanity test requirements to resolve crashes on Python 3.11. (https://github.com/ansible/ansible/issues/78882)
+- ansible-test - Update the ``pylint`` sanity test to use version 2.15.5.
+
 v2.14.0rc1
 ==========
 
