@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.join('ansible', 'lib'))
 # the repository version needs to be the one that is loaded:
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
 
-VERSION = 'devel'
+VERSION = '2.14_ja'
 AUTHOR = 'Ansible, Inc'
 
 
