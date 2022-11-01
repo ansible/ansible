@@ -95,7 +95,7 @@ options:
 
   autoremove:
     description:
-      - If C(yes), removes all "leaf" packages from the system that were originally
+      - If C(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
     type: bool
@@ -132,14 +132,14 @@ options:
     version_added: "2.7"
   security:
     description:
-      - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+      - If set to C(true), and C(state=latest) then only installs updates that have been marked security related.
       - Note that, similar to C(dnf upgrade-minimal), this filter applies to dependencies as well.
     type: bool
     default: "no"
     version_added: "2.7"
   bugfix:
     description:
-      - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - If set to C(true), and C(state=latest) then only installs updates that have been marked bugfix related.
       - Note that, similar to C(dnf upgrade-minimal), this filter applies to dependencies as well.
     default: "no"
     type: bool
@@ -168,15 +168,15 @@ options:
     type: str
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(false), the SSL certificates will not be validated.
+      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
     type: bool
     default: "yes"
     version_added: "2.7"
   sslverify:
     description:
       - Disables SSL validation of the repository server for this transaction.
-      - This should be set to C(no) if one of the configured repositories is using an untrusted or self-signed certificate.
+      - This should be set to C(false) if one of the configured repositories is using an untrusted or self-signed certificate.
     type: bool
     default: "yes"
     version_added: "2.13"
@@ -227,7 +227,7 @@ options:
     version_added: "2.8"
   allowerasing:
     description:
-      - If C(yes) it allows  erasing  of  installed  packages to resolve dependencies.
+      - If C(true) it allows  erasing  of  installed  packages to resolve dependencies.
     required: false
     type: bool
     default: "no"
