@@ -203,7 +203,7 @@ html_context = {
     'current_version': version,
     'latest_version': '2.13',
     # list specifically out of order to make latest work
-    'available_versions': ('2.13_ja', '2.12_ja', '2.11_ja',),
+    'available_versions': ('2.14_ja', '2.13_ja', '2.12_ja',),
 }
 
 # Add extra CSS styles to the resulting HTML pages
