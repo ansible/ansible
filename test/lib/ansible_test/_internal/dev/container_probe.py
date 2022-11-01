@@ -186,7 +186,12 @@ def check_container_cgroup_status(args: EnvironmentConfig, config: DockerConfig,
 def get_identity(args: EnvironmentConfig, config: DockerConfig, container_name: str):
     """Generate and return an identity string to use when logging test results."""
     engine = require_docker().command
-    loginuid = int(read_text_file('/proc/self/loginuid'))
+
+    try:
+        loginuid = int(read_text_file('/proc/self/loginuid'))
+    except FileNotFoundError:
+        loginuid = LOGINUID_NOT_SET
+
     user = pwd.getpwuid(os.getuid()).pw_name
     login_user = user if loginuid == LOGINUID_NOT_SET else pwd.getpwuid(loginuid).pw_name
     remote = engine == 'podman' and get_podman_remote()
