@@ -7,9 +7,6 @@ major_changes:
   - ansible-test - When additional cgroup setup is required on the container host, this will be automatically detected.
                    Instructions on how to configure the host will be provided in the error message shown.
 minor_changes:
-  - ansible-test - Containers that require the ``crun`` runtime will now use it automatically when run under Podman.
-                   If ``crun`` is unavailable a clear error message will be displayed.
-                   Previously the container would fail to run and no useful error was provided.
   - ansible-test - When using Podman, ansible-test will detect if the loginuid used in containers is incorrect.
                    When this occurs a warning is displayed and the container is run with the AUDIT_CONTROL capability.
                    Previously containers would fail under this situation, with no useful warnings or errors given.
