@@ -40,7 +40,7 @@ options:
         type: str
     fail_key:
         description:
-            - If a supplied key is missing this will make the task fail if C(yes).
+            - If a supplied key is missing this will make the task fail if C(true).
         type: bool
         default: 'yes'
 extends_documentation_fragment:
