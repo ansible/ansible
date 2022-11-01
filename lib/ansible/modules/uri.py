@@ -104,8 +104,8 @@ options:
       - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
         C(safe) will follow only "safe" redirects, where "safe" means that the client is only
         doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
-        where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
+        any redirects. Note that C(true) and C(false) choices are accepted for backwards compatibility,
+        where C(true) is the equivalent of C(all) and C(false) is the equivalent of C(safe). C(true) and C(false)
         are deprecated and will be removed in some future version of Ansible.
     type: str
     choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
@@ -139,9 +139,9 @@ options:
     version_added: '2.1'
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-      - Prior to 1.9.2 the code defaulted to C(no).
+      - If C(false), SSL certificates will not be validated.
+      - This should only set to C(false) used on personally controlled sites using self-signed certificates.
+      - Prior to 1.9.2 the code defaulted to C(false).
     type: bool
     default: yes
     version_added: '1.9.2'
@@ -171,19 +171,19 @@ options:
     version_added: '2.7'
   remote_src:
     description:
-      - If C(no), the module will search for the C(src) on the controller node.
-      - If C(yes), the module will search for the C(src) on the managed (remote) node.
+      - If C(false), the module will search for the C(src) on the controller node.
+      - If C(true), the module will search for the C(src) on the managed (remote) node.
     type: bool
     default: no
     version_added: '2.7'
   force:
     description:
-      - If C(yes) do not get a cached copy.
+      - If C(true) do not get a cached copy.
     type: bool
     default: no
   use_proxy:
     description:
-      - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+      - If C(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
     default: yes
   unix_socket:

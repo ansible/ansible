@@ -36,7 +36,7 @@ options:
     required: true
   backup:
     description:
-    - Create a backup file (if C(yes)), including the timestamp information so
+    - Create a backup file (if C(true)), including the timestamp information so
       you can get the original file back if you somehow clobbered it
       incorrectly.
     type: bool
@@ -48,8 +48,8 @@ options:
     version_added: '1.4'
   remote_src:
     description:
-    - If C(no), it will search for src at originating/master machine.
-    - If C(yes), it will go to the remote/target machine for the src.
+    - If C(false), it will search for src at originating/master machine.
+    - If C(true), it will go to the remote/target machine for the src.
     type: bool
     default: yes
     version_added: '1.4'

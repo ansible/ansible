@@ -36,8 +36,8 @@ options:
     aliases: [ rev, version ]
   force:
     description:
-      - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
-        Prior to 1.9 the default was C(yes).
+      - If C(true), modified files will be discarded. If C(false), module will fail if it encounters modified files.
+        Prior to 1.9 the default was C(true).
     type: bool
     default: "no"
   in_place:
@@ -65,32 +65,32 @@ options:
     version_added: "1.4"
   checkout:
     description:
-     - If C(no), do not check out the repository if it does not exist locally.
+     - If C(false), do not check out the repository if it does not exist locally.
     type: bool
     default: "yes"
     version_added: "2.3"
   update:
     description:
-     - If C(no), do not retrieve new revisions from the origin repository.
+     - If C(false), do not retrieve new revisions from the origin repository.
     type: bool
     default: "yes"
     version_added: "2.3"
   export:
     description:
-      - If C(yes), do export instead of checkout/update.
+      - If C(true), do export instead of checkout/update.
     type: bool
     default: "no"
     version_added: "1.6"
   switch:
     description:
-      - If C(no), do not call svn switch before update.
+      - If C(false), do not call svn switch before update.
     default: "yes"
     version_added: "2.0"
     type: bool
   validate_certs:
     description:
-      - If C(no), passes the C(--trust-server-cert) flag to svn.
-      - If C(yes), does not pass the flag.
+      - If C(false), passes the C(--trust-server-cert) flag to svn.
+      - If C(true), does not pass the flag.
     default: "no"
     version_added: "2.11"
     type: bool
