@@ -185,7 +185,8 @@ def run_support_container(
             if not support_container_id:
                 docker_rm(args, name)
 
-    options.extend(('--env', 'SYSTEMD_LOG_LEVEL=debug'))
+    if args.dev_systemd_debug:
+        options.extend(('--env', 'SYSTEMD_LOG_LEVEL=debug'))
 
     if support_container_id:
         display.info('Using existing "%s" container.' % name)

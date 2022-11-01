@@ -199,7 +199,8 @@ def run_test(scenario: TestScenario) -> TestResult:
     start = time.monotonic()
 
     integration = ['ansible-test', 'integration', 'split']
-    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v', '--dev-probe-cgroups', str(LOG_PATH)]
+    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v', '--dev-probe-cgroups', str(LOG_PATH),
+                           '--dev-systemd-debug']
 
     commands = [
         [*integration, *integration_options],

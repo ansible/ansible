@@ -473,6 +473,12 @@ def add_environment_docker(
     )
 
     environments_parser.add_argument(
+        '--dev-systemd-debug',
+        action='store_true',
+        help=suppress or 'enable systemd debugging in containers',
+    )
+
+    environments_parser.add_argument(
         '--dev-probe-cgroups',
         metavar='DIR',
         nargs='?',
