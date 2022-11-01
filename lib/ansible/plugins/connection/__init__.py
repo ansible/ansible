@@ -72,8 +72,6 @@ class ConnectionBase(AnsiblePlugin):
         if not hasattr(self, '_display'):
             # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
-        if not hasattr(self, '_connected'):
-            self._connected = False
 
         self.success_key = None
         self.prompt = None
