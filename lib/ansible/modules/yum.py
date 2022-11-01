@@ -41,11 +41,13 @@ options:
     aliases: [ pkg ]
     type: list
     elements: str
+    default: []
   exclude:
     description:
       - Package name(s) to exclude when state=present, or latest
     type: list
     elements: str
+    default: []
     version_added: "2.0"
   list:
     description:
@@ -72,6 +74,7 @@ options:
         separated string
     type: list
     elements: str
+    default: []
     version_added: "0.9"
   disablerepo:
     description:
@@ -82,6 +85,7 @@ options:
         separated string
     type: list
     elements: str
+    default: []
     version_added: "0.9"
   conf_file:
     description:
@@ -171,6 +175,7 @@ options:
         The enabled plugin will not persist beyond the transaction.
     type: list
     elements: str
+    default: []
     version_added: "2.5"
   disable_plugin:
     description:
@@ -178,6 +183,7 @@ options:
         The disabled plugins will not persist beyond the transaction.
     type: list
     elements: str
+    default: []
     version_added: "2.5"
   releasever:
     description:

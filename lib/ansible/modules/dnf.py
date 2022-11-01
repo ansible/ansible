@@ -28,11 +28,11 @@ options:
         Spaces around the operator are required.
       - You can also pass an absolute path for a binary which is provided by the package to install.
         See examples for more information.
-    required: true
     aliases:
         - pkg
     type: list
     elements: str
+    default: []
 
   list:
     description:
@@ -55,6 +55,7 @@ options:
         When specifying multiple repos, separate them with a ",".
     type: list
     elements: str
+    default: []
 
   disablerepo:
     description:
@@ -63,6 +64,7 @@ options:
         When specifying multiple repos, separate them with a ",".
     type: list
     elements: str
+    default: []
 
   conf_file:
     description:
@@ -108,6 +110,7 @@ options:
     version_added: "2.7"
     type: list
     elements: str
+    default: []
   skip_broken:
     description:
       - Skip all unavailable packages or packages with broken dependencies
@@ -151,12 +154,14 @@ options:
     version_added: "2.7"
     type: list
     elements: str
+    default: []
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     version_added: "2.7"
     type: list
+    default: []
     elements: str
   disable_excludes:
     description:

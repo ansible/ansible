@@ -67,6 +67,7 @@ options:
       - If not set, matches are removed entirely.
       - Backreferences can be used ambiguously like C(\1), or explicitly like C(\g<1>).
     type: str
+    default: ''
   after:
     description:
       - If specified, only content after this match will be replaced/removed.

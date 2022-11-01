@@ -118,7 +118,6 @@ options:
       - TCP flags specification.
       - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
     type: dict
-    default: {}
     version_added: "2.4"
     suboptions:
         flags:
@@ -233,6 +232,7 @@ options:
       - It can only be used in conjunction with the protocols tcp, udp, udplite, dccp and sctp.
     type: list
     elements: str
+    default: []
     version_added: "2.11"
   to_ports:
     description:

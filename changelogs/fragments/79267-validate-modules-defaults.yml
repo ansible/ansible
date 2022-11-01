@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test validate-modules - no longer treat falsy non-``False`` values for defaults as ``None`` (https://github.com/ansible/ansible/pull/79267)."
