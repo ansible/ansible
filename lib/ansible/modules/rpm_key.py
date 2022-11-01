@@ -33,7 +33,7 @@ options:
       choices: [ absent, present ]
     validate_certs:
       description:
-        - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated.
+        - If C(false) and the C(key) is a url starting with https, SSL certificates will not be validated.
         - This should only be used on personally controlled sites using self-signed certificates.
       type: bool
       default: 'yes'

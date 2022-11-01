@@ -55,8 +55,8 @@ options:
   force:
     description:
     - Influence whether the remote file must always be replaced.
-    - If C(yes), the remote file will be replaced when contents are different than the source.
-    - If C(no), the file will only be transferred if the destination does not exist.
+    - If C(true), the remote file will be replaced when contents are different than the source.
+    - If C(false), the file will only be transferred if the destination does not exist.
     type: bool
     default: yes
     version_added: '1.1'
@@ -87,8 +87,8 @@ options:
   remote_src:
     description:
     - Influence whether C(src) needs to be transferred or already is present remotely.
-    - If C(no), it will search for C(src) on the controller node.
-    - If C(yes) it will search for C(src) on the managed (remote) node.
+    - If C(false), it will search for C(src) on the controller node.
+    - If C(true) it will search for C(src) on the managed (remote) node.
     - C(remote_src) supports recursive copying as of version 2.8.
     - C(remote_src) only works with C(mode=preserve) as of version 2.6.
     - Autodecryption of files does not work when C(remote_src=yes).

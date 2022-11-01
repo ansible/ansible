@@ -28,7 +28,7 @@ options:
     default: no
   aggregate:
     description:
-        - Whether the provided value is aggregated to the existing stat C(yes) or will replace it C(no).
+        - Whether the provided value is aggregated to the existing stat C(true) or will replace it C(false).
     type: bool
     default: yes
 extends_documentation_fragment:
@@ -55,7 +55,7 @@ attributes:
         support: none
 notes:
     - In order for custom stats to be displayed, you must set C(show_custom_stats) in section C([defaults]) in C(ansible.cfg)
-      or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to C(yes). See the C(default) callback plugin for details.
+      or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to C(true). See the C(default) callback plugin for details.
 version_added: "2.3"
 '''
 
