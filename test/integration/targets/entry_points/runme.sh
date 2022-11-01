@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -eu -o pipefail
 source virtualenv.sh
 set +x
 unset PYTHONPATH

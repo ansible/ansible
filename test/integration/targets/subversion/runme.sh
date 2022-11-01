@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -eux -o pipefail
 
 cleanup() {
     echo "Cleanup"

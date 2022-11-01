@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu -o pipefail
+set -eux -o pipefail
 
 # tests must be executed outside of the ansible source tree
 # otherwise ansible-test will test the ansible source instead of the test collection
