@@ -135,11 +135,11 @@ try {
 
     # populate initial results before we send the async data to avoid result race
     $result = @{
-        started = 1;
-        finished = 0;
-        results_file = $results_path;
-        ansible_job_id = $local_jid;
-        _ansible_suppress_tmpdir_delete = $true;
+        started = 1
+        finished = 0
+        results_file = $results_path
+        ansible_job_id = $local_jid
+        _ansible_suppress_tmpdir_delete = $true
         ansible_async_watchdog_pid = $watchdog_pid
     }
 
