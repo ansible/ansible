@@ -146,8 +146,9 @@ with_sequence
     - name: with_sequence -> loop
       ansible.builtin.debug:
         msg: "{{ 'testuser%02x' | format(item) }}"
-      # range is exclusive of the end point
       loop: "{{ range(0, 4 + 1, 2)|list }}"
+
+The range of the loop is exclusive of the end point.
 
 with_subelements
 ----------------
