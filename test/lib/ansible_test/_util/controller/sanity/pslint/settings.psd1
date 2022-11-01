@@ -1,40 +1,40 @@
 @{
-    Rules        = @{
-        PSAvoidLongLines                   = @{
-            Enable            = $true
+    Rules = @{
+        PSAvoidLongLines = @{
+            Enable = $true
             MaximumLineLength = 160
         }
         PSAvoidSemicolonsAsLineTerminators = @{
             Enable = $true
         }
-        PSPlaceOpenBrace                   = @{
-            Enable             = $true
-            OnSameLine         = $true
+        PSPlaceOpenBrace = @{
+            Enable = $true
+            OnSameLine = $true
             IgnoreOneLineBlock = $true
-            NewLineAfter       = $true
+            NewLineAfter = $true
         }
-        PSPlaceCloseBrace                  = @{
-            Enable             = $true
+        PSPlaceCloseBrace = @{
+            Enable = $true
             IgnoreOneLineBlock = $true
-            NewLineAfter       = $true
-            NoEmptyLineBefore  = $false
+            NewLineAfter = $true
+            NoEmptyLineBefore = $false
         }
-        PSUseConsistentIndentation         = @{
-            Enable              = $true
-            IndentationSize     = 4
+        PSUseConsistentIndentation = @{
+            Enable = $true
+            IndentationSize = 4
             PipelineIndentation = 'IncreaseIndentationForFirstPipeline'
-            Kind                = 'space'
+            Kind = 'space'
         }
-        PSUseConsistentWhitespace          = @{
-            Enable                                  = $true
-            CheckInnerBrace                         = $true
-            CheckOpenBrace                          = $true
-            CheckOpenParen                          = $true
-            CheckOperator                           = $true
-            CheckPipe                               = $true
-            CheckPipeForRedundantWhitespace         = $false
-            CheckSeparator                          = $true
-            CheckParameter                          = $false
+        PSUseConsistentWhitespace = @{
+            Enable = $true
+            CheckInnerBrace = $true
+            CheckOpenBrace = $true
+            CheckOpenParen = $true
+            CheckOperator = $true
+            CheckPipe = $true
+            CheckPipeForRedundantWhitespace = $false
+            CheckSeparator = $true
+            CheckParameter = $false
             IgnoreAssignmentOperatorInsideHashTable = $false
         }
     }

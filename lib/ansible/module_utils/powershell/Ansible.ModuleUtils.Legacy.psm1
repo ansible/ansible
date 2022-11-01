@@ -354,16 +354,16 @@ Function Get-FileChecksum($path, $algorithm = 'sha1') {
             $hash = $raw_hash.Hash.ToLower()
         }
         Else {
-            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
-            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
-            $fp.Dispose();
+            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
+            $fp.Dispose()
         }
     }
     ElseIf (Test-Path -LiteralPath $path -PathType Container) {
-        $hash = "3";
+        $hash = "3"
     }
     Else {
-        $hash = "1";
+        $hash = "1"
     }
     return $hash
 }
