@@ -1,10 +1,12 @@
 """Functions for accessing docker via the docker cli."""
 from __future__ import annotations
 
+import dataclasses
 import enum
 import errno
 import json
 import os
+import pathlib
 import random
 import socket
 import time
@@ -22,8 +24,8 @@ from .util import (
     find_executable,
     SubprocessError,
     cache,
-    mutex,
     OutputStream,
+    InternalError,
 )
 
 from .util_common import (
@@ -37,7 +39,14 @@ from .config import (
 )
 
 from .thread import (
+    mutex,
     named_lock,
+)
+
+from .cgroup import (
+    CGroupEntry,
+    MountEntry,
+    MountType,
 )
 
 DOCKER_COMMANDS = [
@@ -51,17 +60,33 @@ UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:1.0.0'
 # Passed with --ulimit option to the docker run command.
 MAX_NUM_OPEN_FILES = 10240
 
+# The value of /proc/*/loginuid when it is not set.
+# It is a reserved UID, which is the maximum 32-bit unsigned integer value.
+# See: https://access.redhat.com/solutions/25404
+LOGINUID_NOT_SET = 4294967295
+
 
 class DockerInfo:
     """The results of `docker info` for the container runtime."""
     def __init__(self, data: dict[str, t.Any]) -> None:
         self.data = data
 
+        if server_errors := data.get('ServerErrors'):
+            # This can occur when a remote docker instance is in use and the instance is not responding.
+            # In that case an error such as the following may be returned:
+            # error during connect: Get "http://{hostname}:2375/v1.24/info": dial tcp {ip_address}:2375: connect: no route to host
+            raise ApplicationError('Unable to get container host information: ' + '\n'.join(server_errors))
+
     @property
     def cgroup_version(self) -> int:
         """The cgroup version of the container host."""
         data = self.data
         host = data.get('host')
+
+        # When the container host reports cgroup v1 it is running either cgroup v1 legacy mode or cgroup v2 hybrid mode.
+        # When the container host reports cgroup v2 it is running under cgroup v2 unified mode.
+        # See: https://github.com/containers/podman/blob/8356621249e36ed62fc7f35f12d17db9027ff076/libpod/info_linux.go#L52-L56
+        # See: https://github.com/moby/moby/blob/d082bbcc0557ec667faca81b8b33bec380b75dac/daemon/info_unix.go#L24-L27
 
         if host:
             version = int(host['cgroupVersion'].lstrip('v'))  # podman
@@ -96,6 +121,19 @@ class DockerInfo:
 
         return runtime
 
+    @property
+    def rootless(self) -> bool:
+        """True if rootless, otherwise False."""
+        data = self.data
+        host = data.get('host')
+
+        if host:
+            rootless = host['security']['rootless']  # podman
+        else:
+            raise InternalError('Checking for rootless mode is only supported for Podman.')
+
+        return rootless
+
 
 @mutex
 def get_docker_info(args: CommonConfig) -> DockerInfo:
@@ -110,133 +148,75 @@ def get_docker_info(args: CommonConfig) -> DockerInfo:
 
 class SystemdControlGroupV1Status(enum.Enum):
     """The state of the cgroup v1 systemd hierarchy on the container host."""
-    DIRECTORY_NOT_FOUND = 'The "/sys/fs/cgroup/systemd" directory was not found.'
+    SUBSYSTEM_MISSING = 'The systemd cgroup subsystem was not found.'
     FILESYSTEM_NOT_MOUNTED = 'The "/sys/fs/cgroup/systemd" filesystem is not mounted.'
     MOUNT_TYPE_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount type is not correct.'
-    OWNERSHIP_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount ownership is not correct.'
     VALID = 'The "/sys/fs/cgroup/systemd" mount is valid.'
 
 
-@mutex
-def detect_host_systemd_cgroup_v1(args: EnvironmentConfig) -> SystemdControlGroupV1Status:
-    """Detect the state of the cgroup v1 systemd hierarchy on the container host."""
-    try:
-        return detect_host_systemd_cgroup_v1.cgroup_v1  # type: ignore[attr-defined]
-    except AttributeError:
-        pass
-
-    cgroup_host_path = '/sys/fs/cgroup'
-    cgroup_container_path = '/probe'
-
-    systemd_cgroup_v1_dir = 'systemd'
-    systemd_cgroup_v1_type = 'cgroup'
-    systemd_cgroup_v1_path = f'{cgroup_container_path}/{systemd_cgroup_v1_dir}'
-
-    options = ['--volume', f'{cgroup_host_path}:{cgroup_container_path}:ro']
-
-    # pipeline the commands to speed up execution
-    cmd = ['sh', '-c', f'cat /proc/self/mounts && echo "-" && ls -ln {cgroup_container_path}']
-    stdout = run_utility_container(args, f'ansible-test-cgroup-{args.session_name}', options=options, cmd=cmd).strip()
-    display.info(stdout, verbosity=4)
-
-    lines = stdout.splitlines()
-    split_index = lines.index('-')
-    mount_lines = lines[:split_index]
-    directory_lines = lines[split_index + 2:]  # skip separator and first line of 'ls' output
-
-    mounts = {item[1]: item for item in [line.split() for line in mount_lines]} if not args.explain else {}
-    mount = mounts.get(systemd_cgroup_v1_path)
-    display.info(f'Container host systemd cgroup mount: {mount}', verbosity=3)
-
-    directories = {item[8]: item for item in [line.split() for line in directory_lines]} if not args.explain else {}
-    directory = directories.get(systemd_cgroup_v1_dir)
-    display.info(f'Container host systemd cgroup directory: {directory}', verbosity=3)
-
-    if not directory:
-        cgroup_v1 = SystemdControlGroupV1Status.DIRECTORY_NOT_FOUND
-    elif not mount:
-        cgroup_v1 = SystemdControlGroupV1Status.FILESYSTEM_NOT_MOUNTED
-    elif mount[2] != systemd_cgroup_v1_type:
-        cgroup_v1 = SystemdControlGroupV1Status.MOUNT_TYPE_NOT_CORRECT
-    elif directory[2:4] != ['0', '0']:
-        cgroup_v1 = SystemdControlGroupV1Status.OWNERSHIP_NOT_CORRECT
-    else:
-        cgroup_v1 = SystemdControlGroupV1Status.VALID
-
-    detect_host_systemd_cgroup_v1.cgroup_v1 = cgroup_v1  # type: ignore[attr-defined]
-
-    return cgroup_v1
+@dataclasses.dataclass(frozen=True)
+class ContainerHostProperties:
+    """Container host properties detected at run time."""
+    audit_status: int
+    audit_code: str
+    max_open_files: int
+    loginuid: int | None
+    cgroups: tuple[CGroupEntry, ...]
+    mounts: tuple[MountEntry, ...]
+    cgroup_v1: SystemdControlGroupV1Status
 
 
 @mutex
-def detect_host_audit_status(args: EnvironmentConfig) -> int:
+def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
     """
-    Return the errno result from attempting to query the container host's audit status.
+    Detect and return properties of the container host.
 
-    The following error codes are known to occur:
+    The information collected is:
 
-    EPERM (1) - Operation not permitted
-    This occurs when the root user runs a container but lacks the AUDIT_WRITE capability.
-    This will cause patched versions of OpenSSH to disconnect after a login succeeds.
-    See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
+      - The errno result from attempting to query the container host's audit status.
+      - The max number of open files supported by the container host to run containers.
+        This value may be capped to the maximum value used by ansible-test.
+        If the value is below the desired limit, a warning is displayed.
+      - The loginuid used by the container host to run containers, or None if the audit subsystem is unavailable.
+      - The cgroup subsystems registered with the Linux kernel.
+      - The mounts visible within a container.
+      - The status of the systemd cgroup v1 hierarchy.
 
-    EBADF (9) - Bad file number
-    This occurs when the host doesn't support the audit system (the open_audit call fails).
-    This allows SSH logins to succeed despite the failure.
-    See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/netlink.c#L204-L209
-
-    ECONNREFUSED (111) - Connection refused
-    This occurs when a non-root user runs a container without the AUDIT_WRITE capability.
-    When sending an audit message, libaudit ignores this error condition.
-    This allows SSH logins to succeed despite the failure.
-    See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/deprecated.c#L48-L52
+    This information is collected together to reduce the number of container runs to probe the container host.
     """
     try:
-        return detect_host_audit_status.status  # type: ignore[attr-defined]
+        return detect_host_properties.properties  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
-    cmd = ['audit-status']
-    stdout = run_utility_container(args, f'ansible-test-audit-{args.session_name}', cmd)
-    status = detect_host_audit_status.status = int(stdout) * -1  # type: ignore[attr-defined]
-    name = errno.errorcode.get(status, '?')
+    single_line_commands = (
+        'audit-status',
+        'cat /proc/sys/fs/nr_open',
+        'ulimit -Hn',
+        '(cat /proc/1/loginuid; echo)',
+    )
 
-    display.info(f'Container host audit status: {name} ({status})', verbosity=1)
+    multi_line_commands = (
+        ' && '.join(single_line_commands),
+        'cat /proc/1/cgroup',
+        'cat /proc/1/mounts',
+    )
 
-    return status
+    options = ['--volume', '/sys/fs/cgroup:/probe:ro']
+    cmd = ['sh', '-c', ' && echo "-" && '.join(multi_line_commands)]
 
+    stdout = run_utility_container(args, f'ansible-test-probe-{args.session_name}', cmd, options)
+    blocks = stdout.split('\n-\n')
 
-@mutex
-def detect_container_loginuid(args: EnvironmentConfig) -> int | None:
-    """Return the loginuid used by the container host to run containers, or None if the audit subsystem is unavailable."""
-    try:
-        return detect_container_loginuid.loginuid  # type: ignore[attr-defined]
-    except AttributeError:
-        pass
+    values = blocks[0].split('\n')
 
-    cmd = ['sh', '-c', 'cat /proc/self/loginuid || true']
-    stdout = run_utility_container(args, f'ansible-test-loginuid-{args.session_name}', cmd=cmd)
-    loginuid = int(stdout) if stdout else None
+    audit_status = int(values[0]) * -1
+    system_limit = int(values[1])
+    hard_limit = int(values[2])
+    loginuid = int(values[3]) if values[3] else None
 
-    display.info(f'Container loginuid: {loginuid if loginuid is not None else "unavailable"}', verbosity=1)
-
-    detect_container_loginuid.loginuid = loginuid  # type: ignore[attr-defined]
-
-    return loginuid
-
-
-@mutex
-def detect_container_max_num_open_files(args: EnvironmentConfig) -> int:
-    """Return the max number of open files supported by the container host to run containers."""
-    try:
-        return detect_container_max_num_open_files.hard_limit  # type: ignore[attr-defined]
-    except AttributeError:
-        pass
-
-    cmd = ['sh', '-c', 'cat /proc/sys/fs/nr_open && ulimit -Hn']
-    stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd=cmd)
-    lines = stdout.splitlines()
-    system_limit, hard_limit = int(lines[0]), int(lines[1])
+    cgroups = CGroupEntry.loads(blocks[1])
+    mounts = MountEntry.loads(blocks[2])
 
     if hard_limit < MAX_NUM_OPEN_FILES and hard_limit < system_limit and require_docker().command == 'docker':
         # Podman will use the highest possible limits, up to its default of 1M.
@@ -248,20 +228,69 @@ def detect_container_max_num_open_files(args: EnvironmentConfig) -> int:
         cmd = ['sh', '-c', 'ulimit -Hn']
 
         try:
-            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', options=options, cmd=cmd)
+            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd, options)
         except SubprocessError as ex:
             display.warning(str(ex))
         else:
             hard_limit = int(stdout)
 
+    # Check the errno result from attempting to query the container host's audit status.
+    #
+    # The following error codes are known to occur:
+    #
+    # EPERM (1) - Operation not permitted
+    # This occurs when the root user runs a container but lacks the AUDIT_WRITE capability.
+    # This will cause patched versions of OpenSSH to disconnect after a login succeeds.
+    # See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
+    #
+    # EBADF (9) - Bad file number
+    # This occurs when the host doesn't support the audit system (the open_audit call fails).
+    # This allows SSH logins to succeed despite the failure.
+    # See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/netlink.c#L204-L209
+    #
+    # ECONNREFUSED (111) - Connection refused
+    # This occurs when a non-root user runs a container without the AUDIT_WRITE capability.
+    # When sending an audit message, libaudit ignores this error condition.
+    # This allows SSH logins to succeed despite the failure.
+    # See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/deprecated.c#L48-L52
+
+    audit_code = errno.errorcode.get(audit_status, '?')
+
+    subsystems = set(cgroup.subsystem for cgroup in cgroups)
+    mount_types = {mount.path: mount.type for mount in mounts}
+
+    if 'systemd' not in subsystems:
+        cgroup_v1 = SystemdControlGroupV1Status.SUBSYSTEM_MISSING
+    elif not (mount_type := mount_types.get(pathlib.PurePosixPath('/probe/systemd'))):
+        cgroup_v1 = SystemdControlGroupV1Status.FILESYSTEM_NOT_MOUNTED
+    elif mount_type != MountType.CGROUP_V1:
+        cgroup_v1 = SystemdControlGroupV1Status.MOUNT_TYPE_NOT_CORRECT
+    else:
+        cgroup_v1 = SystemdControlGroupV1Status.VALID
+
+    display.info(f'Container host audit status: {audit_code} ({audit_status})', verbosity=1)
     display.info(f'Container host max open files: {hard_limit}', verbosity=1)
+    display.info(f'Container loginuid: {loginuid if loginuid is not None else "unavailable"}'
+                 f'{" (not set)" if loginuid == LOGINUID_NOT_SET else ""}', verbosity=1)
 
     if hard_limit < MAX_NUM_OPEN_FILES:
         display.warning(f'Unable to set container max open files to {MAX_NUM_OPEN_FILES}. Using container host limit of {hard_limit} instead.')
+    else:
+        hard_limit = MAX_NUM_OPEN_FILES
 
-    detect_container_max_num_open_files.hard_limit = hard_limit  # type: ignore[attr-defined]
+    properties = ContainerHostProperties(
+        audit_status=audit_status,
+        audit_code=audit_code,
+        max_open_files=hard_limit,
+        loginuid=loginuid,
+        cgroups=cgroups,
+        mounts=mounts,
+        cgroup_v1=cgroup_v1,
+    )
 
-    return hard_limit
+    detect_host_properties.properties = properties  # type: ignore[attr-defined]
+
+    return properties
 
 
 def run_utility_container(args: EnvironmentConfig, name: str, cmd: list[str], options: list[str] | None = None, remove: bool = True) -> str:
@@ -615,11 +644,15 @@ def docker_start(args: EnvironmentConfig, container_id: str, options: t.Optional
 def docker_rm(args: EnvironmentConfig, container_id: str) -> None:
     """Remove the specified container."""
     try:
-        docker_command(args, ['rm', '-f', container_id], capture=True)
+        # Stop the container with SIGKILL immediately, then remove the container.
+        # Podman supports the `--time` option on `rm`, but only since version 4.0.0.
+        # Docker does not support the `--time` option on `rm`.
+        docker_command(args, ['stop', '--time', '0', container_id], capture=True)
+        docker_command(args, ['rm', container_id], capture=True)
     except SubprocessError as ex:
-        if 'no such container' in ex.stderr:
-            pass  # podman does not handle this gracefully, exits 1
-        else:
+        # Both Podman and Docker report an error if the container does not exist.
+        # The error messages contain the same "no such container" string, differing only in capitalization.
+        if 'no such container' not in ex.stderr.lower():
             raise ex
 
 
@@ -790,11 +823,27 @@ class DockerImageInspect:
         """Return a dictionary of the image volumes."""
         return self.config.get('Volumes') or {}
 
+    @property
+    def cmd(self) -> list[str]:
+        """The command to run when the container starts."""
+        return self.config['Cmd']
 
+
+@mutex
 def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = False) -> DockerImageInspect | None:
     """
     Return the results of `docker image inspect` for the specified image or None if the image does not exist.
     """
+    inspect_cache: dict[str, DockerImageInspect]
+
+    try:
+        inspect_cache = docker_image_inspect.cache  # type: ignore[attr-defined]
+    except AttributeError:
+        inspect_cache = docker_image_inspect.cache = {}  # type: ignore[attr-defined]
+
+    if inspect_result := inspect_cache.get(image):
+        return inspect_result
+
     try:
         stdout = docker_command(args, ['image', 'inspect', image], capture=True, always=always)[0]
     except SubprocessError:
@@ -806,7 +855,9 @@ def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = Fal
         items = json.loads(stdout)
 
     if len(items) == 1:
-        return DockerImageInspect(args, items[0])
+        inspect_result = DockerImageInspect(args, items[0])
+        inspect_cache[image] = inspect_result
+        return inspect_result
 
     return None
 

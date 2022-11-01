@@ -199,7 +199,9 @@ def dispatch_jobs(jobs: list[tuple[HostProfile, WrappedThread]]) -> None:
             display.error(f'Host {profile.config} job failed:\n{ex}')
             failed = True
         except Exception as ex:  # pylint: disable=broad-except
-            display.error(f'Host {profile.config} job failed:\n{ex}\n{"".join(traceback.format_tb(ex.__traceback__))}')
+            name = f'{"" if ex.__class__.__module__ == "builtins" else ex.__class__.__module__ + "."}{ex.__class__.__qualname__}'
+            display.error(f'Host {profile.config} job failed:\nTraceback (most recent call last):\n'
+                          f'{"".join(traceback.format_tb(ex.__traceback__)).rstrip()}\n{name}: {ex}')
             failed = True
 
     if connection_failures:

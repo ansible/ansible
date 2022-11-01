@@ -440,6 +440,10 @@ def add_environment_docker(
     else:
         docker_images = sorted(filter_completion(docker_completion(), controller_only=True))
 
+    # Docker support isn't related to ansible-core-ci.
+    # However, ansible-core-ci support is a reasonable indicator that the user may need the `--dev-*` options.
+    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
+
     register_completer(exclusive_parser.add_argument(
         '--docker',
         metavar='IMAGE',
@@ -466,6 +470,14 @@ def add_environment_docker(
         metavar='INT',
         type=int,
         help='memory limit for docker in bytes',
+    )
+
+    environments_parser.add_argument(
+        '--dev-probe-cgroups',
+        metavar='DIR',
+        nargs='?',
+        const='',
+        help=suppress or 'probe container cgroups, with optional log dir',
     )
 
 

@@ -5,16 +5,18 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+import datetime
 import errno
 import functools
 import json
 import os
 import pathlib
 import pwd
-import signal
+import re
 import secrets
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -22,6 +24,23 @@ import typing as t
 
 UNPRIVILEGED_USER_NAME = 'ansible-test'
 CGROUP_SYSTEMD = pathlib.Path('/sys/fs/cgroup/systemd')
+LOG_PATH = pathlib.Path('/tmp/results')
+
+# The value of /proc/*/loginuid when it is not set.
+# It is a reserved UID, which is the maximum 32-bit unsigned integer value.
+# See: https://access.redhat.com/solutions/25404
+LOGINUID_NOT_SET = 4294967295
+
+UID = os.getuid()
+
+try:
+    with open('/proc/self/loginuid') as loginuid_file:
+        LOGINUID = int(loginuid_file.read())
+
+    LOGINUID_MISMATCH = LOGINUID != LOGINUID_NOT_SET and LOGINUID != UID
+except FileNotFoundError:
+    LOGINUID = None
+    LOGINUID_MISMATCH = False
 
 
 def main() -> None:
@@ -40,199 +59,76 @@ def main() -> None:
         display.warning('Skipping destructive test on system which is not an ansible-test remote provisioned instance.')
         return
 
+    display.info(f'UID: {UID} / {LOGINUID}')
+
+    if UID != 0:
+        raise Exception('This test must be run as root.')
+
+    if not LOGINUID_MISMATCH:
+        if LOGINUID is None:
+            display.warning('Tests involving loginuid mismatch will be skipped on this host since it does not have audit support.')
+        elif LOGINUID == LOGINUID_NOT_SET:
+            display.warning('Tests involving loginuid mismatch will be skipped on this host since it is not set.')
+        elif LOGINUID == 0:
+            raise Exception('Use sudo, su, etc. as a non-root user to become root before running this test.')
+        else:
+            raise Exception()
+
     display.section(f'Bootstrapping {os_release}')
 
     bootstrapper = Bootstrapper.init()
     bootstrapper.run()
 
-    # exp = ExperimentalTest()
-    # exp.run()
-    # return
+    result_dir = LOG_PATH
+
+    if result_dir.exists():
+        shutil.rmtree(result_dir)
+
+    result_dir.mkdir()
+    result_dir.chmod(0o777)
 
     scenarios = get_test_scenarios()
     results = [run_test(scenario) for scenario in scenarios]
-    error_count = len([result for result in results if result.message])
+    error_total = 0
 
-    display.section(f'Test Results ({error_count=}/{len(results)})')
+    for name in sorted(result_dir.glob('*.log')):
+        with open(name) as log_file:
+            lines = log_file.read().strip().splitlines()
+            error_count = len([line for line in lines if line.startswith('FAIL: ')])
+            error_total += error_count
+
+            display.section(f'Log ({error_count=}/{len(lines)}): {name.name}')
+
+            for line in lines:
+                if line.startswith('FAIL: '):
+                    display.show(line, display.RED)
+                else:
+                    display.show(line)
+
+    error_count = len([result for result in results if result.message])
+    error_total += error_count
+
+    duration = datetime.timedelta(seconds=int(sum(result.duration.total_seconds() for result in results)))
+
+    display.section(f'Test Results ({error_count=}/{len(results)}) [{duration}]')
 
     for result in results:
         notes = f' <cleanup: {", ".join(result.cleanup)}>' if result.cleanup else ''
 
+        if result.cgroup_dirs:
+            notes += f' <cgroup_dirs: {len(result.cgroup_dirs)}>'
+
+        notes += f' [{result.duration}]'
+
         if result.message:
-            display.fatal(f'{result.scenario} {result.message}{notes}')
+            display.show(f'FAIL: {result.scenario} {result.message}{notes}', display.RED)
+        elif result.duration.total_seconds() >= 90:
+            display.show(f'SLOW: {result.scenario}{notes}', display.YELLOW)
         else:
             display.show(f'PASS: {result.scenario}{notes}')
 
-    if error_count:
+    if error_total:
         sys.exit(1)
-
-
-def check(a, b):
-    """Verify two values are equal."""
-    if a != b:
-        raise Exception(f"{a} != {b}")
-
-
-class ExperimentalTest:
-    """Tests to evaluate cgroup mount behavior."""
-    def __init__(self):
-        self.engine = 'podman'
-        self.ssh = ['ssh', 'ansible-test@localhost']
-        self.cgroup_systemd = pathlib.Path(CGROUP_SYSTEMD)
-
-    def run(self) -> None:
-        """Run all tests."""
-        tests = [
-            self.test_no_mount_point,
-            self.test_not_mounted,
-            self.test_mounted_after_prime,
-            self.test_mounted_before_prime_root_owner,
-            self.test_mounted_before_prime,
-        ]
-
-        self.prepare_host_for_experiment()
-
-        try:
-            for test in tests:
-                try:
-                    test()
-                finally:
-                    if have_cgroup_systemd():
-                        remove_cgroup_systemd()
-        finally:
-            cleanup_podman()
-
-    def prepare_host_for_experiment(self) -> None:
-        """Create and remove cgroup hierarchy to ensure consistent behavior between test runs."""
-        prepare_cgroup_systemd(None, self.engine)
-        remove_cgroup_systemd()
-
-    def prime(self) -> None:
-        """Prepare podman for use."""
-        cleanup_podman()
-        run_command(*self.ssh, *prepare_prime_podman_storage())
-
-    def query(self) -> tuple[dict[str, tuple[str, ...]], dict[str, tuple[str, ...]]]:
-        """Query /sys/fs/cgroup mounts and directories visible in a container."""
-        mounts = self.query_mounts()
-        directories = self.query_directories()
-
-        return mounts, directories
-
-    def query_mounts(self) -> dict[str, tuple[str, ...]]:
-        """Query /sys/fs/cgroup mounts visible in a container."""
-        mount = run_command(*self.ssh, shlex.join([
-            self.engine, 'run', '--rm', '--systemd', 'always', '--volume', '/sys/fs/cgroup:/probe:ro', 'quay.io/ansible/ansible-test-utility-container:1.0.0',
-            'cat', '/proc/self/mounts']), capture=True)
-
-        mounts = {item[1]: item for item in [line.split() for line in mount.stdout.splitlines()]}
-
-        targets = ('/probe', '/probe/systemd', '/sys/fs/cgroup', '/sys/fs/cgroup/systemd')
-
-        for target in targets:
-            if mount := mounts.get(target):
-                print(f'{target} -> {mount}')
-
-        return mounts
-
-    def query_directories(self) -> dict[str, tuple[str, ...]]:
-        """Query /sys/fs/cgroup directories visible in a container."""
-        ls = run_command(*self.ssh, shlex.join([
-            self.engine, 'run', '--rm', '--systemd', 'always', '--volume', '/sys/fs/cgroup:/probe:ro',
-            'quay.io/ansible/ansible-test-utility-container:1.0.0', 'sh', '-c',
-            'ls -ld /probe/systemd /sys/fs/cgroup/systemd || true']), capture=True)
-
-        directories = {item[8]: [item[0]] + item[2:4] + [item[8]] for item in [line.split() for line in ls.stdout.splitlines()]}
-
-        for directory, info in directories.items():
-            print(f'{directory} -> {info}')
-
-        return directories
-
-    def test_no_mount_point(self) -> None:
-        """Test without a mount point."""
-        display.section('/sys/fs/cgroup/systemd directory does not exist')
-
-        self.prime()
-
-        mounts, directories = self.query()
-
-        check(mounts.get('/probe', [])[0:3], ['cgroup_root', '/probe', 'tmpfs'])
-        check(mounts.get('/probe/systemd'), None)
-        check(mounts.get('/sys/fs/cgroup', [])[0:3], ['cgroup', '/sys/fs/cgroup', 'tmpfs'])
-        check(mounts.get('/sys/fs/cgroup/systemd'), None)
-        check(directories.get('/probe/systemd'), None)
-        check(directories.get('/sys/fs/cgroup/systemd'), None)
-
-    def test_not_mounted(self):
-        """Test without /sys/fs/cgroup/systemd mounted."""
-        display.section('/sys/fs/cgroup/systemd directory exists (owned by root) but is not mounted')
-
-        self.cgroup_systemd.mkdir()
-
-        self.prime()
-
-        mounts, directories = self.query()
-
-        self.cgroup_systemd.rmdir()
-
-        check(mounts.get('/probe', [])[0:3], ['cgroup_root', '/probe', 'tmpfs'])
-        check(mounts.get('/probe/systemd'), None)
-        check(mounts.get('/sys/fs/cgroup', [])[0:3], ['cgroup', '/sys/fs/cgroup', 'tmpfs'])
-        check(mounts.get('/sys/fs/cgroup/systemd'), None)
-        check(directories.get('/probe/systemd'), ['drwxr-xr-x', 'nobody', 'nobody', '/probe/systemd'])
-        check(directories.get('/sys/fs/cgroup/systemd'), None)
-
-    def test_mounted_after_prime(self) -> None:
-        """Test with /sys/fs/cgroup/systemd mounted after priming podman."""
-        display.section('/sys/fs/cgroup/systemd mounted after prime')
-
-        self.prime()
-
-        prepare_cgroup_systemd(UNPRIVILEGED_USER_NAME, self.engine)
-
-        mounts, directories = self.query()
-
-        check(mounts.get('/probe', [])[0:3], ['cgroup_root', '/probe', 'tmpfs'])
-        check(mounts.get('/probe/systemd'), None)
-        check(mounts.get('/sys/fs/cgroup', [])[0:3], ['cgroup', '/sys/fs/cgroup', 'tmpfs'])
-        check(mounts.get('/sys/fs/cgroup/systemd', [])[0:3], ['cgroup_root', '/sys/fs/cgroup/systemd', 'tmpfs'])
-        check(directories.get('/probe/systemd'), ['drwxr-xr-x', 'nobody', 'nobody', '/probe/systemd'])
-        check(directories.get('/sys/fs/cgroup/systemd'), ['drwxr-xr-x', 'nobody', 'nobody', '/sys/fs/cgroup/systemd'])
-
-    def test_mounted_before_prime_root_owner(self) -> None:
-        """Test with /sys/fs/cgroup/systemd mounted before priming podman, but owned by root."""
-        display.section('/sys/fs/cgroup/systemd mounted before prime but owned by root')
-
-        prepare_cgroup_systemd(None, self.engine)
-
-        self.prime()
-
-        mounts, directories = self.query()
-
-        check(mounts.get('/probe', [])[0:3], ['cgroup_root', '/probe', 'tmpfs'])
-        check(mounts.get('/probe/systemd')[0:3], ['cgroup', '/probe/systemd', 'cgroup'])
-        check(mounts.get('/sys/fs/cgroup', [])[0:3], ['cgroup', '/sys/fs/cgroup', 'tmpfs'])
-        check(mounts.get('/sys/fs/cgroup/systemd', [])[0:3], ['cgroup', '/sys/fs/cgroup/systemd', 'cgroup'])
-        check(directories.get('/probe/systemd'), ['dr-xr-xr-x', 'nobody', 'nobody', '/probe/systemd'])
-        check(directories.get('/sys/fs/cgroup/systemd'), ['dr-xr-xr-x', 'nobody', 'nobody', '/sys/fs/cgroup/systemd'])
-
-    def test_mounted_before_prime(self) -> None:
-        """Test with /sys/fs/cgroup/systemd mounted before priming podman."""
-        display.section('/sys/fs/cgroup/systemd mounted before prime')
-
-        prepare_cgroup_systemd(UNPRIVILEGED_USER_NAME, self.engine)
-
-        self.prime()
-
-        mounts, directories = self.query()
-
-        check(mounts.get('/probe', [])[0:3], ['cgroup_root', '/probe', 'tmpfs'])
-        check(mounts.get('/probe/systemd')[0:3], ['cgroup', '/probe/systemd', 'cgroup'])
-        check(mounts.get('/sys/fs/cgroup', [])[0:3], ['cgroup', '/sys/fs/cgroup', 'tmpfs'])
-        check(mounts.get('/sys/fs/cgroup/systemd', [])[0:3], ['cgroup', '/sys/fs/cgroup/systemd', 'cgroup'])
-        check(directories.get('/probe/systemd'), ['dr-xr-xr-x', 'root', 'root', '/probe/systemd'])
-        check(directories.get('/sys/fs/cgroup/systemd'), ['drwxr-xr-x', 'root', 'root', '/sys/fs/cgroup/systemd'])
 
 
 def get_test_scenarios() -> list[TestScenario]:
@@ -249,41 +145,46 @@ def get_test_scenarios() -> list[TestScenario]:
         entries = {name: value for name, value in [parse_completion_entry(line) for line in docker_file.read().splitlines()]
                    if value.get('context') != 'collection'}
 
+    unprivileged_user = User.get(UNPRIVILEGED_USER_NAME)
+
     scenarios: list[TestScenario] = []
 
     for container_name, settings in entries.items():
         image = settings['image']
-        cgroup = settings.get('cgroup', 'v2')
+        cgroup = settings.get('cgroup', 'v1-v2')
 
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
-            expose_cgroup_v1 = cgroup == 'v1' and get_docker_info(engine).cgroup_version != 1
+            expose_cgroup_v1 = cgroup == 'v1-only' and get_docker_info(engine).cgroup_version != 1
 
             if cgroup != 'none' and get_docker_info(engine).cgroup_version == 1 and not have_cgroup_systemd():
                 expose_cgroup_v1 = True  # the host uses cgroup v1 but there is no systemd cgroup and the container requires cgroup support
 
-            user_names = [
-                # TODO: add testing for rootless docker
-                UNPRIVILEGED_USER_NAME,  # rootless (podman) and "normal" docker (loginuid not set)
+            user_scenarios = [
+                # TODO: test rootless docker
+                UserScenario(ssh=unprivileged_user),
             ]
 
             if engine == 'podman':
-                # TODO: test rootless podman on Alpine and Ubuntu hosts
+                user_scenarios.append(UserScenario(ssh=ROOT_USER))
+
+                # TODO: test podman remote on Alpine and Ubuntu hosts
+                # TODO: combine remote with ssh using different unprivileged users
                 if os_release.id not in ('alpine', 'ubuntu'):
-                    user_names.append(f'{UNPRIVILEGED_USER_NAME}@localhost')  # rootless remote podman
+                    user_scenarios.append(UserScenario(remote=unprivileged_user))
 
-                user_names.append('root')  # rootfull podman over ssh (loginuid matches user)
-                user_names.append('')  # rootfull podman in the current session (loginuid doesn't match uid, due to use of sudo, su, etc. to run the test suite)
+                if LOGINUID_MISMATCH:
+                    user_scenarios.append(UserScenario())
 
-            for user_name in user_names:
+            for user_scenario in user_scenarios:
                 scenarios.append(
                     TestScenario(
-                        user_name=user_name,
+                        user_scenario=user_scenario,
                         engine=engine,
-                        disable_selinux=disable_selinux,
                         container_name=container_name,
                         image=image,
+                        disable_selinux=disable_selinux,
                         expose_cgroup_v1=expose_cgroup_v1,
                     )
                 )
@@ -293,45 +194,45 @@ def get_test_scenarios() -> list[TestScenario]:
 
 def run_test(scenario: TestScenario) -> TestResult:
     """Run a test scenario and return the test results."""
-    display.section(f'Testing {scenario}')
+    display.section(f'Testing {scenario} Started')
+
+    start = time.monotonic()
 
     integration = ['ansible-test', 'integration', 'split']
-    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v']
+    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v', '--dev-probe-cgroups', str(LOG_PATH)]
 
     commands = [
         [*integration, *integration_options],
-        [*integration, '--controller', 'docker:alpine3', *integration_options],  # use alpine3 for the controller since it doesn't require the cgroup v1 hack
+        # For the split test we'll use alpine3 as the controller. There are two reasons for this:
+        # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
+        # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
+        [*integration, '--controller', 'docker:alpine3', *integration_options],
     ]
 
-    env: dict[str, str] = {}
+    common_env: dict[str, str] = {}
+    test_env: dict[str, str] = {}
 
     if scenario.engine == 'podman':
-        env.update(ANSIBLE_TEST_PREFER_PODMAN='1')
+        if scenario.user_scenario.remote:
+            common_env.update(
+                CONTAINER_HOST=f'ssh://{scenario.user_scenario.remote.name}@localhost/run/user/{scenario.user_scenario.remote.pwnam.pw_uid}/podman/podman.sock',
+                CONTAINER_SSHKEY=str(pathlib.Path('~/.ssh/id_rsa').expanduser()),  # TODO: add support for ssh + remote when the ssh user is not root
+            )
+
+        test_env.update(ANSIBLE_TEST_PREFER_PODMAN='1')
+
+    test_env.update(common_env)
+
+    if scenario.user_scenario.ssh:
+        client_become_cmd = ['ssh', f'{scenario.user_scenario.ssh.name}@localhost']
+        test_commands = [client_become_cmd + [f'cd ~/ansible; {format_env(test_env)}{sys.executable} bin/{shlex.join(command)}'] for command in commands]
+    else:
+        client_become_cmd = ['sh', '-c']
+        test_commands = [client_become_cmd + [f'{format_env(test_env)}{shlex.join(command)}'] for command in commands]
 
     prime_storage_command = []
 
-    if scenario.hostname:
-        # Run as the current user, which is root.
-        # However, we'll set CONTAINER_HOST and CONTAINER_SSHKEY so that podman-remote is used.
-        env.update(
-            CONTAINER_HOST=f'ssh://{scenario.user}@{scenario.hostname}/run/user/{scenario.uid}/podman/podman.sock',
-            CONTAINER_SSHKEY=str(pathlib.Path('~/.ssh/id_rsa').expanduser()),
-        )
-
-        become_cmd = ['ssh', f'{scenario.user}@{scenario.hostname}']
-        test_commands = [['sh', '-c'] + [f'{format_env(env)} {shlex.join(command)}'] for command in commands]
-    elif scenario.user:
-        # Use SSH to run the tests so that /proc/self/loginuid reflects the user we're testing as.
-        # Without this, the loginuid will be set to a value other than 4294967295 (-1) even though we've switched to root after login.
-        become_cmd = ['ssh', f'{scenario.user}@localhost']
-        test_commands = [become_cmd + [f'cd ~/ansible; {format_env(env)} {sys.executable} bin/{shlex.join(command)}'] for command in commands]
-    else:
-        # Run as the current user, which is root.
-        # However, our loginuid ins't root since sudo, su, etc. was used after login.
-        become_cmd = ['sh', '-c']
-        test_commands = [become_cmd + [f'{format_env(env)} {shlex.join(command)}'] for command in commands]
-
-    if scenario.engine == 'podman' and scenario.user == UNPRIVILEGED_USER_NAME:
+    if scenario.engine == 'podman' and scenario.user_scenario.actual.name == UNPRIVILEGED_USER_NAME:
         # When testing podman we need to make sure that the overlay filesystem is used instead of vfs.
         # Using the vfs filesystem will result in running out of disk space during the tests.
         # To change the filesystem used, the existing storage directory must be removed before "priming" the storage database.
@@ -344,12 +245,13 @@ def run_test(scenario: TestScenario) -> TestResult:
         #
         #   User-selected graph driver "vfs" overwritten by graph driver "overlay" from database - delete libpod local files to resolve
 
-        prime_storage_command = become_cmd + prepare_prime_podman_storage()
+        actual_become_cmd = ['ssh', f'{scenario.user_scenario.actual.name}@localhost']
+        prime_storage_command = actual_become_cmd + prepare_prime_podman_storage()
 
     message = ''
 
     if scenario.expose_cgroup_v1:
-        prepare_cgroup_systemd(UNPRIVILEGED_USER_NAME if scenario.user == UNPRIVILEGED_USER_NAME else None, scenario.engine)
+        prepare_cgroup_systemd(scenario.user_scenario.actual.name, scenario.engine)
 
     try:
         if prime_storage_command:
@@ -368,21 +270,30 @@ def run_test(scenario: TestScenario) -> TestResult:
             run_command('setenforce', 'enforcing')
 
         if scenario.expose_cgroup_v1:
-            remove_cgroup_systemd()
+            dirs = remove_cgroup_systemd()
+        else:
+            dirs = list_group_systemd()
 
         cleanup_command = [scenario.engine, 'rmi', '-f', scenario.image]
 
         try:
-            run_command(*become_cmd + [shlex.join(cleanup_command)])
+            run_command(*client_become_cmd + [f'{format_env(common_env)}{shlex.join(cleanup_command)}'])
         except SubprocessError as ex:
             display.error(str(ex))
 
         cleanup = cleanup_podman() if scenario.engine == 'podman' else tuple()
 
+    finish = time.monotonic()
+    duration = datetime.timedelta(seconds=int(finish - start))
+
+    display.section(f'Testing {scenario} Completed in {duration}')
+
     return TestResult(
         scenario=scenario,
         message=message,
         cleanup=cleanup,
+        duration=duration,
+        cgroup_dirs=tuple(str(path) for path in dirs),
     )
 
 
@@ -407,14 +318,18 @@ def cleanup_podman() -> tuple[str, ...]:
     for remaining in range(3, -1, -1):
         processes = [(int(item[0]), item[1]) for item in
                      [item.split(maxsplit=1) for item in run_command('ps', '-A', '-o', 'pid,comm', capture=True).stdout.splitlines()]
-                     if pathlib.Path(item[1].split()[0]).name in ('catatonit', 'podman')]
+                     if pathlib.Path(item[1].split()[0]).name in ('catatonit', 'podman', 'conmon')]
 
         if not processes:
             break
 
         for pid, name in processes:
             display.info(f'Killing "{name}" ({pid}) ...')
-            os.kill(pid, signal.SIGTERM if remaining > 1 else signal.SIGKILL)
+
+            try:
+                os.kill(pid, signal.SIGTERM if remaining > 1 else signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 
             cleanup.append(name)
 
@@ -450,24 +365,43 @@ def have_cgroup_systemd() -> bool:
     return pathlib.Path(CGROUP_SYSTEMD).is_dir()
 
 
-def prepare_cgroup_systemd(unprivileged_user: str | None, engine: str) -> None:
+def prepare_cgroup_systemd(username: str, engine: str) -> None:
     """Prepare the systemd cgroup."""
-    CGROUP_SYSTEMD.mkdir(exist_ok=True)
+    CGROUP_SYSTEMD.mkdir()
 
     run_command('mount', 'cgroup', '-t', 'cgroup', str(CGROUP_SYSTEMD), '-o', 'none,name=systemd,xattr', capture=True)
 
     if engine == 'podman':
-        chown_user = unprivileged_user or 'root'
-        run_command('chown', '-R', f'{chown_user}:{chown_user}', str(CGROUP_SYSTEMD))
+        run_command('chown', '-R', f'{username}:{username}', str(CGROUP_SYSTEMD))
+
+    run_command('find', str(CGROUP_SYSTEMD), '-type', 'd', '-exec', 'ls', '-l', '{}', ';')
 
 
-def remove_cgroup_systemd() -> None:
+def list_group_systemd() -> list[pathlib.Path]:
+    """List the systemd cgroup."""
+    dirs = set()
+
+    for dirpath, dirnames, filenames in os.walk(CGROUP_SYSTEMD, topdown=False):
+        for dirname in dirnames:
+            target_path = pathlib.Path(dirpath, dirname)
+            display.info(f'dir: {target_path}')
+            dirs.add(target_path)
+
+    return sorted(dirs)
+
+
+def remove_cgroup_systemd() -> list[pathlib.Path]:
     """Remove the systemd cgroup."""
+    dirs = set()
+
     for sleep_seconds in range(1, 10):
         try:
             for dirpath, dirnames, filenames in os.walk(CGROUP_SYSTEMD, topdown=False):
                 for dirname in dirnames:
-                    pathlib.Path(dirpath, dirname).rmdir()
+                    target_path = pathlib.Path(dirpath, dirname)
+                    display.info(f'rmdir: {target_path}')
+                    dirs.add(target_path)
+                    target_path.rmdir()
         except OSError as ex:
             if ex.errno != errno.EBUSY:
                 raise
@@ -493,6 +427,8 @@ def remove_cgroup_systemd() -> None:
 
     if 'systemd' in cgroup:
         raise Exception('systemd hierarchy detected')
+
+    return sorted(dirs)
 
 
 def rmtree(path: pathlib.Path) -> None:
@@ -521,7 +457,10 @@ def rmtree(path: pathlib.Path) -> None:
 
 def format_env(env: dict[str, str]) -> str:
     """Format an env dict for injection into a shell command and return the resulting string."""
-    return ' '.join(f'{shlex.quote(key)}={shlex.quote(value)}' for key, value in env.items())
+    if env:
+        return ' '.join(f'{shlex.quote(key)}={shlex.quote(value)}' for key, value in env.items()) + ' '
+
+    return ''
 
 
 class DockerInfo:
@@ -551,39 +490,46 @@ def get_docker_info(engine: str) -> DockerInfo:
 
 
 @dataclasses.dataclass(frozen=True)
+class User:
+    name: str
+    pwnam: pwd.struct_passwd
+
+    @classmethod
+    def get(cls, name: str) -> User:
+        return User(
+            name=name,
+            pwnam=pwd.getpwnam(name),
+        )
+
+
+@dataclasses.dataclass(frozen=True)
+class UserScenario:
+    ssh: User = None
+    remote: User = None
+
+    @property
+    def actual(self) -> User:
+        return self.remote or self.ssh or ROOT_USER
+
+
+@dataclasses.dataclass(frozen=True)
 class TestScenario:
+    user_scenario: UserScenario
     engine: str
-    user_name: str
     container_name: str
     image: str
     disable_selinux: bool
     expose_cgroup_v1: bool
 
     @property
-    def user(self) -> str:
-        return self.user_name.split('@', maxsplit=1)[0]
-
-    @property
-    def hostname(self) -> str | None:
-        parts = self.user_name.split('@', maxsplit=1)
-
-        if len(parts) > 1:
-            return parts[1]
-
-        return None
-
-    @property
-    def uid(self) -> int:
-        return pwd.getpwnam(self.user).pw_uid
-
-    @property
     def tags(self) -> tuple[str, ...]:
         tags = []
 
-        if self.hostname:
-            tags.append(f'remote: {self.user_name}')
-        elif self.user_name:
-            tags.append(f'ssh: {self.user_name}')
+        if self.user_scenario.ssh:
+            tags.append(f'ssh: {self.user_scenario.ssh.name}')
+
+        if self.user_scenario.remote:
+            tags.append(f'remote: {self.user_scenario.remote.name}')
 
         if self.disable_selinux:
             tags.append('selinux: permissive')
@@ -606,6 +552,8 @@ class TestResult:
     scenario: TestScenario
     message: str
     cleanup: tuple[str, ...]
+    duration: datetime.timedelta
+    cgroup_dirs: tuple[str, ...]
 
 
 def parse_completion_entry(value: str) -> tuple[str, dict[str, str]]:
@@ -671,6 +619,7 @@ class Display:
 
     CLEAR = '\033[0m'
     RED = '\033[31m'
+    GREEN = '\033[32m'
     YELLOW = '\033[33m'
     BLUE = '\033[34m'
     PURPLE = '\033[35m'
@@ -933,6 +882,21 @@ class DnfBootstrapper(Bootstrapper):
         if os_release.id != 'rhel':
             run_command('systemctl', 'start', 'docker')
 
+        if os_release.id == 'rhel' and os_release.version_id.startswith('8.'):
+            # RHEL 8 defaults to using runc instead of crun.
+            # Unfortunately runc seems to have issues with podman remote.
+            # Specifically, it tends to cause conmon to burn CPU until it reaches the specified exit delay.
+            # So we'll just change the system default to crun instead.
+            # Unfortunately we can't do this with the `--runtime` option since that doesn't work with podman remote.
+
+            with open('/usr/share/containers/containers.conf') as conf_file:
+                conf = conf_file.read()
+
+            conf = re.sub('^runtime .*', 'runtime = "crun"', conf, flags=re.MULTILINE)
+
+            with open('/etc/containers/containers.conf', 'w') as conf_file:
+                conf_file.write(conf)
+
         super().run()
 
 
@@ -1029,6 +993,8 @@ class OsRelease:
 
 display = Display()
 os_release = OsRelease.init()
+
+ROOT_USER = User.get('root')
 
 if __name__ == '__main__':
     main()

@@ -45,7 +45,7 @@ from .docker_util import (
     get_docker_host_ip,
     get_podman_host_ip,
     require_docker,
-    detect_container_max_num_open_files,
+    detect_host_properties,
 )
 
 from .ansible_util import (
@@ -157,7 +157,7 @@ def run_support_container(
         for key, value in env.items():
             options.extend(['--env', '%s=%s' % (key, value)])
 
-    max_open_files = detect_container_max_num_open_files(args)
+    max_open_files = detect_host_properties(args).max_open_files
 
     options.extend(['--ulimit', 'nofile=%s' % max_open_files])
 
@@ -184,6 +184,8 @@ def run_support_container(
 
             if not support_container_id:
                 docker_rm(args, name)
+
+    options.extend(('--env', 'SYSTEMD_LOG_LEVEL=debug'))
 
     if support_container_id:
         display.info('Using existing "%s" container.' % name)
@@ -592,7 +594,7 @@ class ContainerDescriptor:
             raise Exception('Container already registered: %s' % self.name)
 
         try:
-            container = docker_inspect(args, self.container_id)
+            container = docker_inspect(args, self.name)
         except ContainerNotFoundError:
             if not args.explain:
                 raise
@@ -674,7 +676,7 @@ def cleanup_containers(args: EnvironmentConfig) -> None:
         if container.cleanup == CleanupMode.YES:
             docker_rm(args, container.container_id)
         elif container.cleanup == CleanupMode.INFO:
-            display.notice('Remember to run `docker rm -f %s` when finished testing.' % container.name)
+            display.notice(f'Remember to run `{require_docker().command} rm -f {container.name}` when finished testing.')
 
 
 def create_hosts_entries(context: dict[str, ContainerAccess]) -> list[str]:

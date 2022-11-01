@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+import enum
 import os
 import typing as t
 
@@ -24,6 +25,20 @@ from .data import (
 from .become import (
     SUPPORTED_BECOME_METHODS,
 )
+
+
+class CGroupVersion(enum.Enum):
+    """The control group version(s) required by a container."""
+    NONE = 'none'
+    V1_ONLY = 'v1-only'
+    V2_ONLY = 'v2-only'
+    V1_V2 = 'v1-v2'
+
+
+class AuditMode(enum.Enum):
+    """The audit requirements of a container."""
+    NONE = 'none'
+    REQUIRED = 'required'
 
 
 @dataclasses.dataclass(frozen=True)
@@ -140,8 +155,8 @@ class DockerCompletionConfig(PythonCompletionConfig):
     """Configuration for Docker containers."""
     image: str = ''
     seccomp: str = 'default'
-    cgroup: str = 'v2'
-    audit: str = 'none'
+    cgroup: str = CGroupVersion.V1_V2.value
+    audit: str = AuditMode.NONE.value
     placeholder: bool = False
 
     @property
@@ -149,12 +164,32 @@ class DockerCompletionConfig(PythonCompletionConfig):
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
+    @property
+    def audit_enum(self) -> AuditMode:
+        """The audit requirements for the container. Raises an exception if the value is invalid."""
+        try:
+            return AuditMode(self.audit)
+        except ValueError:
+            raise ValueError(f'Docker completion entry "{self.name}" has an invalid value "{self.audit}" for the "audit" setting.') from None
+
+    @property
+    def cgroup_enum(self) -> CGroupVersion:
+        """The control group version(s) required by the container. Raises an exception if the value is invalid."""
+        try:
+            return CGroupVersion(self.cgroup)
+        except ValueError:
+            raise ValueError(f'Docker completion entry "{self.name}" has an invalid value "{self.cgroup}" for the "cgroup" setting.') from None
+
     def __post_init__(self):
         if not self.image:
             raise Exception(f'Docker completion entry "{self.name}" must provide an "image" setting.')
 
         if not self.supported_pythons and not self.placeholder:
             raise Exception(f'Docker completion entry "{self.name}" must provide a "python" setting.')
+
+        # verify properties can be correctly parsed to enums
+        _dummy = self.audit_enum
+        _dummy = self.cgroup_enum
 
 
 @dataclasses.dataclass(frozen=True)
