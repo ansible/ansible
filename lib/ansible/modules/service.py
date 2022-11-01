@@ -76,6 +76,7 @@ options:
         - Additional arguments provided on the command line.
         - While using remote hosts with systemd this setting will be ignored.
         type: str
+        default: ''
         aliases: [ args ]
     use:
         description:

@@ -27,7 +27,6 @@ options:
             - Key from which to return values from the specified database, otherwise the
               full contents are returned.
         type: str
-        default: ''
     service:
         description:
             - Override all databases with the specified service
