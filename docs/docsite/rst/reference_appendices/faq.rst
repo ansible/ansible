@@ -618,10 +618,19 @@ Also array notation allows for dynamic variable composition, see dynamic_variabl
 
 Another problem with 'dot notation' is that some keys can cause problems because they collide with attributes and methods of python dictionaries.
 
+* Example of incorrect syntax when ``item`` is a dictionary:
+
 .. code-block:: jinja
 
-    item.update # this breaks if item is a dictionary, as 'update()' is a python method for dictionaries
-    item['update'] # this works
+    item.update
+
+This variant causes a syntax error because ``update()`` is a Python method for dictionaries.
+
+* Example of correct syntax:
+
+.. code-block:: jinja    
+    
+    item['update']
 
 
 .. _argsplat_unsafe:
