@@ -27,10 +27,17 @@ minor_changes:
   - ansible-test - Connection failures to remote provisioned hosts now show failure details as a warning.
   - ansible-test - When setting the max open files for containers, the container host's limit will be checked.
                    If the host limit is lower than the preferred value, it will be used and a warning will be shown.
+  - ansible-test - Use ``stop --time 0`` followed by ``rm`` to remove ephemeral containers instead of ``rm -f``.
+                   This speeds up teardown of ephemeral containers.
+  - ansible-test - Reduce the polling limit for SSHD startup in containers from 60 retries to 10.
+                   The one second delay between retries remains in place.
 bugfixes:
   - ansible-test - Multiple containers now work under podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.
+  - ansible-test - Prevent concurrent / repeat inspections of the same container image.
   - ansible-test - Prevent concurrent execution of cached methods.
+  - ansible-test - Handle server errors when executing the ``docker info`` command.
+  - ansible-test - Show the exception type when reporting errors during instance provisioning.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.

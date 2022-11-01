@@ -872,7 +872,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             con = self.get_controller_target_connections()[0]
             last_error = ''
 
-            for dummy in range(1, 3):
+            for dummy in range(1, 10):
                 try:
                     con.run(['id'], capture=True)
                 except SubprocessError as ex:
