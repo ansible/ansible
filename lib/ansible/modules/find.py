@@ -102,29 +102,29 @@ options:
         default: mtime
     hidden:
         description:
-            - Set this to C(yes) to include hidden files, otherwise they will be ignored.
+            - Set this to C(true) to include hidden files, otherwise they will be ignored.
         type: bool
         default: no
     follow:
         description:
-            - Set this to C(yes) to follow symlinks in path for systems with python 2.6+.
+            - Set this to C(true) to follow symlinks in path for systems with python 2.6+.
         type: bool
         default: no
     get_checksum:
         description:
-            - Set this to C(yes) to retrieve a file's SHA1 checksum.
+            - Set this to C(true) to retrieve a file's SHA1 checksum.
         type: bool
         default: no
     use_regex:
         description:
-            - If C(no), the patterns are file globs (shell).
-            - If C(yes), they are python regexes.
+            - If C(false), the patterns are file globs (shell).
+            - If C(true), they are python regexes.
         type: bool
         default: no
     depth:
         description:
             - Set the maximum number of levels to descend into.
-            - Setting recurse to C(no) will override this value, which is effectively depth 1.
+            - Setting recurse to C(false) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
         version_added: "2.6"

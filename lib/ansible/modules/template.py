@@ -18,9 +18,9 @@ options:
   follow:
     description:
     - Determine whether symbolic links should be followed.
-    - When set to C(yes) symbolic links will be followed, if they exist.
-    - When set to C(no) symbolic links will not be followed.
-    - Previous to Ansible 2.4, this was hardcoded as C(yes).
+    - When set to C(true) symbolic links will be followed, if they exist.
+    - When set to C(false) symbolic links will not be followed.
+    - Previous to Ansible 2.4, this was hardcoded as C(true).
     type: bool
     default: no
     version_added: '2.4'

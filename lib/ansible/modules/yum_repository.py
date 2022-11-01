@@ -21,7 +21,7 @@ description:
 options:
   async:
     description:
-      - If set to C(yes) Yum will download packages and metadata from this
+      - If set to C(true) Yum will download packages and metadata from this
         repo in parallel, if possible.
       - In ansible-core 2.11, 2.12, and 2.13 the default value is C(true).
       - This option has been deprecated in RHEL 8. If you're using one of the
@@ -117,7 +117,7 @@ options:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
       - No default setting. If the value is not set, the system setting from
-        C(/etc/yum.conf) or system default of C(no) will be used.
+        C(/etc/yum.conf) or system default of C(false) will be used.
     type: bool
   gpgkey:
     description:
@@ -289,7 +289,7 @@ options:
     default: 'no'
   skip_if_unavailable:
     description:
-      - If set to C(yes) yum will continue running if this repository cannot be
+      - If set to C(true) yum will continue running if this repository cannot be
         contacted for any reason. This should be set carefully as all repos are
         consulted for any given command.
     type: bool
@@ -299,7 +299,7 @@ options:
       - Whether yum should check the permissions on the paths for the
         certificates on the repository (both remote and local).
       - If we can't read any of the files then yum will force
-        I(skip_if_unavailable) to be C(yes). This is most useful for non-root
+        I(skip_if_unavailable) to be C(true). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
     type: bool
