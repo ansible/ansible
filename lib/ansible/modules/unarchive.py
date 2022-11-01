@@ -92,7 +92,7 @@ options:
       - Command-line options with multiple elements must use multiple lines in the array, one for each element.
     type: list
     elements: str
-    default: ""
+    default: []
     version_added: "2.1"
   remote_src:
     description:

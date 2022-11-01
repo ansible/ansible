@@ -79,7 +79,7 @@ from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, 
 
 from .schema import ansible_module_kwargs_schema, doc_schema, return_schema
 
-from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml, parse_isodate
+from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
 
 if PY3:
@@ -1789,7 +1789,7 @@ class ModuleValidator(Validator):
                     )
 
             arg_default = None
-            if 'default' in data and not is_empty(data['default']):
+            if 'default' in data and data['default'] is not None:
                 try:
                     with CaptureStd():
                         arg_default = _type_checker(data['default'])
@@ -1830,7 +1830,7 @@ class ModuleValidator(Validator):
 
             try:
                 doc_default = None
-                if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
+                if 'default' in doc_options_arg and doc_options_arg['default'] is not None:
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
             except (Exception, SystemExit):
