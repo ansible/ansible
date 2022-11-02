@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - Update test container to ``7.4.0`` which includes the new PSScriptAnalyzer versions
