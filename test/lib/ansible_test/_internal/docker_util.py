@@ -25,7 +25,6 @@ from .util import (
     SubprocessError,
     cache,
     OutputStream,
-    InternalError,
 )
 
 from .util_common import (
@@ -94,45 +93,6 @@ class DockerInfo:
             version = int(data['CgroupVersion'])  # docker
 
         return version
-
-    @property
-    def cgroup_driver(self) -> str:
-        """The cgroup driver of the container host."""
-        data = self.data
-        host = data.get('host')
-
-        if host:
-            driver = host['cgroupManager']  # podman
-        else:
-            driver = data['CgroupDriver']  # docker
-
-        return driver
-
-    @property
-    def default_runtime(self) -> str:
-        """The default runtime of the container host."""
-        data = self.data
-        host = data.get('host')
-
-        if host:
-            runtime = host['ociRuntime']['name']  # podman
-        else:
-            runtime = data['DefaultRuntime']  # docker
-
-        return runtime
-
-    @property
-    def rootless(self) -> bool:
-        """True if rootless, otherwise False."""
-        data = self.data
-        host = data.get('host')
-
-        if host:
-            rootless = host['security']['rootless']  # podman
-        else:
-            raise InternalError('Checking for rootless mode is only supported for Podman.')
-
-        return rootless
 
 
 @mutex
