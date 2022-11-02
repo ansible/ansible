@@ -513,7 +513,7 @@ class Distribution(object):
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
                                 'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky', 'TencentOS',
-                                'EuroLinux', 'Kylin Linux Advanced Server'],
+                                'EuroLinux', 'Kylin Linux Advanced Server', 'UnionTech'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
                                 'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],

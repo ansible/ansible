@@ -1,7 +1,7 @@
 {
     "name": "Uos 20",
     "distro": {
-        "codename": "fou",
+        "codename": "kongzi",
         "id": "Uos",
         "name": "Uos",
         "version": "20",
@@ -10,20 +10,20 @@
         "lsb_release_info": {}
     },
     "input": {
-        "/etc/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=UOS\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=fou",
-        "/etc/lsb-release": "DISTRIB_ID=uos\nDISTRIB_RELEASE=20\nDISTRIB_DESCRIPTION=\"UnionTech OS Server 20\"\nDISTRIB_CODENAME=fou\n",
-        "/usr/lib/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=UOS\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=fou"
+        "/etc/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=\"uos\"\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=\"kongzi\"\nPLATFORM_ID=\"platform:uelc20\"",
+        "/etc/lsb-release": "DISTRIB_ID=\"Uos\"\nDISTRIB_RELEASE=\"20\"\nDISTRIB_DESCRIPTION=\"UnionTech OS Server 20\"\nDISTRIB_CODENAME=\"kongzi\"",
+        "/usr/lib/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=\"uos\"\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=\"kongzi\"\nPLATFORM_ID=\"platform:uelc20\""
     },
     "platform.dist": [
-        "uos",
+        "UnionTech",
         "20",
-        "fou"
+        "kongzi"
     ],
     "result": {
         "distribution": "Uos",
         "distribution_version": "20",
-        "distribution_release": "fou",
+        "distribution_release": "kongzi",
         "distribution_major_version": "20",
-        "os_family": "Debian"
+        "os_family": "RedHat"
     }
 }
