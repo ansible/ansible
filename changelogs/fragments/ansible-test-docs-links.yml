@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-test - Fix broken documentation link for ``aws`` test plugin error messages.
+minor_changes:
+  - ansible-test - Improve consistency of version specific documentation links.

@@ -49,6 +49,7 @@ from ...util import (
 )
 
 from ...util_common import (
+    get_docs_url,
     write_json_test_results,
     ResultType,
 )
@@ -67,7 +68,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
     UNSTABLE = 'unstable/'
     UNSUPPORTED = 'unsupported/'
 
-    EXPLAIN_URL = 'https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html'
+    EXPLAIN_URL = get_docs_url('https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html')
 
     TEMPLATE_DISABLED = """
     The following integration tests are **disabled** [[explain]({explain_url}#disabled)]:
