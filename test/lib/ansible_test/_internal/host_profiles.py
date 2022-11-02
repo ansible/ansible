@@ -57,6 +57,7 @@ from .util import (
 )
 
 from .util_common import (
+    get_docs_url,
     intercept_python,
 )
 
@@ -139,7 +140,7 @@ class HostConnectionError(ApplicationError):
 
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
-    def __init__(self, reason: str, cgroup_v1: SystemdControlGroupV1Status, engine: str) -> None:
+    def __init__(self, reason: str, cgroup_v1: SystemdControlGroupV1Status, engine: str, dd_wsl2: bool) -> None:
         message = f'''
 {reason}
 {cgroup_v1.value}
@@ -160,8 +161,16 @@ NOTE: These changes must be applied each time the container host is rebooted.
 [1] Check for 'podman' and 'catatonit' processes.
 '''
 
+        dd_wsl_message = f'''
+      When using Docker Desktop with WSL2, additional configuration [1] is required.
+
+[1] {get_docs_url("https://docs.ansible.com/ansible-core/devel/dev_guide/testing_running_locally.html#docker-desktop-with-wsl2")}
+'''
+
         if engine == 'podman':
             message += podman_message
+        elif dd_wsl2:
+            message += dd_wsl_message
 
         message = message.strip()
 
@@ -824,7 +833,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 else:
                     reason = 'The container host provides cgroup v1, but does not appear to be running systemd.'
 
-                raise ControlGroupError(reason, cgroup_v1, require_docker().command)
+                raise ControlGroupError(reason, cgroup_v1, require_docker().command, get_docker_info(self.args).docker_desktop_wsl2)
 
     def setup(self) -> None:
         """Perform out-of-band setup before delegation."""

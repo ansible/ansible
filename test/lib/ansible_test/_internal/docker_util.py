@@ -94,6 +94,18 @@ class DockerInfo:
 
         return version
 
+    @property
+    def docker_desktop_wsl2(self) -> bool:
+        """Return True if Docker Desktop integrated with WSL2 is detected, otherwise False."""
+        data = self.data
+
+        kernel_version = data.get('KernelVersion')
+        operating_system = data.get('OperatingSystem')
+
+        dd_wsl2 = kernel_version and kernel_version.endswith('-WSL2') and operating_system == 'Docker Desktop'
+
+        return dd_wsl2
+
 
 @mutex
 def get_docker_info(args: CommonConfig) -> DockerInfo:
