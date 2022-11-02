@@ -3,15 +3,14 @@ from __future__ import annotations
 
 import collections.abc as c
 import datetime
-import re
 import typing as t
 
 from .util import (
     display,
-    get_ansible_version,
 )
 
 from .util_common import (
+    get_docs_url,
     write_text_test_results,
     write_json_test_results,
     ResultType,
@@ -341,19 +340,8 @@ class TestFailure(TestResult):
         if self.command != 'sanity':
             return None  # only sanity tests have docs links
 
-        # Use the major.minor version for the URL only if this a release that
-        # matches the pattern 2.4.0, otherwise, use 'devel'
-        ansible_version = get_ansible_version()
-        url_version = 'devel'
-        if re.search(r'^[0-9.]+$', ansible_version):
-            url_version = '.'.join(ansible_version.split('.')[:2])
-
-        testing_docs_url = 'https://docs.ansible.com/ansible-core/%s/dev_guide/testing' % url_version
-
-        url = '%s/%s/' % (testing_docs_url, self.command)
-
-        if self.test:
-            url += '%s.html' % self.test
+        filename = f'{self.test}.html' if self.test else ''
+        url = get_docs_url(f'https://docs.ansible.com/ansible-core/devel/dev_guide/testing/{self.command}/{filename}')
 
         return url
 
