@@ -21,7 +21,7 @@ import yaml
 
 import ansible.module_utils.basic
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.six import PY3, raise_from, string_types
+from ansible.module_utils.six import PY2, raise_from, string_types
 from ansible.module_utils.six.moves.collections_abc import MutableMapping
 
 
@@ -139,7 +139,7 @@ def _patched_ansible_module_base_class(monkeypatch):
             return_code = None
 
             fake_stdout_buffer = BytesIO()
-            if PY3:
+            if not PY2:
                 fake_stdout_buffer = TextIOWrapper(fake_stdout_buffer)
 
             with monkeypatch.context() as mp_ctx:
@@ -158,7 +158,7 @@ def _patched_ansible_module_base_class(monkeypatch):
                     )
 
             fake_stdout_buffer.flush()
-            if PY3:
+            if not PY2:
                 fake_stdout_buffer.buffer.flush()
 
             fake_stdout_buffer.seek(0)
@@ -171,7 +171,7 @@ def _patched_ansible_module_base_class(monkeypatch):
             return_code = None
 
             fake_stdout_buffer = BytesIO()
-            if PY3:
+            if not PY2:
                 fake_stdout_buffer = TextIOWrapper(fake_stdout_buffer)
 
             with monkeypatch.context() as mp_ctx:
@@ -190,7 +190,7 @@ def _patched_ansible_module_base_class(monkeypatch):
                     )
 
             fake_stdout_buffer.flush()
-            if PY3:
+            if not PY2:
                 fake_stdout_buffer.buffer.flush()
 
             fake_stdout_buffer.seek(0)
@@ -243,11 +243,11 @@ def make_ansible_module_caller(
                 args = to_bytes(args, errors='surrogate_or_strict')
 
                 fake_stdin_buffer = BytesIO(args)
-                if PY3:
+                if not PY2:
                     fake_stdin_buffer = BufferedReader(fake_stdin_buffer)
 
                 fake_stdin = fake_stdin_buffer
-                if PY3:
+                if not PY2:
                     fake_stdin = TextIOWrapper(
                         fake_stdin_buffer,
                         line_buffering=True,
@@ -321,7 +321,7 @@ def make_ansible_module_subprocess_caller():
                 process.stdout.close()
                 process.stderr.close()
                 process.stdin.close()
-                wait_kwargs = {} if not PY3 else {'timeout': 5}
+                wait_kwargs = {} if PY2 else {'timeout': 5}
                 process.wait(**wait_kwargs)
 
             module_return_json_string = stdoutdata.decode()
@@ -356,8 +356,8 @@ def ansible_module_args(mocker, monkeypatch, request):
 
     fake_stdin_buffer = BytesIO(args)
 
-    fake_stdin = mocker.MagicMock() if PY3 else fake_stdin_buffer
-    if PY3:
+    fake_stdin = mocker.MagicMock() if not PY2 else fake_stdin_buffer
+    if not PY2:
         fake_stdin.buffer = fake_stdin_buffer
 
     monkeypatch.setattr(ansible.module_utils.basic.sys, 'stdin', fake_stdin)
