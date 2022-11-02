@@ -314,7 +314,7 @@ There are three main options in the ``constructed`` documentation fragment:
 
 Each method should be called for every host added to inventory. Three positional arguments are required: the constructed option, a dictionary of variables, and a host name. Calling the method ``_set_composite_vars`` first will allow ``keyed_groups`` and ``groups`` to use the composed variables.
 
-By default, undefined variables are ignored. Pass the constructed option ``strict`` to each of the methods as a keyword argument to allow configuring undefined variables to be an error.
+By default, undefined variables are ignored. This is permitted by default for ``compose`` so you can make the variable definitions depend on variables that will be populated later in a play from other sources. For groups, it allows using variables that are not always present without having to use the ``default`` filter. To support configuring undefined variables to be an error, pass the constructed option ``strict`` to each of the methods as a keyword argument.
 
 ``keyed_groups`` and ``groups`` use any variables already associated with the host (for example, from an earlier inventory source). ``_add_host_to_keyed_groups`` and ``add_host_to_composed_groups`` can turn this off by passing the keyword argument ``fetch_hostvars``.
 
