@@ -38,6 +38,7 @@ bugfixes:
   - ansible-test - Prevent concurrent execution of cached methods.
   - ansible-test - Handle server errors when executing the ``docker info`` command.
   - ansible-test - Show the exception type when reporting errors during instance provisioning.
+  - ansible-test - Pass the ``XDG_RUNTIME_DIR`` environment variable through to container commands.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.

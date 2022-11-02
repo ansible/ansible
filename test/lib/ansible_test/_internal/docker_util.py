@@ -324,7 +324,7 @@ class DockerCommand:
             executable = find_executable(command, required=False)
 
             if executable:
-                version = raw_command([command, '-v'], capture=True)[0].strip()
+                version = raw_command([command, '-v'], env=docker_environment(), capture=True)[0].strip()
 
                 if command == 'docker' and 'podman' in version:
                     continue  # avoid detecting podman as docker
@@ -403,7 +403,7 @@ def get_podman_default_hostname() -> t.Optional[str]:
     """
     hostname: t.Optional[str] = None
     try:
-        stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], capture=True)[0]
+        stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], env=docker_environment(), capture=True)[0]
     except SubprocessError:
         stdout = '[]'
 
@@ -957,5 +957,16 @@ def docker_command(
 def docker_environment() -> dict[str, str]:
     """Return a dictionary of docker related environment variables found in the current environment."""
     env = common_environment()
-    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_') or key.startswith('CONTAINER_')))
+
+    var_names = {
+        'XDG_RUNTIME_DIR',  # podman
+    }
+
+    var_prefixes = {
+        'CONTAINER_',  # podman remote
+        'DOCKER_',  # docker
+    }
+
+    env.update({name: value for name, value in os.environ.items() if name in var_names or any(name.startswith(prefix) for prefix in var_prefixes)})
+
     return env
