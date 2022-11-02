@@ -929,7 +929,8 @@ def install_deb(
 
 
 def remove(m, pkgspec, cache, purge=False, force=False,
-           dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
+           dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
+           allow_change_held_packages=False):
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
@@ -962,7 +963,21 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
+        if allow_change_held_packages:
+            allow_change_held_packages = '--allow-change-held-packages'
+        else:
+            allow_change_held_packages = ''
+
+        cmd = "%s -q -y %s %s %s %s %s %s remove %s" % (
+            APT_GET_CMD,
+            dpkg_options,
+            purge,
+            force_yes,
+            autoremove,
+            check_arg,
+            allow_change_held_packages,
+            packages
+        )
 
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
@@ -1470,7 +1485,16 @@ def main():
                 else:
                     module.fail_json(**retvals)
             elif p['state'] == 'absent':
-                remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
+                remove(
+                    module,
+                    packages,
+                    cache,
+                    p['purge'],
+                    force=force_yes,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    allow_change_held_packages=allow_change_held_packages
+                )
 
         except apt.cache.LockFailedException as lockFailedException:
             if time.time() < deadline:
