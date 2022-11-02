@@ -42,4 +42,3 @@ bugfixes:
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.
-  - ansible-test - Containers may not work under WSL or WSL2.
