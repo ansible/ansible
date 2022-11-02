@@ -154,11 +154,8 @@ NOTE: These changes must be applied each time the container host is rebooted.
 '''.strip()
 
         podman_message = '''
-      Mount changes will not be seen by rootless Podman if it is running [1],
-      unless shared mount propagation was enabled first.
-
-Check mount propagation: findmnt -no PROPAGATION /
-Enable shared mount propagation as root: mount --make-rshared /
+      If rootless Podman is already running [1], you may need to stop it before
+      containers are able to use the new mount point.
 
 [1] Check for 'podman' and 'catatonit' processes.
 '''
