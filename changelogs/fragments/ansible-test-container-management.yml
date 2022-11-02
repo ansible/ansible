@@ -1,6 +1,8 @@
 major_changes:
   - ansible-test - Docker and Podman are now supported on hosts with cgroup v2 unified. 
                    Previously only cgroup v1 and cgroup v2 hybrid were supported.
+  - ansible-test - Docker Desktop on WSL2 is now supported (additional configuration required).
+  - ansible-test - Podman on WSL2 is now supported.
   - ansible-test - Podman now works on container hosts without systemd.
                    Previously only some containers worked, while others required rootfull or rootless Podman,
                    but would not work with both. Some containers did not work at all.
