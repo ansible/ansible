@@ -1,4 +1,4 @@
-ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "required", "type")
+ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "no_log", "required", "type")
 
 
 def option_to_spec(option):
