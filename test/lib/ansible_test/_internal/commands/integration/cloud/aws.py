@@ -127,5 +127,5 @@ class AwsCloudEnvironment(CloudEnvironment):
         """Callback to run when an integration target fails."""
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '
-                           'https://docs.ansible.com/ansible-core/devel/dev_guide/platforms/aws_guidelines.html#aws-permissions-for-integration-tests.'
+                           'https://docs.ansible.com/ansible/devel/collections/amazon/aws/docsite/dev_guidelines.html#aws-permissions-for-integration-tests'
                            % target.name)
