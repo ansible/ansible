@@ -403,7 +403,7 @@ _ansible_debug
 
 Type: ``bool``
 
-Operates verbose logging and logging of external commands that a module executes. If the module uses the :py:meth:`AnsibleModule.debug` function rather than the :py:meth:`AnsibleModule.log` function then the messages are only logged if you set the ``_ansible_debug`` argument to ``True``. To activate the setting, add the ``debug: True`` key to the :file:`ansible.cfg` configuration file. Alternatively, you can set the environment variable :envvar:`ANSIBLE_DEBUG`. To access ``_ansible_debug`` in a module, instantiate the ``AnsibleModule`` utility and access :attr:`AnsibleModule._debug`. For more details, see :ref:`DEFAULT_DEBUG`.
+Operates verbose logging and logging of external commands that a module executes. If the module uses the :py:meth:`AnsibleModule.debug` function rather than the :py:meth:`AnsibleModule.log` function then the messages are only logged if you set the ``_ansible_debug`` argument to ``True``. To access ``_ansible_debug`` in a module, instantiate the ``AnsibleModule`` utility and access :attr:`AnsibleModule._debug`. For more details, see :ref:`DEFAULT_DEBUG`.
 
 
 _ansible_diff
@@ -411,7 +411,7 @@ _ansible_diff
 
 Type: ``bool``
 
-With this parameter you can configure your module to show a unified diff of changes that will be applied to the templated files. To activate the setting, use the ``--diff`` command-line option. To access ``_ansible_diff`` in a module, instantiate the ``AnsibleModule`` utility and access :attr:`AnsibleModule._diff`. You can also access this parameter using the ``diff`` keyword in your playbook, or the relevant environment variable. For more details, see :ref:`playbook_keywords` and the :ref:`DIFF_ALWAYS` configuration option.
+With this parameter you can configure your module to show a unified diff of changes that will be applied to the templated files. To access ``_ansible_diff`` in a module, instantiate the ``AnsibleModule`` utility and access :attr:`AnsibleModule._diff`. You can also access this parameter using the ``diff`` keyword in your playbook, or the relevant environment variable. For more details, see :ref:`playbook_keywords` and the :ref:`DIFF_ALWAYS` configuration option.
 
 
 _ansible_verbosity
@@ -428,13 +428,7 @@ _ansible_selinux_special_fs
 Type: ``list``
 Elements: ``strings``
 
-This argument provides modules with the names of file systems which should have a special SELinux context. They are used by the ``AnsibleModule`` methods which operate on files (changing attributes, moving, and copying). To set, add a comma-separated string of file system names in the :file:`ansible.cfg` configuration file:
-
-.. code-block:: ini
-
-  # ansible.cfg
-  [selinux]
-  special_context_filesystems=nfs,vboxsf,fuse,ramfs,vfat
+This argument provides modules with the names of file systems which should have a special SELinux context. They are used by the ``AnsibleModule`` methods which operate on files (changing attributes, moving, and copying).
 
 Most modules can use the built-in ``AnsibleModule`` methods to manipulate files. To access in a module that needs to know about these special context file systems, instantiate ``AnsibleModule`` and examine the list in :attr:`AnsibleModule._selinux_special_fs`.
 
@@ -446,7 +440,7 @@ This argument replaces :attr:`ansible.module_utils.basic.SELINUX_SPECIAL_FS` fro
 _ansible_syslog_facility
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This argument controls which syslog facility the module logs to. To set, change the ``syslog_facility`` value in the :file:`ansible.cfg` configuration file. Most modules should just use the :meth:`AnsibleModule.log` function which will then make use of this. If a module has to use this on its own, it should instantiate the ``AnsibleModule`` method and then retrieve the name of the syslog facility from :attr:`AnsibleModule._syslog_facility`. The Ansiballz code is less elegant than the :ref:`module_replacer` code:
+This argument controls which syslog facility the module logs to. Most modules should just use the :meth:`AnsibleModule.log` function which will then make use of this. If a module has to use this on its own, it should instantiate the ``AnsibleModule`` method and then retrieve the name of the syslog facility from :attr:`AnsibleModule._syslog_facility`. The Ansiballz code is less elegant than the :ref:`module_replacer` code:
 
 .. code-block:: python
 
