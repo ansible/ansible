@@ -81,6 +81,7 @@ options:
     reference:
         description:
             - Reference repository (see "git clone --reference ...").
+        type: str
         version_added: "1.4"
     remote:
         description:
