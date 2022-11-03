@@ -34,11 +34,17 @@ class CGroupVersion(enum.Enum):
     V2_ONLY = 'v2-only'
     V1_V2 = 'v1-v2'
 
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}.{self.name}'
+
 
 class AuditMode(enum.Enum):
     """The audit requirements of a container."""
     NONE = 'none'
     REQUIRED = 'required'
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}.{self.name}'
 
 
 @dataclasses.dataclass(frozen=True)
