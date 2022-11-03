@@ -36,6 +36,8 @@ options:
     - The marker line template.
     - C({mark}) will be replaced with the values in C(marker_begin) (default="BEGIN") and C(marker_end) (default="END").
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
+    - Multi-line markers are not supported and will result in the block being repeatedly inserted on subsequent playbook runs.
+    - A newline is automatically appended by the module to C(marker_begin) and C(marker_end).
     type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
