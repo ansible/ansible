@@ -189,6 +189,26 @@ The specifics will vary depending on API and structure returned. Remember that i
 For examples on how to implement an inventory plugin, see the source code here:
 `lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_.
 
+.. _inventory_object:
+
+inventory object
+^^^^^^^^^^^^^^^^
+
+The ``inventory`` object passed to ``parse`` has helpful methods for populating inventory.
+
+``add_group`` adds a group to inventory if it doesn't already exist. It takes the group name as the only positional argument.
+
+``add_child`` adds a group or host that exists in inventory to a parent group in inventory. It takes two positional arguments, the name of the parent group and the name of the child group or host.
+
+``add_host`` adds a host to inventory if it doesn't already exist, optionally to a specific group. It takes the host name as the first argument and accepts two optional keyword arguments, ``group`` and ``port``. ``group`` is the name of a group in inventory, and ``port`` is an integer.
+
+``set_variable`` adds a variable to a group or host in inventory. It takes three positional arguments: the name of the group or host, the name of the variable, and the value of the variable.
+
+To create groups and variables using Jinja2 expressions, see the section on implementing ``constructed`` features below.
+
+To see other inventory object methods, see the source code here:
+`lib/ansible/inventory/data.py <https://github.com/ansible/ansible/tree/devel/lib/ansible/inventory/data.py>`_.
+
 .. _inventory_plugin_caching:
 
 inventory cache
@@ -286,7 +306,19 @@ Inventory plugins can create host variables and groups from Jinja2 expressions a
 
         NAME = 'ns.coll.myplugin'
 
-The three main options from the ``constructed`` documentation fragment are ``compose``, ``keyed_groups``, and ``groups``. See the ``constructed`` inventory plugin for examples on using these. ``compose`` is a dictionary of variable names and Jinja2 expressions. Once a host is added to inventory and any initial variables have been set, call the method ``_set_composite_vars`` to add composed host variables. If this is done before adding ``keyed_groups`` and ``groups``, the group generation will be able to use the composed variables.
+There are three main options in the ``constructed`` documentation fragment:
+
+``compose`` creates variables using Jinja2 expressions. This is implemented by calling the ``_set_composite_vars`` method.
+``keyed_groups`` creates groups of hosts based on variable values. This is implemented by calling the ``_add_host_to_keyed_groups`` method.
+``groups`` creates groups based on Jinja2 conditionals. This is implemented by calling the ``_add_host_to_composed_groups`` method.
+
+Each method should be called for every host added to inventory. Three positional arguments are required: the constructed option, a dictionary of variables, and a host name. Calling the method ``_set_composite_vars`` first will allow ``keyed_groups`` and ``groups`` to use the composed variables.
+
+By default, undefined variables are ignored. This is permitted by default for ``compose`` so you can make the variable definitions depend on variables that will be populated later in a play from other sources. For groups, it allows using variables that are not always present without having to use the ``default`` filter. To support configuring undefined variables to be an error, pass the constructed option ``strict`` to each of the methods as a keyword argument.
+
+``keyed_groups`` and ``groups`` use any variables already associated with the host (for example, from an earlier inventory source). ``_add_host_to_keyed_groups`` and ``add_host_to_composed_groups`` can turn this off by passing the keyword argument ``fetch_hostvars``.
+
+Here is an example using all three methods:
 
 .. code-block:: python
 
@@ -296,14 +328,12 @@ The three main options from the ``constructed`` documentation fragment are ``com
        for var_name, var_value in host_vars.items():
            self.inventory.set_variable(hostname, var_name, var_value)
 
-       # Determines if composed variables or groups using nonexistent variables is an error
        strict = self.get_option('strict')
 
        # Add variables created by the user's Jinja2 expressions to the host
        self._set_composite_vars(self.get_option('compose'), host_vars, hostname, strict=True)
 
-       # The following two methods combine the provided variables dictionary with the latest host variables
-       # Using these methods after _set_composite_vars() allows groups to be created with the composed variables
+       # Create user-defined groups using variables and Jinja2 conditionals
        self._add_host_to_composed_groups(self.get_option('groups'), host_vars, hostname, strict=strict)
        self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host_vars, hostname, strict=strict)
 
