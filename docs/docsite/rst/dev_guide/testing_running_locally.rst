@@ -14,7 +14,9 @@ This document describes how to run tests locally using ``ansible-test``.
 Requirements
 ============
 
-FIXME
+Each ``ansible-test`` subcommand has different requirements, some have none.
+You can add the ``--requirements`` option to have ``ansible-test`` install requirements for the current subcommand.
+When using a test environment managed by ``ansible-test`` the option is unnecessary.
 
 Test Environments
 =================
