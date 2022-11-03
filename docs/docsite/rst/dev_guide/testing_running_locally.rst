@@ -154,7 +154,7 @@ Interactive Shell
 Use the ``ansible-test shell`` command to get an interactive shell in the same environment used to run tests. Examples:
 
 * ``ansible-test shell --docker`` - Open a shell in the default docker container.
-* ``ansible-test shell --venv --python 3.11`` - Open a shell in a Python 3.11 virtual environment.
+* ``ansible-test shell --venv --python 3.10`` - Open a shell in a Python 3.10 virtual environment.
 
 Code Coverage
 =============
