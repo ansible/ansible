@@ -1097,6 +1097,23 @@ releases:
     - plugin_loader_fix.yml
     - v2.13.5rc1_summary.yaml
     release_date: '2022-10-03'
+  2.13.6:
+    changes:
+      bugfixes:
+      - ansible-test - Fix broken documentation link for ``aws`` test plugin error
+        messages.
+      minor_changes:
+      - ansible-test - Improve consistency of version specific documentation links.
+      release_summary: '| Release Date: 2022-11-07
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - ansible-test-docs-links.yml
+    - v2.13.6_summary.yaml
+    release_date: '2022-11-07'
   2.13.6rc1:
     changes:
       bugfixes:
