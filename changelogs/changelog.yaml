@@ -1,5 +1,22 @@
 ancestor: 2.13.0
 releases:
+  2.14.0:
+    changes:
+      bugfixes:
+      - ansible-test - Fix broken documentation link for ``aws`` test plugin error
+        messages.
+      minor_changes:
+      - ansible-test - Improve consistency of version specific documentation links.
+      release_summary: '| Release Date: 2022-11-07
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - ansible-test-docs-links.yml
+    - v2.14.0_summary.yaml
+    release_date: '2022-11-07'
   2.14.0b1:
     changes:
       breaking_changes:
