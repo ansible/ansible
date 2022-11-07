@@ -36,7 +36,7 @@ options:
     version_added: "2.7"
   quiet:
     description:
-      - Set this to C(yes) to avoid verbose output.
+      - Set this to C(true) to avoid verbose output.
     type: bool
     default: no
     version_added: "2.8"

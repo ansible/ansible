@@ -36,9 +36,9 @@ options:
   fail_on_missing:
     version_added: '1.1'
     description:
-    - When set to C(yes), the task will fail if the remote file cannot be read for any reason.
+    - When set to C(true), the task will fail if the remote file cannot be read for any reason.
     - Prior to Ansible 2.5, setting this would only fail if the source file was missing.
-    - The default was changed to C(yes) in Ansible 2.5.
+    - The default was changed to C(true) in Ansible 2.5.
     type: bool
     default: yes
   validate_checksum:
@@ -88,7 +88,7 @@ notes:
   file was impossible unless C(fail_on_missing) was set.
 - In Ansible 2.5 or later, playbook authors are encouraged to use
   C(fail_when) or C(ignore_errors) to get this ability. They may
-  also explicitly set C(fail_on_missing) to C(no) to get the
+  also explicitly set C(fail_on_missing) to C(false) to get the
   non-failing behaviour.
 seealso:
 - module: ansible.builtin.copy

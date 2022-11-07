@@ -81,7 +81,7 @@ options:
     type: bool
     default: yes
     description:
-      - If set to C(yes), append a newline to stdin data.
+      - If set to C(true), append a newline to stdin data.
     version_added: "2.8"
   strip_empty_ends:
     description:

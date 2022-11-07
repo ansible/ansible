@@ -68,11 +68,11 @@ options:
     version_added: '2.1'
   force:
     description:
-      - If C(yes) and C(dest) is not a directory, will download the file every
-        time and replace the file if the contents change. If C(no), the file
+      - If C(true) and C(dest) is not a directory, will download the file every
+        time and replace the file if the contents change. If C(false), the file
         will only be downloaded if the destination does not exist. Generally
-        should be C(yes) only for small local files.
-      - Prior to 0.6, this module behaved as if C(yes) was the default.
+        should be C(true) only for small local files.
+      - Prior to 0.6, this module behaved as if C(true) was the default.
     type: bool
     default: no
     version_added: '0.7'
@@ -103,13 +103,13 @@ options:
     version_added: "2.0"
   use_proxy:
     description:
-      - if C(no), it will not use a proxy, even if one is defined in
+      - if C(false), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
     type: bool
     default: yes
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated.
+      - If C(false), SSL certificates will not be validated.
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
     default: yes
