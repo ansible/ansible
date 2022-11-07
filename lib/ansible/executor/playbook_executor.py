@@ -99,7 +99,7 @@ class PlaybookExecutor:
                     playbook_collection = resource[2]
                 else:
                     playbook_path = playbook
-                    # not fqcn, but might still be colleciotn playbook
+                    # not fqcn, but might still be collection playbook
                     playbook_collection = _get_collection_name_from_path(playbook)
 
                 if playbook_collection:
