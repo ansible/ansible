@@ -520,7 +520,7 @@ As a result, using the ``ansible.cfg`` configuration file to activate or customi
 _ansible_remote_tmp
 ^^^^^^^^^^^^^^^^^^^
 
-This argument ensures that modules send through the ``remote_tmp`` value if they need to create their own. For more details, see the `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_ parameter of the shell plugin.
+The module's ``tmpdir`` property creates a randomized directory name in this directory if the action plugin didn't set ``_ansible_tmpdir``. For more details, see the `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_ parameter of the shell plugin.
 
 
 .. _flow_module_return_values:
