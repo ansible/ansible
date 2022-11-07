@@ -506,9 +506,11 @@ _ansible_tmpdir
 
 Type: ``str``
 
-This argument provides instructions to modules that all commands must use the designated temporary directory, if created.
+This argument provides instructions to modules that all commands must use the designated temporary directory, if created. The action plugin designs this temporary directory.
 
-You can configure a part of this argument such as a root path. However, based on the circumstances the end directory is generated randomly for each task, or host in one of these:
+Modules can access this parameter by using the public ``tmpdir`` property. The ``tmpdir`` property will create a temporary directory if the action plugin did not set the parameter.
+
+The directory name is generated randomly, and the the root of the directory is determined by one of these:
 
 * :ref:`DEFAULT_LOCAL_TMP`
 * `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_
@@ -520,7 +522,7 @@ As a result, using the ``ansible.cfg`` configuration file to activate or customi
 _ansible_remote_tmp
 ^^^^^^^^^^^^^^^^^^^
 
-The module's ``tmpdir`` property creates a randomized directory name in this directory if the action plugin didn't set ``_ansible_tmpdir``. For more details, see the `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_ parameter of the shell plugin.
+The module's ``tmpdir`` property creates a randomized directory name in this directory if the action plugin did not set ``_ansible_tmpdir``. For more details, see the `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_ parameter of the shell plugin.
 
 
 .. _flow_module_return_values:
