@@ -125,10 +125,11 @@ significant changes in each minor release.
 ``ansible-core``/``ansible-base``     Status                                           Expected end of life
     Release
 ================================= ==================================================== ======================
-devel                             In development (ansible-core 2.14 unreleased, trunk)  TBD
-`2.13 ansible-core Changelogs`_   Maintained (security **and** general bug fixes)       Nov 2023
-`2.12 ansible-core Changelogs`_   Maintained (security **and** critical bug fixes)      May 2023
-`2.11 ansible-core Changelogs`_   Maintained (security bug fixes only)                  Nov 2022
+devel                             In development (ansible-core 2.15 unreleased, trunk)  TBD
+`2.14 ansible-core Changelogs`_   Maintained (security **and** general bug fixes)       May 2024
+`2.13 ansible-core Changelogs`_   Maintained (security **and** critical bug fixes)      Nov 2023
+`2.12 ansible-core Changelogs`_   Maintained (security bug fixes only)                  May 2023
+`2.11 ansible-core Changelogs`_   Unmaintained (end of life)                            EOL
 `2.10 ansible-base Changelogs`_   Unmaintained (end of life)                            EOL
 `2.9 Changelogs`_                 Unmaintained (end of life)                            EOL
 `2.8 Changelogs`_                 Unmaintained (end of life)                            EOL
@@ -138,6 +139,8 @@ devel                             In development (ansible-core 2.14 unreleased, 
 <2.5                              Unmaintained (end of life)                            EOL
 ================================= ==================================================== ======================
 
+.. _2.14 ansible-core Changelogs:
+.. _2.14: https://github.com/ansible/ansible/blob/stable-2.14/changelogs/CHANGELOG-v2.14.rst
 .. _2.13 ansible-core Changelogs:
 .. _2.13: https://github.com/ansible/ansible/blob/stable-2.13/changelogs/CHANGELOG-v2.13.rst
 .. _2.12 ansible-core Changelogs:
