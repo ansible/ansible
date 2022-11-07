@@ -101,7 +101,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.file import is_executable
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -153,6 +153,8 @@ class CLI(ABC):
         running an Ansible command.
         """
         self.parse()
+        # Initialize plugin loader after parse, so that the init code can utilize parsed arguments
+        init_plugin_loader()
 
         display.vv(to_text(opt_help.version(self.parser.prog)))
 
@@ -522,6 +524,10 @@ class CLI(ABC):
 
     @staticmethod
     def _play_prereqs():
+        # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
+        # into ``init_plugin_loader`` so that we can specifically remove
+        # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
+
         options = context.CLIARGS
 
         # all needs loader

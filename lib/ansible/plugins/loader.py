@@ -17,10 +17,13 @@ import warnings
 from collections import defaultdict, namedtuple
 from traceback import format_exc
 
+import ansible.module_utils.compat.typing as t
 from ansible import __version__ as ansible_version
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
@@ -42,6 +45,7 @@ except ImportError:
 
 import importlib.util
 
+_PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
@@ -1357,7 +1361,7 @@ def get_fqcr_and_name(resource, collection='ansible.builtin'):
 
 
 def _load_plugin_filter():
-    filters = defaultdict(frozenset)
+    filters = _PLUGIN_FILTERS
     user_set = False
     if C.PLUGIN_FILTERS_CFG is None:
         filter_cfg = '/etc/ansible/plugin_filters.yml'
@@ -1461,19 +1465,33 @@ def _configure_collection_loader():
         warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
-    finder = _AnsibleCollectionFinder(C.COLLECTIONS_PATHS, C.COLLECTIONS_SCAN_SYS_PATH)
+    cli_paths = context.CLIARGS.get('collections_path') or []
+    # In some contexts ``collections_path`` is singular
+    if not is_sequence(cli_paths):
+        cli_paths = [cli_paths]
+    paths = list(cli_paths) + C.COLLECTIONS_PATHS
+    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 
     # this should succeed now
     AnsibleCollectionConfig.on_collection_load += _on_collection_load_handler
 
 
-# TODO: All of the following is initialization code   It should be moved inside of an initialization
-# function which is called at some point early in the ansible and ansible-playbook CLI startup.
+def init_plugin_loader():
+    """Initialize the plugin filters and the collection loaders
 
-_PLUGIN_FILTERS = _load_plugin_filter()
+    This method must be called to configure and insert the collection python loaders
+    into ``sys.meta_path`` and ``sys.path_hooks``.
 
-_configure_collection_loader()
+    This method is only called in ``CLI.run`` after CLI args have been parsed, so that
+    instantiation of the collection finder can utilize parsed CLI args, and to not cause
+    side effects.
+    """
+    _load_plugin_filter()
+    _configure_collection_loader()
+
+
+# TODO: Evaluate making these class instantiations lazy, but keep them in the global scope
 
 # doc fragments first
 fragment_loader = PluginLoader(
