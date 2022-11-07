@@ -19,6 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-__version__ = '2.13.6'
+__version__ = '2.13.6.post0'
 __author__ = 'Ansible, Inc.'
 __codename__ = "Nobody's Fault but Mine"
