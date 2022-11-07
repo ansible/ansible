@@ -25,7 +25,7 @@ import base64
 import os
 import json
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from stat import S_IRUSR, S_IWUSR
 
 from ansible import constants as C
@@ -37,8 +37,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-
-ISO_8601_FORMAT_STR = "%Y-%m-%dT%H:%M:%S.%f%z"
+AH_TOKEN_EXPIRES_N_MIN_EARLY = 1
 
 
 class NoTokenSentinel(object):
@@ -59,8 +58,7 @@ class KeycloakToken(object):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
-        self._issued_at = None
-        self._expires_in = None
+        self._expires_at = None
         self.validate_certs = validate_certs
         self.client_id = client_id
         if self.client_id is None:
@@ -68,25 +66,18 @@ class KeycloakToken(object):
 
     @property
     def expired(self):
-        if None in (self._issued_at, self._expires_in):
-            return False
-        try:
-            issue_time = datetime.strptime(self._issued_at, ISO_8601_FORMAT_STR)
-        except ValueError:
-            display.warning(f"KeycloakToken issued at unknown time format {self._issued_at}")
-            return False
-
-        # expire a few seconds before to handle proactively
-        almost_expiration = issue_time + timedelta(seconds=self._expires_in - 3)
-        return datetime.now(tz=issue_time.tzinfo) > almost_expiration
+        # expire early to handle refreshing proactively
+        return datetime.now(tz=timezone.utc) > self._expires_at - timedelta(minutes=AH_TOKEN_EXPIRES_N_MIN_EARLY)
 
     def _form_payload(self):
         return 'grant_type=refresh_token&client_id=%s&refresh_token=%s' % (self.client_id,
                                                                            self.access_token)
 
     def get(self):
-        if self._token:
+        if self._token and not self.expired:
             return self._token
+        if self._token:
+            display.vvv("Refreshing KeycloakToken")
 
         # - build a request to POST to auth_url
         #  - body is form encoded
@@ -107,11 +98,13 @@ class KeycloakToken(object):
         # TODO: handle auth errors
 
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
+        token_data = json.loads(
+            base64.b64decode(data['id_token'].split('.')[1] + "==")
+        )
 
         # - extract token details
         self._token = data.get('access_token')
-        self._issued_at = data.get('issued_at')
-        self._expires_in = int(data.get('expires_in'))
+        self._expires_at = datetime.fromtimestamp(token_data['exp'], timezone.utc)
 
         return self._token
 

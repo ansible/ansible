@@ -24,7 +24,6 @@ from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljo
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
-from ansible.galaxy.token import KeycloakToken
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
@@ -717,29 +716,17 @@ class GalaxyAPI:
         start = time.time()
         wait = 2
 
-        token_expired = False
         while timeout == 0 or (time.time() - start) < timeout:
-            if isinstance(self.token, KeycloakToken) and self.token.expired:
-                display.warning("Authentication failed, refreshing token to try again.")
-                self.token._token = None
             try:
                 data = self._call_galaxy(full_url, method='GET', auth_required=True,
                                          error_context_msg='Error when getting import task results at %s' % full_url)
             except GalaxyError as e:
-                if e.http_code == 401 and self.token and isinstance(self.token, KeycloakToken):
-                    if token_expired:
-                        raise
-                    display.vvv("Authentication failed, refreshing token to try again.")
-                    self.token._token = None
-                    token_expired = True
-                elif e.http_code != 404:
+                if e.http_code != 404:
                     raise
                 # The import job may not have started, and as such, the task url may not yet exist
                 display.vvv('Galaxy import process has not started, wait %s seconds before trying again' % wait)
                 time.sleep(wait)
                 continue
-            else:
-                token_expired = False
 
             state = data.get('state', 'waiting')
 

@@ -6,6 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import base64
 import os
 import pytest
 
@@ -14,7 +15,6 @@ from io import StringIO
 from unittest.mock import MagicMock
 
 import ansible.constants as C
-import ansible.galaxy.token as token_lib
 from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
 from ansible.galaxy.token import GalaxyToken, NoTokenSentinel, KeycloakToken
 from ansible.galaxy.token import ISO_8601_FORMAT_STR as time_format
@@ -103,33 +103,32 @@ def test_token_none(b_token_file):
     assert GalaxyToken(token=NoTokenSentinel).get() is None
 
 
-def test_expired_keycloak_token(monkeypatch):
-    # test long-expired token
-    response1 = u'{{"access_token": "token", "issued_at": "{0}", "expires_in": "{1}"}}'.format(
-        "2020-11-27T13:50:51.925209Z", "300"
-    )
-    # test token that will expire in a few seconds
-    response2 = u'{{"access_token": "token", "issued_at": "{0}", "expires_in": "{1}"}}'.format(
-        (datetime.now(timezone.utc) - timedelta(seconds=298)).strftime(time_format), "300"
-    )
-    mock_open = MagicMock(side_effect=[StringIO(response1), StringIO(response2)])
-    monkeypatch.setattr(token_file, 'open_url', mock_open)
+def test_keycloak_token_not_expired(monkeypatch):
+    expires_in_2_min = int((datetime.now(tz=timezone.utc) + timedelta(minutes=2)).timestamp())
+    token_payload = to_text(base64.b64encode(to_bytes(f'{{"exp": {expires_in_2_min}}}')))
 
-    token = KeycloakToken(access_token='', auth_url='')
-    token.get()
-    assert token.expired
-    token.get()
-    assert token.expired
+    with StringIO(f'{{"access_token": "token", "id_token": "header.{token_payload}.signature"}}') as response:
+        mock_open = MagicMock(return_value=response)
+        monkeypatch.setattr(token_file, 'open_url', mock_open)
+        token = KeycloakToken(access_token='', auth_url='')
+        token.get()
+        assert token.expired is False
 
 
-def test_non_expired_keycloak_token(monkeypatch):
-    # test token that expires in 10 seconds
-    response = u'{{"access_token": "token", "issued_at": "{0}", "expires_in": "{1}"}}'.format(
-        (datetime.now(timezone.utc) - timedelta(seconds=290)).strftime(time_format), "300"
-    )
-    mock_open = MagicMock(return_value=StringIO(response))
-    monkeypatch.setattr(token_lib, 'open_url', mock_open)
+def test_keycloak_token_expired(monkeypatch):
+    expired_earlier = int((datetime.now(tz=timezone.utc) - timedelta(minutes=15)).timestamp())
+    token_payload = to_text(base64.b64encode(to_bytes(f'{{"exp": {expired_earlier}}}')))
+    response1 = f'{{"access_token": "token", "id_token": "header.{token_payload}.signature"}}'
 
-    token = KeycloakToken(access_token='', auth_url='')
-    token.get()
-    assert token.expired is False
+    almost_expired = int((datetime.now(tz=timezone.utc) + timedelta(minutes=1)).timestamp())
+    token_payload = to_text(base64.b64encode(to_bytes(f'{{"exp": {almost_expired}}}')))
+    response2 = f'{{"access_token": "token", "id_token": "header.{token_payload}.signature"}}'
+
+    with StringIO(response1) as resp1, StringIO(response2) as resp2:
+        mock_open = MagicMock(side_effect=[resp1, resp2])
+        monkeypatch.setattr(token_file, 'open_url', mock_open)
+        token = KeycloakToken(access_token='', auth_url='')
+        token.get()
+        assert token.expired
+        token.get()
+        assert token.expired
