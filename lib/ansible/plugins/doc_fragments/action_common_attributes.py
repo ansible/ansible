@@ -46,7 +46,7 @@ attributes:
     FILES = r'''
 attributes:
     safe_file_operations:
-      description: Uses Ansbile's strict file operation functions to ensure proper permissions and avoid data corruption
+      description: Uses Ansible's strict file operation functions to ensure proper permissions and avoid data corruption
     vault:
       description: Can automatically decrypt Ansible vaulted files
 '''
