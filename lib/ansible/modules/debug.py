@@ -94,6 +94,6 @@ EXAMPLES = r'''
 - name: Prints two lines of messages, but only if there is an environment value set
   ansible.builtin.debug:
     msg:
-    - "Provisioning based on YOUR_KEY which is: {{ lookup('ansible.builtin.env', 'YOUR_KEY') }}"
-    - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
+      - "Provisioning based on YOUR_KEY which is: {{ lookup('ansible.builtin.env', 'YOUR_KEY') }}"
+      - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 '''
