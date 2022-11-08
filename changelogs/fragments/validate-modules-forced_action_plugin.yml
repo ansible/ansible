@@ -1,0 +1,2 @@
+minor_changes:
+  - "validate-modules sanity test - remove support for the never implemented ``forced_action_plugin`` attribute (https://github.com/ansible/ansible/pull/79317)."
