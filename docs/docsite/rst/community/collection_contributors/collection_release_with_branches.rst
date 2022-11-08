@@ -22,7 +22,7 @@ Releasing major collection versions
 
 The new version is assumed to be ``X.0.0``.
 
-1. Check the collections for deprecations that have been planned to be removed in the major release. Use past changelogs. Also running ``grep -r `X.0.0` plugins/`` in the repository can be helpful.
+1. Check the collections for deprecations that are planned for removal in the major release. Use past changelogs or run ``grep -r `X.0.0` plugins/`` in the repository.
 
 2. If you are going to release the ``community.general`` and ``community.network`` collections, create a new ``backport-X`` label in the corresponding repositories. Copy the styles and descriptions from the corresponding existing labels.
 
