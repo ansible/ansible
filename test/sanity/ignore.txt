@@ -35,7 +35,6 @@ lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/git.py pylint:disallowed-name
 lib/ansible/modules/git.py use-argspec-type-path
-lib/ansible/modules/git.py validate-modules:doc-missing-type
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
 lib/ansible/modules/iptables.py pylint:disallowed-name
 lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
