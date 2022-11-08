@@ -202,9 +202,9 @@ html_context = {
     'github_root_dir': 'devel/lib/ansible',
     'github_cli_version': 'devel/lib/ansible/cli/',
     'current_version': version,
-    'latest_version': '2.13',
+    'latest_version': '2.14',
     # list specifically out of order to make latest work
-    'available_versions': ('2.13_ja', '2.12_ja', '2.11_ja',),
+    'available_versions': ('2.14_ja', '2.13_ja', '2.12_ja',),
 }
 
 # Add extra CSS styles to the resulting HTML pages
