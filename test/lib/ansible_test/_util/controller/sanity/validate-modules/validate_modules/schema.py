@@ -864,9 +864,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False, plugi
                 'action_group': add_default_attributes({
                     Required('membership'): list_string_types,
                 }),
-                'forced_action_plugin': add_default_attributes({
-                    Required('action_plugin'): any_string_types,
-                }),
                 'platform': add_default_attributes({
                     Required('platforms'): Any(list_string_types, *string_types)
                 }),
