@@ -94,7 +94,7 @@ class OpenBSDHardware(Hardware):
         rc, out, err = self.module.run_command("/usr/bin/vmstat")
         if rc == 0:
             memory_facts['memfree_mb'] = int(out.splitlines()[-1].split()[4]) // 1024
-            memory_facts['memtotal_mb'] = int(self.sysctl['hw.usermem']) // 1024 // 1024
+            memory_facts['memtotal_mb'] = int(self.sysctl['hw.physmem']) // 1024 // 1024
 
         # Get swapctl info. swapctl output looks like:
         # total: 69268 1K-blocks allocated, 0 used, 69268 available
