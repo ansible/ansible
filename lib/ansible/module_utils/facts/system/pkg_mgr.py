@@ -41,6 +41,7 @@ PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
             {'path': '/usr/bin/installp', 'name': 'installp'},
             {'path': '/QOpenSys/pkgs/bin/yum', 'name': 'yum'},
+            {'path': '/run/ostree-booted', 'name': 'ansible.posix.r4e_rpm_ostree'},
             ]
 
 
@@ -70,6 +71,9 @@ class PkgMgrFactCollector(BaseFactCollector):
 
     def _check_rh_versions(self, pkg_mgr_name, collected_facts):
         if os.path.exists('/run/ostree-booted'):
+            if (collected_facts['ansible_distribution'] == "RedHat") and (int(collected_facts['ansible_distribution_major_version']) > 7):
+                # Atomic Host was retired with RHEL7. RHEL8+ is RHEL for Edge.
+                return "ansible.posix.r4e_rpm_ostree"
             return "atomic_container"
 
         if collected_facts['ansible_distribution'] == 'Fedora':

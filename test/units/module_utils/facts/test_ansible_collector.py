@@ -493,7 +493,10 @@ class TestPkgMgrOSTreeFacts(TestPkgMgrFacts):
         # Recollect facts
         self.setUp()
         self.assertIn('pkg_mgr', self.facts)
-        self.assertEqual(self.facts['pkg_mgr'], 'atomic_container')
+        if distribution == 'RedHat':
+            self.assertEqual(self.facts['pkg_mgr'], 'ansible.posix.r4e_rpm_ostree')
+        else:
+            self.assertEqual(self.facts['pkg_mgr'], 'atomic_container')
 
     def test_is_rhel_edge_ostree(self):
         self._recollect_facts('RedHat', 8)
