@@ -23,8 +23,8 @@ If you want to follow the conversation about what features will be added to ``an
 * the :ref:`ansible-core project branches and tags <core_branches_and_tags>`
 * various GitHub `projects <https://github.com/ansible/ansible/projects>`_ - for example:
 
-   * the `2.12 release project <https://github.com/ansible/ansible/projects/43>`_
-   * the `core documentation project <https://github.com/ansible/ansible/projects/27>`_
+   * the `2.115 release project <https://github.com/ansible/ansible/projects/46>`_
+   * the `core documentation project <https://github.com/orgs/ansible/projects/94/views/1>`_
 
 
 .. _community_pull_requests:
@@ -330,7 +330,7 @@ We do **not** backport features.
 
    These instructions assume that:
 
-    * ``stable-2.13`` is the targeted release branch for the backport
+    * ``stable-2.14`` is the targeted release branch for the backport
     * ``https://github.com/ansible/ansible.git`` is configured as a ``git remote`` named ``upstream``. If you do not use a ``git remote`` named ``upstream``, adjust the instructions accordingly.
     * ``https://github.com/<yourgithubaccount>/ansible.git`` is configured as a ``git remote`` named ``origin``. If you do not use a ``git remote`` named ``origin``, adjust the instructions accordingly.
 
@@ -339,7 +339,7 @@ We do **not** backport features.
 .. code-block:: shell
 
        git fetch upstream
-       git checkout -b backport/2.13/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.13
+       git checkout -b backport/2.14/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.14
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:
 
@@ -353,15 +353,15 @@ We do **not** backport features.
 
 .. code-block:: shell
 
-       git push origin backport/2.13/[PR_NUMBER_FROM_DEVEL]
+       git push origin backport/2.14/[PR_NUMBER_FROM_DEVEL]
 
-#. Submit the pull request for ``backport/2.13/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.13`` branch
+#. Submit the pull request for ``backport/2.14/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.14`` branch
 
 #. The Release Manager will decide whether to merge the backport PR before the next minor release. There isn't any need to follow up. Just ensure that the automated tests (CI) are green.
 
 .. note::
 
-    The branch name ``backport/2.13/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
+    The branch name ``backport/2.14/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
 
 .. note::
 
