@@ -1307,7 +1307,7 @@ class GalaxyCLI(CLI):
         collection_requirements = []
         role_requirements = []
         if context.CLIARGS['type'] == 'collection':
-            collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'] or AnsibleCollectionConfig.collection_paths)
+            collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
             requirements = self._require_one_of_collections_requirements(
                 install_items, requirements_file,
                 signatures=signatures,
