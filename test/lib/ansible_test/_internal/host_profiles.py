@@ -466,7 +466,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 if not init_probe:
                     init_command += f' && {shlex.join(self.wake_command)}'
 
-                cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p', 'sh', '-c', init_config.command]
+                cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p', 'sh', '-c', init_command]
                 run_utility_container(self.args, f'ansible-test-init-{self.label}', cmd, options)
 
             if init_probe:
