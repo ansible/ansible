@@ -23,7 +23,7 @@ If you want to follow the conversation about what features will be added to ``an
 * the :ref:`ansible-core project branches and tags <core_branches_and_tags>`
 * various GitHub `projects <https://github.com/ansible/ansible/projects>`_ - for example:
 
-   * the `2.115 release project <https://github.com/ansible/ansible/projects/46>`_
+   * the `2.15 release project <https://github.com/ansible/ansible/projects/46>`_
    * the `core documentation project <https://github.com/orgs/ansible/projects/94/views/1>`_
 
 
