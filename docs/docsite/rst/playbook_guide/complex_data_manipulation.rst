@@ -35,7 +35,7 @@ Use a loop to create exponential backoff for retries/until.
       ping:
       retries: 10
       delay: '{{item|int}}'
-      loop: '{{ range(1, 10)|map('pow', 2) }}'
+      loop: '{{ range(1, 10)|map("pow", 2) }}'
 
 
 .. _keys_from_dict_matching_list:
