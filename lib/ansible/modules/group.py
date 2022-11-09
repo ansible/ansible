@@ -41,7 +41,7 @@ options:
             - Only applicable on platforms which implement a --force flag on the group deletion command.
         type: bool
         default: false
-        version_added: "2.14"
+        version_added: "2.15"
     system:
         description:
             - If I(yes), indicates that the group created is a system group.
