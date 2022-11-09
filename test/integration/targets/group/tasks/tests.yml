@@ -345,6 +345,49 @@
       # only applicable to Linux, limit further to CentOS where 'lgroupadd' is installed
       when: ansible_distribution == 'CentOS'
 
+    # https://github.com/ansible/ansible/pull/78172
+    - block:
+        - name: Create a group
+          group:
+            name: groupdeltest
+            state: present
+
+        - name: Create user with primary group of groupdeltest
+          user:
+            name: groupdeluser
+            group: groupdeltest
+            state: present
+
+        - name: Show we can't delete the group usually
+          group:
+            name: groupdeltest
+            state: absent
+          ignore_errors: true
+          register: failed_delete
+
+        - name: assert we couldn't delete the group
+          assert:
+            that:
+              - failed_delete is failed
+
+        - name: force delete the group
+          group:
+            name: groupdeltest
+            force: true
+            state: absent
+
+      always:
+        - name: Cleanup user
+          user:
+            name: groupdeluser
+            state: absent
+
+        - name: Cleanup group
+          group:
+            name: groupdeltest
+            state: absent
+      when: ansible_distribution not in ["MacOSX", "Alpine", "FreeBSD"]
+
     # create system group
 
     - name: remove group
