@@ -139,7 +139,7 @@ class _AnsibleNSTraversable:
     def _not_implemented(self, *args, **kwargs):
         raise NotImplementedError('not usable on namespaces')
 
-    joinpath = __truediv__ = __truediv__ = read_bytes = read_text = _not_implemented
+    joinpath = __truediv__ = read_bytes = read_text = _not_implemented
 
 
 class _AnsibleTraversableResources:
