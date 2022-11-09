@@ -1251,7 +1251,7 @@ class GalaxyCLI(CLI):
     def execute_verify(self, artifacts_manager=None):
 
         collections = context.CLIARGS['args']
-        search_paths = context.CLIARGS['collections_path'] or AnsibleCollectionConfig.collection_paths
+        search_paths = AnsibleCollectionConfig.collection_paths
         ignore_errors = context.CLIARGS['ignore_errors']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
