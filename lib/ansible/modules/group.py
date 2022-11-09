@@ -35,6 +35,13 @@ options:
         type: str
         choices: [ absent, present ]
         default: present
+    force:
+        description:
+            - Whether to delete a group even if it is the primary group of a user.
+            - Only applicable on platforms which implement a --force flag on the group deletion command.
+        type: bool
+        default: false
+        version_added: "2.15"
     system:
         description:
             - If I(yes), indicates that the group created is a system group.
@@ -140,6 +147,7 @@ class Group(object):
         self.module = module
         self.state = module.params['state']
         self.name = module.params['name']
+        self.force = module.params['force']
         self.gid = module.params['gid']
         self.system = module.params['system']
         self.local = module.params['local']
@@ -242,6 +250,31 @@ class Group(object):
         except KeyError:
             return False
         return info
+
+
+# ===========================================
+
+class Linux(Group):
+    """
+    This is a Linux Group manipulation class. This is to apply the '-f' parameter to the groupdel command
+
+    This overrides the following methods from the generic class:-
+        - group_del()
+    """
+
+    platform = 'Linux'
+    distribution = None
+
+    def group_del(self):
+        if self.local:
+            command_name = 'lgroupdel'
+        else:
+            command_name = 'groupdel'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        if self.force:
+            cmd.append('-f')
+        cmd.append(self.name)
+        return self.execute_command(cmd)
 
 
 # ===========================================
@@ -596,6 +629,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             name=dict(type='str', required=True),
+            force=dict(type='bool', default=False),
             gid=dict(type='int'),
             system=dict(type='bool', default=False),
             local=dict(type='bool', default=False),
@@ -606,6 +640,9 @@ def main():
             ['non_unique', True, ['gid']],
         ],
     )
+
+    if module.params['force'] and module.params['local']:
+        module.fail_json(msg='force is not a valid option for local, force=True and local=True are mutually exclusive')
 
     group = Group(module)
 
