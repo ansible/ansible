@@ -1,0 +1,315 @@
+---
+- name: setup test environment
+  block:
+  - name: ensure custom root exists
+    command: "mkdir -p \"{{ prefix_path }}/etc/\""
+
+  - name: ensure custom auth files exist
+    command: "touch \"{{ prefix_path }}/etc/{{ item }}\""
+    loop:
+      - group
+      - passwd
+
+- name: ensure test groups are deleted before the test
+  group:
+    name: '{{ item }}'
+    state: absent
+    prefix_path: "{{ prefix_path }}"
+  loop:
+    - ansibullgroup
+    - ansibullgroup2
+    - ansibullgroup3
+
+- block:
+    ##
+    ## group add
+    ##
+
+    - name: create group (check mode)
+      group:
+        name: ansibullgroup
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      register: create_group_check
+      check_mode: true
+
+    - name: get result of create group (check mode)
+      script: 'grouplist.sh "{{ ansible_distribution }}" "{{ prefix_path }}"'
+      register: create_group_actual_check
+
+    - name: assert create group (check mode)
+      assert:
+        that:
+          - create_group_check is changed
+          - '"ansibullgroup" not in create_group_actual_check.stdout_lines'
+
+    - name: create group
+      group:
+        name: ansibullgroup
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      register: create_group
+
+    - name: get result of create group
+      script: 'grouplist.sh "{{ ansible_distribution }}" "{{ prefix_path }}"'
+      register: create_group_actual
+
+    - name: assert create group
+      assert:
+        that:
+          - create_group is changed
+          - create_group.gid is defined
+          - '"ansibullgroup" in create_group_actual.stdout_lines'
+
+    - name: create group (idempotent)
+      group:
+        name: ansibullgroup
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      register: create_group_again
+
+    - name: assert create group (idempotent)
+      assert:
+        that:
+          - not create_group_again is changed
+
+    ##
+    ## group check
+    ##
+
+    - name: run existing group check tests
+      group:
+        name: "{{ create_group_actual.stdout_lines|random }}"
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      with_sequence: start=1 end=5
+      register: group_test1
+
+    - name: validate results for testcase 1
+      assert:
+        that:
+          - group_test1.results is defined
+          - group_test1.results|length == 5
+
+    - name: validate change results for testcase 1
+      assert:
+        that:
+          - not group_test1 is changed
+
+    ##
+    ## group add with gid
+    ##
+
+    - name: get the next available gid
+      script: 'get_free_gid.py "{{ prefix_path }}"'
+      args:
+        executable: '{{ ansible_python_interpreter }}'
+      register: gid
+
+    - name: create a group with a gid (check mode)
+      group:
+        name: ansibullgroup2
+        gid: '{{ gid.stdout_lines[0] }}'
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      register: create_group_gid_check
+      check_mode: true
+
+    - name: get result of create a group with a gid (check mode)
+      script: 'grouplist.sh "{{ ansible_distribution }}" "{{ prefix_path }}"'
+      register: create_group_gid_actual_check
+
+    - name: assert create group with a gid (check mode)
+      assert:
+        that:
+          - create_group_gid_check is changed
+          - '"ansibullgroup2" not in create_group_gid_actual_check.stdout_lines'
+
+    - name: create a group with a gid
+      group:
+        name: ansibullgroup2
+        gid: '{{ gid.stdout_lines[0] }}'
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      register: create_group_gid
+
+    - name: get gid of created group
+      script: 'get_gid_for_group.py ansibullgroup2 "{{ prefix_path }}"'
+      args:
+        executable: '{{ ansible_python_interpreter }}'
+      register: create_group_gid_actual
+
+    - name: assert create group with a gid
+      assert:
+        that:
+          - create_group_gid is changed
+          - create_group_gid.gid | int == gid.stdout_lines[0] | int
+          - create_group_gid_actual.stdout | trim | int == gid.stdout_lines[0] | int
+
+    - name: create a group with a gid (idempotent)
+      group:
+        name: ansibullgroup2
+        gid: '{{ gid.stdout_lines[0] }}'
+        state: present
+        prefix_path: "{{ prefix_path }}"
+      register: create_group_gid_again
+
+    - name: assert create group with a gid (idempotent)
+      assert:
+        that:
+          - not create_group_gid_again is changed
+          - create_group_gid_again.gid | int == gid.stdout_lines[0] | int
+
+    - block:
+        - name: create a group with a non-unique gid
+          group:
+            name: ansibullgroup3
+            gid: '{{ gid.stdout_lines[0] }}'
+            non_unique: true
+            state: present
+            prefix_path: "{{ prefix_path }}"
+          register: create_group_gid_non_unique
+
+        - name: validate gid required with non_unique
+          group:
+            name: foo
+            non_unique: true
+            prefix_path: "{{ prefix_path }}"
+          register: missing_gid
+          ignore_errors: true
+
+        - name: assert create group with a non unique gid
+          assert:
+            that:
+              - create_group_gid_non_unique is changed
+              - create_group_gid_non_unique.gid | int == gid.stdout_lines[0] | int
+              - missing_gid is failed
+      when: ansible_facts.distribution not in ['MacOSX', 'Alpine']
+
+    ##
+    ## group remove
+    ##
+
+    - name: delete group (check mode)
+      group:
+        name: ansibullgroup
+        state: absent
+        prefix_path: "{{ prefix_path }}"
+      register: delete_group_check
+      check_mode: true
+
+    - name: get result of delete group (check mode)
+      script: 'grouplist.sh "{{ ansible_distribution }}" "{{ prefix_path }}"'
+      register: delete_group_actual_check
+
+    - name: assert delete group (check mode)
+      assert:
+        that:
+          - delete_group_check is changed
+          - '"ansibullgroup" in delete_group_actual_check.stdout_lines'
+
+    - name: delete group
+      group:
+        name: ansibullgroup
+        state: absent
+        prefix_path: "{{ prefix_path }}"
+      register: delete_group
+
+    - name: get result of delete group
+      script: 'grouplist.sh "{{ ansible_distribution }}" "{{ prefix_path }}"'
+      register: delete_group_actual
+
+    - name: assert delete group
+      assert:
+        that:
+          - delete_group is changed
+          - '"ansibullgroup" not in delete_group_actual.stdout_lines'
+
+    - name: delete group (idempotent)
+      group:
+        name: ansibullgroup
+        state: absent
+        prefix_path: "{{ prefix_path }}"
+      register: delete_group_again
+
+    - name: assert delete group (idempotent)
+      assert:
+        that:
+          - not delete_group_again is changed
+
+    # https://github.com/ansible/ansible/pull/78172
+    - block:
+        - name: Create a group
+          group:
+            name: groupdeltest
+            state: present
+            gid: 1042 # random number
+            prefix_path: "{{ prefix_path }}"
+
+        - name: Create user with primary group of groupdeltest
+          lineinfile:
+            path: "{{ prefix_path }}/etc/passwd"
+            regexp: '^groupdeluser:'
+            line: "groupdeluser:x:1042:1042::/home/groupdeluser:/sbin/nologin"
+
+        - name: Show we can't delete the group usually
+          group:
+            name: groupdeltest
+            state: absent
+            prefix_path: "{{ prefix_path }}"
+          ignore_errors: true
+          register: failed_delete
+
+        - name: assert we couldn't delete the group
+          assert:
+            that:
+              - failed_delete is failed
+
+        - name: force delete the group
+          group:
+            name: groupdeltest
+            force: true
+            state: absent
+            prefix_path: "{{ prefix_path }}"
+      always:
+        - name: Cleanup user
+          lineinfile:
+            path: "{{ prefix_path }}/etc/passwd"
+            state: absent
+            regexp: '^groupdeluser:'
+
+        - name: Cleanup group
+          group:
+            name: groupdeltest
+            state: absent
+            prefix_path: "{{ prefix_path }}"
+      when: ansible_distribution not in ["MacOSX", "Alpine", "FreeBSD"]
+
+    # create system group
+
+    - name: remove group
+      group:
+        name: ansibullgroup
+        state: absent
+        prefix_path: "{{ prefix_path }}"
+
+    - name: create system group
+      group:
+        name: ansibullgroup
+        state: present
+        system: true
+        prefix_path: "{{ prefix_path }}"
+
+  always:
+    - name: remove test groups after test
+      group:
+        name: '{{ item }}'
+        state: absent
+        prefix_path: "{{ prefix_path }}"
+      loop:
+        - ansibullgroup
+        - ansibullgroup2
+        - ansibullgroup3
+
+    - name: ensure custom prefix path is removed
+      command: "rm -rf \"{{ prefix_path }}\""

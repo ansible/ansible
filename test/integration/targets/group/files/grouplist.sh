@@ -11,10 +11,15 @@
 #  register: group_names
 #  when: 'ansible_distribution == "MacOSX"'
 
-DISTRO="$*"
+DISTRO="$1"
+PREFIX_PATH="$2"
 
-if [[ "$DISTRO" == "MacOSX" ]]; then
+if [[ "${DISTRO}" == "MacOSX" ]]; then
     dscl localhost -list /Local/Default/Groups
 else
-    grep -E -v ^\# /etc/group | cut -d: -f1
+    GROUPFILE="/etc/group"
+    if [[ -n "${PREFIX_PATH}" ]]; then
+        GROUPFILE="${PREFIX_PATH}${GROUPFILE}"
+    fi
+    grep -E -v ^\# "${GROUPFILE}" | cut -d: -f1
 fi

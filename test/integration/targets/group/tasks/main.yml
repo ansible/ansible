@@ -17,3 +17,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - import_tasks: tests.yml
+
+- block:
+    - name: get home directory for user
+      command: "echo $HOME"
+      register: user_home
+    - import_tasks: tests_with_prefix_path.yml
+      vars:
+        prefix_path: "{{ user_home.stdout_lines[0] }}/custom_group_dir"
+  when:
+    - not (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version | int <= 18)
+    - not (ansible_os_family == 'RedHat' and ansible_distribution_major_version | int <= 6)
+    - not (ansible_distribution == 'Alpine')
+    - not (ansible_distribution == 'MacOSX')

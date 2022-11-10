@@ -53,6 +53,7 @@ options:
             - This is useful in environments that use centralized authentication when you want to manipulate the local groups.
               (for example, it uses C(lgroupadd) instead of C(groupadd)).
             - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+            - Mutually exclusive with C(prefix_path)
         type: bool
         default: no
         version_added: "2.6"
@@ -63,6 +64,16 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+    prefix_path:
+        description:
+            - Prefix path to use when updating groups. The directory where this variable is pointing to needs to contain
+              at least the file C(etc/group). If this file is empty, then the caller must ensure that the required
+              I(root) and system groups are created.
+            - Not supported on macOS or BusyBox distributions, Ubuntu older than (or equal to) version 18 and RedHat
+              distributions older than (or equal to) 6.
+            - Mutually exclusive with C(local)
+        type: path
+        version_added: "2.15"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -83,6 +94,12 @@ EXAMPLES = '''
   ansible.builtin.group:
     name: somegroup
     state: present
+
+- name: Ensure group "othergroup" exists in another configuration directory
+  group:
+    name: othergroup
+    state: present
+    prefix_path: /another/authentication/dir/
 
 - name: Ensure group "docker" exists with correct gid
   ansible.builtin.group:
@@ -152,6 +169,13 @@ class Group(object):
         self.system = module.params['system']
         self.local = module.params['local']
         self.non_unique = module.params['non_unique']
+        self.prefix_path = module.params['prefix_path']
+
+    def _group_file_path(self):
+        if self.prefix_path is not None:
+            return os.path.normpath(self.prefix_path + self.GROUPFILE)
+        else:
+            return self.GROUPFILE
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
@@ -161,7 +185,11 @@ class Group(object):
             command_name = 'lgroupdel'
         else:
             command_name = 'groupdel'
-        cmd = [self.module.get_bin_path(command_name, True), self.name]
+        cmd = [self.module.get_bin_path(command_name, True)]
+        if self.prefix_path is not None:
+            cmd.append('-P')
+            cmd.append(self.prefix_path)
+        cmd.append(self.name)
         return self.execute_command(cmd)
 
     def _local_check_gid_exists(self):
@@ -177,14 +205,16 @@ class Group(object):
         else:
             command_name = 'groupadd'
         cmd = [self.module.get_bin_path(command_name, True)]
-        for key in kwargs:
-            if key == 'gid' and kwargs[key] is not None:
-                cmd.append('-g')
-                cmd.append(str(kwargs[key]))
-                if self.non_unique:
-                    cmd.append('-o')
-            elif key == 'system' and kwargs[key] is True:
-                cmd.append('-r')
+        if self.prefix_path is not None:
+            cmd.append('-P')
+            cmd.append(self.prefix_path)
+        if self.gid is not None:
+            cmd.append('-g')
+            cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
+        if self.system is True:
+            cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -194,44 +224,56 @@ class Group(object):
             self._local_check_gid_exists()
         else:
             command_name = 'groupmod'
-        cmd = [self.module.get_bin_path(command_name, True)]
         info = self.group_info()
-        for key in kwargs:
-            if key == 'gid':
-                if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('-g')
-                    cmd.append(str(kwargs[key]))
-                    if self.non_unique:
-                        cmd.append('-o')
-        if len(cmd) == 1:
+        cmd = [self.module.get_bin_path(command_name, True)]
+        if self.prefix_path is not None:
+            cmd.append('-P')
+            cmd.append(self.prefix_path)
+        cmd_len = len(cmd)
+        if self.gid is not None and int(self.gid) != int(info[2]):
+            cmd.append('-g')
+            cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
+        # return when there is nothing to do
+        if len(cmd) == cmd_len:
             return (None, '', '')
         if self.module.check_mode:
             return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
+    def _find_entry_in_file(self, entry, file):
+        with open(file, 'rb') as f:
+            reversed_lines = f.readlines()[::-1]
+            for line in reversed_lines:
+                if line.startswith(to_bytes(entry)):
+                    return line
+        return None
+
     def group_exists(self):
         # The grp module does not distinguish between local and directory accounts.
         # It's output cannot be used to determine whether or not a group exists locally.
         # It returns True if the group exists locally or in the directory, so instead
         # look in the local GROUP file for an existing account.
-        if self.local:
-            if not os.path.exists(self.GROUPFILE):
-                self.module.fail_json(msg="'local: true' specified but unable to find local group file {0} to parse.".format(self.GROUPFILE))
+        #
+        # Also search the files for when a prefix path is defined.
+        if self.local or self.prefix_path is not None:
+            group_file = self._group_file_path()
+            if not os.path.exists(group_file):
+                self.module.fail_json(msg="'local: true' or 'prefix_path' specified but unable to find local "
+                                          "group file {0} to parse.".format(group_file))
 
             exists = False
             name_test = '{0}:'.format(self.name)
-            with open(self.GROUPFILE, 'rb') as f:
-                reversed_lines = f.readlines()[::-1]
-                for line in reversed_lines:
-                    if line.startswith(to_bytes(name_test)):
-                        exists = True
-                        break
+            if self._find_entry_in_file(name_test, group_file):
+                exists = True
 
-            if not exists:
+            if self.local and not exists:
                 self.module.warn(
-                    "'local: true' specified and group was not found in {file}. "
-                    "The local group may already exist if the local group database exists somewhere other than {file}.".format(file=self.GROUPFILE))
+                    "'local: true' specified and group '{name}' was not found in {file}. "
+                    "The local group may already exist if the local group database exists somewhere "
+                    "other than {file}.".format(file=group_file, name=self.name))
 
             return exists
 
@@ -243,13 +285,40 @@ class Group(object):
                 return False
 
     def group_info(self):
+        # Returns a list with info about the current group in the following format:
+        #     [0] = group name
+        #     [1] = group password
+        #     [2] = gid
+        #     [3] = group members
+        #
+        # If the group does not exist, 'False' is returned
+
         if not self.group_exists():
             return False
-        try:
-            info = list(grp.getgrnam(self.name))
-        except KeyError:
-            return False
-        return info
+
+        if self.prefix_path is not None:
+            group_file = self._group_file_path()
+            if not os.path.exists(group_file):
+                self.module.fail_json(msg="'prefix_path' specified but unable to find local group file {0} to "
+                                          "parse.".format(group_file))
+
+            name_test = '{0}:'.format(self.name)
+            entry = self._find_entry_in_file(name_test, group_file)
+            if entry is not None:
+                entries = entry.split(b':')
+                if len(entries) == 4:
+                    return entries
+                else:
+                    self.module.debug('Unknown entry format in group file: %s' % b','.join(entries))
+                    return False
+            else:
+                return False
+        else:
+            try:
+                info = list(grp.getgrnam(self.name))
+            except KeyError:
+                return False
+            return info
 
 
 # ===========================================
@@ -273,6 +342,9 @@ class Linux(Group):
         cmd = [self.module.get_bin_path(command_name, True)]
         if self.force:
             cmd.append('-f')
+        if self.prefix_path is not None:
+            cmd.append('-P')
+            cmd.append(self.prefix_path)
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -367,10 +439,16 @@ class FreeBsdGroup(Group):
 
     def group_del(self):
         cmd = [self.module.get_bin_path('pw', True), 'groupdel', self.name]
+        if self.prefix_path is not None:
+            cmd.append('-R')
+            cmd.append(self.prefix_path)
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
+        if self.prefix_path is not None:
+            cmd.append('-R')
+            cmd.append(self.prefix_path)
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
@@ -379,20 +457,23 @@ class FreeBsdGroup(Group):
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('pw', True), 'groupmod', self.name]
         info = self.group_info()
+        cmd = [self.module.get_bin_path('pw', True), 'groupmod', self.name]
+        if self.prefix_path is not None:
+            cmd.append('-R')
+            cmd.append(self.prefix_path)
         cmd_len = len(cmd)
-        if self.gid is not None and int(self.gid) != info[2]:
+        if self.gid is not None and int(self.gid) != int(info[2]):
             cmd.append('-g')
             cmd.append(str(self.gid))
             if self.non_unique:
                 cmd.append('-o')
-        # modify the group if cmd will do anything
-        if cmd_len != len(cmd):
-            if self.module.check_mode:
-                return (0, '', '')
-            return self.execute_command(cmd)
-        return (None, '', '')
+        # return when there is nothing to do
+        if len(cmd) == cmd_len:
+            return (None, '', '')
+        if self.module.check_mode:
+            return (0, '', '')
+        return self.execute_command(cmd)
 
 
 class DragonFlyBsdGroup(FreeBsdGroup):
@@ -634,10 +715,14 @@ def main():
             system=dict(type='bool', default=False),
             local=dict(type='bool', default=False),
             non_unique=dict(type='bool', default=False),
+            prefix_path=dict(type='path'),
         ),
         supports_check_mode=True,
         required_if=[
             ['non_unique', True, ['gid']],
+        ],
+        mutually_exclusive=[
+            ('local', 'prefix_path'),
         ],
     )
 
