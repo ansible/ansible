@@ -34,6 +34,7 @@
 - import_tasks: test_expires_min_max.yml
 - import_tasks: test_shadow_backup.yml
 - import_tasks: test_ssh_key_passphrase.yml
+- import_tasks: test_ssh_key_rounds.yml
 - import_tasks: test_password_lock.yml
 - import_tasks: test_password_lock_new_user.yml
 - import_tasks: test_local.yml

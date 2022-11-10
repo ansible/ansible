@@ -176,6 +176,12 @@ options:
             - If no passphrase is provided, the SSH key will default to having no passphrase.
         type: str
         version_added: "0.9"
+    ssh_key_rounds:
+        description:
+            - Optionally specify the number of KDF (key derivation function) rounds used to provide higher resistance to brute-force password cracking.
+        type: int
+        default: 100
+        version_added: "2.14"
     update_password:
         description:
             - C(always) will update passwords if they differ.
@@ -315,6 +321,14 @@ EXAMPLES = r'''
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
+
+- name: Create a 2048-bit SSH key for user johndoe with 1000 KDF rounds
+  ansible.builtin.user:
+    name: johndoe
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    ssh_key_rounds: 1000
 
 - name: Added a consultant whose account you want to expire
   ansible.builtin.user:
@@ -562,6 +576,7 @@ class User(object):
         self.ssh_type = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
+        self.ssh_key_rounds = module.params['ssh_key_rounds']
         self.update_password = module.params['update_password']
         self.home = module.params['home']
         self.expires = None
@@ -1169,6 +1184,8 @@ class User(object):
             else:
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
+        cmd.append('-a')
+        cmd.append(self.ssh_key_rounds)
         cmd.append('-t')
         cmd.append(self.ssh_type)
         if self.ssh_bits > 0:
@@ -3078,7 +3095,8 @@ def main():
         bits=0,
         type='rsa',
         passphrase=None,
-        comment='ansible-generated on %s' % socket.gethostname()
+        comment='ansible-generated on %s' % socket.gethostname(),
+        rounds=100
     )
     module = AnsibleModule(
         argument_spec=dict(
@@ -3116,6 +3134,7 @@ def main():
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(type='str', no_log=True),
+            ssh_key_rounds=dict(type='int', default=ssh_defaults['rounds'], no_log=False),
             update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             expires=dict(type='float'),
             password_lock=dict(type='bool', no_log=False),

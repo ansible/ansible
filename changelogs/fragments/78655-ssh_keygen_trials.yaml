@@ -1,0 +1,2 @@
+minor_changes:
+  - user - add -a option for creating more secure SSH keys (https://github.com/ansible/ansible/issues/78473).
