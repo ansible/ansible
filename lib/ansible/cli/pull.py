@@ -37,7 +37,7 @@ class PullCLI(CLI):
         each set to run via cron and update playbook source via a source repository.
         This inverts the default *push* architecture of ansible into a *pull* architecture,
         which has near-limitless scaling potential.
-        To make concurrent ``ansible-pull`` invocations for the same checkout on the same host, you should 
+        To make concurrent ``ansible-pull`` invocations for the same checkout on the same host, you should
         use either locks (``setlock/flock``) or separate directories.
         The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
         This is useful both for extreme scale-out as well as periodic remediation.
