@@ -85,11 +85,12 @@ class DockerInfo:
         version_stdout = docker_command(args, ['version', '--format', '{{ json . }}'], capture=True, always=True)[0]
         version = json.loads(version_stdout)
 
-        info = DockerInfo(command, info, version)
+        info = DockerInfo(args, command, info, version)
 
         return info
 
-    def __init__(self, engine: str, info: dict[str, t.Any], version: dict[str, t.Any]) -> None:
+    def __init__(self, args: CommonConfig, engine: str, info: dict[str, t.Any], version: dict[str, t.Any]) -> None:
+        self.args = args
         self.engine = engine
         self.info = info
         self.version = version
@@ -166,27 +167,44 @@ class DockerInfo:
         # See: https://github.com/moby/moby/blob/d082bbcc0557ec667faca81b8b33bec380b75dac/daemon/info_unix.go#L24-L27
 
         if host:
-            version = int(host['cgroupVersion'].lstrip('v'))  # podman
-        else:
-            try:
-                version = int(info['CgroupVersion'])  # docker
-            except KeyError:
-                if self.server_major_minor_version >= (20, 10):
-                    # Docker 20.10 (API version 1.41) added support for cgroup v2.
-                    # Unfortunately the client is older and unable to report the cgroup version.
-                    # Tell the user what versions they have and recommend they upgrade the client.
-                    # Downgrading the server should also work, but we won't mention that.
-                    # See: https://docs.docker.com/engine/release-notes/#20100
-                    # See: https://docs.docker.com/engine/api/version-history/#v141-api-changes
-                    raise ApplicationError(
-                        'Cannot determine the Docker server cgroup version. '
-                        f'The Docker client version is {self.client_version}. '
-                        f'The Docker server version is {self.server_version}. '
-                        'Upgrade your Docker client to version 20.10 or later.') from None
+            return int(host['cgroupVersion'].lstrip('v'))  # podman
 
-                version = 1
+        try:
+            return int(info['CgroupVersion'])  # docker
+        except KeyError:
+            pass
 
-        return version
+        # Docker 20.10 (API version 1.41) added support for cgroup v2.
+        # Unfortunately the client or server is too old to report the cgroup version.
+        # If the server is old, we can infer the cgroup version.
+        # Otherwise, we'll need to fall back to detection.
+        # See: https://docs.docker.com/engine/release-notes/#20100
+        # See: https://docs.docker.com/engine/api/version-history/#v141-api-changes
+
+        if self.server_major_minor_version < (20, 10):
+            return 1  # old docker server with only cgroup v1 support
+
+        # Tell the user what versions they have and recommend they upgrade the client.
+        # Downgrading the server should also work, but we won't mention that.
+        message = (
+            f'The Docker client version is {self.client_version}. '
+            f'The Docker server version is {self.server_version}. '
+            'Upgrade your Docker client to version 20.10 or later.'
+        )
+
+        if isinstance(self.args, EnvironmentConfig):
+            if detect_host_properties(self.args).cgroup_v2:
+                # Unfortunately cgroup v2 was detected on the Docker server.
+                # A newer client is needed to support the `--cgroupns` option for use with cgroup v2.
+                raise ApplicationError(f'Unsupported Docker client and server combination using cgroup v2. {message}')
+
+            display.warning(f'Detected Docker server cgroup v1 using probing. {message}', unique=True)
+
+            return 1  # docker server is using cgroup v1 (or cgroup v2 hybrid)
+
+        # This should only occur for the `env` command which provides CommonConfig instead of EnvironmentConfig.
+        # It will be caught and converted to a warning.
+        raise ApplicationError(f'Cannot determine the Docker server cgroup version. {message}')
 
     @property
     def docker_desktop_wsl2(self) -> bool:
@@ -252,6 +270,7 @@ class ContainerHostProperties:
     cgroups: tuple[CGroupEntry, ...]
     mounts: tuple[MountEntry, ...]
     cgroup_v1: SystemdControlGroupV1Status
+    cgroup_v2: bool
 
 
 @mutex
@@ -356,6 +375,8 @@ def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
     else:
         cgroup_v1 = SystemdControlGroupV1Status.VALID
 
+    cgroup_v2 = mount_types.get(pathlib.PurePosixPath('/probe')) == MountType.CGROUP_V2
+
     display.info(f'Container host audit status: {audit_code} ({audit_status})', verbosity=1)
     display.info(f'Container host max open files: {hard_limit}', verbosity=1)
     display.info(f'Container loginuid: {loginuid if loginuid is not None else "unavailable"}'
@@ -374,6 +395,7 @@ def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
         cgroups=cgroups,
         mounts=mounts,
         cgroup_v1=cgroup_v1,
+        cgroup_v2=cgroup_v2,
     )
 
     detect_host_properties.properties = properties  # type: ignore[attr-defined]
