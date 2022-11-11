@@ -19,6 +19,7 @@ from ...util import (
     display,
     get_ansible_version,
     get_available_python_versions,
+    ApplicationError,
 )
 
 from ...util_common import (
@@ -174,10 +175,14 @@ def get_docker_details(args: EnvConfig) -> dict[str, t.Any]:
 
     if docker:
         executable = docker.executable
-        docker_info = get_docker_info(args)
 
-        info = docker_info.info
-        version = docker_info.version
+        try:
+            docker_info = get_docker_info(args)
+
+            info = docker_info.info
+            version = docker_info.version
+        except ApplicationError as ex:
+            display.warning(str(ex))
 
     docker_details = dict(
         executable=executable,

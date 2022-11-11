@@ -179,9 +179,9 @@ class DockerInfo:
                     # See: https://docs.docker.com/engine/release-notes/#20100
                     # See: https://docs.docker.com/engine/api/version-history/#v141-api-changes
                     raise ApplicationError(
-                        'Cannot determine the Docker server cgroup version.\n'
-                        f'The Docker client version is {self.client_version}.\n'
-                        f'The Docker server version is {self.server_version}.\n'
+                        'Cannot determine the Docker server cgroup version. '
+                        f'The Docker client version is {self.client_version}. '
+                        f'The Docker server version is {self.server_version}. '
                         'Upgrade your Docker client to version 20.10 or later.') from None
 
                 version = 1
