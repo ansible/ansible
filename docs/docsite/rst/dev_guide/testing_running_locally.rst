@@ -18,7 +18,7 @@ Each ``ansible-test`` subcommand has different requirements, some have none.
 You can add the ``--requirements`` option to have ``ansible-test`` install requirements for the current subcommand.
 When using a test environment managed by ``ansible-test`` the option is unnecessary.
 
-Test Environments
+Test environments
 =================
 
 Most ``ansible-test`` commands support running in one or more isolated test environments to simplify testing.
@@ -43,20 +43,20 @@ See the `list of supported containers <https://github.com/ansible/ansible/blob/d
 You can also specify your own container. When doing so, you will need to specify the ``--python`` option as well.
 
 Docker and SELinux
-******************
+^^^^^^^^^^^^^^^^^^
 
 Using Docker on a host with SELinux may require setting the system in permissive mode.
 Consider using Podman instead.
 
 Docker Desktop with WSL2
-************************
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 These instructions explain how to use ``ansible-test`` with WSL2 and Docker Desktop *without* systemd support.
 
     If your WSL2 environment includes systemd support, these steps are not required.
 
-Configuration Requirements
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configuration requirements
+""""""""""""""""""""""""""
 
 Open Docker Desktop and go to the Settings screen, then verify these Settings on the General tab:
 
@@ -68,8 +68,8 @@ Next go to the Resources tab and check the WSL Integration section.
 * Under "Enable integration with additional distros" make sure each distro you want to use is enabled.
 * Click "Apply and restart" if needed.
 
-Setup Instructions
-^^^^^^^^^^^^^^^^^^
+Setup instructions
+""""""""""""""""""
 
     IMPORTANT: If all WSL instances have been stopped, these changes will need to be re-applied.
 
@@ -87,8 +87,8 @@ Setup Instructions
 
 You should now be able to use ``ansible-test`` with the ``--docker`` option.
 
-Linux cgroup Configuration
-**************************
+Linux cgroup configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     IMPORTANT: These changes will need to be re-applied each time the container host is booted.
 
@@ -108,14 +108,14 @@ Make sure to substitute your user and group for ``{user}`` and ``{group}`` respe
    chown -R {user}:{group} /sys/fs/cgroup/systemd
 
 Podman
-^^^^^^
+""""""
 
 When using Podman, you may need to stop existing Podman processes after following the cgroup instructions above.
 Otherwise Podman may be unable to see the new mount point.
 
 You can check to see if Podman is running by looking for ``podman`` and ``catatonit`` processes.
 
-Remote Virtual Machines
+Remote virtual machines
 -----------------------
 
 Remote virtual machines are recommended for running integration tests not suitable for execution in containers.
@@ -126,7 +126,7 @@ The ``--remote`` option runs tests in a cloud hosted ephemeral virtual machine.
 
 See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/remote.txt>`_ for additional details.
 
-Python Virtual Environments
+Python virtual environments
 ---------------------------
 
 Python virtual environments provide a simple way to achieve isolation from the system and user Python environments.
@@ -135,7 +135,7 @@ They are recommended for unit and integration tests when the ``--docker`` and ``
 The ``--venv`` option runs tests in a virtual environment managed by ``ansible-test``.
 Requirements are automatically installed before tests are run.
 
-Environment Variables
+Environment variables
 =====================
 
 When using environment variables to manipulate tests there some limitations to keep in mind. Environment variables are:
@@ -148,7 +148,7 @@ When using environment variables to manipulate tests there some limitations to k
     and the tests executed. This is useful for debugging tests inside a container by following the
     :ref:`Debugging AnsibleModule-based modules <debugging_modules>` instructions.
 
-Interactive Shell
+Interactive shell
 =================
 
 Use the ``ansible-test shell`` command to get an interactive shell in the same environment used to run tests. Examples:
@@ -156,7 +156,7 @@ Use the ``ansible-test shell`` command to get an interactive shell in the same e
 * ``ansible-test shell --docker`` - Open a shell in the default docker container.
 * ``ansible-test shell --venv --python 3.10`` - Open a shell in a Python 3.10 virtual environment.
 
-Code Coverage
+Code coverage
 =============
 
 Code coverage reports make it easy to identify untested code for which more tests should
