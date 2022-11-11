@@ -650,9 +650,18 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         if self.config.cgroup == CGroupVersion.NONE:
             # Containers which do not require cgroup do not use systemd.
 
+            if get_docker_info(self.args).cgroupns_option_supported:
+                # Use the `--cgroupns` option if it is supported.
+                # Older servers which do not support the option use the host group namespace.
+                # Older clients which do not support the option cause newer servers to use the host cgroup namespace (cgroup v1 only).
+                # See: https://github.com/moby/moby/blob/master/api/server/router/container/container_routes.go#L512-L517
+                # If the host cgroup namespace is used, cgroup information will be visible, but the cgroup mounts will be unavailable due to the tmpfs below.
+                options.extend((
+                    # A private cgroup namespace limits what is visible in /proc/*/cgroup.
+                    '--cgroupns', 'private',
+                ))
+
             options.extend((
-                # A private cgroup namespace limits what is visible in /proc/*/cgroup.
-                '--cgroupns', 'private',
                 # Mounting a tmpfs overrides the cgroup mount(s) that would otherwise be provided by Docker.
                 # This helps provide a consistent container environment across various container host configurations.
                 '--tmpfs', '/sys/fs/cgroup',
@@ -666,12 +675,20 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             # They will also create a dedicated cgroup v1 systemd hierarchy for the container.
             # The cgroup v1 system hierarchy path is: /sys/fs/cgroup/systemd/{container_id}/
 
+            if get_docker_info(self.args).cgroupns_option_supported:
+                # Use the `--cgroupns` option if it is supported.
+                # Older servers which do not support the option use the host group namespace.
+                # Older clients which do not support the option cause newer servers to use the host cgroup namespace (cgroup v1 only).
+                # See: https://github.com/moby/moby/blob/master/api/server/router/container/container_routes.go#L512-L517
+                options.extend((
+                    # The host cgroup namespace must be used.
+                    # Otherwise, /proc/1/cgroup will report "/" for the cgroup path, which is incorrect.
+                    # See: https://github.com/systemd/systemd/issues/19245#issuecomment-815954506
+                    # It is set here to avoid relying on the current Docker configuration.
+                    '--cgroupns', 'host',
+                ))
+
             options.extend((
-                # The host cgroup namespace must be used.
-                # Otherwise, /proc/1/cgroup will report "/" for the cgroup path, which is incorrect.
-                # See: https://github.com/systemd/systemd/issues/19245#issuecomment-815954506
-                # It is set here to avoid relying on the current Docker configuration.
-                '--cgroupns', 'host',
                 # Mask the host cgroup tmpfs mount to avoid exposing the host cgroup v1 hierarchies (or cgroup v2 hybrid) to the container.
                 '--tmpfs', '/sys/fs/cgroup',
                 # A cgroup v1 systemd hierarchy needs to be mounted read-write over the read-only one provided by Docker.

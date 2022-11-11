@@ -66,21 +66,99 @@ LOGINUID_NOT_SET = 4294967295
 
 
 class DockerInfo:
-    """The results of `docker info` for the container runtime."""
-    def __init__(self, data: dict[str, t.Any]) -> None:
-        self.data = data
+    """The results of `docker info` and `docker version` for the container runtime."""
 
-        if server_errors := data.get('ServerErrors'):
-            # This can occur when a remote docker instance is in use and the instance is not responding.
+    @classmethod
+    def init(cls, args: CommonConfig) -> DockerInfo:
+        """Initialize and return a DockerInfo instance."""
+        command = require_docker().command
+
+        info_stdout = docker_command(args, ['info', '--format', '{{ json . }}'], capture=True, always=True)[0]
+        info = json.loads(info_stdout)
+
+        if server_errors := info.get('ServerErrors'):
+            # This can occur when a remote docker instance is in use and the instance is not responding, such as when the system is still starting up.
             # In that case an error such as the following may be returned:
             # error during connect: Get "http://{hostname}:2375/v1.24/info": dial tcp {ip_address}:2375: connect: no route to host
             raise ApplicationError('Unable to get container host information: ' + '\n'.join(server_errors))
 
+        version_stdout = docker_command(args, ['version', '--format', '{{ json . }}'], capture=True, always=True)[0]
+        version = json.loads(version_stdout)
+
+        info = DockerInfo(command, info, version)
+
+        return info
+
+    def __init__(self, engine: str, info: dict[str, t.Any], version: dict[str, t.Any]) -> None:
+        self.engine = engine
+        self.info = info
+        self.version = version
+
+    @property
+    def client(self) -> dict[str, t.Any]:
+        """The client version details."""
+        client = self.version.get('Client')
+
+        if not client:
+            raise ApplicationError('Unable to get container host client information.')
+
+        return client
+
+    @property
+    def server(self) -> dict[str, t.Any]:
+        """The server version details."""
+        server = self.version.get('Server')
+
+        if not server:
+            if self.engine == 'podman':
+                # Some Podman versions always report server version info (verified with 1.8.0 and 1.9.3).
+                # Others do not unless Podman remote is being used.
+                # To provide consistency, use the client version if the server version isn't provided.
+                # See: https://github.com/containers/podman/issues/2671#issuecomment-804382934
+                return self.client
+
+            raise ApplicationError('Unable to get container host server information.')
+
+        return server
+
+    @property
+    def client_version(self) -> str:
+        """The client version."""
+        return self.client['Version']
+
+    @property
+    def server_version(self) -> str:
+        """The server version."""
+        return self.server['Version']
+
+    @property
+    def client_major_minor_version(self) -> tuple[int, int]:
+        """The client major and minor version."""
+        major, minor = self.client_version.split('.')[:2]
+        return int(major), int(minor)
+
+    @property
+    def server_major_minor_version(self) -> tuple[int, int]:
+        """The server major and minor version."""
+        major, minor = self.server_version.split('.')[:2]
+        return int(major), int(minor)
+
+    @property
+    def cgroupns_option_supported(self) -> bool:
+        """Return True if the `--cgroupns` option is supported, otherwise return False."""
+        if self.engine == 'docker':
+            # Docker added support for the `--cgroupns` option in version 20.10.
+            # Both the client and server must support the option to use it.
+            # See: https://docs.docker.com/engine/release-notes/#20100
+            return self.client_major_minor_version >= (20, 10) and self.server_major_minor_version >= (20, 10)
+
+        raise NotImplementedError(self.engine)
+
     @property
     def cgroup_version(self) -> int:
         """The cgroup version of the container host."""
-        data = self.data
-        host = data.get('host')
+        info = self.info
+        host = info.get('host')
 
         # When the container host reports cgroup v1 it is running either cgroup v1 legacy mode or cgroup v2 hybrid mode.
         # When the container host reports cgroup v2 it is running under cgroup v2 unified mode.
@@ -90,21 +168,53 @@ class DockerInfo:
         if host:
             version = int(host['cgroupVersion'].lstrip('v'))  # podman
         else:
-            version = int(data['CgroupVersion'])  # docker
+            try:
+                version = int(info['CgroupVersion'])  # docker
+            except KeyError:
+                if self.server_major_minor_version >= (20, 10):
+                    # Docker 20.10 (API version 1.41) added support for cgroup v2.
+                    # Unfortunately the client is older and unable to report the cgroup version.
+                    # Tell the user what versions they have and recommend they upgrade the client.
+                    # Downgrading the server should also work, but we won't mention that.
+                    # See: https://docs.docker.com/engine/release-notes/#20100
+                    # See: https://docs.docker.com/engine/api/version-history/#v141-api-changes
+                    raise ApplicationError(
+                        'Cannot determine the Docker server cgroup version.\n'
+                        f'The Docker client version is {self.client_version}.\n'
+                        f'The Docker server version is {self.server_version}.\n'
+                        'Upgrade your Docker client to version 20.10 or later.') from None
+
+                version = 1
 
         return version
 
     @property
     def docker_desktop_wsl2(self) -> bool:
         """Return True if Docker Desktop integrated with WSL2 is detected, otherwise False."""
-        data = self.data
+        info = self.info
 
-        kernel_version = data.get('KernelVersion')
-        operating_system = data.get('OperatingSystem')
+        kernel_version = info.get('KernelVersion')
+        operating_system = info.get('OperatingSystem')
 
         dd_wsl2 = kernel_version and kernel_version.endswith('-WSL2') and operating_system == 'Docker Desktop'
 
         return dd_wsl2
+
+    @property
+    def description(self) -> str:
+        """Describe the container runtime."""
+        tags = dict(
+            client=self.client_version,
+            server=self.server_version,
+            cgroup=f'v{self.cgroup_version}',
+        )
+
+        labels = [self.engine] + [f'{key}={value}' for key, value in tags.items()]
+
+        if self.docker_desktop_wsl2:
+            labels.append('DD+WSL2')
+
+        return f'Container runtime: {" ".join(labels)}'
 
 
 @mutex
@@ -113,7 +223,13 @@ def get_docker_info(args: CommonConfig) -> DockerInfo:
     try:
         return get_docker_info.info  # type: ignore[attr-defined]
     except AttributeError:
-        info = get_docker_info.info = DockerInfo(docker_info(args))  # type: ignore[attr-defined]
+        pass
+
+    info = DockerInfo.init(args)
+
+    display.info(info.description, verbosity=1)
+
+    get_docker_info.info = info  # type: ignore[attr-defined]
 
     return info
 
@@ -890,18 +1006,6 @@ def docker_exec(
 
     return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive,
                           output_stream=output_stream, data=data)
-
-
-def docker_info(args: CommonConfig) -> dict[str, t.Any]:
-    """Return a dictionary containing details from the `docker info` command."""
-    stdout, _dummy = docker_command(args, ['info', '--format', '{{json .}}'], capture=True, always=True)
-    return json.loads(stdout)
-
-
-def docker_version(args: CommonConfig) -> dict[str, t.Any]:
-    """Return a dictionary containing details from the `docker version` command."""
-    stdout, _dummy = docker_command(args, ['version', '--format', '{{json .}}'], capture=True, always=True)
-    return json.loads(stdout)
 
 
 def docker_command(
