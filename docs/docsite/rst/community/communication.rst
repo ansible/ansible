@@ -102,6 +102,7 @@ Working groups
 
 Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet in chat. If you want to get involved in a working group, join the Matrix room or IRC channel where it meets or comment on the agenda.
 
+- `AAP Configuration as Code <https://github.com/redhat-cop/controller_configuration/wiki/AAP-Configuration-as-Code>`_ - Matrix: `#aap_config_as_code:ansible.com <https://matrix.to/#/#aap_config_as_code:ansible.com>`_
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - Matrix: `#aws:ansible.com <https://matrix.to:/#/#aws:ansible.com>`_ | IRC: ``#ansible-aws``
 - `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ (`Security playbooks/roles <https://github.com/ansible/ansible-lockdown>`_) - Matrix: `#lockdown:ansible.com <https://matrix.to:/#/#lockdown:ansible.com>`_ | IRC: ``#ansible-lockdown``
 - `AWX Working Group <https://github.com/ansible/awx>`_ - Matrix: `#awx:ansible.com <https://matrix.to:/#/#awx:ansible.com>`_ | IRC: ``#ansible-awx``
