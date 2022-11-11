@@ -16,7 +16,7 @@ Prepare your environment
 	These steps assume a Linux work environment with ``git`` installed.
 
 
-1. Install and start ``docker`` or ``podman`` with the ``docker`` executable shim. This insures tests run properly isolated and in the exact environments as in CI. The latest ``ansible-core`` development version also supports the ``podman`` CLI program.
+1. Install and start ``docker`` or ``podman``. This ensures tests run properly isolated and in the same environment as in CI.
 
 2. :ref:`Install Ansible or ansible-core <installation_guide>`. You need the ``ansible-test`` utility which is provided by either of these packages.
 
@@ -154,8 +154,6 @@ See :ref:`module_contribution` for some general guidelines about Ansible module 
 
 Test your changes
 =================
-
-	If using the ``docker`` CLI program, the host must be configured to use cgroupsv1 (this is not required for ``podman``). This can be done by adding ``systemd.unified_cgroup_hierarchy=0`` to the kernel boot arguments (requires bootloader config update and reboot).
 
 1. Install ``flake8`` (``pip install flake8``, or install the corresponding package on your operating system).
 
