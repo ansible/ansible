@@ -2,24 +2,84 @@
 
 .. _testing_running_locally:
 
-***************
-Testing Ansible
-***************
+*******************************
+Testing Ansible and Collections
+*******************************
 
-This document describes how to run tests locally using ``ansible-test``.
+This document describes how to run tests using ``ansible-test``.
 
 .. contents::
    :local:
 
-Requirements
+Setup
+=====
+
+To run ``ansible-test``, you need to make sure your environment is properly setup.
+
+.. warning::
+
+   If you use ``git`` for version control, make sure the files you are working with are not ignored by ``git``.
+   If they are, ``ansible-test`` will ignore them as well.
+
+Testing an Ansible Collection
+-----------------------------
+
+If you're testing an Ansible Collection, you'll need a copy of the collection, preferably a git clone.
+As with Ansible itself, ``ansible-test`` requires collections to be within a valid collection root.
+
+For example, if you want to work with the ``community.windows`` collection, you could clone it from GitHub:
+
+.. code-block:: shell-session
+
+   git clone https://github.com/ansible-collections/community.windows ~/dev/ansible_collections/community/windows
+
+Since it depends on the ``ansible.windows`` collection you need to clone that as well:
+
+.. code-block:: shell-session
+
+   git clone https://github.com/ansible-collections/ansible.windows ~/dev/ansible_collections/ansible/windows
+
+Finally, you can switch to the directory where the ``community.windows`` collection resides:
+
+.. code-block:: shell-session
+
+   cd ~/dev/ansible_collections/community/windows
+
+Now you're ready to start testing the collection with ``ansible-test`` commands.
+
+.. note::
+
+   If your collection has any dependencies on other collections, they must be in the same collection root.
+   Unlike Ansible, ``ansible-test`` will not use your configured collection roots (or other Ansible configuration).
+
+Testing Ansible
+---------------
+
+If you're testing Ansible itself, you'll need a copy of the Ansible source code, preferably a git clone.
+Having an installed copy of Ansible is not sufficient, or required.
+
+.. note::
+
+   If you do have an installed version of Ansible,
+   make sure you are not using that copy of ``ansible-test`` to test Ansible itself.
+
+Commands
+========
+
+The most commonly used test commands are:
+
+* ``ansible-test sanity`` - Run sanity tests (mostly linters and static analysis).
+* ``ansible-test integration`` - Run integration tests.
+* ``ansible-test units`` - Run unit tests.
+
+Run ``ansible-test --help`` to see a complete list of available commands.
+
+.. note::
+
+   For detailed help on a specific command, add the ``--help`` option after the command.
+
+Environments
 ============
-
-Each ``ansible-test`` subcommand has different requirements, some have none.
-You can add the ``--requirements`` option to have ``ansible-test`` install requirements for the current subcommand.
-When using a test environment managed by ``ansible-test`` the option is unnecessary.
-
-Test environments
-=================
 
 Most ``ansible-test`` commands support running in one or more isolated test environments to simplify testing.
 
@@ -27,20 +87,33 @@ Containers
 ----------
 
 Containers are recommended for running sanity, unit and integration tests, since they provide consistent environments.
-Additionally, unit tests gain the benefit of network isolation, which avoids unintentional network use in unit tests.
+Unit tests will be run with network isolation, which avoids unintentional dependencies on network resources.
 
 The ``--docker`` option runs tests in a container using either Docker or Podman.
 
-If both Docker and Podman are installed, Docker will be used.
-To override this, set the environment variable ``ANSIBLE_TEST_PREFER_PODMAN=1``.
+.. note::
+
+   If both Docker and Podman are installed, Docker will be used.
+   To override this, set the environment variable ``ANSIBLE_TEST_PREFER_PODMAN=1``.
+
+Choosing a container
+^^^^^^^^^^^^^^^^^^^^
 
 Without an additional argument, the ``--docker`` option uses the ``default`` container.
+To use another container, specify it immediately after the ``--docker`` option.
 
-    Always use the ``default`` container when running sanity tests.
+.. note::
 
-See the `list of supported containers <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for additional details.
+   The ``default`` container is recommended for all sanity and unit tests.
 
-You can also specify your own container. When doing so, you will need to specify the ``--python`` option as well.
+To see the list of supported containers, use the ``--help`` option with the ``ansible-test`` command you want to use.
+
+.. note::
+
+   The list of available containers is dependent on the ``ansible-test`` command you are using.
+
+You can also specify your own container.
+When doing so, you will need to indicate the Python version in the container with the ``--python`` option.
 
 Docker and SELinux
 ^^^^^^^^^^^^^^^^^^
@@ -53,7 +126,9 @@ Docker Desktop with WSL2
 
 These instructions explain how to use ``ansible-test`` with WSL2 and Docker Desktop *without* systemd support.
 
-    If your WSL2 environment includes systemd support, these steps are not required.
+.. note::
+
+   If your WSL2 environment includes systemd support, these steps are not required.
 
 Configuration requirements
 """"""""""""""""""""""""""
@@ -71,7 +146,9 @@ Next go to the Resources tab and check the WSL Integration section.
 Setup instructions
 """"""""""""""""""
 
-    IMPORTANT: If all WSL instances have been stopped, these changes will need to be re-applied.
+.. note::
+
+   If all WSL instances have been stopped, these changes will need to be re-applied.
 
 1. Verify Docker Desktop is properly configured (see Configuration Requirements above)
 2. Quit Docker Desktop if it is running (Docker Desktop taskbar icon | Quit Docker Desktop)
@@ -90,7 +167,9 @@ You should now be able to use ``ansible-test`` with the ``--docker`` option.
 Linux cgroup configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    IMPORTANT: These changes will need to be re-applied each time the container host is booted.
+.. note::
+
+   These changes will need to be re-applied each time the container host is booted.
 
 For certain container hosts and container combinations, additional setup on the container host may be required.
 In these situations ``ansible-test`` will report an error and provide additional instructions to run as ``root``:
@@ -122,9 +201,15 @@ Remote virtual machines are recommended for running integration tests not suitab
 
 The ``--remote`` option runs tests in a cloud hosted ephemeral virtual machine.
 
-    An API key is required to use this feature, unless running under an approved Azure Pipelines organization.
+.. note::
 
-See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/remote.txt>`_ for additional details.
+   An API key is required to use this feature, unless running under an approved Azure Pipelines organization.
+
+To see the list of supported systems, use the ``--help`` option with the ``ansible-test`` command you want to use.
+
+.. note::
+
+   The list of available systems is dependent on the ``ansible-test`` command you are using.
 
 Python virtual environments
 ---------------------------
@@ -134,6 +219,30 @@ They are recommended for unit and integration tests when the ``--docker`` and ``
 
 The ``--venv`` option runs tests in a virtual environment managed by ``ansible-test``.
 Requirements are automatically installed before tests are run.
+
+Composite environment arguments
+-------------------------------
+
+The environment arguments covered in this document are sufficient for most use cases.
+However, some scenarios may require the additional flexibility offered by composite environment arguments.
+
+The ``--controller`` and ``--target`` options are alternatives to the ``--docker``, ``--remote`` and ``--venv`` options.
+
+.. note::
+
+   When using the ``shell`` command, the ``--target`` option is replaced by three platform specific options.
+
+Add the ``--help`` option to your ``ansible-test`` command to learn more about the composite environment arguments.
+
+Requirements
+============
+
+Some ``ansible-test`` commands have additional requirements.
+You can use the ``--requirements`` option to automatically install them.
+
+.. note::
+
+   When using a test environment managed by ``ansible-test`` the ``--requirements`` option is usually unnecessary.
 
 Environment variables
 =====================
@@ -181,8 +290,4 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage html`` - HTML report.
 * ``ansible-test coverage xml`` - XML report.
 
-To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help:
-
-.. code-block:: shell-session
-
-   ansible-test coverage --help
+To clear data between test runs, use the ``ansible-test coverage erase`` command.
