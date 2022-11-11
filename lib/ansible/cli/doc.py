@@ -496,7 +496,7 @@ class DocCLI(CLI, RoleMixin):
 
                 pbreak = plugin.split('.')
                 # TODO: add mark for deprecated collection plugins
-                if pbreak[-1].startswith('_') and plugin.startswith('ansible.builtin.'):
+                if pbreak[-1].startswith('_') and plugin.startswith(('ansible.builtin.', 'ansible.legacy.')):
                     # Handle deprecated ansible.builtin plugins
                     pbreak[-1] = pbreak[-1][1:]
                     plugin = '.'.join(pbreak)
