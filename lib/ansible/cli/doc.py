@@ -17,13 +17,9 @@ import re
 import textwrap
 import traceback
 
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping  # type: ignore[no-redef,attr-defined]  # pylint: disable=ansible-bad-import-from
-
 import ansible.plugins.loader as plugin_loader
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from ansible import constants as C
