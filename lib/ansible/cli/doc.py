@@ -679,7 +679,12 @@ class DocCLI(CLI, RoleMixin):
         return result
 
     def _find_private_plugins(self, collection_name, plugin_type):
-        b_routing_meta_path = to_bytes(os.path.join(_get_collection_path(collection_name), 'meta/runtime.yml'))
+        try:
+            collection_path = _get_collection_path(collection_name)
+        except ValueError as exc:
+            display.vv('Error while finding collection path: %s' % exc)
+            return []
+        b_routing_meta_path = to_bytes(os.path.join(collection_path, 'meta/runtime.yml'))
         if not os.path.isfile(b_routing_meta_path):
             return []
         with open(b_routing_meta_path, 'rb') as fd:
