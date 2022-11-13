@@ -651,17 +651,9 @@ class DocCLI(CLI, RoleMixin):
         self.plugins.update(list_plugins(plugin_type, coll_filter))
 
         if remove_private:
-            # Collect all proper collections that appear in the plugin list
-            collections = set()
-            for plugin in self.plugins:
-                collections.add('.'.join(plugin.split('.', 2)[:2]))
-            collections.discard('ansible.builtin')
-            collections.discard('ansible.legacy')
-            # List private plugins for every collection and remove them
-            for collection in collections:
-                for plugin in self._find_private_plugins(collection, plugin_type):
-                    display.debug('Skipping private %s %s' % (plugin_type, plugin))
-                    self.plugins.pop(plugin, None)
+            for plugin in self._find_all_private_plugins(self.plugins, plugin_type):
+                display.debug('Skipping private %s %s' % (plugin_type, plugin))
+                self.plugins.pop(plugin, None)
 
         # get appropriate content depending on option
         if content == 'dir':
@@ -673,6 +665,21 @@ class DocCLI(CLI, RoleMixin):
             self.plugin_list = set()  # reset for next iteration
 
         return results
+
+    def _find_all_private_plugins(self, plugin_names, plugin_type):
+        # Collect all proper collections that appear in the plugin list
+        collections = set()
+        for plugin in plugin_names:
+            collections.add('.'.join(plugin.split('.', 2)[:2]))
+        collections.discard('ansible.builtin')
+        collections.discard('ansible.legacy')
+        # List private plugins for every collection
+        result = set()
+        for collection in collections:
+            for plugin in self._find_private_plugins(collection, plugin_type):
+                if plugin in plugin_names:
+                    result.add(plugin)
+        return result
 
     def _find_private_plugins(self, collection_name, plugin_type):
         b_routing_meta_path = to_bytes(os.path.join(_get_collection_path(collection_name), 'meta/runtime.yml'))
@@ -700,6 +707,8 @@ class DocCLI(CLI, RoleMixin):
     def _get_plugins_docs(self, plugin_type, names, fail_ok=False, fail_on_errors=True):
 
         loader = DocCLI._prep_loader(plugin_type)
+
+        private_plugins = self._find_all_private_plugins(names, plugin_type)
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
@@ -735,6 +744,9 @@ class DocCLI(CLI, RoleMixin):
                 except Exception as e:  # pylint:disable=broad-except
                     plugin_docs[plugin] = {'error': 'Cannot serialize documentation as JSON: %s' % to_native(e)}
                     continue
+
+            if plugin in private_plugins:
+                docs['private'] = True
 
             plugin_docs[plugin] = docs
 

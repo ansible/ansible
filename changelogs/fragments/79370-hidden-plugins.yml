@@ -1,3 +1,5 @@
 minor_changes:
-  - "Plugins in collections can now be marked as private by adding ``private: true`` to their routing information in ``meta/runtime.yml``.
-     This will prevent them being listed by ``ansible-doc --list`` (https://github.com/ansible/ansible/pull/79370)."
+  - >-
+    Plugins in collections can now be marked as private by adding ``private: true`` to their routing information in ``meta/runtime.yml``.
+    This will prevent them being listed by ``ansible-doc --list``. The JSON output of the documentation will contain ``"private": true``
+    (https://github.com/ansible/ansible/pull/79370).
