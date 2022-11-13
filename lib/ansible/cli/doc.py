@@ -17,6 +17,11 @@ import re
 import textwrap
 import traceback
 
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping  # type: ignore[no-redef,attr-defined]  # pylint: disable=ansible-bad-import-from
+
 import ansible.plugins.loader as plugin_loader
 
 from pathlib import Path
@@ -26,7 +31,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError, AnsiblePluginNotFound
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
@@ -38,7 +43,8 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
+from ansible.utils.collection_loader._collection_finder import _get_collection_path, _get_collection_name_from_path
+from ansible.utils.collection_loader._collection_meta import _meta_yml_to_dict
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
 
@@ -635,7 +641,7 @@ class DocCLI(CLI, RoleMixin):
 
         return coll_filter
 
-    def _list_plugins(self, plugin_type, content):
+    def _list_plugins(self, plugin_type, content, remove_private=False):
 
         results = {}
         self.plugins = {}
@@ -643,6 +649,19 @@ class DocCLI(CLI, RoleMixin):
 
         coll_filter = self._get_collection_filter()
         self.plugins.update(list_plugins(plugin_type, coll_filter))
+
+        if remove_private:
+            # Collect all proper collections that appear in the plugin list
+            collections = set()
+            for plugin in self.plugins:
+                collections.add('.'.join(plugin.split('.', 2)[:2]))
+            collections.discard('ansible.builtin')
+            collections.discard('ansible.legacy')
+            # List private plugins for every collection and remove them
+            for collection in collections:
+                for plugin in self._find_private_plugins(collection, plugin_type):
+                    display.debug('Skipping private %s %s' % (plugin_type, plugin))
+                    self.plugins.pop(plugin, None)
 
         # get appropriate content depending on option
         if content == 'dir':
@@ -654,6 +673,29 @@ class DocCLI(CLI, RoleMixin):
             self.plugin_list = set()  # reset for next iteration
 
         return results
+
+    def _find_private_plugins(self, collection_name, plugin_type):
+        b_routing_meta_path = to_bytes(os.path.join(_get_collection_path(collection_name), 'meta/runtime.yml'))
+        if not os.path.isfile(b_routing_meta_path):
+            return []
+        with open(b_routing_meta_path, 'rb') as fd:
+            raw_routing = fd.read()
+        try:
+            routing_dict = _meta_yml_to_dict(raw_routing, (collection_name, 'runtime.yml'))
+        except Exception as ex:
+            raise ValueError('error parsing collection metadata: {0}'.format(to_native(ex)))
+
+        if plugin_type == 'module':
+            plugin_type = 'modules'
+
+        if not isinstance(routing_dict.get('plugin_routing'), Mapping) or not isinstance(routing_dict['plugin_routing'].get(plugin_type), Mapping):
+            return []
+
+        return [
+            f'{collection_name}.{plugin_name}'
+            for plugin_name, plugin_record in routing_dict['plugin_routing'][plugin_type].items()
+            if plugin_record.get('private')
+        ]
 
     def _get_plugins_docs(self, plugin_type, names, fail_ok=False, fail_on_errors=True):
 
@@ -781,7 +823,7 @@ class DocCLI(CLI, RoleMixin):
             elif plugin_type == 'role':
                 docs = self._create_role_list()
             else:
-                docs = self._list_plugins(plugin_type, content)
+                docs = self._list_plugins(plugin_type, content, remove_private=True)
         else:
             # here we require a name
             if len(context.CLIARGS['args']) == 0:

@@ -1,0 +1,20 @@
+DOCUMENTATION:
+  name: hidden
+  author: Felix Fontein
+  version_added: 1.2.0
+  short_description: This is a private filter
+  description:
+    - You cannot list this one.
+  options:
+    _input:
+      description: Will be ignored.
+      type: raw
+      required: true
+
+EXAMPLES: |
+  something: "{{ (stuff | testns.testcol.hidden }}"
+
+RETURN:
+  _value:
+    description: guess
+    type: int

@@ -1,0 +1,9 @@
+---
+
+plugin_routing:
+  filter:
+    hidden:
+      private: true
+  modules:
+    hidden:
+      private: true

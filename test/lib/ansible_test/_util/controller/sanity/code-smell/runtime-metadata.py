@@ -197,22 +197,19 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         avoid_additional_data
     )
 
-    plugin_routing_schema = Any(
-        Schema({
-            ('deprecation'): Any(deprecation_schema),
-            ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): fqcr,
-        }, extra=PREVENT_EXTRA),
-    )
+    generic_routing_schema = {
+        ('deprecation'): Any(deprecation_schema),
+        ('tombstone'): Any(tombstoning_schema),
+        ('redirect'): fqcr,
+        ('private'): bool,
+    }
+
+    plugin_routing_schema = Any(Schema(generic_routing_schema.copy(), extra=PREVENT_EXTRA))
 
     # Adjusted schema for module_utils
-    plugin_routing_schema_mu = Any(
-        Schema({
-            ('deprecation'): Any(deprecation_schema),
-            ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): Any(*string_types),
-        }, extra=PREVENT_EXTRA),
-    )
+    plugin_routing_schema_mu_content = generic_routing_schema.copy()
+    plugin_routing_schema_mu_content['redirect'] = Any(*string_types)
+    plugin_routing_schema_mu = Any(Schema(plugin_routing_schema_mu_content, extra=PREVENT_EXTRA))
 
     list_dict_plugin_routing_schema = [{str_type: plugin_routing_schema}
                                        for str_type in string_types]

@@ -17,6 +17,10 @@ def meaningoflife(a):
     return 42
 
 
+def hidden(a):
+    return 'this is private!'
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -25,4 +29,5 @@ class FilterModule(object):
             'noop': nochange,
             'ultimatequestion': meaningoflife,
             'b64decode': nochange,   # here to colide with basename of builtin
+            'hidden': hidden,
         }

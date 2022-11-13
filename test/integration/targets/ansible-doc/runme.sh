@@ -30,6 +30,10 @@ ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid coll
 # ensure we dont break on invalid collection name for list
 ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection name"
 
+# test that directly showing docs for private plugins in collections works
+ansible-doc testns.testcol.hidden -t filter --playbook-dir . | grep "TESTNS.TESTCOL.HIDDEN"
+ansible-doc testns.testcol.hidden -t module --playbook-dir . | grep "TESTNS.TESTCOL.HIDDEN"
+
 # test listing diff plugin types from collection
 for ptype in cache inventory lookup vars filter module
 do
