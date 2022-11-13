@@ -1090,7 +1090,7 @@ class TaskExecutor:
 
         # deals with networking sub_plugins (network_cli/httpapi/netconf)
         sub = getattr(self._connection, '_sub_plugin', None)
-        if sub is not None and sub.get('type') != 'external':
+        if sub and sub.get('type') != 'external':
             plugin_type = get_plugin_class(sub.get("obj"))
             varnames.extend(self._set_plugin_options(plugin_type, variables, templar, task_keys))
         sub_conn = getattr(self._connection, 'ssh_type_conn', None)
