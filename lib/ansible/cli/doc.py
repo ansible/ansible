@@ -666,7 +666,8 @@ class DocCLI(CLI, RoleMixin):
         # Collect all proper collections that appear in the plugin list
         collections = set()
         for plugin in plugin_names:
-            collections.add('.'.join(plugin.split('.', 2)[:2]))
+            if plugin.count('.') >= 2:
+                collections.add('.'.join(plugin.split('.', 2)[:2]))
         collections.discard('ansible.builtin')
         collections.discard('ansible.legacy')
         # List private plugins for every collection
