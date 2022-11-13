@@ -697,13 +697,17 @@ class DocCLI(CLI, RoleMixin):
         if plugin_type == 'module':
             plugin_type = 'modules'
 
-        if not isinstance(routing_dict.get('plugin_routing'), Mapping) or not isinstance(routing_dict['plugin_routing'].get(plugin_type), Mapping):
+        if (
+            not isinstance(routing_dict, Mapping) or
+            not isinstance(routing_dict.get('plugin_routing'), Mapping) or
+            not isinstance(routing_dict['plugin_routing'].get(plugin_type), Mapping)
+        ):
             return []
 
         return [
             f'{collection_name}.{plugin_name}'
             for plugin_name, plugin_record in routing_dict['plugin_routing'][plugin_type].items()
-            if plugin_record.get('private')
+            if isinstance(plugin_record, Mapping) and plugin_record.get('private')
         ]
 
     def _get_plugins_docs(self, plugin_type, names, fail_ok=False, fail_on_errors=True):
