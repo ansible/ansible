@@ -20,26 +20,8 @@ Usage
 Help
 -----
 
-.. code:: shell
+Type ``ansible-test sanity validate-modules -h`` to display help for using this sanity test.
 
-    usage: validate-modules [-h] [-w] [--exclude EXCLUDE] [--arg-spec]
-                            [--base-branch BASE_BRANCH] [--format {json,plain}]
-                            [--output OUTPUT]
-                            modules [modules ...]
-
-    positional arguments:
-      modules               Path to module or module directory
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -w, --warnings        Show warnings
-      --exclude EXCLUDE     RegEx exclusion pattern
-      --arg-spec            Analyze module argument spec
-      --base-branch BASE_BRANCH
-                            Used in determining if new options were added
-      --format {json,plain}
-                            Output format. Default: "plain"
-      --output OUTPUT       Output location, use "-" for stdout. Default "-"
 
 
 Extending validate-modules
