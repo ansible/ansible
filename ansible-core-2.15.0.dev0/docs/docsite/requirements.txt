@@ -1,0 +1,18 @@
+# pip packages required to build docsite
+# these requirements are as loosely defined as possible
+# if you want known good versions of these dependencies
+# use test/sanity/code-smell/docs-build.requirements.txt
+# instead
+
+antsibull-docs >= 1.0.0, < 2.0.0
+docutils
+jinja2
+pygments >= 2.10.0
+pyyaml
+rstcheck
+sphinx
+sphinx-notfound-page >= 0.6
+sphinx-intl
+sphinx-ansible-theme >= 0.9.1
+resolvelib
+straight.plugin # Needed for hacking/build-ansible.py which is the backend build script
