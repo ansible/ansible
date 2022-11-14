@@ -1406,7 +1406,7 @@ GALAXY_DISPLAY_PROGRESS:
   default: ~
   description:
   - Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when
-    outputing the stdout to a file.
+    outputting the stdout to a file.
   - This config option controls whether the display wheel is shown or not.
   - The default is to show the display wheel if stdout has a tty.
   env: [{name: ANSIBLE_GALAXY_DISPLAY_PROGRESS}]
@@ -1591,7 +1591,7 @@ INVALID_TASK_ATTRIBUTE_FAILED:
       section: defaults
   version_added: "2.7"
 INVENTORY_ANY_UNPARSED_IS_FAILED:
-  name: Controls whether any unparseable inventory source is a fatal error
+  name: Controls whether any unparsable inventory source is a fatal error
   default: False
   description: >
     If 'true', it is a fatal error when any given inventory source
@@ -1753,7 +1753,7 @@ MODULE_IGNORE_EXTS:
   - {key: module_ignore_exts, section: defaults}
   type: list
 OLD_PLUGIN_CACHE_CLEARING:
-  description: Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in prevoius plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
+  description: Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in previous plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
   env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
   ini:
   - {key: old_plugin_cache_clear, section: defaults}
@@ -1764,7 +1764,7 @@ PAGER:
   name: pager application to use
   default: less
   descrioption:
-    - for the cases in which Ansible needs to return output in pageable fasion, this chooses the application to use
+    - for the cases in which Ansible needs to return output in pageable fashion, this chooses the application to use
   ini:
     - section: defaults
       key: pager
