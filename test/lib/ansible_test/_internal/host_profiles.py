@@ -140,10 +140,12 @@ class HostConnectionError(ApplicationError):
 
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
-    def __init__(self, reason: str, cgroup_v1: SystemdControlGroupV1Status, engine: str, dd_wsl2: bool) -> None:
+    def __init__(self, args: CommonConfig, reason: str) -> None:
+        engine = require_docker().command
+        dd_wsl2 = get_docker_info(args).docker_desktop_wsl2
+
         message = f'''
 {reason}
-{cgroup_v1.value}
 
 Run the following commands as root on the container host to resolve this issue:
 
@@ -788,7 +790,14 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         options = ['--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw', '--privileged']
         cmd = ['mkdir', self.cgroup_path]
 
-        run_utility_container(self.args, f'ansible-test-cgroup-create-{self.label}', cmd, options)
+        try:
+            run_utility_container(self.args, f'ansible-test-cgroup-create-{self.label}', cmd, options)
+        except SubprocessError as ex:
+            if ex.stderr.strip().endswith(': Permission denied'):
+                raise ControlGroupError(self.args, f'Unable to create a v1 cgroup within the systemd hierarchy.\n'
+                                                   f'Reason: {ex.stderr.strip().splitlines()[-1]}') from ex  # cgroup permission denied
+
+            raise
 
         return self.cgroup_path
 
@@ -807,7 +816,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         try:
             run_utility_container(self.args, f'ansible-test-cgroup-delete-{self.label}', cmd, options)
         except SubprocessError as ex:
-            display.error(str(ex))
+            if not ex.stderr.strip().endswith(': No such file or directory'):
+                display.error(str(ex))
 
     def check_cgroup_requirements(self):
         """Check cgroup requirements for the container."""
@@ -850,7 +860,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 else:
                     reason = 'The container host provides cgroup v1, but does not appear to be running systemd.'
 
-                raise ControlGroupError(reason, cgroup_v1, require_docker().command, get_docker_info(self.args).docker_desktop_wsl2)
+                reason += f'\n{cgroup_v1.value}'
+
+                raise ControlGroupError(self.args, reason)  # cgroup probe reported invalid state
 
     def setup(self) -> None:
         """Perform out-of-band setup before delegation."""
