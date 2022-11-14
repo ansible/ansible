@@ -22,11 +22,13 @@ Releasing major collection versions
 
 The new version is assumed to be ``X.0.0``.
 
-1. Check the collections for deprecations that are planned for removal in the major release. Use past changelogs or run ``grep -r `X.0.0` plugins/`` in the repository.
+1. Make sure that ``galaxy.yml`` contains the correct version number ``X.0.0``. If that is not the case, create a PR to update it. This will make sanity tests fail for all deprecations that have to be removed in ``X.0.0``, so this is potentially a lot of work and should have been done weeks before the major release.
 
-2. If you are going to release the ``community.general`` and ``community.network`` collections, create a new ``backport-X`` label in the corresponding repositories. Copy the styles and descriptions from the corresponding existing labels.
+2. Check the collection for deprecations that are planned for removal in the major release. Use past changelogs or run ``grep -r `X.0.0` plugins/`` in the repository.
 
-3. Ensure you are in a default branch in your local fork. These examples use ``main``.
+3. If you are going to release the ``community.general`` and ``community.network`` collections, create a new ``backport-X`` label in the corresponding repositories. Copy the styles and descriptions from the corresponding existing labels.
+
+4. Ensure you are in a default branch in your local fork. These examples use ``main``.
 
   .. code-block:: bash
 
@@ -34,7 +36,7 @@ The new version is assumed to be ``X.0.0``.
     git checkout main     # if needed
 
 
-4. Update your local fork:
+5. Update your local fork:
 
   .. code-block:: bash
 
@@ -81,7 +83,7 @@ Creating the changelogs
 
 5. Switch to the ``stable-X`` branch.
 
-6. In the ``stable-X`` branch, ensure that ``galaxy.yml`` contains the correct version number ``X.0.0``. If not, update it.
+6. In the ``stable-X`` branch, verify that ``galaxy.yml`` contains the correct version number ``X.0.0``.
 
 7. In the ``stable-X`` branch, ensure that ``changelogs/changelog.yml`` contains a correct ancestor's version:
 
