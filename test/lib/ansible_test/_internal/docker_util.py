@@ -7,7 +7,6 @@ import errno
 import json
 import os
 import pathlib
-import random
 import socket
 import time
 import urllib.parse
@@ -34,7 +33,6 @@ from .util_common import (
 
 from .config import (
     CommonConfig,
-    EnvironmentConfig,
 )
 
 from .thread import (
@@ -192,19 +190,14 @@ class DockerInfo:
             'Upgrade your Docker client to version 20.10 or later.'
         )
 
-        if isinstance(self.args, EnvironmentConfig):
-            if detect_host_properties(self.args).cgroup_v2:
-                # Unfortunately cgroup v2 was detected on the Docker server.
-                # A newer client is needed to support the `--cgroupns` option for use with cgroup v2.
-                raise ApplicationError(f'Unsupported Docker client and server combination using cgroup v2. {message}')
+        if detect_host_properties(self.args).cgroup_v2:
+            # Unfortunately cgroup v2 was detected on the Docker server.
+            # A newer client is needed to support the `--cgroupns` option for use with cgroup v2.
+            raise ApplicationError(f'Unsupported Docker client and server combination using cgroup v2. {message}')
 
-            display.warning(f'Detected Docker server cgroup v1 using probing. {message}', unique=True)
+        display.warning(f'Detected Docker server cgroup v1 using probing. {message}', unique=True)
 
-            return 1  # docker server is using cgroup v1 (or cgroup v2 hybrid)
-
-        # This should only occur for the `env` command which provides CommonConfig instead of EnvironmentConfig.
-        # It will be caught and converted to a warning.
-        raise ApplicationError(f'Cannot determine the Docker server cgroup version. {message}')
+        return 1  # docker server is using cgroup v1 (or cgroup v2 hybrid)
 
     @property
     def docker_desktop_wsl2(self) -> bool:
@@ -274,7 +267,7 @@ class ContainerHostProperties:
 
 
 @mutex
-def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
+def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
     """
     Detect and return properties of the container host.
 
@@ -312,7 +305,7 @@ def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
     options = ['--volume', '/sys/fs/cgroup:/probe:ro']
     cmd = ['sh', '-c', ' && echo "-" && '.join(multi_line_commands)]
 
-    stdout = run_utility_container(args, f'ansible-test-probe-{args.session_name}', cmd, options)
+    stdout = run_utility_container(args, f'ansible-test-probe-{args.session_name}', cmd, options)[0]
     blocks = stdout.split('\n-\n')
 
     values = blocks[0].split('\n')
@@ -335,7 +328,7 @@ def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
         cmd = ['sh', '-c', 'ulimit -Hn']
 
         try:
-            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd, options)
+            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd, options)[0]
         except SubprocessError as ex:
             display.warning(str(ex))
         else:
@@ -403,16 +396,21 @@ def detect_host_properties(args: EnvironmentConfig) -> ContainerHostProperties:
     return properties
 
 
-def run_utility_container(args: EnvironmentConfig, name: str, cmd: list[str], options: list[str] | None = None, remove: bool = True) -> str:
-    """Run the specified command using the ansible-test utility container and return stdout."""
-    options = list(options or [])
-
-    if remove:
-        options.append('--rm')
+def run_utility_container(
+        args: CommonConfig,
+        name: str,
+        cmd: list[str],
+        options: list[str],
+) -> tuple[str | None, str | None]:
+    """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
+    options = options + [
+        '--name', name,
+        '--rm',
+    ]
 
     docker_pull(args, UTILITY_IMAGE)
 
-    return docker_run(args, UTILITY_IMAGE, name, options=options, cmd=cmd)
+    return docker_run(args, UTILITY_IMAGE, options, cmd)
 
 
 class DockerCommand:
@@ -592,51 +590,7 @@ def get_docker_container_id() -> t.Optional[str]:
     return container_id
 
 
-@mutex
-def get_docker_preferred_network_name(args: EnvironmentConfig) -> str | None:
-    """
-    Return the preferred network name for use with Docker. The selection logic is:
-    - the network selected by the user with `--docker-network`
-    - the network of the currently running docker container (if any)
-    - the default docker network (returns None)
-    """
-    try:
-        return get_docker_preferred_network_name.network  # type: ignore[attr-defined]
-    except AttributeError:
-        pass
-
-    network = None
-
-    if args.docker_network:
-        network = args.docker_network
-    else:
-        current_container_id = get_docker_container_id()
-
-        if current_container_id:
-            # Make sure any additional containers we launch use the same network as the current container we're running in.
-            # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
-            container = docker_inspect(args, current_container_id, always=True)
-            network = container.get_network_name()
-
-    # The default docker behavior puts containers on the same network.
-    # The default podman behavior puts containers on isolated networks which don't allow communication between containers or network disconnect.
-    # Starting with podman version 2.1.0 rootless containers are able to join networks.
-    # Starting with podman version 2.2.0 containers can be disconnected from networks.
-    # To maintain feature parity with docker, detect and use the default "podman" network when running under podman.
-    if network is None and require_docker().command == 'podman' and docker_network_inspect(args, 'podman', always=True):
-        network = 'podman'
-
-    get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
-
-    return network
-
-
-def is_docker_user_defined_network(network: str) -> bool:
-    """Return True if the network being used is a user-defined network."""
-    return bool(network) and network != 'bridge'
-
-
-def docker_pull(args: EnvironmentConfig, image: str) -> None:
+def docker_pull(args: CommonConfig, image: str) -> None:
     """
     Pull the specified image if it is not available.
     Images without a tag or digest will not be pulled.
@@ -650,7 +604,7 @@ def docker_pull(args: EnvironmentConfig, image: str) -> None:
             __docker_pull(args, image)
 
 
-def __docker_pull(args: EnvironmentConfig, image: str) -> None:
+def __docker_pull(args: CommonConfig, image: str) -> None:
     """Internal implementation for docker_pull. Do not call directly."""
     inspect: DockerImageInspect | None = None
 
@@ -685,73 +639,41 @@ def __docker_pull(args: EnvironmentConfig, image: str) -> None:
                         unique=True)
 
 
-def docker_cp_to(args: EnvironmentConfig, container_id: str, src: str, dst: str) -> None:
+def docker_cp_to(args: CommonConfig, container_id: str, src: str, dst: str) -> None:
     """Copy a file to the specified container."""
     docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)], capture=True)
 
 
-def docker_run(
-        args: EnvironmentConfig,
+def docker_create(
+        args: CommonConfig,
         image: str,
-        name: str,
-        options: t.Optional[list[str]],
-        cmd: t.Optional[list[str]] = None,
-        create_only: bool = False,
-) -> str:
+        options: list[str],
+        cmd: list[str] = None,
+) -> tuple[str | None, str | None]:
+    """Create a container using the given docker image."""
+    return docker_command(args, ['create'] + options + [image] + cmd, capture=True)
+
+
+def docker_run(
+        args: CommonConfig,
+        image: str,
+        options: list[str],
+        cmd: list[str] = None,
+) -> tuple[str | None, str | None]:
     """Run a container using the given docker image."""
-    options = list(options or [])
-    options.extend(['--name', name])
-
-    if not cmd:
-        cmd = []
-
-    if create_only:
-        command = 'create'
-    else:
-        command = 'run'
-
-    network = get_docker_preferred_network_name(args)
-
-    if is_docker_user_defined_network(network):
-        # Only when the network is not the default bridge network.
-        options.extend(['--network', network])
-
-    for _iteration in range(1, 3):
-        try:
-            stdout = docker_command(args, [command] + options + [image] + cmd, capture=True)[0]
-
-            if args.explain:
-                return ''.join(random.choice('0123456789abcdef') for _iteration in range(64))
-
-            return stdout.strip()
-        except SubprocessError as ex:
-            display.error(ex.message)
-            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
-            docker_rm(args, name)  # podman doesn't remove containers after create if run fails
-            time.sleep(3)
-
-    raise ApplicationError('Failed to run docker image "%s".' % image)
+    return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
 
 
-def docker_start(args: EnvironmentConfig, container_id: str, options: t.Optional[list[str]] = None) -> tuple[t.Optional[str], t.Optional[str]]:
-    """
-    Start a docker container by name or ID
-    """
-    if not options:
-        options = []
-
-    for _iteration in range(1, 3):
-        try:
-            return docker_command(args, ['start'] + options + [container_id], capture=True)
-        except SubprocessError as ex:
-            display.error(ex.message)
-            display.warning('Failed to start docker container "%s". Waiting a few seconds before trying again.' % container_id)
-            time.sleep(3)
-
-    raise ApplicationError('Failed to run docker container "%s".' % container_id)
+def docker_start(
+        args: CommonConfig,
+        container_id: str,
+        options: list[str],
+) -> tuple[str | None, str | None]:
+    """Start a container by name or ID."""
+    return docker_command(args, ['start'] + options + [container_id], capture=True)
 
 
-def docker_rm(args: EnvironmentConfig, container_id: str) -> None:
+def docker_rm(args: CommonConfig, container_id: str) -> None:
     """Remove the specified container."""
     try:
         # Stop the container with SIGKILL immediately, then remove the container.
@@ -780,7 +702,7 @@ class ContainerNotFoundError(DockerError):
 
 class DockerInspect:
     """The results of `docker inspect` for a single container."""
-    def __init__(self, args: EnvironmentConfig, inspection: dict[str, t.Any]) -> None:
+    def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
 
@@ -867,27 +789,8 @@ class DockerInspect:
 
         return networks[0]
 
-    def get_ip_address(self) -> t.Optional[str]:
-        """Return the IP address of the container for the preferred docker network."""
-        if self.networks:
-            network_name = get_docker_preferred_network_name(self.args)
 
-            if not network_name:
-                # Sort networks and use the first available.
-                # This assumes all containers will have access to the same networks.
-                network_name = sorted(self.networks.keys()).pop(0)
-
-            ipaddress = self.networks[network_name]['IPAddress']
-        else:
-            ipaddress = self.network_settings['IPAddress']
-
-        if not ipaddress:
-            return None
-
-        return ipaddress
-
-
-def docker_inspect(args: EnvironmentConfig, identifier: str, always: bool = False) -> DockerInspect:
+def docker_inspect(args: CommonConfig, identifier: str, always: bool = False) -> DockerInspect:
     """
     Return the results of `docker container inspect` for the specified container.
     Raises a ContainerNotFoundError if the container was not found.
@@ -908,14 +811,14 @@ def docker_inspect(args: EnvironmentConfig, identifier: str, always: bool = Fals
     raise ContainerNotFoundError(identifier)
 
 
-def docker_network_disconnect(args: EnvironmentConfig, container_id: str, network: str) -> None:
+def docker_network_disconnect(args: CommonConfig, container_id: str, network: str) -> None:
     """Disconnect the specified docker container from the given network."""
     docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
 
 
 class DockerImageInspect:
     """The results of `docker image inspect` for a single image."""
-    def __init__(self, args: EnvironmentConfig, inspection: dict[str, t.Any]) -> None:
+    def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
 
@@ -940,7 +843,7 @@ class DockerImageInspect:
 
 
 @mutex
-def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = False) -> DockerImageInspect | None:
+def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -> DockerImageInspect | None:
     """
     Return the results of `docker image inspect` for the specified image or None if the image does not exist.
     """
@@ -974,12 +877,12 @@ def docker_image_inspect(args: EnvironmentConfig, image: str, always: bool = Fal
 
 class DockerNetworkInspect:
     """The results of `docker network inspect` for a single network."""
-    def __init__(self, args: EnvironmentConfig, inspection: dict[str, t.Any]) -> None:
+    def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
 
 
-def docker_network_inspect(args: EnvironmentConfig, network: str, always: bool = False) -> DockerNetworkInspect | None:
+def docker_network_inspect(args: CommonConfig, network: str, always: bool = False) -> DockerNetworkInspect | None:
     """
     Return the results of `docker network inspect` for the specified network or None if the network does not exist.
     """
@@ -999,7 +902,7 @@ def docker_network_inspect(args: EnvironmentConfig, network: str, always: bool =
     return None
 
 
-def docker_logs(args: EnvironmentConfig, container_id: str) -> None:
+def docker_logs(args: CommonConfig, container_id: str) -> None:
     """Display logs for the specified container. If an error occurs, it is displayed rather than raising an exception."""
     try:
         docker_command(args, ['logs', container_id], capture=False)
@@ -1008,7 +911,7 @@ def docker_logs(args: EnvironmentConfig, container_id: str) -> None:
 
 
 def docker_exec(
-        args: EnvironmentConfig,
+        args: CommonConfig,
         container_id: str,
         cmd: list[str],
         capture: bool,
