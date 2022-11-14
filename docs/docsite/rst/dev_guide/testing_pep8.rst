@@ -5,4 +5,4 @@
 PEP 8
 *****
 
-this page has moved to :ref:`testing_pep8`.
+This page has moved to :ref:`testing_pep8`.
