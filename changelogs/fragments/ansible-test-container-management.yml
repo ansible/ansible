@@ -34,7 +34,7 @@ minor_changes:
   - ansible-test - Reduce the polling limit for SSHD startup in containers from 60 retries to 10.
                    The one second delay between retries remains in place.
 bugfixes:
-  - ansible-test - Multiple containers now work under podman without specifying the ``--docker-network`` option.
+  - ansible-test - Multiple containers now work under Podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.
   - ansible-test - Prevent concurrent / repeat inspections of the same container image.
   - ansible-test - Prevent concurrent execution of cached methods.

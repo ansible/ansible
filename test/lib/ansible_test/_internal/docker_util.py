@@ -401,6 +401,7 @@ def run_utility_container(
         name: str,
         cmd: list[str],
         options: list[str],
+        data: str | None = None,
 ) -> tuple[str | None, str | None]:
     """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
     options = options + [
@@ -408,9 +409,12 @@ def run_utility_container(
         '--rm',
     ]
 
+    if data:
+        options.append('-i')
+
     docker_pull(args, UTILITY_IMAGE)
 
-    return docker_run(args, UTILITY_IMAGE, options, cmd)
+    return docker_run(args, UTILITY_IMAGE, options, cmd, data)
 
 
 class DockerCommand:
@@ -659,9 +663,10 @@ def docker_run(
         image: str,
         options: list[str],
         cmd: list[str] = None,
+        data: str | None = None,
 ) -> tuple[str | None, str | None]:
     """Run a container using the given docker image."""
-    return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
+    return docker_command(args, ['run'] + options + [image] + cmd, data=data, capture=True)
 
 
 def docker_start(

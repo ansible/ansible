@@ -11,6 +11,7 @@ import time
 import typing as t
 
 from .io import (
+    read_text_file,
     write_text_file,
 )
 
@@ -54,6 +55,7 @@ from .util import (
     sanitize_host_name,
     sorted_versions,
     InternalError,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from .util_common import (
@@ -405,6 +407,8 @@ class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[Con
 class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[DockerConfig]):
     """Host profile for a docker instance."""
 
+    MARKER = 'ansible-test-marker'
+
     @dataclasses.dataclass(frozen=True)
     class InitConfig:
         """Configuration details required to run the container init."""
@@ -574,6 +578,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 '--tmpfs', '/sys/fs/cgroup',
             ))
 
+            self.check_systemd_cgroup_v1(options)  # podman
+
             expected_mounts = (
                 CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
                 # The mount point can be writable or not.
@@ -702,6 +708,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 '--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw',
             ))
 
+            self.check_systemd_cgroup_v1(options)  # docker
+
             expected_mounts = (
                 CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
                 CGroupMount(path=CGroupPath.SYSTEMD, type=MountType.CGROUP_V1, writable=True, state=CGroupState.HOST),
@@ -781,6 +789,23 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """
         return ['pkill', 'sleep']
 
+    def check_systemd_cgroup_v1(self, options: list[str]) -> None:
+        """Check the cgroup v1 systemd hierarchy to verify it is writeable for our container."""
+        probe_script = (read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'check_systemd_cgroup_v1.sh'))
+                        .replace('@MARKER@', self.MARKER)
+                        .replace('@LABEL@', self.label))
+
+        cmd = ['sh']
+
+        try:
+            run_utility_container(self.args, f'ansible-test-cgroup-check-{self.label}', cmd, options, data=probe_script)
+        except SubprocessError as ex:
+            if error := self.extract_error(ex.stderr):
+                raise ControlGroupError(self.args, 'Unable to create a v1 cgroup within the systemd hierarchy.\n'
+                                                   f'Reason: {error}') from ex  # cgroup probe failed
+
+            raise
+
     def create_systemd_cgroup_v1(self) -> str:
         """Create a unique ansible-test cgroup in the v1 systemd hierarchy and return its path."""
         self.cgroup_path = f'/sys/fs/cgroup/systemd/ansible-test-{self.label}'
@@ -788,14 +813,14 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         # Privileged mode is required to create the cgroup directories on some hosts, such as Fedora 36 and RHEL 9.0.
         # The mkdir command will fail with "Permission denied" otherwise.
         options = ['--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw', '--privileged']
-        cmd = ['mkdir', self.cgroup_path]
+        cmd = ['sh', '-c', f'>&2 echo {shlex.quote(self.MARKER)} && mkdir {shlex.quote(self.cgroup_path)}']
 
         try:
             run_utility_container(self.args, f'ansible-test-cgroup-create-{self.label}', cmd, options)
         except SubprocessError as ex:
-            if ex.stderr.strip().endswith(': Permission denied'):
+            if error := self.extract_error(ex.stderr):
                 raise ControlGroupError(self.args, f'Unable to create a v1 cgroup within the systemd hierarchy.\n'
-                                                   f'Reason: {ex.stderr.strip().splitlines()[-1]}') from ex  # cgroup permission denied
+                                                   f'Reason: {error}') from ex  # cgroup create permission denied
 
             raise
 
@@ -811,13 +836,33 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         # Privileged mode is required to remove the cgroup directories on some hosts, such as Fedora 36 and RHEL 9.0.
         # The BusyBox find utility will report "Permission denied" otherwise, although it still exits with a status code of 0.
         options = ['--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw', '--privileged']
-        cmd = self.delete_systemd_cgroup_v1_command
+        cmd = ['sh', '-c', f'>&2 echo {shlex.quote(self.MARKER)} && {shlex.join(self.delete_systemd_cgroup_v1_command)}']
 
         try:
             run_utility_container(self.args, f'ansible-test-cgroup-delete-{self.label}', cmd, options)
         except SubprocessError as ex:
-            if not ex.stderr.strip().endswith(': No such file or directory'):
-                display.error(str(ex))
+            if error := self.extract_error(ex.stderr):
+                if error.endswith(': No such file or directory'):
+                    return
+
+            display.error(str(ex))
+
+    def extract_error(self, value: str) -> str | None:
+        """
+        Extract the ansible-test portion of the error message from the given value and return it.
+        Returns None if no ansible-test marker was found.
+        """
+        lines = value.strip().splitlines()
+
+        try:
+            idx = lines.index(self.MARKER)
+        except ValueError:
+            return None
+
+        lines = lines[idx + 1:]
+        message = '\n'.join(lines)
+
+        return message
 
     def check_cgroup_requirements(self):
         """Check cgroup requirements for the container."""
