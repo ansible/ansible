@@ -244,7 +244,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             elif k.startswith('with_') and k.removeprefix("with_") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
-            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
+            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self.fattributes:
                 new_ds[k] = v
             else:
                 display.warning("Ignoring invalid attribute: %s" % k)
