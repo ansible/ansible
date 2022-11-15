@@ -216,7 +216,10 @@ def run_test(scenario: TestScenario) -> TestResult:
     if scenario.engine == 'podman':
         if scenario.user_scenario.remote:
             common_env.update(
-                CONTAINER_HOST=f'ssh://{scenario.user_scenario.remote.name}@localhost/run/user/{scenario.user_scenario.remote.pwnam.pw_uid}/podman/podman.sock',
+                # Podman 4.3.0 has a regression which requires a port for remote connections to work.
+                # See: https://github.com/containers/podman/issues/16509
+                CONTAINER_HOST=f'ssh://{scenario.user_scenario.remote.name}@localhost:22'
+                               f'/run/user/{scenario.user_scenario.remote.pwnam.pw_uid}/podman/podman.sock',
                 CONTAINER_SSHKEY=str(pathlib.Path('~/.ssh/id_rsa').expanduser()),  # TODO: add support for ssh + remote when the ssh user is not root
             )
 
