@@ -131,6 +131,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # Indicates whether this role was included via include/import_role
         self.from_include = from_include
 
+        self._hash = None
+
         super(Role, self).__init__()
 
     def __repr__(self):
@@ -146,7 +148,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return os.path.realpath(self._role_path)
 
     def _get_hash_dict(self):
-        return MappingProxyType(
+        if self._hash:
+            return self._hash
+        self._hash = MappingProxyType(
             {
                 'name': self.get_name(),
                 'path': self.get_role_path(),
@@ -158,6 +162,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 'from_include': self.from_include,
             }
         )
+        return self._hash
 
     def __eq__(self, other):
         if not isinstance(other, Role):
