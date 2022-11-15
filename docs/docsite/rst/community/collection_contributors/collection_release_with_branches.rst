@@ -22,9 +22,13 @@ Releasing major collection versions
 
 The new version is assumed to be ``X.0.0``.
 
-1. If you are going to release the ``community.general`` and ``community.network`` collections, create new ``backport-X`` and ``needs_backport_to_stable_X`` labels in the corresponding repositories. Copy the styles and descriptions from the corresponding existing labels.
+1. Make sure that ``galaxy.yml`` contains the correct version number ``X.0.0``. If that is not the case, create a PR to update it. This will make sanity tests fail for all deprecations that have to be removed in ``X.0.0``, so this is potentially a lot of work and should have been done weeks before the major release.
 
-2. Ensure you are in a default branch in your local fork. These examples use ``main``.
+2. Check the collection for deprecations that are planned for removal in the major release that were not reported by the sanity tests. Use past changelogs or run ``grep -r `X.0.0` plugins/`` in the repository.
+
+3. If you are going to release the ``community.general`` and ``community.network`` collections, create a new ``backport-X`` label in the corresponding repositories. Copy the styles and descriptions from the corresponding existing labels.
+
+4. Ensure you are in a default branch in your local fork. These examples use ``main``.
 
   .. code-block:: bash
 
@@ -32,7 +36,7 @@ The new version is assumed to be ``X.0.0``.
     git checkout main     # if needed
 
 
-3. Update your local fork:
+5. Update your local fork:
 
   .. code-block:: bash
 
@@ -79,9 +83,17 @@ Creating the changelogs
 
 5. Switch to the ``stable-X`` branch.
 
-6. In the ``stable-X`` branch, ensure that ``galaxy.yml`` contains the correct version number ``X.0.0``. If not, update it.
+6. In the ``stable-X`` branch, verify that ``galaxy.yml`` contains the correct version number ``X.0.0``.
 
-7. In the ``stable-X`` branch, add a changelog fragment ``changelogs/fragments/X.0.0.yml`` with the content:
+7. In the ``stable-X`` branch, ensure that ``changelogs/changelog.yml`` contains a correct ancestor's version:
+
+  .. code-block:: yaml
+
+    ancestor: X-1.0.0
+    releases: {}
+
+
+8. In the ``stable-X`` branch, add a changelog fragment ``changelogs/fragments/X.0.0.yml`` with the content:
 
   .. code-block:: yaml
 
@@ -90,6 +102,7 @@ Creating the changelogs
       The format is reStructuredText, but not a list as for regular changelog fragments.
       This text will be inserted into the changelog.
 
+
   For example:
 
   .. code-block:: yaml
@@ -97,18 +110,18 @@ Creating the changelogs
     release_summary: This is release 2.0.0 of ``community.foo``, released on YYYY-MM-DD.
 
 
-8. In the ``stable-X`` branch, generate the changelogs:
+9. In the ``stable-X`` branch, generate the changelogs:
 
   .. code-block:: bash
 
     antsibull-changelog release --cummulative-release
 
 
-9. In the ``stable-X`` branch, verify that the ``CHANGELOG.rst`` looks as expected.
+10. In the ``stable-X`` branch, verify that the ``CHANGELOG.rst`` looks as expected.
 
-10. In the ``stable-X`` branch, update ``README.md`` so that the changelog link points to ``/tree/stable-X/`` and no longer to ``/tree/main/``, and change badges respectively, for example, in case of AZP, add ``?branchName=stable-X`` to the AZP CI badge (https://dev.azure.com/ansible/community.xxx/_apis/build/status/CI?branchName=stable-X).
+11. In the ``stable-X`` branch, update ``README.md`` so that the changelog link points to ``/tree/stable-X/`` and no longer to ``/tree/main/``, and change badges respectively, for example, in case of AZP, add ``?branchName=stable-X`` to the AZP CI badge (https://dev.azure.com/ansible/community.xxx/_apis/build/status/CI?branchName=stable-X).
 
-11. In the ``stable-X`` branch, add, commit, and push changes to ``README.md``, ``CHANGELOG.rst`` and ``changelogs/changelog.yaml``, and potentially deleted/archived fragments to the **upstream** repository, NOT to the ``origin``.
+12. In the ``stable-X`` branch, add, commit, and push changes to ``README.md``, ``CHANGELOG.rst`` and ``changelogs/changelog.yaml``, and potentially deleted/archived fragments to the **upstream** repository, NOT to the ``origin``.
 
 
 Publishing the collection
@@ -123,16 +136,25 @@ Publishing the collection
     git push upstream NEW_VERSION
 
 
-2. Wait until the new version is published on the collection's `Ansible Galaxy <https://galaxy.ansible.com/>`_ page. It will appear in a list of tarballs available to download.
+2. If the collection uses `Zuul <https://github.com/ansible/zuul-config/blob/master/README.rst>`_ for publishing its releases, wait until the new version is published on the collection's `Ansible Galaxy <https://galaxy.ansible.com/>`_ page. It will appear in a list of tarballs available to download.
 
-3. Add a GitHub release for the new tag. The title should be the version and content, such as -  ``See https://github.com/ansible-collections/community.xxx/blob/stable-X/CHANGELOG.rst for all changes``.
+3. If the release tarball did not appear within several hours after pushing the tag, try to re-tag the release commit and push the tag again. In the ``stable-X`` branch being at the release commit:
+
+  .. code-block:: bash
+
+    git tag --delete NEW_VERSION
+    git push upstream :NEW_VERSION
+    git tag -a NEW_VERSION -m "comment here"    # the comment can be, for example, "community.foo: 2.0.0"
+    git push upstream NEW_VERSION
 
 
-4. Announce the release through the `Bullhorn Newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
+4. Add a GitHub release for the new tag. The title should be the version and content, such as -  ``See https://github.com/ansible-collections/community.xxx/blob/stable-X/CHANGELOG.rst for all changes``.
 
-5. Announce the release in the pinned release issue/community pinboard of the collection and in the ``#ansible-community`` `Matrix/Libera.Chat IRC channel <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>`_.
+5. Announce the release through the `Bullhorn Newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
 
-6. In the ``stable-X`` branch, update the version in ``galaxy.yml`` to the next **expected** version, for example, ``X.1.0``. Add, commit and push to the **upstream** repository.
+6. Announce the release in the pinned release issue/community pinboard of the collection and in the ``#ansible-community`` `Matrix/Libera.Chat IRC channel <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>`_.
+
+7. In the ``stable-X`` branch, update the version in ``galaxy.yml`` to the next **expected** version, for example, ``X.1.0``. Add, commit and push to the **upstream** repository.
 
 
 Releasing minor collection versions
