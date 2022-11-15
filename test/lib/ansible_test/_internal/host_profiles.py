@@ -1197,9 +1197,8 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             try:
                 return self.get_working_directory()
             except SubprocessError as ex:
-                if 'Permission denied' in ex.message:
-                    raise
-
+                # No "Permission denied" check is performed here.
+                # Unlike containers, with remote instances, user configuration isn't guaranteed to have been completed before SSH connections are attempted.
                 display.warning(str(ex))
                 time.sleep(10)
 
