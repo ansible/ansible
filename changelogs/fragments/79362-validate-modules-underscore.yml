@@ -1,0 +1,6 @@
+breaking_changes:
+  - "ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated
+     (https://github.com/ansible/ansible/pull/79217)."
+  - "ansible-test sanity - previously plugins and modules in collections whose name started with ``_``
+     were treated as deprecated, even when they were not marked as deprecated in ``meta/runtime.yml``.
+     This is no longer the case (https://github.com/ansible/ansible/pull/79362)."
