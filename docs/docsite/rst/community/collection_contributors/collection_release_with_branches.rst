@@ -24,7 +24,7 @@ The new version is assumed to be ``X.0.0``.
 
 1. Make sure that ``galaxy.yml`` contains the correct version number ``X.0.0``. If that is not the case, create a PR to update it. This will make sanity tests fail for all deprecations that have to be removed in ``X.0.0``, so this is potentially a lot of work and should have been done weeks before the major release.
 
-2. Check the collection for deprecations that are planned for removal in the major release. Use past changelogs or run ``grep -r `X.0.0` plugins/`` in the repository.
+2. Check the collection for deprecations that are planned for removal in the major release that were not reported by the sanity tests. Use past changelogs or run ``grep -r `X.0.0` plugins/`` in the repository.
 
 3. If you are going to release the ``community.general`` and ``community.network`` collections, create a new ``backport-X`` label in the corresponding repositories. Copy the styles and descriptions from the corresponding existing labels.
 
