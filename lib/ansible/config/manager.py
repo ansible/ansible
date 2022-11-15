@@ -559,7 +559,7 @@ class ConfigManager(object):
                             pass  # not templatable
 
             # template if possible and needed
-            if templar is not None and value is not None and templar.is_template(value):
+            if config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):
                 try:
                     value = templar.template(value)
                 except Exception as e:
