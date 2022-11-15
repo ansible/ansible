@@ -794,7 +794,7 @@ def author(value):
 
 def doc_schema(module_name, for_collection=False, deprecated_module=False, plugin_type='module'):
 
-    if module_name.startswith('_'):
+    if module_name.startswith('_') and not for_collection:
         module_name = module_name[1:]
         deprecated_module = True
     if for_collection is False and plugin_type == 'connection' and module_name == 'paramiko_ssh':

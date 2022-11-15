@@ -495,7 +495,9 @@ class DocCLI(CLI, RoleMixin):
                     desc = desc[:linelimit] + '...'
 
                 pbreak = plugin.split('.')
-                if pbreak[-1].startswith('_'):  # Handle deprecated # TODO: add mark for deprecated collection plugins
+                # TODO: add mark for deprecated collection plugins
+                if pbreak[-1].startswith('_') and plugin.startswith(('ansible.builtin.', 'ansible.legacy.')):
+                    # Handle deprecated ansible.builtin plugins
                     pbreak[-1] = pbreak[-1][1:]
                     plugin = '.'.join(pbreak)
                     deprecated.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
