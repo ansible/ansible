@@ -253,6 +253,17 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
          util_dir.subdir.my_util:
            redirect: namespace.name.my_util
 
+  It is also possible to mark plugins as private to the collection by adding ``private: true``. This will prevent them from being listed by ansible-doc.
+
+  .. code:: yaml
+
+     plugin_routing:
+       modules:
+         some_private_module:
+           # This module can be used in roles in the collection, but should not be used
+           # by roles or playbooks outside this collection.
+           private: true
+
 - *import_redirection*
 
   A mapping of names for Python import statements and their redirected locations.
