@@ -881,6 +881,13 @@ class DnfBootstrapper(Bootstrapper):
         if cls.install_docker():
             packages.append('moby-engine')
 
+        if os_release.id == 'fedora' and os_release.version_id == '36':
+            # In Fedora 36 the current version of netavark, 1.2.0, causes TCP connect to hang between rootfull containers.
+            # The previously tested version, 1.1.0, did not have this issue.
+            # Unfortunately, with the release of 1.2.0 the 1.1.0 package was removed from the repositories.
+            # Thankfully the 1.0.2 version is available and also works, so we'll use that here until a fixed version is available.
+            packages.append('netavark-1.0.2')
+
         if os_release.id == 'rhel':
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
