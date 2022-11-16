@@ -909,7 +909,7 @@ class DnfBootstrapper(Bootstrapper):
 
         run_command('dnf', 'install', '-y', *packages)
 
-        if os_release.id != 'rhel':
+        if cls.install_docker():
             run_command('systemctl', 'start', 'docker')
 
         if os_release.id == 'rhel' and os_release.version_id.startswith('8.'):
