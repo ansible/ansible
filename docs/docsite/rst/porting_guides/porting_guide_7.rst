@@ -92,6 +92,18 @@ Networking
 
 No notable changes
 
+Porting Guide for v7.0.0rc1
+===========================
+
+Major Changes
+-------------
+
+fortinet.fortimanager
+~~~~~~~~~~~~~~~~~~~~~
+
+- Fix compatibility issue for ansible 2.9.x and ansible-base 2.10.x.
+- support Ansible changelogs.
+
 Porting Guide for v7.0.0b1
 ==========================
 
@@ -147,6 +159,12 @@ dellemc.openmanage
 
 - idrac_redfish_storage_controller - This module is enhanced to support LockVirtualDisk operation.
 - idrac_virtual_media - This module allows to configure Remote File Share settings.
+
+fortinet.fortimanager
+~~~~~~~~~~~~~~~~~~~~~
+
+- Many fixes for Ansible sanity test warnings & errors.
+- Support FortiManager Schema 7.2.0 , 98 new modules
 
 Removed Features
 ----------------
