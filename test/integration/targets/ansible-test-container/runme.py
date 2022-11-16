@@ -881,6 +881,25 @@ class DnfBootstrapper(Bootstrapper):
         if cls.install_docker():
             packages.append('moby-engine')
 
+        if os_release.id == 'rhel':
+            # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
+            #
+            #   libsemanage.semanage_pipe_data: Child process /usr/libexec/selinux/hll/pp failed with code: 255. (No such file or directory).
+            #   container: libsepol.policydb_read: policydb module version 21 does not match my version range 4-20
+            #   container: libsepol.sepol_module_package_read: invalid module in module package (at section 0)
+            #   container: Failed to read policy package
+            #   libsemanage.semanage_direct_commit: Failed to compile hll files into cil files.
+            #    (No such file or directory).
+            #   /usr/sbin/semodule:  Failed!
+            #
+            # Unfortunately this is then fatal when running podman, resulting in no error message and a 127 return code.
+            # The solution is to update the policycoreutils package *before* installing podman.
+            #
+            # NOTE: This work-around can probably be removed once we're testing on RHEL 9.1, as the updated packages should already be installed.
+            #       Unfortunately at this time there is no RHEL 9.1 AMI available (other than the Beta release).
+
+            run_command('dnf', 'update', '-y', 'policycoreutils')
+
         run_command('dnf', 'install', '-y', *packages)
 
         if os_release.id != 'rhel':
