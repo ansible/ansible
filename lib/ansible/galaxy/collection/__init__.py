@@ -1143,7 +1143,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
         directives.extend([
             f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
             'recursive-exclude tests/output **',
-            'global-exclude /.* /__pycache__',
+            'global-exclude /.* /__pycache__ *.pyc *.pyo *.bak *~ *.swp',
         ])
 
     display.vvv('Manifest Directives:')
