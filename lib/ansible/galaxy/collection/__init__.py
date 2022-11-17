@@ -1113,13 +1113,15 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
     else:
         directives.extend([
             'include meta/*.yml',
-            'include *.txt *.md *.rst COPYING LICENSE',
+            'include *.txt *.md *.rst *.license COPYING LICENSE',
+            'recursive-include .reuse **',
+            'recursive-include LICENSES **',
             'recursive-include tests **',
-            'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt',
-            'recursive-include roles **.yml **.yaml **.json **.j2',
-            'recursive-include playbooks **.yml **.yaml **.json',
-            'recursive-include changelogs **.yml **.yaml',
-            'recursive-include plugins */**.py',
+            'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt **.license',
+            'recursive-include roles **.yml **.yaml **.json **.j2 **.license',
+            'recursive-include playbooks **.yml **.yaml **.json **.license',
+            'recursive-include changelogs **.yml **.yaml **.license',
+            'recursive-include plugins */**.py */**.license',
         ])
 
         plugins = set(l.package.split('.')[-1] for d, l in get_all_plugin_loaders())
@@ -1132,8 +1134,8 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
                 )
 
         directives.extend([
-            'recursive-include plugins/modules **.ps1 **.yml **.yaml',
-            'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs',
+            'recursive-include plugins/modules **.ps1 **.yml **.yaml **.license',
+            'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs **.license',
         ])
 
         directives.extend(control.directives)
@@ -1141,7 +1143,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
         directives.extend([
             f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
             'recursive-exclude tests/output **',
-            'global-exclude /.* /__pycache__',
+            'global-exclude /.* /__pycache__ *.pyc *.pyo *.bak *~ *.swp',
         ])
 
     display.vvv('Manifest Directives:')
