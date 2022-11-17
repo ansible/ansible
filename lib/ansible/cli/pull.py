@@ -38,6 +38,9 @@ class PullCLI(CLI):
         This inverts the default *push* architecture of ansible into a *pull* architecture,
         which has near-limitless scaling potential.
 
+        None of the CLI tools are designed to run concurrently with themselves,
+        you should use an external scheduler and/or locking to ensure there are no clashing operations.
+
         The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
         This is useful both for extreme scale-out as well as periodic remediation.
         Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
