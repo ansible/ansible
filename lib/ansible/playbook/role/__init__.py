@@ -189,7 +189,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             # Using the role path as a cache key is done to improve performance when a large number of roles
             # are in use in the play
             if r not in play.role_cache[role_path]:
-                play.role_cache.setdefault(role_path, []).append(r)
+                play.role_cache.append(r)
 
             return r
 
