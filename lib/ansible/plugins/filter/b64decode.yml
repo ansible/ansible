@@ -7,8 +7,8 @@ DOCUMENTATION:
     - Base64 decoding function.
     - The return value is a string.
     - Trying to store a binary blob in a string most likely corrupts the binary. To base64 decode a binary blob,
-    - use the ``base64`` command  and pipe the encoded data through standard input. 
-    - For example, in the ansible.builtin.shell`` module, ``cmd="base64 --decode > myfile.bin" stdin="{{ encoded }}"``.
+      use the ``base64`` command  and pipe the encoded data through standard input. 
+      For example, in the ansible.builtin.shell`` module, ``cmd="base64 --decode > myfile.bin" stdin="{{ encoded }}"``.
   positional: _input
   options:
     _input:
