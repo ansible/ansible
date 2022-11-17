@@ -277,17 +277,21 @@ class _ComputedReqKindsMixin:
             if not req['version']:
                 del req['version']
         else:
-            if not HAS_PACKAGING:
-                raise AnsibleError("Failed to import packaging, check that a supported version is installed")
             try:
+                if not HAS_PACKAGING:
+                    # The code above used to let `name` roll through if there was no `:`, this is just backwards
+                    # compat when packaging is missing
+                    if not AnsibleCollectionRef.is_valid_collection_name(collection_input):
+                        # If just a collection name, we don't need this warning
+                        display.warning('Python packaging library not available, parsing may be incorrect')
+                    raise AnsibleError("Failed to import packaging, check that a supported version is installed")
                 pkg_req = PkgReq(collection_input)
             except Exception as e:
                 req['name'] = collection_input
             else:
-                req |= {
-                    'name': pkg_req.name,
-                    'version': to_text(pkg_req.specifier),
-                }
+                req['name'] = pkg_req.name
+                if pkg_req.specifier:
+                    req['version'] = to_text(pkg_req.specifier)
         req['signatures'] = supplemental_signatures
 
         return cls.from_requirement_dict(req, artifacts_manager)
@@ -295,7 +299,7 @@ class _ComputedReqKindsMixin:
     @classmethod
     def from_requirement_dict(cls, collection_req, art_mgr, validate_signature_options=True):
         req_name = collection_req.get('name', None)
-        req_version = collection_req.get('version') or '*'
+        req_version = collection_req.get('version', '*')
         req_type = collection_req.get('type')
         # TODO: decide how to deprecate the old src API behavior
         req_source = collection_req.get('source', None)
