@@ -282,13 +282,12 @@ class _ComputedReqKindsMixin:
             try:
                 pkg_req = PkgReq(collection_input)
             except Exception as e:
-                raise AnsibleError(
-                    f'Unable to parse requirement {collection_input!r}: {e}'
-                )
-            req |= {
-                'name': pkg_req.name,
-                'version': to_text(pkg_req.specifier),
-            }
+                req['name'] = collection_input
+            else:
+                req |= {
+                    'name': pkg_req.name,
+                    'version': to_text(pkg_req.specifier),
+                }
         req['signatures'] = supplemental_signatures
 
         return cls.from_requirement_dict(req, artifacts_manager)
