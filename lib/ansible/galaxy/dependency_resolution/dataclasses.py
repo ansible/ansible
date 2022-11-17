@@ -269,24 +269,20 @@ class _ComputedReqKindsMixin:
     @classmethod
     def from_string(cls, collection_input, artifacts_manager, supplemental_signatures):
         req = {}
-        if _is_concrete_artifact_pointer(collection_input):
-            # Arg is a file path or URL to a collection
+        if _is_concrete_artifact_pointer(collection_input) or AnsibleCollectionRef.is_valid_collection_name(collection_input):
+            # Arg is a file path or URL to a collection, or just a collection
             req['name'] = collection_input
         elif ':' in collection_input:
             req['name'], _sep, req['version'] = collection_input.partition(':')
             if not req['version']:
                 del req['version']
         else:
+            if not HAS_PACKAGING:
+                raise AnsibleError("Failed to import packaging, check that a supported version is installed")
             try:
-                if not HAS_PACKAGING:
-                    # The code above used to let `name` roll through if there was no `:`, this is just backwards
-                    # compat when packaging is missing
-                    if not AnsibleCollectionRef.is_valid_collection_name(collection_input):
-                        # If just a collection name, we don't need this warning
-                        display.warning('Python packaging library not available, parsing may be incorrect')
-                    raise AnsibleError("Failed to import packaging, check that a supported version is installed")
                 pkg_req = PkgReq(collection_input)
             except Exception as e:
+                # packaging doesn't know what this is, let it fly, better errors happen in from_requirement_dict
                 req['name'] = collection_input
             else:
                 req['name'] = pkg_req.name
