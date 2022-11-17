@@ -886,6 +886,7 @@ class DnfBootstrapper(Bootstrapper):
             # The previously tested version, 1.1.0, did not have this issue.
             # Unfortunately, with the release of 1.2.0 the 1.1.0 package was removed from the repositories.
             # Thankfully the 1.0.2 version is available and also works, so we'll use that here until a fixed version is available.
+            # See: https://github.com/containers/netavark/issues/491
             packages.append('netavark-1.0.2')
 
         if os_release.id == 'rhel':
