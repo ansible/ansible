@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - galaxy - include ``license_file`` in the default manifest directives
+    (https://github.com/ansible/ansible/pull-request/79420)
