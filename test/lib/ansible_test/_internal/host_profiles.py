@@ -509,6 +509,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         #
         # This occurs when running containers as root when the container host provides audit support, but the user lacks the AUDIT_WRITE capability.
         # The AUDIT_WRITE capability is provided by docker by default, but not podman.
+        # See: https://github.com/moby/moby/pull/7179
         #
         # Some containers will be running a patched version of OpenSSH which blocks logins when EPERM is received while using the audit system.
         # These containers will require the AUDIT_WRITE capability when EPERM is returned while accessing the audit system.
