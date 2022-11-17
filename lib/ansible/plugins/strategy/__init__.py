@@ -1067,7 +1067,7 @@ class StrategyBase:
             idx = role_cache.index(task._role)
             return role_cache[idx]
         except ValueError:
-            return None
+            raise AnsibleError(f'Cannot locate {task._role.get_name()} in role cache')
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
