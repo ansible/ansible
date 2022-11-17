@@ -511,11 +511,16 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         # The AUDIT_WRITE capability is provided by docker by default, but not podman.
         # See: https://github.com/moby/moby/pull/7179
         #
+        # OpenSSH Portable requires AUDIT_WRITE when logging in with a TTY if the Linux audit feature was compiled in.
+        # Containers with the feature enabled will require the AUDIT_WRITE capability when EPERM is returned while accessing the audit system.
+        # See: https://github.com/openssh/openssh-portable/blob/2dc328023f60212cd29504fc05d849133ae47355/audit-linux.c#L90
+        # See: https://github.com/openssh/openssh-portable/blob/715c892f0a5295b391ae92c26ef4d6a86ea96e8e/loginrec.c#L476-L478
+        #
         # Some containers will be running a patched version of OpenSSH which blocks logins when EPERM is received while using the audit system.
         # These containers will require the AUDIT_WRITE capability when EPERM is returned while accessing the audit system.
         # See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
         #
-        # Since only some containers carry the patch, this capability is enabled on a per-container basis.
+        # Since only some containers carry the patch or enable the Linux audit feature in OpenSSH, this capability is enabled on a per-container basis.
         # No warning is provided when adding this capability, since there's not really anything the user can do about it.
         if self.config.audit == AuditMode.REQUIRED and detect_host_properties(self.args).audit_status == errno.EPERM:
             options.extend(('--cap-add', 'AUDIT_WRITE'))

@@ -162,7 +162,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
     image: str = ''
     seccomp: str = 'default'
     cgroup: str = CGroupVersion.V1_V2.value
-    audit: str = AuditMode.NONE.value
+    audit: str = AuditMode.REQUIRED.value  # most containers need this, so the default is required, leaving it to be opt-out for containers which don't need it
     placeholder: bool = False
 
     @property
