@@ -18,12 +18,13 @@ DOCUMENTATION = '''
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
 
-import os
-import pty
-import shutil
-import subprocess
 import fcntl
 import getpass
+import os
+import pty
+import pwd
+import shutil
+import subprocess
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
@@ -47,7 +48,11 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
         self.cwd = None
-        self.default_user = getpass.getuser()
+        try:
+            self.default_user = pwd.getpwnam(getpass.getuser())
+        except KeyError:
+            # running ansible from container with invalid user? (valid in host)
+            self.default_user = pwd.getpwuid(os.getuid())
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
