@@ -1,2 +1,0 @@
-context/target
-unsupported  # used internally by the ansible-test-container test suite
