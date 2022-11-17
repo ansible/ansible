@@ -295,7 +295,7 @@ class _ComputedReqKindsMixin:
     @classmethod
     def from_requirement_dict(cls, collection_req, art_mgr, validate_signature_options=True):
         req_name = collection_req.get('name', None)
-        req_version = collection_req.get('version', '*')
+        req_version = collection_req.get('version') or '*'
         req_type = collection_req.get('type')
         # TODO: decide how to deprecate the old src API behavior
         req_source = collection_req.get('source', None)
