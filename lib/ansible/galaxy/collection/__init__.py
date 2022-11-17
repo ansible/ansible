@@ -1449,7 +1449,10 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     )
 
     if os.path.exists(b_collection_path):
-        shutil.rmtree(b_collection_path)
+        # See bug #79408 for details on ignoring_errors
+        shutil.rmtree(b_collection_path, ignore_errors=True)
+        if os.path.exists(b_collection_path):
+            raise AnsibleError("Failed to remove the existing collection at '%s'." % b_collection_path)
 
     if collection.is_dir:
         install_src(collection, b_artifact_path, b_collection_path, artifacts_manager)
