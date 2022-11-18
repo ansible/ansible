@@ -55,6 +55,7 @@ from .util import (
     sanitize_host_name,
     sorted_versions,
     InternalError,
+    HostConnectionError,
     ANSIBLE_TEST_TARGET_ROOT,
 )
 
@@ -134,10 +135,6 @@ TControllerHostConfig = t.TypeVar('TControllerHostConfig', bound=ControllerHostC
 THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 TPosixConfig = t.TypeVar('TPosixConfig', bound=PosixConfig)
 TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
-
-
-class HostConnectionError(ApplicationError):
-    """Raised when the initial connection during host profile setup has failed and all retries have been exhausted."""
 
 
 class ControlGroupError(ApplicationError):
@@ -974,9 +971,13 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             display.info(last_error)
 
             if not self.args.delegate and not self.args.host_path:
-                self.on_target_failure()  # when the controller is not delegated, report failures immediately
+                def callback() -> None:
+                    """Callback to run during error display."""
+                    self.on_target_failure()  # when the controller is not delegated, report failures immediately
+            else:
+                callback = None
 
-            raise HostConnectionError(f'Timeout waiting for {self.config.name} container {self.container_name}.')
+            raise HostConnectionError(f'Timeout waiting for {self.config.name} container {self.container_name}.', callback)
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -1022,6 +1023,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 docker_exec(self.args, self.container_name, ['journalctl'], capture=False)
             except SubprocessError as ex:
                 display.error(str(ex))
+
+        display.error(f'Connection to container "{self.container_name}" failed. See logs and original error above.')
 
     def get_common_run_options(self) -> list[str]:
         """Return a list of options needed to run the container."""

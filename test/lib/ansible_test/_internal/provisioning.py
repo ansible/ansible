@@ -19,6 +19,7 @@ from .config import (
 
 from .util import (
     ApplicationError,
+    HostConnectionError,
     display,
     open_binary_file,
     verify_sys_executable,
@@ -34,7 +35,6 @@ from .host_profiles import (
     ControllerHostProfile,
     DockerProfile,
     HostProfile,
-    HostConnectionError,
     SshConnection,
     SshTargetHostProfile,
     create_host_profile,

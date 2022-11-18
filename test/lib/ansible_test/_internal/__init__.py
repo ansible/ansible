@@ -17,6 +17,7 @@ from .constants import (
 
 from .util import (
     ApplicationError,
+    HostConnectionError,
     display,
     report_locale,
 )
@@ -53,10 +54,6 @@ from .provisioning import (
 
 from .config import (
     TestConfig,
-)
-
-from .host_profiles import (
-    HostConnectionError,
 )
 
 
@@ -104,6 +101,7 @@ def main(cli_args: t.Optional[list[str]] = None) -> None:
         config.success = True
     except HostConnectionError as ex:
         display.fatal(str(ex))
+        ex.run_callback()
         sys.exit(STATUS_HOST_CONNECTION_ERROR)
     except ApplicationWarning as ex:
         display.warning('%s' % ex)
