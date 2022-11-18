@@ -1,0 +1,2 @@
+bugfixes:
+  - plugin filter now works with rejectlist as documented (still falls back to blacklist if used).
