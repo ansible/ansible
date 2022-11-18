@@ -397,6 +397,8 @@ def add_global_docker(
             docker_network=None,
             docker_terminate=None,
             prime_containers=False,
+            dev_systemd_debug=False,
+            dev_probe_cgroups=None,
         )
 
         return
@@ -428,6 +430,24 @@ def add_global_docker(
         help='download containers without running tests',
     )
 
+    # Docker support isn't related to ansible-core-ci.
+    # However, ansible-core-ci support is a reasonable indicator that the user may need the `--dev-*` options.
+    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
+
+    parser.add_argument(
+        '--dev-systemd-debug',
+        action='store_true',
+        help=suppress or 'enable systemd debugging in containers',
+    )
+
+    parser.add_argument(
+        '--dev-probe-cgroups',
+        metavar='DIR',
+        nargs='?',
+        const='',
+        help=suppress or 'probe container cgroups, with optional log dir',
+    )
+
 
 def add_environment_docker(
         exclusive_parser: argparse.ArgumentParser,
@@ -439,10 +459,6 @@ def add_environment_docker(
         docker_images = sorted(filter_completion(docker_completion()))
     else:
         docker_images = sorted(filter_completion(docker_completion(), controller_only=True))
-
-    # Docker support isn't related to ansible-core-ci.
-    # However, ansible-core-ci support is a reasonable indicator that the user may need the `--dev-*` options.
-    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
 
     register_completer(exclusive_parser.add_argument(
         '--docker',
@@ -470,20 +486,6 @@ def add_environment_docker(
         metavar='INT',
         type=int,
         help='memory limit for docker in bytes',
-    )
-
-    environments_parser.add_argument(
-        '--dev-systemd-debug',
-        action='store_true',
-        help=suppress or 'enable systemd debugging in containers',
-    )
-
-    environments_parser.add_argument(
-        '--dev-probe-cgroups',
-        metavar='DIR',
-        nargs='?',
-        const='',
-        help=suppress or 'probe container cgroups, with optional log dir',
     )
 
 
