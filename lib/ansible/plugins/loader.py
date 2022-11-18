@@ -1385,14 +1385,21 @@ def _load_plugin_filter():
         version = to_text(version)
         version = version.strip()
 
+        # Modules and action plugins share the same reject list since the difference between the
+        # two isn't visible to the users
         if version == u'1.0':
-            # Modules and action plugins share the same blacklist since the difference between the
-            # two isn't visible to the users
+
+            if 'module_blacklist' in filter_data:
+                display.deprecated("'module_blacklist' is being removed in favor of 'module_rejectlist'", version='2.18')
+                if 'module_rejectlist' not in filter_data:
+                    filter_data['module_rejectlist'] = filter_data['module_blacklist']
+                del filter_data['module_blacklist']
+
             try:
-                filters['ansible.modules'] = frozenset(filter_data['module_blacklist'])
+                filters['ansible.modules'] = frozenset(filter_data['module_rejectlist'])
             except TypeError:
                 display.warning(u'Unable to parse the plugin filter file {0} as'
-                                u' module_blacklist is not a list.'
+                                u' module_rejectlist is not a list.'
                                 u' Skipping.'.format(filter_cfg))
                 return filters
             filters['ansible.plugins.action'] = filters['ansible.modules']
@@ -1404,11 +1411,11 @@ def _load_plugin_filter():
             display.warning(u'The plugin filter file, {0} does not exist.'
                             u' Skipping.'.format(filter_cfg))
 
-    # Specialcase the stat module as Ansible can run very few things if stat is blacklisted.
+    # Specialcase the stat module as Ansible can run very few things if stat is rejected
     if 'stat' in filters['ansible.modules']:
-        raise AnsibleError('The stat module was specified in the module blacklist file, {0}, but'
+        raise AnsibleError('The stat module was specified in the module reject list file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'
-                           ' from the blacklist.'.format(to_native(filter_cfg)))
+                           ' from the reject list.'.format(to_native(filter_cfg)))
     return filters
 
 
