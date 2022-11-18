@@ -432,6 +432,9 @@ def get_timestamp_for_time(formatted_time, time_format):
 
 
 def update_timestamp_for_file(path, mtime, atime, diff=None):
+    if module.check_mode:
+        return True
+
     b_path = to_bytes(path, errors='surrogate_or_strict')
 
     try:
@@ -470,8 +473,8 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
 
             set_time = (atime, mtime)
 
-        if not module.check_mode:
-            os.utime(b_path, set_time)
+        
+        os.utime(b_path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
@@ -552,12 +555,18 @@ def execute_touch(path, follow, timestamps):
     result = {'dest': path}
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
-    # If the filename did not already exist
+    diff = initial_diff(path, 'touch', prev_state)
+    
+    # if we are in check mode we can safely return
+    # the 'changed' status since in any case the time
+    # attributes will be updated. If we would execute the attributes
+    # modifications those will fail if the user/group do not exist
+    # (a warning will still be thrown also if we return here)
+    if module.check_mode:
+        return{'changed': True, 'diff': diff}
+
+    # If the file did not already exist
     if prev_state == 'absent':
-        # If we are in check mode return changed status
-        if module.check_mode:
-            result['changed'] = True
-            return result
         # Create an empty file
         try:
             open(b_path, 'wb').close()
@@ -568,7 +577,6 @@ def execute_touch(path, follow, timestamps):
                                                 'path': path})
 
     # Update the attributes on the file
-    diff = initial_diff(path, 'touch', prev_state)
     file_args = module.load_file_common_arguments(module.params)
     try:
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
