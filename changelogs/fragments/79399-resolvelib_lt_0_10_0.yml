@@ -1,0 +1,2 @@
+minor_changes:
+  - Upgrade `resolvelib >= 0.5.3, < 0.10.0`
