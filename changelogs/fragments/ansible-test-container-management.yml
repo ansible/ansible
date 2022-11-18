@@ -33,6 +33,9 @@ minor_changes:
                    This speeds up teardown of ephemeral containers.
   - ansible-test - Reduce the polling limit for SSHD startup in containers from 60 retries to 10.
                    The one second delay between retries remains in place.
+  - ansible-test - Integration tests can be excluded from retries triggered by the ``--retry-on-error`` option by
+                   adding the ``retry/never`` alias. This is useful for tests that cannot pass on a retry or are too
+                   slow to make retries useful.
 bugfixes:
   - ansible-test - Multiple containers now work under Podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.
