@@ -23,8 +23,10 @@ minor_changes:
                    This option can be used to indicate a container requires cgroup v1 or that it does not use cgroup.
                    The default behavior assumes the container works with cgroup v2 (as well as v1).
   - ansible-test - A new ``audit`` option is available when running custom containers.
-                   This option can be used to indicate a container requires the AUDIT_WRITE capability.
-                   Containers with a patched OpenSSH requiring this capability will need this option when using Podman.
+                   This option can be used to indicate whether a container requires the AUDIT_WRITE capability.
+                   The default is ``required``, which most containers will need when using Podman.
+                   If necessary, the ``none`` option can be used to opt-out of the capability.
+                   This has no effect on Docker, which always provides the capability.
   - ansible-test - More details are provided about an instance when provisioning fails.
   - ansible-test - Connection failures to remote provisioned hosts now show failure details as a warning.
   - ansible-test - When setting the max open files for containers, the container host's limit will be checked.
