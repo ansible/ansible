@@ -143,7 +143,7 @@ def get_test_scenarios() -> list[TestScenario]:
     with open(pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt')) as docker_file:
         # TODO: consider including testing for the collection default image
         entries = {name: value for name, value in [parse_completion_entry(line) for line in docker_file.read().splitlines()]
-                   if value.get('context') != 'collection'}
+                   if name != 'default'}
 
     unprivileged_user = User.get(UNPRIVILEGED_USER_NAME)
 
