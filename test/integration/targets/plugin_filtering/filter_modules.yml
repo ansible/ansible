@@ -1,6 +1,6 @@
 ---
 filter_version: 1.0
-module_blacklist:
+module_rejectlist:
   # A pure action plugin
   - pause
   # A hybrid action plugin with module
