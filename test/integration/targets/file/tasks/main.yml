@@ -711,18 +711,62 @@
     - group_exists.warnings is not defined
     - group_gid_exists.warnings is not defined
 
-# ensures touching a file returns changed in check mode
+# ensures touching a file returns changed when needed
 # issue: https://github.com/ansible/ansible/issues/79360
-- name: touch a file returns changed in check mode
+- name: touch a file returns changed in check mode if file does not exist
   file:
-    path: '/tmp/nonexistent'
+    path: '/tmp/touch_check_mode_test'
     state: touch
   check_mode: yes
-  register: touch_result_in_check_mode
+  register: touch_result_in_check_mode_not_existing
+
+- name: touch the file
+  file:
+    path: '/tmp/touch_check_mode_test'
+    mode: "0660"
+    state: touch
+
+- name: touch an existing file returns changed in check mode
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+  check_mode: yes
+  register: touch_result_in_check_mode_change_all_attr
+
+- name: touch an existing file returns changed in check mode when preserving access time
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    access_time: "preserve"
+  check_mode: yes
+  register: touch_result_in_check_mode_preserve_access_time
+
+- name: touch an existing file returns changed in check mode when only mode changes
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    access_time: "preserve"
+    modification_time: "preserve"
+    mode: "0640"
+  check_mode: yes
+  register: touch_result_in_check_mode_change_only_mode
+
+- name: touch an existing file returns ok if all attributes are preserved
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    access_time: "preserve"
+    modification_time: "preserve"
+  check_mode: yes
+  register: touch_result_in_check_mode_all_attrs_preserved
+
 
 - assert:
-  that: 
-  - touch_result_in_check_mode.changed
+    that: 
+    - touch_result_in_check_mode_not_existing.changed
+    - touch_result_in_check_mode_preserve_access_time.changed
+    - touch_result_in_check_mode_change_only_mode.changed
+    - not touch_result_in_check_mode_all_attrs_preserved.changed
 
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access remote_tmp_dir_test at all
