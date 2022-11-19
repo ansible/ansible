@@ -751,6 +751,26 @@
   check_mode: yes
   register: touch_result_in_check_mode_change_only_mode
 
+- name: touch an existing file returns changed in check mode when only owner changes
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    owner: nobody
+    access_time: "preserve"
+    modification_time: "preserve"
+  check_mode: yes
+  register: touch_result_in_check_mode_change_only_owner
+
+- name: touch an existing file returns changed in check mode when only group changes
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    group: nobody
+    access_time: "preserve"
+    modification_time: "preserve"
+  check_mode: yes
+  register: touch_result_in_check_mode_change_only_group
+
 - name: touch an existing file returns ok if all attributes are preserved
   file:
     path: '/tmp/touch_check_mode_test'
@@ -766,6 +786,8 @@
     - touch_result_in_check_mode_not_existing.changed
     - touch_result_in_check_mode_preserve_access_time.changed
     - touch_result_in_check_mode_change_only_mode.changed
+    - touch_result_in_check_mode_change_only_owner.changed
+    - touch_result_in_check_mode_change_only_group.changed
     - not touch_result_in_check_mode_all_attrs_preserved.changed
 
 # https://github.com/ansible/ansible/issues/50943
