@@ -520,10 +520,8 @@ class TestLookupModuleWithPasslib(BaseTestLookupModule):
             self.assertEqual(int(str_parts[2]), crypt_parts['rounds'])
             self.assertIsInstance(result, text_type)
 
-    @patch.object(PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
-    def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+    def test_password_already_created_encrypt(self, mock_write_file):
         password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
 
         with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
