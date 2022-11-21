@@ -23,7 +23,7 @@ DOCUMENTATION:
       default: false
 
 EXAMPLES: |
-  # for a complete set of features got to  https://strftime.org/
+  # for a complete set of features go to  https://strftime.org/
 
   # Display year-month-day
   {{ '%Y-%m-%d' | strftime }}
