@@ -1,0 +1,14 @@
+# pip packages required to build docsite
+# These requirements drift from test/sanity/code-smell/docs-build.requirements.txt
+# only for antsibull-docs minor (bugfix) releases. 
+
+jinja2==3.1.2
+PyYAML==6.0
+resolvelib==0.8.1
+rstcheck==3.5.0
+sphinx == 4.2.0
+sphinx-ansible-theme==0.9.1
+sphinx-notfound-page==0.8.3
+straight.plugin==1.5.0
+antsibull-docs == 1.7.3  # Drifted from CI. currently approved version
+
