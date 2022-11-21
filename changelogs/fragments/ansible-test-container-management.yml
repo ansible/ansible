@@ -52,3 +52,8 @@ known_issues:
                    Podman should work with SELinux in enforcing mode.
   - ansible-test - Additional configuration may be required for certain container host and container combinations.
                    Further details are available in the testing documentation.
+  - ansible-test - Systems with Podman networking issues may be unable to run containers, when previously the issue
+                   went unreported. Correct the networking issues to continue using ``ansible-test`` with Podman.
+  - ansible-test - Custom containers with ``VOLUME`` instructions may be unable to start, when previously the containers
+                   started correctly. Remove the ``VOLUME`` instructions to resolve the issue. Containers with this
+                   condition will cause ``ansible-test`` to emit a warning.
