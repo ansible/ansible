@@ -22,7 +22,6 @@ import fcntl
 import getpass
 import os
 import pty
-import pwd
 import shutil
 import subprocess
 
@@ -49,7 +48,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
         self.cwd = None
         try:
-            self.default_user = pwd.getpwnam(getpass.getuser())
+            self.default_user = getpass.getuser()
         except KeyError:
             display.vv("Current user (uid=%s) does not seem to exist on this system, leaving user empty." % os.getuid())
             self.default_user = ""
