@@ -5,7 +5,7 @@ Windows Remote Management
 Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
 configured with WinRM. This topic covers how to configure and use WinRM with Ansible.
 
-.. contents:: 
+.. contents::
    :local:
    :depth: 2
 
@@ -116,6 +116,8 @@ be enabled by running the following in PowerShell:
 
 .. Note:: Encrypted private keys cannot be used as the urllib3 library that
     is used by Ansible for WinRM does not support this functionality.
+
+.. Note:: Certificate authentication does not work with a TLS 1.3 connection.
 
 .._winrm_certificate_generate:
 
@@ -633,7 +635,7 @@ The WinRM protocol considers the channel to be encrypted if using TLS over HTTP
 recommended option as it works with all authentication options, but requires
 a certificate to be created and used on the WinRM listener.
 
-If in a domain environment, ADCS can create a certificate for the host that 
+If in a domain environment, ADCS can create a certificate for the host that
 is issued by the domain itself.
 
 If using HTTPS is not an option, then HTTP can be used when the authentication
