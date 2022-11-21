@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Using Python's C(strftime) function, take a data formating string and a date/time to create a formated date.
   notes:
-    - This is a passthrough to Python's C(stftime).
+    - This is a passthrough to Python's C(stftime), for a complete set of formatting options got to https://strftime.org/.
   positional: _input, second, utc
   options:
     _input:
@@ -21,8 +21,6 @@ DOCUMENTATION:
       description: Whether time supplied is in UTC.
       type: bool
       default: false
-  notes:
-  - This plugin is just a wrapper to C(strftime) standard function, for a complete set of features got to  https://strftime.org/
 
 EXAMPLES: |
   # for a complete set of features got to  https://strftime.org/
