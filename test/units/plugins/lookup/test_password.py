@@ -529,6 +529,9 @@ class TestLookupModuleWithPasslib(BaseTestLookupModule):
         for result in results:
             self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')
 
+        # Assert the password file is not rewritten
+        mock_write_file.assert_not_called()
+
 
 @pytest.mark.skipif(passlib is None, reason='passlib must be installed to run these tests')
 class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
