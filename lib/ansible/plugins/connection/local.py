@@ -51,8 +51,8 @@ class Connection(ConnectionBase):
         try:
             self.default_user = pwd.getpwnam(getpass.getuser())
         except KeyError:
-            # running ansible from container with invalid user? (valid in host)
-            self.default_user = pwd.getpwuid(os.getuid())
+            display.vv("Current user (uid=%s) does not seem to exist on this system, leaving user empty." % os.getuid())
+            self.default_user = ""
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
