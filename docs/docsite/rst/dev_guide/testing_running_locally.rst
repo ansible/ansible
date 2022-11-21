@@ -115,6 +115,22 @@ To see the list of supported containers, use the ``--help`` option with the ``an
 You can also specify your own container.
 When doing so, you will need to indicate the Python version in the container with the ``--python`` option.
 
+Custom containers
+"""""""""""""""""
+
+When building custom containers, keep in mind the following requirements:
+
+* The ``USER`` should be ``root``
+* Use an ``init`` process, such as ``systemd``
+* Include ``sshd`` and accept connections on the default port of ``22``
+* Include a POSIX compatible ``sh`` shell which can be found on ``PATH``
+* Include a ``sleep`` utility which runs as a subprocess
+* Include a supported version of Python
+* Avoid using the ``VOLUME`` statement
+
+  * Mounts under ``/sys/fs/cgroup`` may prevent ``systemd`` in containers from running
+  * Anonymous volumes may be leaked when running containers
+
 Docker and SELinux
 ^^^^^^^^^^^^^^^^^^
 
