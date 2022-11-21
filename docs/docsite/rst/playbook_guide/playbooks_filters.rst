@@ -2061,6 +2061,8 @@ As of version 2.6, you can define the type of encoding to use, the default is ``
 
 .. note:: The ``string`` filter is only required for Python 2 and ensures that text to encode is a unicode string. Without that filter before b64encode the wrong value will be encoded.
 
+.. note:: The return value of b64decode is a string.  If you decrypt a binary blob using b64decode and then try to use it (for example by using :ref:`copy <copy_module>` to write it to a file) you will mostly likely find that your binary has been corrupted.  If you need to take a base64 encoded binary and write it to disk, it is best to use the system ``base64`` command with the :ref:`shell module <shell_module>`, piping in the encoded data using the ``stdin`` parameter. For example: ``shell: cmd="base64 --decode > myfile.bin" stdin="{{ encoded }}"``
+
 .. versionadded:: 2.6
 
 Managing UUIDs
