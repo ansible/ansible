@@ -151,10 +151,19 @@ A single changelog fragment may contain multiple sections but most will only con
       - idrac_user - module may error out with the message ``unable to perform the import or export operation`` because there are pending attribute changes or a configuration job is in progress. Wait for the job to complete and run the task again.(https://github.com/dell/dellemc-openmanage-ansible-modules/pull/303).
 
 
+**trivial**
+  Changes where a formal release changelog entry isn't required.  ``trivial`` changelog fragments are excluded from the published changelog output and may be used for changes such as housekeeping, documentation and test changes.
+  You can use ``trivial`` for collections that requires a changelog fragment for each pull request.
+
+  .. code-block:: yaml
+
+    trivial:
+      - aws_ec2 - fix broken integration test (https://github.com/ansible-collections/amazon.aws/pull/1269).
+
 
 Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
-Most changelog entries are ``bugfixes`` or ``minor_changes``. You can also use ``trivial``  for any collection that requires a changelog fragment for each pull request. ``trivial`` changelog fragments are excluded from the changelog output.
+Most changelog entries are ``bugfixes`` or ``minor_changes``.
 
 
 Changelog fragment entry format
