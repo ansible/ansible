@@ -152,8 +152,8 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **trivial**
-  Changes where a formal release changelog entry isn't required.  ``trivial`` changelog fragments are excluded from the published changelog output and may be used for changes such as housekeeping, documentation and test changes.
-  You can use ``trivial`` for collections that requires a changelog fragment for each pull request.
+  Changes where a formal release changelog entry isn't required.  ``trivial`` changelog fragments are excluded from the published changelog output and may be used for changes such as housekeeping, documentation and test only changes.
+  You can use ``trivial`` for collections that require a changelog fragment for each pull request.
 
   .. code-block:: yaml
 
