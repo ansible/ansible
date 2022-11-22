@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Using Python's C(strftime) function, take a data formating string and a date/time to create a formated date.
   notes:
-    - This is a passthrough to Python's C(stftime), for a complete set of formatting options got to https://strftime.org/.
+    - This is a passthrough to Python's C(stftime), for a complete set of formatting options go to https://strftime.org/.
   positional: _input, second, utc
   options:
     _input:
