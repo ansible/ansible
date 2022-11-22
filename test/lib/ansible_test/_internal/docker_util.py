@@ -625,10 +625,10 @@ def __docker_pull(args: CommonConfig, image: str) -> None:
 
                 display.warning(f'Image "{image}" not found after pull completed. Waiting a few seconds before trying again.')
             except SubprocessError:
-                display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
+                display.warning(f'Failed to pull container image "{image}". Waiting a few seconds before trying again.')
                 time.sleep(3)
         else:
-            raise ApplicationError('Failed to pull docker image "%s".' % image)
+            raise ApplicationError(f'Failed to pull container image "{image}".')
 
     if inspect and inspect.volumes:
         display.warning(f'Image "{image}" contains {len(inspect.volumes)} volume(s): {", ".join(sorted(inspect.volumes))}\n'
