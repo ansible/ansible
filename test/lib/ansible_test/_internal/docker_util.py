@@ -610,33 +610,27 @@ def docker_pull(args: CommonConfig, image: str) -> None:
 
 def __docker_pull(args: CommonConfig, image: str) -> None:
     """Internal implementation for docker_pull. Do not call directly."""
-    inspect: DockerImageInspect | None = None
-
     if '@' not in image and ':' not in image:
         display.info('Skipping pull of image without tag or digest: %s' % image, verbosity=2)
+        inspect = docker_image_inspect(args, image)
     elif inspect := docker_image_inspect(args, image, always=True):
         display.info('Skipping pull of existing image: %s' % image, verbosity=2)
     else:
         for _iteration in range(1, 10):
             try:
                 docker_command(args, ['pull', image], capture=False)
-                break
+
+                if (inspect := docker_image_inspect(args, image)) or args.explain:
+                    break
+
+                display.warning(f'Image "{image}" not found after pull completed. Waiting a few seconds before trying again.')
             except SubprocessError:
                 display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
                 time.sleep(3)
         else:
             raise ApplicationError('Failed to pull docker image "%s".' % image)
 
-    if not inspect:
-        inspect = docker_image_inspect(args, image)
-
-    if args.explain:
-        return
-
-    if not inspect:
-        raise ApplicationError(f'Image "{image}" not found after pull completed.')
-
-    if inspect.volumes:
+    if inspect and inspect.volumes:
         display.warning(f'Image "{image}" contains {len(inspect.volumes)} volume(s): {", ".join(sorted(inspect.volumes))}\n'
                         'This may result in leaking anonymous volumes. It may also prevent the image from working on some hosts or container engines.\n'
                         'The image should be rebuilt without the use of the VOLUME instruction.',
@@ -871,6 +865,9 @@ def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -
         items = []
     else:
         items = json.loads(stdout)
+
+    if len(items) > 1:
+        raise ApplicationError(f'Inspection of image "{image}" resulted in {len(items)} items:\n{json.dumps(items, indent=4)}')
 
     if len(items) == 1:
         inspect_result = DockerImageInspect(args, items[0])
