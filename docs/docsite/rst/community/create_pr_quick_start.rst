@@ -157,7 +157,7 @@ Test your changes
 
 1. Install ``flake8`` (``pip install flake8``, or install the corresponding package on your operating system).
 
-1. Run ``flake8`` against a changed file:
+2. Run ``flake8`` against a changed file:
 
   .. code-block:: bash
 
@@ -167,7 +167,7 @@ Test your changes
   This shows unused imports, which are not shown by sanity tests, as well as other common issues.
   Optionally, you can use the ``--max-line-length=160`` command-line argument.
 
-2. Run sanity tests:
+3. Run sanity tests:
 
   .. code-block:: bash
 
@@ -176,7 +176,7 @@ Test your changes
   If they failed, look at the output carefully - it is informative and helps to identify a problem line quickly.
   Sanity failings usually relate to incorrect code and documentation formatting.
 
-3. Run integration tests:
+4. Run integration tests:
 
   .. code-block:: bash
 
