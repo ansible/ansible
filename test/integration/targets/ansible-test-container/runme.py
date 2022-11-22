@@ -259,13 +259,13 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     try:
         if prime_storage_command:
-            run_command(*prime_storage_command)
+            retry_command(lambda: run_command(*prime_storage_command))
 
         if scenario.disable_selinux:
             run_command('setenforce', 'permissive')
 
         for test_command in test_commands:
-            run_command(*test_command)
+            retry_command(lambda: run_command(*test_command))
     except SubprocessError as ex:
         message = str(ex)
         display.error(f'{scenario} {message}')
@@ -281,7 +281,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         cleanup_command = [scenario.engine, 'rmi', '-f', scenario.image]
 
         try:
-            run_command(*client_become_cmd + [f'{format_env(common_env)}{shlex.join(cleanup_command)}'])
+            retry_command(lambda: run_command(*client_become_cmd + [f'{format_env(common_env)}{shlex.join(cleanup_command)}']))
         except SubprocessError as ex:
             display.error(str(ex))
 
@@ -672,6 +672,23 @@ def run_module(
     return run_command('ansible', '-m', module, '-v', '-a', json.dumps(args), 'localhost')
 
 
+def retry_command(func: t.Callable[[], SubprocessResult], attempts: int = 3) -> SubprocessResult:
+    """Run the given command function up to the specified number of attempts when the failure is due to an SSH error."""
+    for attempts_remaining in range(attempts - 1, -1, -1):
+        try:
+            return func()
+        except SubprocessError as ex:
+            if ex.result.command[0] == 'ssh' and ex.result.status == 255 and attempts_remaining:
+                # SSH connections on our Ubuntu 22.04 host sometimes fail for unknown reasons.
+                # This retry should allow the test suite to continue, maintaining CI stability.
+                # TODO: Figure out why local SSH connections sometimes fail during the test run.
+                display.warning('Command failed due to an SSH error. Waiting a few seconds before retrying.')
+                time.sleep(3)
+                continue
+
+            raise
+
+
 def run_command(
     *command: str,
     data: str | None = None,
@@ -850,7 +867,7 @@ class Bootstrapper(metaclass=abc.ABCMeta):
             return
 
         # Support podman remote on any host with systemd available.
-        run_command('ssh', f'{UNPRIVILEGED_USER_NAME}@localhost', 'systemctl', '--user', 'enable', '--now', 'podman.socket')
+        retry_command(lambda: run_command('ssh', f'{UNPRIVILEGED_USER_NAME}@localhost', 'systemctl', '--user', 'enable', '--now', 'podman.socket'))
         run_command('loginctl', 'enable-linger', UNPRIVILEGED_USER_NAME)
 
 
