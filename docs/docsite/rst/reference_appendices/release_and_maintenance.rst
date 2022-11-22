@@ -132,17 +132,6 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
      - End Of Life [1]_
      - Controller Python
      - Target Python / Powershell
-   * - `2.9`_
-     - 31 Oct 2019
-     - 13 Aug 2020
-     - 26 Apr 2021
-     - | **EOL**
-       | 23 May 2022
-     - | Python 2.7
-       | Python 3.5 - 3.8
-     - | Python 2.6 - 2.7
-       | Python 3.5 - 3.8
-       | PowerShell 3 - 5.1
    * - `2.10`_
      - 13 Aug 2020
      - 26 Apr 2021
@@ -153,6 +142,17 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
        | Python 3.5 - 3.9
      - | Python 2.6 - 2.7
        | Python 3.5 - 3.9
+       | PowerShell 3 - 5.1
+   * - `2.9`_
+     - 31 Oct 2019
+     - 13 Aug 2020
+     - 26 Apr 2021
+     - | **EOL**
+       | 23 May 2022
+     - | Python 2.7
+       | Python 3.5 - 3.8
+     - | Python 2.6 - 2.7
+       | Python 3.5 - 3.8
        | PowerShell 3 - 5.1
    * - `2.11`_
      - 26 Apr 2021
