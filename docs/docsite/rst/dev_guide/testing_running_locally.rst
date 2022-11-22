@@ -14,7 +14,8 @@ This document describes how to run tests using ``ansible-test``.
 Setup
 =====
 
-To run ``ansible-test``, you need to make sure your environment is properly setup.
+Before running ``ansible-test``, set up your environment for :ref:`Testing an Ansible Collection` or
+:ref:`Testing ansible-core`, depending on which scenario applies to you.
 
 .. warning::
 
@@ -24,44 +25,79 @@ To run ``ansible-test``, you need to make sure your environment is properly setu
 Testing an Ansible Collection
 -----------------------------
 
-If you're testing an Ansible Collection, you'll need a copy of the collection, preferably a git clone.
-As with Ansible itself, ``ansible-test`` requires collections to be within a valid collection root.
+If you are testing an Ansible Collection, you need a copy of the collection, preferably a git clone.
+For example, to work with the ``community.windows`` collection, follow these steps:
 
-For example, if you want to work with the ``community.windows`` collection, you could clone it from GitHub:
+1. Clone the collection you want to test into a valid collection root:
 
-.. code-block:: shell-session
+   .. code-block:: shell-session
 
-   git clone https://github.com/ansible-collections/community.windows ~/dev/ansible_collections/community/windows
+      git clone https://github.com/ansible-collections/community.windows ~/dev/ansible_collections/community/windows
 
-Since it depends on the ``ansible.windows`` collection you need to clone that as well:
+   .. important::
 
-.. code-block:: shell-session
+      The path must end with ``/ansible_collections/{collection_namespace}/{collection_name}`` where
+      ``{collection_namespace}`` is the namespace of the collection and ``{collection_name}`` is the collection name.
 
-   git clone https://github.com/ansible-collections/ansible.windows ~/dev/ansible_collections/ansible/windows
+2. Clone any collections on which the collection depends:
 
-Finally, you can switch to the directory where the ``community.windows`` collection resides:
+   .. code-block:: shell-session
 
-.. code-block:: shell-session
+      git clone https://github.com/ansible-collections/ansible.windows ~/dev/ansible_collections/ansible/windows
 
-   cd ~/dev/ansible_collections/community/windows
+   .. important::
 
-Now you're ready to start testing the collection with ``ansible-test`` commands.
+      If your collection has any dependencies on other collections, they must be in the same collection root, since
+      ``ansible-test`` will not use your configured collection roots (or other Ansible configuration).
 
-.. note::
+   .. note::
 
-   If your collection has any dependencies on other collections, they must be in the same collection root.
-   Unlike Ansible, ``ansible-test`` will not use your configured collection roots (or other Ansible configuration).
+      See the collection's ``galaxy.yml`` for a list of possible dependencies.
 
-Testing Ansible
----------------
+3. Switch to the directory where the collection to test resides:
 
-If you're testing Ansible itself, you'll need a copy of the Ansible source code, preferably a git clone.
-Having an installed copy of Ansible is not sufficient, or required.
+   .. code-block:: shell-session
 
-.. note::
+      cd ~/dev/ansible_collections/community/windows
 
-   If you do have an installed version of Ansible,
-   make sure you are not using that copy of ``ansible-test`` to test Ansible itself.
+Testing ``ansible-core``
+------------------------
+
+If you are testing ``ansible-core`` itself, you need a copy of the ``ansible-core`` source code, preferably a git clone.
+Having an installed copy of ``ansible-core`` is not sufficient or required.
+For example, to work with the ``ansible-core`` source cloned from GitHub, follow these steps:
+
+1. Clone the ``ansible-core`` repository:
+
+   .. code-block:: shell-session
+
+      git clone https://github.com/ansible/ansible ~/dev/ansible
+
+2. Switch to the directory where the ``ansible-core`` source resides:
+
+   .. code-block:: shell-session
+
+      cd ~/dev/ansible
+
+3. Add ``ansible-core`` programs to your ``PATH``:
+
+   .. code-block:: shell-session
+
+      source hacking/env-setup
+
+   .. note::
+
+      You can skip this step if you only need to run ``ansible-test``, and not other ``ansible-core`` programs.
+      In that case, simply run ``bin/ansible-test`` from the root of the ``ansible-core`` source.
+
+   .. caution::
+
+      If you have an installed version of ``ansible-core`` and are trying to run ``ansible-test`` from your ``PATH``,
+      make sure the program found by your shell is the one from the ``ansible-core`` source:
+
+      .. code-block:: shell-session
+
+         which ansible-test
 
 Commands
 ========
@@ -94,7 +130,7 @@ The ``--docker`` option runs tests in a container using either Docker or Podman.
 .. note::
 
    If both Docker and Podman are installed, Docker will be used.
-   To override this, set the environment variable ``ANSIBLE_TEST_PREFER_PODMAN=1``.
+   To override this, set the environment variable ``ANSIBLE_TEST_PREFER_PODMAN`` to any non-empty value.
 
 Choosing a container
 ^^^^^^^^^^^^^^^^^^^^
@@ -120,16 +156,13 @@ Custom containers
 
 When building custom containers, keep in mind the following requirements:
 
-* The ``USER`` should be ``root``
-* Use an ``init`` process, such as ``systemd``
-* Include ``sshd`` and accept connections on the default port of ``22``
-* Include a POSIX compatible ``sh`` shell which can be found on ``PATH``
-* Include a ``sleep`` utility which runs as a subprocess
-* Include a supported version of Python
-* Avoid using the ``VOLUME`` statement
-
-  * Mounts under ``/sys/fs/cgroup`` may prevent ``systemd`` in containers from running
-  * Anonymous volumes may be leaked when running containers
+* The ``USER`` should be ``root``.
+* Use an ``init`` process, such as ``systemd``.
+* Include ``sshd`` and accept connections on the default port of ``22``.
+* Include a POSIX compatible ``sh`` shell which can be found on ``PATH``.
+* Include a ``sleep`` utility which runs as a subprocess.
+* Include a supported version of Python.
+* Avoid using the ``VOLUME`` statement.
 
 Docker and SELinux
 ^^^^^^^^^^^^^^^^^^
@@ -140,24 +173,26 @@ Consider using Podman instead.
 Docker Desktop with WSL2
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-These instructions explain how to use ``ansible-test`` with WSL2 and Docker Desktop *without* systemd support.
+These instructions explain how to use ``ansible-test`` with WSL2 and Docker Desktop *without* ``systemd`` support.
 
 .. note::
 
-   If your WSL2 environment includes systemd support, these steps are not required.
+   If your WSL2 environment includes ``systemd`` support, these steps are not required.
 
 Configuration requirements
 """"""""""""""""""""""""""
 
-Open Docker Desktop and go to the Settings screen, then verify these Settings on the General tab:
+1. Open Docker Desktop and go to the **Settings** screen.
+2. On the the **General** tab:
 
-* Use the WSL 2 based engine - checked
-* Start Docker Desktop when you log in - unchecked
+   a. Uncheck the **Start Docker Desktop when you log in** checkbox.
+   b. Check the **Use the WSL 2 based engine** checkbox.
 
-Next go to the Resources tab and check the WSL Integration section.
+3. On the **Resources** tab under the **WSL Integration** section:
 
-* Under "Enable integration with additional distros" make sure each distro you want to use is enabled.
-* Click "Apply and restart" if needed.
+   a. Enable distros you want to use under the **Enable integration with additional distros** section.
+
+4. Click **Apply and restart** if changes were made.
 
 Setup instructions
 """"""""""""""""""
@@ -166,17 +201,45 @@ Setup instructions
 
    If all WSL instances have been stopped, these changes will need to be re-applied.
 
-1. Verify Docker Desktop is properly configured (see Configuration Requirements above)
-2. Quit Docker Desktop if it is running (Docker Desktop taskbar icon | Quit Docker Desktop)
-3. Stop any running WSL instances with ``wsl --shutdown``
-4. Verify all WSL instances have stopped with ``wsl -l -v``
+1. Verify Docker Desktop is properly configured (see :ref:`Configuration requirements`).
+2. Quit Docker Desktop if it is running:
+
+   a. Right click the **Docker Desktop** taskbar icon.
+   b. Click the **Quit Docker Desktop** option.
+
+3. Stop any running WSL instances with the command:
+
+   .. code-block:: shell-session
+
+      wsl --shutdown
+
+4. Verify all WSL instances have stopped with the command:
+
+   .. code-block:: shell-session
+
+      wsl -l -v
+
 5. Start a WSL instance and perform the following steps as ``root``:
 
-   1. Verify the systemd subsystem is not registered with ``grep systemd /proc/self/cgroup``
-   2. Run ``mkdir /sys/fs/cgroup/systemd``
-   3. Run ``mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr``
+   a. Verify the ``systemd`` subsystem is not registered:
 
-6. Start Docker Desktop
+      a.  Check for the ``systemd`` cgroup hierarchy with the following command:
+
+          .. code-block:: shell-session
+
+             grep systemd /proc/self/cgroup
+
+      b. If any matches are found, re-check the :ref:`Configuration requirements` and follow the
+         :ref:`Setup instructions` again.
+
+   b. Mount the ``systemd`` cgroup hierarchy with the following commands:
+
+   .. code-block:: shell-session
+
+      mkdir /sys/fs/cgroup/systemd
+      mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
+
+6. Start Docker Desktop.
 
 You should now be able to use ``ansible-test`` with the ``--docker`` option.
 
@@ -205,8 +268,8 @@ Make sure to substitute your user and group for ``{user}`` and ``{group}`` respe
 Podman
 """"""
 
-When using Podman, you may need to stop existing Podman processes after following the cgroup instructions above.
-Otherwise Podman may be unable to see the new mount point.
+When using Podman, you may need to stop existing Podman processes after following the :ref:`Linux cgroup configuration`
+instructions. Otherwise Podman may be unable to see the new mount point.
 
 You can check to see if Podman is running by looking for ``podman`` and ``catatonit`` processes.
 
@@ -250,8 +313,8 @@ The ``--controller`` and ``--target`` options are alternatives to the ``--docker
 
 Add the ``--help`` option to your ``ansible-test`` command to learn more about the composite environment arguments.
 
-Requirements
-============
+Additional Requirements
+=======================
 
 Some ``ansible-test`` commands have additional requirements.
 You can use the ``--requirements`` option to automatically install them.
