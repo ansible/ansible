@@ -197,7 +197,8 @@ class RoleDistributionServer:
 
 
 class GalaxyCLI(CLI):
-    '''Command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.
+    '''Command to manage Ansible roles and collections.
+
        None of the CLI tools are designed to run concurrently with themselves,
        you should use an external scheduler and/or locking to ensure there are no clashing operations.
     '''
