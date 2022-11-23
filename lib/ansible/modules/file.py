@@ -552,8 +552,6 @@ def execute_touch(path, follow, timestamps):
     result = {'dest': path}
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
-    diff = initial_diff(path, 'touch', prev_state)
-    file_args = module.load_file_common_arguments(module.params)
 
     # If the file did not already exist
     if prev_state == 'absent':
@@ -562,15 +560,17 @@ def execute_touch(path, follow, timestamps):
         if module.check_mode:
             result['changed'] = True
             return result
-        else:
-            # Create an empty file
-            try:
-                open(b_path, 'wb').close()
-                changed = True
-            except (OSError, IOError) as e:
-                raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
-                                                  % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
+        # Create an empty file
+        try:
+            open(b_path, 'wb').close()
+            changed = True
+        except (OSError, IOError) as e:
+            raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
+                                              % to_native(e, nonstring='simplerepr'),
+                                              'path': path})
+    # Update the attributes on the file
+    diff = initial_diff(path, 'touch', prev_state)
+    file_args = module.load_file_common_arguments(module.params)
     try:
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
         changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
@@ -585,7 +585,6 @@ def execute_touch(path, follow, timestamps):
 
     result['changed'] = changed
     result['diff'] = diff
-
     return result
 
 
