@@ -31,6 +31,8 @@ access to OS distribution information is needed. See `Python issue 1322
 <https://bugs.python.org/issue1322>`_ for more information.
 """
 
+import argparse
+import json
 import logging
 import os
 import re
@@ -135,56 +137,6 @@ _DISTRO_RELEASE_IGNORE_BASENAMES = (
 )
 
 
-#
-# Python 2.6 does not have subprocess.check_output so replicate it here
-#
-def _my_check_output(*popenargs, **kwargs):
-    r"""Run command with arguments and return its output as a byte string.
-
-    If the exit code was non-zero it raises a CalledProcessError.  The
-    CalledProcessError object will have the return code in the returncode
-    attribute and output in the output attribute.
-
-    The arguments are the same as for the Popen constructor.  Example:
-
-    >>> check_output(["ls", "-l", "/dev/null"])
-    'crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n'
-
-    The stdout argument is not allowed as it is used internally.
-    To capture standard error in the result, use stderr=STDOUT.
-
-    >>> check_output(["/bin/sh", "-c",
-    ...               "ls -l non_existent_file ; exit 0"],
-    ...              stderr=STDOUT)
-    'ls: non_existent_file: No such file or directory\n'
-
-    This is a backport of Python-2.7's check output to Python-2.6
-    """
-    if 'stdout' in kwargs:
-        raise ValueError(
-            'stdout argument not allowed, it will be overridden.'
-        )
-    process = subprocess.Popen(
-        stdout=subprocess.PIPE, *popenargs, **kwargs
-    )
-    output, unused_err = process.communicate()
-    retcode = process.poll()
-    if retcode:
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        # Deviation from Python-2.7: Python-2.6's CalledProcessError does not
-        # have an argument for the stdout so simply omit it.
-        raise subprocess.CalledProcessError(retcode, cmd)
-    return output
-
-
-try:
-    _check_output = subprocess.check_output
-except AttributeError:
-    _check_output = _my_check_output
-
-
 def linux_distribution(full_distribution_name=True):
     # type: (bool) -> Tuple[str, str, str]
     """
@@ -203,7 +155,8 @@ def linux_distribution(full_distribution_name=True):
 
     * ``version``:  The result of :func:`distro.version`.
 
-    * ``codename``:  The result of :func:`distro.codename`.
+    * ``codename``:  The extra item (usually in parentheses) after the
+      os-release version number, or the result of :func:`distro.codename`.
 
     The interface of this function is compatible with the original
     :py:func:`platform.linux_distribution` function, supporting a subset of
@@ -250,8 +203,9 @@ def id():
     "fedora"        Fedora
     "sles"          SUSE Linux Enterprise Server
     "opensuse"      openSUSE
-    "amazon"        Amazon Linux
+    "amzn"          Amazon Linux
     "arch"          Arch Linux
+    "buildroot"     Buildroot
     "cloudlinux"    CloudLinux OS
     "exherbo"       Exherbo Linux
     "gentoo"        GenToo Linux
@@ -271,6 +225,8 @@ def id():
     "netbsd"        NetBSD
     "freebsd"       FreeBSD
     "midnightbsd"   MidnightBSD
+    "rocky"         Rocky Linux
+    "guix"          Guix System
     ==============  =========================================
 
     If you have a need to get distros for reliable IDs added into this set,
@@ -364,6 +320,10 @@ def version(pretty=False, best=False):
     the different sources of distribution information. Examining the different
     sources in a fixed priority order does not always yield the most precise
     version (e.g. for Debian 8.2, or CentOS 7.1).
+
+    Some other distributions may not provide this kind of information. In these
+    cases, an empty string would be returned. This behavior can be observed
+    with rolling releases distributions (e.g. Arch Linux).
 
     The *best* parameter can be used to control the approach for the returned
     version:
@@ -680,7 +640,7 @@ except ImportError:
 
         def __get__(self, obj, owner):
             # type: (Any, Type[Any]) -> Any
-            assert obj is not None, "call {0} on an instance".format(self._fname)
+            assert obj is not None, "call {} on an instance".format(self._fname)
             ret = obj.__dict__[self._fname] = self._f(obj)
             return ret
 
@@ -775,10 +735,6 @@ class LinuxDistribution(object):
         * :py:exc:`IOError`: Some I/O issue with an os-release file or distro
           release file.
 
-        * :py:exc:`subprocess.CalledProcessError`: The lsb_release command had
-          some issue (other than not being available in the program execution
-          path).
-
         * :py:exc:`UnicodeError`: A data source has unexpected characters or
           uses an unexpected encoding.
         """
@@ -836,7 +792,7 @@ class LinuxDistribution(object):
         return (
             self.name() if full_distribution_name else self.id(),
             self.version(),
-            self.codename(),
+            self._os_release_info.get("release_codename") or self.codename(),
         )
 
     def id(self):
@@ -912,6 +868,9 @@ class LinuxDistribution(object):
             ).get("version_id", ""),
             self.uname_attr("release"),
         ]
+        if self.id() == "debian" or "debian" in self.like().split():
+            # On Debian-like, add debian_version file content to candidates list.
+            versions.append(self._debian_version)
         version = ""
         if best:
             # This algorithm uses the last version in priority order that has
@@ -1154,12 +1113,17 @@ class LinuxDistribution(object):
             # stripped, etc.), so the tokens are now either:
             # * variable assignments: var=value
             # * commands or their arguments (not allowed in os-release)
+            # Ignore any tokens that are not variable assignments
             if "=" in token:
                 k, v = token.split("=", 1)
                 props[k.lower()] = v
-            else:
-                # Ignore any tokens that are not variable assignments
-                pass
+
+        if "version" in props:
+            # extract release codename (if any) from version attribute
+            match = re.search(r"\((\D+)\)|,\s*(\D+)", props["version"])
+            if match:
+                release_codename = match.group(1) or match.group(2)
+                props["codename"] = props["release_codename"] = release_codename
 
         if "version_codename" in props:
             # os-release added a version_codename field.  Use that in
@@ -1170,16 +1134,6 @@ class LinuxDistribution(object):
         elif "ubuntu_codename" in props:
             # Same as above but a non-standard field name used on older Ubuntus
             props["codename"] = props["ubuntu_codename"]
-        elif "version" in props:
-            # If there is no version_codename, parse it from the version
-            match = re.search(r"(\(\D+\))|,(\s+)?\D+", props["version"])
-            if match:
-                codename = match.group()
-                codename = codename.strip("()")
-                codename = codename.strip(",")
-                codename = codename.strip()
-                # codename appears within paranthese.
-                props["codename"] = codename
 
         return props
 
@@ -1197,7 +1151,7 @@ class LinuxDistribution(object):
         with open(os.devnull, "wb") as devnull:
             try:
                 cmd = ("lsb_release", "-a")
-                stdout = _check_output(cmd, stderr=devnull)
+                stdout = subprocess.check_output(cmd, stderr=devnull)
             # Command not found or lsb_release returned error
             except (OSError, subprocess.CalledProcessError):
                 return {}
@@ -1232,18 +1186,31 @@ class LinuxDistribution(object):
     @cached_property
     def _uname_info(self):
         # type: () -> Dict[str, str]
+        if not self.include_uname:
+            return {}
         with open(os.devnull, "wb") as devnull:
             try:
                 cmd = ("uname", "-rs")
-                stdout = _check_output(cmd, stderr=devnull)
+                stdout = subprocess.check_output(cmd, stderr=devnull)
             except OSError:
                 return {}
         content = self._to_str(stdout).splitlines()
         return self._parse_uname_content(content)
 
+    @cached_property
+    def _debian_version(self):
+        # type: () -> str
+        try:
+            with open(os.path.join(self.etc_dir, "debian_version")) as fp:
+                return fp.readline().rstrip()
+        except (OSError, IOError):
+            return ""
+
     @staticmethod
     def _parse_uname_content(lines):
         # type: (Sequence[str]) -> Dict[str, str]
+        if not lines:
+            return {}
         props = {}
         match = re.search(r"^([^\s]+)\s+([\d\.]+)", lines[0].strip())
         if match:
@@ -1269,7 +1236,7 @@ class LinuxDistribution(object):
             if isinstance(text, bytes):
                 return text.decode(encoding)
         else:
-            if isinstance(text, unicode):  # noqa pylint: disable=undefined-variable
+            if isinstance(text, unicode):  # noqa
                 return text.encode(encoding)
 
         return text
@@ -1324,6 +1291,7 @@ class LinuxDistribution(object):
                     "manjaro-release",
                     "oracle-release",
                     "redhat-release",
+                    "rocky-release",
                     "sl-release",
                     "slackware-version",
                 ]
@@ -1402,13 +1370,36 @@ def main():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
-    dist = _distro
+    parser = argparse.ArgumentParser(description="OS distro info tool")
+    parser.add_argument(
+        "--json", "-j", help="Output in machine readable format", action="store_true"
+    )
 
-    logger.info("Name: %s", dist.name(pretty=True))
-    distribution_version = dist.version(pretty=True)
-    logger.info("Version: %s", distribution_version)
-    distribution_codename = dist.codename()
-    logger.info("Codename: %s", distribution_codename)
+    parser.add_argument(
+        "--root-dir",
+        "-r",
+        type=str,
+        dest="root_dir",
+        help="Path to the root filesystem directory (defaults to /)",
+    )
+
+    args = parser.parse_args()
+
+    if args.root_dir:
+        dist = LinuxDistribution(
+            include_lsb=False, include_uname=False, root_dir=args.root_dir
+        )
+    else:
+        dist = _distro
+
+    if args.json:
+        logger.info(json.dumps(dist.info(), indent=4, sort_keys=True))
+    else:
+        logger.info("Name: %s", dist.name(pretty=True))
+        distribution_version = dist.version(pretty=True)
+        logger.info("Version: %s", distribution_version)
+        distribution_codename = dist.codename()
+        logger.info("Codename: %s", distribution_codename)
 
 
 if __name__ == "__main__":
