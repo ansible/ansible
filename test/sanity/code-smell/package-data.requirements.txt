@@ -6,7 +6,7 @@ MarkupSafe==2.0.1
 packaging==21.2
 pyparsing==2.4.7
 PyYAML==6.0
-resolvelib==0.5.4
+resolvelib==0.9.0
 rstcheck==3.3.1
 semantic-version==2.8.5
 straight.plugin==1.5.0

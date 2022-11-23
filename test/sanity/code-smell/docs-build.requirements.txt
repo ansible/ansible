@@ -27,7 +27,7 @@ pyparsing==2.4.7
 pytz==2021.3
 PyYAML==6.0
 requests==2.26.0
-resolvelib==0.5.4
+resolvelib==0.9.0
 rstcheck==3.3.1
 semantic-version==2.8.5
 sh==1.14.2

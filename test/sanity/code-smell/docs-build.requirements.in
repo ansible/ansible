@@ -1,6 +1,6 @@
 jinja2
 pyyaml
-resolvelib < 0.9.0
+resolvelib < 0.10.0
 sphinx == 4.2.0
 sphinx-notfound-page
 sphinx-ansible-theme
