@@ -1,0 +1,2 @@
+minor_changes:
+  - updated the vendored distro library to upstream version (https://github.com/ansible/ansible/pull/79227)
