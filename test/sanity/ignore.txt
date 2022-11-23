@@ -72,8 +72,10 @@ lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends o
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
-lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
+lib/ansible/module_utils/distro/_distro.py pylint:ansible-format-automatic-specification # ignore bundled
+lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
+lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:disallowed-name
