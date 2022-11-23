@@ -751,7 +751,16 @@
   check_mode: yes
   register: touch_result_in_check_mode_change_only_mode
 
-- name: touch an existing file returns changed in check mode when only owner changes
+- name: touch an existing file returns ok if all attributes are preserved
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    access_time: "preserve"
+    modification_time: "preserve"
+  check_mode: yes
+  register: touch_result_in_check_mode_all_attrs_preserved
+
+- name: touch an existing file fails changed in check mode when only owner changes
   file:
     path: '/tmp/touch_check_mode_test'
     state: touch
@@ -771,15 +780,23 @@
   check_mode: yes
   register: touch_result_in_check_mode_change_only_group
 
-- name: touch an existing file returns ok if all attributes are preserved
+- name: touch an existing file fails in check mode when user does not exist
   file:
     path: '/tmp/touch_check_mode_test'
     state: touch
-    access_time: "preserve"
-    modification_time: "preserve"
+    owner: not-existing-user
   check_mode: yes
-  register: touch_result_in_check_mode_all_attrs_preserved
+  ignore_errors: true
+  register: touch_result_in_check_mode_fails_not_existing_user
 
+- name: touch an existing file fails in check mode when group does not exist
+  file:
+    path: '/tmp/touch_check_mode_test'
+    state: touch
+    group: not-existing-group
+  check_mode: yes
+  ignore_errors: true
+  register: touch_result_in_check_mode_fails_not_existing_group
 
 - assert:
     that: 
@@ -789,6 +806,8 @@
     - touch_result_in_check_mode_change_only_owner.changed
     - touch_result_in_check_mode_change_only_group.changed
     - not touch_result_in_check_mode_all_attrs_preserved.changed
+    - touch_result_in_check_mode_fails_not_existing_user.warnings[0] is search('failed to look up user')
+    - touch_result_in_check_mode_fails_not_existing_group.warnings[0] is search('failed to look up group')
 
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access remote_tmp_dir_test at all

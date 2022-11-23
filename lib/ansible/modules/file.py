@@ -558,7 +558,7 @@ def execute_touch(path, follow, timestamps):
     # If the file did not already exist
     if prev_state == 'absent':
         # if we are in check mode and the file is absent
-        # we can set the changed status to True.
+        # we can set the changed status to True and return
         if module.check_mode:
             result['changed'] = True
             return result
@@ -571,27 +571,8 @@ def execute_touch(path, follow, timestamps):
                 raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
                                                   % to_native(e, nonstring='simplerepr'),
                                                   'path': path})
-
-    # Update the attributes on the file
     try:
-        # If we are in check mode, check if the file attributes are changing. We call the same
-        # functions used by the set_fs_attributes_if_different, except for the user and group for which the call
-        # will fail if the user/group does not yet exist
-        if module.check_mode:
-            # get current file attributes
-            file = os.stat(path)
-            # check if user is different (name used since it could not yet exist)
-            changed = file_args['owner'] is not None and file_args['owner'] != getpwuid(file.st_uid).pw_name
-            # check if group is different (name used since it could not yet exist)
-            changed |= file_args['group'] is not None and file_args['group'] != getgrgid(file.st_gid).gr_name
-            # check if selinux attributes changed
-            changed |= module.set_context_if_different(file_args['path'], file_args['secontext'], changed, diff)
-            # check if mode changed
-            changed |= module.set_mode_if_different(file_args['path'], file_args['mode'], changed, diff, False)
-            # check if file attributes changed
-            changed |= module.set_attributes_if_different(file_args['path'], file_args['attributes'], changed, diff, False)
-        else:
-            changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
         changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
     except SystemExit as e:
         if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
