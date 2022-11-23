@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Using Python's C(strftime) function, take a data formating string and a date/time to create a formated date.
   notes:
-    - This is a passthrough to Python's C(stftime).
+    - This is a passthrough to Python's C(stftime), for a complete set of formatting options go to https://strftime.org/.
   positional: _input, second, utc
   options:
     _input:
@@ -23,6 +23,8 @@ DOCUMENTATION:
       default: false
 
 EXAMPLES: |
+  # for a complete set of features go to  https://strftime.org/
+
   # Display year-month-day
   {{ '%Y-%m-%d' | strftime }}
   # => "2021-03-19"
@@ -38,6 +40,14 @@ EXAMPLES: |
   # Use arbitrary epoch value
   {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
   {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+  # complex examples
+  vars:
+    date1: '2022-11-15T03:23:13.686956868Z'
+    date2: '2021-12-15T16:06:24.400087Z'
+    date_short: '{{ date1|regex_replace("([^.]+)(\.\d{6})(\d*)(.+)", "\1\2\4") }}' #shorten microseconds
+    iso8601format: '%Y-%m-%dT%H:%M:%S.%fZ'
+    date_diff_isoed: '{{ (date1|to_datetime(isoformat) - date2|to_datetime(isoformat)).total_seconds() }}'
 
 RETURN:
   _value:
