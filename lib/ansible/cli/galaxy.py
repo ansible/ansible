@@ -199,8 +199,8 @@ class RoleDistributionServer:
 class GalaxyCLI(CLI):
     '''Command to manage Ansible roles and collections.
 
-       None of the CLI tools are designed to run concurrently with themselves,
-       you should use an external scheduler and/or locking to ensure there are no clashing operations.
+       None of the CLI tools are designed to run concurrently with themselves.
+       Use an external scheduler and/or locking to ensure there are no clashing operations.
     '''
 
     name = 'ansible-galaxy'
