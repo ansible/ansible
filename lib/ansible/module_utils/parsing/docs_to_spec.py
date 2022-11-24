@@ -1,41 +1,62 @@
+# Copyright: 2017, Ansible Project
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause )
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+from collections.abc import Sequence
+
+from ansible.module_utils.six import string_types
+# from ansible.module_utils._text import to_text
+
 ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "no_log", "required", "type")
 
 
-def option_to_spec(option):
+def option_to_spec(option, deprecate=None):
 
     # use known common keys to copy data
     spec = {name: option[name] for name in ARGS_DOCS_KEYS if name in option}
 
     # handle suboptions
     if "suboptions" in option:
-        add_options(spec, option["suboptions"])
+        add_options_from_doc(spec, option["suboptions"], deprecate)
 
         for sub in spec["options"].values():
             # check if we need to apply_defults
             if "default" in sub or "fallback" in sub:
                 spec["apply_defaults"] = True
 
-    #TODO: handle deprecations:
+    # Use passed-in function to handle deprecations
+    if deprecate is not None and 'deprecated' in option:
+        deprecate(option['deprecated'])
+
     return spec
 
 
 def restriction_to_spec(r):
-
+    ''' use documentation to create parameter restrictions for args_spec '''
     name = None
-    rest = None # normally a list except for 'required_by'
+    rest = None  # normally a list except for 'required_by'
     if 'required' in r:
         if 'by' in r:
-            name='required_by'
+            name = 'required_by'
             rest = {r['required']: r['by']}
         elif 'if' in r:
-            name='required_if'
+            name = 'required_if'
             rest = [r['if'], r['equals'], r['required']]
     else:
         for ding in ('exclusive', 'toghether', 'one_of'):
             if ding in r:
-                if not isinstance(r[ding], Sequence):
-                    raise AnsibleError('must be a list!')
-                rest  = r[ding]
+
+                if isinstance(r[ding], string_types):
+                    rest = r[ding].spit(',')
+                elif not isinstance(r[ding], Sequence):
+                    raise TypeError('must be a list!')
+                else:
+                    rest = r[ding]
+
+                if len(rest) < 2:
+                    raise TypeError('must have multiple elements')
 
                 if ding == 'exclusive':
                     name = 'mutually_exclusive'
@@ -43,34 +64,58 @@ def restriction_to_spec(r):
                     name = 'required_%s' % ding
                 break
             else:
-                raise AnsibleError('unknown restriction!')
-
+                raise Exception('unknown restriction!')
     return {name: rest}
 
 
-    # use known common keys to copy data
-def add_options(argspec, options):
+def add_options_from_doc(argspec, options, deprecate=None):
+    ''' Add option doc entries into argspec '''
     for n, o in sorted(options.items()):
-        argspec[n] = option_to_spec(o)
+        argspec[n] = option_to_spec(o, deprecate)
 
 
-def add_restrictions(restrict_spec, restrictions):
+def get_options_from_doc(options, deprecate=None):
+    ''' Add option doc entries into argspec '''
+    argspec = {}
+    add_options_from_doc(argspec, options, deprecate)
+    return argspec
+
+
+def add_restrictions_from_doc(restrict_args, restrictions):
+    ''' add restriction doc entries into argspec '''
     for r in restrictions:
-        restrict_spec.append(restriction_to_spec(r))
+        restrict_args.append(restriction_to_spec(r))
 
 
-#argspec = {}
-#add_options(argspec, doc['docs']['options'])
-#
-#restrictions = {}
-#add_restrictions(restrictions, doc['docs']['restrictions'])
-#
-#attributes = {}
-#add_attributes(attributes, doc['ATTRIBUTES'])
+def get_restrictions_from_doc(restrictions):
+    ''' add restriction doc entries into argspec '''
+    reargs = {}
+    add_restrictions_from_doc(reargs, restrictions)
+    return reargs
+
 
 '''
+# example usage:
+
+        argpsec = get_options_from_docs(doc.get('options', {}))
+        restrictions = get_restrictions_from_doc(doc.get('restrictions', {}))
+        validator = ModuleArgumentSpecValidator(argspec, **restrictions)
+        validation_result = validator.validate(params)
+
+        final_params = validation_result.validated_parameters
+
+        no_log_values = validation_result._no_log_values
+        aliases = validation_result._aliases
+
+'''
+
+# TODO: attributes = {}
+# add_attributes(attributes, doc['ATTRIBUTES'])
+
+'''
+# example of DOCUMENTATION with requirements:
 options:
-     ...
+     ...jkk
 notes:
      ...
 requirements:
