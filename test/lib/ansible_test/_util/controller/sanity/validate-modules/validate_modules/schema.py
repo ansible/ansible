@@ -523,11 +523,48 @@ def list_dict_option_schema(for_collection, plugin_type):
                            'path', 'tmp', 'temppath', 'tmppath', 'pathspec', 'pathlist', 'str', 'string', 'raw')
         element_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'path', 'str', 'string', 'raw')
 
+    deprecated_schema = All(
+        Schema(
+            All(
+                {
+                    # This definition makes sure everything has the correct types/values
+                    'why': doc_string,
+                    'alternatives': doc_string,
+                    # vod stands for 'version or date'; this is the name of the exclusive group
+                    Exclusive('removed_at_date', 'vod'): date(),
+                    Exclusive('version', 'vod'): version(for_collection),
+                    'collection_name': collection_name,
+                },
+                {
+                    # This definition makes sure that everything we require is there
+                    Required('why'): Any(*string_types),
+                    'alternatives': Any(*string_types),
+                    Required(Any('removed_at_date', 'version')): Any(*string_types),
+                    Required('collection_name'): Any(*string_types),
+                },
+            ),
+            extra=PREVENT_EXTRA
+        ),
+        partial(check_removal_version,
+                version_field='version',
+                collection_name_field='collection_name',
+                error_code='invalid-removal-version'),
+    )
+    env_schema = All(
+        Schema({
+            Required('name'): Any(*string_types),
+            'deprecated': deprecated_schema,
+            'version_added': version(for_collection),
+            'version_added_collection': collection_name,
+        }, extra=PREVENT_EXTRA),
+        partial(version_added, error_code='option-invalid-version-added')
+    )
     basic_option_schema = {
         Required('description'): doc_string_or_strings,
         'required': bool,
         'choices': list,
         'aliases': Any(list_string_types),
+        'env': [env_schema],
         'version_added': version(for_collection),
         'version_added_collection': collection_name,
         'default': json_value,
@@ -538,42 +575,6 @@ def list_dict_option_schema(for_collection, plugin_type):
     }
     if plugin_type != 'module':
         basic_option_schema['name'] = Any(*string_types)
-        deprecated_schema = All(
-            Schema(
-                All(
-                    {
-                        # This definition makes sure everything has the correct types/values
-                        'why': doc_string,
-                        'alternatives': doc_string,
-                        # vod stands for 'version or date'; this is the name of the exclusive group
-                        Exclusive('removed_at_date', 'vod'): date(),
-                        Exclusive('version', 'vod'): version(for_collection),
-                        'collection_name': collection_name,
-                    },
-                    {
-                        # This definition makes sure that everything we require is there
-                        Required('why'): Any(*string_types),
-                        'alternatives': Any(*string_types),
-                        Required(Any('removed_at_date', 'version')): Any(*string_types),
-                        Required('collection_name'): Any(*string_types),
-                    },
-                ),
-                extra=PREVENT_EXTRA
-            ),
-            partial(check_removal_version,
-                    version_field='version',
-                    collection_name_field='collection_name',
-                    error_code='invalid-removal-version'),
-        )
-        env_schema = All(
-            Schema({
-                Required('name'): Any(*string_types),
-                'deprecated': deprecated_schema,
-                'version_added': version(for_collection),
-                'version_added_collection': collection_name,
-            }, extra=PREVENT_EXTRA),
-            partial(version_added, error_code='option-invalid-version-added')
-        )
         ini_schema = All(
             Schema({
                 Required('key'): Any(*string_types),
@@ -613,7 +614,6 @@ def list_dict_option_schema(for_collection, plugin_type):
             partial(version_added, error_code='option-invalid-version-added')
         )
         basic_option_schema.update({
-            'env': [env_schema],
             'ini': [ini_schema],
             'vars': [vars_schema],
             'cli': [cli_schema],

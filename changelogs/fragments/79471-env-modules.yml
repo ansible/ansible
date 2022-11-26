@@ -1,0 +1,2 @@
+minor_changes:
+  - "Allow modules to declare environment variables for options in documentation (https://github.com/ansible/ansible/pull/79471)."

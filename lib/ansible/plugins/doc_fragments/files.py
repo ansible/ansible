@@ -77,6 +77,9 @@ options:
     type: bool
     default: no
     version_added: '2.2'
+    env:
+      - name: ANSIBLE_UNSAFE_WRITES
+        version_added: '2.11'
   attributes:
     description:
     - The attributes the resulting filesystem object should have.
