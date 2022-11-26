@@ -639,6 +639,9 @@ class PathMapper:
         if path.startswith('docs/'):
             return minimal
 
+        if path == '.github/BOTMETA.yml':
+            return minimal
+
         if '/' not in path:
             if path in (
                     '.gitignore',

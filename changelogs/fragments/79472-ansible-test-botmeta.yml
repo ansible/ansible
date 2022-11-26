@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test - do not trigger running *all* tests when ``.github/BOTMETA.yml`` is changed in collections (https://github.com/ansible/ansible/pull/79472)."
