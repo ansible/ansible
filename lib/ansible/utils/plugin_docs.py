@@ -62,9 +62,9 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
                 continue
             if 'version_added' in option:
                 callback(option, 'version_added', 'version_added_collection')
+            if isinstance(option.get('env'), list):
+                process_option_specifiers(option['env'])
             if not is_module:
-                if isinstance(option.get('env'), list):
-                    process_option_specifiers(option['env'])
                 if isinstance(option.get('ini'), list):
                     process_option_specifiers(option['ini'])
                 if isinstance(option.get('vars'), list):
