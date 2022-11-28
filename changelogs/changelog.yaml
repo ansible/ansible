@@ -1120,6 +1120,28 @@ releases:
     fragments:
     - v2.12.10rc1_summary.yaml
     release_date: '2022-10-03'
+  2.12.11rc1:
+    changes:
+      bugfixes:
+      - ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.
+      - ansible-test - Fix broken documentation link for ``aws`` test plugin error
+        messages.
+      minor_changes:
+      - ansible-test - Improve consistency of executed ``pylint`` commands by making
+        the plugins ordered.
+      - ansible-test - Improve consistency of version specific documentation links.
+      release_summary: '| Release Date: 2022-11-28
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - 79187--wheel-0.38.0.yml
+    - ansible-test-docs-links.yml
+    - ansible-test-pylint-command.yml
+    - v2.12.11rc1_summary.yaml
+    release_date: '2022-11-28'
   2.12.1rc1:
     changes:
       bugfixes:

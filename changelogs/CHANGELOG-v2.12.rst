@@ -5,6 +5,28 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2022-11-28
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Improve consistency of executed ``pylint`` commands by making the plugins ordered.
+- ansible-test - Improve consistency of version specific documentation links.
+
+Bugfixes
+--------
+
+- ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.
+- ansible-test - Fix broken documentation link for ``aws`` test plugin error messages.
+
 v2.12.10
 ========
 
