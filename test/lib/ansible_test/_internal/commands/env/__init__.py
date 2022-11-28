@@ -178,11 +178,11 @@ def get_docker_details(args: EnvConfig) -> dict[str, t.Any]:
 
         try:
             docker_info = get_docker_info(args)
-
-            info = docker_info.info
-            version = docker_info.version
         except ApplicationError as ex:
             display.warning(str(ex))
+        else:
+            info = docker_info.info
+            version = docker_info.version
 
     docker_details = dict(
         executable=executable,

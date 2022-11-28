@@ -194,8 +194,8 @@ class DockerCompletionConfig(PythonCompletionConfig):
             raise Exception(f'Docker completion entry "{self.name}" must provide a "python" setting.')
 
         # verify properties can be correctly parsed to enums
-        _dummy = self.audit_enum
-        _dummy = self.cgroup_enum
+        assert self.audit_enum
+        assert self.cgroup_enum
 
 
 @dataclasses.dataclass(frozen=True)

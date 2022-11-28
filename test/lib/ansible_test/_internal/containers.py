@@ -261,16 +261,16 @@ def run_container(
                 stdout = docker_create(args, image, options, cmd)[0]
             else:
                 stdout = docker_run(args, image, options, cmd)[0]
-
-            if args.explain:
-                stdout = ''.join(random.choice('0123456789abcdef') for _iteration in range(64))
-
-            return stdout.strip()
         except SubprocessError as ex:
             display.error(ex.message)
             display.warning('Failed to run docker image "{image}". Waiting a few seconds before trying again.')
             docker_rm(args, name)  # podman doesn't remove containers after create if run fails
             time.sleep(3)
+        else:
+            if args.explain:
+                stdout = ''.join(random.choice('0123456789abcdef') for _iteration in range(64))
+
+            return stdout.strip()
 
     raise ApplicationError(f'Failed to run docker image "{image}".')
 
