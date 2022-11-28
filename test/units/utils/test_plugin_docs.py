@@ -35,7 +35,6 @@ ADD_TESTS = [
                         'removed_in': '2.0.0',
                     },
                     'env': [
-                        # should not be touched since this isn't a plugin
                         {
                             'version_added': '1.3.0',
                             'deprecated': {
@@ -98,11 +97,12 @@ ADD_TESTS = [
                         'removed_in': '2.0.0',
                     },
                     'env': [
-                        # should not be touched since this isn't a plugin
                         {
                             'version_added': '1.3.0',
+                            'version_added_collection': 'foo.bar',
                             'deprecated': {
                                 'version': '2.0.0',
+                                'collection_name': 'foo.bar',
                             },
                         },
                     ],

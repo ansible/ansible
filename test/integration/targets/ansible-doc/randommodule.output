@@ -24,12 +24,14 @@
                         {
                             "deprecated": {
                                 "alternative": "none",
+                                "collection_name": "testns.testcol",
                                 "removed_in": "2.0.0",
                                 "version": "2.0.0",
                                 "why": "Test deprecation"
                             },
                             "name": "TEST_ENV",
-                            "version_added": "1.0.0"
+                            "version_added": "1.0.0",
+                            "version_added_collection": "testns.testcol"
                         }
                     ],
                     "options": {

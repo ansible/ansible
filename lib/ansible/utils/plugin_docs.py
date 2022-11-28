@@ -36,15 +36,15 @@ def merge_fragment(target, source):
 
 
 def _process_versions_and_dates(fragment, is_module, return_docs, callback):
-    def process_deprecation(deprecation, top_level=False):
+    def process_deprecation(deprecation, top_level=False, treat_as_plugin=False):
         collection_name = 'removed_from_collection' if top_level else 'collection_name'
         if not isinstance(deprecation, MutableMapping):
             return
-        if (is_module or top_level) and 'removed_in' in deprecation:  # used in module deprecations
+        if ((is_module and not treat_as_plugin) or top_level) and 'removed_in' in deprecation:  # used in module deprecations
             callback(deprecation, 'removed_in', collection_name)
         if 'removed_at_date' in deprecation:
             callback(deprecation, 'removed_at_date', collection_name)
-        if not (is_module or top_level) and 'version' in deprecation:  # used in plugin option deprecations
+        if not ((is_module and not treat_as_plugin) or top_level) and 'version' in deprecation:  # used in plugin option deprecations
             callback(deprecation, 'version', collection_name)
 
     def process_option_specifiers(specifiers):
@@ -54,7 +54,7 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
             if 'version_added' in specifier:
                 callback(specifier, 'version_added', 'version_added_collection')
             if isinstance(specifier.get('deprecated'), MutableMapping):
-                process_deprecation(specifier['deprecated'])
+                process_deprecation(specifier['deprecated'], treat_as_plugin=True)
 
     def process_options(options):
         for option in options.values():

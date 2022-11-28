@@ -19,6 +19,7 @@ OPTIONS (= is mandatory):
           env:
           - deprecated:
               alternative: none
+              collection_name: testns.testcol
               removed_in: 2.0.0
               version: 2.0.0
               why: Test deprecation
