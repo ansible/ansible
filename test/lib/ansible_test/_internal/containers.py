@@ -311,7 +311,7 @@ def get_container_ip_address(args: EnvironmentConfig, container: DockerInspect) 
 
 
 @mutex
-def get_docker_preferred_network_name(args: EnvironmentConfig) -> str | None:
+def get_docker_preferred_network_name(args: EnvironmentConfig) -> t.Optional[str]:
     """
     Return the preferred network name for use with Docker. The selection logic is:
     - the network selected by the user with `--docker-network`

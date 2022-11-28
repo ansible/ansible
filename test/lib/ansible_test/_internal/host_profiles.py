@@ -495,7 +495,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     def get_podman_init_config(self) -> InitConfig:
         """Return init config for running under Podman."""
         options = self.get_common_run_options()
-        command: str | None = None
+        command: t.Optional[str] = None
         expected_mounts: tuple[CGroupMount, ...]
 
         cgroup_version = get_docker_info(self.args).cgroup_version
@@ -653,7 +653,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     def get_docker_init_config(self) -> InitConfig:
         """Return init config for running under Docker."""
         options = self.get_common_run_options()
-        command: str | None = None
+        command: t.Optional[str] = None
         expected_mounts: tuple[CGroupMount, ...]
 
         cgroup_version = get_docker_info(self.args).cgroup_version
@@ -850,7 +850,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
             display.error(str(ex))
 
-    def extract_error(self, value: str) -> str | None:
+    def extract_error(self, value: str) -> t.Optional[str]:
         """
         Extract the ansible-test portion of the error message from the given value and return it.
         Returns None if no ansible-test marker was found.

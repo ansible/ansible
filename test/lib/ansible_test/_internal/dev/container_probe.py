@@ -7,6 +7,7 @@ import json
 import os
 import pathlib
 import pwd
+import typing as t
 
 from ..io import (
     read_text_file,
@@ -53,9 +54,9 @@ class CGroupState(enum.Enum):
 class CGroupMount:
     """Details on a cgroup mount point that is expected to be present in the container."""
     path: str
-    type: str | None
-    writable: bool | None
-    state: CGroupState | None
+    type: t.Optional[str]
+    writable: t.Optional[bool]
+    state: t.Optional[CGroupState]
 
     def __post_init__(self):
         assert pathlib.PurePosixPath(self.path).is_relative_to(CGroupPath.ROOT)
@@ -83,7 +84,7 @@ def check_container_cgroup_status(args: EnvironmentConfig, config: DockerConfig,
     mounts = tuple(mount for mount in mounts if mount.path.is_relative_to(CGroupPath.ROOT))
 
     mount_cgroups: dict[MountEntry, CGroupEntry] = {}
-    probe_paths: dict[pathlib.PurePosixPath, str | None] = {}
+    probe_paths: dict[pathlib.PurePosixPath, t.Optional[str]] = {}
 
     for cgroup in cgroups:
         if cgroup.subsystem:

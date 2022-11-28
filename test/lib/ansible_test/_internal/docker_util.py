@@ -259,7 +259,7 @@ class ContainerHostProperties:
     audit_status: int
     audit_code: str
     max_open_files: int
-    loginuid: int | None
+    loginuid: t.Optional[int]
     cgroups: tuple[CGroupEntry, ...]
     mounts: tuple[MountEntry, ...]
     cgroup_v1: SystemdControlGroupV1Status
@@ -401,8 +401,8 @@ def run_utility_container(
         name: str,
         cmd: list[str],
         options: list[str],
-        data: str | None = None,
-) -> tuple[str | None, str | None]:
+        data: t.Optional[str] = None,
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
     options = options + [
         '--name', name,
@@ -647,7 +647,7 @@ def docker_create(
         image: str,
         options: list[str],
         cmd: list[str] = None,
-) -> tuple[str | None, str | None]:
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Create a container using the given docker image."""
     return docker_command(args, ['create'] + options + [image] + cmd, capture=True)
 
@@ -657,8 +657,8 @@ def docker_run(
         image: str,
         options: list[str],
         cmd: list[str] = None,
-        data: str | None = None,
-) -> tuple[str | None, str | None]:
+        data: t.Optional[str] = None,
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a container using the given docker image."""
     return docker_command(args, ['run'] + options + [image] + cmd, data=data, capture=True)
 
@@ -667,7 +667,7 @@ def docker_start(
         args: CommonConfig,
         container_id: str,
         options: list[str],
-) -> tuple[str | None, str | None]:
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Start a container by name or ID."""
     return docker_command(args, ['start'] + options + [container_id], capture=True)
 
@@ -842,7 +842,7 @@ class DockerImageInspect:
 
 
 @mutex
-def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -> DockerImageInspect | None:
+def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -> t.Optional[DockerImageInspect]:
     """
     Return the results of `docker image inspect` for the specified image or None if the image does not exist.
     """
@@ -884,7 +884,7 @@ class DockerNetworkInspect:
         self.inspection = inspection
 
 
-def docker_network_inspect(args: CommonConfig, network: str, always: bool = False) -> DockerNetworkInspect | None:
+def docker_network_inspect(args: CommonConfig, network: str, always: bool = False) -> t.Optional[DockerNetworkInspect]:
     """
     Return the results of `docker network inspect` for the specified network or None if the network does not exist.
     """
