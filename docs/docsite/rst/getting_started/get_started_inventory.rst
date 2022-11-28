@@ -14,7 +14,7 @@ Now let's create an inventory file that you can add to source control for flexib
 
 .. note::
    Inventory files can be in ``INI`` or ``YAML`` format.
-   For demonstration purposes this section uses ``YAML`` format only.
+   For demonstration purposes, this section uses ``YAML`` format only.
 
 Complete the following steps: 
 
