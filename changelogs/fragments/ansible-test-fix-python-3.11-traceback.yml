@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Added a work-around for a traceback under Python 3.11 when completing certain command line options.
