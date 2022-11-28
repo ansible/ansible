@@ -133,7 +133,7 @@ EXAMPLES = r"""
       - '!<any valid subset>'
       - facter
 
-- name: Collect only selected facts
+- name: Display only selected facts
   ansible.builtin.setup:
     filter:
       - 'ansible_distribution'
