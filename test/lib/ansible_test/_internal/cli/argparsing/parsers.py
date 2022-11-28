@@ -22,24 +22,26 @@ ASSIGNMENT_DELIMITER = '='
 PATH_DELIMITER = '/'
 
 
-@dataclasses.dataclass(frozen=True)
+# This class was originally frozen. However, that causes issues when running under Python 3.11.
+# See: https://github.com/python/cpython/issues/99856
+@dataclasses.dataclass
 class Completion(Exception):
     """Base class for argument completion results."""
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class CompletionUnavailable(Completion):
     """Argument completion unavailable."""
     message: str = 'No completions available.'
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class CompletionError(Completion):
     """Argument completion error."""
     message: t.Optional[str] = None
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class CompletionSuccess(Completion):
     """Successful argument completion result."""
     list_mode: bool
