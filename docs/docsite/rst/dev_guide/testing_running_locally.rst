@@ -30,7 +30,7 @@ For example, to work with the ``community.windows`` collection, follow these ste
 
 1. Clone the collection you want to test into a valid collection root:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       git clone https://github.com/ansible-collections/community.windows ~/dev/ansible_collections/community/windows
 
@@ -41,7 +41,7 @@ For example, to work with the ``community.windows`` collection, follow these ste
 
 2. Clone any collections on which the collection depends:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       git clone https://github.com/ansible-collections/ansible.windows ~/dev/ansible_collections/ansible/windows
 
@@ -56,7 +56,7 @@ For example, to work with the ``community.windows`` collection, follow these ste
 
 3. Switch to the directory where the collection to test resides:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       cd ~/dev/ansible_collections/community/windows
 
@@ -69,19 +69,19 @@ For example, to work with the ``ansible-core`` source cloned from GitHub, follow
 
 1. Clone the ``ansible-core`` repository:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       git clone https://github.com/ansible/ansible ~/dev/ansible
 
 2. Switch to the directory where the ``ansible-core`` source resides:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       cd ~/dev/ansible
 
 3. Add ``ansible-core`` programs to your ``PATH``:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       source hacking/env-setup
 
@@ -95,7 +95,7 @@ For example, to work with the ``ansible-core`` source cloned from GitHub, follow
       If you have an installed version of ``ansible-core`` and are trying to run ``ansible-test`` from your ``PATH``,
       make sure the program found by your shell is the one from the ``ansible-core`` source:
 
-      .. code-block:: shell-session
+      .. code-block:: shell
 
          which ansible-test
 
@@ -209,13 +209,13 @@ Setup instructions
 
 3. Stop any running WSL instances with the command:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       wsl --shutdown
 
 4. Verify all WSL instances have stopped with the command:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       wsl -l -v
 
@@ -225,7 +225,7 @@ Setup instructions
 
       a.  Check for the ``systemd`` cgroup hierarchy with the following command:
 
-          .. code-block:: shell-session
+          .. code-block:: shell
 
              grep systemd /proc/self/cgroup
 
@@ -234,7 +234,7 @@ Setup instructions
 
    b. Mount the ``systemd`` cgroup hierarchy with the following commands:
 
-   .. code-block:: shell-session
+   .. code-block:: shell
 
       mkdir /sys/fs/cgroup/systemd
       mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
@@ -253,7 +253,7 @@ Linux cgroup configuration
 For certain container hosts and container combinations, additional setup on the container host may be required.
 In these situations ``ansible-test`` will report an error and provide additional instructions to run as ``root``:
 
-.. code-block:: shell-session
+.. code-block:: shell
 
    mkdir /sys/fs/cgroup/systemd
    mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
@@ -261,7 +261,7 @@ In these situations ``ansible-test`` will report an error and provide additional
 If you are using rootless Podman, an additional command must be run, also as ``root``.
 Make sure to substitute your user and group for ``{user}`` and ``{group}`` respectively:
 
-.. code-block:: shell-session
+.. code-block:: shell
 
    chown -R {user}:{group} /sys/fs/cgroup/systemd
 
@@ -356,7 +356,7 @@ aren't using the ``--venv`` or ``--docker`` options which create an isolated pyt
 environment then you may have to use the ``--requirements`` option to ensure that the
 correct version of the coverage module is installed:
 
-.. code-block:: shell-session
+.. code-block:: shell
 
    ansible-test coverage erase
    ansible-test units --coverage apt
