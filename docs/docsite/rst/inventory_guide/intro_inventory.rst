@@ -128,6 +128,7 @@ Grouping groups: parent/child group relationships
 You can create parent/child relationships among groups. Parent groups are also known as nested groups or groups of groups. For example, if all your production hosts are already in groups such as  ``atlanta_prod`` and ``denver_prod``, you can create a ``production`` group that includes those smaller groups. This approach reduces maintenance because you can add or remove hosts from the parent group by editing the child groups.
 
 To create parent/child relationships for groups:
+
 * in INI format, use the ``:children`` suffix
 * in YAML format, use the ``children:`` entry
 
@@ -292,7 +293,9 @@ We document adding variables in the main inventory file for simplicity. However,
 Assigning a variable to one machine: host variables
 ===================================================
 
-You can easily assign a variable to a single host, then use it later in playbooks. You can do this directly in your inventory file. In INI:
+You can easily assign a variable to a single host, then use it later in playbooks. You can do this directly in your inventory file.
+
+In INI:
 
 .. code-block:: text
 
@@ -376,7 +379,9 @@ Consider using YAML format for inventory sources to avoid confusion on the actua
 Assigning a variable to many machines: group variables
 ======================================================
 
-If all hosts in a group share a variable value, you can apply that variable to an entire group at once. In INI:
+If all hosts in a group share a variable value, you can apply that variable to an entire group at once.
+
+In INI:
 
 .. code-block:: text
 
@@ -545,6 +550,7 @@ When using multiple inventory sources, keep in mind that any variable conflicts 
 to the rules described in :ref:`how_we_merge` and :ref:`ansible_variable_precedence`. You can control the merging order of variables in inventory sources to get the variable value you need.
 
 When you pass multiple inventory sources at the command line, Ansible merges variables in the order you pass those parameters. If ``[all:vars]`` in staging inventory defines ``myvar = 1`` and production inventory defines ``myvar = 2``, then:
+
 * Pass  ``-i staging -i production`` to run the playbook with ``myvar = 2``.
 * Pass ``-i production -i staging`` to run the playbook with ``myvar = 1``. 
 
