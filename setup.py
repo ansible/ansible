@@ -277,6 +277,7 @@ static_setup_params = dict(
     name='ansible',
     version=__version__,
     description='Radically simple IT automation',
+    long_description_content_type='text/x-rst',
     author=__author__,
     author_email='info@ansible.com',
     url='https://ansible.com/',
