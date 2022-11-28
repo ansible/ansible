@@ -5,6 +5,26 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-11-28
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Improve consistency of executed ``pylint`` commands by making the plugins ordered.
+
+Bugfixes
+--------
+
+- file lookup now plays nice with generic lookup ``errors`` option.
+
 v2.13.6
 =======
 
