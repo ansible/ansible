@@ -34,9 +34,7 @@ LOGINUID_NOT_SET = 4294967295
 UID = os.getuid()
 
 try:
-    with open('/proc/self/loginuid') as loginuid_file:
-        LOGINUID = int(loginuid_file.read())
-
+    LOGINUID = int(pathlib.Path('/proc/self/loginuid').read_text())
     LOGINUID_MISMATCH = LOGINUID != LOGINUID_NOT_SET and LOGINUID != UID
 except FileNotFoundError:
     LOGINUID = None
@@ -48,8 +46,7 @@ def main() -> None:
     display.section('Startup check')
 
     try:
-        with open('/etc/ansible-test.bootstrap') as bootstrap:
-            bootstrap_type = bootstrap.read().strip()
+        bootstrap_type = pathlib.Path('/etc/ansible-test.bootstrap').read_text().strip()
     except FileNotFoundError:
         bootstrap_type = 'undefined'
 
@@ -92,18 +89,17 @@ def main() -> None:
     error_total = 0
 
     for name in sorted(result_dir.glob('*.log')):
-        with open(name) as log_file:
-            lines = log_file.read().strip().splitlines()
-            error_count = len([line for line in lines if line.startswith('FAIL: ')])
-            error_total += error_count
+        lines = name.read_text().strip().splitlines()
+        error_count = len([line for line in lines if line.startswith('FAIL: ')])
+        error_total += error_count
 
-            display.section(f'Log ({error_count=}/{len(lines)}): {name.name}')
+        display.section(f'Log ({error_count=}/{len(lines)}): {name.name}')
 
-            for line in lines:
-                if line.startswith('FAIL: '):
-                    display.show(line, display.RED)
-                else:
-                    display.show(line)
+        for line in lines:
+            if line.startswith('FAIL: '):
+                display.show(line, display.RED)
+            else:
+                display.show(line)
 
     error_count = len([result for result in results if result.message])
     error_total += error_count
@@ -140,10 +136,10 @@ def get_test_scenarios() -> list[TestScenario]:
     if not available_engines:
         raise ApplicationError(f'No supported container engines found: {", ".join(supported_engines)}')
 
-    with open(pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt')) as docker_file:
-        # TODO: consider including testing for the collection default image
-        entries = {name: value for name, value in [parse_completion_entry(line) for line in docker_file.read().splitlines()]
-                   if name != 'default'}
+    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
+
+    # TODO: consider including testing for the collection default image
+    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
 
     unprivileged_user = User.get(UNPRIVILEGED_USER_NAME)
 
@@ -426,8 +422,7 @@ def remove_cgroup_systemd() -> list[pathlib.Path]:
 
     time.sleep(1)  # allow time for cgroup hierarchy to be removed after unmounting
 
-    with open('/proc/self/cgroup') as cgroup_file:
-        cgroup = cgroup_file.read()
+    cgroup = pathlib.Path('/proc/self/cgroup').read_text()
 
     if 'systemd' in cgroup:
         raise Exception('systemd hierarchy detected')
@@ -937,13 +932,11 @@ class DnfBootstrapper(Bootstrapper):
             # So we'll just change the system default to crun instead.
             # Unfortunately we can't do this with the `--runtime` option since that doesn't work with podman remote.
 
-            with open('/usr/share/containers/containers.conf') as conf_file:
-                conf = conf_file.read()
+            conf = pathlib.Path('/usr/share/containers/containers.conf').read_text()
 
             conf = re.sub('^runtime .*', 'runtime = "crun"', conf, flags=re.MULTILINE)
 
-            with open('/etc/containers/containers.conf', 'w') as conf_file:
-                conf_file.write(conf)
+            pathlib.Path('/etc/containers/containers.conf').write_text(conf)
 
         super().run()
 
