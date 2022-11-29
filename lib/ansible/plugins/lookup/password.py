@@ -366,11 +366,12 @@ class LookupModule(LookupBase):
 
             ident = params['ident']
             if encrypt and not ident:
-                changed = True
                 try:
                     ident = BaseHash.algorithms[encrypt].implicit_ident
                 except KeyError:
                     ident = None
+                if ident:
+                    changed = True
 
             if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
