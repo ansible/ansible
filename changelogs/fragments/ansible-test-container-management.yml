@@ -1,0 +1,59 @@
+major_changes:
+  - ansible-test - Docker and Podman are now supported on hosts with cgroup v2 unified. 
+                   Previously only cgroup v1 and cgroup v2 hybrid were supported.
+  - ansible-test - Docker Desktop on WSL2 is now supported (additional configuration required).
+  - ansible-test - Podman on WSL2 is now supported.
+  - ansible-test - Podman now works on container hosts without systemd.
+                   Previously only some containers worked, while others required rootfull or rootless Podman,
+                   but would not work with both. Some containers did not work at all.
+  - ansible-test - When additional cgroup setup is required on the container host, this will be automatically detected.
+                   Instructions on how to configure the host will be provided in the error message shown.
+minor_changes:
+  - ansible-test - When using Podman, ansible-test will detect if the loginuid used in containers is incorrect.
+                   When this occurs a warning is displayed and the container is run with the AUDIT_CONTROL capability.
+                   Previously containers would fail under this situation, with no useful warnings or errors given.
+  - ansible-test - Failure to connect to a container over SSH now results in a clear error.
+                   Previously tests would be attempted even after initial connection attempts failed.
+  - ansible-test - Warnings are now shown when using containers that were built with VOLUME instructions.
+  - ansible-test - Unit tests now support network disconnect by default when running under Podman.
+                   Previously this feature only worked by default under Docker.
+  - ansible-test - Additional log details are shown when containers fail to start or SSH connections to containers fail.
+  - ansible-test - Containers included with ansible-test no longer disable seccomp by default.
+  - ansible-test - A new ``cgroup`` option is available when running custom containers.
+                   This option can be used to indicate a container requires cgroup v1 or that it does not use cgroup.
+                   The default behavior assumes the container works with cgroup v2 (as well as v1).
+  - ansible-test - A new ``audit`` option is available when running custom containers.
+                   This option can be used to indicate whether a container requires the AUDIT_WRITE capability.
+                   The default is ``required``, which most containers will need when using Podman.
+                   If necessary, the ``none`` option can be used to opt-out of the capability.
+                   This has no effect on Docker, which always provides the capability.
+  - ansible-test - More details are provided about an instance when provisioning fails.
+  - ansible-test - Connection failures to remote provisioned hosts now show failure details as a warning.
+  - ansible-test - When setting the max open files for containers, the container host's limit will be checked.
+                   If the host limit is lower than the preferred value, it will be used and a warning will be shown.
+  - ansible-test - Use ``stop --time 0`` followed by ``rm`` to remove ephemeral containers instead of ``rm -f``.
+                   This speeds up teardown of ephemeral containers.
+  - ansible-test - Reduce the polling limit for SSHD startup in containers from 60 retries to 10.
+                   The one second delay between retries remains in place.
+  - ansible-test - Integration tests can be excluded from retries triggered by the ``--retry-on-error`` option by
+                   adding the ``retry/never`` alias. This is useful for tests that cannot pass on a retry or are too
+                   slow to make retries useful.
+bugfixes:
+  - ansible-test - Multiple containers now work under Podman without specifying the ``--docker-network`` option.
+  - ansible-test - Prevent concurrent / repeat pulls of the same container image.
+  - ansible-test - Prevent concurrent / repeat inspections of the same container image.
+  - ansible-test - Prevent concurrent execution of cached methods.
+  - ansible-test - Handle server errors when executing the ``docker info`` command.
+  - ansible-test - Show the exception type when reporting errors during instance provisioning.
+  - ansible-test - Pass the ``XDG_RUNTIME_DIR`` environment variable through to container commands.
+  - ansible-test - Connection attempts to managed remote instances no longer abort on ``Permission denied`` errors.
+known_issues:
+  - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
+                   Podman should work with SELinux in enforcing mode.
+  - ansible-test - Additional configuration may be required for certain container host and container combinations.
+                   Further details are available in the testing documentation.
+  - ansible-test - Systems with Podman networking issues may be unable to run containers, when previously the issue
+                   went unreported. Correct the networking issues to continue using ``ansible-test`` with Podman.
+  - ansible-test - Custom containers with ``VOLUME`` instructions may be unable to start, when previously the containers
+                   started correctly. Remove the ``VOLUME`` instructions to resolve the issue. Containers with this
+                   condition will cause ``ansible-test`` to emit a warning.

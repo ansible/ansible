@@ -17,9 +17,9 @@ from ...io import (
 
 from ...util import (
     display,
-    SubprocessError,
     get_ansible_version,
     get_available_python_versions,
+    ApplicationError,
 )
 
 from ...util_common import (
@@ -30,8 +30,7 @@ from ...util_common import (
 
 from ...docker_util import (
     get_docker_command,
-    docker_info,
-    docker_version
+    get_docker_info,
 )
 
 from ...constants import (
@@ -178,14 +177,12 @@ def get_docker_details(args: EnvConfig) -> dict[str, t.Any]:
         executable = docker.executable
 
         try:
-            info = docker_info(args)
-        except SubprocessError as ex:
-            display.warning('Failed to collect docker info:\n%s' % ex)
-
-        try:
-            version = docker_version(args)
-        except SubprocessError as ex:
-            display.warning('Failed to collect docker version:\n%s' % ex)
+            docker_info = get_docker_info(args)
+        except ApplicationError as ex:
+            display.warning(str(ex))
+        else:
+            info = docker_info.info
+            version = docker_info.version
 
     docker_details = dict(
         executable=executable,

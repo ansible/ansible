@@ -531,6 +531,10 @@ def command_integration_filtered(
                         if not tries:
                             raise
 
+                        if target.retry_never:
+                            display.warning(f'Skipping retry of test target "{target.name}" since it has been excluded from retries.')
+                            raise
+
                         display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                         display.verbosity = args.verbosity = 6
 
