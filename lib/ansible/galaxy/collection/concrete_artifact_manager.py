@@ -20,20 +20,18 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 if t.TYPE_CHECKING:
-    from ansible.galaxy.dependency_resolution.dataclasses import (
-        Candidate, Requirement,
-    )
+    from ansible.galaxy.dependency_resolution.dataclasses import Candidate
     from ansible.galaxy.token import GalaxyToken
 
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
-from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
+from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML, Requirement
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.module_utils.six import raise_from
+from ansible.module_utils.six import raise_from, string_types
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel

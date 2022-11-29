@@ -342,9 +342,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
             # FIXME: do we assume that all the following artifacts are also concrete?
             # FIXME: does using fqcn==None cause us problems here?
 
+            matches = []
             # Ensure the version found in the concrete artifact is SemVer-compliant
             for version, req_src in coll_versions:
-                version_err = f"Invalid version found for the collection '{first_req}': {version} ({type(version)}). {version_req}"
+                match = Candidate(fqcn, version, req_src, first_req.type, None)
                 # NOTE: The known cases causing the version to be a non-string object come from
                 # NOTE: the differences in how the YAML parser normalizes ambiguous values and
                 # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
@@ -356,18 +357,9 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 # NOTE: Another known mistake is setting a minor part of the SemVer notation
                 # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
                 # NOTE: after the conversion to string.
-                if not isinstance(version, string_types):
-                    raise ValueError(version_err)
-                elif version != '*':
-                    try:
-                        SemanticVersion(version)
-                    except ValueError as ex:
-                        raise ValueError(version_err) from ex
-
-            return [
-                Candidate(fqcn, version, _none_src_server, first_req.type, None)
-                for version, _none_src_server in coll_versions
-            ]
+                match.validate_version()
+                matches.append(match)
+            return matches
 
         latest_matches = []
         signatures = []
@@ -442,12 +434,12 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # NOTE: pre-releases is when there are several user requirements
         # NOTE: and one of them is a pre-release that also matches a
         # NOTE: transitive dependency of another requirement.
-        allow_pre_release = self._with_pre_releases or not (
-            requirement.ver == '*' or
-            requirement.ver.startswith('<') or
-            requirement.ver.startswith('>') or
-            requirement.ver.startswith('!=')
-        ) or self._is_user_requested(candidate)
+        allow_pre_release = (
+            self._with_pre_releases
+            or self._is_user_requested(candidate)
+            or (requirement.ver != '*' and is_pre_release(requirement.ver))
+        )
+
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 

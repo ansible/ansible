@@ -504,8 +504,20 @@ def build_collection(u_collection_path, u_output_path, force):
     return collection_output
 
 
+def process_virtual_requirements(requirement, resolved_requirements, artifacts_manager):
+    # type: (Requirement, t.Iterable[Requirement], ConcreteArtifactsManager) -> None
+    requirement.validate_version()
+
+    if requirement.is_virtual:
+        for dep_name, dep_req in artifacts_manager.get_direct_collection_dependencies(requirement).items():
+            dep = Requirement.from_requirement_dict({'name': dep_name, 'version': dep_req}, artifacts_manager)
+            process_virtual_requirements(dep, resolved_requirements, artifacts_manager)
+    else:
+        resolved_requirements.add(requirement)
+
+
 def download_collections(
-        collections,  # type: t.Iterable[Requirement]
+        collections,  # type: t.List[Requirement]
         output_path,  # type: str
         apis,  # type: t.Iterable[GalaxyAPI]
         no_deps,  # type: bool
@@ -522,6 +534,14 @@ def download_collections(
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
     """
+    for install_req in list(collections):
+        if not install_req.is_virtual:
+            continue
+        virtual_direct_requests = set()  # type: t.Set[Requirement]
+        process_virtual_requirements(install_req, virtual_direct_requests, artifacts_manager)
+        collections.remove(install_req)
+        collections += list(virtual_direct_requests)
+
     with _display_progress("Process download dependency map"):
         dep_map = _resolve_depenency_map(
             set(collections),
@@ -648,7 +668,7 @@ def publish_collection(collection_path, api, wait, timeout):
 
 
 def install_collections(
-        collections,  # type: t.Iterable[Requirement]
+        collections,  # type: t.List[Requirement]
         output_path,  # type: str
         apis,  # type: t.Iterable[GalaxyAPI]
         ignore_errors,  # type: bool
@@ -677,20 +697,15 @@ def install_collections(
         for coll in find_existing_collections(output_path, artifacts_manager)
     }
 
-    unsatisfied_requirements = set(
-        chain.from_iterable(
-            (
-                Requirement.from_dir_path(sub_coll, artifacts_manager)
-                for sub_coll in (
-                    artifacts_manager.
-                    get_direct_collection_dependencies(install_req).
-                    keys()
-                )
-            )
-            if install_req.is_subdirs else (install_req, )
-            for install_req in collections
-        ),
-    )
+    for install_req in list(collections):
+        if not install_req.is_virtual:
+            continue
+        virtual_direct_requests = set()  # type: t.Set[Requirement]
+        process_virtual_requirements(install_req, virtual_direct_requests, artifacts_manager)
+        collections.remove(install_req)
+        collections += list(virtual_direct_requests)
+
+    unsatisfied_requirements = set(collections)
     requested_requirements_names = {req.fqcn for req in unsatisfied_requirements}
 
     # NOTE: Don't attempt to reevaluate already installed deps
@@ -699,7 +714,7 @@ def install_collections(
         req
         for req in unsatisfied_requirements
         for exs in existing_collections
-        if req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver)
+        if req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver) and not req.is_dir
     }
 
     if not unsatisfied_requirements and not upgrade:
