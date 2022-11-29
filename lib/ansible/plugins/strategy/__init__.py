@@ -764,11 +764,10 @@ class StrategyBase:
             # If this is a role task, mark the parent role as being run (if
             # the task was ok or failed, but not skipped or unreachable)
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action not in C._ACTION_INCLUDE_ROLE:?
-                # lookup the role in the ROLE_CACHE to make sure we're dealing
+                # lookup the role in the role cache to make sure we're dealing
                 # with the correct object and mark it as executed
-                for (entry, role_obj) in iterator._play.ROLE_CACHE[original_task._role.get_name()].items():
-                    if role_obj._uuid == original_task._role._uuid:
-                        role_obj._had_task_run[original_host.name] = True
+                role_obj = self._get_cached_role(original_task, iterator._play)
+                role_obj._had_task_run[original_host.name] = True
 
             ret_results.append(task_result)
 
@@ -995,9 +994,9 @@ class StrategyBase:
             # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
             # How would this work with allow_duplicates??
             if task.implicit:
-                if target_host.name in task._role._had_task_run:
-                    task._role._completed[target_host.name] = True
-                    msg = 'role_complete for %s' % target_host.name
+                role_obj = self._get_cached_role(task, iterator._play)
+                role_obj._completed[target_host.name] = True
+                msg = 'role_complete for %s' % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
@@ -1060,6 +1059,15 @@ class StrategyBase:
         if skipped:
             self._tqm.send_callback('v2_runner_on_skipped', res)
         return [res]
+
+    def _get_cached_role(self, task, play):
+        role_path = task._role.get_role_path()
+        role_cache = play.role_cache[role_path]
+        try:
+            idx = role_cache.index(task._role)
+            return role_cache[idx]
+        except ValueError:
+            raise AnsibleError(f'Cannot locate {task._role.get_name()} in role cache')
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''

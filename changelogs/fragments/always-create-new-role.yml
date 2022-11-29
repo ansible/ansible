@@ -1,0 +1,5 @@
+bugfixes:
+- role deduplication - Always create new role object, regardless of
+  deduplication. Deduplication will only affect whether a duplicate call to a
+  role will execute, as opposed to re-using the same object.
+  (https://github.com/ansible/ansible/pull/78661)

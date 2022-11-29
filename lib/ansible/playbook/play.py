@@ -30,7 +30,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
-from ansible.playbook.role import Role
+from ansible.playbook.role import Role, hash_params
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
@@ -93,7 +93,7 @@ class Play(Base, Taggable, CollectionSearch):
         self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
-        self.ROLE_CACHE = {}
+        self.role_cache = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
@@ -103,6 +103,22 @@ class Play(Base, Taggable, CollectionSearch):
 
     def __repr__(self):
         return self.get_name()
+
+    @property
+    def ROLE_CACHE(self):
+        """Backwards compat for custom strategies using ``play.ROLE_CACHE``
+        """
+        display.deprecated(
+            'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
+            version='2.18',
+        )
+        cache = {}
+        for path, roles in self.role_cache.items():
+            for role in roles:
+                name = role.get_name()
+                hashed_params = hash_params(role._get_hash_dict())
+                cache.setdefault(name, {})[hashed_params] = role
+        return cache
 
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.
@@ -393,7 +409,7 @@ class Play(Base, Taggable, CollectionSearch):
 
     def copy(self):
         new_me = super(Play, self).copy()
-        new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me.role_cache = self.role_cache.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         new_me._action_groups = self._action_groups
