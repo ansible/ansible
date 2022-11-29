@@ -22,7 +22,6 @@ import argparse
 import ast
 import datetime
 import json
-import errno
 import os
 import re
 import subprocess
@@ -2467,12 +2466,9 @@ class GitCache:
                 self.head_tree = self._get_module_files()
             else:
                 raise
-        except OSError as ex:
-            if ex.errno == errno.ENOENT:
-                # fallback when git is not installed
-                self.head_tree = self._get_module_files()
-            else:
-                raise
+        except FileNotFoundError:
+            # fallback when git is not installed
+            self.head_tree = self._get_module_files()
 
         allowed_exts = ('.py', '.ps1')
         if plugin_type != 'module':

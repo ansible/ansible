@@ -8,7 +8,6 @@ import os
 import re
 import traceback
 import uuid
-import errno
 import time
 import typing as t
 
@@ -347,18 +346,14 @@ class AnsibleCoreCI:
         try:
             self.connection = None
             os.remove(self.path)
-        except OSError as ex:
-            if ex.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
 
     def _load(self):
         """Load instance information."""
         try:
             data = read_text_file(self.path)
-        except IOError as ex:
-            if ex.errno != errno.ENOENT:
-                raise
-
+        except FileNotFoundError:
             return False
 
         if not data.startswith('{'):
