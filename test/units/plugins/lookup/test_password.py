@@ -520,16 +520,17 @@ class TestLookupModuleWithPasslib(BaseTestLookupModule):
             self.assertEqual(int(str_parts[2]), crypt_parts['rounds'])
             self.assertIsInstance(result, text_type)
 
-    @patch.object(PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
-    def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+    def test_password_already_created_encrypt(self, mock_write_file):
         password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
 
         with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
             results = self.password_lookup.run([u'/path/to/somewhere chars=anything encrypt=pbkdf2_sha256'], None)
         for result in results:
             self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')
+
+        # Assert the password file is not rewritten
+        mock_write_file.assert_not_called()
 
 
 @pytest.mark.skipif(passlib is None, reason='passlib must be installed to run these tests')
