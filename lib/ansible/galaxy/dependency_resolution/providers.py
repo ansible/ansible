@@ -416,7 +416,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             requirement.ver.startswith('<') or
             requirement.ver.startswith('>') or
             requirement.ver.startswith('!=')
-        ) or self._is_user_requested(candidate)
+        ) or self._is_user_requested(candidate) or candidate in self._preferred_candidates
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 

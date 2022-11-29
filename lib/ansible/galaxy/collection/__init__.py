@@ -502,6 +502,28 @@ def build_collection(u_collection_path, u_output_path, force):
     return collection_output
 
 
+def get_virtual_requirement_dependencies(requirement, artifacts_manager, seen=None):
+    # type: (Requirement, t.Iterable[Requirement], ConcreteArtifactsManager) -> None
+    if seen is None:
+        seen = set()
+    elif requirement in seen:
+        yield from ()
+
+    seen.add(requirement)
+
+    if requirement.is_virtual:
+        try:
+            for dep_name, dep_req in artifacts_manager.get_direct_collection_dependencies(requirement).items():
+                dep = Requirement.from_requirement_dict({'name': dep_name, 'version': dep_req}, artifacts_manager)
+                yield from get_virtual_requirement_dependencies(dep, artifacts_manager, seen)
+        except AnsibleError:
+            # Ignore if the concrete artifact manager fails to download git repos.
+            # This will be an error (or warning if --ignore-errors is provided) once the dep resolver runs.
+            pass
+    else:
+        yield requirement
+
+
 def download_collections(
         collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
@@ -520,9 +542,15 @@ def download_collections(
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
     """
+    collections = set(collections)
+
+    for install_req in list(collections):
+        # add any virtual dependencies to the direct requests to give them the correct priority in the dep resolver
+        list(get_virtual_requirement_dependencies(install_req, artifacts_manager, seen=collections))
+
     with _display_progress("Process download dependency map"):
         dep_map = _resolve_depenency_map(
-            set(collections),
+            collections,
             galaxy_apis=apis,
             preferred_candidates=None,
             concrete_artifacts_manager=artifacts_manager,
@@ -673,20 +701,11 @@ def install_collections(
         for coll in find_existing_collections(path, artifacts_manager)
     }
 
-    unsatisfied_requirements = set(
-        chain.from_iterable(
-            (
-                Requirement.from_dir_path(to_bytes(sub_coll), artifacts_manager)
-                for sub_coll in (
-                    artifacts_manager.
-                    get_direct_collection_dependencies(install_req).
-                    keys()
-                )
-            )
-            if install_req.is_subdirs else (install_req, )
-            for install_req in collections
-        ),
-    )
+    collections = set(collections)
+    for install_req in list(collections):
+        list(get_virtual_requirement_dependencies(install_req, artifacts_manager, seen=collections))
+
+    unsatisfied_requirements = collections
     requested_requirements_names = {req.fqcn for req in unsatisfied_requirements}
 
     # NOTE: Don't attempt to reevaluate already installed deps
@@ -695,7 +714,7 @@ def install_collections(
         req
         for req in unsatisfied_requirements
         for exs in existing_collections
-        if req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver)
+        if req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver) and not req.is_dir
     }
 
     if not unsatisfied_requirements and not upgrade:

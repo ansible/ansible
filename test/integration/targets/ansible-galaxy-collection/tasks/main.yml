@@ -134,6 +134,10 @@
   loop_control:
     loop_var: resolvelib_version
 
+- name: test installing prereleases via scm direct requests
+  # In this test suite because the bug relies on the dep having versions on a Galaxy server
+  include_tasks: virtual_direct_requests.yml
+
 - name: publish collection with a dep on another server
   setup_collections:
     server: secondary

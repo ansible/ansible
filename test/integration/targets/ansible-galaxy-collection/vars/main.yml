@@ -165,3 +165,10 @@ collection_list:
     name: parent
     dependencies:
       namespace1.name1: '*'
+
+  # non-prerelease is published to test that installing
+  # the pre-release from SCM doesn't accidentally prefer indirect
+  # dependencies from Galaxy
+  - namespace: test_prereleases
+    name: collection2
+    version: 1.0.0

@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-galaxy collection - allow pre-releases without --pre if the pre-release is already installed.
+  - ansible-galaxy collection - fix installing pre-releases from virtual sources (https://github.com/ansible/ansible/issues/79168).
