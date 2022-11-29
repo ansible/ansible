@@ -1,6 +1,11 @@
 MANIFEST.json
 FILES.json
 README.rst
+GPL
+LICENSES/
+LICENSES/MIT.txt
+.reuse/
+.reuse/dep5
 changelogs/
 docs/
 playbooks/
@@ -88,6 +93,7 @@ plugins/test/bar.yml
 plugins/test/baz.yaml
 plugins/test/test.py
 plugins/vars/bar.yml
+plugins/vars/bar.yml.license
 plugins/vars/baz.yaml
 plugins/vars/test.py
 roles/foo/

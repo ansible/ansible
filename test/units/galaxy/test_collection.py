@@ -596,7 +596,7 @@ def test_build_ignore_files_and_folders(collection_input, monkeypatch):
         tests_file.write('random')
         tests_file.flush()
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel)
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     assert actual['format'] == 1
     for manifest_entry in actual['files']:
@@ -632,7 +632,7 @@ def test_build_ignore_older_release_in_root(collection_input, monkeypatch):
             file_obj.write('random')
             file_obj.flush()
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel)
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
     assert actual['format'] == 1
 
     plugin_release_found = False
@@ -660,7 +660,7 @@ def test_build_ignore_patterns(collection_input, monkeypatch):
 
     actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection',
                                               ['*.md', 'plugins/action', 'playbooks/*.j2'],
-                                              Sentinel)
+                                              Sentinel, None)
     assert actual['format'] == 1
 
     expected_missing = [
@@ -711,7 +711,7 @@ def test_build_ignore_symlink_target_outside_collection(collection_input, monkey
     link_path = os.path.join(input_dir, 'plugins', 'connection')
     os.symlink(outside_dir, link_path)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel)
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
     for manifest_entry in actual['files']:
         assert manifest_entry['name'] != 'plugins/connection'
 
@@ -735,7 +735,7 @@ def test_build_copy_symlink_target_inside_collection(collection_input):
 
     os.symlink(roles_target, roles_link)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel)
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     linked_entries = [e for e in actual['files'] if e['name'].startswith('playbooks/roles/linked')]
     assert len(linked_entries) == 1
