@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update error handling code to use Python 3.x constructs, avoiding direct use of ``errno``.
