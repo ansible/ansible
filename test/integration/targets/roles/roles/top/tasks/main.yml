@@ -1,0 +1,6 @@
+- name: "{{ info }} - {{ role_name }}: testvar content"
+  debug:
+    msg: '{{ testvar | default("Not specified") }}'
+
+- include_role:
+    name: middle
