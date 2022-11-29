@@ -11,8 +11,13 @@ from .init import (
     CURRENT_RLIMIT_NOFILE,
 )
 
+from .constants import (
+    STATUS_HOST_CONNECTION_ERROR,
+)
+
 from .util import (
     ApplicationError,
+    HostConnectionError,
     display,
     report_locale,
 )
@@ -94,6 +99,10 @@ def main(cli_args: t.Optional[list[str]] = None) -> None:
 
         display.review_warnings()
         config.success = True
+    except HostConnectionError as ex:
+        display.fatal(str(ex))
+        ex.run_callback()
+        sys.exit(STATUS_HOST_CONNECTION_ERROR)
     except ApplicationWarning as ex:
         display.warning('%s' % ex)
         sys.exit(0)

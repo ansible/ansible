@@ -946,6 +946,23 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
+class HostConnectionError(ApplicationError):
+    """
+    Raised when the initial connection during host profile setup has failed and all retries have been exhausted.
+    Raised by provisioning code when one or more provisioning threads raise this exception.
+    Also raised when an SSH connection fails for the shell command.
+    """
+    def __init__(self, message: str, callback: t.Callable[[], None] = None) -> None:
+        super().__init__(message)
+
+        self._callback = callback
+
+    def run_callback(self) -> None:
+        """Run the error callback, if any."""
+        if self._callback:
+            self._callback()
+
+
 def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):

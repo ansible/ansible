@@ -397,6 +397,8 @@ def add_global_docker(
             docker_network=None,
             docker_terminate=None,
             prime_containers=False,
+            dev_systemd_debug=False,
+            dev_probe_cgroups=None,
         )
 
         return
@@ -426,6 +428,24 @@ def add_global_docker(
         '--prime-containers',
         action='store_true',
         help='download containers without running tests',
+    )
+
+    # Docker support isn't related to ansible-core-ci.
+    # However, ansible-core-ci support is a reasonable indicator that the user may need the `--dev-*` options.
+    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
+
+    parser.add_argument(
+        '--dev-systemd-debug',
+        action='store_true',
+        help=suppress or 'enable systemd debugging in containers',
+    )
+
+    parser.add_argument(
+        '--dev-probe-cgroups',
+        metavar='DIR',
+        nargs='?',
+        const='',
+        help=suppress or 'probe container cgroups, with optional log dir',
     )
 
 

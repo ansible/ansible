@@ -1,0 +1,5 @@
+shippable/posix/group6
+context/controller
+needs/root
+destructive
+retry/never  # tests on some platforms run too long to make retries useful
