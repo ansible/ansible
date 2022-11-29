@@ -32,8 +32,10 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.six import string_types
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.version import SemanticVersion
 
 
 _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
@@ -550,6 +552,20 @@ class _ComputedReqKindsMixin:
     @property
     def source_info(self):
         return self._source_info
+
+    def validate_version(self):
+        if not self.is_scm:
+            version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
+        else:
+            version_req = f"A string version is required. Got {self.ver} ({type(self.ver)})."
+        version_err = f"Invalid version found for the collection '{self}'. {version_req}"
+        if not isinstance(self.ver, string_types):
+            raise AnsibleError(version_err)
+        elif self.ver != '*' and not self.is_scm:
+            try:
+                SemanticVersion(self.ver)
+            except ValueError as ex:
+                raise AnsibleError(version_err) from ex
 
 
 RequirementNamedTuple = namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources'))  # type: ignore[name-match]

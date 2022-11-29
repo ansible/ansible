@@ -20,9 +20,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 if t.TYPE_CHECKING:
-    from ansible.galaxy.dependency_resolution.dataclasses import (
-        Candidate, Requirement,
-    )
+    from ansible.galaxy.dependency_resolution.dataclasses import Candidate
     from ansible.galaxy.token import GalaxyToken
 
 from ansible.errors import AnsibleError
