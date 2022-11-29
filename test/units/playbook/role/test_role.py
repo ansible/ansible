@@ -85,6 +85,13 @@ class TestHashParams(unittest.TestCase):
         self._assert_hashable(res)
         self._assert_set(res)
 
+    def test_list_collisions(self):
+        params1 = {'foo': [], 'bar': [1], 'baz': []}
+        params2 = {'foo': [], 'bar': [1], 'baz': [1]}
+        res1 = hash_params(params1)
+        res2 = hash_params(params2)
+        self.assertTrue(res1 != res2)
+
     def test_generator(self):
         def my_generator():
             for i in ['a', 1, None, {}]:

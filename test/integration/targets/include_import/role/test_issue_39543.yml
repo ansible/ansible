@@ -1,0 +1,32 @@
+- name: Test include_role
+  hosts: testhost
+
+  vars:
+    run_role: yes
+    do_not_run_role: no
+    role_name: role1
+    test_var: templating test in playbook
+    role_vars:
+      where_am_i_defined: in the playbook
+    entire_task:
+      include_role:
+        name: role1
+
+  roles:
+    - { role: role_a }
+    - { role: role_b, when: do_not_run_role }
+  tasks:
+    - name: Assert that roleb did not run
+      assert:
+        that:
+          - roleb_canary is not defined
+
+    - name: Assert that rolea ran
+      assert:
+        that:
+          - rolea_canary == 'rac'
+
+    - name: Assert that rolex ran
+      assert:
+        that:
+          - rolex_canary == 'rxc'

@@ -1,0 +1,5 @@
+- debug:
+    msg: "Should see this as it's included by `role_a`"
+
+- set_fact:
+    rolex_canary: rxc

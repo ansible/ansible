@@ -1,0 +1,4 @@
+- debug:
+    msg: "Not expecting to see this as `role_b` is conditionally excluded"
+- set_fact:
+    roleb_canary: rbc

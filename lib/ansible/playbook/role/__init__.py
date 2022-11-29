@@ -161,13 +161,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 params['vars'] = role_include.vars
 
             params['from_include'] = from_include
+            if parent_role:
+                params['parent_roles'] = parent_role._parents + [parent_role]
 
             hashed_params = hash_params(params)
             if role_include.get_name() in play.ROLE_CACHE:
                 for (entry, role_obj) in play.ROLE_CACHE[role_include.get_name()].items():
                     if hashed_params == entry:
-                        if parent_role:
-                            role_obj.add_parent(parent_role)
                         return role_obj
 
             # TODO: need to fix cycle detection in role load (maybe use an empty dict

@@ -1,0 +1,8 @@
+- debug:
+    msg: "start of `role_a` before including `role_x`"
+- set_fact:
+    rolea_canary: rac
+- include_role:
+    name: "role_x"
+- debug:
+    msg: "end of `role_a` after including `role_x`"
