@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix a traceback occuring when a task is named ``meta`` (https://github.com/ansible/ansible/issues/79459)"
