@@ -111,6 +111,9 @@ class EnvironmentConfig(CommonConfig):
 
         self.delegate_args: list[str] = []
 
+        self.dev_systemd_debug: bool = args.dev_systemd_debug
+        self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
+
         def host_callback(files: list[tuple[str, str]]) -> None:
             """Add the host files to the payload file list."""
             config = self

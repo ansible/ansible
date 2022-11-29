@@ -427,6 +427,9 @@ bootstrap()
     install_ssh_keys
     customize_bashrc
 
+    # allow tests to detect ansible-test bootstrapped instances, as well as the bootstrap type
+    echo "${bootstrap_type}" > /etc/ansible-test.bootstrap
+
     case "${bootstrap_type}" in
         "docker") bootstrap_docker ;;
         "remote") bootstrap_remote ;;
