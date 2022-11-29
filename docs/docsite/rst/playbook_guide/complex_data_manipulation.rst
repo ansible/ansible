@@ -303,6 +303,12 @@ An example to show a host uptime in days/hours/minutes/seconds (assumes facts wh
    ansible.builtin.debug:
     msg: Uptime {{ now().replace(microsecond=0) - now().fromtimestamp(now(fmt='%s') | int - ansible_uptime_seconds) }}
 
+An example to show how to remove keys by index from an array.
+
+.. code-block:: YAML+Jinja
+
+  vars:
+    file_without_the_last_line: "{{ splitted_file[0:-1] | join('\n') }}"
 
 .. seealso::
 
