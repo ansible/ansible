@@ -18,12 +18,12 @@ DOCUMENTATION = '''
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
 
+import fcntl
+import getpass
 import os
 import pty
 import shutil
 import subprocess
-import fcntl
-import getpass
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
@@ -47,7 +47,11 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
         self.cwd = None
-        self.default_user = getpass.getuser()
+        try:
+            self.default_user = getpass.getuser()
+        except KeyError:
+            display.vv("Current user (uid=%s) does not seem to exist on this system, leaving user empty." % os.getuid())
+            self.default_user = ""
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''

@@ -1,0 +1,2 @@
+bugfixes:
+  - connection local now avoids traceback on invalid user being used to execuet ansible (valid in host, but not in container).
