@@ -702,6 +702,8 @@ class IntegrationTarget(CompletionTarget):
 
         # configuration
 
+        self.retry_never = 'retry/never/' in self.aliases
+
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
         self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))

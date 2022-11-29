@@ -34,8 +34,10 @@ from .config import (
 from .docker_util import (
     ContainerNotFoundError,
     DockerInspect,
+    docker_create,
     docker_exec,
     docker_inspect,
+    docker_network_inspect,
     docker_pull,
     docker_rm,
     docker_run,
@@ -44,6 +46,7 @@ from .docker_util import (
     get_docker_host_ip,
     get_podman_host_ip,
     require_docker,
+    detect_host_properties,
 )
 
 from .ansible_util import (
@@ -78,6 +81,10 @@ from .host_configs import (
 
 from .connections import (
     SshConnection,
+)
+
+from .thread import (
+    mutex,
 )
 
 # information about support containers provisioned by the current ansible-test instance
@@ -141,7 +148,7 @@ def run_support_container(
     options = (options or [])
 
     if start:
-        options.append('-d')
+        options.append('-dt')  # the -t option is required to cause systemd in the container to log output to the console
 
     if publish_ports:
         for port in ports:
@@ -150,6 +157,10 @@ def run_support_container(
     if env:
         for key, value in env.items():
             options.extend(['--env', '%s=%s' % (key, value)])
+
+    max_open_files = detect_host_properties(args).max_open_files
+
+    options.extend(['--ulimit', 'nofile=%s' % max_open_files])
 
     support_container_id = None
 
@@ -175,6 +186,9 @@ def run_support_container(
             if not support_container_id:
                 docker_rm(args, name)
 
+    if args.dev_systemd_debug:
+        options.extend(('--env', 'SYSTEMD_LOG_LEVEL=debug'))
+
     if support_container_id:
         display.info('Using existing "%s" container.' % name)
         running = True
@@ -182,7 +196,7 @@ def run_support_container(
     else:
         display.info('Starting new "%s" container.' % name)
         docker_pull(args, image)
-        support_container_id = docker_run(args, image, name, options, create_only=not start, cmd=cmd)
+        support_container_id = run_container(args, image, name, options, create_only=not start, cmd=cmd)
         running = start
         existing = False
 
@@ -220,6 +234,126 @@ def run_support_container(
     return descriptor
 
 
+def run_container(
+        args: EnvironmentConfig,
+        image: str,
+        name: str,
+        options: t.Optional[list[str]],
+        cmd: t.Optional[list[str]] = None,
+        create_only: bool = False,
+) -> str:
+    """Run a container using the given docker image."""
+    options = list(options or [])
+    cmd = list(cmd or [])
+
+    options.extend(['--name', name])
+
+    network = get_docker_preferred_network_name(args)
+
+    if is_docker_user_defined_network(network):
+        # Only when the network is not the default bridge network.
+        options.extend(['--network', network])
+
+    for _iteration in range(1, 3):
+        try:
+            if create_only:
+                stdout = docker_create(args, image, options, cmd)[0]
+            else:
+                stdout = docker_run(args, image, options, cmd)[0]
+        except SubprocessError as ex:
+            display.error(ex.message)
+            display.warning('Failed to run docker image "{image}". Waiting a few seconds before trying again.')
+            docker_rm(args, name)  # podman doesn't remove containers after create if run fails
+            time.sleep(3)
+        else:
+            if args.explain:
+                stdout = ''.join(random.choice('0123456789abcdef') for _iteration in range(64))
+
+            return stdout.strip()
+
+    raise ApplicationError(f'Failed to run docker image "{image}".')
+
+
+def start_container(args: EnvironmentConfig, container_id: str) -> tuple[t.Optional[str], t.Optional[str]]:
+    """Start a docker container by name or ID."""
+    options: list[str] = []
+
+    for _iteration in range(1, 3):
+        try:
+            return docker_start(args, container_id, options)
+        except SubprocessError as ex:
+            display.error(ex.message)
+            display.warning(f'Failed to start docker container "{container_id}". Waiting a few seconds before trying again.')
+            time.sleep(3)
+
+    raise ApplicationError(f'Failed to start docker container "{container_id}".')
+
+
+def get_container_ip_address(args: EnvironmentConfig, container: DockerInspect) -> t.Optional[str]:
+    """Return the IP address of the container for the preferred docker network."""
+    if container.networks:
+        network_name = get_docker_preferred_network_name(args)
+
+        if not network_name:
+            # Sort networks and use the first available.
+            # This assumes all containers will have access to the same networks.
+            network_name = sorted(container.networks.keys()).pop(0)
+
+        ipaddress = container.networks[network_name]['IPAddress']
+    else:
+        ipaddress = container.network_settings['IPAddress']
+
+    if not ipaddress:
+        return None
+
+    return ipaddress
+
+
+@mutex
+def get_docker_preferred_network_name(args: EnvironmentConfig) -> t.Optional[str]:
+    """
+    Return the preferred network name for use with Docker. The selection logic is:
+    - the network selected by the user with `--docker-network`
+    - the network of the currently running docker container (if any)
+    - the default docker network (returns None)
+    """
+    try:
+        return get_docker_preferred_network_name.network  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    network = None
+
+    if args.docker_network:
+        network = args.docker_network
+    else:
+        current_container_id = get_docker_container_id()
+
+        if current_container_id:
+            # Make sure any additional containers we launch use the same network as the current container we're running in.
+            # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
+            container = docker_inspect(args, current_container_id, always=True)
+            network = container.get_network_name()
+
+    # The default docker behavior puts containers on the same network.
+    # The default podman behavior puts containers on isolated networks which don't allow communication between containers or network disconnect.
+    # Starting with podman version 2.1.0 rootless containers are able to join networks.
+    # Starting with podman version 2.2.0 containers can be disconnected from networks.
+    # To maintain feature parity with docker, detect and use the default "podman" network when running under podman.
+    if network is None and require_docker().command == 'podman' and docker_network_inspect(args, 'podman', always=True):
+        network = 'podman'
+
+    get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
+
+    return network
+
+
+def is_docker_user_defined_network(network: str) -> bool:
+    """Return True if the network being used is a user-defined network."""
+    return bool(network) and network != 'bridge'
+
+
+@mutex
 def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
     """Return the current container database, creating it as needed, or returning the one provided on the command line through delegation."""
     try:
@@ -571,7 +705,7 @@ class ContainerDescriptor:
 
     def start(self, args):  # type: (EnvironmentConfig) -> None
         """Start the container. Used for containers which are created, but not started."""
-        docker_start(args, self.name)
+        start_container(args, self.name)
 
         self.register(args)
 
@@ -581,7 +715,7 @@ class ContainerDescriptor:
             raise Exception('Container already registered: %s' % self.name)
 
         try:
-            container = docker_inspect(args, self.container_id)
+            container = docker_inspect(args, self.name)
         except ContainerNotFoundError:
             if not args.explain:
                 raise
@@ -598,7 +732,7 @@ class ContainerDescriptor:
                 ),
             ))
 
-        support_container_ip = container.get_ip_address()
+        support_container_ip = get_container_ip_address(args, container)
 
         if self.publish_ports:
             # inspect the support container to locate the published ports
@@ -663,7 +797,7 @@ def cleanup_containers(args):  # type: (EnvironmentConfig) -> None
         if container.cleanup == CleanupMode.YES:
             docker_rm(args, container.container_id)
         elif container.cleanup == CleanupMode.INFO:
-            display.notice('Remember to run `docker rm -f %s` when finished testing.' % container.name)
+            display.notice(f'Remember to run `{require_docker().command} rm -f {container.name}` when finished testing.')
 
 
 def create_hosts_entries(context):  # type: (t.Dict[str, ContainerAccess]) -> t.List[str]
