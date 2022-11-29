@@ -52,6 +52,10 @@ from .constants import (
     CONTROLLER_PYTHON_VERSIONS,
 )
 
+from .thread import (
+    mutex,
+)
+
 
 @dataclasses.dataclass(frozen=True)
 class CoverageVersion:
@@ -203,6 +207,7 @@ def get_coverage_environment(
     return env
 
 
+@mutex
 def get_coverage_config(args: TestConfig) -> str:
     """Return the path to the coverage config, creating the config if it does not already exist."""
     try:
