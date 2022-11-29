@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-import errno
 import os
 import shlex
 import tempfile
@@ -519,7 +518,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         #
         # Since only some containers carry the patch or enable the Linux audit feature in OpenSSH, this capability is enabled on a per-container basis.
         # No warning is provided when adding this capability, since there's not really anything the user can do about it.
-        if self.config.audit == AuditMode.REQUIRED and detect_host_properties(self.args).audit_status == errno.EPERM:
+        if self.config.audit == AuditMode.REQUIRED and detect_host_properties(self.args).audit_code == 'EPERM':
             options.extend(('--cap-add', 'AUDIT_WRITE'))
 
         # Without AUDIT_CONTROL the following errors may appear in the system logs of a container after attempting to log in using SSH:

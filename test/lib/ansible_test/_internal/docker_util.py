@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-import errno
 import json
 import os
 import pathlib
@@ -51,7 +50,7 @@ DOCKER_COMMANDS = [
     'podman',
 ]
 
-UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:1.0.0'
+UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:2.0.0'
 
 # Max number of open files in a docker container.
 # Passed with --ulimit option to the docker run command.
@@ -256,7 +255,6 @@ class SystemdControlGroupV1Status(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class ContainerHostProperties:
     """Container host properties detected at run time."""
-    audit_status: int
     audit_code: str
     max_open_files: int
     loginuid: t.Optional[int]
@@ -310,7 +308,10 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
 
     values = blocks[0].split('\n')
 
-    audit_status = int(values[0]) * -1
+    audit_parts = values[0].split(' ', 1)
+    audit_status = int(audit_parts[0])
+    audit_code = audit_parts[1]
+
     system_limit = int(values[1])
     hard_limit = int(values[2])
     loginuid = int(values[3]) if values[3] else None
@@ -334,27 +335,25 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         else:
             hard_limit = int(stdout)
 
-    # Check the errno result from attempting to query the container host's audit status.
+    # Check the audit error code from attempting to query the container host's audit status.
     #
     # The following error codes are known to occur:
     #
-    # EPERM (1) - Operation not permitted
+    # EPERM - Operation not permitted
     # This occurs when the root user runs a container but lacks the AUDIT_WRITE capability.
     # This will cause patched versions of OpenSSH to disconnect after a login succeeds.
     # See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
     #
-    # EBADF (9) - Bad file number
+    # EBADF - Bad file number
     # This occurs when the host doesn't support the audit system (the open_audit call fails).
     # This allows SSH logins to succeed despite the failure.
     # See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/netlink.c#L204-L209
     #
-    # ECONNREFUSED (111) - Connection refused
+    # ECONNREFUSED - Connection refused
     # This occurs when a non-root user runs a container without the AUDIT_WRITE capability.
     # When sending an audit message, libaudit ignores this error condition.
     # This allows SSH logins to succeed despite the failure.
     # See: https://github.com/Distrotech/libaudit/blob/4fc64f79c2a7f36e3ab7b943ce33ab5b013a7782/lib/deprecated.c#L48-L52
-
-    audit_code = errno.errorcode.get(audit_status, '?')
 
     subsystems = set(cgroup.subsystem for cgroup in cgroups)
     mount_types = {mount.path: mount.type for mount in mounts}
@@ -381,7 +380,9 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         hard_limit = MAX_NUM_OPEN_FILES
 
     properties = ContainerHostProperties(
-        audit_status=audit_status,
+        # The errno (audit_status) is intentionally not exposed here, as it can vary across systems and architectures.
+        # Instead, the symbolic name (audit_code) is used, which is resolved inside the container which generated the error.
+        # See: https://man7.org/linux/man-pages/man3/errno.3.html
         audit_code=audit_code,
         max_open_files=hard_limit,
         loginuid=loginuid,
