@@ -33,6 +33,9 @@
 - name: SETUP | set git global user.name if not already set
   shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
 
+- name: SETUP | set git global init.defaultBranch
+  shell: git config --global init.defaultBranch '{{ git_default_branch }}'
+
 - name: SETUP | create repo_dir
   file:
     path: "{{ repo_dir }}"

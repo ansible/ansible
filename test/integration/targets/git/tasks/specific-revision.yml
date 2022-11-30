@@ -162,7 +162,17 @@
     path: "{{ checkout_dir }}"
 
 - name: SPECIFIC-REVISION | prepare origina repo
-  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  # NOTE: `git symbolic-ref` command emulates the `init.defaultBranch` setting
+  # NOTE: on Git versions lower than 2.28. Ref: https://superuser.com/a/1419674
+  shell: |
+    set -eEu
+
+    git init
+    git symbolic-ref HEAD refs/heads/{{ git_default_branch }}
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
   args:
     chdir: "{{ checkout_dir }}"
 
@@ -191,7 +201,17 @@
     force: yes
 
 - name: SPECIFIC-REVISION | create new commit in original
-  shell: git init; echo "2" > b; git add b; git commit -m "2"
+  # NOTE: `git symbolic-ref` command emulates the `init.defaultBranch` setting
+  # NOTE: on Git versions lower than 2.28. Ref: https://superuser.com/a/1419674
+  shell: |
+    set -eEu
+
+    git init
+    git symbolic-ref HEAD refs/heads/{{ git_default_branch }}
+
+    echo "2" > b
+    git add b
+    git commit -m "2"
   args:
     chdir: "{{ checkout_dir }}"
 

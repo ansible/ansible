@@ -36,9 +36,14 @@
 - name: GPG-VERIFICATION | Generate local GnuPG signed repository
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  # NOTE: `git symbolic-ref` command emulates the `init.defaultBranch` setting
+  # NOTE: on Git versions lower than 2.28. Ref: https://superuser.com/a/1419674
   shell: |
-    set -e
+    set -eEu
+
     git init
+    git symbolic-ref HEAD refs/heads/{{ git_default_branch }}
+
     touch an_empty_file
     git add an_empty_file
     git commit --no-gpg-sign --message "Commit, and don't sign"
@@ -48,11 +53,11 @@
     git tag --annotate --message "This is not a signed tag" unsigned_annotated_tag HEAD
     git commit --allow-empty --gpg-sign --message "Commit, and sign"
     git tag --sign --message "This is a signed tag" signed_annotated_tag HEAD
-    git checkout -b some_branch/signed_tip master
+    git checkout -b some_branch/signed_tip '{{ git_default_branch }}'
     git commit --allow-empty --gpg-sign --message "Commit, and sign"
-    git checkout -b another_branch/unsigned_tip master
+    git checkout -b another_branch/unsigned_tip '{{ git_default_branch }}'
     git commit --allow-empty --no-gpg-sign --message "Commit, and don't sign"
-    git checkout master
+    git checkout '{{ git_default_branch }}'
   args:
     chdir: "{{ git_gpg_source }}"
 

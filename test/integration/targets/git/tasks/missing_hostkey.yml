@@ -35,7 +35,8 @@
   git:
     repo: '{{ repo_format3 }}'
     dest: '{{ checkout_dir }}'
-    version: 'master'
+    version: >-
+      {{ git_default_branch }}
     accept_hostkey: false # should already have been accepted
     key_file: '{{ github_ssh_private_key }}'
     ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
