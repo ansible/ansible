@@ -1029,9 +1029,9 @@
     },
     "all": {
         "children": [
+            "ungrouped",
             "None",
-            "guests",
-            "ungrouped"
+            "guests"
         ]
     },
     "guests": {
