@@ -300,9 +300,6 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../pytho
                        'ansible_7': ('https://docs.ansible.com/ansible/7/', (None, '../ansible_7.inv')),
                        'ansible_6': ('https://docs.ansible.com/ansible/6/', (None, '../ansible_6.inv')),
                        'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
-                       'ansible_2_8': ('https://docs.ansible.com/ansible/2.8/', (None, '../ansible_2_8.inv')),
-                       'ansible_2_7': ('https://docs.ansible.com/ansible/2.7/', (None, '../ansible_2_7.inv')),
-                       'ansible_2_6': ('https://docs.ansible.com/ansible/2.6/', (None, '../ansible_2_6.inv')),
                        }
 
 # linckchecker settings
