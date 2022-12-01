@@ -283,21 +283,16 @@ autoclass_content = 'both'
 #   name: ('http://UPSTREAM_URL', (None, 'path/to/local/cache.inv'))
 #
 # The update script depends on this format so deviating from this (for instance, adding a third
-# location for the mappning to live) will confuse it.
+# location for the mapping to live) will confuse it.
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
                        'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
                        'ansible_7': ('https://docs.ansible.com/ansible/7/', (None, '../ansible_7.inv')),
                        'ansible_6': ('https://docs.ansible.com/ansible/6/', (None, '../ansible_6.inv')),
-                       'ansible_5': ('https://docs.ansible.com/ansible/5/', (None, '../ansible_5.inv')),
-                       'ansible_4': ('https://docs.ansible.com/ansible/4/', (None, '../ansible_4.inv')),
-                       'ansible_3': ('https://docs.ansible.com/ansible/3/', (None, '../ansible_3.inv')),
-                       'ansible_2_10': ('https://docs.ansible.com/ansible/2.10/', (None, '../ansible_2_10.inv')),
                        'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
                        'ansible_2_8': ('https://docs.ansible.com/ansible/2.8/', (None, '../ansible_2_8.inv')),
                        'ansible_2_7': ('https://docs.ansible.com/ansible/2.7/', (None, '../ansible_2_7.inv')),
                        'ansible_2_6': ('https://docs.ansible.com/ansible/2.6/', (None, '../ansible_2_6.inv')),
-                       'ansible_2_5': ('https://docs.ansible.com/ansible/2.5/', (None, '../ansible_2_5.inv')),
                        }
 
 # linckchecker settings
