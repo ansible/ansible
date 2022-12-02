@@ -284,21 +284,27 @@ def main():
         section = contents
 
     mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], section, 0)
+    try:
+        result = re.subn(mre, params['replace'], section, 0)
 
-    if result[1] > 0 and section != result[0]:
-        if pattern:
-            result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
-        msg = '%s replacements made' % result[1]
-        changed = True
-        if module._diff:
-            res_args['diff'] = {
-                'before_header': path,
-                'before': contents,
-                'after_header': path,
-                'after': result[0],
-            }
-    else:
+        if result[1] > 0 and section != result[0]:
+            if pattern:
+                result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
+            msg = '%s replacements made' % result[1]
+            changed = True
+            if module._diff:
+                res_args['diff'] = {
+                    'before_header': path,
+                    'before': contents,
+                    'after_header': path,
+                    'after': result[0],
+                }
+        else:
+            msg = ''
+            changed = False
+    except re.error as e:
+        if not e.args[0].startswith('bad escape'):
+            raise e
         msg = ''
         changed = False
 
