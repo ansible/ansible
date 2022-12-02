@@ -430,11 +430,15 @@ class _ComputedReqKindsMixin:
         if req_type not in {'galaxy', 'subdirs'} and req_version == '*':
             req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
 
-        return cls(
+        req = cls(
             req_name, req_version,
             req_source, req_type,
             req_signature_sources,
         )
+        # a version requirement might be a range of versions, but must at least be a str
+        if not isinstance(req_version, string_types):
+            req.validate_version()
+        return req
 
     def __repr__(self):
         return (
