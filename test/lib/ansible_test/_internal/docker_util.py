@@ -6,14 +6,11 @@ import enum
 import json
 import os
 import pathlib
+import re
 import socket
 import time
 import urllib.parse
 import typing as t
-
-from .io import (
-    read_text_file,
-)
 
 from .util import (
     ApplicationError,
@@ -42,6 +39,7 @@ from .thread import (
 from .cgroup import (
     CGroupEntry,
     MountEntry,
+    MountInfoEntry,
     MountType,
 )
 
@@ -573,24 +571,47 @@ def get_podman_hostname() -> str:
 @cache
 def get_docker_container_id() -> t.Optional[str]:
     """Return the current container ID if running in a container, otherwise return None."""
-    path = '/proc/self/cpuset'
+    mountinfo_path = pathlib.Path('/proc/self/mountinfo')
     container_id = None
+    engine = None
 
-    if os.path.exists(path):
-        # File content varies based on the environment:
-        #   No Container: /
-        #   Docker: /docker/c86f3732b5ba3d28bb83b6e14af767ab96abbc52de31313dcb1176a62d91a507
-        #   Azure Pipelines (Docker): /azpl_job/0f2edfed602dd6ec9f2e42c867f4d5ee640ebf4c058e6d3196d4393bb8fd0891
-        #   Podman: /../../../../../..
-        contents = read_text_file(path)
+    if mountinfo_path.is_file():
+        # NOTE: This method of detecting the container engine and container ID relies on implementation details of each container engine.
+        #       Although the implementation details have remained unchanged for some time, there is no guarantee they will continue to work.
+        #       There have been proposals to create a standard mechanism for this, but none is currently available.
+        #       See: https://github.com/opencontainers/runtime-spec/issues/1105
 
-        cgroup_path, cgroup_name = os.path.split(contents.strip())
+        mounts = MountInfoEntry.loads(mountinfo_path.read_text())
 
-        if cgroup_path in ('/docker', '/azpl_job'):
-            container_id = cgroup_name
+        for mount in mounts:
+            if str(mount.path) == '/etc/hostname':
+                # Podman generates /etc/hostname in the makePlatformBindMounts function.
+                # That function ends up using ContainerRunDirectory to generate a path like: {prefix}/{container_id}/userdata/hostname
+                # NOTE: The {prefix} portion of the path can vary, so should not be relied upon.
+                # See: https://github.com/containers/podman/blob/480c7fbf5361f3bd8c1ed81fe4b9910c5c73b186/libpod/container_internal_linux.go#L660-L664
+                # See: https://github.com/containers/podman/blob/480c7fbf5361f3bd8c1ed81fe4b9910c5c73b186/vendor/github.com/containers/storage/store.go#L3133
+                # This behavior has existed for ~5 years and was present in Podman version 0.2.
+                # See: https://github.com/containers/podman/pull/248
+                if match := re.search('/(?P<id>[0-9a-f]{64})/userdata/hostname$', str(mount.root)):
+                    container_id = match.group('id')
+                    engine = 'Podman'
+                    break
+
+                # Docker generates /etc/hostname in the BuildHostnameFile function.
+                # That function ends up using the containerRoot function to generate a path like: {prefix}/{container_id}/hostname
+                # NOTE: The {prefix} portion of the path can vary, so should not be relied upon.
+                # See: https://github.com/moby/moby/blob/cd8a090e6755bee0bdd54ac8a894b15881787097/container/container_unix.go#L58
+                # See: https://github.com/moby/moby/blob/92e954a2f05998dc05773b6c64bbe23b188cb3a0/daemon/container.go#L86
+                # This behavior has existed for at least ~7 years and was present in Docker version 1.0.1.
+                # See: https://github.com/moby/moby/blob/v1.0.1/daemon/container.go#L351
+                # See: https://github.com/moby/moby/blob/v1.0.1/daemon/daemon.go#L133
+                if match := re.search('/(?P<id>[0-9a-f]{64})/hostname$', str(mount.root)):
+                    container_id = match.group('id')
+                    engine = 'Docker'
+                    break
 
     if container_id:
-        display.info('Detected execution in Docker container: %s' % container_id, verbosity=1)
+        display.info(f'Detected execution in {engine} container ID: {container_id}', verbosity=1)
 
     return container_id
 

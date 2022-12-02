@@ -47,6 +47,9 @@ bugfixes:
   - ansible-test - Show the exception type when reporting errors during instance provisioning.
   - ansible-test - Pass the ``XDG_RUNTIME_DIR`` environment variable through to container commands.
   - ansible-test - Connection attempts to managed remote instances no longer abort on ``Permission denied`` errors.
+  - ansible-test - Detection for running in a Podman or Docker container has been fixed to detect more scenarios.
+                   The new detection relies on ``/proc/self/mountinfo`` instead of ``/proc/self/cpuset``.
+                   Detection now works with custom cgroups and private cgroup namespaces.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.
