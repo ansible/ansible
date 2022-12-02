@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-galaxy collection - enforce str versions when loading user-requested requirements (https://github.com/ansible/ansible/issues/78067, https://github.com/ansible/ansible/issues/79109).
+  - ansible-galaxy collection - fix installing pre-releases from virtual sources (https://github.com/ansible/ansible/issues/79168).
