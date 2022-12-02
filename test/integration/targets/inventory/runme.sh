@@ -114,4 +114,4 @@ ansible-inventory  -i inv_with_int.yml --list "$@"
 }
 
 # test support for encrypted values for inventory options
-ANSIBLE_INVENTORY_UNPARSED_FAILED=True ANSIBLE_INVENTORY_ENABLED=vaulted_stuff ansible-inventory -i secrets.yml --playbook-dir ./ --vault-password-file vault_secret --list
+ANSIBLE_INVENTORY_UNPARSED_FAILED=True ANSIBLE_INVENTORY_ENABLED=vaulted_stuff ansible-inventory -i secrets.yml --playbook-dir ./ --vault-password-file vault_secret --list -e 'abbrev=yolo' "$@"
