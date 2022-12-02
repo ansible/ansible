@@ -434,12 +434,12 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # NOTE: pre-releases is when there are several user requirements
         # NOTE: and one of them is a pre-release that also matches a
         # NOTE: transitive dependency of another requirement.
-        allow_pre_release = (
-            self._with_pre_releases
-            or self._is_user_requested(candidate)
-            or (requirement.ver != '*' and is_pre_release(requirement.ver))
-        )
-
+        allow_pre_release = self._with_pre_releases or not (
+            requirement.ver == '*' or
+            requirement.ver.startswith('<') or
+            requirement.ver.startswith('>') or
+            requirement.ver.startswith('!=')
+        ) or self._is_user_requested(candidate)
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 
