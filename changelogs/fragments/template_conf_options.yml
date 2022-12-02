@@ -1,2 +1,3 @@
-minor_changes:
-  - plugin options should be templatable when variables are available.
+major_changes:
+  - Plugin configuration options are templatable when variables are available, also this enables using inline vaults.
+    This mostly will benefit inventory and vars plugins as most other plugins already had data pre templated or are executed inside the templating engine.
