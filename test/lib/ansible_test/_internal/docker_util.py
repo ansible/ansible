@@ -39,7 +39,6 @@ from .thread import (
 from .cgroup import (
     CGroupEntry,
     MountEntry,
-    MountInfoEntry,
     MountType,
 )
 
@@ -295,7 +294,7 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
     multi_line_commands = (
         ' && '.join(single_line_commands),
         'cat /proc/1/cgroup',
-        'cat /proc/1/mounts',
+        'cat /proc/1/mountinfo',
     )
 
     options = ['--volume', '/sys/fs/cgroup:/probe:ro']
@@ -581,7 +580,7 @@ def get_docker_container_id() -> t.Optional[str]:
         #       There have been proposals to create a standard mechanism for this, but none is currently available.
         #       See: https://github.com/opencontainers/runtime-spec/issues/1105
 
-        mounts = MountInfoEntry.loads(mountinfo_path.read_text())
+        mounts = MountEntry.loads(mountinfo_path.read_text())
 
         for mount in mounts:
             if str(mount.path) == '/etc/hostname':

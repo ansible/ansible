@@ -57,32 +57,6 @@ class CGroupEntry:
 
 @dataclasses.dataclass(frozen=True)
 class MountEntry:
-    """A single mount entry parsed from '/proc/{pid}/mounts' in the proc filesystem."""
-    device: pathlib.PurePosixPath
-    path: pathlib.PurePosixPath
-    type: str
-    options: tuple[str, ...]
-
-    @classmethod
-    def parse(cls, value: str) -> MountEntry:
-        """Parse the given mount line from the proc filesystem and return a mount entry."""
-        device, path, mtype, options, _a, _b = value.split(' ')
-
-        return cls(
-            device=pathlib.PurePosixPath(device),
-            path=pathlib.PurePosixPath(path),
-            type=mtype,
-            options=tuple(options.split(',')),
-        )
-
-    @classmethod
-    def loads(cls, value: str) -> tuple[MountEntry, ...]:
-        """Parse the given output from the proc filesystem and return a tuple of mount entries."""
-        return tuple(cls.parse(line) for line in value.splitlines())
-
-
-@dataclasses.dataclass(frozen=True)
-class MountInfoEntry:
     """A single mount info entry parsed from '/proc/{pid}/mountinfo' in the proc filesystem."""
     mount_id: int
     parent_id: int
@@ -97,7 +71,7 @@ class MountInfoEntry:
     super_options: tuple[str, ...]
 
     @classmethod
-    def parse(cls, value: str) -> MountInfoEntry:
+    def parse(cls, value: str) -> MountEntry:
         """Parse the given mount info line from the proc filesystem and return a mount entry."""
         # See: https://man7.org/linux/man-pages/man5/proc.5.html
         # See: https://github.com/torvalds/linux/blob/aea23e7c464bfdec04b52cf61edb62030e9e0d0a/fs/proc_namespace.c#L135
@@ -124,7 +98,7 @@ class MountInfoEntry:
         )
 
     @classmethod
-    def loads(cls, value: str) -> tuple[MountInfoEntry, ...]:
+    def loads(cls, value: str) -> tuple[MountEntry, ...]:
         """Parse the given output from the proc filesystem and return a tuple of mount info entries."""
         return tuple(cls.parse(line) for line in value.splitlines())
 
