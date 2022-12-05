@@ -10,10 +10,14 @@
 - debug:
     var: result
 
+- set_fact:
+    # NOTE: This will cram words together that were manually wrapped, which should be OK for this test.
+    stderr: "{{ result.stderr | replace('\n', '') }}"
+
 - assert:
     that:
-      - '"[WARNING]: Skipping filter plugin" in result.stderr'
-      - '"[WARNING]: Skipping test plugin" in result.stderr'
-      - result.stderr|regex_findall('bad_collection_filter')|length == 3
-      - result.stderr|regex_findall('bad_collection_filter2')|length == 1
-      - result.stderr|regex_findall('bad_collection_test')|length == 2
+      - '"[WARNING]: Skipping filter plugin" in stderr'
+      - '"[WARNING]: Skipping test plugin" in stderr'
+      - stderr|regex_findall('bad_collection_filter')|length == 3
+      - stderr|regex_findall('bad_collection_filter2')|length == 1
+      - stderr|regex_findall('bad_collection_test')|length == 2
