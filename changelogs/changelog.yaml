@@ -1144,6 +1144,17 @@ releases:
     - mention_acl.yml
     - v2.13.6rc1_summary.yaml
     release_date: '2022-10-31'
+  2.13.7:
+    changes:
+      release_summary: '| Release Date: 2022-12-05
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - v2.13.7_summary.yaml
+    release_date: '2022-12-05'
   2.13.7rc1:
     changes:
       bugfixes:
