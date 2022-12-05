@@ -176,9 +176,6 @@ def _synchronize_textiowrapper(tio, lock):
 
         return locking_wrapper
 
-    if not hasattr(tio, 'buffer'):
-        raise ValueError("unable to patch buffer")
-
     buffer = tio.buffer
 
     # monkeypatching the underlying file-like object isn't great, but likely safer than subclassing
@@ -228,8 +225,8 @@ class Display(metaclass=Singleton):
             # NB: we're relying on the display singleton behavior to ensure this only runs once
             _synchronize_textiowrapper(sys.stdout, self._lock)
             _synchronize_textiowrapper(sys.stderr, self._lock)
-        except ValueError:
-            self.warning("failed to patch stdout/stderr for fork-safety")
+        except Exception as ex:
+            self.warning(f"failed to patch stdout/stderr for fork-safety: {ex}")
 
     def set_queue(self, queue):
         """Set the _final_q on Display, so that we know to proxy display over the queue
