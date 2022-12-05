@@ -31,6 +31,7 @@ from ...util_common import (
 from ...docker_util import (
     get_docker_command,
     get_docker_info,
+    get_docker_container_id,
 )
 
 from ...constants import (
@@ -69,11 +70,14 @@ def show_dump_env(args):  # type: (EnvConfig) -> None
     if not args.show and not args.dump:
         return
 
+    container_id = get_docker_container_id()
+
     data = dict(
         ansible=dict(
             version=get_ansible_version(),
         ),
         docker=get_docker_details(args),
+        container_id=container_id,
         environ=os.environ.copy(),
         location=dict(
             pwd=os.environ.get('PWD', None),
