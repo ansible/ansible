@@ -38,6 +38,7 @@ minor_changes:
   - ansible-test - Integration tests can be excluded from retries triggered by the ``--retry-on-error`` option by
                    adding the ``retry/never`` alias. This is useful for tests that cannot pass on a retry or are too
                    slow to make retries useful.
+  - ansible-test - The ``ansible-test env`` command now detects and reports the container ID if running in a container.
 bugfixes:
   - ansible-test - Multiple containers now work under Podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.
@@ -47,6 +48,9 @@ bugfixes:
   - ansible-test - Show the exception type when reporting errors during instance provisioning.
   - ansible-test - Pass the ``XDG_RUNTIME_DIR`` environment variable through to container commands.
   - ansible-test - Connection attempts to managed remote instances no longer abort on ``Permission denied`` errors.
+  - ansible-test - Detection for running in a Podman or Docker container has been fixed to detect more scenarios.
+                   The new detection relies on ``/proc/self/mountinfo`` instead of ``/proc/self/cpuset``.
+                   Detection now works with custom cgroups and private cgroup namespaces.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.

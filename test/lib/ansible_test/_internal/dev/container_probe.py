@@ -73,7 +73,7 @@ class CGroupMount:
 
 def check_container_cgroup_status(args: EnvironmentConfig, config: DockerConfig, container_name: str, expected_mounts: tuple[CGroupMount, ...]) -> None:
     """Check the running container to examine the state of the cgroup hierarchies."""
-    cmd = ['sh', '-c', 'cat /proc/1/cgroup && echo && cat /proc/1/mounts']
+    cmd = ['sh', '-c', 'cat /proc/1/cgroup && echo && cat /proc/1/mountinfo']
 
     stdout = docker_exec(args, container_name, cmd, capture=True)[0]
     cgroups_stdout, mounts_stdout = stdout.split('\n\n')
