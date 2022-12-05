@@ -48,11 +48,7 @@ def main():
             __import__(name)
             return sys.modules[name]
 
-    try:
-        # noinspection PyCompatibility
-        from StringIO import StringIO
-    except ImportError:
-        from io import StringIO
+    from io import BytesIO, TextIOWrapper
 
     try:
         from importlib.util import spec_from_loader, module_from_spec
@@ -436,8 +432,8 @@ def main():
     class Capture:
         """Captured output and/or exception."""
         def __init__(self):
-            self.stdout = StringIO()
-            self.stderr = StringIO()
+            self.stdout = TextIOWrapper(BytesIO())
+            self.stderr = TextIOWrapper(BytesIO())
 
     def capture_report(path, capture, messages):
         """Report on captured output.
@@ -445,11 +441,11 @@ def main():
         :type capture: Capture
         :type messages: set[str]
         """
-        if capture.stdout.getvalue():
+        if capture.stdout.buffer.getvalue().decode():
             first = capture.stdout.getvalue().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stdout', first, messages)
 
-        if capture.stderr.getvalue():
+        if capture.stderr.buffer.getvalue().decode():
             first = capture.stderr.getvalue().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stderr', first, messages)
 
