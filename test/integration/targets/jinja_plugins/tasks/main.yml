@@ -1,4 +1,6 @@
 - shell: ansible-playbook {{ verbosity }} playbook.yml
+  environment:
+    ANSIBLE_FORCE_COLOR: no
   args:
     chdir: '{{ role_path }}'
   vars:
