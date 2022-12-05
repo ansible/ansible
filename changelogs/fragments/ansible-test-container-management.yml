@@ -38,6 +38,7 @@ minor_changes:
   - ansible-test - Integration tests can be excluded from retries triggered by the ``--retry-on-error`` option by
                    adding the ``retry/never`` alias. This is useful for tests that cannot pass on a retry or are too
                    slow to make retries useful.
+  - ansible-test - The ``ansible-test env`` command now detects and reports the container ID if running in a container.
 bugfixes:
   - ansible-test - Multiple containers now work under Podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.
