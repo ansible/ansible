@@ -18,7 +18,7 @@ source ../collection/setup.sh
 
 # Run regular import sanity tests.
 
-ansible-test sanity --test import --color --failure-ok --lint "${@}" 1> actual-stdout.txt 2> actual-stderr.txt
+ansible-test sanity --test import --color --failure-ok --lint --python "${ANSIBLE_TEST_PYTHON_VERSION}" "${@}" 1> actual-stdout.txt 2> actual-stderr.txt
 diff -u "${TEST_DIR}/expected.txt" actual-stdout.txt
 grep -f "${TEST_DIR}/expected.txt" actual-stderr.txt
 
