@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 
+set -eu
+
+# Create test scenarios at runtime that do not pass sanity tests.
+# This avoids the need to create ignore entries for the tests.
+
+mkdir -p ansible_collections/ns/col/plugins/lookup
+
+(
+  cd ansible_collections/ns/col/plugins/lookup
+
+  echo "import sys; sys.stdout.write('unwanted stdout')" > stdout.py # stdout: unwanted stdout
+  echo "import sys; sys.stderr.write('unwanted stderr')" > stderr.py # stderr: unwanted stderr
+)
+
 source ../collection/setup.sh
+
+# Run regular import sanity tests.
+
+ansible-test sanity --test import --color --failure-ok --lint "${@}" 1> actual-stdout.txt 2> actual-stderr.txt
+diff -u "${TEST_DIR}/expected.txt" actual-stdout.txt
+grep -f "${TEST_DIR}/expected.txt" actual-stderr.txt
+
+# Run import sanity tests which require modifications to the source directory.
 
 vendor_dir="$(python -c 'import pathlib, ansible._vendor; print(pathlib.Path(ansible._vendor.__file__).parent)')"
 
