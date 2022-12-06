@@ -188,6 +188,8 @@ This is the great culmination of embedded tests:
           ansible.builtin.command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
+If you need a handler to run before a particular role, use the ``meta`` module with the ``flush_handlers`` option. Consider placing this task in your test role itself. For more information, see :ref:`handlers`.
+
 Of course in the above, the "take out of the pool" and "add back" steps would be replaced with a call to an Ansible load balancer
 module or appropriate shell command.  You might also have steps that use a monitoring module to start and end an outage window
 for the machine.
