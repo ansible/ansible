@@ -19,6 +19,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import typing as t
 
@@ -664,7 +665,18 @@ def run_module(
     args: dict[str, t.Any],
 ) -> SubprocessResult:
     """Run the specified Ansible module and return the result."""
-    return run_command('ansible', '-m', module, '-v', '-a', json.dumps(args), 'localhost')
+    playbook = f'''
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - user: {json.dumps(args)}
+'''
+
+    with tempfile.NamedTemporaryFile() as playbook_file:
+        playbook_file.write(playbook.encode('utf8'))
+        playbook_file.flush()
+
+        return run_command('ansible-playbook', '-v', playbook_file.name)
 
 
 def retry_command(func: t.Callable[[], SubprocessResult], attempts: int = 3) -> SubprocessResult:
