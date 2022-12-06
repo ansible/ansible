@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Remote FreeBSD instances now have ACLs enabled on the root filesystem.
+  - ansible-test - Remote Fedora instances now have the ``acl`` package installed.
+  - ansible-test - Remote Ubuntu instances now have the ``acl`` package installed.
+  - ansible-test - Remote Alpine instances now have the ``acl`` package installed.

@@ -668,6 +668,16 @@ def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str
     return env
 
 
+def verified_chmod(path: str, mode: int) -> None:
+    """Perform chmod on the specified path and then verify the permissions were applied."""
+    os.chmod(path, mode)  # pylint: disable=ansible-bad-function
+
+    executable = any(mode & perm for perm in (stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH))
+
+    if executable and not os.access(path, os.X_OK):
+        raise ApplicationError(f'Path "{path}" should executable, but is not. Is the filesystem mounted with the "noexec" option?')
+
+
 def remove_tree(path):  # type: (str) -> None
     """Remove the specified directory, siliently continuing if the directory does not exist."""
     try:
@@ -919,6 +929,23 @@ class MissingEnvironmentVariable(ApplicationError):
         super().__init__('Missing environment variable: %s' % name)
 
         self.name = name
+
+
+class HostConnectionError(ApplicationError):
+    """
+    Raised when the initial connection during host profile setup has failed and all retries have been exhausted.
+    Raised by provisioning code when one or more provisioning threads raise this exception.
+    Also raised when an SSH connection fails for the shell command.
+    """
+    def __init__(self, message: str, callback: t.Callable[[], None] = None) -> None:
+        super().__init__(message)
+
+        self._callback = callback
+
+    def run_callback(self) -> None:
+        """Run the error callback, if any."""
+        if self._callback:
+            self._callback()
 
 
 def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
