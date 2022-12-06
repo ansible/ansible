@@ -18,6 +18,8 @@ from .io import (
 )
 
 from .completion import (
+    AuditMode,
+    CGroupVersion,
     CompletionConfig,
     docker_completion,
     DockerCompletionConfig,
@@ -282,6 +284,8 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
     memory: t.Optional[int] = None
     privileged: t.Optional[bool] = None
     seccomp: t.Optional[str] = None
+    cgroup: t.Optional[CGroupVersion] = None
+    audit: t.Optional[AuditMode] = None
 
     def get_defaults(self, context):  # type: (HostContext) -> DockerCompletionConfig
         """Return the default settings."""
@@ -313,6 +317,12 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
         if self.seccomp is None:
             self.seccomp = defaults.seccomp
 
+        if self.cgroup is None:
+            self.cgroup = defaults.cgroup_enum
+
+        if self.audit is None:
+            self.audit = defaults.audit_enum
+
         if self.privileged is None:
             self.privileged = False
 
@@ -333,6 +343,8 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
     """Configuration for a POSIX remote host."""
+    become: t.Optional[str] = None
+
     def get_defaults(self, context):  # type: (HostContext) -> PosixRemoteCompletionConfig
         """Return the default settings."""
         return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
@@ -349,6 +361,14 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
             pythons = {context.controller_config.python.version: context.controller_config.python.path}
 
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
+
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+        """Apply default settings."""
+        assert isinstance(defaults, PosixRemoteCompletionConfig)
+
+        super().apply_defaults(context, defaults)
+
+        self.become = self.become or defaults.become
 
     @property
     def have_root(self):  # type: () -> bool

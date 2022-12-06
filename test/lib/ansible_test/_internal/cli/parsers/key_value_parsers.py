@@ -10,6 +10,11 @@ from ...constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
+from ...completion import (
+    AuditMode,
+    CGroupVersion,
+)
+
 from ...util import (
     REMOTE_ARCHITECTURES,
 )
@@ -18,11 +23,16 @@ from ...host_configs import (
     OriginConfig,
 )
 
+from ...become import (
+    SUPPORTED_BECOME_METHODS,
+)
+
 from ..argparsing.parsers import (
     AnyParser,
     BooleanParser,
     ChoicesParser,
     DocumentationState,
+    EnumValueChoicesParser,
     IntegerParser,
     KeyValueParser,
     Parser,
@@ -99,6 +109,8 @@ class DockerKeyValueParser(KeyValueParser):
         return dict(
             python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
             seccomp=ChoicesParser(SECCOMP_CHOICES),
+            cgroup=EnumValueChoicesParser(CGroupVersion),
+            audit=EnumValueChoicesParser(AuditMode),
             privileged=BooleanParser(),
             memory=IntegerParser(),
         )
@@ -112,6 +124,8 @@ class DockerKeyValueParser(KeyValueParser):
         state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
             f'  python={python_parser.document(state)}',
             f'  seccomp={ChoicesParser(SECCOMP_CHOICES).document(state)}',
+            f'  cgroup={EnumValueChoicesParser(CGroupVersion).document(state)}',
+            f'  audit={EnumValueChoicesParser(AuditMode).document(state)}',
             f'  privileged={BooleanParser().document(state)}',
             f'  memory={IntegerParser().document(state)}  # bytes',
         ])
@@ -129,6 +143,7 @@ class PosixRemoteKeyValueParser(KeyValueParser):
     def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]
         """Return a dictionary of key names and value parsers."""
         return dict(
+            become=ChoicesParser(list(SUPPORTED_BECOME_METHODS)),
             provider=ChoicesParser(REMOTE_PROVIDERS),
             arch=ChoicesParser(REMOTE_ARCHITECTURES),
             python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
@@ -141,6 +156,7 @@ class PosixRemoteKeyValueParser(KeyValueParser):
         section_name = 'remote options'
 
         state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
+            f'  become={ChoicesParser(list(SUPPORTED_BECOME_METHODS)).document(state)}',
             f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
             f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
             f'  python={python_parser.document(state)}',

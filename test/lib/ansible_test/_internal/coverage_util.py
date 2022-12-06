@@ -41,6 +41,10 @@ from .host_configs import (
     PythonConfig,
 )
 
+from .thread import (
+    mutex,
+)
+
 
 def cover_python(
         args,  # type: TestConfig
@@ -107,6 +111,7 @@ def get_coverage_environment(
     return env
 
 
+@mutex
 def get_coverage_config(args):  # type: (TestConfig) -> str
     """Return the path to the coverage config, creating the config if it does not already exist."""
     try:
