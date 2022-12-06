@@ -41,6 +41,7 @@ from ansible.utils.color import stringc
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
+from functools import wraps
 
 
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
@@ -163,12 +164,33 @@ b_COW_PATHS = (
 )
 
 
+def _synchronize_textiowrapper(tio, lock):
+    # Ensure that a background thread can't hold the internal buffer lock on a file object
+    # during a fork, which causes forked children to hang. We're using display's existing lock for
+    # convenience (and entering the lock before a fork).
+    def _wrap_with_lock(f, lock):
+        @wraps(f)
+        def locking_wrapper(*args, **kwargs):
+            with lock:
+                return f(*args, **kwargs)
+
+        return locking_wrapper
+
+    buffer = tio.buffer
+
+    # monkeypatching the underlying file-like object isn't great, but likely safer than subclassing
+    buffer.write = _wrap_with_lock(buffer.write, lock)
+    buffer.flush = _wrap_with_lock(buffer.flush, lock)
+
+
 class Display(metaclass=Singleton):
 
     def __init__(self, verbosity=0):
 
         self._final_q = None
 
+        # NB: this lock is used to both prevent intermingled output between threads and to block writes during forks.
+        # Do not change the type of this lock or upgrade to a shared lock (eg multiprocessing.RLock).
         self._lock = threading.RLock()
 
         self.columns = None
@@ -198,6 +220,13 @@ class Display(metaclass=Singleton):
                 self.b_cowsay = False
 
         self._set_column_width()
+
+        try:
+            # NB: we're relying on the display singleton behavior to ensure this only runs once
+            _synchronize_textiowrapper(sys.stdout, self._lock)
+            _synchronize_textiowrapper(sys.stderr, self._lock)
+        except Exception as ex:
+            self.warning(f"failed to patch stdout/stderr for fork-safety: {ex}")
 
     def set_queue(self, queue):
         """Set the _final_q on Display, so that we know to proxy display over the queue
