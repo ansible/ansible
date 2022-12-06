@@ -87,10 +87,12 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         '''
 
         self._save_stdin()
-        try:
-            return super(WorkerProcess, self).start()
-        finally:
-            self._new_stdin.close()
+        # FUTURE: this lock can be removed once a more generalized pre-fork thread pause is in place
+        with display._lock:
+            try:
+                return super(WorkerProcess, self).start()
+            finally:
+                self._new_stdin.close()
 
     def _hard_exit(self, e):
         '''
