@@ -5,13 +5,13 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
-v2.14.1rc1
-==========
+v2.14.1
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2022-11-28
+| Release Date: 2022-12-06
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -26,6 +26,7 @@ Bugfixes
 - Fixes leftover _valid_attrs usage.
 - ansible-galaxy - make initial call to Galaxy server on-demand only when installing, getting info about, and listing roles.
 - copy module will no longer move 'non files' set as src when remote_src=true.
+- display - reduce risk of post-fork output deadlocks (https://github.com/ansible/ansible/pull/79522)
 - jinja2_native: preserve quotes in strings (https://github.com/ansible/ansible/issues/79083)
 - updated error messages to include 'acl' and not just mode changes when failing to set required permissions on remote.
 
