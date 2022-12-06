@@ -40,6 +40,11 @@ except ImportError:
     reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
+    from importlib.abc import TraversableResources
+except ImportError:
+    TraversableResources = object  # type: ignore[assignment,misc]
+
+try:
     from importlib.util import find_spec, spec_from_loader
 except ImportError:
     pass
@@ -142,7 +147,7 @@ class _AnsibleNSTraversable:
     joinpath = __truediv__ = read_bytes = read_text = _not_implemented
 
 
-class _AnsibleTraversableResources:
+class _AnsibleTraversableResources(TraversableResources):
     """Implements ``importlib.resources.abc.TraversableResources`` for the
     collection Python loaders.
 
