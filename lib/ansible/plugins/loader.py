@@ -1389,7 +1389,8 @@ def _load_plugin_filter():
             # Modules and action plugins share the same blacklist since the difference between the
             # two isn't visible to the users
             try:
-                filters['ansible.modules'] = frozenset(filter_data['module_blacklist'])
+                # reject list was documented but we never changed the code from blacklist, will be deprected in 2.15
+                filters['ansible.modules'] = frozenset(filter_data.get('module_rejectlist)', filter_data['module_blacklist']))
             except TypeError:
                 display.warning(u'Unable to parse the plugin filter file {0} as'
                                 u' module_blacklist is not a list.'
