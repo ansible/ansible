@@ -45,7 +45,7 @@ class CGroupEntry:
 
         return cls(
             id=int(cid),
-            subsystem=subsystem.removeprefix('name='),
+            subsystem=re.sub('^name=', '', subsystem),
             path=pathlib.PurePosixPath(path)
         )
 

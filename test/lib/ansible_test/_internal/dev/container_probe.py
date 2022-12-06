@@ -59,7 +59,7 @@ class CGroupMount:
     state: t.Optional[CGroupState]
 
     def __post_init__(self):
-        assert pathlib.PurePosixPath(self.path).is_relative_to(CGroupPath.ROOT)
+        assert is_relative_to(pathlib.PurePosixPath(self.path), CGroupPath.ROOT)
 
         if self.type is None:
             assert self.state is None
@@ -81,7 +81,7 @@ def check_container_cgroup_status(args: EnvironmentConfig, config: DockerConfig,
     cgroups = CGroupEntry.loads(cgroups_stdout)
     mounts = MountEntry.loads(mounts_stdout)
 
-    mounts = tuple(mount for mount in mounts if mount.path.is_relative_to(CGroupPath.ROOT))
+    mounts = tuple(mount for mount in mounts if is_relative_to(mount.path, CGroupPath.ROOT))
 
     mount_cgroups: dict[MountEntry, CGroupEntry] = {}
     probe_paths: dict[pathlib.PurePosixPath, t.Optional[str]] = {}
@@ -90,8 +90,8 @@ def check_container_cgroup_status(args: EnvironmentConfig, config: DockerConfig,
         if cgroup.subsystem:
             mount = ([mount for mount in mounts if
                       mount.type == MountType.CGROUP_V1 and
-                      mount.path.is_relative_to(cgroup.root_path) and
-                      cgroup.full_path.is_relative_to(mount.path)
+                      is_relative_to(mount.path, cgroup.root_path) and
+                      is_relative_to(cgroup.full_path, mount.path)
                       ] or [None])[-1]
         else:
             mount = ([mount for mount in mounts if
@@ -208,3 +208,9 @@ def get_identity(args: EnvironmentConfig, config: DockerConfig, container_name: 
     )
 
     return '|'.join(tags)
+
+
+def is_relative_to(first: pathlib.PurePosixPath, second: t.Union[pathlib.PurePosixPath, str]) -> bool:
+    """Return True if path `first` is relative to path `second`, otherwise return False."""
+    second_path = pathlib.PurePosixPath(second)
+    return second_path == first or second_path in first.parents
