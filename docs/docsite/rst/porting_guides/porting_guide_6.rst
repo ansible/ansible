@@ -99,6 +99,58 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.7.0
+========================
+
+Known Issues
+------------
+
+community.routeros
+~~~~~~~~~~~~~~~~~~
+
+- api_modify - when limits for entries in ``queue tree`` are defined as human readable - for example ``25M`` -, the configuration will be correctly set in ROS, but the module will indicate the item is changed on every run even when there was no change done. This is caused by the ROS API which returns the number in bytes - for example ``25000000`` (which is inconsistent with the CLI behavior). In order to mitigate that, the limits have to be defined in bytes (those will still appear as human readable in the ROS CLI) (https://github.com/ansible-collections/community.routeros/pull/131).
+- api_modify, api_info - ``routing ospf area``, ``routing ospf area range``, ``routing ospf instance``, ``routing ospf interface-template`` paths are not fully implemeted for ROS6 due to the significat changes between ROS6 and ROS7 (https://github.com/ansible-collections/community.routeros/pull/131).
+
+Major Changes
+-------------
+
+cisco.meraki
+~~~~~~~~~~~~
+
+- meraki_mr_l7_firewall - New module
+- meraki_webhook_payload_template - New module
+
+community.zabbix
+~~~~~~~~~~~~~~~~
+
+- all modules are opting away from zabbix-api and using httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
+- zabbix_agent and zabbix_proxy roles are opting away from zabbix-api and use httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
+
+containers.podman
+~~~~~~~~~~~~~~~~~
+
+- New become plugin - podman_unshare
+- Podman generate systemd module
+
+fortinet.fortimanager
+~~~~~~~~~~~~~~~~~~~~~
+
+- Fix compatibility issue for ansible 2.9.x and ansible-base 2.10.x.
+- support Ansible changelogs.
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Support FortiOS v7.0.6, v7.0.7, v7.0.8, v7.2.1, v7.2.2.
+
+Deprecated Features
+-------------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- Please note that some tools, like the VScode plugin (https://github.com/ansible/vscode-ansible/issues/573), or ``ansible-doc --list --type module``, suggest to replace the correct FQCNs for modules and actions in community.general with internal names that have more than three components. For example, ``community.general.ufw`` is suggested to be replaced by ``community.general.system.ufw``. While these longer names do work, they are considered **internal names** by the collection and are subject to change and be removed at all time. They **will** be removed in community.general 6.0.0 and result in deprecation messages. Avoid using these internal names, and use general three-component FQCNs (``community.general.<name_of_module>``) instead (https://github.com/ansible-collections/community.general/pull/5373).
+
 Porting Guide for v6.6.0
 ========================
 
@@ -130,6 +182,12 @@ community.general
 ~~~~~~~~~~~~~~~~~
 
 - newrelic_deployment - removed New Relic v1 API, added support for v2 API (https://github.com/ansible-collections/community.general/pull/5341).
+
+fortinet.fortimanager
+~~~~~~~~~~~~~~~~~~~~~
+
+- Many fixes for Ansible sanity test warnings & errors.
+- Support FortiManager Schema 7.2.0 , 98 new modules
 
 Deprecated Features
 -------------------
