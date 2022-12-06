@@ -117,7 +117,7 @@
       - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
 
-- name: Test update_cache with LANG de_DE
+- name: Test update_cache with LC_ALL set to de_DE
   block:
     - name: get language pack
       command: locale-gen de_DE
