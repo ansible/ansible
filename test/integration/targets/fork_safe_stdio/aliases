@@ -1,4 +1,3 @@
 shippable/posix/group3
 context/controller
-skip/freebsd
 skip/macos
