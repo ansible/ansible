@@ -27,7 +27,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
-from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.api import GalaxyAPI, RETRY_HTTP_ERROR_CODES
 from ansible.galaxy.collection import (
     build_collection,
     download_collections,
@@ -74,6 +74,9 @@ SERVER_DEF = [
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
     ('timeout', False, 'int'),
+    ('collection_page_size', False, 'int'),
+    ('role_page_size', False, 'int'),
+    ('retry_http_error_codes', False, 'list'),
 ]
 
 # config definition fields
@@ -82,6 +85,9 @@ SERVER_ADDITIONAL = {
     'validate_certs': {'default': True, 'cli': [{'name': 'validate_certs'}]},
     'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
+    'collection_page_size': {'default': None, 'cli': [{'name': 'collection_page_size'}]},
+    'role_page_size': {'default': None, 'cli': [{'name': 'role_page_size'}]},
+    'retry_http_error_codes': {'default': RETRY_HTTP_ERROR_CODES},
 }
 
 # override default if the generic is set
@@ -247,6 +253,14 @@ class GalaxyCLI(CLI):
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
         common.add_argument('--timeout', dest='timeout', type=int,
                             help="The time to wait for operations against the galaxy server, defaults to 60s.")
+        common.add_argument('--collection-page-size', type=int, dest='collection_page_size',
+                            help='The page size to use when getting paginated collection results from a server. '
+                                 'Increasing the page size may decrease the number of API calls made when finding the best version to install/download.'
+                            )
+        common.add_argument('--role-page-size', type=int, dest='role_page_size',
+                            help='The page size to use when getting paginated role results from a server . '
+                                 'Increasing the page size may decrease the number of API calls when searching for a role.'
+                            )
 
         opt_help.add_verbosity_options(common)
 
@@ -619,7 +633,7 @@ class GalaxyCLI(CLI):
             return config_def
 
         galaxy_options = {}
-        for optional_key in ['clear_response_cache', 'no_cache', 'timeout']:
+        for optional_key in ['clear_response_cache', 'no_cache', 'timeout', 'collection_page_size', 'role_page_size']:
             if optional_key in context.CLIARGS:
                 galaxy_options[optional_key] = context.CLIARGS[optional_key]
 

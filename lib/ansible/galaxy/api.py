@@ -262,6 +262,7 @@ class GalaxyAPI:
             timeout=60,
             collection_page_size=None,
             role_page_size=None,
+            retry_http_error_codes=None,
     ):
         self.galaxy = galaxy
         self.name = name
@@ -293,7 +294,7 @@ class GalaxyAPI:
 
         self.collection_page_size = collection_page_size
         self.role_page_size = role_page_size
-        self.retry_http_errors = RETRY_HTTP_ERROR_CODES
+        self.retry_http_error_codes = retry_http_error_codes
 
     def __str__(self):
         # type: (GalaxyAPI) -> str
