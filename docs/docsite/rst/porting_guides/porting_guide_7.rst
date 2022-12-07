@@ -92,6 +92,57 @@ Networking
 
 No notable changes
 
+Porting Guide for v7.1.0
+========================
+
+Added Collections
+-----------------
+
+- grafana.grafana (version 1.1.0)
+
+Known Issues
+------------
+
+community.routeros
+~~~~~~~~~~~~~~~~~~
+
+- api_modify - when limits for entries in ``queue tree`` are defined as human readable - for example ``25M`` -, the configuration will be correctly set in ROS, but the module will indicate the item is changed on every run even when there was no change done. This is caused by the ROS API which returns the number in bytes - for example ``25000000`` (which is inconsistent with the CLI behavior). In order to mitigate that, the limits have to be defined in bytes (those will still appear as human readable in the ROS CLI) (https://github.com/ansible-collections/community.routeros/pull/131).
+- api_modify, api_info - ``routing ospf area``, ``routing ospf area range``, ``routing ospf instance``, ``routing ospf interface-template`` paths are not fully implemeted for ROS6 due to the significat changes between ROS6 and ROS7 (https://github.com/ansible-collections/community.routeros/pull/131).
+
+Major Changes
+-------------
+
+cisco.meraki
+~~~~~~~~~~~~
+
+- meraki_mr_l7_firewall - New module
+- meraki_webhook_payload_template - New module
+
+community.zabbix
+~~~~~~~~~~~~~~~~
+
+- all modules are opting away from zabbix-api and using httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
+- zabbix_agent and zabbix_proxy roles are opting away from zabbix-api and use httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
+
+containers.podman
+~~~~~~~~~~~~~~~~~
+
+- New become plugin - podman_unshare
+- Podman generate systemd module
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Support FortiOS v7.0.6, v7.0.7, v7.0.8, v7.2.1, v7.2.2.
+
+Deprecated Features
+-------------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- The ``sap`` modules ``sapcar_extract``, ``sap_task_list_execute``, and ``hana_query``, will be removed from this collection in community.general 7.0.0 and replaced with redirects to ``community.sap_libs``. If you want to continue using these modules, make sure to also install ``community.sap_libs`` (it is part of the Ansible package) (https://github.com/ansible-collections/community.general/pull/5614).
+
 Porting Guide for v7.0.0
 ========================
 
