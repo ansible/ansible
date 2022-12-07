@@ -39,7 +39,7 @@ def reset_cli_args():
 @pytest.fixture(autouse=True)
 def galaxy_server():
     context.CLIARGS._store = {'ignore_certs': False}
-    galaxy_api = api.GalaxyAPI(None, 'test_server', 'https://galaxy.ansible.com')
+    galaxy_api = api.GalaxyAPI(None, 'test_server', 'https://galaxy.ansible.com', role_page_size=50)
     return galaxy_api
 
 

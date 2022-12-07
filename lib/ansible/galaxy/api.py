@@ -294,7 +294,10 @@ class GalaxyAPI:
 
         self.collection_page_size = collection_page_size
         self.role_page_size = role_page_size
-        self.retry_http_error_codes = retry_http_error_codes
+        if retry_http_error_codes is not None:
+            self.retry_http_error_codes = retry_http_error_codes
+        else:
+            self.retry_http_error_codes = RETRY_HTTP_ERROR_CODES
 
     def __str__(self):
         # type: (GalaxyAPI) -> str

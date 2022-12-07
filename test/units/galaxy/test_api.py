@@ -72,6 +72,10 @@ def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache
     api._available_api_versions = {version: '%s' % version}
     api.token = token_ins
 
+    # default for Galaxy to avoid needing to mock an extra api call
+    api.collection_page_size = 100
+    api.role_page_size = 50
+
     return api
 
 
