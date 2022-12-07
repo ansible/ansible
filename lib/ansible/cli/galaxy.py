@@ -634,7 +634,7 @@ class GalaxyCLI(CLI):
 
         galaxy_options = {}
         for optional_key in ['clear_response_cache', 'no_cache', 'timeout', 'collection_page_size', 'role_page_size']:
-            if optional_key in context.CLIARGS:
+            if optional_key in context.CLIARGS and context.CLIARGS[optional_key] is not None:
                 galaxy_options[optional_key] = context.CLIARGS[optional_key]
 
         config_servers = []
