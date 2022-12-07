@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
+import contextlib
 import datetime
 import functools
 import hashlib
@@ -33,8 +34,16 @@ from ansible.utils.path import makedirs_safe
 
 display = Display()
 _CACHE_LOCK = threading.Lock()
-COLLECTION_PAGE_SIZE = 100
-RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
+
+# multiplied with default page size to determine page size for operations with pagination
+# when one hasn't been specified for the server or with --{type}-page-size
+COLLECTION_PAGE_MULTIPLIER = 10
+ROLE_PAGE_MULTIPLIER = 5
+
+# Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
+# Since 403 could reflect the actual problem (such as an expired token),
+# rate limit errors from AH cannot be retried by default.
+RETRY_HTTP_ERROR_CODES = [
     429,  # Too Many Requests
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
 ]
@@ -46,13 +55,6 @@ def cache_lock(func):
             return func(*args, **kwargs)
 
     return wrapped
-
-
-def is_rate_limit_exception(exception):
-    # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
-    # Since 403 could reflect the actual problem (such as an expired token), we should
-    # not retry by default.
-    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
 
 
 def g_connect(versions):
@@ -258,6 +260,8 @@ class GalaxyAPI:
             clear_response_cache=False, no_cache=True,
             priority=float('inf'),
             timeout=60,
+            collection_page_size=None,
+            role_page_size=None,
     ):
         self.galaxy = galaxy
         self.name = name
@@ -286,6 +290,10 @@ class GalaxyAPI:
             self._cache = _load_cache(self._b_cache_path)
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
+
+        self.collection_page_size = collection_page_size
+        self.role_page_size = role_page_size
+        self.retry_http_errors = RETRY_HTTP_ERROR_CODES
 
     def __str__(self):
         # type: (GalaxyAPI) -> str
@@ -325,12 +333,28 @@ class GalaxyAPI:
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
 
-    @retry_with_delays_and_condition(
-        backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
-        should_retry_error=is_rate_limit_exception
-    )
-    def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
-                     cache=False, cache_key=None):
+    def is_rate_limit_exception(self, exception):
+        return isinstance(exception, GalaxyError) and exception.http_code in self.retry_http_error_codes
+
+    def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None, cache=False, cache_key=None):
+        return retry_with_delays_and_condition(
+            backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
+            should_retry_error=self.is_rate_limit_exception
+        )(
+            self._call_galaxy_once
+        )(
+            url,
+            args=args,
+            headers=headers,
+            method=method,
+            auth_required=auth_required,
+            error_context_msg=error_context_msg,
+            cache=cache,
+            cache_key=cache_key
+        )
+
+    def _call_galaxy_once(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
+                          cache=False, cache_key=None):
         url_info = urlparse(url)
         cache_id = get_cache_id(url)
         if not cache_key:
@@ -510,16 +534,28 @@ class GalaxyAPI:
         return None
 
     @g_connect(['v1'])
+    def set_default_role_page_size(self, related, role_id):
+        url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles", role_id, related)
+        with contextlib.suppress(Exception):
+            data = self._call_galaxy(url)
+
+            if 'count' in data and data['count'] < len(data['results']) * ROLE_PAGE_MULTIPLIER:
+                self.role_page_size = data['count']
+            else:
+                self.role_page_size = len(data['results']) * ROLE_PAGE_MULTIPLIER
+
+    @g_connect(['v1'])
     def fetch_role_related(self, related, role_id):
         """
         Fetch the list of related items for the given role.
         The url comes from the 'related' field of the role.
         """
-
         results = []
+        if self.role_page_size is None:
+            self.set_default_role_page_size(related, role_id)
         try:
             url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles", role_id, related,
-                           "?page_size=50")
+                           f"?page_size={self.role_page_size}")
             data = self._call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
@@ -797,28 +833,7 @@ class GalaxyAPI:
                                          data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
-    def get_collection_versions(self, namespace, name):
-        """
-        Gets a list of available versions for a collection on a Galaxy server.
-
-        :param namespace: The collection namespace.
-        :param name: The collection name.
-        :return: A list of versions that are available.
-        """
-        relative_link = False
-        if 'v3' in self.available_api_versions:
-            api_path = self.available_api_versions['v3']
-            pagination_path = ['links', 'next']
-            relative_link = True  # AH pagination results are relative an not an absolute URI.
-        else:
-            api_path = self.available_api_versions['v2']
-            pagination_path = ['next']
-
-        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
-        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
-        versions_url_info = urlparse(versions_url)
-        cache_key = versions_url_info.path
-
+    def reset_cache(self, versions_url, namespace, name, cache_key):
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
         # we are not waiting a day before finding any new collections that have been published.
         if self._cache:
@@ -836,10 +851,68 @@ class GalaxyAPI:
             cached_modified_date = modified_cache.get('%s.%s' % (namespace, name), None)
             if cached_modified_date != modified_date:
                 modified_cache['%s.%s' % (namespace, name)] = modified_date
-                if versions_url_info.path in server_cache:
+                if cache_key in server_cache:
                     del server_cache[cache_key]
 
                 self._set_cache()
+
+    @g_connect(['v2', 'v3'])
+    def set_default_collection_page_size(self, api_path, namespace, name):
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions')
+        cache_key = urlparse(versions_url).path
+        self.reset_cache(versions_url, namespace, name, cache_key)
+
+        error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s).' \
+                            % (namespace, name, self.name, self.api_server)
+
+        try:
+            data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
+        except GalaxyError as err:
+            if err.http_code != 404:
+                raise
+            # v3 doesn't raise a 404 so we need to mimick the empty response from APIs that do.
+            return
+
+        if 'data' in data:
+            # v3 automation-hub is the only known API that uses `data`
+            # since v3 pulp_ansible does not, we cannot rely on version
+            # to indicate which key to use
+            results_key = 'data'
+        else:
+            results_key = 'results'
+
+        if 'count' in data and data['count'] < len(data[results_key]) * COLLECTION_PAGE_MULTIPLIER:
+            self.collection_page_size = data['count']
+        else:
+            self.collection_page_size = len(data[results_key]) * COLLECTION_PAGE_MULTIPLIER
+
+    @g_connect(['v2', 'v3'])
+    def get_collection_versions(self, namespace, name):
+        """
+        Gets a list of available versions for a collection on a Galaxy server.
+
+        :param namespace: The collection namespace.
+        :param name: The collection name.
+        :return: A list of versions that are available.
+        """
+        relative_link = False
+        if 'v3' in self.available_api_versions:
+            api_path = self.available_api_versions['v3']
+            pagination_path = ['links', 'next']
+            relative_link = True  # AH pagination results are relative an not an absolute URI.
+        else:
+            api_path = self.available_api_versions['v2']
+            pagination_path = ['next']
+
+        if self.collection_page_size is None:
+            self.set_default_collection_page_size(api_path, namespace, name)
+
+        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, self.collection_page_size))
+        versions_url_info = urlparse(versions_url)
+        cache_key = versions_url_info.path
+
+        self.reset_cache(versions_url, namespace, name, cache_key)
 
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)
