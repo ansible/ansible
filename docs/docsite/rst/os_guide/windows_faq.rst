@@ -57,7 +57,7 @@ can be run in the bash terminal:
 .. code-block:: shell
 
     sudo apt-get update
-    sudo apt-get install python-pip git libffi-dev libssl-dev -y
+    sudo apt-get install python3-pip git libffi-dev libssl-dev -y
     pip install --user ansible pywinrm
 
 To run Ansible from source instead of a release on the WSL, simply uninstall the pip
