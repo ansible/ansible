@@ -2054,6 +2054,10 @@ STRING_CONVERSION_ACTION:
     - section: defaults
       key: string_conversion_action
   type: string
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.19"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 VALIDATE_ACTION_GROUP_METADATA:
   version_added: '2.12'
   description:
