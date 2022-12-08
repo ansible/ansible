@@ -549,7 +549,7 @@ class StrategyBase:
                             "not supported in handler names). The error: %s" % (handler_task.name, to_text(e))
                         )
 
-    def get_notified_handlers(self, notification, iterator):
+    def get_notified_handlers(self, notification, iterator, templar):
         if (handler := self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator)) is not None:
             yield handler
 
@@ -560,7 +560,7 @@ class StrategyBase:
                         'listen',
                         listening_handler.fattributes.get('listen'),
                         listeners,
-                        Templar(None),  # FIXME pass templar
+                        templar,
                     ):
                         yield listening_handler
 
@@ -659,7 +659,7 @@ class StrategyBase:
                         # handlers are actually flushed so the last defined handlers are exexcuted,
                         # otherwise depending on the setting either error or warn
                         for notification in result_item['_ansible_notify']:
-                            if any(self.get_notified_handlers(notification, iterator)):
+                            if any(self.get_notified_handlers(notification, iterator, handler_templar)):
                                 iterator.notify(original_host.name, notification)
                                 continue
 
@@ -949,9 +949,10 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             if _evaluate_conditional(target_host):
                 host_state = iterator.get_state_for_host(target_host.name)
+                templar = Templar(None)
                 # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.notifications):
-                    for handler in self.get_notified_handlers(notification, iterator):
+                    for handler in self.get_notified_handlers(notification, iterator, templar):
                         if handler.notify_host(target_host):
                             # NOTE callback sent later than in devel, breaking change?
                             self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
