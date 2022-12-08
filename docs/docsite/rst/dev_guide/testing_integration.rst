@@ -187,13 +187,6 @@ Container images are updated regularly. To see the current list of container ima
 
 The list is under the **target docker images and supported python version** heading.
 
-Legacy Cloud Tests
-==================
-
-Some of the cloud tests run as normal integration tests, and others run as legacy tests; see the
-:ref:`testing_integration_legacy` page for more information.
-
-
 Other configuration for Cloud Tests
 ===================================
 
