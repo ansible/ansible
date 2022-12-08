@@ -20,7 +20,6 @@ from traceback import format_exc
 import ansible.module_utils.compat.typing as t
 from ansible import __version__ as ansible_version
 from ansible import constants as C
-from ansible import context
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.common.collections import is_sequence
@@ -1459,17 +1458,16 @@ def _does_collection_support_ansible_version(requirement_string, ansible_version
     return ss.contains(base_ansible_version)
 
 
-def _configure_collection_loader():
+def _configure_collection_loader(prefix_collections_path=None):
     if AnsibleCollectionConfig.collection_finder:
         # this must be a Python warning so that it can be filtered out by the import sanity test
         warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
-    cli_paths = context.CLIARGS.get('collections_path') or []
-    # In some contexts ``collections_path`` is singular
-    if not is_sequence(cli_paths):
-        cli_paths = [cli_paths]
-    paths = list(cli_paths) + C.COLLECTIONS_PATHS
+    if prefix_collections_path is None:
+        prefix_collections_path = []
+
+    paths = list(prefix_collections_path) + C.COLLECTIONS_PATHS
     finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 
@@ -1477,7 +1475,7 @@ def _configure_collection_loader():
     AnsibleCollectionConfig.on_collection_load += _on_collection_load_handler
 
 
-def init_plugin_loader():
+def init_plugin_loader(prefix_collections_path=None):
     """Initialize the plugin filters and the collection loaders
 
     This method must be called to configure and insert the collection python loaders
@@ -1488,7 +1486,7 @@ def init_plugin_loader():
     side effects.
     """
     _load_plugin_filter()
-    _configure_collection_loader()
+    _configure_collection_loader(prefix_collections_path)
 
 
 # TODO: Evaluate making these class instantiations lazy, but keep them in the global scope
