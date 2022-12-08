@@ -117,28 +117,6 @@
       - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
 
-- name: Test update_cache with LC_ALL set to de_DE
-  block:
-    - name: get language pack
-      command: locale-gen de_DE
-      become: true
-
-    - name: update locale
-      command: update-locale
-      become: true
-
-    - name: update the cache with LANG env vars
-      apt:
-        update_cache: true
-      register: apt_update_cache_locale
-      ignore_errors: yes
-      environment:
-        LC_ALL: de_DE
-
-    - assert:
-        that:
-          - apt_update_cache_locale is success
-
 - name: uninstall apt bindings with apt again
   apt:
     pkg: [python-apt, python3-apt]
