@@ -127,7 +127,7 @@ class _AnsibleNSTraversable:
         self._paths = [pathlib.Path(p) for p in paths]
 
     def __repr__(self):
-        return '_AnsibleNSTraversable(\'%s\')' % '\', \''.join(map(to_text, self._paths))
+        return "_AnsibleNSTraversable('%s')" % "', '".join(map(to_text, self._paths))
 
     def iterdir(self):
         return itertools.chain.from_iterable(p.iterdir() for p in self._paths if p.is_dir())
@@ -152,7 +152,7 @@ class _AnsibleTraversableResources(TraversableResources):
     collection Python loaders.
 
     The result of ``files`` will depend on whether a particular collection, or
-    a sub package of a collection was refernced, as opposed to
+    a sub package of a collection was referenced, as opposed to
     ``ansible_collections`` or a particular namespace. For a collection and
     its subpackages, a ``pathlib.Path`` instance will be returned, whereas
     for the higher level namespace packages, ``_AnsibleNSTraversable``
