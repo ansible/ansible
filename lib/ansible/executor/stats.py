@@ -22,7 +22,9 @@ __metaclass__ = type
 from collections.abc import MutableMapping
 
 from ansible.utils.vars import merge_hash
+from ansible.utils.display import Display
 
+display = Display()
 
 class AggregateStats:
     ''' holds stats about per-host activity during playbook runs '''
@@ -91,6 +93,7 @@ class AggregateStats:
 
         # mismatching types
         if not isinstance(what, type(self.custom[host][which])):
+            display.warning("Mismatching types in stats")
             return None
 
         if isinstance(what, MutableMapping):
