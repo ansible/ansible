@@ -950,19 +950,17 @@ class StrategyBase:
                 host_state = iterator.get_state_for_host(target_host.name)
                 for notification in list(host_state.notifications):
                     target_handler = self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator)
-                    if target_handler is not None:
-                        if target_handler.notify_host(target_host):
-                            self._tqm.send_callback('v2_playbook_on_notify', target_handler, target_host)
+                    if target_handler is not None and target_handler.notify_host(target_host):
+                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, target_host)
 
                     for listening_handler_block in iterator._play.handlers:
                         for listening_handler in listening_handler_block.block:
                             if listeners := getattr(listening_handler, 'listen', []) or []:
                                 if notification in listening_handler.get_validated_value(
                                     'listen', listening_handler.fattributes.get('listen'), listeners, Templar(None)
-                                ):
-                                    if listening_handler.notify_host(target_host):
-                                        self._tqm.send_callback('v2_playbook_on_notify', listening_handler, target_host)
-                    host_state.notifications.remove(notification)
+                                ) and listening_handler.notify_host(target_host):
+                                    self._tqm.send_callback('v2_playbook_on_notify', listening_handler, target_host)
+                    iterator.clear_notification(target_host.name, notification)
 
                 if host_state.run_state == IteratingStates.HANDLERS:
                     raise AnsibleError('flush_handlers cannot be used as a handler')

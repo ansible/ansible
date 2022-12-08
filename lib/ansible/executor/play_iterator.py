@@ -656,3 +656,6 @@ class PlayIterator:
 
     def notify(self, hostname: str, notification: str) -> None:
         self._host_states[hostname].notifications.add(notification)
+
+    def clear_notification(self, hostname: str, notification: str) -> None:
+        self._host_states[hostname].notifications.remove(notification)
