@@ -354,6 +354,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 import datetime
 import fnmatch
 import itertools
+import locale as locale_module
 import os
 import random
 import re
@@ -1218,6 +1219,7 @@ def main():
     # to make sure we use the best parsable locale when running commands
     # also set apt specific vars for desired behaviour
     locale = get_best_parsable_locale(module)
+    locale_module.setlocale(locale_module.LC_ALL, locale)
     # APT related constants
     APT_ENV_VARS = dict(
         DEBIAN_FRONTEND='noninteractive',
