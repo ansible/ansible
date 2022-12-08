@@ -262,7 +262,7 @@ def run_container(
                 stdout = docker_run(args, image, options, cmd)[0]
         except SubprocessError as ex:
             display.error(ex.message)
-            display.warning('Failed to run docker image "{image}". Waiting a few seconds before trying again.')
+            display.warning(f'Failed to run docker image "{image}". Waiting a few seconds before trying again.')
             docker_rm(args, name)  # podman doesn't remove containers after create if run fails
             time.sleep(3)
         else:
