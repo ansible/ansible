@@ -549,6 +549,21 @@ class StrategyBase:
                             "not supported in handler names). The error: %s" % (handler_task.name, to_text(e))
                         )
 
+    def get_notified_handlers(self, notification, iterator):
+        if (handler := self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator)) is not None:
+            yield handler
+
+        for listening_handler_block in iterator._play.handlers:
+            for listening_handler in listening_handler_block.block:
+                if listeners := listening_handler.listen:
+                    if notification in listening_handler.get_validated_value(
+                        'listen',
+                        listening_handler.fattributes.get('listen'),
+                        listeners,
+                        Templar(None),  # FIXME pass templar
+                    ):
+                        yield listening_handler
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -644,35 +659,18 @@ class StrategyBase:
                         # handlers are actually flushed so the last defined handlers are exexcuted,
                         # otherwise depending on the setting either error or warn
                         for notification in result_item['_ansible_notify']:
-                            found = False
-                            if self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator) is not None:
-                                found = True
-                            else:
-                                for listening_handler_block in iterator._play.handlers:
-                                    for listening_handler in listening_handler_block.block:
-                                        if listeners := (getattr(listening_handler, 'listen', []) or []):
-                                            if notification in listening_handler.get_validated_value(
-                                                'listen',
-                                                listening_handler.fattributes.get('listen'),
-                                                listeners,
-                                                handler_templar,
-                                            ):
-                                                found = True
-                                                break
-                                    if found:
-                                        break
-
-                            if found:
+                            if any(self.get_notified_handlers(notification, iterator)):
                                 iterator.notify(original_host.name, notification)
+                                continue
+
+                            msg = (
+                                f"The requested handler '{notification}' was not found in either the main handlers"
+                                " list nor in the listening handlers list"
+                            )
+                            if C.ERROR_ON_MISSING_HANDLER:
+                                raise AnsibleError(msg)
                             else:
-                                msg = (
-                                    f"The requested handler '{notification}' was not found in either the main handlers"
-                                    " list nor in the listening handlers list"
-                                )
-                                if C.ERROR_ON_MISSING_HANDLER:
-                                    raise AnsibleError(msg)
-                                else:
-                                    display.warning(msg)
+                                display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -953,17 +951,10 @@ class StrategyBase:
                 host_state = iterator.get_state_for_host(target_host.name)
                 # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.notifications):
-                    target_handler = self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator)
-                    if target_handler is not None and target_handler.notify_host(target_host):
-                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, target_host)
-
-                    for listening_handler_block in iterator._play.handlers:
-                        for listening_handler in listening_handler_block.block:
-                            if listeners := getattr(listening_handler, 'listen', []) or []:
-                                if notification in listening_handler.get_validated_value(
-                                    'listen', listening_handler.fattributes.get('listen'), listeners, Templar(None)
-                                ) and listening_handler.notify_host(target_host):
-                                    self._tqm.send_callback('v2_playbook_on_notify', listening_handler, target_host)
+                    for handler in self.get_notified_handlers(notification, iterator):
+                        if handler.notify_host(target_host):
+                            # NOTE callback sent later than in devel, breaking change?
+                            self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
                     iterator.clear_notification(target_host.name, notification)
 
                 if host_state.run_state == IteratingStates.HANDLERS:
