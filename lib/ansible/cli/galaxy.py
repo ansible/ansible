@@ -84,10 +84,6 @@ SERVER_ADDITIONAL = {
     'token': {'default': None},
 }
 
-# override default if the generic is set
-if C.GALAXY_IGNORE_CERTS is not None:
-    SERVER_ADDITIONAL['validate_certs'].update({'default': not C.GALAXY_IGNORE_CERTS})
-
 
 def with_collection_artifacts_manager(wrapped_method):
     """Inject an artifacts manager if not passed explicitly.
@@ -682,8 +678,7 @@ class GalaxyCLI(CLI):
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
         # resolve validate_certs
-        v_config_default = True if C.GALAXY_IGNORE_CERTS is None else not C.GALAXY_IGNORE_CERTS
-        validate_certs = v_config_default if context.CLIARGS['validate_certs'] is None else context.CLIARGS['validate_certs']
+        validate_certs = True if context.CLIARGS['validate_certs'] is None else context.CLIARGS['validate_certs']
         if cmd_server:
             # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
             # entry, otherwise create a new API entry for the server specified.

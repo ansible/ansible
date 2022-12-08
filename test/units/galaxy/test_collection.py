@@ -201,24 +201,6 @@ def manifest(manifest_info):
             yield fake_file, sha256(b_data).hexdigest()
 
 
-@pytest.fixture()
-def server_config(monkeypatch):
-    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1', 'server2', 'server3'])
-
-    default_options = dict((k, None) for k, v, t in SERVER_DEF)
-
-    server1 = dict(default_options)
-    server1.update({'url': 'https://galaxy.ansible.com/api/', 'validate_certs': False})
-
-    server2 = dict(default_options)
-    server2.update({'url': 'https://galaxy.ansible.com/api/', 'validate_certs': True})
-
-    server3 = dict(default_options)
-    server3.update({'url': 'https://galaxy.ansible.com/api/'})
-
-    return server1, server2, server3
-
-
 @pytest.mark.parametrize(
     'required_signature_count,valid',
     [
@@ -361,32 +343,58 @@ def test_validate_certs_with_server_url(global_ignore_certs, monkeypatch):
     assert len(galaxy_cli.api_servers) == 1
     assert galaxy_cli.api_servers[0].validate_certs is not global_ignore_certs
 
-
-@pytest.mark.parametrize('global_ignore_certs', [True, False])
-def test_validate_certs_with_server_config(global_ignore_certs, server_config, monkeypatch):
-
-    # test sidesteps real resolution and forces the server config to override the cli option
-    get_plugin_options = MagicMock(side_effect=server_config)
-    monkeypatch.setattr(C.config, 'get_plugin_options', get_plugin_options)
-
+@pytest.mark.parametrize(
+    # False/True/omitted, True/omitted
+    "general_config,cli_ignore_certs",
+    [
+        (None, None),
+        (None, True),
+        (True, None),
+        (False, True),
+    ]
+)
+def test_validate_certs_server_config(general_config, cli_ignore_certs, monkeypatch):
+    server_names = ['server1', 'server2', 'server3']
+    cfg_lines = [
+        "[galaxy]",
+        "server_list=server1,server2,server3",
+        "[galaxy_server.server1]",
+        "url=https://galaxy.ansible.com/api/",
+        "validate_certs=False",
+        "[galaxy_server.server2]",
+        "url=https://galaxy.ansible.com/api/",
+        "validate_certs=True",
+        "[galaxy_server.server3]",
+        "url=https://galaxy.ansible.com/api/",
+    ]
     cli_args = [
         'ansible-galaxy',
         'collection',
         'install',
         'namespace.collection:1.0.0',
     ]
-    if global_ignore_certs:
+    if cli_ignore_certs:
         cli_args.append('--ignore-certs')
+    if general_config is not None:
+        monkeypatch.setenv('ANSIBLE_GALAXY_IGNORE', f'{general_config}')
 
-    galaxy_cli = GalaxyCLI(args=cli_args)
-    mock_execute_install = MagicMock()
-    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
-    galaxy_cli.run()
+    with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
+        tmp_file.write(to_bytes('\n'.join(cfg_lines), errors='surrogate_or_strict'))
+        tmp_file.flush()
 
-    # server cfg, so should match def above, if not specified so it should use default (true)
-    assert galaxy_cli.api_servers[0].validate_certs is server_config[0].get('validate_certs', True)
-    assert galaxy_cli.api_servers[1].validate_certs is server_config[1].get('validate_certs', True)
-    assert galaxy_cli.api_servers[2].validate_certs is server_config[2].get('validate_certs', True)
+        with patch.object(C, 'GALAXY_SERVER_LIST', server_names):
+            with patch.object(C.config, '_config_file', tmp_file.name):
+                C.config._parse_config_file()
+
+                galaxy_cli = GalaxyCLI(args=cli_args)
+                mock_execute_install = MagicMock()
+                monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+                galaxy_cli.run()
+
+    # (not) --ignore-certs > server's validate_certs > (not) GALAXY_IGNORE_CERTS > True
+    assert galaxy_cli.api_servers[0].validate_certs is False
+    assert galaxy_cli.api_servers[1].validate_certs is (False if cli_ignore_certs else True)
+    assert galaxy_cli.api_servers[2].validate_certs is (False if cli_ignore_certs else general_config if general_config is not None else True)
 
 
 def test_build_collection_no_galaxy_yaml():
