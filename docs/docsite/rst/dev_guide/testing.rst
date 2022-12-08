@@ -26,9 +26,6 @@ Types of tests
 
 At a high level we have the following classifications of tests:
 
-:compile:
-  * :ref:`testing_compile`
-  * Test python code against a variety of Python versions.
 :sanity:
   * :ref:`testing_sanity`
   * Sanity tests are made up of scripts and tools used to perform static code analysis.
