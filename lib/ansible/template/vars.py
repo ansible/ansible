@@ -18,7 +18,7 @@ def _process_locals(_l):
     return {
         k: v for k, v in _l.items()
         if v is not missing
-        and k not in ('context', 'environment', 'template')  # NOTE is this really needed?
+        and k not in {'context', 'environment', 'template'}  # NOTE is this really needed?
     }
 
 
