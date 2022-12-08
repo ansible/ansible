@@ -36,7 +36,7 @@ Release Phase
 
 - 2023-05-01 Release Candidate 1
 
-- 2023-05-22 Release
+- 2023-05-15 Release
 
 .. note:: The beta and release candidate schedules allow for up to 3 releases on a weekly schedule depending on the necessity of creating a release.
 
