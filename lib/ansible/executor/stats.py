@@ -26,6 +26,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
+
 class AggregateStats:
     ''' holds stats about per-host activity during playbook runs '''
 
