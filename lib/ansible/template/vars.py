@@ -37,7 +37,7 @@ class AnsibleJ2Vars(ChainMap):
         variable = super().__getitem__(varname)
 
         from ansible.vars.hostvars import HostVars
-        if (isinstance(variable, dict) and varname == "vars") or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
             return variable
 
         try:
