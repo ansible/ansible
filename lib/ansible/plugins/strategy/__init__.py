@@ -640,6 +640,9 @@ class StrategyBase:
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item and task_result.is_changed():
+                        # only ensure that notified handlers exist, if so save the notifications for when
+                        # handlers are actually flushed so the last defined handlers are exexcuted,
+                        # otherwise depending on the setting either error or warn
                         for notification in result_item['_ansible_notify']:
                             found = False
                             if self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator) is not None:
@@ -948,6 +951,7 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             if _evaluate_conditional(target_host):
                 host_state = iterator.get_state_for_host(target_host.name)
+                # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.notifications):
                     target_handler = self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator)
                     if target_handler is not None and target_handler.notify_host(target_host):
