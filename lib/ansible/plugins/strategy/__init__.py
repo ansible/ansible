@@ -671,7 +671,6 @@ class StrategyBase:
                                 else:
                                     display.warning(msg)
 
-
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
