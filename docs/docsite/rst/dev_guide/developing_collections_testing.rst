@@ -4,7 +4,7 @@
 Testing collections
 *******************
 
-Testing your collection ensures that your code works well and integrates well with the rest of the Ansible ecosystem. Your collection should pass the general compile and sanity tests for Ansible code. You should also add unit tests to cover the code in your collection and integration tests to cover the interactions between your collection and ansible-core.
+Testing your collection ensures that your code works well and integrates well with the rest of the Ansible ecosystem. Your collection should pass the sanity tests for Ansible code. You should also add unit tests to cover the code in your collection and integration tests to cover the interactions between your collection and ansible-core.
 
 .. contents::
    :local:
@@ -15,20 +15,20 @@ Testing tools
 
 The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing` and provided by both the ``ansible`` and ``ansible-core`` packages.
 
-You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``. When you test collections, test against the ansible-core version(s) you are targeting.
+You can run several sanity tests, as well as run unit and integration tests for plugins using ``ansible-test``. When you test collections, test against the ansible-core version(s) you are targeting.
 
 You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Azure Pipelines both in the ansible/ansible GitHub repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.
 
-Compile and sanity tests
-------------------------
+Sanity tests
+------------
 
-To run all compile and sanity tests:
+To run all sanity tests:
 
 .. code-block:: shell-session
 
     ansible-test sanity --docker default -v
 
-See :ref:`testing_compile` and :ref:`testing_sanity` for more information. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on the sanity tests and how to fix identified issues.
+See :ref:`testing_sanity` for more information. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on the sanity tests and how to fix identified issues.
 
 Adding unit tests
 -----------------
