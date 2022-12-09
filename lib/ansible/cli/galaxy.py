@@ -79,7 +79,7 @@ SERVER_DEF = [
 # config definition fields
 SERVER_ADDITIONAL = {
     'v3': {'default': 'False'},
-    'validate_certs': {'default': True, 'cli': [{'name': 'validate_certs'}]},
+    'validate_certs': {'cli': [{'name': 'validate_certs'}]},
     'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
 }
@@ -96,7 +96,8 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
-        artifacts_manager_kwargs = {'validate_certs': context.CLIARGS['validate_certs']}
+        # FIXME: use validate_certs context from Galaxy servers when downloading collections
+        artifacts_manager_kwargs = {'validate_certs': context.CLIARGS['resolved_validate_certs']}
 
         keyring = context.CLIARGS.get('keyring', None)
         if keyring is not None:
@@ -240,8 +241,7 @@ class GalaxyCLI(CLI):
         common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
-        common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.',
-                            default=C.GALAXY_IGNORE_CERTS)
+        common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
         common.add_argument('--timeout', dest='timeout', type=int,
                             help="The time to wait for operations against the galaxy server, defaults to 60s.")
 
@@ -584,7 +584,10 @@ class GalaxyCLI(CLI):
         options = super(GalaxyCLI, self).post_process_args(options)
 
         # ensure we have 'usable' cli option
+        validate_certs_or_sentinel = (None if options.ignore_certs is None else not options.ignore_certs)
         setattr(options, 'validate_certs', (None if options.ignore_certs is None else not options.ignore_certs))
+        # the default if validate_certs is None
+        setattr(options, 'resolved_validate_certs', (options.validate_certs if options.validate_certs is not None else not C.GALAXY_IGNORE_CERTS))
 
         display.verbosity = options.verbosity
         return options
@@ -642,6 +645,8 @@ class GalaxyCLI(CLI):
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
             v3 = server_options.pop('v3')
+            if server_options['validate_certs'] is None:
+                server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
             if v3:
@@ -677,8 +682,7 @@ class GalaxyCLI(CLI):
         cmd_server = context.CLIARGS['api_server']
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
-        # resolve validate_certs
-        validate_certs = True if context.CLIARGS['validate_certs'] is None else context.CLIARGS['validate_certs']
+        validate_certs = context.CLIARGS['resolved_validate_certs']
         if cmd_server:
             # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
             # entry, otherwise create a new API entry for the server specified.
@@ -844,7 +848,7 @@ class GalaxyCLI(CLI):
                     name=coll_req['name'],
                 ),
                 coll_req['source'],
-                validate_certs=not context.CLIARGS['ignore_certs'],
+                validate_certs=context.CLIARGS['resolved_validate_certs'],
             ),
         )
 
