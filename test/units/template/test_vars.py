@@ -19,23 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat import unittest
-from unittest.mock import MagicMock
-
+from ansible.template import Templar
 from ansible.template.vars import AnsibleJ2Vars
 
 
-class TestVars(unittest.TestCase):
-    def setUp(self):
-        self.mock_templar = MagicMock(name='mock_templar')
+def test_globals_empty():
+    assert isinstance(dict(AnsibleJ2Vars(Templar(None), {})), dict)
 
-    def test_globals_empty(self):
-        ajvars = AnsibleJ2Vars(self.mock_templar, {})
-        res = dict(ajvars)
-        self.assertIsInstance(res, dict)
 
-    def test_globals(self):
-        res = dict(AnsibleJ2Vars(self.mock_templar, {'foo': 'bar', 'blip': [1, 2, 3]}))
-        self.assertIsInstance(res, dict)
-        self.assertIn('foo', res)
-        self.assertEqual(res['foo'], 'bar')
+def test_globals():
+    res = dict(AnsibleJ2Vars(Templar(None), {'foo': 'bar', 'blip': [1, 2, 3]}))
+    assert isinstance(res, dict)
+    assert 'foo' in res
+    assert res['foo'] == 'bar'
