@@ -329,6 +329,7 @@ def test_validate_certs(global_ignore_certs, monkeypatch):
         (None, True),
         (None, False),
         (True, None),
+        (True, True),
         (True, False),
     ]
 )
@@ -358,17 +359,17 @@ def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, monk
 
 @pytest.mark.parametrize(
     # False/True/omitted, True/omitted
-    "general_config,cli_ignore_certs",
+    "ignore_certs_cli,ignore_certs_cfg",
     [
         (None, None),
         (None, True),
+        (None, False),
         (True, None),
         (True, True),
-        (False, None),
-        (False, True),
+        (True, False),
     ]
 )
-def test_validate_certs_server_config(general_config, cli_ignore_certs, monkeypatch):
+def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, monkeypatch):
     server_names = ['server1', 'server2', 'server3']
     cfg_lines = [
         "[galaxy]",
@@ -388,10 +389,10 @@ def test_validate_certs_server_config(general_config, cli_ignore_certs, monkeypa
         'install',
         'namespace.collection:1.0.0',
     ]
-    if cli_ignore_certs:
+    if ignore_certs_cli:
         cli_args.append('--ignore-certs')
-    if general_config is not None:
-        monkeypatch.setattr(C, 'GALAXY_IGNORE_CERTS', general_config)
+    if ignore_certs_cfg is not None:
+        monkeypatch.setattr(C, 'GALAXY_IGNORE_CERTS', ignore_certs_cfg)
 
     with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
         tmp_file.write(to_bytes('\n'.join(cfg_lines), errors='surrogate_or_strict'))
@@ -408,8 +409,8 @@ def test_validate_certs_server_config(general_config, cli_ignore_certs, monkeypa
 
     # (not) --ignore-certs > server's validate_certs > (not) GALAXY_IGNORE_CERTS > True
     assert galaxy_cli.api_servers[0].validate_certs is False
-    assert galaxy_cli.api_servers[1].validate_certs is (False if cli_ignore_certs else True)
-    assert galaxy_cli.api_servers[2].validate_certs is (False if cli_ignore_certs else not general_config if general_config is not None else True)
+    assert galaxy_cli.api_servers[1].validate_certs is (False if ignore_certs_cli else True)
+    assert galaxy_cli.api_servers[2].validate_certs is (False if ignore_certs_cli else not ignore_certs_cfg if ignore_certs_cfg is not None else True)
 
 
 def test_build_collection_no_galaxy_yaml():
