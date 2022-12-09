@@ -99,6 +99,7 @@ from ...host_configs import (
 
 from ...host_profiles import (
     ControllerProfile,
+    ControllerHostProfile,
     HostProfile,
     PosixProfile,
     SshTargetHostProfile,
@@ -961,13 +962,10 @@ def command_integration_filter(args: TIntegrationConfig,
     return host_state, internal_targets
 
 
-def requirements(args: IntegrationConfig, host_state: HostState) -> None:
-    """Install requirements."""
-    target_profile = host_state.target_profiles[0]
-
-    configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
-
-    if isinstance(target_profile, PosixProfile) and not isinstance(target_profile, ControllerProfile):
-        configure_pypi_proxy(args, target_profile)  # integration
-
-    install_requirements(args, host_state.controller_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+def requirements(host_profile: HostProfile) -> None:
+    """Install requirements after bootstrapping and delegation."""
+    if isinstance(host_profile, ControllerHostProfile) and host_profile.controller:
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration, windows-integration, network-integration
+        install_requirements(host_profile.args, host_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+    elif isinstance(host_profile, PosixProfile) and not isinstance(host_profile, ControllerProfile):
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration
