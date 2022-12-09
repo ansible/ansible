@@ -321,6 +321,7 @@ def test_validate_certs(global_ignore_certs, monkeypatch):
     assert len(galaxy_cli.api_servers) == 1
     assert galaxy_cli.api_servers[0].validate_certs is not global_ignore_certs
 
+
 @pytest.mark.parametrize(
     "ignore_certs_cli,ignore_certs_cfg",
     [
@@ -353,6 +354,7 @@ def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, monk
     assert len(galaxy_cli.api_servers) == 1
     validate_certs = (False if ignore_certs_cli else not ignore_certs_cfg if ignore_certs_cfg is not None else True)
     assert galaxy_cli.api_servers[0].validate_certs == validate_certs
+
 
 @pytest.mark.parametrize(
     # False/True/omitted, True/omitted
