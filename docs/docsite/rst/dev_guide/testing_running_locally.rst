@@ -14,13 +14,15 @@ This document describes how to run tests using ``ansible-test``.
 Setup
 =====
 
-Before running ``ansible-test``, set up your environment for :ref:`Testing an Ansible Collection` or
-:ref:`Testing ansible-core`, depending on which scenario applies to you.
+Before running ``ansible-test``, set up your environment for :ref:`testing_an_ansible_collection` or
+:ref:`testing_ansible_core`, depending on which scenario applies to you.
 
 .. warning::
 
    If you use ``git`` for version control, make sure the files you are working with are not ignored by ``git``.
    If they are, ``ansible-test`` will ignore them as well.
+
+.. _testing_an_ansible_collection:
 
 Testing an Ansible Collection
 -----------------------------
@@ -59,6 +61,8 @@ For example, to work with the ``community.windows`` collection, follow these ste
    .. code-block:: shell
 
       cd ~/dev/ansible_collections/community/windows
+
+.. _testing_ansible_core:
 
 Testing ``ansible-core``
 ------------------------
@@ -179,6 +183,8 @@ These instructions explain how to use ``ansible-test`` with WSL2 and Docker Desk
 
    If your WSL2 environment includes ``systemd`` support, these steps are not required.
 
+.. _configuration_requirements:
+
 Configuration requirements
 """"""""""""""""""""""""""
 
@@ -194,6 +200,8 @@ Configuration requirements
 
 4. Click **Apply and restart** if changes were made.
 
+.. setup_instructions:
+
 Setup instructions
 """"""""""""""""""
 
@@ -201,7 +209,7 @@ Setup instructions
 
    If all WSL instances have been stopped, these changes will need to be re-applied.
 
-1. Verify Docker Desktop is properly configured (see :ref:`Configuration requirements`).
+1. Verify Docker Desktop is properly configured (see :ref:`configuration_requirements`).
 2. Quit Docker Desktop if it is running:
 
    a. Right click the **Docker Desktop** taskbar icon.
@@ -229,8 +237,8 @@ Setup instructions
 
              grep systemd /proc/self/cgroup
 
-      b. If any matches are found, re-check the :ref:`Configuration requirements` and follow the
-         :ref:`Setup instructions` again.
+      b. If any matches are found, re-check the :ref:`configuration_requirements` and follow the
+         :ref:`setup_instructions` again.
 
    b. Mount the ``systemd`` cgroup hierarchy with the following commands:
 
@@ -242,6 +250,8 @@ Setup instructions
 6. Start Docker Desktop.
 
 You should now be able to use ``ansible-test`` with the ``--docker`` option.
+
+.. linux_cgroup_configuration:
 
 Linux cgroup configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -268,7 +278,7 @@ Make sure to substitute your user and group for ``{user}`` and ``{group}`` respe
 Podman
 """"""
 
-When using Podman, you may need to stop existing Podman processes after following the :ref:`Linux cgroup configuration`
+When using Podman, you may need to stop existing Podman processes after following the :ref:`linux_cgroup_configuration`
 instructions. Otherwise Podman may be unable to see the new mount point.
 
 You can check to see if Podman is running by looking for ``podman`` and ``catatonit`` processes.
@@ -334,7 +344,7 @@ When using environment variables to manipulate tests there some limitations to k
     Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --venv``. However, using the ``--docker`` option would
     require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set
     and the tests executed. This is useful for debugging tests inside a container by following the
-    :ref:`Debugging AnsibleModule-based modules <debugging_modules>` instructions.
+    :ref:`debugging_modules` instructions.
 
 Interactive shell
 =================
