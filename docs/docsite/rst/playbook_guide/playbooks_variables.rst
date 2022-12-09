@@ -331,10 +331,11 @@ When passing variables with ``--extra-vars``, you must escape quotes and other s
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
 
-If you have a lot of special characters, use a JSON or YAML file containing the variable definitions. Prepend with `@`.
 
 vars from a JSON or YAML file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have a lot of special characters, use a JSON or YAML file containing the variable definitions. Prepend both JSON and YAML filenames with `@`.
 
 .. code-block:: text
 
