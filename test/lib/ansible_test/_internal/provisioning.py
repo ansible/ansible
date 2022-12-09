@@ -99,7 +99,7 @@ def prepare_profiles(
         args,  # type: TEnvironmentConfig
         targets_use_pypi=False,  # type: bool
         skip_setup=False,  # type: bool
-        requirements=None,  # type: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]]
+        requirements=None,  # type: t.Optional[t.Callable[[HostProfile], None]]
 ):  # type: (...) -> HostState
     """
     Create new profiles, or load existing ones, and return them.
@@ -139,7 +139,7 @@ def prepare_profiles(
         check_controller_python(args, host_state)
 
         if requirements:
-            requirements(args, host_state)
+            requirements(host_state.controller_profile)
 
         def configure(profile):  # type: (HostProfile) -> None
             """Configure the given profile."""
@@ -147,6 +147,9 @@ def prepare_profiles(
 
             if not skip_setup:
                 profile.configure()
+
+            if requirements:
+                requirements(profile)
 
         dispatch_jobs([(profile, WrappedThread(functools.partial(configure, profile))) for profile in host_state.target_profiles])
 
