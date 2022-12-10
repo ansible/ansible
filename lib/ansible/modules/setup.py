@@ -172,7 +172,7 @@ EXAMPLES = r"""
 """
 
 # import module snippets
-from ..module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.facts import ansible_collector, default_collectors

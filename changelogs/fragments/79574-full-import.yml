@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - avoid relative import of AnsibleModule.
