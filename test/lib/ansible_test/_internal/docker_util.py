@@ -255,8 +255,6 @@ class ContainerHostProperties:
     audit_code: str
     max_open_files: int
     loginuid: t.Optional[int]
-    cgroups: tuple[CGroupEntry, ...]
-    mounts: tuple[MountEntry, ...]
     cgroup_v1: SystemdControlGroupV1Status
     cgroup_v2: bool
 
@@ -383,8 +381,6 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         audit_code=audit_code,
         max_open_files=hard_limit,
         loginuid=loginuid,
-        cgroups=cgroups,
-        mounts=mounts,
         cgroup_v1=cgroup_v1,
         cgroup_v2=cgroup_v2,
     )
