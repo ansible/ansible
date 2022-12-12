@@ -885,7 +885,7 @@ class GalaxyAPI:
         else:
             results_key = 'results'
 
-        if 'count' in data and data['count'] < len(data[results_key]) * COLLECTION_PAGE_MULTIPLIER:
+        if data.get('count', float('inf')) < len(data[results_key]) * COLLECTION_PAGE_MULTIPLIER:
             self.collection_page_size = data['count']
         else:
             self.collection_page_size = len(data[results_key]) * COLLECTION_PAGE_MULTIPLIER
