@@ -121,13 +121,14 @@ You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guid
 -------------------------------
 
 This table links to the changelogs for each major ``ansible-core`` release. These changelogs contain the dates and significant changes in each minor release.
+Dates listed indicate the start date of the maintenance cycle.
 
 .. list-table::
    :header-rows: 1
     
    * - Version
-     - Support [1]_
-     - End Of Life [1]_
+     - Support
+     - End Of Life
      - Controller Python
      - Target Python / Powershell
    * - `2.15`_
@@ -280,7 +281,6 @@ This table links to the changelogs for each major ``ansible-core`` release. Thes
 ..      - | Python 3.8 - 3.16
 ..        | PowerShell TBD
 
-.. [1] Dates indicate the start date of the maintenance cycle
 
 .. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
 .. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
