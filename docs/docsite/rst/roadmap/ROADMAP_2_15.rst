@@ -29,14 +29,14 @@ The ``milestone`` branch will be advanced at the start date of each development 
 Release Phase
 ^^^^^^^^^^^^^
 
-- 2023-04-03 Feature Freeze (and ``stable-2.15`` branching from ``devel``)
+- 2023-03-31 Feature Freeze (and ``stable-2.15`` branching from ``devel``)
   No new functionality (including modules/plugins) to any code
 
-- 2023-04-10 Beta 1
+- 2023-04-03 Beta 1
 
-- 2023-05-01 Release Candidate 1
+- 2023-04-24 Release Candidate 1
 
-- 2023-05-22 Release
+- 2023-05-15 Release
 
 .. note:: The beta and release candidate schedules allow for up to 3 releases on a weekly schedule depending on the necessity of creating a release.
 
