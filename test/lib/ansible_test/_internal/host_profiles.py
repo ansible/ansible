@@ -76,6 +76,7 @@ from .docker_util import (
     run_utility_container,
     SystemdControlGroupV1Status,
     LOGINUID_NOT_SET,
+    UTILITY_IMAGE,
 )
 
 from .bootstrap import (
@@ -455,6 +456,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         )
 
         if not container:
+            if self.args.prime_containers:
+                if init_config.command or init_probe:
+                    docker_pull(self.args, UTILITY_IMAGE)
+
             return
 
         self.container_name = container.name
