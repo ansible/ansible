@@ -255,8 +255,6 @@ class ContainerHostProperties:
     audit_code: str
     max_open_files: int
     loginuid: t.Optional[int]
-    cgroups: tuple[CGroupEntry, ...]
-    mounts: tuple[MountEntry, ...]
     cgroup_v1: SystemdControlGroupV1Status
     cgroup_v2: bool
 
@@ -301,6 +299,16 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
     cmd = ['sh', '-c', ' && echo "-" && '.join(multi_line_commands)]
 
     stdout = run_utility_container(args, f'ansible-test-probe-{args.session_name}', cmd, options)[0]
+
+    if args.explain:
+        return ContainerHostProperties(
+            audit_code='???',
+            max_open_files=MAX_NUM_OPEN_FILES,
+            loginuid=LOGINUID_NOT_SET,
+            cgroup_v1=SystemdControlGroupV1Status.VALID,
+            cgroup_v2=False,
+        )
+
     blocks = stdout.split('\n-\n')
 
     values = blocks[0].split('\n')
@@ -383,8 +391,6 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         audit_code=audit_code,
         max_open_files=hard_limit,
         loginuid=loginuid,
-        cgroups=cgroups,
-        mounts=mounts,
         cgroup_v1=cgroup_v1,
         cgroup_v2=cgroup_v2,
     )
@@ -767,6 +773,9 @@ class DockerInspect:
     @property
     def pid(self) -> int:
         """Return the PID of the init process."""
+        if self.args.explain:
+            return 0
+
         return self.state['Pid']
 
     @property
