@@ -23,7 +23,7 @@ EXAMPLES: |
     listjojo: "{{ 'jojo is a' | split }}"
 
     # listjojocomma => [ "jojo is", "a" ]
-    listjojocomma: "{{ 'jojo is, a' | split(',' }}"
+    listjojocomma: "{{ 'jojo is, a' | split(',') }}"
 
 RETURN:
   _value:
