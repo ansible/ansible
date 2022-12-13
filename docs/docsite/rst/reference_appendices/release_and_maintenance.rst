@@ -115,52 +115,181 @@ You can refer to the :ref:`core_porting_guides` for tips on updating your playbo
 You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guide` for details.
 
 .. _release_schedule:
-
-``ansible-core`` changelogs
-----------------------------
-
-This table links to the changelogs for each major ``ansible-core``
-release. These changelogs contain the dates and
-significant changes in each minor release.
-
-================================= ==================================================== ======================
-``ansible-core``/``ansible-base``     Status                                           Expected end of life
-    Release
-================================= ==================================================== ======================
-devel                             In development (ansible-core 2.15 unreleased, trunk)  TBD
-`2.14 ansible-core Changelogs`_   Maintained (security **and** general bug fixes)       May 2024
-`2.13 ansible-core Changelogs`_   Maintained (security **and** critical bug fixes)      Nov 2023
-`2.12 ansible-core Changelogs`_   Maintained (security bug fixes only)                  May 2023
-`2.11 ansible-core Changelogs`_   Unmaintained (end of life)                            EOL
-`2.10 ansible-base Changelogs`_   Unmaintained (end of life)                            EOL
-`2.9 Changelogs`_                 Unmaintained (end of life)                            EOL
-`2.8 Changelogs`_                 Unmaintained (end of life)                            EOL
-`2.7 Changelogs`_                 Unmaintained (end of life)                            EOL
-`2.6 Changelogs`_                 Unmaintained (end of life)                            EOL
-`2.5 Changelogs`_                 Unmaintained (end of life)                            EOL
-<2.5                              Unmaintained (end of life)                            EOL
-================================= ==================================================== ======================
-
-.. _2.14 ansible-core Changelogs:
-.. _2.14: https://github.com/ansible/ansible/blob/stable-2.14/changelogs/CHANGELOG-v2.14.rst
-.. _2.13 ansible-core Changelogs:
-.. _2.13: https://github.com/ansible/ansible/blob/stable-2.13/changelogs/CHANGELOG-v2.13.rst
-.. _2.12 ansible-core Changelogs:
-.. _2.12: https://github.com/ansible/ansible/blob/stable-2.12/changelogs/CHANGELOG-v2.12.rst
-.. _2.11 ansible-core Changelogs:
-.. _2.11: https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst
-.. _2.10 ansible-base Changelogs:
-.. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
-.. _2.9 Changelogs:
-.. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
-.. _2.8 Changelogs:
-.. _2.8: https://github.com/ansible/ansible/blob/stable-2.8/changelogs/CHANGELOG-v2.8.rst
-.. _2.7 Changelogs: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
-.. _2.6 Changelogs:
-.. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
-.. _2.5 Changelogs: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
 .. _support_life:
-.. _methods:
+
+``ansible-core`` support matrix
+-------------------------------
+
+This table links to the changelogs for each major ``ansible-core`` release. These changelogs contain the dates and significant changes in each minor release.
+Dates listed indicate the start date of the maintenance cycle.
+
+.. list-table::
+   :header-rows: 1
+    
+   * - Version
+     - Support
+     - End Of Life
+     - Controller Python
+     - Target Python / PowerShell
+   * - `2.15`_
+     - | GA: 22 May 2023
+       | Critical: 06 Nov 2023
+       | Security: 20 May 2024
+     - Nov 2024
+     - | Python 3.9 - 3.11
+     - | Python 2.7
+       | Python 3.5 - 3.11
+       | PowerShell 3 - 5.1
+   * - `2.14`_
+     - | GA: 07 Nov 2022
+       | Critical: 22 May 2023
+       | Security: 06 Nov 2023
+     - 20 May 2024
+     - | Python 3.9 - 3.11
+     - | Python 2.7
+       | Python 3.5 - 3.11
+       | PowerShell 3 - 5.1
+   * - `2.13`_
+     - | GA: 23 May 2022
+       | Critical: 07 Nov 2022
+       | Security: 22 May 2023
+     - 06 Nov 2023
+     - | Python 3.8 - 3.10
+     - | Python 2.7
+       | Python 3.5 - 3.10
+       | PowerShell 3 - 5.1
+   * - `2.12`_
+     - | GA: 08 Nov 2021
+       | Critical: 23 May 2022
+       | Security: 07 Nov 2022
+     - 22 May 2023
+     - | Python 3.8 - 3.10
+     - | Python 2.6
+       | Python 3.5 - 3.10
+       | PowerShell 3 - 5.1
+   * - `2.11`_
+     - | GA: 26 Apr 2021
+       | Critical: 08 Nov 2021
+       | Security: 23 May 2022
+     - | **EOL**
+       | 07 Nov 2022
+     - | Python 2.7
+       | Python 3.5 - 3.9
+     - | Python 2.6 - 2.7
+       | Python 3.5 - 3.9
+       | PowerShell 3 - 5.1
+   * - `2.10`_
+     - | GA: 13 Aug 2020
+       | Critical: 26 Apr 2021
+       | Security: 08 Nov 2021
+     - | **EOL**
+       | 23 May 2022
+     - | Python 2.7
+       | Python 3.5 - 3.9
+     - | Python 2.6 - 2.7
+       | Python 3.5 - 3.9
+       | PowerShell 3 - 5.1
+   * - `2.9`_
+     - | GA: 31 Oct 2019
+       | Critical: 13 Aug 2020
+       | Security: 26 Apr 2021
+     - | **EOL**
+       | 23 May 2022
+     - | Python 2.7
+       | Python 3.5 - 3.8
+     - | Python 2.6 - 2.7
+       | Python 3.5 - 3.8
+       | PowerShell 3 - 5.1
+..    * - 2.16
+..      - 06 Nov 2023
+..      - 20 May 2024
+..      - Nov 2024
+..      - May 2025
+..      - | Python 3.10 - 3.12
+..      - | Python 3.6 - 3.12
+..        | PowerShell TBD
+..    * - 2.17
+..      - 20 May 2024
+..      - Nov 2024
+..      - May 2025
+..      - Nov 2025
+..      - | Python 3.10 - 3.12
+..      - | Python 3.6 - 3.12
+..        | PowerShell TBD
+..    * - 2.18
+..      - Nov 2024
+..      - May 2025
+..      - Nov 2025
+..      - May 2026
+..      - | Python 3.11 - 3.13
+..      - | Python 3.6 - 3.13
+..        | PowerShell TBD
+..    * - 2.19
+..      - May 2025
+..      - Nov 2025
+..      - May 2026
+..      - Nov 2026
+..      - | Python 3.11 - 3.13
+..      - | Python 3.6 - 3.13
+..        | PowerShell TBD
+..    * - 2.20
+..      - Nov 2025
+..      - May 2026
+..      - Nov 2026
+..      - May 2027
+..      - | Python 3.12 - 3.14
+..      - | Python 3.8 - 3.14
+..        | PowerShell TBD
+..    * - 2.21
+..      - May 2026
+..      - Nov 2026
+..      - May 2027
+..      - Nov 2027
+..      - | Python 3.12 - 3.14
+..      - | Python 3.8 - 3.14
+..        | PowerShell TBD
+..    * - 2.22
+..      - Nov 2026
+..      - May 2027
+..      - Nov 2027
+..      - May 2028
+..      - | Python 3.13 - 3.15
+..      - | Python 3.8 - 3.15
+..        | PowerShell TBD
+..    * - 2.23
+..      - May 2027
+..      - Nov 2027
+..      - May 2028
+..      - Nov 2028
+..      - | Python 3.13 - 3.15
+..      - | Python 3.8 - 3.15
+..        | PowerShell TBD
+..    * - 2.24
+..      - Nov 2027
+..      - May 2028
+..      - Nov 2028
+..      - May 2029
+..      - | Python 3.14 - 3.16
+..      - | Python 3.8 - 3.16
+..        | PowerShell TBD
+..    * - 2.25
+..      - May 2028
+..      - Nov 2028
+..      - May 2029
+..      - Nov 2029
+..      - | Python 3.14 - 3.16
+..      - | Python 3.8 - 3.16
+..        | PowerShell TBD
+
+
+.. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
+.. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
+.. _2.11: https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst
+.. _2.12: https://github.com/ansible/ansible/blob/stable-2.12/changelogs/CHANGELOG-v2.12.rst
+.. _2.13: https://github.com/ansible/ansible/blob/stable-2.13/changelogs/CHANGELOG-v2.13.rst
+.. _2.14: https://github.com/ansible/ansible/blob/stable-2.14/changelogs/CHANGELOG-v2.14.rst
+.. _2.15: https://github.com/ansible/ansible/blob/stable-2.15/changelogs/CHANGELOG-v2.15.rst
+
 
 Preparing for a new release
 ===========================
