@@ -130,7 +130,7 @@ Dates listed indicate the start date of the maintenance cycle.
      - Support
      - End Of Life
      - Controller Python
-     - Target Python / Powershell
+     - Target Python / PowerShell
    * - `2.15`_
      - | GA: 22 May 2023
        | Critical: 06 Nov 2023
