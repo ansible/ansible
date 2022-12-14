@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+import itertools
 import json
 import os
 import random
@@ -38,9 +39,39 @@ class SshConnectionDetail:
     identity_file: str
     python_interpreter: t.Optional[str] = None
     shell_type: t.Optional[str] = None
+    enable_rsa_sha1: bool = False
 
     def __post_init__(self):
         self.name = sanitize_host_name(self.name)
+
+    @property
+    def options(self) -> dict[str, str]:
+        """OpenSSH config options, which can be passed to the `ssh` CLI with the `-o` argument."""
+        options: dict[str, str] = {}
+
+        if self.enable_rsa_sha1:
+            # Newer OpenSSH clients connecting to older SSH servers must explicitly enable ssh-rsa support.
+            # OpenSSH 8.8, released on 2021-09-26, deprecated using RSA with the SHA-1 hash algorithm (ssh-rsa).
+            # OpenSSH 7.2, released on 2016-02-29, added support for using RSA with SHA-256/512 hash algorithms.
+            # See: https://www.openssh.com/txt/release-8.8
+            algorithms = '+ssh-rsa'  # append the algorithm to the default list, requires OpenSSH 7.0 or later
+
+            options.update(dict(
+                # Host key signature algorithms that the client wants to use.
+                # Available options can be found with `ssh -Q HostKeyAlgorithms` or `ssh -Q key` on older clients.
+                # This option was updated in OpenSSH 7.0, released on 2015-08-11, to support the "+" prefix.
+                # See: https://www.openssh.com/txt/release-7.0
+                HostKeyAlgorithms=algorithms,
+                # Signature algorithms that will be used for public key authentication.
+                # Available options can be found with `ssh -Q PubkeyAcceptedAlgorithms` or `ssh -Q key` on older clients.
+                # This option was added in OpenSSH 7.0, released on 2015-08-11.
+                # See: https://www.openssh.com/txt/release-7.0
+                # This option is an alias for PubkeyAcceptedAlgorithms, which was added in OpenSSH 8.5.
+                # See: https://www.openssh.com/txt/release-8.5
+                PubkeyAcceptedKeyTypes=algorithms,
+            ))
+
+        return options
 
 
 class SshProcess:
@@ -141,7 +172,7 @@ def create_ssh_command(
     if ssh.user:
         cmd.extend(['-l', ssh.user])  # user to log in as on the remote machine
 
-    ssh_options = dict(
+    ssh_options: dict[str, t.Union[int, str]] = dict(
         BatchMode='yes',
         ExitOnForwardFailure='yes',
         LogLevel='ERROR',
@@ -153,9 +184,7 @@ def create_ssh_command(
 
     ssh_options.update(options or {})
 
-    for key, value in sorted(ssh_options.items()):
-        cmd.extend(['-o', '='.join([key, str(value)])])
-
+    cmd.extend(ssh_options_to_list(ssh_options))
     cmd.extend(cli_args or [])
     cmd.append(ssh.host)
 
@@ -163,6 +192,18 @@ def create_ssh_command(
         cmd.append(command)
 
     return cmd
+
+
+def ssh_options_to_list(options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]) -> list[str]:
+    """Format a dictionary of SSH options as a list suitable for passing to the `ssh` command."""
+    return list(itertools.chain.from_iterable(
+        ('-o', f'{key}={value}') for key, value in sorted(options.items())
+    ))
+
+
+def ssh_options_to_str(options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]) -> str:
+    """Format a dictionary of SSH options as a string suitable for passing as `ansible_ssh_extra_args` in inventory."""
+    return shlex.join(ssh_options_to_list(options))
 
 
 def run_ssh_command(
@@ -245,7 +286,7 @@ def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
                 ansible_pipelining='yes',
                 ansible_python_interpreter=ssh.python_interpreter,
                 ansible_shell_type=ssh.shell_type,
-                ansible_ssh_extra_args='-o UserKnownHostsFile=/dev/null',  # avoid changing the test environment
+                ansible_ssh_extra_args=ssh_options_to_str(dict(UserKnownHostsFile='/dev/null', **ssh.options)),  # avoid changing the test environment
                 ansible_ssh_host_key_checking='no',
             ))) for ssh in ssh_connections),
         ),
