@@ -267,15 +267,17 @@ class InventoryCLI(CLI):
             name = "  |" * (depth) + "--%s" % name
         return name
 
-    def _graph_group(self, group, depth=0):
+    def _graph_group(self, group, valid_hosts, depth=0):
 
         result = [self._graph_name('@%s:' % group.name, depth)]
         depth = depth + 1
         for kid in group.child_groups:
-            result.extend(self._graph_group(kid, depth))
+            result.extend(self._graph_group(kid, valid_hosts, depth))
 
         if group.name != 'all':
             for host in group.hosts:
+                if host not in valid_hosts:
+                    continue
                 result.append(self._graph_name(host.name, depth))
                 if context.CLIARGS['show_vars']:
                     result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
@@ -287,9 +289,10 @@ class InventoryCLI(CLI):
 
     def inventory_graph(self):
 
+        valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
         start_at = self._get_group(context.CLIARGS['pattern'])
         if start_at:
-            return '\n'.join(self._graph_group(start_at))
+            return '\n'.join(self._graph_group(start_at, valid_hosts))
         else:
             raise AnsibleOptionsError("Pattern must be valid group name when using --graph")
 
