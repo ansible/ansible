@@ -256,7 +256,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     try:
         if prime_storage_command:
-            retry_command(lambda: run_command(*prime_storage_command))
+            retry_command(lambda: run_command(*prime_storage_command), retry_any_error=True)
 
         if scenario.disable_selinux:
             run_command('setenforce', 'permissive')
@@ -278,7 +278,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         cleanup_command = [scenario.engine, 'rmi', '-f', scenario.image]
 
         try:
-            retry_command(lambda: run_command(*client_become_cmd + [f'{format_env(common_env)}{shlex.join(cleanup_command)}']))
+            retry_command(lambda: run_command(*client_become_cmd + [f'{format_env(common_env)}{shlex.join(cleanup_command)}']), retry_any_error=True)
         except SubprocessError as ex:
             display.error(str(ex))
 
@@ -679,7 +679,7 @@ def run_module(
         return run_command('ansible-playbook', '-v', playbook_file.name)
 
 
-def retry_command(func: t.Callable[[], SubprocessResult], attempts: int = 3) -> SubprocessResult:
+def retry_command(func: t.Callable[[], SubprocessResult], attempts: int = 3, retry_any_error: bool = False) -> SubprocessResult:
     """Run the given command function up to the specified number of attempts when the failure is due to an SSH error."""
     for attempts_remaining in range(attempts - 1, -1, -1):
         try:
@@ -690,6 +690,11 @@ def retry_command(func: t.Callable[[], SubprocessResult], attempts: int = 3) -> 
                 # This retry should allow the test suite to continue, maintaining CI stability.
                 # TODO: Figure out why local SSH connections sometimes fail during the test run.
                 display.warning('Command failed due to an SSH error. Waiting a few seconds before retrying.')
+                time.sleep(3)
+                continue
+
+            if retry_any_error:
+                display.warning('Command failed. Waiting a few seconds before retrying.')
                 time.sleep(3)
                 continue
 
