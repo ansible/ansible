@@ -39,6 +39,11 @@ minor_changes:
                    adding the ``retry/never`` alias. This is useful for tests that cannot pass on a retry or are too
                    slow to make retries useful.
   - ansible-test - The ``ansible-test env`` command now detects and reports the container ID if running in a container.
+  - ansible-test - SSH connections from OpenSSH 8.8+ to CentOS 6 containers now work without additional configuration.
+                   However, clients older than OpenSSH 7.0 can no longer connect to CentOS 6 containers as a result.
+                   The container must have ``centos6`` in the image name for this work-around to be applied.
+  - ansible-test - SSH shell connections from OpenSSH 8.8+ to ansible-test provisioned network instances now work without additional configuration.
+                   However, clients older than OpenSSH 7.0 can no longer open shell sessions for ansible-test provisioned network instances as a result.
 bugfixes:
   - ansible-test - Multiple containers now work under Podman without specifying the ``--docker-network`` option.
   - ansible-test - Prevent concurrent / repeat pulls of the same container image.

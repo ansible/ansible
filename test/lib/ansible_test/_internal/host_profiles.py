@@ -998,6 +998,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             port=port,
             identity_file=SshKey(self.args).key,
             python_interpreter=self.python.path,
+            # CentOS 6 uses OpenSSH 5.3, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # Since only CentOS 6 is affected, and it is only supported by ansible-core 2.12, support for RSA SHA-1 is simply hard-coded here.
+            # A substring is used to allow custom containers to work, not just the one provided with ansible-test.
+            enable_rsa_sha1='centos6' in self.config.image,
         )
 
         return [SshConnection(self.args, settings)]
@@ -1089,6 +1093,13 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_port=connection.port,
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
+            # VyOS 1.1.8 uses OpenSSH 5.5, making it incompatible with RSA SHA-256/512 used by Paramiko 2.9 and later.
+            # IOS CSR 1000V uses an ancient SSH server, making it incompatible with RSA SHA-256/512 used by Paramiko 2.9 and later.
+            # That means all network platforms currently offered by ansible-core-ci require support for RSA SHA-1, so it is simply hard-coded here.
+            # NOTE: This option only exists in ansible-core 2.14 and later. For older ansible-core versions, use of Paramiko 2.8.x or earlier is required.
+            #       See: https://github.com/ansible/ansible/pull/78789
+            #       See: https://github.com/ansible/ansible/pull/78842
+            ansible_paramiko_use_rsa_sha2_algorithms='no',
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
         )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
 
@@ -1131,6 +1142,10 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             port=core_ci.connection.port,
             user=core_ci.connection.username,
             identity_file=core_ci.ssh_key.key,
+            # VyOS 1.1.8 uses OpenSSH 5.5, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # IOS CSR 1000V uses an ancient SSH server, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # That means all network platforms currently offered by ansible-core-ci require support for RSA SHA-1, so it is simply hard-coded here.
+            enable_rsa_sha1=True,
         )
 
         return [SshConnection(self.args, settings)]
