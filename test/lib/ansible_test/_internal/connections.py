@@ -34,6 +34,7 @@ from .docker_util import (
 
 from .ssh import (
     SshConnectionDetail,
+    ssh_options_to_list,
 )
 
 from .become import (
@@ -123,7 +124,7 @@ class SshConnection(Connection):
 
         self.options = ['-i', settings.identity_file]
 
-        ssh_options = dict(
+        ssh_options: dict[str, t.Union[int, str]] = dict(
             BatchMode='yes',
             StrictHostKeyChecking='no',
             UserKnownHostsFile='/dev/null',
@@ -131,8 +132,9 @@ class SshConnection(Connection):
             ServerAliveCountMax=4,
         )
 
-        for ssh_option in sorted(ssh_options):
-            self.options.extend(['-o', f'{ssh_option}={ssh_options[ssh_option]}'])
+        ssh_options.update(settings.options)
+
+        self.options.extend(ssh_options_to_list(ssh_options))
 
     def run(self,
             command: list[str],
