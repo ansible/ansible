@@ -72,7 +72,6 @@ class InventoryCLI(CLI):
         opt_help.add_runtask_options(self.parser)
 
         # remove unused default options
-        self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')
         self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
         self.parser.add_argument('args', metavar='host|group', nargs='?')
@@ -297,12 +296,13 @@ class InventoryCLI(CLI):
     def json_inventory(self, top):
 
         seen = set()
+        valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
 
         def format_group(group):
             results = {}
             results[group.name] = {}
             if group.name != 'all':
-                results[group.name]['hosts'] = [h.name for h in group.hosts]
+                results[group.name]['hosts'] = [h.name for h in group.hosts if h in valid_hosts]
             results[group.name]['children'] = []
             for subgroup in group.child_groups:
                 results[group.name]['children'].append(subgroup.name)
@@ -333,6 +333,7 @@ class InventoryCLI(CLI):
     def yaml_inventory(self, top):
 
         seen = []
+        valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
 
         def format_group(group):
             results = {}
@@ -350,6 +351,8 @@ class InventoryCLI(CLI):
             results[group.name]['hosts'] = {}
             if group.name != 'all':
                 for h in group.hosts:
+                    if h not in valid_hosts:
+                        continue
                     myvars = {}
                     if h.name not in seen:  # avoid defining host vars more than once
                         seen.append(h.name)
@@ -370,6 +373,7 @@ class InventoryCLI(CLI):
     def toml_inventory(self, top):
         seen = set()
         has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
+        valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
 
         def format_group(group):
             results = {}
@@ -385,6 +389,8 @@ class InventoryCLI(CLI):
 
             if group.name != 'all':
                 for host in group.hosts:
+                    if host not in valid_hosts:
+                        continue
                     if host.name not in seen:
                         seen.add(host.name)
                         host_vars = self._get_host_variables(host=host)
