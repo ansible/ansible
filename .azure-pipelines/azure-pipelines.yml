@@ -91,14 +91,14 @@ stages:
               test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
-            - name: RHEL 8.6 py36
-              test: rhel/8.6@3.6
-            - name: RHEL 8.6 py39
-              test: rhel/8.6@3.9
-            - name: RHEL 9.0
-              test: rhel/9.0
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
+            - name: RHEL 8.7 py36
+              test: rhel/8.7@3.6
+            - name: RHEL 8.7 py39
+              test: rhel/8.7@3.9
+            - name: RHEL 9.1
+              test: rhel/9.1
+            - name: FreeBSD 12.4
+              test: freebsd/12.4
             - name: FreeBSD 13.1
               test: freebsd/13.1
           groups:
@@ -109,10 +109,10 @@ stages:
           targets:
             - name: macOS 12.0
               test: macos/12.0
-            - name: RHEL 8.6
-              test: rhel/8.6
-            - name: RHEL 9.0
-              test: rhel/9.0
+            - name: RHEL 8.7
+              test: rhel/8.7
+            - name: RHEL 9.1
+              test: rhel/9.1
             - name: FreeBSD 13.1
               test: freebsd/13.1
           groups:
@@ -122,14 +122,14 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.16
-              test: alpine/3.16
-            - name: Fedora 36
-              test: fedora/36
-            - name: RHEL 8.6
-              test: rhel/8.6
-            - name: RHEL 9.0
-              test: rhel/9.0
+            - name: Alpine 3.17
+              test: alpine/3.17
+            - name: Fedora 37
+              test: fedora/37
+            - name: RHEL 8.7
+              test: rhel/8.7
+            - name: RHEL 9.1
+              test: rhel/9.1
             - name: Ubuntu 20.04
               test: ubuntu/20.04
             - name: Ubuntu 22.04
@@ -147,8 +147,8 @@ stages:
               test: alpine3
             - name: CentOS 7
               test: centos7
-            - name: Fedora 36
-              test: fedora36
+            - name: Fedora 37
+              test: fedora37
             - name: openSUSE 15
               test: opensuse15
             - name: Ubuntu 20.04
@@ -164,8 +164,8 @@ stages:
           targets:
             - name: Alpine 3
               test: alpine3
-            - name: Fedora 36
-              test: fedora36
+            - name: Fedora 37
+              test: fedora37
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:
