@@ -32,12 +32,6 @@ set -eu
 
 mkdir ansible_collections/ns/col/examples
 
-(
-  cd ansible_collections/ns/col/examples
-
-  echo '#!/usr/bin/custom' > unexpected-shebang # pass
-)
-
 source ../collection/setup.sh
 
 set -x
