@@ -1,0 +1,9 @@
+minor_changes:
+  - ansible-test - Add RHEL 8.7 remote.
+  - ansible-test - Add RHEL 9.1 remote.
+  - ansible-test - Add FreeBSD 12.4 remote.
+  - ansible-test - Add Alpine 3.17 remote.
+  - ansible-test - Add Fedora 37 remote.
+  - ansible-test - Add Fedora 37 container.
+  - ansible-test - Update Alpine 3 container to 3.17.
+  - ansible-test - Minor cleanup and package updates in distro containers.
