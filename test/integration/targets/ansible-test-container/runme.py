@@ -149,10 +149,29 @@ def get_test_scenarios() -> list[TestScenario]:
         image = settings['image']
         cgroup = settings.get('cgroup', 'v1-v2')
 
+        if container_name == 'centos6' and os_release.id == 'alpine':
+            # Alpine kernels do not emulate vsyscall by default, which causes the centos6 container to fail during init.
+            # See: https://unix.stackexchange.com/questions/478387/running-a-centos-docker-image-on-arch-linux-exits-with-code-139
+            # Other distributions enable settings which trap vsyscall by default.
+            # See: https://www.kernelconfig.io/config_legacy_vsyscall_xonly
+            # See: https://www.kernelconfig.io/config_legacy_vsyscall_emulate
+            continue
+
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
             expose_cgroup_v1 = cgroup == 'v1-only' and get_docker_info(engine).cgroup_version != 1
+            debug_systemd = cgroup != 'none'
+
+            # The sleep+pkill used to support the cgroup probe causes problems with the centos6 container.
+            # It results in sshd connections being refused or reset for many, but not all, container instances.
+            # The underlying cause of this issue is unknown.
+            probe_cgroups = container_name != 'centos6'
+
+            # The default RHEL 9 crypto policy prevents use of SHA-1.
+            # This results in SSH errors with centos6 containers: ssh_dispatch_run_fatal: Connection to 1.2.3.4 port 22: error in libcrypto
+            # See: https://access.redhat.com/solutions/6816771
+            enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
 
             if cgroup != 'none' and get_docker_info(engine).cgroup_version == 1 and not have_cgroup_systemd():
                 expose_cgroup_v1 = True  # the host uses cgroup v1 but there is no systemd cgroup and the container requires cgroup support
@@ -182,6 +201,9 @@ def get_test_scenarios() -> list[TestScenario]:
                         image=image,
                         disable_selinux=disable_selinux,
                         expose_cgroup_v1=expose_cgroup_v1,
+                        enable_sha1=enable_sha1,
+                        debug_systemd=debug_systemd,
+                        probe_cgroups=probe_cgroups,
                     )
                 )
 
@@ -195,11 +217,21 @@ def run_test(scenario: TestScenario) -> TestResult:
     start = time.monotonic()
 
     integration = ['ansible-test', 'integration', 'split']
-    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v', '--dev-probe-cgroups', str(LOG_PATH),
-                           '--dev-systemd-debug']
+    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v']
+    target_only_options = []
+
+    if scenario.debug_systemd:
+        integration_options.append('--dev-systemd-debug')
+
+    if scenario.probe_cgroups:
+        target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
 
     commands = [
-        [*integration, *integration_options],
+        # The cgroup probe is only performed for the first test of the target.
+        # There's no need to repeat the probe again for the same target.
+        # The controller will be tested separately as a target.
+        # This ensures that both the probe and no-probe code paths are functional.
+        [*integration, *integration_options, *target_only_options],
         # For the split test we'll use alpine3 as the controller. There are two reasons for this:
         # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
         # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
@@ -260,12 +292,18 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_selinux:
             run_command('setenforce', 'permissive')
 
+        if scenario.enable_sha1:
+            run_command('update-crypto-policies', '--set', 'DEFAULT:SHA1')
+
         for test_command in test_commands:
             retry_command(lambda: run_command(*test_command))
     except SubprocessError as ex:
         message = str(ex)
         display.error(f'{scenario} {message}')
     finally:
+        if scenario.enable_sha1:
+            run_command('update-crypto-policies', '--set', 'DEFAULT')
+
         if scenario.disable_selinux:
             run_command('setenforce', 'enforcing')
 
@@ -519,6 +557,9 @@ class TestScenario:
     image: str
     disable_selinux: bool
     expose_cgroup_v1: bool
+    enable_sha1: bool
+    debug_systemd: bool
+    probe_cgroups: bool
 
     @property
     def tags(self) -> tuple[str, ...]:
@@ -535,6 +576,9 @@ class TestScenario:
 
         if self.expose_cgroup_v1:
             tags.append('cgroup: v1')
+
+        if self.enable_sha1:
+            tags.append('sha1: enabled')
 
         return tuple(tags)
 

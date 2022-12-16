@@ -56,6 +56,8 @@ bugfixes:
   - ansible-test - Detection for running in a Podman or Docker container has been fixed to detect more scenarios.
                    The new detection relies on ``/proc/self/mountinfo`` instead of ``/proc/self/cpuset``.
                    Detection now works with custom cgroups and private cgroup namespaces.
+  - ansible-test - Avoid using ``exec`` after container startup when possible.
+                   This improves container startup performance and avoids intermittent startup issues with some old containers.
 known_issues:
   - ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode.
                    Podman should work with SELinux in enforcing mode.

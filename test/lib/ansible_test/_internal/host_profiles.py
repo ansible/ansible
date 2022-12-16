@@ -411,6 +411,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Configuration details required to run the container init."""
         options: list[str]
         command: str
+        command_privileged: bool
         expected_mounts: tuple[CGroupMount, ...]
 
     @property
@@ -452,12 +453,12 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             publish_ports=not self.controller,  # connections to the controller over SSH are not required
             options=init_config.options,
             cleanup=CleanupMode.NO,
-            cmd=self.build_sleep_command() if init_config.command or init_probe else None,
+            cmd=self.build_init_command(init_config, init_probe),
         )
 
         if not container:
             if self.args.prime_containers:
-                if init_config.command or init_probe:
+                if init_config.command_privileged or init_probe:
                     docker_pull(self.args, UTILITY_IMAGE)
 
             return
@@ -467,7 +468,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         try:
             options = ['--pid', 'host', '--privileged']
 
-            if init_config.command:
+            if init_config.command and init_config.command_privileged:
                 init_command = init_config.command
 
                 if not init_probe:
@@ -500,6 +501,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Return init config for running under Podman."""
         options = self.get_common_run_options()
         command: t.Optional[str] = None
+        command_privileged = False
         expected_mounts: tuple[CGroupMount, ...]
 
         cgroup_version = get_docker_info(self.args).cgroup_version
@@ -651,6 +653,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         return self.InitConfig(
             options=options,
             command=command,
+            command_privileged=command_privileged,
             expected_mounts=expected_mounts,
         )
 
@@ -658,6 +661,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Return init config for running under Docker."""
         options = self.get_common_run_options()
         command: t.Optional[str] = None
+        command_privileged = False
         expected_mounts: tuple[CGroupMount, ...]
 
         cgroup_version = get_docker_info(self.args).cgroup_version
@@ -724,7 +728,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         elif self.config.cgroup in (CGroupVersion.V1_V2, CGroupVersion.V2_ONLY) and cgroup_version == 2:
             # Docker hosts providing cgroup v2 will give each container a read-only cgroup mount.
             # It must be remounted read-write before systemd starts.
+            # This must be done in a privileged container, otherwise a "permission denied" error can occur.
             command = 'mount -o remount,rw /sys/fs/cgroup/'
+            command_privileged = True
 
             options.extend((
                 # A private cgroup namespace is used to avoid exposing the host cgroup to the container.
@@ -768,12 +774,14 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         return self.InitConfig(
             options=options,
             command=command,
+            command_privileged=command_privileged,
             expected_mounts=expected_mounts,
         )
 
-    def build_sleep_command(self) -> list[str]:
+    def build_init_command(self, init_config: InitConfig, sleep: bool) -> t.Optional[list[str]]:
         """
-        Build and return the command to put the container to sleep.
+        Build and return the command to start in the container.
+        Returns None if the default command for the container should be used.
 
         The sleep duration below was selected to:
 
@@ -783,10 +791,23 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         NOTE: The container must have a POSIX-compliant default shell "sh" with a non-builtin "sleep" command.
         """
+        command = ''
+
+        if init_config.command and not init_config.command_privileged:
+            command += f'{init_config.command} && '
+
+        if sleep or init_config.command_privileged:
+            command += 'sleep 60 ; '
+
+        if not command:
+            return None
+
         docker_pull(self.args, self.config.image)
         inspect = docker_image_inspect(self.args, self.config.image)
 
-        return ['sh', '-c', f'sleep 60; exec {shlex.join(inspect.cmd)}']
+        command += f'exec {shlex.join(inspect.cmd)}'
+
+        return ['sh', '-c', command]
 
     @property
     def wake_command(self) -> list[str]:
