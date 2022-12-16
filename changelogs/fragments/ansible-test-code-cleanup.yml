@@ -1,2 +1,4 @@
 minor_changes:
   - ansible-test - Minor code cleanup.
+  - ansible-test - Miscellaneous code cleanup and type hint fixes.
+  - ansible-test - Remove unused Python 2.x compatibility code.

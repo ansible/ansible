@@ -28,14 +28,16 @@ from .util import (
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
     MODE_FILE,
+    OutputStream,
     PYTHON_PATHS,
     raw_command,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_TARGET_ROOT,
-    ANSIBLE_TEST_TOOLS_ROOT,
+    ANSIBLE_TEST_TARGET_TOOLS_ROOT,
     ApplicationError,
     SubprocessError,
     generate_name,
+    verified_chmod,
 )
 
 from .io import (
@@ -58,7 +60,7 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-CHECK_YAML_VERSIONS = {}
+CHECK_YAML_VERSIONS = {}  # type: t.Dict[str, t.Any]
 
 
 class ShellScriptTemplate:
@@ -66,7 +68,7 @@ class ShellScriptTemplate:
     def __init__(self, template):  # type: (t.Text) -> None
         self.template = template
 
-    def substitute(self, **kwargs):  # type: (t.Dict[str, t.Union[str, t.List[str]]]) -> str
+    def substitute(self, **kwargs: t.Union[str, t.List[str]]) -> str:
         """Return a string templated with the given arguments."""
         kvp = dict((k, self.quote(v)) for k, v in kwargs.items())
         pattern = re.compile(r'#{(?P<name>[^}]+)}')
@@ -127,6 +129,8 @@ class CommonConfig:
     """Configuration common to all commands."""
     def __init__(self, args, command):  # type: (t.Any, str) -> None
         self.command = command
+        self.interactive = False
+        self.check_layout = True
         self.success = None  # type: t.Optional[bool]
 
         self.color = args.color  # type: bool
@@ -136,11 +140,11 @@ class CommonConfig:
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
 
-        self.info_stderr = False  # type: bool
+        self.display_stderr = False  # type: bool
 
         self.session_name = generate_name()
 
-        self.cache = {}
+        self.cache = {}  # type: t.Dict[str, t.Any]
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
@@ -220,15 +224,8 @@ def process_scoped_temporary_directory(args, prefix='ansible-test-', suffix=None
 
 
 @contextlib.contextmanager
-def named_temporary_file(args, prefix, suffix, directory, content):
-    """
-    :param args: CommonConfig
-    :param prefix: str
-    :param suffix: str
-    :param directory: str
-    :param content: str | bytes | unicode
-    :rtype: str
-    """
+def named_temporary_file(args, prefix, suffix, directory, content):  # type: (CommonConfig, str, str, t.Optional[str], str) -> t.Iterator[str]
+    """Context manager for a named temporary file."""
     if args.explain:
         yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
     else:
@@ -243,7 +240,7 @@ def write_json_test_results(category,  # type: ResultType
                             name,  # type: str
                             content,  # type: t.Union[t.List[t.Any], t.Dict[str, t.Any]]
                             formatted=True,  # type: bool
-                            encoder=None,  # type: t.Optional[t.Callable[[t.Any], t.Any]]
+                            encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]
                             ):  # type: (...) -> None
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
@@ -286,9 +283,9 @@ def get_injector_path():  # type: () -> str
         script = set_shebang(script, shebang)
 
         write_text_file(dst, script)
-        os.chmod(dst, mode)
+        verified_chmod(dst, mode)
 
-    os.chmod(injector_path, MODE_DIRECTORY)
+    verified_chmod(injector_path, MODE_DIRECTORY)
 
     def cleanup_injector():
         """Remove the temporary injector directory."""
@@ -349,7 +346,7 @@ def get_python_path(interpreter):  # type: (str) -> str
 
     create_interpreter_wrapper(interpreter, injected_interpreter)
 
-    os.chmod(python_path, MODE_DIRECTORY)
+    verified_chmod(python_path, MODE_DIRECTORY)
 
     if not PYTHON_PATHS:
         atexit.register(cleanup_python_paths)
@@ -387,7 +384,7 @@ def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str
 
     write_text_file(injected_interpreter, code)
 
-    os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
+    verified_chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
 def cleanup_python_paths():
@@ -402,7 +399,7 @@ def intercept_python(
         python,  # type: PythonConfig
         cmd,  # type: t.List[str]
         env,  # type: t.Dict[str, str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
@@ -432,26 +429,28 @@ def intercept_python(
 def run_command(
         args,  # type: CommonConfig
         cmd,  # type: t.Iterable[str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
+        interactive=False,  # type: bool
+        output_stream=None,  # type: t.Optional[OutputStream]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
+                       output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
 def yamlcheck(python):
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
-    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
+    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
 
     if not result['yaml']:
         return None

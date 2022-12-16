@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+import enum
 import os
 import typing as t
 
@@ -20,6 +21,30 @@ from .util import (
 from .data import (
     data_context,
 )
+
+from .become import (
+    SUPPORTED_BECOME_METHODS,
+)
+
+
+class CGroupVersion(enum.Enum):
+    """The control group version(s) required by a container."""
+    NONE = 'none'
+    V1_ONLY = 'v1-only'
+    V2_ONLY = 'v2-only'
+    V1_V2 = 'v1-v2'
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}.{self.name}'
+
+
+class AuditMode(enum.Enum):
+    """The audit requirements of a container."""
+    NONE = 'none'
+    REQUIRED = 'required'
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}.{self.name}'
 
 
 @dataclasses.dataclass(frozen=True)
@@ -79,6 +104,7 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
 class RemoteCompletionConfig(CompletionConfig):
     """Base class for completion configuration of remote environments provisioned through Ansible Core CI."""
     provider: t.Optional[str] = None
+    arch: t.Optional[str] = None
 
     @property
     def platform(self):
@@ -98,6 +124,9 @@ class RemoteCompletionConfig(CompletionConfig):
     def __post_init__(self):
         if not self.provider:
             raise Exception(f'Remote completion entry "{self.name}" must provide a "provider" setting.')
+
+        if not self.arch:
+            raise Exception(f'Remote completion entry "{self.name}" must provide a "arch" setting.')
 
 
 @dataclasses.dataclass(frozen=True)
@@ -132,12 +161,30 @@ class DockerCompletionConfig(PythonCompletionConfig):
     """Configuration for Docker containers."""
     image: str = ''
     seccomp: str = 'default'
+    cgroup: str = CGroupVersion.V1_V2.value
+    audit: str = AuditMode.REQUIRED.value  # most containers need this, so the default is required, leaving it to be opt-out for containers which don't need it
     placeholder: bool = False
 
     @property
     def is_default(self):
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
+
+    @property
+    def audit_enum(self) -> AuditMode:
+        """The audit requirements for the container. Raises an exception if the value is invalid."""
+        try:
+            return AuditMode(self.audit)
+        except ValueError:
+            raise ValueError(f'Docker completion entry "{self.name}" has an invalid value "{self.audit}" for the "audit" setting.') from None
+
+    @property
+    def cgroup_enum(self) -> CGroupVersion:
+        """The control group version(s) required by the container. Raises an exception if the value is invalid."""
+        try:
+            return CGroupVersion(self.cgroup)
+        except ValueError:
+            raise ValueError(f'Docker completion entry "{self.name}" has an invalid value "{self.cgroup}" for the "cgroup" setting.') from None
 
     def __post_init__(self):
         if not self.image:
@@ -146,20 +193,36 @@ class DockerCompletionConfig(PythonCompletionConfig):
         if not self.supported_pythons and not self.placeholder:
             raise Exception(f'Docker completion entry "{self.name}" must provide a "python" setting.')
 
+        # verify properties can be correctly parsed to enums
+        assert self.audit_enum
+        assert self.cgroup_enum
+
 
 @dataclasses.dataclass(frozen=True)
 class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote network platforms."""
     collection: str = ''
     connection: str = ''
+    placeholder: bool = False
+
+    def __post_init__(self):
+        if not self.placeholder:
+            super().__post_init__()
 
 
 @dataclasses.dataclass(frozen=True)
 class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig):
     """Configuration for remote POSIX platforms."""
+    become: t.Optional[str] = None
     placeholder: bool = False
 
     def __post_init__(self):
+        if not self.placeholder:
+            super().__post_init__()
+
+        if self.become and self.become not in SUPPORTED_BECOME_METHODS:
+            raise Exception(f'POSIX remote completion entry "{self.name}" setting "become" must be omitted or one of: {", ".join(SUPPORTED_BECOME_METHODS)}')
+
         if not self.supported_pythons:
             if self.version and not self.placeholder:
                 raise Exception(f'POSIX remote completion entry "{self.name}" must provide a "python" setting.')
@@ -211,9 +274,9 @@ def filter_completion(
         controller_only=False,  # type: bool
         include_defaults=False,  # type: bool
 ):  # type: (...) -> t.Dict[str, TCompletionConfig]
-    """Return a the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
+    """Return the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
     if controller_only:
-        completion = {name: config for name, config in completion.items() if config.controller_supported}
+        completion = {name: config for name, config in completion.items() if isinstance(config, PosixCompletionConfig) and config.controller_supported}
 
     if not include_defaults:
         completion = {name: config for name, config in completion.items() if not config.is_default}

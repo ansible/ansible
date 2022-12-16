@@ -15,6 +15,7 @@ from ..target import (
     walk_sanity_targets,
     load_integration_prefixes,
     analyze_integration_target_dependencies,
+    IntegrationTarget,
 )
 
 from ..util import (
@@ -63,14 +64,14 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
         'integration': set(),
         'windows-integration': set(),
         'network-integration': set(),
-    }
+    }  # type: t.Dict[str, t.Set[str]]
 
     focused_commands = collections.defaultdict(set)
 
-    deleted_paths = set()
-    original_paths = set()
-    additional_paths = set()
-    no_integration_paths = set()
+    deleted_paths = set()  # type: t.Set[str]
+    original_paths = set()  # type: t.Set[str]
+    additional_paths = set()  # type: t.Set[str]
+    no_integration_paths = set()  # type: t.Set[str]
 
     for path in paths:
         if not os.path.exists(path):
@@ -110,7 +111,7 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
             tests = all_tests(args)  # not categorized, run all tests
             display.warning('Path not categorized: %s' % path)
         else:
-            focused_target = tests.pop(FOCUSED_TARGET, False) and path in original_paths
+            focused_target = bool(tests.pop(FOCUSED_TARGET, None)) and path in original_paths
 
             tests = dict((key, value) for key, value in tests.items() if value)
 
@@ -155,18 +156,18 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
         if any(target == 'all' for target in targets):
             commands[command] = {'all'}
 
-    commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
+    sorted_commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
     focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
 
-    for command, targets in commands.items():
+    for command, targets in sorted_commands.items():
         if targets == ['all']:
-            commands[command] = []  # changes require testing all targets, do not filter targets
+            sorted_commands[command] = []  # changes require testing all targets, do not filter targets
 
     changes = ChangeDescription()
     changes.command = verbose_command
     changes.changed_paths = sorted(original_paths)
     changes.deleted_paths = sorted(deleted_paths)
-    changes.regular_command_targets = commands
+    changes.regular_command_targets = sorted_commands
     changes.focused_command_targets = focused_commands
     changes.no_integration_paths = sorted(no_integration_paths)
 
@@ -205,11 +206,11 @@ class PathMapper:
         self.prefixes = load_integration_prefixes()
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
-        self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
-        self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
-        self.csharp_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.python_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
 
-        self.paths_to_dependent_targets = {}
+        self.paths_to_dependent_targets = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
 
         for target in self.integration_targets:
             for path in target.needs_file:
@@ -341,7 +342,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}
+        minimal = {}  # type: t.Dict[str, str]
 
         if os.path.sep not in path:
             if filename in (
@@ -372,7 +373,7 @@ class PathMapper:
                 'integration': target.name if 'posix/' in target.aliases else None,
                 'windows-integration': target.name if 'windows/' in target.aliases else None,
                 'network-integration': target.name if 'network/' in target.aliases else None,
-                FOCUSED_TARGET: True,
+                FOCUSED_TARGET: target.name,
             }
 
         if is_subdir(path, data_context().content.integration_path):
@@ -430,7 +431,7 @@ class PathMapper:
                     'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
                     'windows-integration': self.windows_integration_by_module.get(module_name) if ext in ['.cs', '.ps1'] else None,
                     'network-integration': self.network_integration_by_module.get(module_name),
-                    FOCUSED_TARGET: True,
+                    FOCUSED_TARGET: module_name,
                 }
 
             return minimal
@@ -582,7 +583,7 @@ class PathMapper:
                 'windows-integration': target.name if target and 'windows/' in target.aliases else None,
                 'network-integration': target.name if target and 'network/' in target.aliases else None,
                 'units': units_path,
-                FOCUSED_TARGET: target is not None,
+                FOCUSED_TARGET: target.name if target else None,
             }
 
         if is_subdir(path, data_context().content.plugin_paths['filter']):
@@ -630,7 +631,7 @@ class PathMapper:
         filename = os.path.basename(path)
         dummy, ext = os.path.splitext(filename)
 
-        minimal = {}
+        minimal = {}  # type: t.Dict[str, str]
 
         if path.startswith('changelogs/'):
             return minimal
@@ -674,7 +675,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}
+        minimal = {}  # type: t.Dict[str, str]
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
@@ -721,7 +722,6 @@ class PathMapper:
 
         if path.startswith('test/lib/ansible_test/config/'):
             if name.startswith('cloud-config-'):
-                # noinspection PyTypeChecker
                 cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
 
                 if cloud_target in self.integration_targets_by_alias:
@@ -746,13 +746,13 @@ class PathMapper:
         if path.startswith('test/lib/ansible_test/_internal/commands/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_internal/commands/units/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
@@ -776,13 +776,13 @@ class PathMapper:
         if path.startswith('test/lib/ansible_test/_util/controller/sanity/') or path.startswith('test/lib/ansible_test/_util/target/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_util/target/pytest/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/'):

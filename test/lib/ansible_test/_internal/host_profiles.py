@@ -4,11 +4,13 @@ from __future__ import annotations
 import abc
 import dataclasses
 import os
+import shlex
 import tempfile
 import time
 import typing as t
 
 from .io import (
+    read_text_file,
     write_text_file,
 )
 
@@ -40,6 +42,7 @@ from .host_configs import (
 from .core_ci import (
     AnsibleCoreCI,
     SshKey,
+    VmResource,
 )
 
 from .util import (
@@ -50,16 +53,30 @@ from .util import (
     get_type_map,
     sanitize_host_name,
     sorted_versions,
+    InternalError,
+    HostConnectionError,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from .util_common import (
+    get_docs_url,
     intercept_python,
 )
 
 from .docker_util import (
     docker_exec,
+    docker_image_inspect,
+    docker_logs,
+    docker_pull,
     docker_rm,
     get_docker_hostname,
+    require_docker,
+    get_docker_info,
+    detect_host_properties,
+    run_utility_container,
+    SystemdControlGroupV1Status,
+    LOGINUID_NOT_SET,
+    UTILITY_IMAGE,
 )
 
 from .bootstrap import (
@@ -96,8 +113,22 @@ from .connections import (
 )
 
 from .become import (
-    Su,
+    Become,
+    SUPPORTED_BECOME_METHODS,
     Sudo,
+)
+
+from .completion import (
+    AuditMode,
+    CGroupVersion,
+)
+
+from .dev.container_probe import (
+    CGroupMount,
+    CGroupPath,
+    CGroupState,
+    MountType,
+    check_container_cgroup_status,
 )
 
 TControllerHostConfig = t.TypeVar('TControllerHostConfig', bound=ControllerHostConfig)
@@ -106,14 +137,55 @@ TPosixConfig = t.TypeVar('TPosixConfig', bound=PosixConfig)
 TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
 
 
+class ControlGroupError(ApplicationError):
+    """Raised when the container host does not have the necessary cgroup support to run a container."""
+    def __init__(self, args: CommonConfig, reason: str) -> None:
+        engine = require_docker().command
+        dd_wsl2 = get_docker_info(args).docker_desktop_wsl2
+
+        message = f'''
+{reason}
+
+Run the following commands as root on the container host to resolve this issue:
+
+  mkdir /sys/fs/cgroup/systemd
+  mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
+  chown -R {{user}}:{{group}} /sys/fs/cgroup/systemd  # only when rootless
+
+NOTE: These changes must be applied each time the container host is rebooted.
+'''.strip()
+
+        podman_message = '''
+      If rootless Podman is already running [1], you may need to stop it before
+      containers are able to use the new mount point.
+
+[1] Check for 'podman' and 'catatonit' processes.
+'''
+
+        dd_wsl_message = f'''
+      When using Docker Desktop with WSL2, additional configuration [1] is required.
+
+[1] {get_docs_url("https://docs.ansible.com/ansible-core/devel/dev_guide/testing_running_locally.html#docker-desktop-with-wsl2")}
+'''
+
+        if engine == 'podman':
+            message += podman_message
+        elif dd_wsl2:
+            message += dd_wsl_message
+
+        message = message.strip()
+
+        super().__init__(message)
+
+
 @dataclasses.dataclass(frozen=True)
 class Inventory:
     """Simple representation of an Ansible inventory."""
-    host_groups: t.Dict[str, t.Dict[str, t.Dict[str, str]]]
+    host_groups: t.Dict[str, t.Dict[str, t.Dict[str, t.Union[str, int]]]]
     extra_groups: t.Optional[t.Dict[str, t.List[str]]] = None
 
     @staticmethod
-    def create_single_host(name, variables):  # type: (str, t.Dict[str, str]) -> Inventory
+    def create_single_host(name, variables):  # type: (str, t.Dict[str, t.Union[str, int]]) -> Inventory
         """Return an inventory instance created from the given hostname and variables."""
         return Inventory(host_groups=dict(all={name: variables}))
 
@@ -147,7 +219,7 @@ class Inventory:
         inventory_text = inventory_text.strip()
 
         if not args.explain:
-            write_text_file(path, inventory_text)
+            write_text_file(path, inventory_text + '\n')
 
         display.info(f'>>> Inventory\n{inventory_text}', verbosity=3)
 
@@ -175,6 +247,9 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
     def setup(self):  # type: () -> None
         """Perform out-of-band setup before delegation."""
+
+    def on_target_failure(self) -> None:
+        """Executed during failure handling if this profile is a target."""
 
     def deprovision(self):  # type: () -> None
         """Deprovision the host after delegation has completed."""
@@ -294,12 +369,18 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
     def create_core_ci(self, load):  # type: (bool) -> AnsibleCoreCI
         """Create and return an AnsibleCoreCI instance."""
+        if not self.config.arch:
+            raise InternalError(f'No arch specified for config: {self.config}')
+
         return AnsibleCoreCI(
             args=self.args,
-            platform=self.config.platform,
-            version=self.config.version,
-            provider=self.config.provider,
-            suffix='controller' if self.controller else 'target',
+            resource=VmResource(
+                platform=self.config.platform,
+                version=self.config.version,
+                architecture=self.config.arch,
+                provider=self.config.provider,
+                tag='controller' if self.controller else 'target',
+            ),
             load=load,
         )
 
@@ -322,6 +403,17 @@ class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[Con
 
 class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[DockerConfig]):
     """Host profile for a docker instance."""
+
+    MARKER = 'ansible-test-marker'
+
+    @dataclasses.dataclass(frozen=True)
+    class InitConfig:
+        """Configuration details required to run the container init."""
+        options: list[str]
+        command: str
+        command_privileged: bool
+        expected_mounts: tuple[CGroupMount, ...]
+
     @property
     def container_name(self):  # type: () -> t.Optional[str]
         """Return the stored container name, if any, otherwise None."""
@@ -332,23 +424,518 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Store the given container name."""
         self.state['container_name'] = value
 
+    @property
+    def cgroup_path(self) -> t.Optional[str]:
+        """Return the path to the cgroup v1 systemd hierarchy, if any, otherwise None."""
+        return self.state.get('cgroup_path')
+
+    @cgroup_path.setter
+    def cgroup_path(self, value: str) -> None:
+        """Store the path to the cgroup v1 systemd hierarchy."""
+        self.state['cgroup_path'] = value
+
+    @property
+    def label(self) -> str:
+        """Label to apply to resources related to this profile."""
+        return f'{"controller" if self.controller else "target"}-{self.args.session_name}'
+
     def provision(self):  # type: () -> None
         """Provision the host before delegation."""
+        init_probe = self.args.dev_probe_cgroups is not None
+        init_config = self.get_init_config()
+
         container = run_support_container(
             args=self.args,
             context='__test_hosts__',
             image=self.config.image,
-            name=f'ansible-test-{"controller" if self.controller else "target"}-{self.args.session_name}',
+            name=f'ansible-test-{self.label}',
             ports=[22],
             publish_ports=not self.controller,  # connections to the controller over SSH are not required
-            options=self.get_docker_run_options(),
+            options=init_config.options,
             cleanup=CleanupMode.NO,
+            cmd=self.build_init_command(init_config, init_probe),
         )
 
         if not container:
+            if self.args.prime_containers:
+                if init_config.command_privileged or init_probe:
+                    docker_pull(self.args, UTILITY_IMAGE)
+
             return
 
         self.container_name = container.name
+
+        try:
+            options = ['--pid', 'host', '--privileged']
+
+            if init_config.command and init_config.command_privileged:
+                init_command = init_config.command
+
+                if not init_probe:
+                    init_command += f' && {shlex.join(self.wake_command)}'
+
+                cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p', 'sh', '-c', init_command]
+                run_utility_container(self.args, f'ansible-test-init-{self.label}', cmd, options)
+
+            if init_probe:
+                check_container_cgroup_status(self.args, self.config, self.container_name, init_config.expected_mounts)
+
+                cmd = ['nsenter', '-t', str(container.details.container.pid), '-m', '-p'] + self.wake_command
+                run_utility_container(self.args, f'ansible-test-wake-{self.label}', cmd, options)
+        except SubprocessError:
+            display.info(f'Checking container "{self.container_name}" logs...')
+            docker_logs(self.args, self.container_name)
+
+            raise
+
+    def get_init_config(self) -> InitConfig:
+        """Return init config for running under the current container engine."""
+        self.check_cgroup_requirements()
+
+        engine = require_docker().command
+        init_config = getattr(self, f'get_{engine}_init_config')()
+
+        return init_config
+
+    def get_podman_init_config(self) -> InitConfig:
+        """Return init config for running under Podman."""
+        options = self.get_common_run_options()
+        command: t.Optional[str] = None
+        command_privileged = False
+        expected_mounts: tuple[CGroupMount, ...]
+
+        cgroup_version = get_docker_info(self.args).cgroup_version
+
+        # Without AUDIT_WRITE the following errors may appear in the system logs of a container after attempting to log in using SSH:
+        #
+        #   fatal: linux_audit_write_entry failed: Operation not permitted
+        #
+        # This occurs when running containers as root when the container host provides audit support, but the user lacks the AUDIT_WRITE capability.
+        # The AUDIT_WRITE capability is provided by docker by default, but not podman.
+        # See: https://github.com/moby/moby/pull/7179
+        #
+        # OpenSSH Portable requires AUDIT_WRITE when logging in with a TTY if the Linux audit feature was compiled in.
+        # Containers with the feature enabled will require the AUDIT_WRITE capability when EPERM is returned while accessing the audit system.
+        # See: https://github.com/openssh/openssh-portable/blob/2dc328023f60212cd29504fc05d849133ae47355/audit-linux.c#L90
+        # See: https://github.com/openssh/openssh-portable/blob/715c892f0a5295b391ae92c26ef4d6a86ea96e8e/loginrec.c#L476-L478
+        #
+        # Some containers will be running a patched version of OpenSSH which blocks logins when EPERM is received while using the audit system.
+        # These containers will require the AUDIT_WRITE capability when EPERM is returned while accessing the audit system.
+        # See: https://src.fedoraproject.org/rpms/openssh/blob/f36/f/openssh-7.6p1-audit.patch
+        #
+        # Since only some containers carry the patch or enable the Linux audit feature in OpenSSH, this capability is enabled on a per-container basis.
+        # No warning is provided when adding this capability, since there's not really anything the user can do about it.
+        if self.config.audit == AuditMode.REQUIRED and detect_host_properties(self.args).audit_code == 'EPERM':
+            options.extend(('--cap-add', 'AUDIT_WRITE'))
+
+        # Without AUDIT_CONTROL the following errors may appear in the system logs of a container after attempting to log in using SSH:
+        #
+        #   pam_loginuid(sshd:session): Error writing /proc/self/loginuid: Operation not permitted
+        #   pam_loginuid(sshd:session): set_loginuid failed
+        #
+        # Containers configured to use the pam_loginuid module will encounter this error. If the module is required, logins will fail.
+        # Since most containers will have this configuration, the code to handle this issue is applied to all containers.
+        #
+        # This occurs when the loginuid is set on the container host and doesn't match the user on the container host which is running the container.
+        # Container hosts which do not use systemd are likely to leave the loginuid unset and thus be unaffected.
+        # The most common source of a mismatch is the use of sudo to run ansible-test, which changes the uid but cannot change the loginuid.
+        # This condition typically occurs only under podman, since the loginuid is inherited from the current user.
+        # See: https://github.com/containers/podman/issues/13012#issuecomment-1034049725
+        #
+        # This condition is detected by querying the loginuid of a container running on the container host.
+        # When it occurs, a warning is displayed and the AUDIT_CONTROL capability is added to containers to work around the issue.
+        # The warning serves as notice to the user that their usage of ansible-test is responsible for the additional capability requirement.
+        if (loginuid := detect_host_properties(self.args).loginuid) not in (0, LOGINUID_NOT_SET, None):
+            display.warning(f'Running containers with capability AUDIT_CONTROL since the container loginuid ({loginuid}) is incorrect. '
+                            'This is most likely due to use of sudo to run ansible-test when loginuid is already set.', unique=True)
+
+            options.extend(('--cap-add', 'AUDIT_CONTROL'))
+
+        if self.config.cgroup == CGroupVersion.NONE:
+            # Containers which do not require cgroup do not use systemd.
+
+            options.extend((
+                # Disabling systemd support in Podman will allow these containers to work on hosts without systemd.
+                # Without this, running a container on a host without systemd results in errors such as (from crun):
+                #   Error: crun: error stat'ing file `/sys/fs/cgroup/systemd`: No such file or directory:
+                # A similar error occurs when using runc:
+                #   OCI runtime attempted to invoke a command that was not found
+                '--systemd', 'false',
+                # A private cgroup namespace limits what is visible in /proc/*/cgroup.
+                '--cgroupns', 'private',
+                # Mounting a tmpfs overrides the cgroup mount(s) that would otherwise be provided by Podman.
+                # This helps provide a consistent container environment across various container host configurations.
+                '--tmpfs', '/sys/fs/cgroup',
+            ))
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
+            )
+        elif self.config.cgroup in (CGroupVersion.V1_V2, CGroupVersion.V1_ONLY) and cgroup_version == 1:
+            # Podman hosts providing cgroup v1 will automatically bind mount the systemd hierarchy read-write in the container.
+            # They will also create a dedicated cgroup v1 systemd hierarchy for the container.
+            # On hosts with systemd this path is: /sys/fs/cgroup/systemd/libpod_parent/libpod-{container_id}/
+            # On hosts without systemd this path is: /sys/fs/cgroup/systemd/{container_id}/
+
+            options.extend((
+                # Force Podman to enable systemd support since a command may be used later (to support pre-init diagnostics).
+                '--systemd', 'always',
+                # The host namespace must be used to permit the container to access the cgroup v1 systemd hierarchy created by Podman.
+                '--cgroupns', 'host',
+                # Mask the host cgroup tmpfs mount to avoid exposing the host cgroup v1 hierarchies (or cgroup v2 hybrid) to the container.
+                # Podman will provide a cgroup v1 systemd hiearchy on top of this.
+                '--tmpfs', '/sys/fs/cgroup',
+            ))
+
+            self.check_systemd_cgroup_v1(options)  # podman
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
+                # The mount point can be writable or not.
+                # The reason for the variation is not known.
+                CGroupMount(path=CGroupPath.SYSTEMD, type=MountType.CGROUP_V1, writable=None, state=CGroupState.HOST),
+                # The filesystem type can be tmpfs or devtmpfs.
+                # The reason for the variation is not known.
+                CGroupMount(path=CGroupPath.SYSTEMD_RELEASE_AGENT, type=None, writable=False, state=None),
+            )
+        elif self.config.cgroup in (CGroupVersion.V1_V2, CGroupVersion.V2_ONLY) and cgroup_version == 2:
+            # Podman hosts providing cgroup v2 will give each container a read-write cgroup mount.
+
+            options.extend((
+                # Force Podman to enable systemd support since a command may be used later (to support pre-init diagnostics).
+                '--systemd', 'always',
+                # A private cgroup namespace is used to avoid exposing the host cgroup to the container.
+                '--cgroupns', 'private',
+            ))
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.CGROUP_V2, writable=True, state=CGroupState.PRIVATE),
+            )
+        elif self.config.cgroup == CGroupVersion.V1_ONLY and cgroup_version == 2:
+            # Containers which require cgroup v1 need explicit volume mounts on container hosts not providing that version.
+            # We must put the container PID 1 into the cgroup v1 systemd hierarchy we create.
+            cgroup_path = self.create_systemd_cgroup_v1()  # podman
+            command = f'echo 1 > {cgroup_path}/cgroup.procs'
+
+            options.extend((
+                # Force Podman to enable systemd support since a command is being provided.
+                '--systemd', 'always',
+                # A private cgroup namespace is required. Using the host cgroup namespace results in errors such as the following (from crun):
+                #   Error: OCI runtime error: mount `/sys/fs/cgroup` to '/sys/fs/cgroup': Invalid argument
+                # A similar error occurs when using runc:
+                #   Error: OCI runtime error: runc create failed: unable to start container process: error during container init:
+                #   error mounting "/sys/fs/cgroup" to rootfs at "/sys/fs/cgroup": mount /sys/fs/cgroup:/sys/fs/cgroup (via /proc/self/fd/7), flags: 0x1000:
+                #   invalid argument
+                '--cgroupns', 'private',
+                # Unlike Docker, Podman ignores a /sys/fs/cgroup tmpfs mount, instead exposing a cgroup v2 mount.
+                # The exposed volume will be read-write, but the container will have its own private namespace.
+                # Provide a read-only cgroup v1 systemd hierarchy under which the dedicated ansible-test cgroup will be mounted read-write.
+                # Without this systemd will fail while attempting to mount the cgroup v1 systemd hierarchy.
+                # Podman doesn't support using a tmpfs for this. Attempting to do so results in an error (from crun):
+                #   Error: OCI runtime error: read: Invalid argument
+                # A similar error occurs when using runc:
+                #   Error: OCI runtime error: runc create failed: unable to start container process: error during container init:
+                #   error mounting "tmpfs" to rootfs at "/sys/fs/cgroup/systemd": tmpcopyup: failed to copy /sys/fs/cgroup/systemd to /proc/self/fd/7
+                #   (/tmp/runctop3876247619/runctmpdir1460907418): read /proc/self/fd/7/cgroup.kill: invalid argument
+                '--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:ro',
+                # Provide the container access to the cgroup v1 systemd hierarchy created by ansible-test.
+                '--volume', f'{cgroup_path}:{cgroup_path}:rw',
+            ))
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.CGROUP_V2, writable=True, state=CGroupState.PRIVATE),
+                CGroupMount(path=CGroupPath.SYSTEMD, type=MountType.CGROUP_V1, writable=False, state=CGroupState.SHADOWED),
+                CGroupMount(path=cgroup_path, type=MountType.CGROUP_V1, writable=True, state=CGroupState.HOST),
+            )
+        else:
+            raise InternalError(f'Unhandled cgroup configuration: {self.config.cgroup} on cgroup v{cgroup_version}.')
+
+        return self.InitConfig(
+            options=options,
+            command=command,
+            command_privileged=command_privileged,
+            expected_mounts=expected_mounts,
+        )
+
+    def get_docker_init_config(self) -> InitConfig:
+        """Return init config for running under Docker."""
+        options = self.get_common_run_options()
+        command: t.Optional[str] = None
+        command_privileged = False
+        expected_mounts: tuple[CGroupMount, ...]
+
+        cgroup_version = get_docker_info(self.args).cgroup_version
+
+        if self.config.cgroup == CGroupVersion.NONE:
+            # Containers which do not require cgroup do not use systemd.
+
+            if get_docker_info(self.args).cgroupns_option_supported:
+                # Use the `--cgroupns` option if it is supported.
+                # Older servers which do not support the option use the host group namespace.
+                # Older clients which do not support the option cause newer servers to use the host cgroup namespace (cgroup v1 only).
+                # See: https://github.com/moby/moby/blob/master/api/server/router/container/container_routes.go#L512-L517
+                # If the host cgroup namespace is used, cgroup information will be visible, but the cgroup mounts will be unavailable due to the tmpfs below.
+                options.extend((
+                    # A private cgroup namespace limits what is visible in /proc/*/cgroup.
+                    '--cgroupns', 'private',
+                ))
+
+            options.extend((
+                # Mounting a tmpfs overrides the cgroup mount(s) that would otherwise be provided by Docker.
+                # This helps provide a consistent container environment across various container host configurations.
+                '--tmpfs', '/sys/fs/cgroup',
+            ))
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
+            )
+        elif self.config.cgroup in (CGroupVersion.V1_V2, CGroupVersion.V1_ONLY) and cgroup_version == 1:
+            # Docker hosts providing cgroup v1 will automatically bind mount the systemd hierarchy read-only in the container.
+            # They will also create a dedicated cgroup v1 systemd hierarchy for the container.
+            # The cgroup v1 system hierarchy path is: /sys/fs/cgroup/systemd/{container_id}/
+
+            if get_docker_info(self.args).cgroupns_option_supported:
+                # Use the `--cgroupns` option if it is supported.
+                # Older servers which do not support the option use the host group namespace.
+                # Older clients which do not support the option cause newer servers to use the host cgroup namespace (cgroup v1 only).
+                # See: https://github.com/moby/moby/blob/master/api/server/router/container/container_routes.go#L512-L517
+                options.extend((
+                    # The host cgroup namespace must be used.
+                    # Otherwise, /proc/1/cgroup will report "/" for the cgroup path, which is incorrect.
+                    # See: https://github.com/systemd/systemd/issues/19245#issuecomment-815954506
+                    # It is set here to avoid relying on the current Docker configuration.
+                    '--cgroupns', 'host',
+                ))
+
+            options.extend((
+                # Mask the host cgroup tmpfs mount to avoid exposing the host cgroup v1 hierarchies (or cgroup v2 hybrid) to the container.
+                '--tmpfs', '/sys/fs/cgroup',
+                # A cgroup v1 systemd hierarchy needs to be mounted read-write over the read-only one provided by Docker.
+                # Alternatives were tested, but were unusable due to various issues:
+                #  - Attempting to remount the existing mount point read-write will result in a "mount point is busy" error.
+                #  - Adding the entire "/sys/fs/cgroup" mount will expose hierarchies other than systemd.
+                #    If the host is a cgroup v2 hybrid host it would also expose the /sys/fs/cgroup/unified/ hierarchy read-write.
+                #    On older systems, such as an Ubuntu 18.04 host, a dedicated v2 cgroup would not be used, exposing the host cgroups to the container.
+                '--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw',
+            ))
+
+            self.check_systemd_cgroup_v1(options)  # docker
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
+                CGroupMount(path=CGroupPath.SYSTEMD, type=MountType.CGROUP_V1, writable=True, state=CGroupState.HOST),
+            )
+        elif self.config.cgroup in (CGroupVersion.V1_V2, CGroupVersion.V2_ONLY) and cgroup_version == 2:
+            # Docker hosts providing cgroup v2 will give each container a read-only cgroup mount.
+            # It must be remounted read-write before systemd starts.
+            # This must be done in a privileged container, otherwise a "permission denied" error can occur.
+            command = 'mount -o remount,rw /sys/fs/cgroup/'
+            command_privileged = True
+
+            options.extend((
+                # A private cgroup namespace is used to avoid exposing the host cgroup to the container.
+                # This matches the behavior in Podman 1.7.0 and later, which select cgroupns 'host' mode for cgroup v1 and 'private' mode for cgroup v2.
+                # See: https://github.com/containers/podman/pull/4374
+                # See: https://github.com/containers/podman/blob/main/RELEASE_NOTES.md#170
+                '--cgroupns', 'private',
+            ))
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.CGROUP_V2, writable=True, state=CGroupState.PRIVATE),
+            )
+        elif self.config.cgroup == CGroupVersion.V1_ONLY and cgroup_version == 2:
+            # Containers which require cgroup v1 need explicit volume mounts on container hosts not providing that version.
+            # We must put the container PID 1 into the cgroup v1 systemd hierarchy we create.
+            cgroup_path = self.create_systemd_cgroup_v1()  # docker
+            command = f'echo 1 > {cgroup_path}/cgroup.procs'
+
+            options.extend((
+                # A private cgroup namespace is used since no access to the host cgroup namespace is required.
+                # This matches the configuration used for running cgroup v1 containers under Podman.
+                '--cgroupns', 'private',
+                # Provide a read-write tmpfs filesystem to support additional cgroup mount points.
+                # Without this Docker will provide a read-only cgroup2 mount instead.
+                '--tmpfs', '/sys/fs/cgroup',
+                # Provide a read-write tmpfs filesystem to simulate a systemd cgroup v1 hierarchy.
+                # Without this systemd will fail while attempting to mount the cgroup v1 systemd hierarchy.
+                '--tmpfs', '/sys/fs/cgroup/systemd',
+                # Provide the container access to the cgroup v1 systemd hierarchy created by ansible-test.
+                '--volume', f'{cgroup_path}:{cgroup_path}:rw',
+            ))
+
+            expected_mounts = (
+                CGroupMount(path=CGroupPath.ROOT, type=MountType.TMPFS, writable=True, state=None),
+                CGroupMount(path=CGroupPath.SYSTEMD, type=MountType.TMPFS, writable=True, state=None),
+                CGroupMount(path=cgroup_path, type=MountType.CGROUP_V1, writable=True, state=CGroupState.HOST),
+            )
+        else:
+            raise InternalError(f'Unhandled cgroup configuration: {self.config.cgroup} on cgroup v{cgroup_version}.')
+
+        return self.InitConfig(
+            options=options,
+            command=command,
+            command_privileged=command_privileged,
+            expected_mounts=expected_mounts,
+        )
+
+    def build_init_command(self, init_config: InitConfig, sleep: bool) -> t.Optional[list[str]]:
+        """
+        Build and return the command to start in the container.
+        Returns None if the default command for the container should be used.
+
+        The sleep duration below was selected to:
+
+          - Allow enough time to perform necessary operations in the container before waking it.
+          - Make the delay obvious if the wake command doesn't run or succeed.
+          - Avoid hanging indefinitely or for an unreasonably long time.
+
+        NOTE: The container must have a POSIX-compliant default shell "sh" with a non-builtin "sleep" command.
+        """
+        command = ''
+
+        if init_config.command and not init_config.command_privileged:
+            command += f'{init_config.command} && '
+
+        if sleep or init_config.command_privileged:
+            command += 'sleep 60 ; '
+
+        if not command:
+            return None
+
+        docker_pull(self.args, self.config.image)
+        inspect = docker_image_inspect(self.args, self.config.image)
+
+        command += f'exec {shlex.join(inspect.cmd)}'
+
+        return ['sh', '-c', command]
+
+    @property
+    def wake_command(self) -> list[str]:
+        """
+        The command used to wake the container from sleep.
+        This will be run inside our utility container, so the command used does not need to be present in the container being woken up.
+        """
+        return ['pkill', 'sleep']
+
+    def check_systemd_cgroup_v1(self, options: list[str]) -> None:
+        """Check the cgroup v1 systemd hierarchy to verify it is writeable for our container."""
+        probe_script = (read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'check_systemd_cgroup_v1.sh'))
+                        .replace('@MARKER@', self.MARKER)
+                        .replace('@LABEL@', self.label))
+
+        cmd = ['sh']
+
+        try:
+            run_utility_container(self.args, f'ansible-test-cgroup-check-{self.label}', cmd, options, data=probe_script)
+        except SubprocessError as ex:
+            if error := self.extract_error(ex.stderr):
+                raise ControlGroupError(self.args, 'Unable to create a v1 cgroup within the systemd hierarchy.\n'
+                                                   f'Reason: {error}') from ex  # cgroup probe failed
+
+            raise
+
+    def create_systemd_cgroup_v1(self) -> str:
+        """Create a unique ansible-test cgroup in the v1 systemd hierarchy and return its path."""
+        self.cgroup_path = f'/sys/fs/cgroup/systemd/ansible-test-{self.label}'
+
+        # Privileged mode is required to create the cgroup directories on some hosts, such as Fedora 36 and RHEL 9.0.
+        # The mkdir command will fail with "Permission denied" otherwise.
+        options = ['--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw', '--privileged']
+        cmd = ['sh', '-c', f'>&2 echo {shlex.quote(self.MARKER)} && mkdir {shlex.quote(self.cgroup_path)}']
+
+        try:
+            run_utility_container(self.args, f'ansible-test-cgroup-create-{self.label}', cmd, options)
+        except SubprocessError as ex:
+            if error := self.extract_error(ex.stderr):
+                raise ControlGroupError(self.args, f'Unable to create a v1 cgroup within the systemd hierarchy.\n'
+                                                   f'Reason: {error}') from ex  # cgroup create permission denied
+
+            raise
+
+        return self.cgroup_path
+
+    @property
+    def delete_systemd_cgroup_v1_command(self) -> list[str]:
+        """The command used to remove the previously created ansible-test cgroup in the v1 systemd hierarchy."""
+        return ['find', self.cgroup_path, '-type', 'd', '-delete']
+
+    def delete_systemd_cgroup_v1(self) -> None:
+        """Delete a previously created ansible-test cgroup in the v1 systemd hierarchy."""
+        # Privileged mode is required to remove the cgroup directories on some hosts, such as Fedora 36 and RHEL 9.0.
+        # The BusyBox find utility will report "Permission denied" otherwise, although it still exits with a status code of 0.
+        options = ['--volume', '/sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw', '--privileged']
+        cmd = ['sh', '-c', f'>&2 echo {shlex.quote(self.MARKER)} && {shlex.join(self.delete_systemd_cgroup_v1_command)}']
+
+        try:
+            run_utility_container(self.args, f'ansible-test-cgroup-delete-{self.label}', cmd, options)
+        except SubprocessError as ex:
+            if error := self.extract_error(ex.stderr):
+                if error.endswith(': No such file or directory'):
+                    return
+
+            display.error(str(ex))
+
+    def extract_error(self, value: str) -> t.Optional[str]:
+        """
+        Extract the ansible-test portion of the error message from the given value and return it.
+        Returns None if no ansible-test marker was found.
+        """
+        lines = value.strip().splitlines()
+
+        try:
+            idx = lines.index(self.MARKER)
+        except ValueError:
+            return None
+
+        lines = lines[idx + 1:]
+        message = '\n'.join(lines)
+
+        return message
+
+    def check_cgroup_requirements(self):
+        """Check cgroup requirements for the container."""
+        cgroup_version = get_docker_info(self.args).cgroup_version
+
+        if cgroup_version not in (1, 2):
+            raise ApplicationError(f'The container host provides cgroup v{cgroup_version}, but only version v1 and v2 are supported.')
+
+        # Stop early for containers which require cgroup v2 when the container host does not provide it.
+        # None of the containers included with ansible-test currently use this configuration.
+        # Support for v2-only was added in preparation for the eventual removal of cgroup v1 support from systemd after EOY 2023.
+        # See: https://github.com/systemd/systemd/pull/24086
+        if self.config.cgroup == CGroupVersion.V2_ONLY and cgroup_version != 2:
+            raise ApplicationError(f'Container {self.config.name} requires cgroup v2 but the container host provides cgroup v{cgroup_version}.')
+
+        # Containers which use old versions of systemd (earlier than version 226) require cgroup v1 support.
+        # If the host is a cgroup v2 (unified) host, changes must be made to how the container is run.
+        #
+        # See: https://github.com/systemd/systemd/blob/main/NEWS
+        #      Under the "CHANGES WITH 226" section:
+        #      > systemd now optionally supports the new Linux kernel "unified" control group hierarchy.
+        #
+        # NOTE: The container host must have the cgroup v1 mount already present.
+        #       If the container is run rootless, the user it runs under must have permissions to the mount.
+        #
+        # The following commands can be used to make the mount available:
+        #
+        #   mkdir /sys/fs/cgroup/systemd
+        #   mount cgroup -t cgroup /sys/fs/cgroup/systemd -o none,name=systemd,xattr
+        #   chown -R {user}:{group} /sys/fs/cgroup/systemd  # only when rootless
+        #
+        # See: https://github.com/containers/crun/blob/main/crun.1.md#runocisystemdforce_cgroup_v1path
+        if self.config.cgroup == CGroupVersion.V1_ONLY or (self.config.cgroup != CGroupVersion.NONE and get_docker_info(self.args).cgroup_version == 1):
+            if (cgroup_v1 := detect_host_properties(self.args).cgroup_v1) != SystemdControlGroupV1Status.VALID:
+                if self.config.cgroup == CGroupVersion.V1_ONLY:
+                    if get_docker_info(self.args).cgroup_version == 2:
+                        reason = f'Container {self.config.name} requires cgroup v1, but the container host only provides cgroup v2.'
+                    else:
+                        reason = f'Container {self.config.name} requires cgroup v1, but the container host does not appear to be running systemd.'
+                else:
+                    reason = 'The container host provides cgroup v1, but does not appear to be running systemd.'
+
+                reason += f'\n{cgroup_v1.value}'
+
+                raise ControlGroupError(self.args, reason)  # cgroup probe reported invalid state
 
     def setup(self):  # type: () -> None
         """Perform out-of-band setup before delegation."""
@@ -361,31 +948,61 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         setup_sh = bootstrapper.get_script()
         shell = setup_sh.splitlines()[0][2:]
 
-        docker_exec(self.args, self.container_name, [shell], data=setup_sh)
+        try:
+            docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
+        except SubprocessError:
+            display.info(f'Checking container "{self.container_name}" logs...')
+            docker_logs(self.args, self.container_name)
+            raise
 
     def deprovision(self):  # type: () -> None
         """Deprovision the host after delegation has completed."""
-        if not self.container_name:
-            return  # provision was never called or did not succeed, so there is no container to remove
+        container_exists = False
 
-        if self.args.docker_terminate == TerminateMode.ALWAYS or (self.args.docker_terminate == TerminateMode.SUCCESS and self.args.success):
-            docker_rm(self.args, self.container_name)
+        if self.container_name:
+            if self.args.docker_terminate == TerminateMode.ALWAYS or (self.args.docker_terminate == TerminateMode.SUCCESS and self.args.success):
+                docker_rm(self.args, self.container_name)
+            else:
+                container_exists = True
+
+        if self.cgroup_path:
+            if container_exists:
+                display.notice(f'Remember to run `{require_docker().command} rm -f {self.container_name}` when finished testing. '
+                               f'Then run `{shlex.join(self.delete_systemd_cgroup_v1_command)}` on the container host.')
+            else:
+                self.delete_systemd_cgroup_v1()
+        elif container_exists:
+            display.notice(f'Remember to run `{require_docker().command} rm -f {self.container_name}` when finished testing.')
 
     def wait(self):  # type: () -> None
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         if not self.controller:
             con = self.get_controller_target_connections()[0]
+            last_error = ''
 
-            for dummy in range(1, 60):
+            for dummy in range(1, 10):
                 try:
                     con.run(['id'], capture=True)
                 except SubprocessError as ex:
                     if 'Permission denied' in ex.message:
                         raise
 
+                    last_error = str(ex)
                     time.sleep(1)
                 else:
                     return
+
+            display.info('Checking SSH debug output...')
+            display.info(last_error)
+
+            if not self.args.delegate and not self.args.host_path:
+                def callback() -> None:
+                    """Callback to run during error display."""
+                    self.on_target_failure()  # when the controller is not delegated, report failures immediately
+            else:
+                callback = None
+
+            raise HostConnectionError(f'Timeout waiting for {self.config.name} container {self.container_name}.', callback)
 
     def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -402,6 +1019,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             port=port,
             identity_file=SshKey(self.args).key,
             python_interpreter=self.python.path,
+            # CentOS 6 uses OpenSSH 5.3, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # Since only CentOS 6 is affected, and it is only supported by ansible-core 2.12, support for RSA SHA-1 is simply hard-coded here.
+            # A substring is used to allow custom containers to work, not just the one provided with ansible-test.
+            enable_rsa_sha1='centos6' in self.config.image,
         )
 
         return [SshConnection(self.args, settings)]
@@ -414,12 +1035,45 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Return the working directory for the host."""
         return '/root'
 
-    def get_docker_run_options(self):  # type: () -> t.List[str]
+    def on_target_failure(self) -> None:
+        """Executed during failure handling if this profile is a target."""
+        display.info(f'Checking container "{self.container_name}" logs...')
+
+        try:
+            docker_logs(self.args, self.container_name)
+        except SubprocessError as ex:
+            display.error(str(ex))
+
+        if self.config.cgroup != CGroupVersion.NONE:
+            # Containers with cgroup support are assumed to be running systemd.
+            display.info(f'Checking container "{self.container_name}" systemd logs...')
+
+            try:
+                docker_exec(self.args, self.container_name, ['journalctl'], capture=False)
+            except SubprocessError as ex:
+                display.error(str(ex))
+
+        display.error(f'Connection to container "{self.container_name}" failed. See logs and original error above.')
+
+    def get_common_run_options(self) -> list[str]:
         """Return a list of options needed to run the container."""
         options = [
-            '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
-            f'--privileged={str(self.config.privileged).lower()}',
+            # These temporary mount points need to be created at run time when using Docker.
+            # They are automatically provided by Podman, but will be overridden by VOLUME instructions for the container, if they exist.
+            # If supporting containers with VOLUME instructions is not desired, these options could be limited to use with Docker.
+            # See: https://github.com/containers/podman/pull/1318
+            # Previously they were handled by the VOLUME instruction during container image creation.
+            # However, that approach creates anonymous volumes when running the container, which are then left behind after the container is deleted.
+            # These options eliminate the need for the VOLUME instruction, and override it if they are present.
+            # The mount options used are those typically found on Linux systems.
+            # Of special note is the "exec" option for "/tmp", which is required by ansible-test for path injection of executables using temporary directories.
+            '--tmpfs', '/tmp:exec',
+            '--tmpfs', '/run:exec',
+            '--tmpfs', '/run/lock',  # some systemd containers require a separate tmpfs here, such as Ubuntu 20.04 and Ubuntu 22.04
         ]
+
+        if self.config.privileged:
+            options.append('--privileged')
 
         if self.config.memory:
             options.extend([
@@ -448,7 +1102,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def get_inventory_variables(self):
+    def get_inventory_variables(self):  # type: () -> t.Dict[str, t.Optional[t.Union[str, int]]]
         """Return inventory variables for accessing this host."""
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
@@ -460,8 +1114,15 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_port=connection.port,
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
+            # VyOS 1.1.8 uses OpenSSH 5.5, making it incompatible with RSA SHA-256/512 used by Paramiko 2.9 and later.
+            # IOS CSR 1000V uses an ancient SSH server, making it incompatible with RSA SHA-256/512 used by Paramiko 2.9 and later.
+            # That means all network platforms currently offered by ansible-core-ci require support for RSA SHA-1, so it is simply hard-coded here.
+            # NOTE: This option only exists in ansible-core 2.14 and later. For older ansible-core versions, use of Paramiko 2.8.x or earlier is required.
+            #       See: https://github.com/ansible/ansible/pull/78789
+            #       See: https://github.com/ansible/ansible/pull/78842
+            ansible_paramiko_use_rsa_sha2_algorithms='no',
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
-        )
+        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
 
         return variables
 
@@ -483,13 +1144,14 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
             for dummy in range(1, 90):
                 try:
-                    intercept_python(self.args, self.args.controller_python, cmd, env)
-                except SubprocessError:
+                    intercept_python(self.args, self.args.controller_python, cmd, env, capture=True)
+                except SubprocessError as ex:
+                    display.warning(str(ex))
                     time.sleep(10)
                 else:
                     return
 
-            raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
+            raise HostConnectionError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
     def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -501,6 +1163,10 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             port=core_ci.connection.port,
             user=core_ci.connection.username,
             identity_file=core_ci.ssh_key.key,
+            # VyOS 1.1.8 uses OpenSSH 5.5, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # IOS CSR 1000V uses an ancient SSH server, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # That means all network platforms currently offered by ansible-core-ci require support for RSA SHA-1, so it is simply hard-coded here.
+            enable_rsa_sha1=True,
         )
 
         return [SshConnection(self.args, settings)]
@@ -546,7 +1212,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         shell = setup_sh.splitlines()[0][2:]
 
         ssh = self.get_origin_controller_connection()
-        ssh.run([shell], data=setup_sh)
+        ssh.run([shell], data=setup_sh, capture=False)
 
     def get_ssh_connection(self):  # type: () -> SshConnection
         """Return an SSH connection for accessing the host."""
@@ -562,15 +1228,12 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         )
 
         if settings.user == 'root':
-            become = None
-        elif self.config.platform == 'freebsd':
-            become = Su()
-        elif self.config.platform == 'macos':
-            become = Sudo()
-        elif self.config.platform == 'rhel':
-            become = Sudo()
+            become = None  # type: t.Optional[Become]
+        elif self.config.become:
+            become = SUPPORTED_BECOME_METHODS[self.config.become]()
         else:
-            raise NotImplementedError(f'Become support has not been implemented for platform "{self.config.platform}" and user "{settings.user}" is not root.')
+            display.warning(f'Defaulting to "sudo" for platform "{self.config.platform}" become support.', unique=True)
+            become = Sudo()
 
         return SshConnection(self.args, settings, become)
 
@@ -582,12 +1245,12 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             try:
                 return self.get_working_directory()
             except SubprocessError as ex:
-                if 'Permission denied' in ex.message:
-                    raise
-
+                # No "Permission denied" check is performed here.
+                # Unlike containers, with remote instances, user configuration isn't guaranteed to have been completed before SSH connections are attempted.
+                display.warning(str(ex))
                 time.sleep(10)
 
-        raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
+        raise HostConnectionError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
     def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -672,7 +1335,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def get_inventory_variables(self):
+    def get_inventory_variables(self):  # type: () -> t.Dict[str, t.Optional[t.Union[str, int]]]
         """Return inventory variables for accessing this host."""
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
@@ -686,7 +1349,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
             ansible_user=connection.username,
             ansible_password=connection.password,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
-        )
+        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
 
         # HACK: force 2016 to use NTLM + HTTP message encryption
         if self.config.version == '2016':
@@ -716,13 +1379,14 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
 
             for dummy in range(1, 120):
                 try:
-                    intercept_python(self.args, self.args.controller_python, cmd, env)
-                except SubprocessError:
+                    intercept_python(self.args, self.args.controller_python, cmd, env, capture=True)
+                except SubprocessError as ex:
+                    display.warning(str(ex))
                     time.sleep(10)
                 else:
                     return
 
-        raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
+        raise HostConnectionError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
     def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
         """Return SSH connection(s) for accessing the host as a target from the controller."""

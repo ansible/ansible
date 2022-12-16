@@ -111,7 +111,7 @@ class ImportTest(SanityMultipleVersion):
             try:
                 install_requirements(args, python, virtualenv=True, controller=False)  # sanity (import)
             except PipUnavailableError as ex:
-                display.warning(ex)
+                display.warning(str(ex))
 
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 

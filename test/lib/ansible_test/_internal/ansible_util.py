@@ -22,11 +22,11 @@ from .util import (
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
     get_ansible_version,
+    raw_command,
 )
 
 from .util_common import (
     create_temp_dir,
-    run_command,
     ResultType,
     intercept_python,
     get_injector_path,
@@ -49,6 +49,10 @@ from .python_requirements import (
 
 from .host_configs import (
     PythonConfig,
+)
+
+from .thread import (
+    mutex,
 )
 
 
@@ -193,13 +197,14 @@ def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
     return env
 
 
+@mutex
 def get_ansible_python_path(args):  # type: (CommonConfig) -> str
     """
     Return a directory usable for PYTHONPATH, containing only the ansible package.
     If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
     """
     try:
-        return get_ansible_python_path.python_path
+        return get_ansible_python_path.python_path  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -217,7 +222,7 @@ def get_ansible_python_path(args):  # type: (CommonConfig) -> str
     if not args.explain:
         generate_egg_info(python_path)
 
-    get_ansible_python_path.python_path = python_path
+    get_ansible_python_path.python_path = python_path  # type: ignore[attr-defined]
 
     return python_path
 
@@ -259,12 +264,12 @@ class CollectionDetailError(ApplicationError):
         self.reason = reason
 
 
-def get_collection_detail(args, python):  # type: (EnvironmentConfig, PythonConfig) -> CollectionDetail
+def get_collection_detail(python):  # type: (PythonConfig) -> CollectionDetail
     """Return collection detail."""
     collection = data_context().content.collection
     directory = os.path.join(collection.root, collection.directory)
 
-    stdout = run_command(args, [python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'collection_detail.py'), directory], capture=True, always=True)[0]
+    stdout = raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'collection_detail.py'), directory], capture=True)[0]
     result = json.loads(stdout)
     error = result.get('error')
 
@@ -283,15 +288,15 @@ def run_playbook(
         args,  # type: EnvironmentConfig
         inventory_path,  # type: str
         playbook,   # type: str
-        run_playbook_vars=None,  # type: t.Optional[t.Dict[str, t.Any]]
-        capture=False,  # type: bool
+        capture,  # type: bool
+        variables=None,  # type: t.Optional[t.Dict[str, t.Any]]
 ):  # type: (...) -> None
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
     cmd = ['ansible-playbook', '-i', inventory_path, playbook_path]
 
-    if run_playbook_vars:
-        cmd.extend(['-e', json.dumps(run_playbook_vars)])
+    if variables:
+        cmd.extend(['-e', json.dumps(variables)])
 
     if args.verbosity:
         cmd.append('-%s' % ('v' * args.verbosity))

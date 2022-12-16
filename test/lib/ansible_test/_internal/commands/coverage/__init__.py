@@ -95,7 +95,16 @@ def run_coverage(args, host_state, output_file, command, cmd):  # type: (Coverag
 
     cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
-    intercept_python(args, host_state.controller_profile.python, cmd, env)
+    stdout, stderr = intercept_python(args, host_state.controller_profile.python, cmd, env, capture=True)
+
+    stdout = (stdout or '').strip()
+    stderr = (stderr or '').strip()
+
+    if stdout:
+        display.info(stdout)
+
+    if stderr:
+        display.warning(stderr)
 
 
 def get_all_coverage_files():  # type: () -> t.List[str]
@@ -152,7 +161,7 @@ def enumerate_python_arcs(
         modules,  # type: t.Dict[str, str]
         collection_search_re,  # type: t.Optional[t.Pattern]
         collection_sub_re,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]]]
+):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -193,7 +202,7 @@ def enumerate_powershell_lines(
         path,  # type: str
         collection_search_re,  # type: t.Optional[t.Pattern]
         collection_sub_re,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]]]
+):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -298,7 +307,7 @@ class PathChecker:
     def __init__(self, args, collection_search_re=None):  # type: (CoverageConfig, t.Optional[t.Pattern]) -> None
         self.args = args
         self.collection_search_re = collection_search_re
-        self.invalid_paths = []
+        self.invalid_paths = []  # type: t.List[str]
         self.invalid_path_chars = 0
 
     def check_path(self, path):  # type: (str) -> bool

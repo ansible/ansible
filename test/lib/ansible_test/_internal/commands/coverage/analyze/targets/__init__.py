@@ -18,27 +18,22 @@ from .. import (
     CoverageAnalyzeConfig,
 )
 
-if t.TYPE_CHECKING:
-    TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
-    NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
-    IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
-    Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
-    Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
-    TargetIndexes = t.Dict[str, int]
-    TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
+TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
+NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
+IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
+Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
+TargetIndexes = t.Dict[str, int]
+TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
 
 
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
     """Configuration for the `coverage analyze targets` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super().__init__(args)
-
-        self.info_stderr = True
 
 
 def make_report(target_indexes, arcs, lines):  # type: (TargetIndexes, Arcs, Lines) -> t.Dict[str, t.Any]
     """Condense target indexes, arcs and lines into a compact report."""
-    set_indexes = {}
+    set_indexes = {}  # type: TargetSetIndexes
     arc_refs = dict((path, dict((format_arc(arc), get_target_set_index(indexes, set_indexes)) for arc, indexes in data.items())) for path, data in arcs.items())
     line_refs = dict((path, dict((line, get_target_set_index(indexes, set_indexes)) for line, indexes in data.items())) for path, data in lines.items())
 
@@ -93,6 +88,11 @@ def write_report(args, report, path):  # type: (CoverageAnalyzeTargetsConfig, t.
     display.info('Generated %d byte report with %d targets covering %d files.' % (
         os.path.getsize(path), len(report['targets']), len(set(report['arcs'].keys()) | set(report['lines'].keys())),
     ), verbosity=1)
+
+
+def format_line(value):  # type: (int) -> str
+    """Format line as a string."""
+    return str(value)  # putting this in a function keeps both pylint and mypy happy
 
 
 def format_arc(value):  # type: (t.Tuple[int, int]) -> str

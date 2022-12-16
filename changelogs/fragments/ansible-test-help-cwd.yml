@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - The ``--help`` option is now available when an unsupported cwd is in use.
+  - ansible-test - The ``--help`` output now shows the same instructions about cwd as would be shown in error messages if the cwd is unsupported.
+  - ansible-test - Add ``--version`` support to show the ansible-core version.
+  - ansible-test - The explanation about cwd usage has been improved to explain more clearly what is required.

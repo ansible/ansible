@@ -10,6 +10,7 @@ from ...config import (
 
 from ...util import (
     cache,
+    detect_architecture,
     display,
     get_type_map,
 )
@@ -108,19 +109,19 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
         if not self.allow_destructive and not self.config.is_managed:
             override_destructive = set(target for target in self.include_targets if target.startswith('destructive/'))
-            override = [target.name for target in targets if override_destructive & set(target.skips)]
+            override = [target.name for target in targets if override_destructive & set(target.aliases)]
 
             self.skip('destructive', 'which require --allow-destructive or prefixing with "destructive/" to run on unmanaged hosts', targets, exclude, override)
 
         if not self.args.allow_disabled:
             override_disabled = set(target for target in self.args.include if target.startswith('disabled/'))
-            override = [target.name for target in targets if override_disabled & set(target.skips)]
+            override = [target.name for target in targets if override_disabled & set(target.aliases)]
 
             self.skip('disabled', 'which require --allow-disabled or prefixing with "disabled/"', targets, exclude, override)
 
         if not self.args.allow_unsupported:
             override_unsupported = set(target for target in self.args.include if target.startswith('unsupported/'))
-            override = [target.name for target in targets if override_unsupported & set(target.skips)]
+            override = [target.name for target in targets if override_unsupported & set(target.aliases)]
 
             self.skip('unsupported', 'which require --allow-unsupported or prefixing with "unsupported/"', targets, exclude, override)
 
@@ -130,7 +131,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
             if self.args.allow_unstable_changed:
                 override_unstable |= set(self.args.metadata.change_description.focused_targets or [])
 
-            override = [target.name for target in targets if override_unstable & set(target.skips)]
+            override = [target.name for target in targets if override_unstable & set(target.aliases)]
 
             self.skip('unstable', 'which require --allow-unstable or prefixing with "unstable/"', targets, exclude, override)
 
@@ -223,6 +224,14 @@ class NetworkInventoryTargetFilter(TargetFilter[NetworkInventoryConfig]):
 
 class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
     """Target filter for localhost."""
+    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+        """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
+        super().filter_targets(targets, exclude)
+
+        arch = detect_architecture(self.config.python.path)
+
+        if arch:
+            self.skip(f'skip/{arch}', f'which are not supported by {arch}', targets, exclude)
 
 
 @cache
@@ -247,10 +256,7 @@ def get_target_filter(args, configs, controller):  # type: (IntegrationConfig, t
 
 def get_remote_skip_aliases(config):  # type: (RemoteConfig) -> t.Dict[str, str]
     """Return a dictionary of skip aliases and the reason why they apply."""
-    if isinstance(config, PosixRemoteConfig):
-        return get_platform_skip_aliases(config.platform, config.version, config.arch)
-
-    return get_platform_skip_aliases(config.platform, config.version, None)
+    return get_platform_skip_aliases(config.platform, config.version, config.arch)
 
 
 def get_platform_skip_aliases(platform, version, arch):  # type: (str, str, t.Optional[str]) -> t.Dict[str, str]

@@ -17,9 +17,9 @@ from ...io import (
 
 from ...util import (
     display,
-    SubprocessError,
     get_ansible_version,
     get_available_python_versions,
+    ApplicationError,
 )
 
 from ...util_common import (
@@ -30,8 +30,8 @@ from ...util_common import (
 
 from ...docker_util import (
     get_docker_command,
-    docker_info,
-    docker_version
+    get_docker_info,
+    get_docker_container_id,
 )
 
 from ...constants import (
@@ -70,11 +70,14 @@ def show_dump_env(args):  # type: (EnvConfig) -> None
     if not args.show and not args.dump:
         return
 
+    container_id = get_docker_container_id()
+
     data = dict(
         ansible=dict(
             version=get_ansible_version(),
         ),
         docker=get_docker_details(args),
+        container_id=container_id,
         environ=os.environ.copy(),
         location=dict(
             pwd=os.environ.get('PWD', None),
@@ -166,7 +169,7 @@ def show_dict(data, verbose, root_verbosity=0, path=None):  # type: (t.Dict[str,
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, str]
+def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, t.Any]
     """Return details about docker."""
     docker = get_docker_command()
 
@@ -178,14 +181,12 @@ def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, str]
         executable = docker.executable
 
         try:
-            info = docker_info(args)
-        except SubprocessError as ex:
-            display.warning('Failed to collect docker info:\n%s' % ex)
-
-        try:
-            version = docker_version(args)
-        except SubprocessError as ex:
-            display.warning('Failed to collect docker version:\n%s' % ex)
+            docker_info = get_docker_info(args)
+        except ApplicationError as ex:
+            display.warning(str(ex))
+        else:
+            info = docker_info.info
+            version = docker_info.version
 
     docker_details = dict(
         executable=executable,

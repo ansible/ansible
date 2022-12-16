@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import contextlib
 import fnmatch
@@ -161,14 +160,15 @@ def clean_repository(file_list):
 
 def create_sdist(tmp_dir):
     """Create an sdist in the repository"""
-    create = subprocess.Popen(
+    create = subprocess.run(
         ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
-    stderr = create.communicate()[1]
+    stderr = create.stderr
 
     if create.returncode != 0:
         raise Exception('make snapshot failed:\n%s' % stderr)
@@ -209,15 +209,16 @@ def extract_sdist(sdist_path, tmp_dir):
 
 def install_sdist(tmp_dir, sdist_dir):
     """Install the extracted sdist into the temporary directory"""
-    install = subprocess.Popen(
+    install = subprocess.run(
         ['python', 'setup.py', 'install', '--root=%s' % tmp_dir],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
         cwd=os.path.join(tmp_dir, sdist_dir),
+        check=False,
     )
 
-    stdout, stderr = install.communicate()
+    stdout, stderr = install.stdout, install.stderr
 
     if install.returncode != 0:
         raise Exception('sdist install failed:\n%s' % stderr)

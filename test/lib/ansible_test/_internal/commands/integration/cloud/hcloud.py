@@ -18,6 +18,7 @@ from ....target import (
 
 from ....core_ci import (
     AnsibleCoreCI,
+    CloudResource,
 )
 
 from . import (
@@ -78,7 +79,7 @@ class HcloudCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
         """Return a Heztner instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', 'hetzner', persist=False)
+        return AnsibleCoreCI(self.args, CloudResource(platform='hetzner'))
 
 
 class HcloudCloudEnvironment(CloudEnvironment):

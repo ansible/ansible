@@ -18,13 +18,12 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        Arcs,
-        IndexedPoints,
-        Lines,
-        TargetIndexes,
-    )
+from . import (
+    Arcs,
+    IndexedPoints,
+    Lines,
+    TargetIndexes,
+)
 
 
 class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):

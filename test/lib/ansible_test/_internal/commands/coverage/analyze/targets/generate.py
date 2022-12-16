@@ -43,12 +43,11 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        Arcs,
-        Lines,
-        TargetIndexes,
-    )
+from . import (
+    Arcs,
+    Lines,
+    TargetIndexes,
+)
 
 
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
@@ -68,7 +67,7 @@ def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTa
         raise Delegate(host_state)
 
     root = data_context().content.root
-    target_indexes = {}
+    target_indexes = {}  # type: TargetIndexes
     arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, host_state, args.input_dir, target_indexes).items())
     lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
     report = make_report(target_indexes, arcs, lines)
@@ -139,7 +138,7 @@ def analyze_powershell_coverage(
 def prune_invalid_filenames(
         args,  # type: CoverageAnalyzeTargetsGenerateConfig
         results,  # type: t.Dict[str, t.Any]
-        collection_search_re=None,  # type: t.Optional[str]
+        collection_search_re=None,  # type: t.Optional[t.Pattern]
 ):  # type: (...) -> None
     """Remove invalid filenames from the given result set."""
     path_checker = PathChecker(args, collection_search_re)

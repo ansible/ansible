@@ -41,6 +41,10 @@ from .host_configs import (
     PythonConfig,
 )
 
+from .thread import (
+    mutex,
+)
+
 
 def cover_python(
         args,  # type: TestConfig
@@ -48,7 +52,7 @@ def cover_python(
         cmd,  # type: t.List[str]
         target_name,  # type: str
         env,  # type: t.Dict[str, str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
@@ -107,10 +111,11 @@ def get_coverage_environment(
     return env
 
 
+@mutex
 def get_coverage_config(args):  # type: (TestConfig) -> str
     """Return the path to the coverage config, creating the config if it does not already exist."""
     try:
-        return get_coverage_config.path
+        return get_coverage_config.path  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -122,10 +127,12 @@ def get_coverage_config(args):  # type: (TestConfig) -> str
         temp_dir = tempfile.mkdtemp()
         atexit.register(lambda: remove_tree(temp_dir))
 
-    path = get_coverage_config.path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
+    path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
 
     if not args.explain:
         write_text_file(path, coverage_config)
+
+    get_coverage_config.path = path  # type: ignore[attr-defined]
 
     return path
 

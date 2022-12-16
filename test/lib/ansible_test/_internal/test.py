@@ -218,7 +218,7 @@ class TestFailure(TestResult):
             command,  # type: str
             test,  # type: str
             python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.List[TestMessage]]
+            messages=None,  # type: t.Optional[t.Sequence[TestMessage]]
             summary=None,  # type: t.Optional[str]
     ):
         super().__init__(command, test, python_version)
@@ -264,10 +264,10 @@ class TestFailure(TestResult):
             message = 'The test `%s` failed. See stderr output for details.' % command
             path = ''
             message = TestMessage(message, path)
-            print(message)
+            print(message)  # display goes to stderr, this should be on stdout
         else:
             for message in self.messages:
-                print(message)
+                print(message)  # display goes to stderr, this should be on stdout
 
     def write_junit(self, args):  # type: (TestConfig) -> None
         """Write results to a junit XML file."""

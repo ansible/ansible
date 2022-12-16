@@ -1,15 +1,20 @@
 """Miscellaneous utility functions and classes."""
 from __future__ import annotations
 
+import abc
 import errno
+import enum
 import fcntl
+import importlib.util
 import inspect
+import json
+import keyword
 import os
+import platform
 import pkgutil
 import random
 import re
 import shutil
-import socket
 import stat
 import string
 import subprocess
@@ -21,6 +26,11 @@ import typing as t
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
+
+try:
+    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.9
+except ImportError:
+    TypeGuard = None
 
 from .encoding import (
     to_bytes,
@@ -35,6 +45,7 @@ from .io import (
 
 from .thread import (
     mutex,
+    WrappedThread,
 )
 
 from .constants import (
@@ -47,12 +58,6 @@ TKey = t.TypeVar('TKey')
 TValue = t.TypeVar('TValue')
 
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
-
-try:
-    # noinspection PyUnresolvedReferences
-    MAXFD = subprocess.MAXFD
-except AttributeError:
-    MAXFD = -1
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -79,6 +84,7 @@ ANSIBLE_TEST_CONTROLLER_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'controller'
 ANSIBLE_TEST_TARGET_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'target')
 
 ANSIBLE_TEST_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'tools')
+ANSIBLE_TEST_TARGET_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'tools')
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -93,6 +99,41 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
+
+
+class OutputStream(enum.Enum):
+    """The output stream to use when running a subprocess and redirecting/capturing stdout or stderr."""
+
+    ORIGINAL = enum.auto()
+    AUTO = enum.auto()
+
+    def get_buffer(self, original: t.BinaryIO) -> t.BinaryIO:
+        """Return the correct output buffer to use, taking into account the given original buffer."""
+
+        if self == OutputStream.ORIGINAL:
+            return original
+
+        if self == OutputStream.AUTO:
+            return display.fd.buffer
+
+        raise NotImplementedError(str(self))
+
+
+class Architecture:
+    """
+    Normalized architecture names.
+    These are the architectures supported by ansible-test, such as when provisioning remote instances.
+    """
+    X86_64 = 'x86_64'
+    AARCH64 = 'aarch64'
+
+
+REMOTE_ARCHITECTURES = list(value for key, value in Architecture.__dict__.items() if not key.startswith('__'))
+
+
+def is_valid_identifier(value: str) -> bool:
+    """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
+    return value.isidentifier() and not keyword.iskeyword(value)
 
 
 def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
@@ -111,6 +152,58 @@ def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
     wrapper = mutex(cache_func)
 
     return wrapper
+
+
+@mutex
+def detect_architecture(python: str) -> t.Optional[str]:
+    """Detect the architecture of the specified Python and return a normalized version, or None if it cannot be determined."""
+    results: t.Dict[str, t.Optional[str]]
+
+    try:
+        results = detect_architecture.results  # type: ignore[attr-defined]
+    except AttributeError:
+        results = detect_architecture.results = {}  # type: ignore[attr-defined]
+
+    if python in results:
+        return results[python]
+
+    if python == sys.executable or os.path.realpath(python) == os.path.realpath(sys.executable):
+        uname = platform.uname()
+    else:
+        data = raw_command([python, '-c', 'import json, platform; print(json.dumps(platform.uname()));'], capture=True)[0]
+        uname = json.loads(data)
+
+    translation = {
+        'x86_64': Architecture.X86_64,  # Linux, macOS
+        'amd64': Architecture.X86_64,  # FreeBSD
+        'aarch64': Architecture.AARCH64,  # Linux, FreeBSD
+        'arm64': Architecture.AARCH64,  # FreeBSD
+    }
+
+    candidates = []
+
+    if len(uname) >= 5:
+        candidates.append(uname[4])
+
+    if len(uname) >= 6:
+        candidates.append(uname[5])
+
+    candidates = sorted(set(candidates))
+    architectures = sorted(set(arch for arch in [translation.get(candidate) for candidate in candidates] if arch))
+
+    architecture: t.Optional[str] = None
+
+    if not architectures:
+        display.warning(f'Unable to determine architecture for Python interpreter "{python}" from: {candidates}')
+    elif len(architectures) == 1:
+        architecture = architectures[0]
+        display.info(f'Detected architecture {architecture} for Python interpreter: {python}', verbosity=1)
+    else:
+        display.warning(f'Conflicting architectures detected ({architectures}) for Python interpreter "{python}" from: {candidates}')
+
+    results[python] = architecture
+
+    return architecture
 
 
 def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.List[str]
@@ -248,18 +341,46 @@ def get_available_python_versions():  # type: () -> t.Dict[str, str]
 
 def raw_command(
         cmd,  # type: t.Iterable[str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         explain=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        interactive=False,  # type: bool
+        output_stream=None,  # type: t.Optional[OutputStream]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
+    output_stream = output_stream or OutputStream.AUTO
+
+    if capture and interactive:
+        raise InternalError('Cannot combine capture=True with interactive=True.')
+
+    if data and interactive:
+        raise InternalError('Cannot combine data with interactive=True.')
+
+    if stdin and interactive:
+        raise InternalError('Cannot combine stdin with interactive=True.')
+
+    if stdout and interactive:
+        raise InternalError('Cannot combine stdout with interactive=True.')
+
+    if stdin and data:
+        raise InternalError('Cannot combine stdin with data.')
+
+    if stdout and not capture:
+        raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
+
+    if output_stream != OutputStream.AUTO and capture:
+        raise InternalError(f'Cannot combine {output_stream=} with capture=True.')
+
+    if output_stream != OutputStream.AUTO and interactive:
+        raise InternalError(f'Cannot combine {output_stream=} with interactive=True.')
+
     if not cwd:
         cwd = os.getcwd()
 
@@ -270,7 +391,30 @@ def raw_command(
 
     escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
+    if capture:
+        description = 'Run'
+    elif interactive:
+        description = 'Interactive'
+    else:
+        description = 'Stream'
+
+    description += ' command'
+
+    with_types = []
+
+    if data:
+        with_types.append('data')
+
+    if stdin:
+        with_types.append('stdin')
+
+    if stdout:
+        with_types.append('stdout')
+
+    if with_types:
+        description += f' with {"/".join(with_types)}'
+
+    display.info(f'{description}: {escaped_cmd}', verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
@@ -288,17 +432,23 @@ def raw_command(
 
     if stdin is not None:
         data = None
-        communicate = True
     elif data is not None:
         stdin = subprocess.PIPE
         communicate = True
+    elif interactive:
+        pass  # allow the subprocess access to our stdin
+    else:
+        stdin = subprocess.DEVNULL
 
-    if stdout:
-        communicate = True
-
-    if capture:
+    if not interactive:
+        # When not running interactively, send subprocess stdout/stderr through a pipe.
+        # This isolates the stdout/stderr of the subprocess from the current process, and also hides the current TTY from it, if any.
+        # This prevents subprocesses from sharing stdout/stderr with the current process or each other.
+        # Doing so allows subprocesses to safely make changes to their file handles, such as making them non-blocking (ssh does this).
+        # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
+        # To maintain output ordering, a single pipe is used for both stdout/stderr when not capturing output unless the output stream is ORIGINAL.
         stdout = stdout or subprocess.PIPE
-        stderr = subprocess.PIPE
+        stderr = subprocess.PIPE if capture or output_stream == OutputStream.ORIGINAL else subprocess.STDOUT
         communicate = True
     else:
         stderr = None
@@ -318,7 +468,8 @@ def raw_command(
 
         if communicate:
             data_bytes = to_optional_bytes(data)
-            stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
+                                                                  output_stream=output_stream)
             stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
             stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
         else:
@@ -339,6 +490,122 @@ def raw_command(
         return stdout_text, stderr_text
 
     raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime, error_callback)
+
+
+def communicate_with_process(
+        process: subprocess.Popen,
+        stdin: t.Optional[bytes],
+        stdout: bool,
+        stderr: bool,
+        capture: bool,
+        output_stream: OutputStream,
+) -> t.Tuple[bytes, bytes]:
+    """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
+    threads: t.List[WrappedThread] = []
+    reader: t.Type[ReaderThread]
+
+    if capture:
+        reader = CaptureThread
+    else:
+        reader = OutputThread
+
+    if stdin is not None:
+        threads.append(WriterThread(process.stdin, stdin))
+
+    if stdout:
+        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer))
+        threads.append(stdout_reader)
+    else:
+        stdout_reader = None
+
+    if stderr:
+        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer))
+        threads.append(stderr_reader)
+    else:
+        stderr_reader = None
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        try:
+            thread.wait_for_result()
+        except Exception as ex:  # pylint: disable=broad-except
+            display.error(str(ex))
+
+    if isinstance(stdout_reader, ReaderThread):
+        stdout_bytes = b''.join(stdout_reader.lines)
+    else:
+        stdout_bytes = b''
+
+    if isinstance(stderr_reader, ReaderThread):
+        stderr_bytes = b''.join(stderr_reader.lines)
+    else:
+        stderr_bytes = b''
+
+    process.wait()
+
+    return stdout_bytes, stderr_bytes
+
+
+class WriterThread(WrappedThread):
+    """Thread to write data to stdin of a subprocess."""
+    def __init__(self, handle: t.IO[bytes], data: bytes) -> None:
+        super().__init__(self._run)
+
+        self.handle = handle
+        self.data = data
+
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+        try:
+            self.handle.write(self.data)
+            self.handle.flush()
+        finally:
+            self.handle.close()
+
+
+class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
+    """Thread to read stdout from a subprocess."""
+    def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO) -> None:
+        super().__init__(self._run)
+
+        self.handle = handle
+        self.buffer = buffer
+        self.lines = []  # type: t.List[bytes]
+
+    @abc.abstractmethod
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+
+
+class CaptureThread(ReaderThread):
+    """Thread to capture stdout from a subprocess into a buffer."""
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+        src = self.handle
+        dst = self.lines
+
+        try:
+            for line in src:
+                dst.append(line)
+        finally:
+            src.close()
+
+
+class OutputThread(ReaderThread):
+    """Thread to pass stdout from a subprocess to stdout."""
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+        src = self.handle
+        dst = self.buffer
+
+        try:
+            for line in src:
+                dst.write(line)
+                dst.flush()
+        finally:
+            src.close()
 
 
 def common_environment():
@@ -404,6 +671,16 @@ def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str
     return env
 
 
+def verified_chmod(path: str, mode: int) -> None:
+    """Perform chmod on the specified path and then verify the permissions were applied."""
+    os.chmod(path, mode)  # pylint: disable=ansible-bad-function
+
+    executable = any(mode & perm for perm in (stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH))
+
+    if executable and not os.access(path, os.X_OK):
+        raise ApplicationError(f'Path "{path}" should executable, but is not. Is the filesystem mounted with the "noexec" option?')
+
+
 def remove_tree(path):  # type: (str) -> None
     """Remove the specified directory, siliently continuing if the directory does not exist."""
     try:
@@ -466,7 +743,6 @@ def is_binary_file(path):  # type: (str) -> bool
         return True
 
     with open_binary_file(path) as path_fd:
-        # noinspection PyTypeChecker
         return b'\0' in path_fd.read(4096)
 
 
@@ -514,7 +790,7 @@ class Display:
         self.color = sys.stdout.isatty()
         self.warnings = []
         self.warnings_unique = set()
-        self.info_stderr = False
+        self.fd = sys.stderr  # default to stderr until config is initialized to avoid early messages going to stdout
         self.rows = 0
         self.columns = 0
         self.truncate = 0
@@ -526,7 +802,7 @@ class Display:
 
     def __warning(self, message):  # type: (str) -> None
         """Internal implementation for displaying a warning message."""
-        self.print_message('WARNING: %s' % message, color=self.purple, fd=sys.stderr)
+        self.print_message('WARNING: %s' % message, color=self.purple)
 
     def review_warnings(self):  # type: () -> None
         """Review all warnings which previously occurred."""
@@ -554,23 +830,27 @@ class Display:
 
     def notice(self, message):  # type: (str) -> None
         """Display a notice level message."""
-        self.print_message('NOTICE: %s' % message, color=self.purple, fd=sys.stderr)
+        self.print_message('NOTICE: %s' % message, color=self.purple)
 
     def error(self, message):  # type: (str) -> None
         """Display an error level message."""
-        self.print_message('ERROR: %s' % message, color=self.red, fd=sys.stderr)
+        self.print_message('ERROR: %s' % message, color=self.red)
+
+    def fatal(self, message):  # type: (str) -> None
+        """Display a fatal level message."""
+        self.print_message('FATAL: %s' % message, color=self.red, stderr=True)
 
     def info(self, message, verbosity=0, truncate=False):  # type: (str, int, bool) -> None
         """Display an info level message."""
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout, truncate=truncate)
+            self.print_message(message, color=color, truncate=truncate)
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
             self,
             message,  # type: str
             color=None,  # type: t.Optional[str]
-            fd=sys.stdout,  # type: t.TextIO
+            stderr=False,  # type: bool
             truncate=False,  # type: bool
     ):  # type: (...) -> None
         """Display a message."""
@@ -590,11 +870,16 @@ class Display:
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
-        if sys.version_info[0] == 2:
-            message = to_bytes(message)
+        fd = sys.stderr if stderr else self.fd
 
         print(message, file=fd)
         fd.flush()
+
+
+class InternalError(Exception):
+    """An unhandled internal error indicating a bug in the code."""
+    def __init__(self, message: str) -> None:
+        super().__init__(f'An internal error has occurred in ansible-test: {message}')
 
 
 class ApplicationError(Exception):
@@ -649,12 +934,32 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
-def retry(func, ex_type=SubprocessError, sleep=10, attempts=10):
+class HostConnectionError(ApplicationError):
+    """
+    Raised when the initial connection during host profile setup has failed and all retries have been exhausted.
+    Raised by provisioning code when one or more provisioning threads raise this exception.
+    Also raised when an SSH connection fails for the shell command.
+    """
+    def __init__(self, message: str, callback: t.Callable[[], None] = None) -> None:
+        super().__init__(message)
+
+        self._callback = callback
+
+    def run_callback(self) -> None:
+        """Run the error callback, if any."""
+        if self._callback:
+            self._callback()
+
+
+def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
             return func()
-        except ex_type:
+        except ex_type as ex:
+            if warn:
+                display.warning(str(ex))
+
             time.sleep(sleep)
 
     return func()
@@ -771,40 +1076,15 @@ def load_module(path, name):  # type: (str, str) -> None
     if name in sys.modules:
         return
 
-    if sys.version_info >= (3, 4):
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(name, path)
-        module = importlib.util.module_from_spec(spec)
-        # noinspection PyUnresolvedReferences
-        spec.loader.exec_module(module)
-
-        sys.modules[name] = module
-    else:
-        # noinspection PyDeprecation
-        import imp  # pylint: disable=deprecated-module
-
-        # load_source (and thus load_module) require a file opened with `open` in text mode
-        with open(to_bytes(path)) as module_file:
-            # noinspection PyDeprecation
-            imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
 
 
 def sanitize_host_name(name):
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
-
-
-@cache
-def get_host_ip():
-    """Return the host's IP address."""
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect(('10.255.255.255', 22))
-        host_ip = get_host_ip.ip = sock.getsockname()[0]
-
-    display.info('Detected host IP: %s' % host_ip, verbosity=1)
-
-    return host_ip
 
 
 def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TType]) -> t.Optional[t.Type[TType]]
@@ -838,6 +1118,21 @@ def verify_sys_executable(path):  # type: (str) -> t.Optional[str]
         return None
 
     return expected_executable
+
+
+def type_guard(sequence: t.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[t.Sequence[C]]:
+    """
+    Raises an exception if any item in the given sequence does not match the specified guard type.
+    Use with assert so that type checkers are aware of the type guard.
+    """
+    invalid_types = set(type(item) for item in sequence if not isinstance(item, guard_type))
+
+    if not invalid_types:
+        return True
+
+    invalid_type_names = sorted(str(item) for item in invalid_types)
+
+    raise Exception(f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}')
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

@@ -142,7 +142,7 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     if not targets.include:
         raise AllTargetsSkipped()
 
-    tests = sanity_get_tests()
+    tests = list(sanity_get_tests())
 
     if args.test:
         disabled = []
@@ -157,6 +157,8 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     targets_use_pypi = any(isinstance(test, SanityMultipleVersion) and test.needs_pypi for test in tests) and not args.list_tests
     host_state = prepare_profiles(args, targets_use_pypi=targets_use_pypi)  # sanity
 
+    get_content_config(args)  # make sure content config has been parsed prior to delegation
+
     if args.delegate:
         raise Delegate(host_state=host_state, require=changes, exclude=args.exclude)
 
@@ -170,9 +172,11 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     total = 0
     failed = []
 
+    result: t.Optional[TestResult]
+
     for test in tests:
         if args.list_tests:
-            display.info(test.name)
+            print(test.name)  # display goes to stderr, this should be on stdout
             continue
 
         for version in SUPPORTED_PYTHON_VERSIONS:
@@ -201,19 +205,19 @@ def command_sanity(args):  # type: (SanityConfig) -> None
                 else:
                     raise Exception('Unsupported test type: %s' % type(test))
 
-                all_targets = targets.targets
+                all_targets = list(targets.targets)
 
                 if test.all_targets:
-                    usable_targets = targets.targets
+                    usable_targets = list(targets.targets)
                 elif test.no_targets:
-                    usable_targets = tuple()
+                    usable_targets = []
                 else:
-                    usable_targets = targets.include
+                    usable_targets = list(targets.include)
 
                 all_targets = SanityTargets.filter_and_inject_targets(test, all_targets)
                 usable_targets = SanityTargets.filter_and_inject_targets(test, usable_targets)
 
-                usable_targets = sorted(test.filter_targets_by_version(list(usable_targets), version))
+                usable_targets = sorted(test.filter_targets_by_version(args, list(usable_targets), version))
                 usable_targets = settings.filter_skipped_targets(usable_targets)
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
@@ -355,12 +359,12 @@ class SanityIgnoreParser:
                 for python_version in test.supported_python_versions:
                     test_name = '%s-%s' % (test.name, python_version)
 
-                    paths_by_test[test_name] = set(target.path for target in test.filter_targets_by_version(test_targets, python_version))
+                    paths_by_test[test_name] = set(target.path for target in test.filter_targets_by_version(args, test_targets, python_version))
                     tests_by_name[test_name] = test
             else:
                 unversioned_test_names.update(dict(('%s-%s' % (test.name, python_version), test.name) for python_version in SUPPORTED_PYTHON_VERSIONS))
 
-                paths_by_test[test.name] = set(target.path for target in test.filter_targets_by_version(test_targets, ''))
+                paths_by_test[test.name] = set(target.path for target in test.filter_targets_by_version(args, test_targets, ''))
                 tests_by_name[test.name] = test
 
         for line_no, line in enumerate(lines, start=1):
@@ -503,12 +507,15 @@ class SanityIgnoreParser:
     def load(args):  # type: (SanityConfig) -> SanityIgnoreParser
         """Return the current SanityIgnore instance, initializing it if needed."""
         try:
-            return SanityIgnoreParser.instance
+            return SanityIgnoreParser.instance  # type: ignore[attr-defined]
         except AttributeError:
             pass
 
-        SanityIgnoreParser.instance = SanityIgnoreParser(args)
-        return SanityIgnoreParser.instance
+        instance = SanityIgnoreParser(args)
+
+        SanityIgnoreParser.instance = instance  # type: ignore[attr-defined]
+
+        return instance
 
 
 class SanityIgnoreProcessor:
@@ -571,7 +578,7 @@ class SanityIgnoreProcessor:
 
     def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
         """Return error messages related to issues with the file."""
-        messages = []
+        messages = []  # type: t.List[SanityMessage]
 
         # unused errors
 
@@ -621,7 +628,7 @@ class SanityFailure(TestFailure):
             self,
             test,  # type: str
             python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.List[SanityMessage]]
+            messages=None,  # type: t.Optional[t.Sequence[SanityMessage]]
             summary=None,  # type: t.Optional[str]
     ):  # type: (...) -> None
         super().__init__(COMMAND, test, python_version, messages, summary)
@@ -633,7 +640,7 @@ class SanityMessage(TestMessage):
 
 class SanityTargets:
     """Sanity test target information."""
-    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget], t.Tuple[TestTarget]) -> None
+    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget, ...], t.Tuple[TestTarget, ...]) -> None
         self.targets = targets
         self.include = include
 
@@ -671,11 +678,13 @@ class SanityTargets:
     def get_targets():  # type: () -> t.Tuple[TestTarget, ...]
         """Return a tuple of sanity test targets. Uses a cached version when available."""
         try:
-            return SanityTargets.get_targets.targets
+            return SanityTargets.get_targets.targets  # type: ignore[attr-defined]
         except AttributeError:
-            SanityTargets.get_targets.targets = tuple(sorted(walk_sanity_targets()))
+            targets = tuple(sorted(walk_sanity_targets()))
 
-        return SanityTargets.get_targets.targets
+        SanityTargets.get_targets.targets = targets  # type: ignore[attr-defined]
+
+        return targets
 
 
 class SanityTest(metaclass=abc.ABCMeta):
@@ -695,7 +704,7 @@ class SanityTest(metaclass=abc.ABCMeta):
         # Because these errors can be unpredictable they behave differently than normal error codes:
         #  * They are not reported by default. The `--enable-optional-errors` option must be used to display these errors.
         #  * They cannot be ignored. This is done to maintain the integrity of the ignore system.
-        self.optional_error_codes = set()
+        self.optional_error_codes = set()  # type: t.Set[str]
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]
@@ -749,7 +758,7 @@ class SanityTest(metaclass=abc.ABCMeta):
 
         raise NotImplementedError('Sanity test "%s" must implement "filter_targets" or set "no_targets" to True.' % self.name)
 
-    def filter_targets_by_version(self, targets, python_version):  # type: (t.List[TestTarget], str) -> t.List[TestTarget]
+    def filter_targets_by_version(self, args, targets, python_version):  # type: (SanityConfig, t.List[TestTarget], str) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
         del python_version  # python_version is not used here, but derived classes may make use of it
 
@@ -757,7 +766,7 @@ class SanityTest(metaclass=abc.ABCMeta):
 
         if self.py2_compat:
             # This sanity test is a Python 2.x compatibility test.
-            content_config = get_content_config()
+            content_config = get_content_config(args)
 
             if content_config.py2_support:
                 # This collection supports Python 2.x.
@@ -938,6 +947,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
         cmd = [python.path, self.path]
 
         env = ansible_environment(args, color=False)
+        env.update(PYTHONUTF8='1')  # force all code-smell sanity tests to run with Python UTF-8 Mode enabled
 
         pattern = None
         data = None
@@ -952,7 +962,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             elif self.output == 'path-message':
                 pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
             else:
-                pattern = ApplicationError('Unsupported output type: %s' % self.output)
+                raise ApplicationError('Unsupported output type: %s' % self.output)
 
         if not self.no_targets:
             data = '\n'.join(paths)
@@ -1041,15 +1051,15 @@ class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return SUPPORTED_PYTHON_VERSIONS
 
-    def filter_targets_by_version(self, targets, python_version):  # type: (t.List[TestTarget], str) -> t.List[TestTarget]
+    def filter_targets_by_version(self, args, targets, python_version):  # type: (SanityConfig, t.List[TestTarget], str) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
         if not python_version:
             raise Exception('python_version is required to filter multi-version tests')
 
-        targets = super().filter_targets_by_version(targets, python_version)
+        targets = super().filter_targets_by_version(args, targets, python_version)
 
         if python_version in REMOTE_ONLY_PYTHON_VERSIONS:
-            content_config = get_content_config()
+            content_config = get_content_config(args)
 
             if python_version not in content_config.modules.python_versions:
                 # when a remote-only python version is not supported there are no paths to test

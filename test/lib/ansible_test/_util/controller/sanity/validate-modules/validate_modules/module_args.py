@@ -15,8 +15,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import runpy
 import inspect
@@ -117,20 +116,18 @@ def get_ps_argument_spec(filename, collection):
     ps_dep_finder._add_module(name=b"Ansible.ModuleUtils.AddType", ext=".psm1", fqn=None, optional=False, wrapper=False)
 
     util_manifest = json.dumps({
-        'module_path': to_text(module_path, errors='surrogiate_or_strict'),
+        'module_path': to_text(module_path, errors='surrogate_or_strict'),
         'ansible_basic': ps_dep_finder.cs_utils_module["Ansible.Basic"]['path'],
         'ps_utils': dict([(name, info['path']) for name, info in ps_dep_finder.ps_modules.items()]),
     })
 
     script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
-    proc = subprocess.Popen(['pwsh', script_path, util_manifest], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            shell=False)
-    stdout, stderr = proc.communicate()
+    proc = subprocess.run(['pwsh', script_path, util_manifest], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
 
     if proc.returncode != 0:
-        raise AnsibleModuleImportError("STDOUT:\n%s\nSTDERR:\n%s" % (stdout.decode('utf-8'), stderr.decode('utf-8')))
+        raise AnsibleModuleImportError("STDOUT:\n%s\nSTDERR:\n%s" % (proc.stdout, proc.stderr))
 
-    kwargs = json.loads(stdout)
+    kwargs = json.loads(proc.stdout)
 
     # the validate-modules code expects the options spec to be under the argument_spec key not options as set in PS
     kwargs['argument_spec'] = kwargs.pop('options', {})

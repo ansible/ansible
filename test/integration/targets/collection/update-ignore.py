@@ -16,6 +16,11 @@ def main():
     from ansible_test._internal import constants
 
     src_path = 'tests/sanity/ignore.txt'
+
+    if not os.path.exists(src_path):
+        print(f'Skipping updates on non-existent ignore file: {src_path}')
+        return
+
     directory = os.path.dirname(src_path)
     name, ext = os.path.splitext(os.path.basename(src_path))
     major_minor = '.'.join(release.__version__.split('.')[:2])

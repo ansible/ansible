@@ -103,7 +103,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
 
     paths = [target.path for target in include]
 
-    content_config = get_content_config()
+    content_config = get_content_config(args)
     supported_remote_python_versions = content_config.modules.python_versions
 
     if content_config.modules.controller_only:
@@ -295,7 +295,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
         display.info('Unit test %s with Python %s' % (test_context, python.version))
 
         try:
-            cover_python(args, python, cmd, test_context, env)
+            cover_python(args, python, cmd, test_context, env, capture=False)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
@@ -311,9 +311,9 @@ def get_units_ansible_python_path(args, test_context):  # type: (UnitsConfig, st
         return get_ansible_python_path(args)
 
     try:
-        cache = get_units_ansible_python_path.cache
+        cache = get_units_ansible_python_path.cache  # type: ignore[attr-defined]
     except AttributeError:
-        cache = get_units_ansible_python_path.cache = {}
+        cache = get_units_ansible_python_path.cache = {}  # type: ignore[attr-defined]
 
     python_path = cache.get(test_context)
 

@@ -173,7 +173,7 @@ class ParserState:
         self.namespaces.append(namespace)
 
     @contextlib.contextmanager
-    def delimit(self, delimiters, required=True):  # type: (str, bool) -> t.ContextManager[ParserBoundary]
+    def delimit(self, delimiters, required=True):  # type: (str, bool) -> t.Iterator[ParserBoundary]
         """Context manager for delimiting parsing of input."""
         boundary = ParserBoundary(delimiters=delimiters, required=required)
 
@@ -286,6 +286,19 @@ class ChoicesParser(DynamicChoicesParser):
         return '|'.join(self.choices)
 
 
+class EnumValueChoicesParser(ChoicesParser):
+    """Composite argument parser which relies on a static list of choices derived from the values of an enum."""
+    def __init__(self, enum_type: t.Type[enum.Enum], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
+        self.enum_type = enum_type
+
+        super().__init__(choices=[str(item.value) for item in enum_type], conditions=conditions)
+
+    def parse(self, state: ParserState) -> t.Any:
+        """Parse the input from the given state and return the result."""
+        value = super().parse(state)
+        return self.enum_type(value)
+
+
 class IntegerParser(DynamicChoicesParser):
     """Composite argument parser for integers."""
     PATTERN = re.compile('^[1-9][0-9]*$')
@@ -394,7 +407,7 @@ class FileParser(Parser):
         else:
             path = ''
 
-            with state.delimit(PATH_DELIMITER, required=False) as boundary:
+            with state.delimit(PATH_DELIMITER, required=False) as boundary:  # type: ParserBoundary
                 while boundary.ready:
                     directory = path or '.'
 
@@ -420,7 +433,7 @@ class AbsolutePathParser(Parser):
         """Parse the input from the given state and return the result."""
         path = ''
 
-        with state.delimit(PATH_DELIMITER, required=False) as boundary:
+        with state.delimit(PATH_DELIMITER, required=False) as boundary:  # type: ParserBoundary
             while boundary.ready:
                 if path:
                     path += AnyParser(nothing=True).parse(state)
@@ -506,7 +519,7 @@ class KeyValueParser(Parser, metaclass=abc.ABCMeta):
         parsers = self.get_parsers(state)
         keys = list(parsers)
 
-        with state.delimit(PAIR_DELIMITER, required=False) as pair:
+        with state.delimit(PAIR_DELIMITER, required=False) as pair:  # type: ParserBoundary
             while pair.ready:
                 with state.delimit(ASSIGNMENT_DELIMITER):
                     key = ChoicesParser(keys).parse(state)
@@ -528,7 +541,7 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
 
         state.set_namespace(namespace)
 
-        with state.delimit(self.delimiter, self.required) as boundary:
+        with state.delimit(self.delimiter, self.required) as boundary:  # type: ParserBoundary
             choice = self.get_left_parser(state).parse(state)
 
         if boundary.match:

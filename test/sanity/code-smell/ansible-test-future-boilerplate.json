@@ -3,7 +3,8 @@
         ".py"
     ],
     "prefixes": [
-        "test/lib/ansible_test/_internal/"
+        "test/sanity/",
+        "test/lib/ansible_test/"
     ],
     "output": "path-message"
 }

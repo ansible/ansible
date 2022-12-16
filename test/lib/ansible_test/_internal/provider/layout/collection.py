@@ -11,6 +11,10 @@ from . import (
     LayoutMessages,
 )
 
+from ...util import (
+    is_valid_identifier,
+)
+
 
 class CollectionLayout(LayoutProvider):
     """Layout provider for Ansible collections."""
@@ -28,6 +32,10 @@ class CollectionLayout(LayoutProvider):
 
         collection_root = os.path.dirname(os.path.dirname(root))
         collection_dir = os.path.relpath(root, collection_root)
+
+        collection_namespace: str
+        collection_name: str
+
         collection_namespace, collection_name = collection_dir.split(os.path.sep)
 
         collection_root = os.path.dirname(collection_root)
@@ -65,6 +73,7 @@ class CollectionLayout(LayoutProvider):
                              unit_module_path='tests/unit/plugins/modules',
                              unit_module_utils_path='tests/unit/plugins/module_utils',
                              unit_messages=unit_messages,
+                             unsupported=not(is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
                              )
 
     @staticmethod

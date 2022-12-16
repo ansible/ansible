@@ -13,14 +13,19 @@ from .argparsing.argcompletion import (
 )
 
 
-def complete_target(completer, prefix, parsed_args, **_):  # type: (OptionCompletionFinder, str, argparse.Namespace, ...) -> t.List[str]
+def complete_target(completer: OptionCompletionFinder, prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Perform completion for the targets configured for the command being parsed."""
     matches = find_target_completion(parsed_args.targets_func, prefix, completer.list_mode)
     completer.disable_completion_mangling = completer.list_mode and len(matches) > 1
     return matches
 
 
-def complete_choices(choices, prefix, **_):  # type: (t.List[str], str, ...) -> t.List[str]
+def complete_choices(choices: t.List[str], prefix: str, **_) -> t.List[str]:
     """Perform completion using the provided choices."""
     matches = [choice for choice in choices if choice.startswith(prefix)]
     return matches
+
+
+def register_completer(action: argparse.Action, completer) -> None:
+    """Register the given completer with the specified action."""
+    action.completer = completer  # type: ignore[attr-defined]  # intentionally using an attribute that does not exist

@@ -25,6 +25,10 @@ from .host_profiles import (
     WindowsRemoteProfile,
 )
 
+from .ssh import (
+    ssh_options_to_str,
+)
+
 
 def create_controller_inventory(args, path, controller_host):  # type: (EnvironmentConfig, str, ControllerHostProfile) -> None
     """Create and return inventory for use in controller-only integration tests."""
@@ -94,7 +98,7 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
         return
 
     target_hosts = t.cast(t.List[NetworkRemoteProfile], target_hosts)
-    host_groups = {target_host.config.platform: {} for target_host in target_hosts}
+    host_groups = {target_host.config.platform: {} for target_host in target_hosts}  # type: t.Dict[str, t.Dict[str, t.Dict[str, t.Union[str, int]]]]
 
     for target_host in target_hosts:
         host_groups[target_host.config.platform][sanitize_host_name(target_host.config.name)] = target_host.get_inventory_variables()
@@ -149,7 +153,8 @@ def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: 
             ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
             ansible_ssh_private_key_file=ssh.settings.identity_file,
-        )
+            ansible_ssh_extra_args=ssh_options_to_str(ssh.settings.options),
+        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
 
         if ssh.become:
             testhost.update(

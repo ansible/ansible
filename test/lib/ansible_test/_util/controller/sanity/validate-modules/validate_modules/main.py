@@ -15,8 +15,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
 import argparse
@@ -431,14 +430,13 @@ class ModuleValidator(Validator):
         base_path = self._get_base_branch_module_path()
 
         command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
-        p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
+        p = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, check=False)
+
         if int(p.returncode) != 0:
             return None
 
         t = tempfile.NamedTemporaryFile(delete=False)
-        t.write(stdout)
+        t.write(p.stdout)
         t.close()
 
         return t.name
@@ -2424,11 +2422,12 @@ class GitCache:
     @staticmethod
     def _git(args):
         cmd = ['git'] + args
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
+        p = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
+
         if p.returncode != 0:
-            raise GitError(stderr, p.returncode)
-        return stdout.decode('utf-8').splitlines()
+            raise GitError(p.stderr, p.returncode)
+
+        return p.stdout.splitlines()
 
 
 class GitError(Exception):

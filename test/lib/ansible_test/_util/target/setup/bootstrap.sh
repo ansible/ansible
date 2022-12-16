@@ -80,30 +80,63 @@ pip_install() {
     done
 }
 
-bootstrap_remote_aix()
+bootstrap_remote_alpine()
 {
-    chfs -a size=1G /
-    chfs -a size=4G /usr
-    chfs -a size=1G /var
-    chfs -a size=1G /tmp
-    chfs -a size=2G /opt
-
-    if [ "${python_version}" = "2.7" ]; then
-        python_package_version=""
-    else
-        python_package_version="3"
-    fi
+    py_pkg_prefix="py3"
 
     packages="
+        acl
+        bash
         gcc
-        python${python_package_version}
-        python${python_package_version}-devel
-        python${python_package_version}-pip
+        python3-dev
+        ${py_pkg_prefix}-pip
+        sudo
         "
+
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-yaml
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
 
     while true; do
         # shellcheck disable=SC2086
-        yum install -q -y ${packages} \
+        apk add -q ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+}
+
+bootstrap_remote_fedora()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        acl
+        gcc
+        ${py_pkg_prefix}-devel
+        "
+
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-pyyaml
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        dnf install -q -y ${packages} \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
@@ -190,6 +223,19 @@ bootstrap_remote_freebsd()
 extra-index-url = https://spare-tire.testing.ansible.com/simple/
 prefer-binary = yes
 " > /etc/pip.conf
+
+    # enable ACL support on the root filesystem (required for become between unprivileged users)
+    fs_path="/"
+    fs_device="$(mount -v "${fs_path}" | cut -w -f 1)"
+    # shellcheck disable=SC2001
+    fs_device_escaped=$(echo "${fs_device}" | sed 's|/|\\/|g')
+
+    mount -o acls "${fs_device}" "${fs_path}"
+    awk 'BEGIN{FS=" "}; /'"${fs_device_escaped}"'/ {gsub(/^rw$/,"rw,acls", $4); print; next} // {print}' /etc/fstab > /etc/fstab.new
+    mv /etc/fstab.new /etc/fstab
+
+    # enable sudo without a password for the wheel group, allowing ansible to use the sudo become plugin
+    echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /usr/local/etc/sudoers.d/ansible-test
 }
 
 bootstrap_remote_macos()
@@ -233,6 +279,8 @@ bootstrap_remote_rhel_7()
     done
 
     install_pip
+
+    bootstrap_remote_rhel_pinned_pip_packages
 }
 
 bootstrap_remote_rhel_8()
@@ -264,6 +312,38 @@ bootstrap_remote_rhel_8()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+
+    bootstrap_remote_rhel_pinned_pip_packages
+}
+
+bootstrap_remote_rhel_9()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        gcc
+        ${py_pkg_prefix}-devel
+        "
+
+    # Jinja2 is not installed with an OS package since the provided version is too old.
+    # Instead, ansible-test will install it using pip.
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-pyyaml
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        dnf install -q -y ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
 }
 
 bootstrap_remote_rhel()
@@ -271,8 +351,12 @@ bootstrap_remote_rhel()
     case "${platform_version}" in
         7.*) bootstrap_remote_rhel_7 ;;
         8.*) bootstrap_remote_rhel_8 ;;
+        9.*) bootstrap_remote_rhel_9 ;;
     esac
+}
 
+bootstrap_remote_rhel_pinned_pip_packages()
+{
     # pin packaging and pyparsing to match the downstream vendored versions
     pip_packages="
         packaging==20.4
@@ -280,6 +364,63 @@ bootstrap_remote_rhel()
         "
 
     pip_install "${pip_packages}"
+}
+
+bootstrap_remote_ubuntu()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        acl
+        gcc
+        python${python_version}-dev
+        python3-pip
+        python${python_version}-venv
+        "
+
+    if [ "${controller}" ]; then
+        cryptography_pkg="${py_pkg_prefix}-cryptography"
+        jinja2_pkg="${py_pkg_prefix}-jinja2"
+        packaging_pkg="${py_pkg_prefix}-packaging"
+        pyyaml_pkg="${py_pkg_prefix}-yaml"
+        resolvelib_pkg="${py_pkg_prefix}-resolvelib"
+
+        # Declare platforms which do not have supporting OS packages available.
+        # For these ansible-test will use pip to install the requirements instead.
+        # Only the platform is checked since Ubuntu shares Python packages across Python versions.
+        case "${platform_version}" in
+            "20.04")
+                jinja2_pkg=""  # too old
+                resolvelib_pkg=""  # not available
+                ;;
+        esac
+
+        packages="
+            ${packages}
+            ${cryptography_pkg}
+            ${jinja2_pkg}
+            ${packaging_pkg}
+            ${pyyaml_pkg}
+            ${resolvelib_pkg}
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        apt-get update -qq -y && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+
+    if [ "${controller}" ]; then
+        if [ "${platform_version}/${python_version}" = "20.04/3.9" ]; then
+            # Install pyyaml using pip so libyaml support is available on Python 3.9.
+            # The OS package install (which is installed by default) only has a .so file for Python 3.8.
+            pip_install "--upgrade pyyaml"
+        fi
+    fi
 }
 
 bootstrap_docker()
@@ -297,10 +438,12 @@ bootstrap_remote()
         python_package_version="$(echo "${python_version}" | tr -d '.')"
 
         case "${platform}" in
-            "aix") bootstrap_remote_aix ;;
+            "alpine") bootstrap_remote_alpine ;;
+            "fedora") bootstrap_remote_fedora ;;
             "freebsd") bootstrap_remote_freebsd ;;
             "macos") bootstrap_remote_macos ;;
             "rhel") bootstrap_remote_rhel ;;
+            "ubuntu") bootstrap_remote_ubuntu ;;
         esac
     done
 }
@@ -312,6 +455,9 @@ bootstrap()
 
     install_ssh_keys
     customize_bashrc
+
+    # allow tests to detect ansible-test bootstrapped instances, as well as the bootstrap type
+    echo "${bootstrap_type}" > /etc/ansible-test.bootstrap
 
     case "${bootstrap_type}" in
         "docker") bootstrap_docker ;;

@@ -98,6 +98,7 @@ from ...host_configs import (
 
 from ...host_profiles import (
     ControllerProfile,
+    ControllerHostProfile,
     HostProfile,
     PosixProfile,
     SshTargetHostProfile,
@@ -134,7 +135,7 @@ def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTa
     """Analyze the given list of integration test targets and return a dictionary expressing target names and the targets on which they depend."""
     targets_dict = dict((target.name, target) for target in integration_targets)
     target_dependencies = analyze_integration_target_dependencies(integration_targets)
-    dependency_map = {}
+    dependency_map = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
 
     invalid_targets = set()
 
@@ -159,7 +160,7 @@ def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTa
 
 def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) -> t.List[str]
     """Return a list of files needed by the given list of target dependencies."""
-    files_needed = []
+    files_needed = []  # type: t.List[str]
 
     for target_dependency in target_dependencies:
         files_needed += target_dependency.needs_file
@@ -241,7 +242,7 @@ def integration_test_environment(
         args,  # type: IntegrationConfig
         target,  # type: IntegrationTarget
         inventory_path_src,  # type: str
-):  # type: (...) -> t.ContextManager[IntegrationEnvironment]
+):  # type: (...) -> t.Iterator[IntegrationEnvironment]
     """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
     ansible_config_relative = os.path.join(data_context().content.integration_path, '%s.cfg' % args.command)
@@ -324,7 +325,7 @@ def integration_test_environment(
             display.info('Copying %s/ to %s/' % (dir_src, dir_dst), verbosity=2)
 
             if not args.explain:
-                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)
+                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)  # type: ignore[arg-type]  # incorrect type stub omits bytes path support
 
         for file_src, file_dst in file_copies:
             display.info('Copying %s to %s' % (file_src, file_dst), verbosity=2)
@@ -344,7 +345,7 @@ def integration_test_config_file(
         args,  # type: IntegrationConfig
         env_config,  # type: CloudEnvironmentConfig
         integration_dir,  # type: str
-):  # type: (...) -> t.ContextManager[t.Optional[str]]
+):  # type: (...) -> t.Iterator[t.Optional[str]]
     """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
         yield None
@@ -361,7 +362,7 @@ def integration_test_config_file(
 
     config_file = json.dumps(config_vars, indent=4, sort_keys=True)
 
-    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:
+    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:  # type: str
         filename = os.path.relpath(path, integration_dir)
 
         display.info('>>> Config File: %s\n%s' % (filename, config_file), verbosity=3)
@@ -398,8 +399,8 @@ def create_inventory(
 def command_integration_filtered(
         args,  # type: IntegrationConfig
         host_state,  # type: HostState
-        targets,  # type: t.Tuple[IntegrationTarget]
-        all_targets,  # type: t.Tuple[IntegrationTarget]
+        targets,  # type: t.Tuple[IntegrationTarget, ...]
+        all_targets,  # type: t.Tuple[IntegrationTarget, ...]
         inventory_path,  # type: str
         pre_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
         post_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
@@ -413,7 +414,7 @@ def command_integration_filtered(
     all_targets_dict = dict((target.name, target) for target in all_targets)
 
     setup_errors = []
-    setup_targets_executed = set()
+    setup_targets_executed = set()  # type: t.Set[str]
 
     for target in all_targets:
         for setup_target in target.setup_once + target.setup_always:
@@ -530,6 +531,10 @@ def command_integration_filtered(
                         if not tries:
                             raise
 
+                        if target.retry_never:
+                            display.warning(f'Skipping retry of test target "{target.name}" since it has been excluded from retries.')
+                            raise
+
                         display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                         display.verbosity = args.verbosity = 6
 
@@ -538,7 +543,7 @@ def command_integration_filtered(
                 failed.append(target)
 
                 if args.continue_on_error:
-                    display.error(ex)
+                    display.error(str(ex))
                     continue
 
                 display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
@@ -597,7 +602,7 @@ def command_integration_script(
             module_defaults=env_config.module_defaults,
         ), indent=4, sort_keys=True), verbosity=3)
 
-    with integration_test_environment(args, target, inventory_path) as test_env:
+    with integration_test_environment(args, target, inventory_path) as test_env:  # type: IntegrationEnvironment
         cmd = ['./%s' % os.path.basename(target.script_path)]
 
         if args.verbosity:
@@ -614,12 +619,12 @@ def command_integration_script(
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
 
-        with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:
+        with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:  # type: t.Optional[str]
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
             env.update(coverage_manager.get_environment(target.name, target.aliases))
-            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd)
+            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
 def command_integration_role(
@@ -673,7 +678,7 @@ def command_integration_role(
             module_defaults=env_config.module_defaults,
         ), indent=4, sort_keys=True), verbosity=3)
 
-    with integration_test_environment(args, target, inventory_path) as test_env:
+    with integration_test_environment(args, target, inventory_path) as test_env:  # type: IntegrationEnvironment
         if os.path.exists(test_env.vars_file):
             vars_files.append(os.path.relpath(test_env.vars_file, test_env.integration_dir))
 
@@ -738,14 +743,14 @@ def command_integration_role(
             env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
             env.update(coverage_manager.get_environment(target.name, target.aliases))
-            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd)
+            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
 def run_setup_targets(
         args,  # type: IntegrationConfig
         host_state,  # type: HostState
         test_dir,  # type: str
-        target_names,  # type: t.List[str]
+        target_names,  # type: t.Sequence[str]
         targets_dict,  # type: t.Dict[str, IntegrationTarget]
         targets_executed,  # type: t.Set[str]
         inventory_path,  # type: str
@@ -956,13 +961,10 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     return host_state, internal_targets
 
 
-def requirements(args, host_state):  # type: (IntegrationConfig, HostState) -> None
-    """Install requirements."""
-    target_profile = host_state.target_profiles[0]
-
-    configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
-
-    if isinstance(target_profile, PosixProfile) and not isinstance(target_profile, ControllerProfile):
-        configure_pypi_proxy(args, target_profile)  # integration
-
-    install_requirements(args, host_state.controller_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+def requirements(host_profile: HostProfile) -> None:
+    """Install requirements after bootstrapping and delegation."""
+    if isinstance(host_profile, ControllerHostProfile) and host_profile.controller:
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration, windows-integration, network-integration
+        install_requirements(host_profile.args, host_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+    elif isinstance(host_profile, PosixProfile) and not isinstance(host_profile, ControllerProfile):
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import shlex
-import sys
 import tempfile
 import typing as t
 
@@ -17,6 +16,7 @@ from .config import (
 
 from .util import (
     Display,
+    OutputStream,
     SubprocessError,
     retry,
 )
@@ -34,6 +34,7 @@ from .docker_util import (
 
 from .ssh import (
     SshConnectionDetail,
+    ssh_options_to_list,
 )
 
 from .become import (
@@ -46,10 +47,12 @@ class Connection(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
 
@@ -58,11 +61,9 @@ class Connection(metaclass=abc.ABCMeta):
                         src,  # type: t.IO[bytes]
                         ):
         """Extract the given archive file stream in the specified directory."""
-        # This will not work on AIX.
-        # However, AIX isn't supported as a controller, which is where this would be needed.
         tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
 
-        retry(lambda: self.run(tar_cmd, stdin=src))
+        retry(lambda: self.run(tar_cmd, stdin=src, capture=True))
 
     def create_archive(self,
                        chdir,  # type: str
@@ -75,18 +76,16 @@ class Connection(metaclass=abc.ABCMeta):
         gzip_cmd = ['gzip']
 
         if exclude:
-            # This will not work on AIX.
-            # However, AIX isn't supported as a controller, which is where this would be needed.
             tar_cmd += ['--exclude', exclude]
 
         tar_cmd.append(name)
 
-        # Using gzip to compress the archive allows this to work on all POSIX systems we support, including AIX.
+        # Using gzip to compress the archive allows this to work on all POSIX systems we support.
         commands = [tar_cmd, gzip_cmd]
 
         sh_cmd = ['sh', '-c', ' | '.join(' '.join(shlex.quote(cmd) for cmd in command) for command in commands)]
 
-        retry(lambda: self.run(sh_cmd, stdout=dst))
+        retry(lambda: self.run(sh_cmd, stdout=dst, capture=True))
 
 
 class LocalConnection(Connection):
@@ -96,10 +95,12 @@ class LocalConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         return run_command(
@@ -109,6 +110,8 @@ class LocalConnection(Connection):
             data=data,
             stdin=stdin,
             stdout=stdout,
+            interactive=interactive,
+            output_stream=output_stream,
         )
 
 
@@ -121,7 +124,7 @@ class SshConnection(Connection):
 
         self.options = ['-i', settings.identity_file]
 
-        ssh_options = dict(
+        ssh_options: dict[str, t.Union[int, str]] = dict(
             BatchMode='yes',
             StrictHostKeyChecking='no',
             UserKnownHostsFile='/dev/null',
@@ -129,15 +132,18 @@ class SshConnection(Connection):
             ServerAliveCountMax=4,
         )
 
-        for ssh_option in sorted(ssh_options):
-            self.options.extend(['-o', f'{ssh_option}={ssh_options[ssh_option]}'])
+        ssh_options.update(settings.options)
+
+        self.options.extend(ssh_options_to_list(ssh_options))
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = list(self.options)
@@ -147,7 +153,7 @@ class SshConnection(Connection):
 
         options.append('-q')
 
-        if not data and not stdin and not stdout and sys.stdin.isatty():
+        if interactive:
             options.append('-tt')
 
         with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
@@ -170,6 +176,8 @@ class SshConnection(Connection):
                 data=data,
                 stdin=stdin,
                 stdout=stdout,
+                interactive=interactive,
+                output_stream=output_stream,
                 error_callback=error_callback,
             )
 
@@ -212,10 +220,12 @@ class DockerConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = []
@@ -223,7 +233,7 @@ class DockerConnection(Connection):
         if self.user:
             options.extend(['--user', self.user])
 
-        if not data and not stdin and not stdout and sys.stdin.isatty():
+        if interactive:
             options.append('-it')
 
         return docker_exec(
@@ -235,6 +245,8 @@ class DockerConnection(Connection):
             data=data,
             stdin=stdin,
             stdout=stdout,
+            interactive=interactive,
+            output_stream=output_stream,
         )
 
     def inspect(self):  # type: () -> DockerInspect

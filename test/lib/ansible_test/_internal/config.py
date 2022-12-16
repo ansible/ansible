@@ -1,6 +1,7 @@
 """Configuration classes."""
 from __future__ import annotations
 
+import dataclasses
 import enum
 import os
 import sys
@@ -10,6 +11,7 @@ from .util import (
     display,
     verify_sys_executable,
     version_to_str,
+    type_guard,
 )
 
 from .util_common import (
@@ -47,27 +49,20 @@ class TerminateMode(enum.Enum):
         return self.name.lower()
 
 
-class ParsedRemote:
-    """A parsed version of a "remote" string."""
-    def __init__(self, arch, platform, version):  # type: (t.Optional[str], str, str) -> None
-        self.arch = arch
-        self.platform = platform
-        self.version = version
+@dataclasses.dataclass(frozen=True)
+class ModulesConfig:
+    """Configuration for modules."""
+    python_requires: str
+    python_versions: tuple[str, ...]
+    controller_only: bool
 
-    @staticmethod
-    def parse(value):  # type: (str) -> t.Optional['ParsedRemote']
-        """Return a ParsedRemote from the given value or None if the syntax is invalid."""
-        parts = value.split('/')
 
-        if len(parts) == 2:
-            arch = None
-            platform, version = parts
-        elif len(parts) == 3:
-            arch, platform, version = parts
-        else:
-            return None
-
-        return ParsedRemote(arch, platform, version)
+@dataclasses.dataclass(frozen=True)
+class ContentConfig:
+    """Configuration for all content."""
+    modules: ModulesConfig
+    python_versions: tuple[str, ...]
+    py2_support: bool
 
 
 class EnvironmentConfig(CommonConfig):
@@ -80,6 +75,10 @@ class EnvironmentConfig(CommonConfig):
         self.containers = args.containers  # type: t.Optional[str]
         self.pypi_proxy = args.pypi_proxy  # type: bool
         self.pypi_endpoint = args.pypi_endpoint  # type: t.Optional[str]
+
+        # Populated by content_config.get_content_config on the origin.
+        # Serialized and passed to delegated instances to avoid parsing a second time.
+        self.content_config = None  # type: t.Optional[ContentConfig]
 
         # Set by check_controller_python once HostState has been created by prepare_profiles.
         # This is here for convenience, to avoid needing to pass HostState to some functions which already have access to EnvironmentConfig.
@@ -96,7 +95,7 @@ class EnvironmentConfig(CommonConfig):
                 not isinstance(self.controller, OriginConfig)
                 or isinstance(self.controller.python, VirtualPythonConfig)
                 or self.controller.python.version != version_to_str(sys.version_info[:2])
-                or verify_sys_executable(self.controller.python.path)
+                or bool(verify_sys_executable(self.controller.python.path))
             )
 
         self.docker_network = args.docker_network  # type: t.Optional[str]
@@ -112,6 +111,9 @@ class EnvironmentConfig(CommonConfig):
 
         self.delegate_args = []  # type: t.List[str]
 
+        self.dev_systemd_debug: bool = args.dev_systemd_debug
+        self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
+
         def host_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the host files to the payload file list."""
             config = self
@@ -119,9 +121,11 @@ class EnvironmentConfig(CommonConfig):
             if config.host_path:
                 settings_path = os.path.join(config.host_path, 'settings.dat')
                 state_path = os.path.join(config.host_path, 'state.dat')
+                config_path = os.path.join(config.host_path, 'config.dat')
 
                 files.append((os.path.abspath(settings_path), settings_path))
                 files.append((os.path.abspath(state_path), state_path))
+                files.append((os.path.abspath(config_path), config_path))
 
         data_context().register_payload_callback(host_callback)
 
@@ -161,16 +165,14 @@ class EnvironmentConfig(CommonConfig):
     def only_targets(self, target_type):  # type: (t.Type[THostConfig]) -> t.List[THostConfig]
         """
         Return a list of target host configurations.
-        Requires that there are one or more targets, all of the specified type.
+        Requires that there are one or more targets, all the specified type.
         """
         if not self.targets:
             raise Exception('There must be one or more targets.')
 
-        for target in self.targets:
-            if not isinstance(target, target_type):
-                raise Exception(f'Target is {type(target_type)} instead of {target_type}.')
+        assert type_guard(self.targets, target_type)
 
-        return self.targets
+        return t.cast(t.List[THostConfig], self.targets)
 
     @property
     def target_type(self):  # type: () -> t.Type[HostConfig]
@@ -218,7 +220,7 @@ class TestConfig(EnvironmentConfig):
         self.failure_ok = getattr(args, 'failure_ok', False)  # type: bool
 
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
+        self.metadata_path = None  # type: t.Optional[str]
 
         if self.coverage_check:
             self.coverage = True
@@ -238,7 +240,12 @@ class ShellConfig(EnvironmentConfig):
     def __init__(self, args):  # type: (t.Any) -> None
         super().__init__(args, 'shell')
 
+        self.cmd = args.cmd  # type: t.List[str]
         self.raw = args.raw  # type: bool
+        self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
+        self.interactive = sys.stdin.isatty() and not args.cmd  # delegation should only be interactive when stdin is a TTY and no command was given
+        self.export = args.export  # type: t.Optional[str]
+        self.display_stderr = True
 
 
 class SanityConfig(TestConfig):
@@ -254,7 +261,7 @@ class SanityConfig(TestConfig):
         self.keep_git = args.keep_git  # type: bool
         self.prime_venvs = args.prime_venvs  # type: bool
 
-        self.info_stderr = self.lint
+        self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
             def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
@@ -293,7 +300,7 @@ class IntegrationConfig(TestConfig):
 
         if self.list_targets:
             self.explain = True
-            self.info_stderr = True
+            self.display_stderr = True
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""

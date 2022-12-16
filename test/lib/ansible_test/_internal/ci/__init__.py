@@ -114,7 +114,7 @@ class AuthHelper(metaclass=abc.ABCMeta):
     def initialize_private_key(self):  # type: () -> str
         """
         Initialize and publish a new key pair (if needed) and return the private key.
-        The private key is cached across ansible-test invocations so it is only generated and published once per CI job.
+        The private key is cached across ansible-test invocations, so it is only generated and published once per CI job.
         """
         path = os.path.expanduser('~/.ansible-core-ci-private.key')
 
@@ -166,14 +166,12 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
         private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
         public_key = private_key.public_key()
 
-        # noinspection PyUnresolvedReferences
-        private_key_pem = to_text(private_key.private_bytes(
+        private_key_pem = to_text(private_key.private_bytes(  # type: ignore[attr-defined]  # documented method, but missing from type stubs
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         ))
 
-        # noinspection PyTypeChecker
         public_key_pem = to_text(public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo,

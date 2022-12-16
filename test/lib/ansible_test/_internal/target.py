@@ -155,7 +155,7 @@ def walk_units_targets():  # type: () -> t.Iterable[TestTarget]
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
-def walk_compile_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget, ...]
+def walk_compile_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget]
     """Return an iterable of compile targets."""
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
 
@@ -611,6 +611,9 @@ class IntegrationTarget(CompletionTarget):
         groups += [a for a in static_aliases if a not in modules]
         groups += ['module/%s' % m for m in self.modules]
 
+        if data_context().content.is_ansible and (self.name == 'ansible-test' or self.name.startswith('ansible-test-')):
+            groups.append('ansible-test')
+
         if not self.modules:
             groups.append('non_module')
 
@@ -698,6 +701,8 @@ class IntegrationTarget(CompletionTarget):
         self.aliases = tuple(sorted(set(aliases)))
 
         # configuration
+
+        self.retry_never = 'retry/never/' in self.aliases
 
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
