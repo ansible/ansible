@@ -1,3 +1,0 @@
-- name: Install Paramiko for Python 2 on CentOS 6
-  yum:
-    name: python-paramiko
