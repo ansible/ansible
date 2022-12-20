@@ -297,6 +297,7 @@ class IntegrationConfig(TestConfig):
         self.diff = args.diff
         self.no_temp_workdir: bool = args.no_temp_workdir
         self.no_temp_unicode: bool = args.no_temp_unicode
+        self.show_timings: bool = args.show_timings
 
         if self.list_targets:
             self.explain = True

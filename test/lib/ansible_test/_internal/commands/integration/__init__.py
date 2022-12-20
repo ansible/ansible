@@ -447,6 +447,7 @@ def command_integration_filtered(
     start_at_task = args.start_at_task
 
     results = {}
+    timings = {}
 
     target_profile = host_state.target_profiles[0]
 
@@ -523,6 +524,7 @@ def command_integration_filtered(
                             setup_once=target.setup_once,
                             setup_always=target.setup_always,
                         )
+                        timings[target.name] = end_time - start_time
 
                         break
                     except SubprocessError:
@@ -570,6 +572,11 @@ def command_integration_filtered(
             )
 
             write_json_test_results(ResultType.DATA, result_name, data)
+
+            if args.show_timings:
+                display.notice('Test timings:')
+                for target, run_time in sorted(timings.items()):
+                    display.notice(f'  {target} - {run_time:.1f} seconds')
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (

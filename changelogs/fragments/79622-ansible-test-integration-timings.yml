@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test - the integration tests now support a ``--show-timings`` option that shows the time needed for every target that was run (https://github.com/ansible/ansible/pull/79622)."

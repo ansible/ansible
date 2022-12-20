@@ -118,6 +118,12 @@ def add_integration_common(
     )
 
     parser.add_argument(
+        '--show-timings',
+        action='store_true',
+        help='at the end of all tests show the amount of seconds every test run took',
+    )
+
+    parser.add_argument(
         '--continue-on-error',
         action='store_true',
         help='continue after failed test',
