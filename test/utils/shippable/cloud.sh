@@ -29,6 +29,6 @@ else
 fi
 
 # shellcheck disable=SC2086
-ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+ansible-test integration --show-timings --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
     --remote-terminate always --remote-stage "${stage}" \
     --docker --python "${python}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}"

@@ -46,7 +46,7 @@ else
 fi
 
 # shellcheck disable=SC2086
-ansible-test windows-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+ansible-test windows-integration --show-timings --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
     "${platforms[@]}" \
     --docker default --python "${python_default}" \
     --remote-terminate always --remote-stage "${stage}" --remote-provider "${provider}"

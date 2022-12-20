@@ -87,7 +87,7 @@ for version in "${python_versions[@]}"; do
     fi
 
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    ansible-test windows-integration --show-timings --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         "${platforms[@]}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
         --docker default --python "${version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
