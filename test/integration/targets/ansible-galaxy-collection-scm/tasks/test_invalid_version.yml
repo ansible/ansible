@@ -18,8 +18,8 @@
         - invalid_scm_version is failed
         - msg in invalid_scm_version.stderr
     vars:
-      # FIXME quotation marks
-      msg: "Invalid version found for the collection '\"virtual collection Git repo\"'. A string version is required."
+      ver: "12345 (<class 'int'>)"
+      msg: "Invalid version found for the collection '\"virtual collection Git repo\"': {{ ver }}. A string version is required."
 
   - name: test installing a collection with an invalid float version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#float_version_collection -vvvvvv'
@@ -31,8 +31,9 @@
         - invalid_version_result is failed
         - msg in invalid_version_result.stderr
     vars:
-      req: error_test.float_version_collection:1.0
-      msg: "Invalid version found for the collection '{{ req }}'. A SemVer-compliant version or '*' is required."
+      req: error_test.float_version_collection
+      ver: "1.0 (<class 'float'>)"
+      msg: "Invalid version found for the collection '{{ req }}': {{ ver }}. A SemVer-compliant version or '*' is required."
 
   - name: test installing a collection with an invalid non-SemVer string version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#not_semantic_version_collection -vvvvvv'
@@ -44,8 +45,9 @@
         - invalid_version_result is failed
         - msg in invalid_version_result.stderr
     vars:
-      req: error_test.not_semantic_version_collection:1.0
-      msg: "Invalid version found for the collection '{{ req }}'. A SemVer-compliant version or '*' is required."
+      req: error_test.not_semantic_version_collection
+      ver: "1.0 (<class 'str'>)"
+      msg: "Invalid version found for the collection '{{ req }}': {{ ver }}. A SemVer-compliant version or '*' is required."
 
   - name: test installing a collection with an invalid list version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#list_version_collection -vvvvvv'
@@ -57,8 +59,9 @@
         - invalid_version_result is failed
         - msg in invalid_version_result.stderr
     vars:
-      req: "error_test.list_version_collection:['1.0.0']"
-      msg: "Invalid version found for the collection '{{ req }}'. A SemVer-compliant version or '*' is required."
+      req: error_test.list_version_collection
+      ver: "['1.0.0'] (<class 'list'>)"
+      msg: "Invalid version found for the collection '{{ req }}': {{ ver }}. A SemVer-compliant version or '*' is required."
 
   - name: test installing a collection with an invalid dict version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#dict_version_collection -vvvvvv'
@@ -70,8 +73,9 @@
         - invalid_version_result is failed
         - msg in invalid_version_result.stderr
     vars:
-      req: "error_test.dict_version_collection:{'broken': 'version'}"
-      msg: "Invalid version found for the collection '{{ req }}'. A SemVer-compliant version or '*' is required."
+      req: error_test.dict_version_collection
+      ver: "{'broken': 'version'} (<class 'dict'>)"
+      msg: "Invalid version found for the collection '{{ req }}': {{ ver }}. A SemVer-compliant version or '*' is required."
 
   always:
   - name: remove requirements file

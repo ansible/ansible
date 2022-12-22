@@ -187,7 +187,9 @@
   register: result
 
 - assert:
-    that: "\"'namespace1.name1:1.1.0-beta.1' is already installed, skipping.\" in result.stdout"
+    that: msg in result.stdout
+  vars:
+    msg: "Nothing to do. All requested collections are already installed. If you want to reinstall them, consider using `--force`."
 
 # With deps
 

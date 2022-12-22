@@ -504,20 +504,8 @@ def build_collection(u_collection_path, u_output_path, force):
     return collection_output
 
 
-def process_virtual_requirements(requirement, resolved_requirements, artifacts_manager):
-    # type: (Requirement, t.Iterable[Requirement], ConcreteArtifactsManager) -> None
-    requirement.validate_version()
-
-    if requirement.is_virtual:
-        for dep_name, dep_req in artifacts_manager.get_direct_collection_dependencies(requirement).items():
-            dep = Requirement.from_requirement_dict({'name': dep_name, 'version': dep_req}, artifacts_manager)
-            process_virtual_requirements(dep, resolved_requirements, artifacts_manager)
-    else:
-        resolved_requirements.add(requirement)
-
-
 def download_collections(
-        collections,  # type: t.List[Requirement]
+        collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
         apis,  # type: t.Iterable[GalaxyAPI]
         no_deps,  # type: bool
@@ -534,14 +522,6 @@ def download_collections(
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
     """
-    for install_req in list(collections):
-        if not install_req.is_virtual:
-            continue
-        virtual_direct_requests = set()  # type: t.Set[Requirement]
-        process_virtual_requirements(install_req, virtual_direct_requests, artifacts_manager)
-        collections.remove(install_req)
-        collections += list(virtual_direct_requests)
-
     with _display_progress("Process download dependency map"):
         dep_map = _resolve_depenency_map(
             set(collections),
@@ -668,7 +648,7 @@ def publish_collection(collection_path, api, wait, timeout):
 
 
 def install_collections(
-        collections,  # type: t.List[Requirement]
+        collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
         apis,  # type: t.Iterable[GalaxyAPI]
         ignore_errors,  # type: bool
@@ -693,55 +673,10 @@ def install_collections(
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
     existing_collections = {
-        Requirement(coll.fqcn, coll.ver, coll.src, coll.type, None)
+        Candidate(coll.fqcn, coll.ver, coll.src, coll.type, None)
         for coll in find_existing_collections(output_path, artifacts_manager)
     }
-
-    for install_req in list(collections):
-        if not install_req.is_virtual:
-            continue
-        virtual_direct_requests = set()  # type: t.Set[Requirement]
-        process_virtual_requirements(install_req, virtual_direct_requests, artifacts_manager)
-        collections.remove(install_req)
-        collections += list(virtual_direct_requests)
-
-    unsatisfied_requirements = set(collections)
-    requested_requirements_names = {req.fqcn for req in unsatisfied_requirements}
-
-    # NOTE: Don't attempt to reevaluate already installed deps
-    # NOTE: unless `--force` or `--force-with-deps` is passed
-    unsatisfied_requirements -= set() if force or force_deps else {
-        req
-        for req in unsatisfied_requirements
-        for exs in existing_collections
-        if req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver) and not req.is_dir
-    }
-
-    if not unsatisfied_requirements and not upgrade:
-        display.display(
-            'Nothing to do. All requested collections are already '
-            'installed. If you want to reinstall them, '
-            'consider using `--force`.'
-        )
-        return
-
-    # FIXME: This probably needs to be improved to
-    # FIXME: properly match differing src/type.
-    existing_non_requested_collections = {
-        coll for coll in existing_collections
-        if coll.fqcn not in requested_requirements_names
-    }
-
-    preferred_requirements = (
-        [] if force_deps
-        else existing_non_requested_collections if force
-        else existing_collections
-    )
-    preferred_collections = {
-        # NOTE: No need to include signatures if the collection is already installed
-        Candidate(coll.fqcn, coll.ver, coll.src, coll.type, None)
-        for coll in preferred_requirements
-    }
+    preferred_collections = existing_collections if not force_deps else set()
     with _display_progress("Process install dependency map"):
         dependency_map = _resolve_depenency_map(
             collections,
@@ -753,7 +688,15 @@ def install_collections(
             upgrade=upgrade,
             include_signatures=not disable_gpg_verify,
             offline=offline,
+            force=force,
         )
+    if not dependency_map:
+        display.display(
+            'Nothing to do. All requested collections are already '
+            'installed. If you want to reinstall them, '
+            'consider using `--force`.'
+        )
+        return
 
     keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
@@ -1767,6 +1710,7 @@ def _resolve_depenency_map(
         upgrade,  # type: bool
         include_signatures,  # type: bool
         offline,  # type: bool
+        force=False,  # type: bool
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
     if not HAS_RESOLVELIB:
@@ -1793,20 +1737,26 @@ def _resolve_depenency_map(
         elif not req.specifier.contains(RESOLVELIB_VERSION.vstring):
             raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
-    collection_dep_resolver = build_collection_dependency_resolver(
-        galaxy_apis=galaxy_apis,
-        concrete_artifacts_manager=concrete_artifacts_manager,
-        user_requirements=requested_requirements,
-        preferred_candidates=preferred_candidates,
-        with_deps=not no_deps,
-        with_pre_releases=allow_pre_release,
-        upgrade=upgrade,
-        include_signatures=include_signatures,
-        offline=offline,
-    )
     try:
-        return collection_dep_resolver.resolve(
-            requested_requirements,
+        collection_dep_resolver = build_collection_dependency_resolver(
+            galaxy_apis=galaxy_apis,
+            concrete_artifacts_manager=concrete_artifacts_manager,
+            user_requirements=requested_requirements,
+            preferred_candidates=preferred_candidates,
+            with_deps=not no_deps,
+            with_pre_releases=allow_pre_release,
+            upgrade=upgrade,
+            include_signatures=include_signatures,
+            offline=offline,
+            force=force,
+        )
+    except TypeError as e:
+        # malformed requirements
+        raise AnsibleError(f"{e}") from e
+
+    try:
+        dependency_mapping = collection_dep_resolver.resolve(
+            collection_dep_resolver.provider.unrolled_user_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
         ).mapping
     except CollectionDependencyResolutionImpossible as dep_exc:
@@ -1864,3 +1814,12 @@ def _resolve_depenency_map(
         )
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc
+
+    # NOTE: Return {} for a lack of unsatisfied collections.
+    # All callers pass installed collections as preferred candidates, and don't have access to the finalized preferred candidates.
+    if dependency_mapping and all(
+        candidate in collection_dep_resolver.provider._preferred_candidates
+        for candidate in dependency_mapping.values()
+    ):
+        return {}
+    return dependency_mapping
