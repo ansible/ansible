@@ -1,11 +1,4 @@
 minor_changes:
-  - >
-    ansible-galaxy collection install - fix consistency when installing type ``url`` or ``file``
-    requirements by resolving dependencies and determining satisfied requirements from the result.
-    Previously, tarfiles were were always reinstalled if the dependency resolver ran, and could
-    be short-circuited if all type ``galaxy`` requirements were satisfied.
-    Now ``url`` and ``file`` types are always reinstalled, rather than circumstantially on
-    unrelated requirements.
   - ansible-galaxy collection - consolidate message when an invalid version is encountered so it's
     the same regardless of codepath.
 bugfixes:

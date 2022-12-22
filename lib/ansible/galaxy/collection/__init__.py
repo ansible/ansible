@@ -1754,6 +1754,39 @@ def _resolve_depenency_map(
         # malformed requirements
         raise AnsibleError(f"{e}") from e
 
+    # This is arguably a bug, but this short-circuit is here for backwards compatibility...
+    # Context: when the dependency resolver runs, tarfile and url requirements are always
+    # reinstalled because only galaxy type uses the preferred candidates in _find_matches.
+    # However, the dependency resolver doesn't always run for url/tarfile types,
+    # only if a collection by that name + version isn't installed at all or if another
+    # collection is (potentially) missing.
+    # TL;DR: unrelated requirements (which may not even end up installed) cause all tarfile/url
+    # requirements to be reinstalled, whereas without this they would always be reinstalled.
+    if (
+        # Exclude all conditions which require dependency resolution
+        preferred_candidates is not None  # None for --force-with-deps/download
+        and not force
+        and not upgrade
+        and requested_requirements == collection_dep_resolver.provider.unrolled_user_requirements  # no ephemeral deps
+    ):
+        for req in collection_dep_resolver.provider.unrolled_user_requirements:
+            installed = False
+            for exs in collection_dep_resolver.provider._preferred_candidates:
+                if req.fqcn == exs.fqcn and not meets_requirements(exs.ver, req.ver):
+                    break
+                elif req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver):
+                    installed = True
+            else:
+                if installed:
+                    continue
+            satisfied = False
+            break
+        else:
+            satisfied = True
+
+        if satisfied:
+            return {}
+
     try:
         dependency_mapping = collection_dep_resolver.resolve(
             collection_dep_resolver.provider.unrolled_user_requirements,
