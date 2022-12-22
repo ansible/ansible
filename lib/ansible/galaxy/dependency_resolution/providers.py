@@ -82,6 +82,13 @@ class PinnedCandidateRequests(Set):
             # unrelated to whether or not a matching Candidate is user-requested.
             # Candidate objects in the set are not expected to have signatures.
             for attr in PinnedCandidateRequests.CANDIDATE_ATTRS:
+                if value.is_dir and candidate.is_dir and attr == 'src':
+                    # The src attr can be expected not to match. For example, if
+                    # the candidate is a dependency of an ephemeral collection,
+                    # src will be a temp path, whereas the preferred candidate's src would
+                    # be the installation path.
+                    # Compare checksums?
+                    continue
                 if getattr(value, attr) != getattr(candidate, attr):
                     break
             else:
@@ -156,16 +163,12 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 not req.ver.startswith(('<', '>', '!='))
             )
         )
-        requested_requirement_names = {req.fqcn for req in _direct_requests}
-        ephemeral_dep_names = {req.fqcn for req in _ephemeral_request_dependencies}
+        requested_requirement_names = {req.fqcn for req in self.unrolled_user_requirements}
 
         self._preferred_candidates = set()
         # FIXME: the logic for force probably needs to be improved to properly match differing src/type
         for preference in preferred_candidates or ():
             if force and preference.fqcn in requested_requirement_names:
-                continue
-            elif preference.fqcn in ephemeral_dep_names and preference.fqcn not in requested_requirement_names:
-                # Backwards compat to ensure we always reinstall SCM direct requests
                 continue
             else:
                 self._preferred_candidates.add(preference)
@@ -362,7 +365,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
         preinstalled_candidates = set()
-        if not self._upgrade and first_req.type == 'galaxy':
+        if not self._upgrade and not first_req.is_virtual:  # Compare checksums for non-galaxy types?
             preinstalled_candidates = {
                 candidate for candidate in self._preferred_candidates
                 if candidate.fqcn == fqcn and
@@ -403,7 +406,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 except TypeError as ex:
                     raise ValueError(ex) from ex
                 matches.append(match)
-            return matches
+            return list(preinstalled_candidates) + matches
 
         latest_matches = []
         signatures = []

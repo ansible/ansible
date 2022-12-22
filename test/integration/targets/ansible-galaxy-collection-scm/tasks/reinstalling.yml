@@ -2,30 +2,43 @@
   command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/'
   register: installed
 
-- name: SCM collections don't have a concrete artifact version so the collection should always be reinstalled
+- name: assert the virtual dependency is already installed with an identical version
+  assert:
+    that:
+      - >
+        "'ansible_test.collection_1:1.0.0' is already installed, skipping." in installed.stdout
+      - >
+        "'ansible_test.collection_2:1.0.0' is already installed, skipping." in installed.stdout
+
+- name: Force reinstalling a collection
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/ --force'
+  register: installed
+
+- name: assert only the direct request was resinstalled with --force
+  assert:
+    that:
+      - "'Created collection for ansible_test.collection_1' in installed.stdout"
+      - >
+        "'ansible_test.collection_2:1.0.0' is already installed, skipping." in installed.stdout
+
+- name: Force reinstalling a collection and its dependency
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/ --force-with-deps'
+  register: installed
+
+- name: assert the SCM collection and its dependency was reinstalled
   assert:
     that:
       - "'Created collection for ansible_test.collection_1' in installed.stdout"
       - "'Created collection for ansible_test.collection_2' in installed.stdout"
 
-- name: The collection should also be reinstalled when --force flag is used
-  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/ --force'
+- name: Install a different version of the collection without --force
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/,v0.0.9'
   register: installed
 
-- assert:
+- name: assert the collection was reinstalled
+  assert:
     that:
       - "'Created collection for ansible_test.collection_1' in installed.stdout"
-      # The dependency is also an SCM collection, so it should also be reinstalled
-      - "'Created collection for ansible_test.collection_2' in installed.stdout"
-
-- name: The collection should also be reinstalled when --force-with-deps is used
-  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/ --force-with-deps'
-  register: installed
-
-- assert:
-    that:
-      - "'Created collection for ansible_test.collection_1' in installed.stdout"
-      - "'Created collection for ansible_test.collection_2' in installed.stdout"
 
 - include_tasks: ./empty_installed_collections.yml
   when: cleanup

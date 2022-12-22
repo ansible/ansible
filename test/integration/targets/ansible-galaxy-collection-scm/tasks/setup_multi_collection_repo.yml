@@ -56,6 +56,12 @@
     regexp: '^build_ignore'
     line: "build_ignore: ['foo.txt', 'foobar/*']"
 
+- name: Update collection version
+  lineinfile:
+    path: '{{ test_repo_path }}/collection_1/galaxy.yml'
+    regexp: '^version:'
+    line: 'version: 0.0.9'
+
 - name: Commit the changes
   command: '{{ item }}'
   args:
@@ -63,6 +69,22 @@
   loop:
     - git add ./
     - git commit -m 'add collections'
+    - git tag -a v0.0.9 -m "version 0.0.9"
+
+- name: Add another version
+  lineinfile:
+    path: '{{ test_repo_path }}/collection_1/galaxy.yml'
+    regexp: '^version:'
+    line: 'version: 1.0.0'
+
+- name: Commit the changes
+  command: '{{ item }}'
+  args:
+    chdir: '{{ test_repo_path }}'
+  loop:
+    - git add ./
+    - git commit -m 'update collections'
+    - git tag -a v1.0.0 -m "version 1.0.0"
 
 - name: Build the actual artifact for ansible_test.collection_1 for comparison
   command: "ansible-galaxy collection build ansible_test/collection_1 --output-path {{ galaxy_dir }}"
