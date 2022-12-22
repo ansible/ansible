@@ -34,6 +34,7 @@ def build_collection_dependency_resolver(
         upgrade=False,  # type: bool
         include_signatures=True,  # type: bool
         offline=False,  # type: bool
+        force=False,  # type: bool
 ):  # type: (...) -> CollectionDependencyResolver
     """Return a collection dependency resolver.
 
@@ -50,6 +51,7 @@ def build_collection_dependency_resolver(
             with_pre_releases=with_pre_releases,
             upgrade=upgrade,
             include_signatures=include_signatures,
+            force=force,
         ),
         CollectionDependencyReporter(),
     )

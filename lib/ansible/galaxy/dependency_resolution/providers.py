@@ -46,6 +46,24 @@ RESOLVELIB_UPPERBOUND = SemanticVersion("1.1.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
+def get_virtual_requirement_dependencies(requirement, artifacts_manager, seen=None):
+    if seen is None:
+        seen = set()
+    elif requirement in seen:
+        yield from ()
+
+    seen.add(requirement)
+    requirement.assert_version()  # assert version before assuming it's hashable
+
+    if requirement.is_virtual:
+        for dep_name, dep_req in artifacts_manager.get_direct_collection_dependencies(requirement).items():
+            dep = Requirement.from_requirement_dict({'name': dep_name, 'version': dep_req}, artifacts_manager)
+            for dep in get_virtual_requirement_dependencies(dep, artifacts_manager, seen):
+                yield dep
+    else:
+        yield requirement
+
+
 class PinnedCandidateRequests(Set):
     """Custom set class to store Candidate objects. Excludes the 'signatures' attribute when determining if a Candidate instance is in the set."""
     CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
@@ -87,6 +105,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             with_pre_releases=False,  # type: bool
             upgrade=False,  # type: bool
             include_signatures=True,  # type: bool
+            force=False,  # type: bool
     ):  # type: (...) -> None
         r"""Initialize helper attributes.
 
@@ -117,17 +136,39 @@ class CollectionDependencyProviderBase(AbstractProvider):
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
+
+        _direct_requests = []
+        _ephemeral_request_dependencies = []
+        for request in user_requirements or ():
+            if request.is_virtual:
+                _ephemeral_request_dependencies.extend(get_virtual_requirement_dependencies(request, concrete_artifacts_manager))
+            _direct_requests.append(request)
+
+        self.unrolled_user_requirements = _direct_requests + _ephemeral_request_dependencies
+
         self._pinned_candidate_requests = PinnedCandidateRequests(
             # NOTE: User-provided signatures are supplemental, so signatures
             # NOTE: are not used to determine if a candidate is user-requested
             Candidate(req.fqcn, req.ver, req.src, req.type, None)
-            for req in (user_requirements or ())
+            for req in self.unrolled_user_requirements
             if req.is_concrete_artifact or (
                 req.ver != '*' and
                 not req.ver.startswith(('<', '>', '!='))
             )
         )
-        self._preferred_candidates = set(preferred_candidates or ())
+        requested_requirement_names = {req.fqcn for req in _direct_requests}
+        ephemeral_dep_names = {req.fqcn for req in _ephemeral_request_dependencies}
+
+        self._preferred_candidates = set()
+        # FIXME: the logic for force probably needs to be improved to properly match differing src/type
+        for preference in preferred_candidates or ():
+            if force and preference.fqcn in requested_requirement_names:
+                continue
+            elif preference.fqcn in ephemeral_dep_names and preference.fqcn not in requested_requirement_names:
+                # Backwards compat to ensure we always reinstall SCM direct requests
+                continue
+            else:
+                self._preferred_candidates.add(preference)
         self._with_deps = with_deps
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
@@ -357,7 +398,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 # NOTE: Another known mistake is setting a minor part of the SemVer notation
                 # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
                 # NOTE: after the conversion to string.
-                match.validate_version()
+                try:
+                    match.assert_version()
+                except TypeError as ex:
+                    raise ValueError(version_err) from ex
                 matches.append(match)
             return matches
 
@@ -434,12 +478,17 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # NOTE: pre-releases is when there are several user requirements
         # NOTE: and one of them is a pre-release that also matches a
         # NOTE: transitive dependency of another requirement.
-        allow_pre_release = self._with_pre_releases or not (
-            requirement.ver == '*' or
-            requirement.ver.startswith('<') or
-            requirement.ver.startswith('>') or
-            requirement.ver.startswith('!=')
-        ) or self._is_user_requested(candidate)
+        allow_pre_release = (
+            self._with_pre_releases or not (
+                requirement.ver == '*' or
+                requirement.ver.startswith('<') or
+                requirement.ver.startswith('>') or
+                requirement.ver.startswith('!=')
+            )
+            or is_pre_release(requirement.ver)  # allow pre-releases if the requirement was one, like pip
+            or self._is_user_requested(candidate)
+            or candidate in self._preferred_candidates  # if a pre-release was already installed
+        )
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 

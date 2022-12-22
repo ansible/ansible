@@ -435,9 +435,7 @@ class _ComputedReqKindsMixin:
             req_source, req_type,
             req_signature_sources,
         )
-        # a version requirement might be a range of versions, but must at least be a str
-        if not isinstance(req_version, string_types):
-            req.validate_version()
+        req.assert_version()
         return req
 
     def __repr__(self):
@@ -557,19 +555,27 @@ class _ComputedReqKindsMixin:
     def source_info(self):
         return self._source_info
 
-    def validate_version(self):
+    def assert_version(self):
         if not self.is_scm:
-            version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
+            version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly."
         else:
-            version_req = f"A string version is required. Got {self.ver} ({type(self.ver)})."
-        version_err = f"Invalid version found for the collection '{self}'. {version_req}"
+            version_req = f"A string version is required."
+
+        name = self.fqcn if self.fqcn is not None else self
+        version_err = f"Invalid version found for the collection '{name}': {self.ver} ({type(self.ver)}). {version_req}"
         if not isinstance(self.ver, string_types):
-            raise AnsibleError(version_err)
-        elif self.ver != '*' and not self.is_scm:
+            raise TypeError(version_err)
+
+        # FIXME: validate individual requirements are valid semver
+        req_qualifiers = [">", "<", "!", "="]
+        if any(qualifier in self.ver for qualifier in req_qualifiers):
+            return
+
+        if not (self.is_scm or self.ver == '*'):
             try:
                 SemanticVersion(self.ver)
             except ValueError as ex:
-                raise AnsibleError(version_err) from ex
+                raise TypeError(version_err) from ex
 
 
 RequirementNamedTuple = namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources'))  # type: ignore[name-match]

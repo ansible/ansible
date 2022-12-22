@@ -1,3 +1,20 @@
+minor_changes:
+  - >
+    ansible-galaxy collection install - fix consistency when installing type ``url`` or ``file``
+    requirements by resolving dependencies and determining satisfied requirements from the result.
+    Previously, tarfiles were were always reinstalled if the dependency resolver ran, and could
+    be short-circuited if all type ``galaxy`` requirements were satisfied.
+    Now ``url`` and ``file`` types are always reinstalled, rather than circumstantially on
+    unrelated requirements.
+  - ansible-galaxy collection - consolidate message when an invalid version is encountered so it's
+    the same regardless of codepath.
 bugfixes:
-  - ansible-galaxy collection - enforce str versions when loading user-requested requirements (https://github.com/ansible/ansible/issues/78067, https://github.com/ansible/ansible/issues/79109).
-  - ansible-galaxy collection - fix installing pre-releases from virtual sources (https://github.com/ansible/ansible/issues/79168).
+  - >
+    ansible-galaxy collection - allow pre-releases without --pre if the pre-release is already installed
+    or if the requirement is a pre-release.
+  - >
+    ansible-galaxy collection - enforce str versions when loading user-requested requirements
+    (https://github.com/ansible/ansible/issues/78067, https://github.com/ansible/ansible/issues/79109).
+  - >
+    ansible-galaxy collection - fix installing pre-releases from virtual sources
+    (https://github.com/ansible/ansible/issues/79168).
