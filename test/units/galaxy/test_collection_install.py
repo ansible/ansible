@@ -806,6 +806,9 @@ def test_install_installed_collection(monkeypatch, tmp_path_factory, galaxy_serv
     mock_get_versions = MagicMock(return_value=['1.2.3', '1.3.0'])
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_get_versions)
 
+    mock_get_dependencies = MagicMock(return_value={})
+    monkeypatch.setattr(collection.galaxy_api_proxy.MultiGalaxyAPIProxy, 'get_collection_dependencies', mock_get_dependencies)
+
     cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection'])
     cli.run()
 
@@ -955,6 +958,9 @@ def test_install_missing_metadata_warning(collection_artifact, monkeypatch):
 
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_get_dependencies = MagicMock(return_value={})
+    monkeypatch.setattr(collection.galaxy_api_proxy.MultiGalaxyAPIProxy, 'get_collection_dependencies', mock_get_dependencies)
 
     for file in [b'MANIFEST.json', b'galaxy.yml']:
         b_path = os.path.join(collection_path, file)
