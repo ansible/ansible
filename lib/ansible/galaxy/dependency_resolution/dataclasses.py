@@ -559,7 +559,7 @@ class _ComputedReqKindsMixin:
         if not self.is_scm:
             version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly."
         else:
-            version_req = f"A string version is required."
+            version_req = "A string version is required."
 
         name = self.fqcn if self.fqcn is not None else self
         version_err = f"Invalid version found for the collection '{name}': {self.ver} ({type(self.ver)}). {version_req}"

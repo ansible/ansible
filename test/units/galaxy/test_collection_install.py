@@ -809,7 +809,7 @@ def test_install_installed_collection(monkeypatch, tmp_path_factory, galaxy_serv
     cli.run()
 
     expected = "Nothing to do. All requested collections are already installed. If you want to reinstall them, consider using `--force`."
-    assert mock_display.mock_calls[1][1][0] == expected
+    assert mock_display.mock_calls[-1][1][0] == expected
 
 
 def test_install_collection(collection_artifact, monkeypatch):
