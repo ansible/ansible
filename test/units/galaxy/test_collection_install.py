@@ -810,7 +810,7 @@ def test_install_installed_collection(monkeypatch, tmp_path_factory, galaxy_serv
     cli.run()
 
     expected = "Nothing to do. All requested collections are already installed. If you want to reinstall them, consider using `--force`."
-    assert mock_display.mock_calls[1][1][0] == expected
+    assert mock_display.mock_calls[-1][1][0] == expected
 
 
 def test_install_collection(collection_artifact, monkeypatch):
@@ -941,9 +941,9 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 1
+    assert len(display_msgs) == 2
 
-    assert display_msgs[0] == 'Nothing to do. All requested collections are already installed. If you want to reinstall them, consider using `--force`.'
+    assert display_msgs[1] == 'Nothing to do. All requested collections are already installed. If you want to reinstall them, consider using `--force`.'
 
     for msg in display_msgs:
         assert 'WARNING' not in msg

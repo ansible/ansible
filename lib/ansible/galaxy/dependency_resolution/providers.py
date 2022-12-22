@@ -401,7 +401,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 try:
                     match.assert_version()
                 except TypeError as ex:
-                    raise ValueError(version_err) from ex
+                    raise ValueError(ex) from ex
                 matches.append(match)
             return matches
 
