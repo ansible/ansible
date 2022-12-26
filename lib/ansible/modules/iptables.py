@@ -148,14 +148,19 @@ options:
             default: rcheck
         seconds:
             description:
-                - Must be used in conjunction with one of the actions C(rcheck) or C(update)
-                - Narrow the match to only happen when the address is in the list and was seen within the last given number of seconds
+                - Must be used in conjunction with one of the actions C(rcheck)
+                  or C(update)
+                - Narrow the match to only happen when the address is in the
+                  list and was seen within the last given number of seconds
             type: str
         hitcount:
             description:
-                - Must be used in conjunction with one of the actions C(rcheck) or C(update)
-                - Narrow the match to only happen when the address is in the list and packets had been received greater than or equal to the given value
-                - This option may be used along with seconds to create an even narrower match requiring a certain number of hits within a specific time frame
+                - Must be used in conjunction with one of the actions C(rcheck)
+                  or C(update)
+                - Narrow the match to only happen when the address is in the
+                  list and packets had been received greater than or equal to the given value
+                - This option may be used along with seconds to create an even
+                  narrower match requiring a certain number of hits within a specific time frame
             type: str
         mask:
             description:
@@ -169,8 +174,11 @@ options:
             default: rsource
         rttl:
             description:
-                - This option may only be used in conjunction with one of the actions C(rcheck) or C(update)
-                - When used, this will narrow the match to only happen when the address is in the list and the  TTL of the current packet matches that of the packet which hit the C(set) action
+                - This option may only be used in conjunction with one of the
+                  actions C(rcheck) or C(update)
+                - When used, this will narrow the match to only happen when the
+                  address is in the list and the  TTL of the current packet
+                  matches that of the packet which hit the C(set) action
             type: bool
             default: False
         reap:
