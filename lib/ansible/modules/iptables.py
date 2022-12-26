@@ -134,7 +134,7 @@ options:
     description:
       - Allows to dynamically create a list of IP addresses
     type: dict
-    version_added: "2.13"
+    version_added: "2.15"
     suboptions:
         name:
             description:
