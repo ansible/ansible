@@ -130,6 +130,55 @@ options:
                 - Flags to be set.
             type: list
             elements: str
+  recent:
+    description:
+      - Allows to dynamically create a list of IP addresses
+    type: dict
+    version_added: "2.13"
+    suboptions:
+        name:
+            description:
+                - Name for the list of IP addresses
+            type: str
+        action:
+            description:
+                - Action for the recent module
+            type: str
+            choices: ['set', 'update', 'rcheck', 'remove']
+            default: rcheck
+        seconds:
+            description:
+                - Must be used in conjunction with one of the actions C(rcheck) or C(update)
+                - Narrow the match to only happen when the address is in the list and was seen within the last given number of seconds
+            type: str
+        hitcount:
+            description:
+                - Must be used in conjunction with one of the actions C(rcheck) or C(update)
+                - Narrow the match to only happen when the address is in the list and packets had been received greater than or equal to the given value
+                - This option may be used along with seconds to create an even narrower match requiring a certain number of hits within a specific time frame
+            type: str
+        mask:
+            description:
+                - Netmask that will be applied to the recent list
+            type: str
+        side:
+            description:
+                - Which side of the IP addresses to add
+            type: str
+            choices: ['rsource', 'rdest']
+            default: rsource
+        rttl:
+            description:
+                - This option may only be used in conjunction with one of the actions C(rcheck) or C(update)
+                - When used, this will narrow the match to only happen when the address is in the list and the  TTL of the current packet matches that of the packet which hit the C(set) action
+            type: bool
+            default: False
+        reap:
+            description:
+                - This option can only be used in conjunction with C(seconds)
+                - When used, this will cause entries older than the last given number of seconds to be purged
+            type: bool
+            default: False
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -541,6 +590,26 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
+
+# Recent module
+- name: Check the recent list 'iptrack' and return if source IP matches
+  ansible.builtin.iptables:
+    chain: CUSTOM
+    recent:
+      name: iptrack
+      action: rcheck
+      seconds: 43200
+      side: rsource
+    jump: RETURN
+
+# When combined with the rule above, IP addresses will only be added when not seen in 12 hours
+- name: Add all IP addresses to a list named 'iptrack'
+  ansible.builtin.iptables:
+    chain: CUSTOM
+    recent:
+      name: iptrack
+      action: set
+      side: rsource
 '''
 
 import re
@@ -583,6 +652,22 @@ def append_tcp_flags(rule, param, flag):
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 
+def append_recent(rule, param):
+    if param:
+        append_match(rule, param, 'recent')
+        append_param(rule, param['name'], '--name', False)
+        append_param(rule, param['mask'], '--mask', False)
+        append_match_flag(rule, 'match', '--' + param['side'], False)
+        append_match_flag(rule, 'match', '--' + param['action'], True)
+        if param['action'] in ['rcheck', 'update']:
+            if 'rttl' in param and param['rttl']:
+                append_match_flag(rule, 'match', '--rttl', False)
+            append_param(rule, param['seconds'], '--seconds', False)
+            if 'seconds' in param and 'reap' in param and param['reap']:
+                append_match_flag(rule, 'match', '--reap', False)
+            append_param(rule, param['hitcount'], '--seconds', False)
+
+
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
         rule.extend([flag])
@@ -618,6 +703,7 @@ def construct_rule(params):
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
+    append_recent(rule, params['recent'])
     append_param(rule, params['jump'], '-j', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
         append_param(rule, params['gateway'], '--gateway', False)
@@ -795,6 +881,17 @@ def main():
                                     'warning', 'notice', 'info', 'debug'],
                            default=None,
                            ),
+            recent=dict(type='dict',
+                        options=dict(
+                            name=dict(type='str'),
+                            action=dict(type='str', default='rcheck', choices=['set', 'rcheck', 'update', 'remove']),
+                            side=dict(type='str', default='rsource', choices=['rsource', 'rdest']),
+                            reap=dict(type='bool', default=False),
+                            rttl=dict(type='bool', default=False),
+                            seconds=dict(type='str'),
+                            hitcount=dict(type='str'),
+                            mask=dict(type='str')
+                        )),
             goto=dict(type='str'),
             in_interface=dict(type='str'),
             out_interface=dict(type='str'),
