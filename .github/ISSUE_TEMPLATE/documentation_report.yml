@@ -106,7 +106,7 @@ body:
     label: Ansible Version
     description: >-
       Paste verbatim output from `ansible --version` below, under
-      the prompt line. Please don't wrap it with tripple backticks — your
+      the prompt line. Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
@@ -131,7 +131,7 @@ body:
     description: >-
       Paste verbatim output from `ansible-config dump --only-changed -t all` below, under the prompt line.
       (if using a version older than ansible-core 2.12 you should omit the '-t all')
-      Please don't wrap it with tripple backticks — your
+      Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
