@@ -31,8 +31,12 @@ def check_blocking_io():
         except Exception:
             continue  # not a real file handle, such as during the import sanity test
 
-        if not os.get_blocking(fd):
-            handles.append(getattr(handle, 'name', None) or '#%s' % fd)
+        try:
+            if not os.get_blocking(fd):
+                handles.append(getattr(handle, 'name', None) or '#%s' % fd)
+        except AttributeError:
+            raise SystemExit('ERROR: Ansible requires blocking IO, but this platform '
+                             'does not have os.get_blocking available')
 
     if handles:
         raise SystemExit('ERROR: Ansible requires blocking IO on stdin/stdout/stderr. '
