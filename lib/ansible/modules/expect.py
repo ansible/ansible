@@ -4,8 +4,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
@@ -113,6 +113,7 @@ import traceback
 PEXPECT_IMP_ERR = None
 try:
     import pexpect
+
     HAS_PEXPECT = True
 except ImportError:
     PEXPECT_IMP_ERR = traceback.format_exc()
@@ -174,10 +175,6 @@ def main():
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
-    if chdir:
-        chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
-
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
@@ -201,6 +198,10 @@ def main():
                 changed=False,
                 rc=0
             )
+
+    if chdir:
+        chdir = os.path.abspath(chdir)
+        os.chdir(chdir)
 
     startd = datetime.datetime.now()
 
