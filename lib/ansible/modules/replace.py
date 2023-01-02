@@ -284,7 +284,10 @@ def main():
         section = contents
 
     mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], section, 0)
+    try:
+        result = re.subn(mre, params['replace'], section, 0)
+    except re.error as s:
+        module.fail_json(msg=str(s))
 
     if result[1] > 0 and section != result[0]:
         if pattern:
