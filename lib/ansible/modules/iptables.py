@@ -166,6 +166,7 @@ options:
             description:
                 - Netmask that will be applied to the recent list
             type: str
+            default: "255.255.255.255"
         side:
             description:
                 - Which side of the IP addresses to add
@@ -898,7 +899,7 @@ def main():
                             rttl=dict(type='bool', default=False),
                             seconds=dict(type='str'),
                             hitcount=dict(type='str'),
-                            mask=dict(type='str')
+                            mask=dict(type='str', default='255.255.255.255')
                         )),
             goto=dict(type='str'),
             in_interface=dict(type='str'),
