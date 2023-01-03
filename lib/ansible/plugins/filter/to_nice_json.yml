@@ -41,7 +41,7 @@ DOCUMENTATION:
       type: bool
   notes:
     - Both I(vault_to_text) and I(preprocess_unsafe) defaulted to C(False) between Ansible 2.9 and 2.12.
-    - 'These parameters to C(json.dumps) will be ignored, they are overriden for internal use: I(cls), I(default), I(indent), I(separators), I(sort_keys).'
+    - 'These parameters to C(json.dumps) will be ignored, they are overridden for internal use: I(cls), I(default), I(indent), I(separators), I(sort_keys).'
 
 EXAMPLES: |
   # dump variable in a template to create a nicely formatted JSON document
