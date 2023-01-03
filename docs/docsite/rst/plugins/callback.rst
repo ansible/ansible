@@ -36,7 +36,7 @@ Most callbacks shipped with Ansible are disabled by default and need to be enabl
 Setting a callback plugin for ``ansible-playbook``
 --------------------------------------------------
 
-You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:
+You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define ``CALLBACK_TYPE = stdout`` in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:
 
 .. code-block:: ini
 
@@ -66,6 +66,25 @@ You can also set this as an environment variable:
 
     export ANSIBLE_LOAD_CALLBACK_PLUGINS=1
 
+
+.. _callback_plugin_types:
+
+Types of callback plugins
+-------------------------
+
+There are three types of callback plugins:
+
+:stdout callback plugins:
+
+  These plugins handle the main console output. Only one of these can be active.
+
+:aggregate callback plugins:
+
+  Aggregate callbacks can add additional console output next to a stdout callback. This can be aggregate information at the end of a playbook run, additional per-task output, or anything else.
+
+:notification callback plugins:
+
+  Notification callbacks inform other applications, services, or systems. This can be anything from logging to databases, informing on errors in Instant Messaging applications, or sending emails when a server is unreachable.
 
 .. _callback_plugin_list:
 
