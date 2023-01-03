@@ -67,6 +67,25 @@ You can also set this as an environment variable:
     export ANSIBLE_LOAD_CALLBACK_PLUGINS=1
 
 
+.. _callback_plugin_types:
+
+Types of callback plugins
+-------------------------
+
+There are three types of callback plugins:
+
+:stdout callback plugins:
+
+  These plugins handle the main console output. Only one of these can be active.
+
+:aggregate callback plugins:
+
+  Aggregate callbacks can add additional console output next to a stdout callback. This can be aggregate information at the end of a playbook run, additional per-task output, or anything else.
+
+:notification callback plugins:
+
+  Notification callbacks inform other applications, services, or systems. This can be anything from logging to databases, informing on errors in Instant Messaging applications, or sending emails when a server is unreachable.
+
 .. _callback_plugin_list:
 
 Plugin list
