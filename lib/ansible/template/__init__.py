@@ -45,7 +45,7 @@ from ansible.errors import (
     AnsibleOptionsError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
@@ -415,8 +415,14 @@ class JinjaPluginIntercept(MutableMapping):
         # cache of resolved plugins
         self._delegatee = delegatee
 
-        # track loaded plugins here as cache above includes 'jinja2' filters but ours should override
-        self._loaded_builtins = set()
+        # check if we loaded buitins
+        for pname in self._delegatee.keys():
+            if pname.startswith('ansible.builtin'):
+                break
+        else:
+            # builtins not loaded, so load em here
+            for plugin in self._pluginloader.all():
+                self._delegatee[plugin.ansible_name] = plugin.j2_function
 
     def __getitem__(self, key):
 
@@ -424,21 +430,26 @@ class JinjaPluginIntercept(MutableMapping):
             raise ValueError('key must be a string, got %s instead' % type(key))
 
         original_exc = None
-        if key not in self._loaded_builtins:
-            plugin = None
-            try:
-                plugin = self._pluginloader.get(key)
-            except (AnsibleError, KeyError) as e:
-                original_exc = e
-            except Exception as e:
-                display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
-                raise e
+        if key not in self._delegatee:
+            if not key.startswith('ansible.builtin.'):
+                # TODO: should this check 'collections' list?
+                ab_key = 'ansible.builtin.%s' % key
+            if ab_key in self._delegatee:
+                key = ab_key
+            else:
+                plugin = None
+                try:
+                    plugin = self._pluginloader.get(key)
+                except (AnsibleError, KeyError) as e:
+                    original_exc = e
+                except Exception as e:
+                    display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
+                    raise e
 
-            # if a plugin was found/loaded
-            if plugin:
-                # set in filter cache and avoid expensive plugin load
-                self._delegatee[key] = plugin.j2_function
-                self._loaded_builtins.add(key)
+                # if a plugin was found/loaded
+                if plugin:
+                    # set in filter cache and avoid expensive plugin load
+                    self._delegatee[key] = plugin.j2_function
 
         # raise template syntax error if we could not find ours or jinja2 one
         try:
