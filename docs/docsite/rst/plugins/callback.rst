@@ -36,7 +36,7 @@ Most callbacks shipped with Ansible are disabled by default and need to be enabl
 Setting a callback plugin for ``ansible-playbook``
 --------------------------------------------------
 
-You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:
+You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define ``CALLBACK_TYPE = stdout`` in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:
 
 .. code-block:: ini
 
