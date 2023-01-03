@@ -419,7 +419,7 @@ class JinjaPluginIntercept(MutableMapping):
 
         # builtins not loaded, so load em here
         for plugin in self._pluginloader.all():
-            self._loaded_bulitins.add(plugin.ansible_name)
+            self._loaded_builtins.add(plugin.ansible_name)
             self._delegatee[plugin.ansible_name] = plugin.j2_function
 
     def __getitem__(self, key):
