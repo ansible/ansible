@@ -95,7 +95,7 @@ If ($null -ne $info) {
         isreadonly = ($attributes -contains "ReadOnly")
         isreg = $false
         isshared = $false
-        nlink = 1  # Number of links to the file (hard links), overriden below if islnk
+        nlink = 1  # Number of links to the file (hard links), overridden below if islnk
         # lnk_target = islnk or isjunction Target of the symlink. Note that relative paths remain relative
         # lnk_source = islnk os isjunction Target of the symlink normalized for the remote filesystem
         hlnk_targets = @()
