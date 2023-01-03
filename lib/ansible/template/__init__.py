@@ -431,25 +431,19 @@ class JinjaPluginIntercept(MutableMapping):
 
         original_exc = None
         if key not in self._delegatee:
-            if not key.startswith('ansible.builtin.'):
-                # TODO: should this check 'collections' list?
-                ab_key = 'ansible.builtin.%s' % key
-            if ab_key in self._delegatee:
-                key = ab_key
-            else:
-                plugin = None
-                try:
-                    plugin = self._pluginloader.get(key)
-                except (AnsibleError, KeyError) as e:
-                    original_exc = e
-                except Exception as e:
-                    display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
-                    raise e
+            plugin = None
+            try:
+                plugin = self._pluginloader.get(key)
+            except (AnsibleError, KeyError) as e:
+                original_exc = e
+            except Exception as e:
+                display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
+                raise e
 
-                # if a plugin was found/loaded
-                if plugin:
-                    # set in filter cache and avoid expensive plugin load
-                    self._delegatee[key] = plugin.j2_function
+            # if a plugin was found/loaded
+            if plugin:
+                # set in filter cache and avoid expensive plugin load
+                self._delegatee[key] = plugin.j2_function
 
         # raise template syntax error if we could not find ours or jinja2 one
         try:
