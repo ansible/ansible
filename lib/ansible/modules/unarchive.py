@@ -427,7 +427,8 @@ class ZipArchive(object):
             unarchived = False
 
         # Get some information related to user/group ownership
-        umask = os.umask(0)
+        # Loose file permission has been replaced with stricter permission
+        umask = os.umask(0o777)
         os.umask(umask)
         systemtype = platform.system()
 
