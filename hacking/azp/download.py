@@ -150,7 +150,8 @@ def download_run(args):
             with open(path, 'w') as metadata_fd:
                 metadata_fd.write(contents)
 
-    timeline_response = requests.get('https://dev.azure.com/ansible/ansible/_apis/build/builds/%s/timeline?api-version=6.0' % args.run)
+    # Warning: The 'requests.get' method does not use any 'timeout' threshold which may cause program to hang indefinitely.
+    timeline_response = requests.get('https://dev.azure.com/ansible/ansible/_apis/build/builds/%s/timeline?api-version=6.0' % args.run, timeout=0.4)
     timeline_response.raise_for_status()
     timeline = timeline_response.json()
     roots = set()
