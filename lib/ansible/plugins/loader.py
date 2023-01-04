@@ -1231,9 +1231,9 @@ class Jinja2Loader(PluginLoader):
             else:
                 break
 
-            # if builtin, we should already have in cache
-            if key.startswith(('ansible.builtin.', 'ansible.legacy.')):
-                return get_with_context_result(self._j2_module_cache.get(key), context)
+        # if builtin, we should already have in cache
+        if key.startswith(('ansible.builtin.', 'ansible.legacy.')):
+            return get_with_context_result(self._j2_module_cache.get(key), context)
 
         try:
             pkg = import_module(acr.n_python_package_name)
