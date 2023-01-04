@@ -403,7 +403,7 @@ class JinjaPluginIntercept(MutableMapping):
         otherwise all plugins would need to be loaded a priori.
 
         NOTE: plugin_loader still loads all 'builtin/legacy' at
-        start so only collection plugins are really at request.
+        first request, so only collection plugins are really at request.
     '''
 
     def __init__(self, delegatee, pluginloader, *args, **kwargs):
@@ -412,9 +412,10 @@ class JinjaPluginIntercept(MutableMapping):
 
         self._pluginloader = pluginloader
 
-        # cache of resolved plugins
+        # cache of resolved plugins from caller
         self._delegatee = delegatee
 
+        # local cache for builtins/legacy
         self._loaded_builtins = set()
 
     def __getitem__(self, key):
