@@ -72,8 +72,11 @@ options:
     filename:
         description:
             - Sets the name of the source list file in sources.list.d.
-              Defaults to a file name based on the repository source url.
-              The .list extension will be automatically added.
+            - Defaults to a file name based on the repository source URL (for example, https://user:pass@packagecloud.io/linz/prod/ubuntu/) following those steps
+            - 1) The URL Scheme is removed -> user:pass@packagecloud.io/linz/prod/ubuntu/
+            - 2) The username and password in the URL are removed -> packagecloud.io/linz/prod/ubuntu/
+            - 3) All contiguous non-alphanumeric(English) characters are removed and replaced with a single underscore -> packagecloud_io_linz_prod_ubuntu
+            - 4) Finally, '.list' is appended and we have the filename -> packagecloud_io_linz_prod_ubuntu.list
         type: str
         version_added: '2.1'
     codename:
