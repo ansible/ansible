@@ -1292,27 +1292,32 @@ class Jinja2Loader(PluginLoader):
                 continue
 
             for plugin_name in plugins.keys():
-                if plugin_name in _PLUGIN_FILTERS[self.package]:
+
+                fqcn = plugin_name
+                collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
+                if not plugin_name.startswith(collection):
+                    fqcn = f"{collection}.{plugin_name}"
+
+                if fqcn in _PLUGIN_FILTERS[self.package] or plugin_name in _PLUGIN_FILTERS[self.package]:
                     display.debug("%s skipped due to a defined plugin filter" % plugin_name)
                     continue
 
-                if plugin_name in found:
-                    display.debug("%s skipped as duplicate" % plugin_name)
+                if fqcn in found:
+                    display.debug("%s skipped as duplicate" % fqcn)
                     continue
 
                 if path_only:
                     result = p_map._original_path
                 else:
-                    # loader class is for the file with multiple plugins, but each plugin now has it's own class
-                    pclass = self._load_jinja2_class()
-                    result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
-                    found.add(plugin_name)
-                    fqcn = plugin_name
-                    collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
-                    if not plugin_name.startswith(collection):
-                        fqcn = f"{collection}.{plugin_name}"
-
-                    self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
+                    if fqcn in self._module_cache:
+                        result = self._module_cache[fqcn]
+                    else:
+                        # loader class is for the file with multiple plugins, but each plugin now has it's own class
+                        pclass = self._load_jinja2_class()
+                        result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
+                        found.add(fqcn)
+                        self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
+                        self._module_cache[fqcn] = result
                 yield result
 
     def _load_jinja2_class(self):
