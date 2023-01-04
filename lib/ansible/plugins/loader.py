@@ -1069,6 +1069,7 @@ class Jinja2Loader(PluginLoader):
 
         super(Jinja2Loader, self).__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=required_base_class)
         self._loaded_j2_file_maps = []
+        self._j2_module_cache = {}
 
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
@@ -1137,19 +1138,22 @@ class Jinja2Loader(PluginLoader):
 
         context = PluginLoadContext()
 
+        # prime cache if empty
+        if not self._j2_module_cache:
+            self.all(*args, **kwargs)
+
+        for known_name in self._j2_module_cache.keys():
+            known_plugin = self._j2_module_cache[known_name]
+            if known_plugin.matches_name([name]):
+                context.resolved = True
+                context.plugin_resolved_name = known_name
+                context.plugin_resolved_path = known_plugin._original_path
+                context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
+                context._resolved_fqcn = known_plugin.ansible_name
+                return get_with_context_result(known_plugin, context)
+
         # avoid collection path for legacy
         name = name.removeprefix('ansible.legacy.')
-
-        if '.' not in name:
-            # Filter/tests must always be FQCN except builtin and legacy
-            for known_plugin in self.all(*args, **kwargs):
-                if known_plugin.matches_name([name]):
-                    context.resolved = True
-                    context.plugin_resolved_name = name
-                    context.plugin_resolved_path = known_plugin._original_path
-                    context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
-                    context._resolved_fqcn = known_plugin.ansible_name
-                    return get_with_context_result(known_plugin, context)
 
         plugin = None
         key, leaf_key = get_fqcr_and_name(name)
@@ -1256,6 +1260,7 @@ class Jinja2Loader(PluginLoader):
                         if plugin:
                             context = plugin_impl.plugin_load_context
                             self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            self._j2_module_cache[fq_name] = plugin
                             break  # go to next file as it can override if dupe (dont break both loops)
 
         except AnsiblePluginRemovedError as apre:
@@ -1309,15 +1314,15 @@ class Jinja2Loader(PluginLoader):
                 if path_only:
                     result = p_map._original_path
                 else:
-                    if fqcn in self._module_cache:
-                        result = self._module_cache[fqcn]
+                    if fqcn in self._j2_module_cache:
+                        result = self._j2_module_cache[fqcn]
                     else:
                         # loader class is for the file with multiple plugins, but each plugin now has it's own class
                         pclass = self._load_jinja2_class()
                         result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
                         found.add(fqcn)
                         self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
-                        self._module_cache[fqcn] = result
+                        self._j2_module_cache[fqcn] = result
                 yield result
 
     def _load_jinja2_class(self):
