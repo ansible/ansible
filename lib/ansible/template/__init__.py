@@ -417,12 +417,13 @@ class JinjaPluginIntercept(MutableMapping):
 
         self._loaded_builtins = set()
 
-        # builtins not loaded, so load em here
-        for plugin in self._pluginloader.all():
-            self._loaded_builtins.add(plugin.ansible_name)
-            self._delegatee[plugin.ansible_name] = plugin.j2_function
-
     def __getitem__(self, key):
+
+        if not self._loaded_builtins:
+            # builtins not loaded, so load em here
+            for plugin in self._pluginloader.all():
+                self._loaded_builtins.add(plugin.ansible_name)
+                self._delegatee[plugin.ansible_name] = plugin.j2_function
 
         if not isinstance(key, string_types):
             raise ValueError('key must be a string, got %s instead' % type(key))
