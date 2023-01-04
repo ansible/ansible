@@ -1320,8 +1320,14 @@ class Jinja2Loader(PluginLoader):
             to access the 'multimap' of filter/tests to function, this is a 'singular' plugin for
             each entry.
         """
+
         class_name = 'AnsibleJinja2%s' % get_plugin_class(self.class_name).capitalize()
-        module = __import__(self.package, fromlist=[class_name])
+
+        # use cached if it exists, otherwise import
+        if self.package in sys.modules and hasattr(sys.modules[self.package], class_name):
+            module = sys.modules[self.package]
+        else:
+            module = __import__(self.package, fromlist=[class_name])
 
         return getattr(module, class_name)
 
