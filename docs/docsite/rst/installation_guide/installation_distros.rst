@@ -104,7 +104,7 @@ You cannot use a Windows system for the Ansible control node. See :ref:`windows_
 
 .. seealso::
 
-    `Installing Ansible on ARch Linux <https://wiki.archlinux.org/title/Ansible#Installation>`_
+    `Installing Ansible on Arch Linux <https://wiki.archlinux.org/title/Ansible#Installation>`_
        Distro-specific installation on Arch Linux
     `Installing Ansible on Clear Linux <https://clearlinux.org/software/bundle/ansible>`_
        Distro-specific installation on Clear Linux
