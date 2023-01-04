@@ -76,13 +76,6 @@
     - ansible_facts["distribution_major_version"] == "7"
     - ansible_facts["distribution"] == "RedHat"
   block:
-    # Need to enable this RHUI repo for RHEL7 testing in AWS, CentOS has Extras
-    # enabled by default and this is not needed there.
-    - name: enable rhel-7-server-rhui-extras-rpms repo for RHEL7
-      command: yum-config-manager --enable rhel-7-server-rhui-extras-rpms
-    - name: update cache to pull repodata
-      yum:
-        update_cache: yes
     - name: install required packages for buildah test
       yum:
         state: present
@@ -137,5 +130,3 @@
         state: absent
         name:
           - buildah
-    - name: disable rhel-7-server-rhui-extras-rpms repo for RHEL7
-      command: yum-config-manager --disable rhel-7-server-rhui-extras-rpms
