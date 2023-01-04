@@ -6,4 +6,4 @@ sphinx-notfound-page
 sphinx-ansible-theme
 straight.plugin
 rstcheck < 4  # match version used in other sanity tests
-antsibull-docs == 1.7.3  # currently approved version
+antsibull-docs == 1.8.2  # currently approved version
