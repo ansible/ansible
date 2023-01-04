@@ -1,0 +1,2 @@
+bugfixes:
+  - jinja plugin loading performance fix, previous fix for listing/loading had removed key caches and created a lot of effort, moved caches not into plugin loader as for other plugins.
