@@ -1,3 +1,8 @@
+- name: Enable RHEL7 extras
+  # EPEL 7 depends on RHEL 7 extras, which is not enabled by default on RHEL.
+  # See: https://docs.fedoraproject.org/en-US/epel/epel-policy/#_policy
+  command: yum-config-manager --enable rhel-7-server-rhui-extras-rpms
+  when: ansible_facts.distribution == 'RedHat' and ansible_facts.distribution_major_version == '7'
 - name: Install EPEL
   yum:
     name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
