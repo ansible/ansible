@@ -33,7 +33,7 @@ Module parameters
 
 All the vcenter_rest modules accept the following arguments:
 
-- ``vcenter_host``
+- ``vcenter_hostname``
 - ``vcenter_username``
 - ``vcenter_password``
 
