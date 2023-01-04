@@ -1077,16 +1077,26 @@ class Jinja2Loader(PluginLoader):
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
 
-        # TODO: handle collection plugin find, see 'get_with_context'
-        # this can really 'find plugin file'
-        plugin = super(Jinja2Loader, self).find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases,
-                                                       collection_list=collection_list)
+        plugin = None
+        names = ['.'.join(cname, name) for cname in collection_list] + [name]
+
+        # check cache
+        for pname in self._j2_module_cache.keys():
+            p = self._j2_module_cache[pname]
+            if p.matches_name(names):
+                plugin = p
+                break
+
+        if not plugin:
+            # cannot do direct find as we need to introspect files, get does this (really get_with_context, but we dont use context here)
+            plugin = self.get(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases, collection_list=collection_list)
 
         # if not found, try loading all non collection plugins and see if this in there
         if not plugin:
-            all_plugins = self.all()
-            plugin = all_plugins.get(name, None)
-
+            for p in self.all():
+                if p.matches_name(names):
+                    plugin = p
+                    break
         return plugin
 
     @property
@@ -1140,7 +1150,7 @@ class Jinja2Loader(PluginLoader):
 
         # prime cache if empty
         if not self._j2_module_cache:
-            self.all(*args, **kwargs)
+            list(self.all(*args, **kwargs))
 
         for known_name in self._j2_module_cache.keys():
             known_plugin = self._j2_module_cache[known_name]
@@ -1148,7 +1158,7 @@ class Jinja2Loader(PluginLoader):
                 context.resolved = True
                 context.plugin_resolved_name = known_name
                 context.plugin_resolved_path = known_plugin._original_path
-                context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
+                context.plugin_resolved_collection = '.'.join(known_name.split('.')[0:1])
                 context._resolved_fqcn = known_plugin.ansible_name
                 return get_with_context_result(known_plugin, context)
 
@@ -1222,7 +1232,7 @@ class Jinja2Loader(PluginLoader):
                 break
 
             # if builtin, we should already have in cache
-            if key.startswith('ansible.builtin.'):
+            if key.startswith(('ansible.builtin.', 'ansible.legacy.')):
                 return get_with_context_result(self._j2_module_cache.get(key), context)
 
         try:
