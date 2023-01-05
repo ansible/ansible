@@ -711,7 +711,7 @@ def main():
     diff = []
     sources_added = set()
     sources_removed = set()
-    if changed:
+    if changed and module._diff:
         sources_added = set(sources_after.keys()).difference(sources_before.keys())
         sources_removed = set(sources_before.keys()).difference(sources_after.keys())
         for filename in set(sources_added.union(sources_removed)):
