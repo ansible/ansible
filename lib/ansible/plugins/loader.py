@@ -1074,6 +1074,7 @@ class Jinja2Loader(PluginLoader):
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
         self._loaded_j2_file_maps = []
+        self._j2_module_cache = {}
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
 
