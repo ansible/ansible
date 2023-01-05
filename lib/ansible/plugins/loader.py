@@ -1232,7 +1232,7 @@ class Jinja2Loader(PluginLoader):
                 break
 
         # if builtin, we should already have in cache
-        if key.startswith(('ansible.builtin.', 'ansible.legacy.')):
+        if key.startswith(C.SYNTHETIC_COLLECTIONS):
             return get_with_context_result(self._j2_module_cache.get(key), context)
 
         try:
