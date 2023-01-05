@@ -72,12 +72,8 @@ options:
     filename:
         description:
             - Sets the name of the source list file in sources.list.d.
-            - Defaults to a file name based on the repository source URL (for example, https://user:pass@packagecloud.io/linz/prod/ubuntu/)
-             following those steps
-            - 1) The URL Scheme is removed -> user:pass@packagecloud.io/linz/prod/ubuntu/
-            - 2) The username and password in the URL are removed -> packagecloud.io/linz/prod/ubuntu/
-            - 3) All contiguous non-alphanumeric(English) characters are removed and replaced with a single underscore -> packagecloud_io_linz_prod_ubuntu
-            - 4) Finally, '.list' is appended and we have the filename -> packagecloud_io_linz_prod_ubuntu.list
+              Defaults to a file name based on the repository source url.
+              The .list extension will be automatically added.
         type: str
         version_added: '2.1'
     codename:
@@ -692,15 +688,17 @@ def main():
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
 
-    if changed and module._diff:
-        diff = []
-        for filename in set(sources_before.keys()).union(sources_after.keys()):
+    diff = []
+    sources_added = set()
+    sources_removed = set()
+    if changed:
+        sources_added = set(sources_after.keys()).difference(sources_before.keys())
+        sources_removed = set(sources_before.keys()).difference(sources_after.keys())
+        for filename in set(sources_added.union(sources_removed)):
             diff.append({'before': sources_before.get(filename, ''),
                          'after': sources_after.get(filename, ''),
                          'before_header': (filename, '/dev/null')[filename not in sources_before],
                          'after_header': (filename, '/dev/null')[filename not in sources_after]})
-    else:
-        diff = {}
 
     if changed and not module.check_mode:
         try:
@@ -732,7 +730,7 @@ def main():
             revert_sources_list(sources_before, sources_after, sourceslist_before)
             module.fail_json(msg=to_native(ex))
 
-    module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
+    module.exit_json(changed=changed, repo=repo, sources_added=sources_added, sources_removed=sources_removed, state=state, diff=diff)
 
 
 if __name__ == '__main__':
