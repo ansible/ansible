@@ -711,14 +711,15 @@ def main():
     diff = []
     sources_added = set()
     sources_removed = set()
-    if changed and module._diff:
+    if changed:
         sources_added = set(sources_after.keys()).difference(sources_before.keys())
         sources_removed = set(sources_before.keys()).difference(sources_after.keys())
-        for filename in set(sources_added.union(sources_removed)):
-            diff.append({'before': sources_before.get(filename, ''),
-                         'after': sources_after.get(filename, ''),
-                         'before_header': (filename, '/dev/null')[filename not in sources_before],
-                         'after_header': (filename, '/dev/null')[filename not in sources_after]})
+        if module._diff:
+            for filename in set(sources_added.union(sources_removed)):
+                diff.append({'before': sources_before.get(filename, ''),
+                             'after': sources_after.get(filename, ''),
+                             'before_header': (filename, '/dev/null')[filename not in sources_before],
+                             'after_header': (filename, '/dev/null')[filename not in sources_after]})
 
     if changed and not module.check_mode:
         try:
