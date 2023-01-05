@@ -1,4 +1,3 @@
 repo_command:
   RedHat7:
-    enable: yum-config-manager --enable REGION-rhel-server-extras rhui-rhel-7-server-rhui-extras-rpms
-    disable: yum-config-manager --disable REGION-rhel-server-extras rhui-rhel-7-server-rhui-extras-rpms
+    enable: yum-config-manager --enable rhel-7-server-rhui-extras-rpms
