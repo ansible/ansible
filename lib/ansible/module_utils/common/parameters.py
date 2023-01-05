@@ -600,7 +600,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         value = parameters[param]
-        if value is None:
+        if value is None and not spec.get('required') and spec.get('default') is None:
             continue
 
         wanted_type = spec.get('type')

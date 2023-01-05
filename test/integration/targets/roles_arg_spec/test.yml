@@ -145,7 +145,10 @@
   hosts: localhost
   gather_facts: false
   vars:
+    c_dict: {}
     c_int: 1
+    c_list: []
+    c_raw: ~
     a_str: "some string"
     a_int: 42
   tasks:
@@ -157,6 +160,126 @@
         include_role:
           name: c
 
+- name: "New play to reset vars: Test nested role including/importing role fails with null required options"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    a_main_spec:
+      a_str:
+        required: true
+        type: "str"
+    c_main_spec:
+      c_int:
+        required: true
+        type: "int"
+      c_list:
+        required: true
+        type: "list"
+      c_dict:
+        required: true
+        type: "dict"
+      c_raw:
+        required: true
+        type: "raw"
+    # role c calls a's main and alternate entrypoints
+    a_str: ''
+    c_dict: {}
+    c_int: 0
+    c_list: []
+    c_raw: ~
+  tasks:
+    # TODO: None does not fail str type conversion. Should it?
+    #- name: test type coercion fails on None for required str
+    #  block:
+    #    - name: "Test import_role of role C (missing a_str)"
+    #      import_role:
+    #        name: c
+    #      vars:
+    #        a_str: ~
+    #    - fail:
+    #        msg: "Should not get here"
+    #  rescue:
+    #    - debug:
+    #        var: ansible_failed_result
+    #    - name: "Validate import_role failure"
+    #      assert:
+    #        that:
+    #          # NOTE: a bug here that prevents us from getting ansible_failed_task
+    #          - ansible_failed_result.argument_errors == [error]
+    #          - ansible_failed_result.argument_spec_data == a_main_spec
+    #      vars:
+    #        error: >-
+    #          argument 'a_str' is of type <class 'NoneType'> and we were unable to convert to str:
+    #          'None' is not a string and conversion is not allowed
+
+    - name: test type coercion fails on None for required int
+      block:
+        - name: "Test import_role of role C (missing c_int)"
+          import_role:
+            name: c
+          vars:
+            c_int: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == c_main_spec
+          vars:
+            error: >-
+              argument 'c_int' is of type <class 'NoneType'> and we were unable to convert to int:
+              <class 'NoneType'> cannot be converted to an int
+
+    - name: test type coercion fails on None for required list
+      block:
+        - name: "Test import_role of role C (missing c_list)"
+          import_role:
+            name: c
+          vars:
+            c_list: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == c_main_spec
+          vars:
+            error: >-
+              argument 'c_list' is of type <class 'NoneType'> and we were unable to convert to list:
+              <class 'NoneType'> cannot be converted to a list
+
+    - name: test type coercion fails on None for required dict
+      block:
+        - name: "Test import_role of role C (missing c_dict)"
+          import_role:
+            name: c
+          vars:
+            c_dict: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == c_main_spec
+          vars:
+            error: >-
+              argument 'c_dict' is of type <class 'NoneType'> and we were unable to convert to dict:
+              <class 'NoneType'> cannot be converted to a dict
 
 - name: "New play to reset vars: Test nested role including/importing role fails"
   hosts: localhost
@@ -171,13 +294,15 @@
         required: true
         type: "int"
 
+    c_int: 100
+    c_list: []
+    c_dict: {}
+    c_raw: ~
   tasks:
       - block:
         - name: "Test import_role of role C (missing a_str)"
           import_role:
             name: c
-          vars:
-            c_int: 100
 
         - fail:
             msg: "Should not get here"
@@ -202,7 +327,6 @@
           include_role:
             name: c
           vars:
-            c_int: 200
             a_str: "some string"
 
         - fail:

@@ -381,7 +381,7 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     if isinstance(value, string_types):
         return value
 
-    if allow_conversion:
+    if allow_conversion:  # and value is not None?
         return to_native(value, errors='surrogate_or_strict')
 
     msg = "'{0!r}' is not a string and conversion is not allowed".format(value)
