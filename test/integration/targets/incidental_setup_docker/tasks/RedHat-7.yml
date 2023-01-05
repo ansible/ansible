@@ -11,12 +11,6 @@
   include_role:
     name: setup_epel
 
-- name: Enable extras repository for RHEL on AWS
-  # RHEL 7.6 uses REGION-rhel-server-extras and RHEL 7.7+ use rhel-7-server-rhui-extras-rpms
-  command: yum-config-manager --enable REGION-rhel-server-extras rhel-7-server-rhui-extras-rpms
-  args:
-    warn: no
-
 # They broke their .repo file, so we set it up ourselves
 - name: Set-up repository
   yum_repository:
