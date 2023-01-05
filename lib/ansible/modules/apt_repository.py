@@ -152,13 +152,13 @@ repo:
   returned: always
   type: str
   sample: "deb https://artifacts.elastic.co/packages/6.x/apt stable main"
-  
+
 sources_added:
   description: List of sources added
   returned: success, sources were added
   type: list
   sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
-  
+
 sources_removed:
   description: List of sources removed
   returned: success, sources were removed
