@@ -688,16 +688,15 @@ def main():
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
 
-    diff = []
-    if changed:
-        sources_added = set(sources_after.keys()).difference(sources_before.keys())
-        sources_removed = set(sources_before.keys()).difference(sources_after.keys())
-        if module._diff:
-            for filename in set(sources_added, sources_removed):
-                diff.append({'before': sources_before.get(filename, ''),
-                             'after': sources_after.get(filename, ''),
-                             'before_header': (filename, '/dev/null')[filename not in sources_before],
-                             'after_header': (filename, '/dev/null')[filename not in sources_after]})
+    if changed and module._diff:
+        diff = []
+        for filename in set(sources_before.keys()).union(sources_after.keys()):
+            diff.append({'before': sources_before.get(filename, ''),
+                         'after': sources_after.get(filename, ''),
+                         'before_header': (filename, '/dev/null')[filename not in sources_before],
+                         'after_header': (filename, '/dev/null')[filename not in sources_after]})
+    else:
+        diff = {}
 
     if changed and not module.check_mode:
         try:
@@ -729,7 +728,7 @@ def main():
             revert_sources_list(sources_before, sources_after, sourceslist_before)
             module.fail_json(msg=to_native(ex))
 
-    module.exit_json(changed=changed, repo=repo, sources_added=sources_added, sources_remove=sources_removed, state=state, diff=diff)
+    module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
 
 if __name__ == '__main__':
