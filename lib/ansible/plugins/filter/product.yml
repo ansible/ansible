@@ -30,7 +30,7 @@ EXAMPLES: |
   repeat_original: "{{ [1,2] | product(repeat=2) }}"
 
   # repeat_product => [ [ 1, "a", 1, "a" ], [ 1, "a", 1, "b" ], [ 1, "a", 2, "a" ], [ 1, "a", 2, "b" ], [ 1, "b", 1, "a" ], [ 1, "b", 1, "b" ], [ 1, "b", 2, "a" ], [ 1, "b", 2, "b" ], [ 2, "a", 1, "a" ], [ 2, "a", 1, "b" ], [ 2, "a", 2, "a" ], [ 2, "a", 2, "b" ], [ 2, "b", 1, "a" ], [ 2, "b", 1, "b" ], [ 2, "b", 2, "a" ], [ 2, "b", 2, "b" ] ]
-  repeat_product:  "{{ [1,2] | product(['a', 'b']) }}"
+  repeat_product:  "{{ [1,2] | product(['a', 'b'], repeat=2) }}"
 
   # domains => [ 'example.com', 'ansible.com', 'redhat.com' ]
   domains: "{{ [ 'example', 'ansible', 'redhat'] | product(['com']) | map('join', '.') }}"
