@@ -97,9 +97,10 @@ Authenticate with Galaxy
 
 Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on the Galaxy website requires authentication in the form of an API key, you must create an account on the Galaxy website.
 
-Log in to the galaxy website and visit https://galaxy.ansible.com/me/preferences and click `show api key`
+#. Log in to the Galaxy website and open the `Preferences <https://galaxy.ansible.com/me/preferences>`_ view.
+#. Select **Show API key** and then copy it.
 
-Put this token in the `/home/<username>/.ansible/galaxy_token` file.
+#. Save your token in the `.ansible/galaxy_token` file.
 
 
 Import a role
