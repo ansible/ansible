@@ -28,5 +28,5 @@ as well as the additional Python versions supported only on targets:
 .. note::
 
    Ansible Collections can be
-   `configured <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/config/config.yml>_`
+   `configured <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/config/config.yml>`_
    to support a subset of the target-only Python versions.
