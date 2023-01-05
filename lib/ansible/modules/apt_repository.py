@@ -158,12 +158,14 @@ sources_added:
   returned: success, sources were added
   type: list
   sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
+  version_added: "2.15"
 
 sources_removed:
   description: List of sources removed
   returned: success, sources were removed
   type: list
   sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
+  version_added: "2.15"
 '''
 
 import copy
