@@ -4,7 +4,9 @@ source ../collection/setup.sh
 
 set -eux
 
-ansible-test sanity --test validate-modules --color --truncate 0 "${@}"
+ansible-test sanity --test validate-modules --color --truncate 0 --failure-ok --lint "${@}" 1> actual-stdout.txt 2> actual-stderr.txt
+diff -u "${TEST_DIR}/expected.txt" actual-stdout.txt
+grep -f "${TEST_DIR}/expected.txt" actual-stderr.txt
 
 cd ../ps_only
 

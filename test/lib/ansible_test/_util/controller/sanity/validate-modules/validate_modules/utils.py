@@ -154,11 +154,9 @@ def parse_yaml(value, lineno, module, name, load_all=False, ansible_loader=False
         if load_all:
             data = list(data)
     except yaml.MarkedYAMLError as e:
-        e.problem_mark.line += lineno - 1
-        e.problem_mark.name = '%s.%s' % (module, name)
         errors.append({
             'msg': '%s is not valid YAML' % name,
-            'line': e.problem_mark.line + 1,
+            'line': e.problem_mark.line + lineno,
             'column': e.problem_mark.column + 1
         })
         traces.append(e)
