@@ -110,7 +110,7 @@ class BecomeModule(BecomeBase):
                         # handle -XnxxX flags only
                         flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
                     reflag.append(flag)
-                flags = ' '.join((reflag)
+                flags = ' '.join(reflag)
 
             prompt = '-p "%s"' % (self.prompt)
 
