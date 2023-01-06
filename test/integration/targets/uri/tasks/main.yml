@@ -638,9 +638,18 @@
 - assert:
     that:
       - result['set_cookie'] == 'Foo=bar, Baz=qux'
-      # Python sorts cookies in order of most specific (ie. longest) path first
+      # Python 3.10 and earlier sorts cookies in order of most specific (ie. longest) path first
       # items with the same path are reversed from response order
       - result['cookies_string'] == 'Baz=qux; Foo=bar'
+  when: ansible_python_version is version('3.11', '<')
+
+- assert:
+    that:
+      - result['set_cookie'] == 'Foo=bar, Baz=qux'
+      # Python 3.11 no longer sorts cookies.
+      # See: https://github.com/python/cpython/issues/86232
+      - result['cookies_string'] == 'Foo=bar; Baz=qux'
+  when: ansible_python_version is version('3.11', '>=')
 
 - name: Write out netrc template
   template:
