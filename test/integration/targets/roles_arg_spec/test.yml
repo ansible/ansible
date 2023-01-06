@@ -188,7 +188,8 @@
     c_list: []
     c_raw: ~
   tasks:
-    # TODO: None does not fail str type conversion. Should it?
+    # TODO: Uncomment once there is a way to turn off type conversion
+    # See https://github.com/ansible/ansible/issues/77159
     #- name: test type coercion fails on None for required str
     #  block:
     #    - name: "Test import_role of role C (missing a_str)"
