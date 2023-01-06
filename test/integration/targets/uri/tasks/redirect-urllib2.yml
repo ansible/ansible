@@ -237,7 +237,7 @@
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: urllib2
     return_content: yes
-    method: GET
+    method: HEAD
   ignore_errors: yes
   register: http_308_head
 
@@ -250,6 +250,23 @@
     - http_308_head.redirected == false
     - http_308_head.status == 308
     - http_308_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
+  # Python 3.10 and earlier do not support HTTP 308 responses.
+  # See: https://github.com/python/cpython/issues/84501
+  when: ansible_python_version is version('3.11', '<')
+
+# NOTE: The HTTP HEAD turns into an HTTP GET
+- assert:
+    that:
+    - http_308_head is successful
+    - http_308_head.json.data == ''
+    - http_308_head.json.method == 'GET'
+    - http_308_head.json.url == 'https://{{ httpbin_host }}/anything'
+    - http_308_head.redirected == true
+    - http_308_head.status == 200
+    - http_308_head.url == 'https://{{ httpbin_host }}/anything'
+  # Python 3.11 introduced support for HTTP 308 responses.
+  # See: https://github.com/python/cpython/issues/84501
+  when: ansible_python_version is version('3.11', '>=')
 
 # FIXME: This is fixed in https://github.com/ansible/ansible/pull/36809
 - name: Test HTTP 308 using GET
@@ -270,6 +287,22 @@
     - http_308_get.redirected == false
     - http_308_get.status == 308
     - http_308_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
+  # Python 3.10 and earlier do not support HTTP 308 responses.
+  # See: https://github.com/python/cpython/issues/84501
+  when: ansible_python_version is version('3.11', '<')
+
+- assert:
+    that:
+    - http_308_get is successful
+    - http_308_get.json.data == ''
+    - http_308_get.json.method == 'GET'
+    - http_308_get.json.url == 'https://{{ httpbin_host }}/anything'
+    - http_308_get.redirected == true
+    - http_308_get.status == 200
+    - http_308_get.url == 'https://{{ httpbin_host }}/anything'
+  # Python 3.11 introduced support for HTTP 308 responses.
+  # See: https://github.com/python/cpython/issues/84501
+  when: ansible_python_version is version('3.11', '>=')
 
 # FIXME: This is fixed in https://github.com/ansible/ansible/pull/36809
 - name: Test HTTP 308 using POST
