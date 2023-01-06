@@ -317,6 +317,7 @@ EXAMPLES = '''
   ansible.builtin.dnf:
     name: "*"
     state: latest
+    update_only: true
 
 - name: Install the nginx rpm from a remote repo
   ansible.builtin.dnf:
