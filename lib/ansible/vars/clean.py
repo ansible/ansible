@@ -131,14 +131,15 @@ def clean_facts(facts):
     # remove common connection vars
     remove_keys.update(fact_keys.intersection(C.COMMON_CONNECTION_VARS))
 
-    # next we remove any connection plugin specific vars
-    for conn_path in connection_loader.all(path_only=True):
-        conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-        re_key = re.compile('^ansible_%s_' % re.escape(conn_name))
-        for fact_key in fact_keys:
-            # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
-            if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
-                remove_keys.add(fact_key)
+    # FIXME: this is busted for collections and incredibly expensive since it's not cached
+    # # next we remove any connection plugin specific vars
+    # for conn_path in connection_loader.all(path_only=True):
+    #     conn_name = os.path.splitext(os.path.basename(conn_path))[0]
+    #     re_key = re.compile('^ansible_%s_' % re.escape(conn_name))
+    #     for fact_key in fact_keys:
+    #         # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
+    #         if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
+    #             remove_keys.add(fact_key)
 
     # remove some KNOWN keys
     for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:

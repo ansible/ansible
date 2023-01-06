@@ -63,7 +63,7 @@ from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
 FOUND = {}  # type: dict[str, list[str]]
-
+NAK = set()
 
 class VarsModule(BaseVarsPlugin):
 
@@ -91,11 +91,18 @@ class VarsModule(BaseVarsPlugin):
                 try:
                     found_files = []
                     # load vars
-                    b_opath = os.path.realpath(to_bytes(os.path.join(self._basedir, subdir)))
+                    # FIXME: calling realpath here is very expensive for the likely benefit we get; normalize parent paths earlier and/or ignore entirely
+                    #b_opath = os.path.realpath(to_bytes(os.path.join(self._basedir, subdir)))
+                    b_opath = to_bytes(os.path.join(self._basedir, subdir))
                     opath = to_text(b_opath)
+                    if cache and opath in NAK:
+                        continue
                     key = '%s.%s' % (entity.name, opath)
                     if cache and key in FOUND:
                         found_files = FOUND[key]
+                    elif cache and key in NAK:
+                        # cached "not there", don't scan again
+                        continue
                     else:
                         # no need to do much if path does not exist for basedir
                         if os.path.exists(b_opath):
@@ -105,6 +112,11 @@ class VarsModule(BaseVarsPlugin):
                                 FOUND[key] = found_files
                             else:
                                 self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                                # cache non-directory matches
+                                NAK.add(opath)
+                        else:
+                            # cache missing dirs so we don't have to keep looking for things beneath them
+                            NAK.add(opath)
 
                     for found in found_files:
                         new_data = loader.load_from_file(found, cache=True, unsafe=True)

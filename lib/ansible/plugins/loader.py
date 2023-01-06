@@ -235,6 +235,8 @@ class PluginLoader:
 
         self._searched_paths = set()
 
+        self._aggressive_cache = dict()
+
     @property
     def type(self):
         return AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir)
@@ -926,7 +928,9 @@ class PluginLoader:
 
             display.debug(msg)
 
-    def all(self, *args, **kwargs):
+
+
+    def all(self, *args, aggressive_cache=False, **kwargs):
         '''
         Iterate through all plugins of this type, in configured paths (no collections)
 
@@ -970,13 +974,20 @@ class PluginLoader:
         all_matches = []
         found_in_cache = True
 
-        legacy_excluding_builtin = set()
-        for path_with_context in self._get_paths_with_context():
-            matches = glob.glob(to_native(os.path.join(path_with_context.path, "*.py")))
-            if not path_with_context.internal:
-                legacy_excluding_builtin.update(matches)
-            # we sort within each path, but keep path precedence from config
-            all_matches.extend(sorted(matches, key=os.path.basename))
+        if not aggressive_cache or not self._aggressive_cache:
+            legacy_excluding_builtin = set()
+            for path_with_context in self._get_paths_with_context():
+                matches = glob.glob(to_native(os.path.join(path_with_context.path, "*.py")))
+                if not path_with_context.internal:
+                    legacy_excluding_builtin.update(matches)
+                # we sort within each path, but keep path precedence from config
+                all_matches.extend(sorted(matches, key=os.path.basename))
+
+            self._aggressive_cache['all_matches'] = all_matches
+            self._aggressive_cache['legacy_excluding_builtin'] = legacy_excluding_builtin
+        elif aggressive_cache and self._aggressive_cache:
+            all_matches = self._aggressive_cache['all_matches']
+            legacy_excluding_builtin = self._aggressive_cache['legacy_excluding_builtin']
 
         loaded_modules = set()
         for path in all_matches:

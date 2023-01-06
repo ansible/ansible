@@ -66,6 +66,9 @@ def _validate_mutable_mappings(a, b):
     # If this becomes generally needed, change the signature to operate on
     # a variable number of arguments instead.
 
+    # FIXME: find a cheaper or earlier solution to this; the isinstance is incredibly expensive and gets called millions of times!
+    return
+
     if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
         myvars = []
         for x in [a, b]:
