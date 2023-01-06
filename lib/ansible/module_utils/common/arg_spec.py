@@ -12,6 +12,7 @@ from ansible.module_utils.common.parameters import (
     _get_legal_inputs,
     _get_unsupported_parameters,
     _handle_aliases,
+    _list_deprecations,
     _list_no_log_values,
     _set_defaults,
     _validate_argument_types,
@@ -31,6 +32,7 @@ from ansible.module_utils.common.validation import (
 from ansible.module_utils.errors import (
     AliasError,
     AnsibleValidationErrorMultiple,
+    DeprecationError,
     MutuallyExclusiveError,
     NoLogError,
     RequiredDefaultError,
@@ -205,6 +207,11 @@ class ArgumentSpecValidator:
             result.errors.append(NoLogError(to_native(te)))
 
         try:
+            result._deprecations.extend(_list_deprecations(self.argument_spec, result._validated_parameters))
+        except TypeError as te:
+            result.errors.append(DeprecationError(to_native(te)))
+
+        try:
             result._unsupported_parameters.update(
                 _get_unsupported_parameters(
                     self.argument_spec,
@@ -285,9 +292,14 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
         for d in result._deprecations:
-            deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
-                      version=d.get('version'), date=d.get('date'),
-                      collection_name=d.get('collection_name'))
+            if 'name' in d:
+                deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
+                          version=d.get('version'), date=d.get('date'),
+                          collection_name=d.get('collection_name'))
+            if 'msg' in d:
+                deprecate(d['msg'],
+                          version=d.get('version'), date=d.get('date'),
+                          collection_name=d.get('collection_name'))
 
         for w in result._warnings:
             warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))
