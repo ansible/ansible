@@ -1,0 +1,5 @@
+plugins/modules/invalid_yaml_syntax.py:0:0: deprecation-mismatch: "meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.
+plugins/modules/invalid_yaml_syntax.py:0:0: missing-documentation: No DOCUMENTATION provided
+plugins/modules/invalid_yaml_syntax.py:8:15: documentation-syntax-error: DOCUMENTATION is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:12:15: invalid-examples: EXAMPLES is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:16:15: return-syntax-error: RETURN is not valid YAML
