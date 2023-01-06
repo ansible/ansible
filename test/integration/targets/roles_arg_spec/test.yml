@@ -188,30 +188,28 @@
     c_list: []
     c_raw: ~
   tasks:
-    # TODO: Uncomment once there is a way to turn off type conversion
-    # See https://github.com/ansible/ansible/issues/77159
-    #- name: test type coercion fails on None for required str
-    #  block:
-    #    - name: "Test import_role of role C (missing a_str)"
-    #      import_role:
-    #        name: c
-    #      vars:
-    #        a_str: ~
-    #    - fail:
-    #        msg: "Should not get here"
-    #  rescue:
-    #    - debug:
-    #        var: ansible_failed_result
-    #    - name: "Validate import_role failure"
-    #      assert:
-    #        that:
-    #          # NOTE: a bug here that prevents us from getting ansible_failed_task
-    #          - ansible_failed_result.argument_errors == [error]
-    #          - ansible_failed_result.argument_spec_data == a_main_spec
-    #      vars:
-    #        error: >-
-    #          argument 'a_str' is of type <class 'NoneType'> and we were unable to convert to str:
-    #          'None' is not a string and conversion is not allowed
+    - name: test type coercion fails on None for required str
+      block:
+        - name: "Test import_role of role C (missing a_str)"
+          import_role:
+            name: c
+          vars:
+            a_str: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == a_main_spec
+          vars:
+            error: >-
+              argument 'a_str' is of type <class 'NoneType'> and we were unable to convert to str:
+              'None' is not a string and conversion is not allowed
 
     - name: test type coercion fails on None for required int
       block:

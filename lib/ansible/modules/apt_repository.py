@@ -666,9 +666,6 @@ def main():
             # we've done all we can do; just tell the user it's busted and get out
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-    if not repo:
-        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
-
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module)
     else:

@@ -224,7 +224,7 @@
 - assert:
     that:
       - result is failed
-      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+      - result.msg.startswith("argument 'repo' is of type <class 'NoneType'> and we were unable to convert to str")
 
 - name: Test apt_repository with an empty value for repo
   apt_repository:
