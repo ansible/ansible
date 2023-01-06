@@ -110,12 +110,12 @@ class BecomeModule(BecomeBase):
                         # handle -XnxxX flags only
                         flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
                     reflag.append(flag)
-                flags = ' '.join(reflag)
+                flags = shlex.join(reflag)
 
-            prompt = '-p "%s"' % (self.prompt)
+            prompt = '-p %s' % shlex.quote(self.prompt)
 
         user = self.get_option('become_user') or ''
         if user:
-            user = '-u %s' % (user)
+            user = '-u %s' % shlex.quote(user)
 
-        return shlex.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])
+        return ' '.join([becomecmd, flags, prompt, user, shlex.quote(self._build_success_command(cmd, shell))])
