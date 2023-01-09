@@ -154,7 +154,7 @@ def _get_legal_inputs(argument_spec, parameters, aliases=None):
     return list(aliases.keys()) + list(argument_spec.keys())
 
 
-def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None):
+def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None, store_supported=None):
     """Check keys in parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
     they will be generated using the argument_spec.
@@ -181,6 +181,16 @@ def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, op
                 context = tuple(options_context + [k])
 
             unsupported_parameters.add(context)
+
+            if store_supported is not None:
+                supported_aliases = _handle_aliases(argument_spec, parameters)
+                supported_params = []
+                for option in legal_inputs:
+                    if option in supported_aliases:
+                        continue
+                    supported_params.append(option)
+
+                store_supported.update({context: (supported_params, supported_aliases)})
 
     return unsupported_parameters
 
@@ -686,7 +696,16 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
             errors.append(ArgumentTypeError(msg))
 
 
-def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
+def _validate_sub_spec(
+    argument_spec,
+    parameters,
+    prefix="",
+    options_context=None,
+    errors=None,
+    no_log_values=None,
+    unsupported_parameters=None,
+    supported_parameters=None,
+):
     """Validate sub argument spec.
 
     This function is recursive.
@@ -703,6 +722,8 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
 
     if unsupported_parameters is None:
         unsupported_parameters = set()
+    if supported_parameters is None:
+        supported_parameters = dict()
 
     for param, value in argument_spec.items():
         wanted = value.get('type')
@@ -756,7 +777,15 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                     errors.append(NoLogError(to_native(te)))
 
                 legal_inputs = _get_legal_inputs(sub_spec, sub_parameters, options_aliases)
-                unsupported_parameters.update(_get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
+                unsupported_parameters.update(
+                    _get_unsupported_parameters(
+                        sub_spec,
+                        sub_parameters,
+                        legal_inputs,
+                        options_context,
+                        store_supported=supported_parameters,
+                    )
+                )
 
                 try:
                     check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
@@ -782,7 +811,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 no_log_values.update(_set_defaults(sub_spec, sub_parameters))
 
                 # Handle nested specs
-                _validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
+                _validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters, supported_parameters)
 
             options_context.pop()
 
