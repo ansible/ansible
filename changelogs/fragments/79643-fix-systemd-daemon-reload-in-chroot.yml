@@ -1,0 +1,2 @@
+bugfixes:
+  - systemd - daemon-reload and daemon-reexec ignore errors when running in a chroot (https://github.com/ansible/ansible/pull/79643)
