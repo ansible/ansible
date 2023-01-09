@@ -92,6 +92,65 @@
     - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
     - (init_custom_path_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
 
+- name: test using a custom skeleton for collection init
+  block:
+    - name: create skeleton directories
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton/{{ item }}"
+        state: directory
+      loop:
+        - custom_skeleton
+        - custom_skeleton/plugins
+        - inventory
+
+    - name: create files
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton/{{ item }}"
+        state: touch
+      loop:
+        - inventory/foo.py
+        - galaxy.yml
+
+    - name: create symlinks
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton/{{ item.link }}"
+        src: "{{ galaxy_dir }}/scratch/skeleton/{{ item.source }}"
+        state: link
+      loop:
+        - link: custom_skeleton/plugins/inventory
+          source: inventory
+        - link: custom_skeleton/galaxy.yml
+          source: galaxy.yml
+
+    - name: initialize a collection using the skeleton
+      command: ansible-galaxy collection init ansible_test.my_collection {{ init_path }} {{ skeleton }}
+      vars:
+        init_path: '--init-path {{ galaxy_dir }}/scratch/skeleton'
+        skeleton: '--collection-skeleton {{ galaxy_dir }}/scratch/skeleton/custom_skeleton'
+
+    - name: stat expected collection contents
+      stat:
+        path: "{{ galaxy_dir }}/scratch/skeleton/ansible_test/my_collection/{{ item }}"
+      register: stat_result
+      loop:
+        - plugins
+        - plugins/inventory
+        - galaxy.yml
+        - plugins/inventory/foo.py
+
+    - assert:
+        that:
+          - stat_result.results[0].stat.isdir
+          - stat_result.results[1].stat.islnk
+          - stat_result.results[2].stat.islnk
+          - stat_result.results[3].stat.isreg
+
+  always:
+    - name: cleanup
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton"
+        state: absent
+
 - name: create collection for ignored files and folders
   command: ansible-galaxy collection init ansible_test.ignore
   args:
