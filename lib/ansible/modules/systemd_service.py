@@ -391,13 +391,19 @@ def main():
     if module.params['daemon_reload'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+            else:
+                module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
         if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
+            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+            else:
+                module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False
