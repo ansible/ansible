@@ -264,11 +264,8 @@ class ArgumentSpecValidator:
             if supported_aliases:
                 aliases_string = ", ".join(supported_aliases)
                 supported_string += " (%s)" % aliases_string
-            if kwargs.get('validate_role_argument_spec'):
-                msg = "{0} is not a supported parameter. Supported parameters include: {1}.".format(unsupported_string, supported_string)
-            else:
-                # AnsibleModule modifies the error message
-                msg = "{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)
+
+            msg = "{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)
             result.errors.append(UnsupportedError(msg))
 
         return result

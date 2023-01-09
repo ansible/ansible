@@ -194,4 +194,4 @@
                  - got_unexpected in ansible_failed_result.argument_errors
              vars:
                missing_required: "missing required arguments: third_level found in multi_level_option -> second_level"
-               got_unexpected: "multi_level_option.second_level.not_a_supported_suboption is not a supported parameter. Supported parameters include: third_level."
+               got_unexpected: "multi_level_option.second_level.not_a_supported_suboption. Supported parameters include: third_level."
