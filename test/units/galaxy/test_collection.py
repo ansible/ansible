@@ -323,17 +323,17 @@ def test_validate_certs(global_ignore_certs, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "ignore_certs_cli,ignore_certs_cfg",
+    ["ignore_certs_cli", "ignore_certs_cfg", "expected_validate_certs"],
     [
-        (None, None),
-        (None, True),
-        (None, False),
-        (True, None),
-        (True, True),
-        (True, False),
+        (None, None, True),
+        (None, True, False),
+        (None, False, True),
+        (True, None, False),
+        (True, True, False),
+        (True, False, False),
     ]
 )
-def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, monkeypatch):
+def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, expected_validate_certs, monkeypatch):
     cli_args = [
         'ansible-galaxy',
         'collection',
@@ -353,23 +353,21 @@ def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, monk
     galaxy_cli.run()
 
     assert len(galaxy_cli.api_servers) == 1
-    validate_certs = (False if ignore_certs_cli else not ignore_certs_cfg if ignore_certs_cfg is not None else True)
-    assert galaxy_cli.api_servers[0].validate_certs == validate_certs
+    assert galaxy_cli.api_servers[0].validate_certs == expected_validate_certs
 
 
 @pytest.mark.parametrize(
-    # False/True/omitted, True/omitted
-    "ignore_certs_cli,ignore_certs_cfg",
+    ["ignore_certs_cli", "ignore_certs_cfg", "expected_server2_validate_certs", "expected_server3_validate_certs"],
     [
-        (None, None),
-        (None, True),
-        (None, False),
-        (True, None),
-        (True, True),
-        (True, False),
+        (None, None, True, True),
+        (None, True, True, False),
+        (None, False, True, True),
+        (True, None, False, False),
+        (True, True, False, False),
+        (True, False, False, False),
     ]
 )
-def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, monkeypatch):
+def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, expected_server2_validate_certs, expected_server3_validate_certs, monkeypatch):
     server_names = ['server1', 'server2', 'server3']
     cfg_lines = [
         "[galaxy]",
@@ -394,23 +392,23 @@ def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, monkey
     if ignore_certs_cfg is not None:
         monkeypatch.setattr(C, 'GALAXY_IGNORE_CERTS', ignore_certs_cfg)
 
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', server_names)
+
     with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
         tmp_file.write(to_bytes('\n'.join(cfg_lines), errors='surrogate_or_strict'))
         tmp_file.flush()
 
-        with patch.object(C, 'GALAXY_SERVER_LIST', server_names):
-            with patch.object(C.config, '_config_file', tmp_file.name):
-                C.config._parse_config_file()
-
-                galaxy_cli = GalaxyCLI(args=cli_args)
-                mock_execute_install = MagicMock()
-                monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
-                galaxy_cli.run()
+        monkeypatch.setattr(C.config, '_config_file', tmp_file.name)
+        C.config._parse_config_file()
+        galaxy_cli = GalaxyCLI(args=cli_args)
+        mock_execute_install = MagicMock()
+        monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+        galaxy_cli.run()
 
     # (not) --ignore-certs > server's validate_certs > (not) GALAXY_IGNORE_CERTS > True
     assert galaxy_cli.api_servers[0].validate_certs is False
-    assert galaxy_cli.api_servers[1].validate_certs is (False if ignore_certs_cli else True)
-    assert galaxy_cli.api_servers[2].validate_certs is (False if ignore_certs_cli else not ignore_certs_cfg if ignore_certs_cfg is not None else True)
+    assert galaxy_cli.api_servers[1].validate_certs is expected_server2_validate_certs
+    assert galaxy_cli.api_servers[2].validate_certs is expected_server3_validate_certs
 
 
 def test_build_collection_no_galaxy_yaml():
