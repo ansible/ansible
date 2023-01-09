@@ -87,10 +87,10 @@ options:
     password:
         description:
             - Optionally set the user's password hash to this value.
-            - Do B(not) put the actual password into this field.
+            - B(Linux:) Do not enter password in cleartext.
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate the hash of a password.
-            - On macOS systems, this value has to be cleartext. Beware of security issues.
+            - B(macOS:) This value has to be cleartext. Beware of security issues.
             - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
             - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
         type: str
