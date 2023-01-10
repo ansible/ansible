@@ -97,13 +97,21 @@ Add-CSharpType -References @(Get-Content -LiteralPath $manifest.ansible_basic -R
 
 $powershell.AddScript($module_code) > $null
 $powershell.Invoke() > $null
+$arg_spec = $powershell.Runspace.SessionStateProxy.GetVariable('ansibleTestArgSpec')
 
-if ($powershell.HadErrors) {
-    $powershell.Streams.Error
+if (-not $arg_spec) {
+    $err = $powershell.Streams.Error
+    if ($err) {
+        $err
+    }
+    else {
+        "Unknown error trying to get PowerShell arg spec"
+    }
+
     exit 1
 }
 
-$arg_spec = $powershell.Runspace.SessionStateProxy.GetVariable('ansibleTestArgSpec')
+
 Resolve-CircularReference -Hash $arg_spec
 
 ConvertTo-Json -InputObject $arg_spec -Compress -Depth 99
