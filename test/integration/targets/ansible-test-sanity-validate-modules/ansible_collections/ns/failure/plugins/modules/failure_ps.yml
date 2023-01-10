@@ -1,0 +1,31 @@
+# Copyright (c) 2022 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: failure_ps
+  short_description: Short description for failure_ps module
+  description:
+  - Description for failure_ps module
+  options:
+    test:
+      description:
+      - Description for test module option
+      type: str
+      choices:
+      - foo
+      - bar
+      default: foo
+  author:
+  - Ansible Core Team
+
+EXAMPLES: |
+  - name: example for failure_ps
+    ns.col.failure_ps:
+      test: bar
+
+RETURN:
+  test:
+    description: The test return value
+    returned: always
+    type: str
+    sample: abc
