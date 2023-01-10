@@ -11,6 +11,7 @@ import fnmatch
 import functools
 import json
 import os
+import pathlib
 import queue
 import re
 import shutil
@@ -83,6 +84,7 @@ if t.TYPE_CHECKING:
     FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
 import ansible.constants as C
+from ansible.compat.importlib_resources import files
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
@@ -1402,36 +1404,75 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
     return collection_output
 
 
-def find_existing_collections(path, artifacts_manager):
+def _normalize_collection_path(path):
+    str_path = path.as_posix() if isinstance(path, pathlib.Path) else path
+    return pathlib.Path(
+        # This is annoying, but GalaxyCLI._resolve_path did it
+        os.path.expandvars(str_path)
+    ).expanduser().absolute()
+
+
+def find_existing_collections(path_filter, artifacts_manager, namespace_filter=None, collection_filter=None, dedupe=True):
     """Locate all collections under a given path.
 
     :param path: Collection dirs layout search path.
     :param artifacts_manager: Artifacts manager.
     """
-    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if files is None:
+        raise AnsibleError('importlib_resources is not installed and is required')
 
-    # FIXME: consider using `glob.glob()` to simplify looping
-    for b_namespace in os.listdir(b_path):
-        b_namespace_path = os.path.join(b_path, b_namespace)
-        if os.path.isfile(b_namespace_path):
+    if path_filter and not is_sequence(path_filter):
+        path_filter = [path_filter]
+
+    paths = set()
+    for path in files('ansible_collections').glob('*/*/'):
+        path = _normalize_collection_path(path)
+        if not path.is_dir():
+            continue
+        if path_filter:
+            for pf in path_filter:
+                try:
+                    path.relative_to(_normalize_collection_path(pf))
+                except ValueError:
+                    continue
+                break
+            else:
+                continue
+        paths.add(path)
+
+    seen = set()
+    for path in paths:
+        namespace = path.parent.name
+        name = path.name
+        if namespace_filter and namespace != namespace_filter:
+            continue
+        if collection_filter and name != collection_filter:
             continue
 
-        # FIXME: consider feeding b_namespace_path to Candidate.from_dir_path to get subdirs automatically
-        for b_collection in os.listdir(b_namespace_path):
-            b_collection_path = os.path.join(b_namespace_path, b_collection)
-            if not os.path.isdir(b_collection_path):
-                continue
-
+        if dedupe:
             try:
-                req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
-            except ValueError as val_err:
-                raise_from(AnsibleError(val_err), val_err)
+                collection_path = files(f'ansible_collections.{namespace}.{name}')
+            except ImportError:
+                continue
+            if collection_path in seen:
+                continue
+            seen.add(collection_path)
+        else:
+            collection_path = path
 
-            display.vvv(
-                u"Found installed collection {coll!s} at '{path!s}'".
-                format(coll=to_text(req), path=to_text(req.src))
-            )
-            yield req
+        b_collection_path = to_bytes(collection_path.as_posix())
+
+        try:
+            req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
+        except ValueError as val_err:
+            display.warning(f'{val_err}')
+            continue
+
+        display.vvv(
+            u"Found installed collection {coll!s} at '{path!s}'".
+            format(coll=to_text(req), path=to_text(req.src))
+        )
+        yield req
 
 
 def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
