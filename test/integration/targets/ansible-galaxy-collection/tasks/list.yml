@@ -137,7 +137,7 @@
   register: list_result_error
   ignore_errors: True
   environment:
-    ANSIBLE_COLLECTIONS_PATH: ""
+    ANSIBLE_COLLECTIONS_PATH: "i_dont_exist"
 
 - assert:
     that:
