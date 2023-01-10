@@ -81,7 +81,7 @@ A convenient way of requiring a variable to be overridden is to give it an undef
 .. code-block:: yaml+jinja
 
     galaxy_url: "https://galaxy.ansible.com"
-    galaxy_api_key: {{ undef(hint="You must specify your Galaxy API key") }}
+    galaxy_api_key: "{{ undef(hint='You must specify your Galaxy API key') }}"
 
 Defining different values for true/false/null (ternary)
 =======================================================
