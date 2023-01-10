@@ -81,7 +81,7 @@ Become a collection maintainer
 
 If you are a code contributor to a collection, you can get extended permissions in the repository and become a maintainer. A collection maintainer is a contributor trusted by the community who makes significant and regular contributions to the project and showed themselves as a specialist in the related area. See :ref:`maintainers` for details.
 
-For some collections that use the `collection bot <https://github.com/ansible-community/collection_bot>`_, such as  `community.general <https://github.com/ansible-collections/community.general>`_ and `community.network <https://github.com/ansible-collections/community.network>`_, you can have different levels of access and permissions.
+For some collections that use the `collection bot <https://github.com/ansible-community/collection_bot>`_, such as `community.general <https://github.com/ansible-collections/community.general>`_ and `community.network <https://github.com/ansible-collections/community.network>`_, you can have different levels of access and permissions.
 
 * :ref:`module_maintainers` - The stage prior to becoming a collection maintainer. The file is usually a module or plugin. File maintainers have indirect commit rights.
 * supershipit permissions - Similar to being a file maintainer but the scope where a maintainer has the indirect commit is the whole repository.
@@ -103,4 +103,4 @@ To reach the status, as the current Committee members did before getting it, alo
 
 * Subscribe to, comment on, and vote on the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_.
 * Propose your topics.
-* If time permits, join the `Community meetings <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_  Note this is **NOT** a requirement.
+* If time permits, join the `Community meetings <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_. Note this is **NOT** a requirement.
