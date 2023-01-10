@@ -2,3 +2,4 @@ bcrypt ; python_version >= '3.10'  # controller only
 passlib ; python_version >= '3.10'  # controller only
 pexpect ; python_version >= '3.10'  # controller only
 pywinrm ; python_version >= '3.10'  # controller only
+cryptography ; python_version >= '3.10'  # controller only

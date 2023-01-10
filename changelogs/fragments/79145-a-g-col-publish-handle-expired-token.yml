@@ -1,2 +1,4 @@
+minor_changes:
+  - ansible-galaxy collection - add a ``jkws_url`` (JSON web key set) configuration option for distribution servers to validate KeycloakToken JSON web signatures.
 bugfixes:
   - ansible-galaxy collection publish - fix refreshing the KeycloakToken when waiting for publish results (https://github.com/ansible/ansible/issues/70019).

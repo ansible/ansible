@@ -74,6 +74,7 @@ SERVER_DEF = [
     ('token', False, 'str'),
     ('auth_url', False, 'str'),
     ('api_version', False, 'int'),
+    ('openid_configuration', False, 'str'),  # mutually exclusive with auth_url
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
     ('timeout', False, 'int'),
@@ -660,6 +661,10 @@ class GalaxyCLI(CLI):
             # auth_url is used to create the token, but not directly by GalaxyAPI, so
             # it doesn't need to be passed as kwarg to GalaxyApi, same for others we pop here
             auth_url = server_options.pop('auth_url')
+            openid_configuration = server_options.pop('openid_configuration')
+            if auth_url is not None and openid_configuration is not None:
+                raise AnsibleOptionsError("auth_url and openid_configuration are mutually exclusive")
+
             client_id = server_options.pop('client_id')
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
@@ -687,11 +692,12 @@ class GalaxyCLI(CLI):
                 server_options['token'] = BasicAuthToken(username, server_options['password'])
             else:
                 if token_val:
-                    if auth_url:
+                    if auth_url or openid_configuration:
                         server_options['token'] = KeycloakToken(access_token=token_val,
                                                                 auth_url=auth_url,
                                                                 validate_certs=validate_certs,
-                                                                client_id=client_id)
+                                                                client_id=client_id,
+                                                                openid_configuration=openid_configuration)
                     else:
                         # The galaxy v1 / github / django / 'Token'
                         server_options['token'] = GalaxyToken(token=token_val)
