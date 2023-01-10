@@ -44,6 +44,7 @@ import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
+from ansible.plugins.loader import init_plugin_loader
 from ansible.executor import module_common
 import ansible.constants as C
 from ansible.module_utils._text import to_native, to_text
@@ -266,6 +267,7 @@ def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
 def main():
 
     options, args = parse()
+    init_plugin_loader()
     interpreters = get_interpreters(options.interpreter)
     (modfile, modname, module_style) = boilerplate_module(options.module_path, options.module_args, interpreters, options.check, options.filename)
 

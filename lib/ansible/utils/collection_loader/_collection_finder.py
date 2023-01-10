@@ -7,6 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import itertools
 import os
 import os.path
 import pkgutil
@@ -39,7 +40,12 @@ except ImportError:
     reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
-    from importlib.util import spec_from_loader
+    from importlib.abc import TraversableResources
+except ImportError:
+    TraversableResources = object  # type: ignore[assignment,misc]
+
+try:
+    from importlib.util import find_spec, spec_from_loader
 except ImportError:
     pass
 
@@ -49,6 +55,11 @@ except ImportError:
     HAS_FILE_FINDER = False
 else:
     HAS_FILE_FINDER = True
+
+try:
+    import pathlib
+except ImportError:
+    pass
 
 # NB: this supports import sanity test providing a different impl
 try:
@@ -78,6 +89,141 @@ except AttributeError:  # Python 2
 
 
 PB_EXTENSIONS = ('.yml', '.yaml')
+SYNTHETIC_PACKAGE_NAME = '<ansible_synthetic_collection_package>'
+
+
+class _AnsibleNSTraversable:
+    """Class that implements the ``importlib.resources.abc.Traversable``
+    interface for the following ``ansible_collections`` namespace packages::
+
+    * ``ansible_collections``
+    * ``ansible_collections.<namespace>``
+
+    These namespace packages operate differently from a normal Python
+    namespace package, in that the same namespace can be distributed across
+    multiple directories on the filesystem and still function as a single
+    namespace, such as::
+
+    * ``/usr/share/ansible/collections/ansible_collections/ansible/posix/``
+    * ``/home/user/.ansible/collections/ansible_collections/ansible/windows/``
+
+    This class will mimic the behavior of various ``pathlib.Path`` methods,
+    by combining the results of multiple root paths into the output.
+
+    This class does not do anything to remove duplicate collections from the
+    list, so when traversing either namespace patterns supported by this class,
+    it is possible to have the same collection located in multiple root paths,
+    but precedence rules only use one. When iterating or traversing these
+    package roots, there is the potential to see the same collection in
+    multiple places without indication of which would be used. In such a
+    circumstance, it is best to then call ``importlib.resources.files`` for an
+    individual collection package rather than continuing to traverse from the
+    namespace package.
+
+    Several methods will raise ``NotImplementedError`` as they do not make
+    sense for these namespace packages.
+    """
+    def __init__(self, *paths):
+        self._paths = [pathlib.Path(p) for p in paths]
+
+    def __repr__(self):
+        return "_AnsibleNSTraversable('%s')" % "', '".join(map(to_text, self._paths))
+
+    def iterdir(self):
+        return itertools.chain.from_iterable(p.iterdir() for p in self._paths if p.is_dir())
+
+    def is_dir(self):
+        return any(p.is_dir() for p in self._paths)
+
+    def is_file(self):
+        return False
+
+    def glob(self, pattern):
+        return itertools.chain.from_iterable(p.glob(pattern) for p in self._paths if p.is_dir())
+
+    def _not_implemented(self, *args, **kwargs):
+        raise NotImplementedError('not usable on namespaces')
+
+    joinpath = __truediv__ = read_bytes = read_text = _not_implemented
+
+
+class _AnsibleTraversableResources(TraversableResources):
+    """Implements ``importlib.resources.abc.TraversableResources`` for the
+    collection Python loaders.
+
+    The result of ``files`` will depend on whether a particular collection, or
+    a sub package of a collection was referenced, as opposed to
+    ``ansible_collections`` or a particular namespace. For a collection and
+    its subpackages, a ``pathlib.Path`` instance will be returned, whereas
+    for the higher level namespace packages, ``_AnsibleNSTraversable``
+    will be returned.
+    """
+    def __init__(self, package, loader):
+        self._package = package
+        self._loader = loader
+
+    def _get_name(self, package):
+        try:
+            # spec
+            return package.name
+        except AttributeError:
+            # module
+            return package.__name__
+
+    def _get_package(self, package):
+        try:
+            # spec
+            return package.__parent__
+        except AttributeError:
+            # module
+            return package.__package__
+
+    def _get_path(self, package):
+        try:
+            # spec
+            return package.origin
+        except AttributeError:
+            # module
+            return package.__file__
+
+    def _is_ansible_ns_package(self, package):
+        origin = getattr(package, 'origin', None)
+        if not origin:
+            return False
+
+        if origin == SYNTHETIC_PACKAGE_NAME:
+            return True
+
+        module_filename = os.path.basename(origin)
+        return module_filename in {'__synthetic__', '__init__.py'}
+
+    def _ensure_package(self, package):
+        if self._is_ansible_ns_package(package):
+            # Short circuit our loaders
+            return
+        if self._get_package(package) != package.__name__:
+            raise TypeError('%r is not a package' % package.__name__)
+
+    def files(self):
+        package = self._package
+        parts = package.split('.')
+        is_ns = parts[0] == 'ansible_collections' and len(parts) < 3
+
+        if isinstance(package, string_types):
+            if is_ns:
+                # Don't use ``spec_from_loader`` here, because that will point
+                # to exactly 1 location for a namespace. Use ``find_spec``
+                # to get a list of all locations for the namespace
+                package = find_spec(package)
+            else:
+                package = spec_from_loader(package, self._loader)
+        elif not isinstance(package, ModuleType):
+            raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
+
+        self._ensure_package(package)
+        if is_ns:
+            return _AnsibleNSTraversable(*package.submodule_search_locations)
+        return pathlib.Path(self._get_path(package)).parent
 
 
 class _AnsibleCollectionFinder:
@@ -423,6 +569,9 @@ class _AnsibleCollectionPkgLoaderBase:
 
         return module_path, has_code, package_path
 
+    def get_resource_reader(self, fullname):
+        return _AnsibleTraversableResources(fullname, self)
+
     def exec_module(self, module):
         # short-circuit redirect; avoid reinitializing existing modules
         if self._redirect_module:
@@ -509,7 +658,7 @@ class _AnsibleCollectionPkgLoaderBase:
         return None
 
     def _synthetic_filename(self, fullname):
-        return '<ansible_synthetic_collection_package>'
+        return SYNTHETIC_PACKAGE_NAME
 
     def get_filename(self, fullname):
         if fullname != self._fullname:
@@ -747,6 +896,9 @@ class _AnsibleInternalRedirectLoader:
 
         if not self._redirect:
             raise ImportError('not redirected, go ask path_hook')
+
+    def get_resource_reader(self, fullname):
+        return _AnsibleTraversableResources(fullname, self)
 
     def exec_module(self, module):
         # should never see this

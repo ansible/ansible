@@ -9,7 +9,8 @@ import os
 from collections import defaultdict
 
 from ansible.errors import AnsibleError
-from ansible.collections import is_collection_path
+from ansible.cli.galaxy import with_collection_artifacts_manager
+from ansible.galaxy.collection import find_existing_collections
 from ansible.module_utils._text import to_bytes
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -18,14 +19,13 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def list_collections(coll_filter=None, search_paths=None, dedupe=False):
+@with_collection_artifacts_manager
+def list_collections(coll_filter=None, search_paths=None, dedupe=True, artifacts_manager=None):
 
     collections = {}
-    for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter):
-        if os.path.exists(candidate):
-            collection = _get_collection_name_from_path(candidate)
-            if collection not in collections or not dedupe:
-                collections[collection] = candidate
+    for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter, artifacts_manager=artifacts_manager, dedupe=dedupe):
+        collection = _get_collection_name_from_path(candidate)
+        collections[collection] = candidate
     return collections
 
 
@@ -59,7 +59,8 @@ def list_valid_collection_paths(search_paths=None, warn=False):
         yield path
 
 
-def list_collection_dirs(search_paths=None, coll_filter=None):
+@with_collection_artifacts_manager
+def list_collection_dirs(search_paths=None, coll_filter=None, artifacts_manager=None, dedupe=True):
     """
     Return paths for the specific collections found in passed or configured search paths
     :param search_paths: list of text-string paths, if none load default config
@@ -67,48 +68,18 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
     :return: list of collection directory paths
     """
 
-    collection = None
-    namespace = None
+    namespace_filter = None
+    collection_filter = None
     if coll_filter is not None:
         if '.' in coll_filter:
             try:
-                (namespace, collection) = coll_filter.split('.')
+                namespace_filter, collection_filter = coll_filter.split('.')
             except ValueError:
                 raise AnsibleError("Invalid collection pattern supplied: %s" % coll_filter)
         else:
-            namespace = coll_filter
+            namespace_filter = coll_filter
 
-    collections = defaultdict(dict)
-    for path in list_valid_collection_paths(search_paths):
+    for req in find_existing_collections(search_paths, artifacts_manager, namespace_filter=namespace_filter,
+                                         collection_filter=collection_filter, dedupe=dedupe):
 
-        if os.path.basename(path) != 'ansible_collections':
-            path = os.path.join(path, 'ansible_collections')
-
-        b_coll_root = to_bytes(path, errors='surrogate_or_strict')
-
-        if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
-
-            if namespace is None:
-                namespaces = os.listdir(b_coll_root)
-            else:
-                namespaces = [namespace]
-
-            for ns in namespaces:
-                b_namespace_dir = os.path.join(b_coll_root, to_bytes(ns))
-
-                if os.path.isdir(b_namespace_dir):
-
-                    if collection is None:
-                        colls = os.listdir(b_namespace_dir)
-                    else:
-                        colls = [collection]
-
-                    for mycoll in colls:
-
-                        # skip dupe collections as they will be masked in execution
-                        if mycoll not in collections[ns]:
-                            b_coll = to_bytes(mycoll)
-                            b_coll_dir = os.path.join(b_namespace_dir, b_coll)
-                            if is_collection_path(b_coll_dir):
-                                collections[ns][mycoll] = b_coll_dir
-                                yield b_coll_dir
+        yield to_bytes(req.src)

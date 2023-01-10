@@ -25,6 +25,7 @@ from unittest.mock import patch, MagicMock
 from ansible.executor.play_iterator import HostState, PlayIterator, IteratingStates, FailedStates
 from ansible.playbook import Playbook
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.loader import init_plugin_loader
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
@@ -286,6 +287,7 @@ class TestPlayIterator(unittest.TestCase):
         self.assertNotIn(hosts[0], failed_hosts)
 
     def test_play_iterator_nested_blocks(self):
+        init_plugin_loader()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all

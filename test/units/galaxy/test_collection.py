@@ -23,6 +23,7 @@ from ansible import context
 from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
+from ansible.plugins.loader import init_plugin_loader
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six.moves import builtins
 from ansible.utils import context_objects as co
@@ -852,57 +853,6 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
 
     assert mock_display.mock_calls[0][1][0] == "Collection has been published to the Galaxy server test_server %s" \
         % galaxy_server.api_server
-
-
-def test_find_existing_collections(tmp_path_factory, monkeypatch):
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
-    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
-    collection1 = os.path.join(test_dir, 'namespace1', 'collection1')
-    collection2 = os.path.join(test_dir, 'namespace2', 'collection2')
-    fake_collection1 = os.path.join(test_dir, 'namespace3', 'collection3')
-    fake_collection2 = os.path.join(test_dir, 'namespace4')
-    os.makedirs(collection1)
-    os.makedirs(collection2)
-    os.makedirs(os.path.split(fake_collection1)[0])
-
-    open(fake_collection1, 'wb+').close()
-    open(fake_collection2, 'wb+').close()
-
-    collection1_manifest = json.dumps({
-        'collection_info': {
-            'namespace': 'namespace1',
-            'name': 'collection1',
-            'version': '1.2.3',
-            'authors': ['Jordan Borean'],
-            'readme': 'README.md',
-            'dependencies': {},
-        },
-        'format': 1,
-    })
-    with open(os.path.join(collection1, 'MANIFEST.json'), 'wb') as manifest_obj:
-        manifest_obj.write(to_bytes(collection1_manifest))
-
-    mock_warning = MagicMock()
-    monkeypatch.setattr(Display, 'warning', mock_warning)
-
-    actual = list(collection.find_existing_collections(test_dir, artifacts_manager=concrete_artifact_cm))
-
-    assert len(actual) == 2
-    for actual_collection in actual:
-        if '%s.%s' % (actual_collection.namespace, actual_collection.name) == 'namespace1.collection1':
-            assert actual_collection.namespace == 'namespace1'
-            assert actual_collection.name == 'collection1'
-            assert actual_collection.ver == '1.2.3'
-            assert to_text(actual_collection.src) == collection1
-        else:
-            assert actual_collection.namespace == 'namespace2'
-            assert actual_collection.name == 'collection2'
-            assert actual_collection.ver == '*'
-            assert to_text(actual_collection.src) == collection2
-
-    assert mock_warning.call_count == 1
-    assert mock_warning.mock_calls[0][1][0] == "Collection at '%s' does not have a MANIFEST.json file, nor has it galaxy.yml: " \
-                                               "cannot detect version." % to_text(collection2)
 
 
 def test_download_file(tmp_path_factory, monkeypatch):

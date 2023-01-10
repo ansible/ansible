@@ -44,6 +44,7 @@ def get_composite_name(collection, name, path, depth):
 
 
 def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
+    # TODO: update to use importlib.resources
 
     plugins = {}
 
@@ -117,6 +118,7 @@ def _list_j2_plugins_from_file(collection, plugin_path, ptype, plugin_name):
 
 
 def list_collection_plugins(ptype, collections, search_paths=None):
+    # TODO: update to use importlib.resources
 
     # starts at  {plugin_name: filepath, ...}, but changes at the end
     plugins = {}
