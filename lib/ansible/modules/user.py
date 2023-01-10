@@ -87,7 +87,7 @@ options:
     password:
         description:
             - Optionally set the user password.
-            - B(Linux:) Do not enter password in cleartext.
+            - B(Linux:) Enter the hashed password as the value.
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate the hash of a password.
             - B(macOS:) This value has to be cleartext. Beware of security issues.
