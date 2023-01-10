@@ -673,7 +673,6 @@ class StrategyBase:
                             all_task_vars = combine_vars(found_task_vars, item_vars)
                         else:
                             all_task_vars = found_task_vars
-
                         all_task_vars[original_task.register] = wrap_var(result_item)
                         post_process_whens(result_item, original_task, handler_templar, all_task_vars)
                         if original_task.loop or original_task.loop_with:
