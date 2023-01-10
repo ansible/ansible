@@ -24,9 +24,9 @@ if ansible-test sanity --test validate-modules --color --truncate 0 "${@}" 1> an
 fi
 
 cat ansible-stdout.txt
-cat ansible-stdout.txt | grep -q "ERROR: plugins/modules/failure_ps.ps1:0:0: import-error: Exception attempting to import module for argument_spec introspection"
-cat ansible-stdout.txt | grep -q "test inner error message"
+grep -q "ERROR: plugins/modules/failure_ps.ps1:0:0: import-error: Exception attempting to import module for argument_spec introspection" < ansible-stdout.txt
+grep -q "test inner error message" < ansible-stdout.txt
 
 cat ansible-stderr.txt
-cat ansible-stderr.txt | grep -q "FATAL: The 1 sanity test(s) listed below (out of 1) failed"
-cat ansible-stderr.txt | grep -q "validate-modules"
+grep -q "FATAL: The 1 sanity test(s) listed below (out of 1) failed" < ansible-stderr.txt
+grep -q "validate-modules" < ansible-stderr.txt
