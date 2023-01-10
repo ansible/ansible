@@ -27,6 +27,27 @@ DOCUMENTATION = """
             - name: ansible_host
             - name: ansible_ssh_host
             - name: ansible_paramiko_host
+      port:
+          description: Remote port to connect to.
+          type: int
+          default: 22
+          ini:
+            - section: defaults
+              key: remote_port
+            - section: paramiko_connection
+              key: remote_port
+              version_added: '2.15'
+          env:
+            - name: ANSIBLE_REMOTE_PORT
+            - name: ANSIBLE_REMOTE_PARAMIKO_PORT
+              version_added: '2.15'
+          vars:
+            - name: ansible_port
+            - name: ansible_ssh_port
+            - name: ansible_paramiko_port
+              version_added: '2.15'
+          keyword:
+            - name: port
       remote_user:
         description:
             - User to login/authenticate as
