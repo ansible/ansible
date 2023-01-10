@@ -35,7 +35,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError, AnsibleAssertionError
 from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates
 from ansible.executor.process.worker import WorkerProcess
@@ -956,9 +956,12 @@ class StrategyBase:
                 # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.handler_notifications):
                     for handler in self.get_notified_handlers(notification, iterator, templar):
-                        if handler.notify_host(target_host):
-                            # NOTE callback sent later than in devel, breaking change?
-                            self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
+                        if not handler.notify_host(target_host):
+                            raise AnsibleAssertionError(
+                                f"Handler notifications deduplication has failed as {handler.name} "
+                                "has been already notified. This appears to be a bug."
+                            )
+                        self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
                     iterator.clear_notification(target_host.name, notification)
 
                 if host_state.run_state == IteratingStates.HANDLERS:
