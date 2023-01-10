@@ -232,7 +232,7 @@ DOCUMENTATION = """
           - name: ansible_ssh_timeout
             version_added: '2.11'
           - name: ansible_paramiko_timeout
-            versoin_added: '2.15'
+            version_added: '2.15'
         cli:
           - name: timeout
 """
@@ -338,11 +338,11 @@ class Connection(ConnectionBase):
     transport = 'paramiko'
     _log_channel = None
 
-    def get_option(self, name, hostvars=None):
+    def get_option(self, option, hostvars=None):
         try:
-            r = super().get_option(name, hostvars=hostvars)
+            r = super().get_option(option, hostvars=hostvars)
         except Exception:
-            r = getattr(self._play_context, name)
+            r = getattr(self._play_context, option)
         return r
 
     def _cache_key(self):
