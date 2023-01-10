@@ -660,7 +660,10 @@ class StrategyBase:
                         # otherwise depending on the setting either error or warn
                         for notification in result_item['_ansible_notify']:
                             if any(self.get_notified_handlers(notification, iterator, handler_templar)):
-                                iterator.notify(original_host.name, notification)
+                                iterator.add_notification(original_host.name, notification)
+                                display.v(
+                                    f"Notification for handler {notification} has been saved."
+                                )
                                 continue
 
                             msg = (
@@ -951,7 +954,7 @@ class StrategyBase:
                 host_state = iterator.get_state_for_host(target_host.name)
                 templar = Templar(None)
                 # actually notify proper handlers based on all notifications up to this point
-                for notification in list(host_state.notifications):
+                for notification in list(host_state.handler_notifications):
                     for handler in self.get_notified_handlers(notification, iterator, templar):
                         if handler.notify_host(target_host):
                             # NOTE callback sent later than in devel, breaking change?

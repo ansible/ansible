@@ -60,7 +60,8 @@ class HostState:
         self._blocks = blocks[:]
         self.handlers = []
 
-        self.notifications = set()
+
+        self.handler_notifications = set()
 
         self.cur_block = 0
         self.cur_regular_task = 0
@@ -122,7 +123,7 @@ class HostState:
     def copy(self):
         new_state = HostState(self._blocks)
         new_state.handlers = self.handlers[:]
-        new_state.notifications = self.notifications.copy()
+        new_state.handler_notifications = self.handler_notifications.copy()
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
@@ -654,8 +655,8 @@ class PlayIterator:
             raise AnsibleAssertionError('Expected fail_state to be a FailedStates but was %s' % (type(fail_state)))
         self._host_states[hostname].fail_state = fail_state
 
-    def notify(self, hostname: str, notification: str) -> None:
-        self._host_states[hostname].notifications.add(notification)
+    def add_notification(self, hostname: str, notification: str) -> None:
+        self._host_states[hostname].handler_notifications.add(notification)
 
     def clear_notification(self, hostname: str, notification: str) -> None:
-        self._host_states[hostname].notifications.remove(notification)
+        self._host_states[hostname].handler_notifications.remove(notification)
