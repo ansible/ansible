@@ -16,7 +16,6 @@ options:
     - A temporary file path is used to validate, passed in through '%s' which must be present as in the examples below.
     - Also, the command is passed securely so shell features such as expansion and pipes will not work.
     - For an example on how to handle more complex validation than what this
-      option provides, see L("The 'validate' option is not enough for my needs, what do I
-      do?",https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#the-validate-option-is-not-enough-for-my-needs-what-do-i-do).
+      option provides, see R(handling complex validation,complex_configuration_validation).
     type: str
 '''
