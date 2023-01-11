@@ -815,9 +815,9 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False, plugi
         'options': Any(None, *list_dict_option_schema(for_collection, plugin_type)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
-        'required_if': Any(None, list),
+        'mutually_exclusive': argument_spec_modifiers['mutually_exclusive'],
         'supports_check_mode': bool,
-        'mutually_exclusive': Any(None, list),
+        'required_if': argument_spec_modifiers['required_if'],
     }
     if plugin_type == 'module':
         doc_schema_dict[Required('author')] = All(Any(None, list_string_types, *string_types), author)
