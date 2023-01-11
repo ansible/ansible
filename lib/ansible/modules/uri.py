@@ -696,7 +696,7 @@ def main():
         content_type, main_type, sub_type, content_encoding = parse_content_type(r)
     else:
         content_type = 'application/octet-stream'
-        main_type = 'aplication'
+        main_type = 'application'
         sub_type = 'octet-stream'
         content_encoding = 'utf-8'
 
