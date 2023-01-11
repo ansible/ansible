@@ -6,7 +6,7 @@
   register: good_ciphers
 
 - name: test bad cipher
-  uri:
+  get_url:
     url: https://{{ httpbin_host }}/get
     ciphers: ECDHE-ECDSA-AES128-SHA
     dest: '{{ remote_tmp_dir }}/bad_cipher_get.json'
