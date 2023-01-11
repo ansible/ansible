@@ -132,7 +132,7 @@
       - "result.changed == true"
 
 - name: "get ca certificate {{ self_signed_host }}"
-  get_url:
+  uri:
     url: "http://{{ httpbin_host }}/ca2cert.pem"
     dest: "{{ remote_tmp_dir }}/ca2cert.pem"
 
