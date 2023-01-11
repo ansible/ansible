@@ -356,7 +356,7 @@ class DocCLI(CLI, RoleMixin):
 
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'version_added_collection', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
-
+    ARGUMENT_SPEC_MODIFIERS = ('mutually_exclusive', 'required_if', 'required_together', 'required_one_of', 'required_by', 'no_log')
     # Warning: If you add more elements here, you also need to add it to the docsite build (in the
     # ansible-community/antsibull repo)
     _ITALIC = re.compile(r"\bI\(([^)]+)\)")
@@ -1218,8 +1218,17 @@ class DocCLI(CLI, RoleMixin):
         if doc.pop('has_action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
+        if doc.pop('supports_check_mode', False):
+            text.append("  * note: %s\n" % "This module supports check mode.")
+
         if doc.get('options', False):
             text.append("OPTIONS (= is mandatory):\n")
+
+            for k in DocCLI.ARGUMENT_SPEC_MODIFIERS:
+                if doc.get(k):
+                    text.append(DocCLI._dump_yaml({k: doc[k]}, ""))
+                    doc.pop(k)
+
             DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
             text.append('')
 
