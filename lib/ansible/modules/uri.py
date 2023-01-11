@@ -448,7 +448,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
 
-JSON_CANDIDATES = ('text', 'json', 'javascript')
+JSON_CANDIDATES = {'json', 'javascript'}
 
 # List of response key names we do not want sanitize_keys() to change.
 NO_MODIFY_KEYS = frozenset(
@@ -700,7 +700,7 @@ def main():
         sub_type = 'octet-stream'
         content_encoding = 'utf-8'
 
-    maybe_json = content_type and any(candidate in sub_type for candidate in JSON_CANDIDATES)
+    maybe_json = content_type and sub_type.lower() in JSON_CANDIDATES
     maybe_output = maybe_json or return_content or info['status'] not in status_code
 
     if maybe_output:
