@@ -28,8 +28,8 @@ Modules and plugins: what is the difference?
 ============================================
 If you are looking to add functionality to Ansible, you might wonder whether you need a module or a plugin. Here is a quick overview to help you understand what you need:
 
-* Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface. Each module accepts arguments and returns information to Ansible by printing a JSON string to stdout before exiting. Modules execute on the target system (usually that means on a remote system) in separate processes. Modules are technically plugins, but for historical reasons we do not usually talk about "module plugins".
-* :ref:`Plugins <working_with_plugins>` extend Ansible's core functionality and execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more.
+* :ref:`Plugins <working_with_plugins>` extend Ansible's core functionality. Most plugin types execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible: transforming data, logging output, connecting to inventory, and more.
+* Modules are a type of plugin that execute automation tasks on a 'target' (usually a remote system). Modules work as standalone scripts that Ansible executes in their own process outside of the controller. Modules interface with Ansible mostly via JSON, accepting arguments and returning information by printing a JSON string to stdout before exiting. Unlike the other plugins (which must be written in Python), modules can be written in any language; although Ansible provides modules in Python and Powershell only.
 
 .. _use_collections:
 
@@ -42,10 +42,10 @@ The rest of this page describes other methods of using local, standalone modules
 
 .. _local_modules:
 
-Adding a module outside of a collection
-=======================================
+Adding a module or plugin outside of a collection
+==================================================
 
-You can configure Ansible to load standalone local modules in a specified location or locations and make them available to all playbooks and roles. Alternatively, you can make a non-collection local module available only to specific playbooks or roles.
+You can configure Ansible to load standalone local modules or plugins in specific locations and make them available to all playbooks and roles (using configured paths). Alternatively, you can make a non-collection local module or plugin available only to certain playbooks or roles (via adjacent paths).
 
 Adding standalone local modules for all playbooks and roles
 -----------------------------------------------------------
@@ -70,9 +70,10 @@ To confirm that ``my_local_module`` is available:
 * type ``ansible localhost -m my_local_module`` to see the output for that module, or
 * type ``ansible-doc -t module my_local_module`` to see the documentation for that module
 
+.. note:: This applies to all plugin types but requires specific configuration and/or adjacent directories for each plugin type, see below.
 .. note::
 
-   Currently, the ``ansible-doc`` command can parse module documentation only from modules written in Python. If you have a module written in a programming language other than Python, please write the documentation in a Python file adjacent to the module file.
+   The ``ansible-doc`` command can parse module documentation from modules written in Python or an adjacent YAML file. If you have a module written in a programming language other than Python, you should write the documentation in a Python or YAML file adjacent to the module file. :ref:`adjacent_yaml_doc`
 
 Adding standalone local modules for selected playbooks or a single role
 -----------------------------------------------------------------------
@@ -81,6 +82,8 @@ Ansible automatically loads all executable files from certain directories adjace
 
 * To use a standalone module only in a selected playbook or playbooks, store the module in a subdirectory called ``library`` in the directory that contains the playbook or playbooks.
 * To use a standalone module only in a single role, store the module in a subdirectory called ``library`` within that role.
+
+.. note:: This applies to all plugin types but requires specific configuration and/or adjacent directories for each plugin type, see below.
 
 .. warning::
 
