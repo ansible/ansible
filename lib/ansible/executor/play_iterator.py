@@ -60,7 +60,6 @@ class HostState:
         self._blocks = blocks[:]
         self.handlers = []
 
-
         self.handler_notifications = set()
 
         self.cur_block = 0
