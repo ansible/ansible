@@ -81,6 +81,10 @@ Configuration sources follow the precedence rules for values in Ansible. When th
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either through a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
+In ansible-core 2.14 we added support for documenting filter and test plugins. You have two options for providing documentation:
+  - Define a Python file that includes inline documentation for each plugin.
+  - Define a Python file for multiple plugins and create adjacent documentation files in YAML format.
+
 Developing particular plugin types
 ==================================
 
@@ -313,7 +317,7 @@ Filter plugins
 
 Filter plugins manipulate data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
 
-Filter plugins do not use the standard configuration and documentation system described above.
+Filter plugins do not use the standard configuration system described above, but since ansible-core 2.14 can use it as plain documentation.
 
 Since Ansible evaluates variables only when they are needed, filter plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
 
@@ -356,7 +360,7 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
     from __future__ import (absolute_import, division, print_function)
     __metaclass__ = type
 
-    DOCUMENTATION = """
+    DOCUMENTATION = r"""
       name: file
       author: Daniel Hokka Zakrisson (@dhozac) <daniel@hozac.com>
       version_added: "0.9"  # for collections, use the collection version, not the Ansible version
@@ -451,7 +455,7 @@ Test plugins
 
 Test plugins verify data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
 
-Test plugins do not use the standard configuration and documentation system described above.
+Test plugins do not use the standard configuration system described above. Since ansible-core 2.14 test plugins can use plain documentation.
 
 Since Ansible evaluates variables only when they are needed, test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
 
@@ -547,3 +551,5 @@ For example vars plugins, see the source code for the `vars plugins included wit
        The development mailing list
    :ref:`communication_irc`
        How to join Ansible chat channels
+   :ref:`adjacent_yaml_doc`
+       Alternate YAML files as documentation
