@@ -661,7 +661,7 @@ class StrategyBase:
                         for notification in result_item['_ansible_notify']:
                             if any(self.get_notified_handlers(notification, iterator, handler_templar)):
                                 iterator.add_notification(original_host.name, notification)
-                                display.v(
+                                display.vv(
                                     f"Notification for handler {notification} has been saved."
                                 )
                                 continue
