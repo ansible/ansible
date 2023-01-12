@@ -127,3 +127,12 @@ rm -f 78612.out
 
 ansible-playbook -vv 43191.yml
 ansible-playbook -vv 43191-2.yml
+
+# https://github.com/ansible/ansible/issues/79711
+set +e
+ANSIBLE_FORCE_HANDLERS=0 ansible-playbook -vv 79711.yml | tee 79711.out
+set -e
+[ "$(grep -c 'ok=5' 79711.out)" -eq 1 ]
+[ "$(grep -c 'failed=1' 79711.out)" -eq 1 ]
+[ "$(grep -c 'rescued=1' 79711.out)" -eq 1 ]
+rm -f 79711.out
