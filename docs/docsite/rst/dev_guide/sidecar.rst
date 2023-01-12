@@ -1,14 +1,14 @@
 .. _adjacent_yaml_doc:
 
-******************************
+*********************************
 Adjacent YAML documentation files
-******************************
+*********************************
 
 .. contents::
    :local:
 
 YAML documentation for plugins
-------------------------------------------------
+------------------------------
 For most Ansible plugins, the documentation is in the same file as the code. This approach does not work for cases when:
 
   * Multiple plugins are defined in the same file, such as tests and filters.
@@ -19,7 +19,7 @@ The format of a YAML documentation file is nearly identical to its Python equiva
 
 
 YAML format
--------------------
+-----------
 In Python each section is a variable ``DOCUMENTATION = r""" ... """`` while in YAML it is a mapping key ``DOCUMENTATION: ...``.
 
 Here is a longer example that shows documentation as embedded in a Python file:
