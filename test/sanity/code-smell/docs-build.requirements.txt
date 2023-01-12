@@ -5,7 +5,7 @@ aiosignal==1.2.0
 alabaster==0.7.12
 ansible-pygments==0.1.1
 antsibull-core==1.2.0
-antsibull-docs==1.8.2
+antsibull-docs==1.9.0
 async-timeout==4.0.2
 asyncio-pool==0.6.0
 attrs==22.1.0
