@@ -81,9 +81,9 @@ Configuration sources follow the precedence rules for values in Ansible. When th
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either through a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
-In ansible-core 2.14 we added support for documenting filter and test plugins, since they are unique in that you can define multiple of them in one file :ref:`adjacent_yaml_doc`, we had to do some adjustments but now you have two options:
-  - define a file per plugin and include the documentation inline.
-  - keep multiple plugins per Python file and create adjacent YAML files per plugin documenting them.
+In ansible-core 2.14 we added support for documenting filter and test plugins. You have two options for providing documentation:
+  - Define a Python file that includes inline documentation for each plugin.
+  - Define a Python file for multiple plugins and create adjacent documentation files in YAML format.
 
 Developing particular plugin types
 ==================================
@@ -455,7 +455,7 @@ Test plugins
 
 Test plugins verify data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
 
-Test plugins do not use the standard configuration system described above, but since ansible-core 2.14 can use it as plain documentation.
+Test plugins do not use the standard configuration system described above. Since ansible-core 2.14 test plugins can use plain documentation.
 
 Since Ansible evaluates variables only when they are needed, test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
 

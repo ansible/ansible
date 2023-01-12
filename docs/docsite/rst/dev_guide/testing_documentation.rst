@@ -12,7 +12,7 @@ A quick test while developing is to use ``ansible-doc -t <plugin_type> <name>`` 
 Before you submit a plugin for inclusion in Ansible, you must test your documentation for correct HTML rendering and for modules to ensure that the argspec matches the documentation in your Python file.
 The community pages offer more information on :ref:`testing reStructuredText documentation <testing_documentation_locally>`.
 
-For example, to check the HTML output of your module documentation for modules:
+For example, to check the HTML output of your module documentation:
 
 #. Ensure working :ref:`development environment <environment_setup>`.
 #. Install required Python packages (drop '--user' in venv/virtualenv):
