@@ -1,0 +1,2 @@
+bugfixes:
+- get_url - Ensure we are passing ciphers to all url_get calls (https://github.com/ansible/ansible/issues/79717)
