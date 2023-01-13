@@ -75,6 +75,10 @@ class ArgumentValueError(AnsibleValidationError):
     """Error with parameter value"""
 
 
+class DeprecationError(AnsibleValidationError):
+    """Error processing parameter deprecations"""
+
+
 class ElementError(AnsibleValidationError):
     """Error when validating elements"""
 
