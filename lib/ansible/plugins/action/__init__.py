@@ -340,13 +340,14 @@ class ActionBase(ABC):
 
     def _get_argspec_from_docs(self, module_name):
         resolved = self._get_module(module_name)
-        argspec = '' + resolved  # TODO it
+        argspec = '' + resolved  # TODO: actuall call build function
         return argspec
 
     def _validate_args(self, module_name, module_args):
         argspec = self._get_argspec_from_docs(module_name)
-        validate(argpsec)
+
         # call validation
+        #TODO: validate(argpsec, module_args)
 
     def _compute_environment_string(self, raw_environment_out=None):
         """
