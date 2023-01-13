@@ -1,2 +1,2 @@
 minor_changes:
-  - "ansible-doc sanity test - now also lists documentation for test and filter plugins that are documented (https://github.com/ansible/ansible/pull/77737)."
+  - "ansible-test sanity --test ansible-doc - now also lists documentation for test and filter plugins that are documented (https://github.com/ansible/ansible/pull/77737)."
