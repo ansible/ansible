@@ -366,6 +366,30 @@
       foo: bar
   register: argspec_apply_defaults_one
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    deprecation_aliases_version: value
+  register: deprecation_alias_version
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    deprecation_aliases_date: value
+  register: deprecation_alias_date
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    deprecation_param_version: value
+  register: deprecation_param_version
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    deprecation_param_date: value
+  register: deprecation_param_date
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -446,3 +470,24 @@
       - "argspec_apply_defaults_none.apply_defaults == {'foo': none, 'bar': 'baz'}"
       - "argspec_apply_defaults_empty.apply_defaults == {'foo': none, 'bar': 'baz'}"
       - "argspec_apply_defaults_one.apply_defaults == {'foo': 'bar', 'bar': 'baz'}"
+
+      - deprecation_alias_version.deprecations | length == 1
+      - deprecation_alias_version.deprecations[0].msg == "Alias 'deprecation_aliases_version' is deprecated. See the module docs for more information"
+      - deprecation_alias_version.deprecations[0].collection_name == 'foo.bar'
+      - deprecation_alias_version.deprecations[0].version == '2.0.0'
+      - "'date' not in deprecation_alias_version.deprecations[0]"
+      - deprecation_alias_date.deprecations | length == 1
+      - deprecation_alias_date.deprecations[0].msg == "Alias 'deprecation_aliases_date' is deprecated. See the module docs for more information"
+      - deprecation_alias_date.deprecations[0].collection_name == 'foo.bar'
+      - deprecation_alias_date.deprecations[0].date == '2023-01-01'
+      - "'version' not in deprecation_alias_date.deprecations[0]"
+      - deprecation_param_version.deprecations | length == 1
+      - deprecation_param_version.deprecations[0].msg == "Param 'deprecation_param_version' is deprecated. See the module docs for more information"
+      - deprecation_param_version.deprecations[0].collection_name == 'foo.bar'
+      - deprecation_param_version.deprecations[0].version == '2.0.0'
+      - "'date' not in deprecation_param_version.deprecations[0]"
+      - deprecation_param_date.deprecations | length == 1
+      - deprecation_param_date.deprecations[0].msg == "Param 'deprecation_param_date' is deprecated. See the module docs for more information"
+      - deprecation_param_date.deprecations[0].collection_name == 'foo.bar'
+      - deprecation_param_date.deprecations[0].date == '2023-01-01'
+      - "'version' not in deprecation_param_date.deprecations[0]"
