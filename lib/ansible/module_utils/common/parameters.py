@@ -705,6 +705,7 @@ def _validate_sub_spec(
     no_log_values=None,
     unsupported_parameters=None,
     supported_parameters=None,
+    alias_deprecations=None,
 ):
     """Validate sub argument spec.
 
@@ -761,15 +762,24 @@ def _validate_sub_spec(
                 new_prefix += '.'
 
                 alias_warnings = []
-                alias_deprecations = []
+                alias_deprecations_sub = []
                 try:
-                    options_aliases = _handle_aliases(sub_spec, sub_parameters, alias_warnings, alias_deprecations)
+                    options_aliases = _handle_aliases(sub_spec, sub_parameters, alias_warnings, alias_deprecations_sub)
                 except (TypeError, ValueError) as e:
                     options_aliases = {}
                     errors.append(AliasError(to_native(e)))
 
                 for option, alias in alias_warnings:
                     warn('Both option %s and its alias %s are set.' % (option, alias))
+
+                if alias_deprecations is not None:
+                    for deprecation in alias_deprecations_sub:
+                        alias_deprecations.append({
+                            'name': '%s%s' % (new_prefix, deprecation['name']),
+                            'version': deprecation.get('version'),
+                            'date': deprecation.get('date'),
+                            'collection_name': deprecation.get('collection_name'),
+                        })
 
                 try:
                     no_log_values.update(_list_no_log_values(sub_spec, sub_parameters))

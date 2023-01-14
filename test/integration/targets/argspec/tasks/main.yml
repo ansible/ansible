@@ -548,17 +548,16 @@
       - deprecation_param_date.deprecations[0].date == '2023-01-01'
       - "'version' not in deprecation_param_date.deprecations[0]"
 
-      # Currently fails:
-      # - sub_deprecation_alias_version.deprecations | length == 1
-      # - sub_deprecation_alias_version.deprecations[0].msg == "Alias 'deprecation_aliases_version' is deprecated. See the module docs for more information"
-      # - sub_deprecation_alias_version.deprecations[0].collection_name == 'foo.bar'
-      # - sub_deprecation_alias_version.deprecations[0].version == '2.0.0'
-      # - "'date' not in sub_deprecation_alias_version.deprecations[0]"
-      # - sub_deprecation_alias_date.deprecations | length == 1
-      # - sub_deprecation_alias_date.deprecations[0].msg == "Alias 'deprecation_aliases_date' is deprecated. See the module docs for more information"
-      # - sub_deprecation_alias_date.deprecations[0].collection_name == 'foo.bar'
-      # - sub_deprecation_alias_date.deprecations[0].date == '2023-01-01'
-      # - "'version' not in sub_deprecation_alias_date.deprecations[0]"
+      - sub_deprecation_alias_version.deprecations | length == 1
+      - sub_deprecation_alias_version.deprecations[0].msg == "Alias 'subdeprecation.deprecation_aliases_version' is deprecated. See the module docs for more information"
+      - sub_deprecation_alias_version.deprecations[0].collection_name == 'foo.bar'
+      - sub_deprecation_alias_version.deprecations[0].version == '2.0.0'
+      - "'date' not in sub_deprecation_alias_version.deprecations[0]"
+      - sub_deprecation_alias_date.deprecations | length == 1
+      - sub_deprecation_alias_date.deprecations[0].msg == "Alias 'subdeprecation.deprecation_aliases_date' is deprecated. See the module docs for more information"
+      - sub_deprecation_alias_date.deprecations[0].collection_name == 'foo.bar'
+      - sub_deprecation_alias_date.deprecations[0].date == '2023-01-01'
+      - "'version' not in sub_deprecation_alias_date.deprecations[0]"
       - sub_deprecation_param_version.deprecations | length == 1
       - sub_deprecation_param_version.deprecations[0].msg == "Param 'subdeprecation[\"deprecation_param_version\"]' is deprecated. See the module docs for more information"
       - sub_deprecation_param_version.deprecations[0].collection_name == 'foo.bar'
@@ -570,17 +569,16 @@
       - sub_deprecation_param_date.deprecations[0].date == '2023-01-01'
       - "'version' not in sub_deprecation_param_date.deprecations[0]"
 
-      # Currently fails:
-      # - subalias_deprecation_alias_version.deprecations | length == 1
-      # - subalias_deprecation_alias_version.deprecations[0].msg == "Alias 'deprecation_aliases_version' is deprecated. See the module docs for more information"
-      # - subalias_deprecation_alias_version.deprecations[0].collection_name == 'foo.bar'
-      # - subalias_deprecation_alias_version.deprecations[0].version == '2.0.0'
-      # - "'date' not in subalias_deprecation_alias_version.deprecations[0]"
-      # - subalias_deprecation_alias_date.deprecations | length == 1
-      # - subalias_deprecation_alias_date.deprecations[0].msg == "Alias 'deprecation_aliases_date' is deprecated. See the module docs for more information"
-      # - subalias_deprecation_alias_date.deprecations[0].collection_name == 'foo.bar'
-      # - subalias_deprecation_alias_date.deprecations[0].date == '2023-01-01'
-      # - "'version' not in subalias_deprecation_alias_date.deprecations[0]"
+      - subalias_deprecation_alias_version.deprecations | length == 1
+      - subalias_deprecation_alias_version.deprecations[0].msg == "Alias 'subdeprecation.deprecation_aliases_version' is deprecated. See the module docs for more information"
+      - subalias_deprecation_alias_version.deprecations[0].collection_name == 'foo.bar'
+      - subalias_deprecation_alias_version.deprecations[0].version == '2.0.0'
+      - "'date' not in subalias_deprecation_alias_version.deprecations[0]"
+      - subalias_deprecation_alias_date.deprecations | length == 1
+      - subalias_deprecation_alias_date.deprecations[0].msg == "Alias 'subdeprecation.deprecation_aliases_date' is deprecated. See the module docs for more information"
+      - subalias_deprecation_alias_date.deprecations[0].collection_name == 'foo.bar'
+      - subalias_deprecation_alias_date.deprecations[0].date == '2023-01-01'
+      - "'version' not in subalias_deprecation_alias_date.deprecations[0]"
       - subalias_deprecation_param_version.deprecations | length == 1
       - subalias_deprecation_param_version.deprecations[0].msg == "Param 'subdeprecation[\"deprecation_param_version\"]' is deprecated. See the module docs for more information"
       - subalias_deprecation_param_version.deprecations[0].collection_name == 'foo.bar'
