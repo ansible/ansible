@@ -1,0 +1,2 @@
+bugfixes:
+  - "argument spec validation - ensure that deprecated aliases in suboptions are also reported (https://github.com/ansible/ansible/pull/79740)."
