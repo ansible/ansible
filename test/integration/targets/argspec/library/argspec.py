@@ -34,7 +34,7 @@ def main():
                 'elements': 'dict',
                 'options': {
                     'thing': {},
-                    'other': {},
+                    'other': {'aliases': ['other_alias']},
                 },
             },
             'required_by': {
@@ -136,6 +136,7 @@ def main():
                     'bar': {
                         'type': 'str',
                         'default': 'baz',
+                        'aliases': ['bar_alias1', 'bar_alias2'],
                     },
                 },
             },

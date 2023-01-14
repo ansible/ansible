@@ -770,7 +770,7 @@ def _validate_sub_spec(
                     errors.append(AliasError(to_native(e)))
 
                 for option, alias in alias_warnings:
-                    warn('Both option %s and its alias %s are set.' % (option, alias))
+                    warn('Both option %s%s and its alias %s%s are set.' % (new_prefix, option, new_prefix, alias))
 
                 if alias_deprecations is not None:
                     for deprecation in alias_deprecations_sub:

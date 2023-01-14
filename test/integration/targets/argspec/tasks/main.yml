@@ -474,6 +474,22 @@
       - deprecation_param_date: value
   register: sublist_deprecation_param_date
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults:
+      bar_alias1: foo
+      bar_alias2: baz
+  register: alias_warning_dict
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    required_one_of:
+      - other: foo
+        other_alias: bar
+  register: alias_warning_listdict
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -638,3 +654,6 @@
       - sublist_deprecation_param_date.deprecations[0].collection_name == 'foo.bar'
       - sublist_deprecation_param_date.deprecations[0].date == '2023-01-01'
       - "'version' not in sublist_deprecation_param_date.deprecations[0]"
+
+      - "'Both option apply_defaults.bar and its alias apply_defaults.bar_alias2 are set.' in alias_warning_dict.warnings"
+      - "'Both option required_one_of[0].other and its alias required_one_of[0].other_alias are set.' in alias_warning_listdict.warnings"
