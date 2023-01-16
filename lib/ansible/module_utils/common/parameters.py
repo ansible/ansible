@@ -821,7 +821,9 @@ def _validate_sub_spec(
                 no_log_values.update(_set_defaults(sub_spec, sub_parameters))
 
                 # Handle nested specs
-                _validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters, supported_parameters)
+                _validate_sub_spec(
+                    sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values,
+                    unsupported_parameters, supported_parameters, alias_deprecations)
 
             options_context.pop()
 
