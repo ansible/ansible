@@ -126,8 +126,12 @@ TARGET_SANITY_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'sanity')
 
 # NOTE: must match ansible.constants.DOCUMENTABLE_PLUGINS, but with 'module' replaced by 'modules'!
 DOCUMENTABLE_PLUGINS = (
-    'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'modules', 'shell', 'strategy', 'vars'
+    'become', 'cache', 'callback', 'cliconf', 'connection', 'filter', 'httpapi', 'inventory',
+    'lookup', 'netconf', 'modules', 'shell', 'strategy', 'test', 'vars',
 )
+
+# Plugin types that can have multiple plugins per file, and where filenames not always correspond to plugin names
+MULTI_FILE_PLUGINS = ('filter', 'test', )
 
 created_venvs: list[str] = []
 
