@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Search in a string to extract the part that matches the regular expression.
   notes:
-    - Maps to Python's C(regex.search).
+    - Maps to Python's C(re.search).
   positional: _input, _regex
   options:
     _input:
