@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Replace a substring defined by a regular expression with another defined by another regular expression based on the first match.
   notes:
-    - Maps to Python's C(regex.replace).
+    - Maps to Python's C(re.replace).
   positional: _input, _regex_match, _regex_replace
   options:
     _input:
