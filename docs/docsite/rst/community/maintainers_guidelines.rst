@@ -52,6 +52,21 @@ Collection contributors and maintainers should also communicate through:
 
 See :ref:`communication` for more details on these communication channels.
 
+.. _wg_and_real_time_chat:
+
+Working Group and Real-time Chat Request
+----------------------------------------
+
+To make communication within your community more efficient and interactive, you can:
+
+* Join existing suitable :ref:`working_group_list` and corresponding real-time chats if exist.
+* `Request <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_ a new working group for your project.
+* `Create <https://hackmd.io/@ansible-community/community-matrix-faq#How-do-I-create-a-public-community-room>`_ a real-time chat for your working group or `ask <https://github.com/ansible/community/issues/new>`_ the community team to create it and make it official.
+* Add information about the working group and related real-time chats to your project's ``README.md`` and to its contributor documentation.
+* Encourage contributors to join the chats and add themselves to the working group.
+
+See the :ref:`Communication guide <communication_irc>` to learn more about real-time chat.
+
 Community Topics
 ----------------
 
@@ -64,13 +79,12 @@ Share your opinion and vote on the topics to help the community make the best de
 Contributor Summits
 -------------------
 
-
 The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real people behind the messages on Matrix or Libera Chat IRC, or GitHub. This gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
 
 Weekly community Matrix/IRC meetings
 ------------------------------------
 
-The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` :ref:`Matrix/Libera.Chat <communication_irc>` channel to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
+The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` `Libera.Chat IRC <https://docs.ansible.com/ansible/devel/community/communication.html#ansible-community-on-irc>`_ channel or in the bridged `#community:ansible.com <https://matrix.to/#/#community:ansible.com>`_ room on `Matrix <https://docs.ansible.com/ansible/devel/community/communication.html#ansible-community-on-matrix>`_ to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
 
 Expanding the collection community
 ===================================
@@ -82,6 +96,7 @@ Expanding the collection community
 Here are some ways you can expand the community around your collection:
 
   * Give :ref:`newcomers a positive first experience <collection_new_contributors>`.
+  * Offer them to join related :ref:`real-time chats <wg_and_real_time_chat>`.
   * Have :ref:`good documentation <maintainer_documentation>` with guidelines for new contributors.
   * Make people feel welcome personally and individually.
   * Use labels to show easy fixes and leave non-critical easy fixes to newcomers and offer to mentor them.
