@@ -17,18 +17,16 @@ Release schedule
 :2023-03-31: ansible-core feature freeze, stable-2.15 branch created.
 :2023-04-03: Start of ansible-core 2.15 betas (biweekly, as needed).
 :2023-04-04: Ansible-8.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.15`` pre-releases).
-:2023-04-19: Community topic: List any backwards incompatible collection releases that beta1 should try to accommodate.
 :2023-04-24: First ansible-core 2.15 release candidate.
-:2023-05-02: Ansible-8.0.0 alpha2.
-:2023-05-03: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
+:2023-05-02: Another Ansible-8.0.0 alpha release.
 :2023-05-15: Ansible-core-2.15.0 released.
 :2023-05-15: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-8. This includes adding new collections to Ansible 8.0.0; from now on new collections have to wait for 8.1.0 or later.
-:2023-05-16: Create the ansible-build-data directory and files for Ansible-8.
 :2023-05-16: Ansible-8.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
 :2023-05-23: Ansible-8.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
 :2023-05-26: Last day to trigger an Ansible-8.0.0rc2 release because of major defects in Ansible-8.0.0rc1.
 :2023-05-30: Ansible-8.0.0rc2 when necessary, otherwise Ansible-8.0.0 release.
 :2023-06-06: Ansible-8.0.0 release when Ansible-8.0.0rc2 was necessary.
+:2023-05-30 or 2023-06-06: Create the ansible-build-data directory and files for Ansible-9.
 :2023-06-12: Release of ansible-core 2.15.1.
 :2023-06-13: Release of Ansible-8.1.0 (bugfix + compatible features: every four weeks.)
 
