@@ -658,7 +658,10 @@ class VaultLib:
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
         if self.secrets is None:
-            raise AnsibleVaultError("A vault password must be specified to decrypt data")
+            msg = "A vault password must be specified to decrypt data"
+            if filename:
+                msg += " in file %s" % to_native(filename)
+            raise AnsibleVaultError(msg)
 
         if not is_encrypted(b_vaulttext):
             msg = "input is not vault encrypted data. "
