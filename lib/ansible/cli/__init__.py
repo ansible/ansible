@@ -425,8 +425,7 @@ class CLI(ABC):
         # Make sure path argument doesn't have a backslash
         if hasattr(options, 'action') and (options.action == 'install' or options.action == 'download'):
             if hasattr(options, 'args') and len(options.args) > 0:
-                path = options.args[0]
-                options.args = path.rstrip("/")
+                options.args = [path.rstrip("/") for path in options.args]
 
         # process inventory options except for CLIs that require their own processing
         if hasattr(options, 'inventory') and not self.SKIP_INVENTORY_DEFAULTS:
