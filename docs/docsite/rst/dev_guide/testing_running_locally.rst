@@ -200,7 +200,7 @@ Configuration requirements
 
 4. Click **Apply and restart** if changes were made.
 
-.. setup_instructions:
+.. _setup_instructions:
 
 Setup instructions
 """"""""""""""""""
@@ -251,7 +251,7 @@ Setup instructions
 
 You should now be able to use ``ansible-test`` with the ``--docker`` option.
 
-.. linux_cgroup_configuration:
+.. _linux_cgroup_configuration:
 
 Linux cgroup configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
