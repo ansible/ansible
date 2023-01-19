@@ -79,7 +79,7 @@ class ActionModule(ActionBase):
 
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
         validator = ArgumentSpecValidator(argument_spec_data)
-        validation_result = validator.validate(combine_vars(args_from_vars, provided_arguments))
+        validation_result = validator.validate(combine_vars(args_from_vars, provided_arguments), validate_role_argument_spec=True)
 
         if validation_result.error_messages:
             result['failed'] = True

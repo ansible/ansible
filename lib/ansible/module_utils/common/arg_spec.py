@@ -12,6 +12,7 @@ from ansible.module_utils.common.parameters import (
     _get_legal_inputs,
     _get_unsupported_parameters,
     _handle_aliases,
+    _list_deprecations,
     _list_no_log_values,
     _set_defaults,
     _validate_argument_types,
@@ -31,6 +32,7 @@ from ansible.module_utils.common.validation import (
 from ansible.module_utils.errors import (
     AliasError,
     AnsibleValidationErrorMultiple,
+    DeprecationError,
     MutuallyExclusiveError,
     NoLogError,
     RequiredDefaultError,
@@ -58,6 +60,7 @@ class ValidationResult:
         """
 
         self._unsupported_parameters = set()
+        self._supported_parameters = dict()
         self._validated_parameters = deepcopy(parameters)
         self._deprecations = []
         self._warnings = []
@@ -204,7 +207,19 @@ class ArgumentSpecValidator:
             result.errors.append(NoLogError(to_native(te)))
 
         try:
-            result._unsupported_parameters.update(_get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
+            result._deprecations.extend(_list_deprecations(self.argument_spec, result._validated_parameters))
+        except TypeError as te:
+            result.errors.append(DeprecationError(to_native(te)))
+
+        try:
+            result._unsupported_parameters.update(
+                _get_unsupported_parameters(
+                    self.argument_spec,
+                    result._validated_parameters,
+                    legal_inputs,
+                    store_supported=result._supported_parameters,
+                )
+            )
         except TypeError as te:
             result.errors.append(RequiredDefaultError(to_native(te)))
         except ValueError as ve:
@@ -236,7 +251,8 @@ class ArgumentSpecValidator:
         _validate_sub_spec(self.argument_spec, result._validated_parameters,
                            errors=result.errors,
                            no_log_values=result._no_log_values,
-                           unsupported_parameters=result._unsupported_parameters)
+                           unsupported_parameters=result._unsupported_parameters,
+                           supported_parameters=result._supported_parameters,)
 
         if result._unsupported_parameters:
             flattened_names = []
@@ -247,9 +263,17 @@ class ArgumentSpecValidator:
                     flattened_names.append(item)
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
-            supported_string = ", ".join(self._valid_parameter_names)
-            result.errors.append(
-                UnsupportedError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
+            supported_params = supported_aliases = []
+            if result._supported_parameters.get(item):
+                supported_params = sorted(list(result._supported_parameters[item][0]))
+                supported_aliases = sorted(list(result._supported_parameters[item][1]))
+            supported_string = ", ".join(supported_params)
+            if supported_aliases:
+                aliases_string = ", ".join(supported_aliases)
+                supported_string += " (%s)" % aliases_string
+
+            msg = "{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)
+            result.errors.append(UnsupportedError(msg))
 
         return result
 
@@ -268,9 +292,14 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
         for d in result._deprecations:
-            deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
-                      version=d.get('version'), date=d.get('date'),
-                      collection_name=d.get('collection_name'))
+            if 'name' in d:
+                deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
+                          version=d.get('version'), date=d.get('date'),
+                          collection_name=d.get('collection_name'))
+            if 'msg' in d:
+                deprecate(d['msg'],
+                          version=d.get('version'), date=d.get('date'),
+                          collection_name=d.get('collection_name'))
 
         for w in result._warnings:
             warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))
