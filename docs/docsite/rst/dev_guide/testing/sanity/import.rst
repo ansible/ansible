@@ -1,7 +1,7 @@
 import
 ======
 
-Ansible :ref:`allows unchecked imports<allowed_uncheck_imports>` of some libraries from specific directories.
+Ansible :ref:`allows unchecked imports<allowed_unchecked_imports>` of some libraries from specific directories.
 Importing any other Python library requires :ref:`handling import errors<handling_import_errors>`.
 This enables support for sanity tests such as :ref:`testing_validate-modules` and provides better error messages to the user.
 
