@@ -1,7 +1,11 @@
 import
 ======
 
-Ansible allows unchecked imports of some libraries from specific directories, listed at the bottom of this section. Import all other Python libraries in a try/except ImportError block to support sanity tests such as ``validate-modules`` and to allow Ansible to give better error messages to the user. To import a library in a try/except ImportError block:
+Ansible :ref:`allows unchecked imports<allowed_uncheck_imports>` of some libraries from specific directories.
+Importing any other Python library requires :ref:`handling import errors<handling_import_errors>`.
+This enables support for sanity tests such as :ref:`testing_validate-modules` and provides better error messages to the user.
+
+.. _handling_import_errors:
 
 Handling import errors
 ----------------------
@@ -96,6 +100,8 @@ Another option is to define a substitute base class by modifying the exception h
        class UsefulThing:
            pass
        ...
+
+.. _allowed_unchecked_imports:
 
 Allowed unchecked imports
 -------------------------
