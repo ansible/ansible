@@ -3,57 +3,106 @@ import
 
 Ansible allows unchecked imports of some libraries from specific directories, listed at the bottom of this section. Import all other Python libraries in a try/except ImportError block to support sanity tests such as ``validate-modules`` and to allow Ansible to give better error messages to the user. To import a library in a try/except ImportError block:
 
-1. In modules:
+Handling import errors
+----------------------
 
-   .. code-block:: python
+In modules
+^^^^^^^^^^
 
-       # Instead of 'import another_library', do:
+Instead of using ``import another_library``:
 
-       import traceback
+.. code-block:: python
 
-       try:
-           import another_library
-       except ImportError:
-           HAS_ANOTHER_LIBRARY = False
-           ANOTHER_LIBRARY_IMPORT_ERROR = traceback.format_exc()
-       else:
-           HAS_ANOTHER_LIBRARY = True
+   import traceback
 
+   from ansible.module_utils.basic import missing_required_lib
 
-       # Later in module code:
+   try:
+       import another_library
+   except ImportError:
+       HAS_ANOTHER_LIBRARY = False
+       ANOTHER_LIBRARY_IMPORT_ERROR = traceback.format_exc()
+   else:
+       HAS_ANOTHER_LIBRARY = True
 
-       module = AnsibleModule(...)
+.. note::
 
-       if not HAS_ANOTHER_LIBRARY:
-           # Needs: from ansible.module_utils.basic import missing_required_lib
-           module.fail_json(
-               msg=missing_required_lib('another_library'),
-               exception=ANOTHER_LIBRARY_IMPORT_ERROR)
+   The ``missing_required_lib`` import above will be used below.
 
-2. In plugins:
+Then in the module code:
 
-   .. code-block:: python
+.. code-block:: python
 
-       # Instead of 'import another_library', do:
+   module = AnsibleModule(...)
 
-       from ansible.module_utils.six import raise_from
+   if not HAS_ANOTHER_LIBRARY:
+       module.fail_json(
+           msg=missing_required_lib('another_library'),
+           exception=ANOTHER_LIBRARY_IMPORT_ERROR)
 
-       try:
-           import another_library
-       except ImportError as imp_exc:
-           ANOTHER_LIBRARY_IMPORT_ERROR = imp_exc
-       else:
-           ANOTHER_LIBRARY_IMPORT_ERROR = None
+In plugins
+^^^^^^^^^^
 
+Instead of using ``import another_library``:
 
-       # Later in plugin code, for example in __init__ of the plugin:
+.. code-block:: python
 
-       if ANOTHER_LIBRARY_IMPORT_ERROR:
-           raise_from(
-               AnsibleError('another_library must be installed to use this plugin'),
-               ANOTHER_LIBRARY_IMPORT_ERROR)
-           # If you target only newer Python 3 versions, you can also use the
-           # 'raise ... from ...' syntax.
+   try:
+       import another_library
+   except ImportError as imp_exc:
+       ANOTHER_LIBRARY_IMPORT_ERROR = imp_exc
+   else:
+       ANOTHER_LIBRARY_IMPORT_ERROR = None
+
+Then in the plugin code, for example in ``__init__`` of the plugin:
+
+.. code-block:: python
+
+   if ANOTHER_LIBRARY_IMPORT_ERROR:
+       raise AnsibleError('another_library must be installed to use this plugin') from ANOTHER_LIBRARY_IMPORT_ERROR
+
+When used as base classes
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. important::
+
+   This solution builds on the previous two examples.
+   Make sure to pick the appropriate one before continuing with this solution.
+
+Sometimes an import is used in a base class, for example:
+
+.. code-block:: python
+
+   from another_library import UsefulThing
+
+   class CustomThing(UsefulThing):
+       pass
+
+One option is make the entire class definition conditional:
+
+.. code-block:: python
+
+   if not ANOTHER_LIBRARY_IMPORT_ERROR:
+       class CustomThing(UsefulThing):
+           pass
+
+Another option is to define a substitute base class by modifying the exception handler:
+
+.. code-block:: python
+
+   try:
+       from another_library import UsefulThing
+   except ImportError:
+       class UsefulThing:
+           pass
+       ...
+
+.. note::
+
+   If this is for module code running on Python 2.7 you'll want to use ``class UsefulThing(object):`` instead.
+
+Allowed unchecked imports
+-------------------------
 
 Ansible allows the following unchecked imports from these specific directories:
 
