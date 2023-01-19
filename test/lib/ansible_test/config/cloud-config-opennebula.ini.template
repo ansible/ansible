@@ -6,7 +6,8 @@
 # 2) Running integration tests against previously recorded XMLRPC fixtures
 #
 # If you want to test against a Live OpenNebula platform,
-# fill in the values below and save this file without the .template extension.
+# fill in the values below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
 # This will cause ansible-test to use the given configuration.
 #
 # If you run with @FIXTURES enabled (true) then you can decide if you want to

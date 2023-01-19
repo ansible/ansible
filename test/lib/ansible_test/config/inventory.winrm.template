@@ -6,7 +6,8 @@
 # 1) Using the `--windows` option to provision temporary Windows instances on EC2.
 #
 # If you do not want to use the automatically provisioned temporary Windows instances,
-# fill in the @VAR placeholders below and save this file without the .template extension.
+# fill in the @VAR placeholders below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
 #
 # NOTE: Automatic provisioning of Windows instances on EC2 requires an ansible-core-ci API key.
 #

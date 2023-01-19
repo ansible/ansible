@@ -6,7 +6,8 @@
 # 2) Using the automatically provisioned VMware credentials in ansible-test.
 #
 # If you do not want to use the automatically provisioned temporary VMware credentials,
-# fill in the @VAR placeholders below and save this file without the .template extension.
+# fill in the @VAR placeholders below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
 # This will cause ansible-test to use the given configuration instead of temporary credentials.
 #
 # NOTE: Automatic provisioning of VMware credentials requires an ansible-core-ci API key.
