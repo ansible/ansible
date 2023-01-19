@@ -97,10 +97,6 @@ Another option is to define a substitute base class by modifying the exception h
            pass
        ...
 
-.. note::
-
-   If this is for module code running on Python 2.7 you'll want to use ``class UsefulThing(object):`` instead.
-
 Allowed unchecked imports
 -------------------------
 
