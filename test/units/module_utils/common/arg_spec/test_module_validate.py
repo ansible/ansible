@@ -49,7 +49,7 @@ def test_module_alias_deprecations_warnings(monkeypatch):
         {
             'collection_name': None,
             'date': '2020-03-04',
-            'name': 'flamethrower',
+            'msg': "Alias 'flamethrower' is deprecated. See the module docs for more information",
             'version': None,
         }
     ]

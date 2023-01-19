@@ -195,7 +195,7 @@ class ArgumentSpecValidator:
 
         for deprecation in alias_deprecations:
             result._deprecations.append({
-                'name': deprecation['name'],
+                'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
                 'version': deprecation.get('version'),
                 'date': deprecation.get('date'),
                 'collection_name': deprecation.get('collection_name'),
@@ -248,11 +248,20 @@ class ArgumentSpecValidator:
 
         result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters))
 
+        alias_deprecations = []
         _validate_sub_spec(self.argument_spec, result._validated_parameters,
                            errors=result.errors,
                            no_log_values=result._no_log_values,
                            unsupported_parameters=result._unsupported_parameters,
-                           supported_parameters=result._supported_parameters,)
+                           supported_parameters=result._supported_parameters,
+                           alias_deprecations=alias_deprecations,)
+        for deprecation in alias_deprecations:
+            result._deprecations.append({
+                'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                'version': deprecation.get('version'),
+                'date': deprecation.get('date'),
+                'collection_name': deprecation.get('collection_name'),
+            })
 
         if result._unsupported_parameters:
             flattened_names = []
@@ -292,14 +301,9 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
         for d in result._deprecations:
-            if 'name' in d:
-                deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
-                          version=d.get('version'), date=d.get('date'),
-                          collection_name=d.get('collection_name'))
-            if 'msg' in d:
-                deprecate(d['msg'],
-                          version=d.get('version'), date=d.get('date'),
-                          collection_name=d.get('collection_name'))
+            deprecate(d['msg'],
+                      version=d.get('version'), date=d.get('date'),
+                      collection_name=d.get('collection_name'))
 
         for w in result._warnings:
             warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))
