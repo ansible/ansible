@@ -170,6 +170,8 @@ class LinuxHardware(Hardware):
         coreid = 0
         sockets = {}
         cores = {}
+        zp = 0
+        zmt = 0
 
         xen = False
         xen_paravirt = False
@@ -209,7 +211,6 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
@@ -233,8 +234,12 @@ class LinuxHardware(Hardware):
                 sockets[physid] = int(val)
             elif key == 'siblings':
                 cores[coreid] = int(val)
+            # S390x classic cpuinfo
             elif key == '# processors':
-                cpu_facts['processor_cores'] = int(val)
+                zp = int(val)
+            elif key == 'max thread id':
+                zmt = int(val) + 1
+            # SPARC
             elif key == 'ncpus active':
                 i = int(val)
 
@@ -250,13 +255,20 @@ class LinuxHardware(Hardware):
         if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch', 'ppc')):
             i = processor_occurrence
 
-        # FIXME
-        if collected_facts.get('ansible_architecture') != 's390x':
+        if collected_facts.get('ansible_architecture') == 's390x':
+            # getting sockets would require 5.7+ with CONFIG_SCHED_TOPOLOGY
+            cpu_facts['processor_count'] = 1
+            cpu_facts['processor_cores'] = zp // zmt
+            cpu_facts['processor_threads_per_core'] = zmt
+            cpu_facts['processor_vcpus'] = zp
+            cpu_facts['processor_nproc'] = zp
+        else:
             if xen_paravirt:
                 cpu_facts['processor_count'] = i
                 cpu_facts['processor_cores'] = i
                 cpu_facts['processor_threads_per_core'] = 1
                 cpu_facts['processor_vcpus'] = i
+                cpu_facts['processor_nproc'] = i
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
@@ -278,25 +290,25 @@ class LinuxHardware(Hardware):
                 cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
                                                 cpu_facts['processor_count'] * cpu_facts['processor_cores'])
 
-                # if the number of processors available to the module's
-                # thread cannot be determined, the processor count
-                # reported by /proc will be the default:
                 cpu_facts['processor_nproc'] = processor_occurrence
 
-                try:
-                    cpu_facts['processor_nproc'] = len(
-                        os.sched_getaffinity(0)
-                    )
-                except AttributeError:
-                    # In Python < 3.3, os.sched_getaffinity() is not available
-                    try:
-                        cmd = get_bin_path('nproc')
-                    except ValueError:
-                        pass
-                    else:
-                        rc, out, _err = self.module.run_command(cmd)
-                        if rc == 0:
-                            cpu_facts['processor_nproc'] = int(out)
+        # if the number of processors available to the module's
+        # thread cannot be determined, the processor count
+        # reported by /proc will be the default (as previously defined)
+        try:
+            cpu_facts['processor_nproc'] = len(
+                os.sched_getaffinity(0)
+            )
+        except AttributeError:
+            # In Python < 3.3, os.sched_getaffinity() is not available
+            try:
+                cmd = get_bin_path('nproc')
+            except ValueError:
+                pass
+            else:
+                rc, out, _err = self.module.run_command(cmd)
+                if rc == 0:
+                    cpu_facts['processor_nproc'] = int(out)
 
         return cpu_facts
 
