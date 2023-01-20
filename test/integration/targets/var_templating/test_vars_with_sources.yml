@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - template:
+        src: ansible_debug_template.j2
+        dest: "{{ output_dir }}/ansible_debug_templated.txt"
+      vars:
+        output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+        hello: hello
