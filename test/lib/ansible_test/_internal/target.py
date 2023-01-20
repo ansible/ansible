@@ -73,23 +73,22 @@ def walk_internal_targets(
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes, directories=False), key=lambda include_target: include_target.name)
+    include_targets = sorted(filter_targets(targets, includes), key=lambda include_target: include_target.name)
 
     if requires:
-        require_targets = set(filter_targets(targets, requires, directories=False))
+        require_targets = set(filter_targets(targets, requires))
         include_targets = [require_target for require_target in include_targets if require_target in require_targets]
 
     if excludes:
-        list(filter_targets(targets, excludes, include=False, directories=False))
+        list(filter_targets(targets, excludes, include=False))
 
-    internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False, directories=False))
+    internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False))
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
 def filter_targets(targets: c.Iterable[TCompletionTarget],
                    patterns: list[str],
                    include: bool = True,
-                   directories: bool = True,
                    errors: bool = True,
                    ) -> c.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
@@ -130,10 +129,7 @@ def filter_targets(targets: c.Iterable[TCompletionTarget],
         if match != include:
             continue
 
-        if directories and matched_directories:
-            yield DirectoryTarget(to_text(sorted(matched_directories, key=len)[0]), target.modules)
-        else:
-            yield target
+        yield target
 
     if errors:
         if unmatched:
@@ -439,16 +435,6 @@ class CompletionTarget(metaclass=abc.ABCMeta):
             return '%s (%s)' % (self.name, ', '.join(self.modules))
 
         return self.name
-
-
-class DirectoryTarget(CompletionTarget):
-    """Directory target."""
-    def __init__(self, path: str, modules: tuple[str, ...]) -> None:
-        super().__init__()
-
-        self.name = path
-        self.path = path
-        self.modules = modules
 
 
 class TestTarget(CompletionTarget):
