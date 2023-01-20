@@ -13,7 +13,7 @@ except Exception:  # pylint: disable=broad-except
     pass
 
 try:
-    from typing import *  # type: ignore[misc]
+    from typing import *  # type: ignore[assignment]
 except Exception:  # pylint: disable=broad-except
     pass
 

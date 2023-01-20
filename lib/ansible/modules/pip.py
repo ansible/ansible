@@ -459,7 +459,7 @@ def _have_pip_module():  # type: () -> bool
     except ImportError:
         find_spec = None  # type: ignore[assignment] # type: ignore[no-redef]
 
-    if find_spec:
+    if find_spec:  # type: ignore[truthy-function]
         # noinspection PyBroadException
         try:
             # noinspection PyUnresolvedReferences
