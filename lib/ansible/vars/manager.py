@@ -166,6 +166,9 @@ class VariableManager:
 
         display.debug("in VariableManager get_vars()")
 
+        if task and task.implicit and task.args.get('_raw_params') == 'noop':
+            return {}
+
         all_vars = dict()
         magic_variables = self._get_magic_variables(
             play=play,

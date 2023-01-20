@@ -18,6 +18,7 @@ from ansible.utils.vars import combine_vars
 
 display = Display()
 
+VARS_PLUGIN_CACHE = []
 
 def get_plugin_vars(loader, plugin, path, entities):
 
@@ -39,10 +40,7 @@ def get_plugin_vars(loader, plugin, path, entities):
     return data
 
 
-def get_vars_from_path(loader, path, entities, stage):
-
-    data = {}
-
+def load_vars_plugins(loader):
     enabled_vars_plugins = []
     enabled_canonical_names = []
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
@@ -75,7 +73,18 @@ def get_vars_from_path(loader, path, entities, stage):
                 continue
         legacy_vars_plugins.append(plugin)
 
-    for plugin in legacy_vars_plugins + enabled_vars_plugins:
+    global VARS_PLUGIN_CACHE
+    VARS_PLUGIN_CACHE = legacy_vars_plugins + enabled_vars_plugins
+
+
+def get_vars_from_path(loader, path, entities, stage):
+
+    data = {}
+
+    if not VARS_PLUGIN_CACHE:
+        load_vars_plugins(loader)
+
+    for plugin in VARS_PLUGIN_CACHE:
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 
         # if a plugin-specific setting has not been provided, use the global setting

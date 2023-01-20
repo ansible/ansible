@@ -85,3 +85,49 @@ ANSIBLE_VARS_PLUGIN_STAGE=task ANSIBLE_VARS_PLUGINS=./custom_vars_plugins ansibl
 ANSIBLE_RUN_VARS_PLUGINS=start ANSIBLE_VARS_PLUGIN_STAGE=inventory ANSIBLE_VARS_PLUGINS=./custom_vars_plugins ansible-playbook test_task_vars.yml | grep "ok=3"
 ANSIBLE_RUN_VARS_PLUGINS=demand ANSIBLE_VARS_PLUGIN_STAGE=inventory ANSIBLE_VARS_PLUGINS=./custom_vars_plugins ansible-playbook test_task_vars.yml | grep "ok=3"
 ANSIBLE_VARS_PLUGINS=./custom_vars_plugins ansible-playbook test_task_vars.yml | grep "ok=3"
+
+# Test vars plugins aren't reloaded every time they might run
+expected_debug=(
+    "Loading VarsModule 'ansible_collections.testns.content_adj.plugins.vars.custom_adj_vars'"
+    "Loading VarsModule 'v1_vars_plugin'"
+    "Loading VarsModule 'v2_vars_plugin'"
+    "Loading VarsModule 'host_group_vars'"
+)
+verbose_result="$(ANSIBLE_DEBUG=True ansible-playbook test_task_vars.yml)"
+
+test "$(grep -c "Loading VarsModule" <<< "$verbose_result")" == 4
+for plugin in "$expected_debug"; do
+    test "$(grep -c "$plugin" <<< "$verbose_result")" == 1;
+done
+
+# Test how many times vars plugins run
+# Not collection-specific - move to a different test target?
+cat << EOF > "test_exe_vars_plugins.yml"
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - debug: msg="{{ adj_var }}"
+  - debug: msg="{{ adj_var }}"
+EOF
+
+cat << EOF > "empty_inventory"
+EOF
+
+# * After parsing inventory, the vars plugin should run 2 times (2 entities x 1 location).
+#   The inventory is empty, so the default entities are the groups 'all' and 'ungrouped'.
+# * The vars plugin should run 30 times for the task list (5 tasks x 3 entities x 2 locations).
+#   The tasks list contains an implicit flush handlers, 2 debug tasks, and 2 more implicit flush handlers.
+#   The entities are the group 'all', the groups of the host (empty in this case) and the host (localhost).
+#   Playbook adjacent locations are searched in addition to inventory adjacent.
+ANSIBLE_DEBUG=True ansible-playbook -i empty_inventory test_exe_vars_plugins.yml | grep -e "Executing VarsModule"
+test "$(ANSIBLE_DEBUG=True ansible-playbook -i empty_inventory test_exe_vars_plugins.yml | grep -c "Executing VarsModule")" == 32
+
+# Note: excluding inventory-adjacent vars by using host list
+export ANSIBLE_VARS_PLUGIN_STAGE=inventory
+test "$(ANSIBLE_DEBUG=True ansible-playbook -i , test_exe_vars_plugins.yml | grep -c "Executing VarsModule")" == 0
+test "$(ANSIBLE_DEBUG=True ansible-playbook -i empty_inventory test_exe_vars_plugins.yml | grep -c "Executing VarsModule")" == 2
+
+# 5 tasks * 3 entities * 1 location
+unset ANSIBLE_VARS_PLUGIN_STAGE
+test "$(ANSIBLE_DEBUG=True ansible-playbook -i , test_exe_vars_plugins.yml | grep -c "Executing VarsModule")" == 15
