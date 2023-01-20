@@ -7,6 +7,8 @@ plugin_routing:
       tombstone:
         removal_date: '2020-01-01'
   connection:
+    redirected_localconn:
+      redirect: testns.testcoll.localconn
     redirected_local:
       redirect: ansible.builtin.local
   modules:

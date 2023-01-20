@@ -24,9 +24,12 @@ class Connection(ConnectionBase):
     has_pipelining = True
 
     def _connect(self):
+        self._connected = True
         return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
+        if not self.connected:
+            self._connect()
         stdout = 'localconn ran {0}'.format(to_native(cmd))
         stderr = 'connectionvar is {0}'.format(to_native(self.get_option('connectionvar')))
         return (0, stdout, stderr)

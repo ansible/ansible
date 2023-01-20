@@ -1,0 +1,40 @@
+- name: setup host for next test
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: add host without ansible_connection var
+      add_host:
+        name: test_host_connection
+
+- name: test plugin loading in TE with loops
+  hosts: test_host_connection
+  gather_facts: no
+  vars:
+    templated_conn_name: testns.testcoll.redirected_localconn
+    connection_plugins:
+      # "testns.testcoll.localconn" should be looked up using the PluginLoader 4 times total
+      - testns.testcoll.localconn
+      # next item redirects to the same name - TE looks it up by the new name
+      - testns.testcoll.redirected_localconn
+      # next item has the same templated value - TE reuses the existing connection
+      - "{{ templated_conn_name }}"
+      # next item uses a new name but the current FQCN - TE reuses the existing connection
+      - testns.testcoll.localconn
+  tasks:
+    - name: test setting ansible_connection in a loop
+      raw: noop
+      vars:
+        ansible_connection: "{{ item }}"
+      loop: "{{ connection_plugins }}"
+      register: test_connection_var
+
+    - name: test setting connection keyword in a loop
+      raw: noop
+      connection: "{{ item }}"
+      loop: "{{ connection_plugins }}"
+      register: test_connection_keyword
+
+    - assert:
+        that:
+          - item.stdout == 'localconn ran noop'
+      loop: "{{ test_connection_var.results + test_connection_keyword.results }}"

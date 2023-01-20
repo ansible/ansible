@@ -91,6 +91,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
+        self._templated_connection_name = None
         self._final_q = final_q
         self._loop_eval_error = None
 
@@ -540,14 +541,18 @@ class TaskExecutor:
             current_connection = self._task.connection
 
         # get the connection and the handler for this execution
-        if (not self._connection or
-                not getattr(self._connection, 'connected', False) or
-                # FIXME elsewhere
-                self._connection._load_name != current_connection or
-                # pc compare, left here for old plugins, but should be irrelevant for those
-                # using get_option, since they are cleared each iteration.
-                self._play_context.remote_addr != self._connection._play_context.remote_addr):
+        # note: negative is not factored out to lazily evaluate or statements
+        if (
+            not self._connection
+            or not getattr(self._connection, 'connected', False)
+            or not (
+                current_connection == self._templated_connection_name
+                or current_connection == self._connection.ansible_name
+            )
+            or self._play_context.remote_addr != self._connection._play_context.remote_addr
+        ):
             self._connection = self._get_connection(cvars, templar, current_connection)
+            self._templated_connection_name = current_connection
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
