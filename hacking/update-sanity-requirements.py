@@ -83,7 +83,7 @@ def main() -> None:
     tests = [test for test in tests if test.name in test_names] if test_names else tests
 
     for test in tests:
-        print(f'===[ {test.name} ]===')
+        print(f'===[ {test.name} ]===', flush=True)
         test.freeze_requirements()
 
 
