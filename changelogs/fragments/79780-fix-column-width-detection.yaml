@@ -1,2 +1,2 @@
 bugfixes:
-  - terminal width detection from stdout now falls back to stderr and stdin, keeping terminal width when piping ansible output (https://github.com/ansible/ansible/pull/79780)
+  - terminal width detection from stdout now falls back to stderr and stdin, keeping terminal width when piping ansible output (https://github.com/ansible/ansible/pull/79780).
