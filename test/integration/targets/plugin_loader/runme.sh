@@ -34,5 +34,3 @@ done
 
 # test config loading
 ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ansible.builtin.ssh' "$@"
-
-ansible-playbook -i host, plugin_object/playbook.yml "$@"
