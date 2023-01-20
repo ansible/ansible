@@ -240,8 +240,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
         clouds = get_cloud_platforms(args, posix_targets)
         cloud_targets = ['cloud/%s/' % cloud for cloud in clouds]
 
-        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], directories=False, errors=False))
-        invalid_cloud_targets = tuple(filter_targets(all_cloud_targets, cloud_targets, include=False, directories=False, errors=False))
+        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], errors=False))
+        invalid_cloud_targets = tuple(filter_targets(all_cloud_targets, cloud_targets, include=False, errors=False))
 
         messages = []
 
@@ -254,13 +254,13 @@ class IntegrationAliasesTest(SanitySingleVersion):
                     messages.append(SanityMessage('invalid alias `%s`' % alias, '%s/aliases' % target.path))
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, directories=False, errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, errors=False)),
             find=self.format_test_group_alias('linux').replace('linux', 'posix'),
             find_incidental=['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], directories=False, errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], errors=False)),
             find=self.format_test_group_alias('generic'),
         )
 
@@ -273,7 +273,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
                 find_incidental = ['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX]
 
             messages += self.check_ci_group(
-                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], directories=False, errors=False)),
+                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], errors=False)),
                 find=find,
                 find_incidental=find_incidental,
             )
@@ -331,11 +331,11 @@ class IntegrationAliasesTest(SanitySingleVersion):
     ) -> list[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
-        supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))
-        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], directories=False, errors=False))
+        supported_paths = set(target.path for target in filter_targets(targets, [find], errors=False))
+        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], errors=False))
 
         if find_incidental:
-            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, directories=False, errors=False))
+            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, errors=False))
         else:
             incidental_paths = set()
 
