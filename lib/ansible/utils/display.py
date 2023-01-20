@@ -519,8 +519,12 @@ class Display(metaclass=Singleton):
         return result
 
     def _set_column_width(self):
-        if os.isatty(1):
-            tty_size = unpack('HHHH', fcntl.ioctl(1, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
-        else:
-            tty_size = 0
+        tty_size = 0
+
+        # Try to detect terminal width from stdout, stderr or stdin
+        for fd in (1, 2, 0):
+            if os.isatty(fd):
+                tty_size = unpack('HHHH', fcntl.ioctl(fd, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
+                break
+
         self.columns = max(79, tty_size - 1)
