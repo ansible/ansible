@@ -445,11 +445,8 @@ class JinjaPluginIntercept(MutableMapping):
 
         self._pluginloader = pluginloader
 
-        # cache of resolved plugins
+        # Jinja environment's list of known names (initially just J2 builtins)
         self._delegatee = delegatee
-
-        # track loaded plugins here as cache above includes 'jinja2' filters but ours should override
-        self._loaded_builtins = set()
 
     def __getitem__(self, key):
 
@@ -457,7 +454,7 @@ class JinjaPluginIntercept(MutableMapping):
             raise ValueError('key must be a string, got %s instead' % type(key))
 
         original_exc = None
-        if key not in self._loaded_builtins:
+        if key not in self._delegatee:
             plugin = None
             try:
                 plugin = self._pluginloader.get(key)
@@ -471,7 +468,6 @@ class JinjaPluginIntercept(MutableMapping):
             if plugin:
                 # set in filter cache and avoid expensive plugin load
                 self._delegatee[key] = plugin.j2_function
-                self._loaded_builtins.add(key)
 
         # raise template syntax error if we could not find ours or jinja2 one
         try:
@@ -479,6 +475,7 @@ class JinjaPluginIntercept(MutableMapping):
         except KeyError as e:
             raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(original_exc or e)), 0)
 
+        # FIXME: do we want to do this for Jinja builtins or not? Also, the wrapped function should be cached so we don't re-wrap on every invocation
         # if i do have func and it is a filter, it nees wrapping
         if self._pluginloader.type == 'filter':
             # filter need wrapping
