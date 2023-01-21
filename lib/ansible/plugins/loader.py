@@ -1124,7 +1124,7 @@ class Jinja2Loader(PluginLoader):
         return plugins
 
     # FUTURE: now that the resulting plugins are closer, refactor base class method with some extra
-    # hooks so we can avoid all the duplicated plugin metadata logic
+    # hooks so we can avoid all the duplicated plugin metadata logic, and also cache the collection results properly here
     def get_with_context(self, name, *args, **kwargs):
         # pop N/A kwargs to avoid passthrough to parent methods
         kwargs.pop('class_only', False)
@@ -1230,14 +1230,10 @@ class Jinja2Loader(PluginLoader):
                     # use 'parent' loader class to find files, but cannot return this as it can contain
                     # multiple plugins per file
                     plugin_impl = super(Jinja2Loader, self).get_with_context(module_name, *args, **kwargs)
-                except Exception as e:
-                    raise KeyError(to_native(e))
-
-                try:
                     method_map = getattr(plugin_impl.object, self.method_map_name)
                     plugin_map = method_map().items()
                 except Exception as e:
-                    display.warning("Skipping %s plugins in '%s' as it seems to be invalid: %r" % (self.type, to_text(plugin_impl.object._original_path), e))
+                    display.warning(f"Skipping {self.type} plugins in {module_name}'; an error occurred while loading: {e}")
                     continue
 
                 for func_name, func in plugin_map:
@@ -1250,6 +1246,7 @@ class Jinja2Loader(PluginLoader):
                         if plugin:
                             context = plugin_impl.plugin_load_context
                             self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 
         except AnsiblePluginRemovedError as apre:

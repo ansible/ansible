@@ -458,9 +458,8 @@ class JinjaPluginIntercept(MutableMapping):
 
         original_exc = None
         if key not in self._seen_it:
-            # only run it through the pluginloader once for each instance of the interceptor;
-            # either the load succeeded and it's in the Jinja env for next time, or it's a Jinja
-            # builtin, or it's going to fail as an unknown name
+            # this looks too early to set this- it isn't. Setting it here keeps requests for Jinja builtins from
+            # going through the pluginloader more than once, which is extremely slow for something that won't ever succeed.
             self._seen_it.add(key)
             plugin = None
             try:
@@ -480,6 +479,8 @@ class JinjaPluginIntercept(MutableMapping):
         try:
             func = self._delegatee[key]
         except KeyError as e:
+            # FIXME: bypassing the cache for failures allows some error messages to propagate
+            self._seen_it.remove(key)
             raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(original_exc or e)), 0)
 
         # FIXME: do we want to do this for Jinja builtins or not? Also, the wrapped function should be cached so we don't re-wrap on every invocation
