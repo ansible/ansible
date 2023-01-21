@@ -445,8 +445,11 @@ class JinjaPluginIntercept(MutableMapping):
 
         self._pluginloader = pluginloader
 
-        # Jinja environment's list of known names (initially just J2 builtins)
+        # Jinja environment's mapping of known names (initially just J2 builtins)
         self._delegatee = delegatee
+
+        # our names take precedence over Jinja's, but let things we've tried to resolve skip the pluginloader
+        self._seen_it = set()
 
     def __getitem__(self, key):
 
@@ -454,7 +457,11 @@ class JinjaPluginIntercept(MutableMapping):
             raise ValueError('key must be a string, got %s instead' % type(key))
 
         original_exc = None
-        if key not in self._delegatee:
+        if key not in self._seen_it:
+            # only run it through the pluginloader once for each instance of the interceptor;
+            # either the load succeeded and it's in the Jinja env for next time, or it's a Jinja
+            # builtin, or it's going to fail as an unknown name
+            self._seen_it.add(key)
             plugin = None
             try:
                 plugin = self._pluginloader.get(key)
