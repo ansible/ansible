@@ -661,8 +661,6 @@ class IntegrationTarget(CompletionTarget):
 
         target_type, actual_type = categorize_integration_test(self.name, list(static_aliases), force_target)
 
-        self._remove_group(groups, 'context')
-
         groups.extend(['context/', f'context/{target_type.name.lower()}'])
 
         if target_type != actual_type:
@@ -690,10 +688,6 @@ class IntegrationTarget(CompletionTarget):
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
         self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
-
-    @staticmethod
-    def _remove_group(groups, group):
-        return [g for g in groups if g != group and not g.startswith('%s/' % group)]
 
 
 class TargetPatternsNotMatched(ApplicationError):
