@@ -866,10 +866,10 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.extensions = []
             self.prefixes = []
             self.files = []
-            self.text: t.Optional[bool] = None
+            self.text = None
             self.ignore_self = False
-            self.minimum_python_version: t.Optional[str] = None
-            self.maximum_python_version: t.Optional[str] = None
+            self.minimum_python_version = None
+            self.maximum_python_version = None
 
             self.__all_targets = False
             self.__no_targets = True
