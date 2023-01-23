@@ -24,6 +24,7 @@ from . import (
 
 from . import (
     NamedPoints,
+    TargetKey,
     TargetIndexes,
 )
 
@@ -50,8 +51,12 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
     covered_targets, covered_path_arcs, covered_path_lines = read_report(args.input_file)
 
-    filtered_path_arcs = expand_indexes(covered_path_arcs, covered_targets, lambda v: v)
-    filtered_path_lines = expand_indexes(covered_path_lines, covered_targets, lambda v: v)
+    def pass_target_key(value: TargetKey) -> TargetKey:
+        """Return the given target key unmodified."""
+        return value
+
+    filtered_path_arcs = expand_indexes(covered_path_arcs, covered_targets, pass_target_key)
+    filtered_path_lines = expand_indexes(covered_path_lines, covered_targets, pass_target_key)
 
     include_targets = set(args.include_targets) if args.include_targets else None
     exclude_targets = set(args.exclude_targets) if args.exclude_targets else None
