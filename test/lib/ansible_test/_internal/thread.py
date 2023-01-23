@@ -21,7 +21,7 @@ class WrappedThread(threading.Thread):
         self.action = action
         self.result = None
 
-    def run(self):
+    def run(self) -> None:
         """
         Run action and capture results or exception.
         Do not override. Do not call directly. Executed by the start() method.

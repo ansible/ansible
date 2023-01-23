@@ -54,7 +54,7 @@ class CompletionConfig(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
 
 
@@ -107,17 +107,17 @@ class RemoteCompletionConfig(CompletionConfig):
     arch: t.Optional[str] = None
 
     @property
-    def platform(self):
+    def platform(self) -> str:
         """The name of the platform."""
         return self.name.partition('/')[0]
 
     @property
-    def version(self):
+    def version(self) -> str:
         """The version of the platform."""
         return self.name.partition('/')[2]
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return not self.version
 
@@ -166,7 +166,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
     placeholder: bool = False
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 

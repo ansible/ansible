@@ -819,7 +819,7 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, test_dir: str, integration_dir: str, targets_dir: str, inventory_path: str, ansible_config: str, vars_file: str) -> None:
         self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir

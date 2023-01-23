@@ -184,7 +184,7 @@ def check_container_cgroup_status(args: EnvironmentConfig, config: DockerConfig,
         write_text_file(os.path.join(args.dev_probe_cgroups, f'{identity}.log'), message)
 
 
-def get_identity(args: EnvironmentConfig, config: DockerConfig, container_name: str):
+def get_identity(args: EnvironmentConfig, config: DockerConfig, container_name: str) -> str:
     """Generate and return an identity string to use when logging test results."""
     engine = require_docker().command
 

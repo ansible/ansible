@@ -313,7 +313,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
     role_targets = [target for target in integration_targets if target.type == 'role']
     hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
 
-    dependencies = collections.defaultdict(set)
+    dependencies: collections.defaultdict[str, set[str]] = collections.defaultdict(set)
 
     # handle setup dependencies
     for target in integration_targets:
@@ -405,12 +405,12 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
 
 class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
-    def __init__(self):
+    def __init__(self) -> None:
         self.name = None
         self.path = None
-        self.base_path = None
-        self.modules = tuple()
-        self.aliases = tuple()
+        self.base_path: t.Optional[str] = None
+        self.modules: tuple[str, ...] = tuple()
+        self.aliases: tuple[str, ...] = tuple()
 
     def __eq__(self, other):
         if isinstance(other, CompletionTarget):
@@ -446,7 +446,7 @@ class TestTarget(CompletionTarget):
             module_prefix: t.Optional[str],
             base_path: str,
             symlink: t.Optional[bool] = None,
-    ):
+    ) -> None:
         super().__init__()
 
         if symlink is None:

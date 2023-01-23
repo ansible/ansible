@@ -34,7 +34,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     These registered completions, if provided, are used to filter the final completion results.
     This works around a known bug: https://github.com/kislyuk/argcomplete/issues/221
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.registered_completions: t.Optional[list[str]] = None

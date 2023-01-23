@@ -59,7 +59,7 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
     include_path = re.compile(args.include_path) if args.include_path else None
     exclude_path = re.compile(args.exclude_path) if args.exclude_path else None
 
-    def path_filter_func(path):
+    def path_filter_func(path: str) -> bool:
         """Return True if the given path should be included, otherwise return False."""
         if include_path and not re.search(include_path, path):
             return False
@@ -69,7 +69,7 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
         return True
 
-    def target_filter_func(targets):
+    def target_filter_func(targets: set[str]) -> set[str]:
         """Filter the given targets and return the result based on the defined includes and excludes."""
         if include_targets:
             targets &= include_targets

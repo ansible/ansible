@@ -831,7 +831,7 @@ class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
 
 class SanityCodeSmellTest(SanitySingleVersion):
     """Sanity test script."""
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
 
