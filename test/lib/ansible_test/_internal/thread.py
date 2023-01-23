@@ -35,11 +35,8 @@ class WrappedThread(threading.Thread):
         except:  # noqa
             self._result.put((None, sys.exc_info()))
 
-    def wait_for_result(self):
-        """
-        Wait for thread to exit and return the result or raise an exception.
-        :rtype: any
-        """
+    def wait_for_result(self) -> t.Any:
+        """Wait for thread to exit and return the result or raise an exception."""
         result, exception = self._result.get()
 
         if exception:

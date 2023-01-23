@@ -136,10 +136,8 @@ def filter_targets(targets: c.Iterable[TCompletionTarget],
             raise TargetPatternsNotMatched(unmatched)
 
 
-def walk_module_targets():
-    """
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_module_targets() -> c.Iterable[TestTarget]:
+    """Iterate through the module test targets."""
     for target in walk_test_targets(path=data_context().content.module_path, module_path=data_context().content.module_path, extensions=MODULE_EXTENSIONS):
         if not target.module:
             continue
@@ -244,10 +242,8 @@ def walk_integration_targets() -> c.Iterable[IntegrationTarget]:
         yield IntegrationTarget(to_text(path), modules, prefixes)
 
 
-def load_integration_prefixes():
-    """
-    :rtype: dict[str, str]
-    """
+def load_integration_prefixes() -> dict[str, str]:
+    """Load and return the integration test prefixes."""
     path = data_context().content.integration_path
     file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
     prefixes = {}

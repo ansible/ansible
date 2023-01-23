@@ -146,10 +146,8 @@ def get_python_module_utils_name(path: str) -> str:
     return name
 
 
-def enumerate_module_utils():
-    """Return a list of available module_utils imports.
-    :rtype: set[str]
-    """
+def enumerate_module_utils() -> set[str]:
+    """Return a list of available module_utils imports."""
     module_utils = []
 
     for path in data_context().content.walk_files(data_context().content.module_utils_path):
