@@ -885,3 +885,164 @@ releases:
     - mention_acl.yml
     - v2.14.1rc1_summary.yaml
     release_date: '2022-11-28'
+  2.14.2rc1:
+    changes:
+      bugfixes:
+      - Correctly count rescued tasks in play recap (https://github.com/ansible/ansible/issues/79711)
+      - Fix using ``GALAXY_IGNORE_CERTS`` in conjunction with collections in requirements
+        files which specify a specific ``source`` that isn't in the configured servers.
+      - Fix using ``GALAXY_IGNORE_CERTS`` when downloading tarballs from Galaxy servers
+        (https://github.com/ansible/ansible/issues/79557).
+      - Module and role argument validation - include the valid suboption choices
+        in the error when an invalid suboption is provided.
+      - ansible-doc now will correctly display short descriptions on listing filters/tests
+        no matter the directory sorting.
+      - ansible-inventory will not explicitly sort groups/hosts anymore, giving a
+        chance (depending on output format) to match the order in the input sources.
+      - ansible-test - Added a work-around for a traceback under Python 3.11 when
+        completing certain command line options.
+      - ansible-test - Avoid using ``exec`` after container startup when possible.
+        This improves container startup performance and avoids intermittent startup
+        issues with some old containers.
+      - ansible-test - Connection attempts to managed remote instances no longer abort
+        on ``Permission denied`` errors.
+      - ansible-test - Detection for running in a Podman or Docker container has been
+        fixed to detect more scenarios. The new detection relies on ``/proc/self/mountinfo``
+        instead of ``/proc/self/cpuset``. Detection now works with custom cgroups
+        and private cgroup namespaces.
+      - ansible-test - Fix validate-modules error when retrieving PowerShell argspec
+        when retrieved inside a Cmdlet
+      - ansible-test - Handle server errors when executing the ``docker info`` command.
+      - ansible-test - Multiple containers now work under Podman without specifying
+        the ``--docker-network`` option.
+      - ansible-test - Pass the ``XDG_RUNTIME_DIR`` environment variable through to
+        container commands.
+      - ansible-test - Perform PyPI proxy configuration after instances are ready
+        and bootstrapping has been completed. Only target instances are affected,
+        as controller instances were already handled this way. This avoids proxy configuration
+        errors when target instances are not yet ready for use.
+      - ansible-test - Prevent concurrent / repeat inspections of the same container
+        image.
+      - ansible-test - Prevent concurrent / repeat pulls of the same container image.
+      - ansible-test - Prevent concurrent execution of cached methods.
+      - ansible-test - Show the exception type when reporting errors during instance
+        provisioning.
+      - ansible-test sanity - correctly report invalid YAML in validate-modules (https://github.com/ansible/ansible/issues/75837).
+      - argument spec validation - again report deprecated parameters for Python-based
+        modules. This was accidentally removed in ansible-core 2.11 when argument
+        spec validation was refactored (https://github.com/ansible/ansible/issues/79680,
+        https://github.com/ansible/ansible/pull/79681).
+      - argument spec validation - ensure that deprecated aliases in suboptions are
+        also reported (https://github.com/ansible/ansible/pull/79740).
+      - argument spec validation - fix warning message when two aliases of the same
+        option are used for suboptions to also mention the option's name they are
+        in (https://github.com/ansible/ansible/pull/79740).
+      - connection local now avoids traceback on invalid user being used to execuet
+        ansible (valid in host, but not in container).
+      - file - touch action in check mode was always returning ok. Fix now evaluates
+        the different conditions and returns the appropriate changed status. (https://github.com/ansible/ansible/issues/79360)
+      - get_url - Ensure we are passing ciphers to all url_get calls (https://github.com/ansible/ansible/issues/79717)
+      - plugin filter now works with rejectlist as documented (still falls back to
+        blacklist if used).
+      - uri - improve JSON content type detection
+      known_issues:
+      - ansible-test - Additional configuration may be required for certain container
+        host and container combinations. Further details are available in the testing
+        documentation.
+      - ansible-test - Custom containers with ``VOLUME`` instructions may be unable
+        to start, when previously the containers started correctly. Remove the ``VOLUME``
+        instructions to resolve the issue. Containers with this condition will cause
+        ``ansible-test`` to emit a warning.
+      - ansible-test - Systems with Podman networking issues may be unable to run
+        containers, when previously the issue went unreported. Correct the networking
+        issues to continue using ``ansible-test`` with Podman.
+      - ansible-test - Using Docker on systems with SELinux may require setting SELinux
+        to permissive mode. Podman should work with SELinux in enforcing mode.
+      major_changes:
+      - ansible-test - Docker Desktop on WSL2 is now supported (additional configuration
+        required).
+      - ansible-test - Docker and Podman are now supported on hosts with cgroup v2
+        unified. Previously only cgroup v1 and cgroup v2 hybrid were supported.
+      - ansible-test - Podman now works on container hosts without systemd. Previously
+        only some containers worked, while others required rootfull or rootless Podman,
+        but would not work with both. Some containers did not work at all.
+      - ansible-test - Podman on WSL2 is now supported.
+      - ansible-test - When additional cgroup setup is required on the container host,
+        this will be automatically detected. Instructions on how to configure the
+        host will be provided in the error message shown.
+      minor_changes:
+      - ansible-test - A new ``audit`` option is available when running custom containers.
+        This option can be used to indicate whether a container requires the AUDIT_WRITE
+        capability. The default is ``required``, which most containers will need when
+        using Podman. If necessary, the ``none`` option can be used to opt-out of
+        the capability. This has no effect on Docker, which always provides the capability.
+      - ansible-test - A new ``cgroup`` option is available when running custom containers.
+        This option can be used to indicate a container requires cgroup v1 or that
+        it does not use cgroup. The default behavior assumes the container works with
+        cgroup v2 (as well as v1).
+      - ansible-test - Additional log details are shown when containers fail to start
+        or SSH connections to containers fail.
+      - ansible-test - Connection failures to remote provisioned hosts now show failure
+        details as a warning.
+      - ansible-test - Containers included with ansible-test no longer disable seccomp
+        by default.
+      - ansible-test - Failure to connect to a container over SSH now results in a
+        clear error. Previously tests would be attempted even after initial connection
+        attempts failed.
+      - ansible-test - Integration tests can be excluded from retries triggered by
+        the ``--retry-on-error`` option by adding the ``retry/never`` alias. This
+        is useful for tests that cannot pass on a retry or are too slow to make retries
+        useful.
+      - ansible-test - More details are provided about an instance when provisioning
+        fails.
+      - ansible-test - Reduce the polling limit for SSHD startup in containers from
+        60 retries to 10. The one second delay between retries remains in place.
+      - ansible-test - SSH connections from OpenSSH 8.8+ to CentOS 6 containers now
+        work without additional configuration. However, clients older than OpenSSH
+        7.0 can no longer connect to CentOS 6 containers as a result. The container
+        must have ``centos6`` in the image name for this work-around to be applied.
+      - ansible-test - SSH shell connections from OpenSSH 8.8+ to ansible-test provisioned
+        network instances now work without additional configuration. However, clients
+        older than OpenSSH 7.0 can no longer open shell sessions for ansible-test
+        provisioned network instances as a result.
+      - ansible-test - The ``ansible-test env`` command now detects and reports the
+        container ID if running in a container.
+      - ansible-test - Unit tests now support network disconnect by default when running
+        under Podman. Previously this feature only worked by default under Docker.
+      - ansible-test - Use ``stop --time 0`` followed by ``rm`` to remove ephemeral
+        containers instead of ``rm -f``. This speeds up teardown of ephemeral containers.
+      - ansible-test - Warnings are now shown when using containers that were built
+        with VOLUME instructions.
+      - ansible-test - When setting the max open files for containers, the container
+        host's limit will be checked. If the host limit is lower than the preferred
+        value, it will be used and a warning will be shown.
+      - ansible-test - When using Podman, ansible-test will detect if the loginuid
+        used in containers is incorrect. When this occurs a warning is displayed and
+        the container is run with the AUDIT_CONTROL capability. Previously containers
+        would fail under this situation, with no useful warnings or errors given.
+      release_summary: '| Release Date: 2023-01-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 75837-validate-modules-invalid-yaml.yml
+    - 76578-fix-role-argspec-suboptions-error.yml
+    - 79525-fix-file-touch-check-mode-status.yaml
+    - 79561-fix-a-g-global-ignore-certs-cfg.yml
+    - 79681-argspec-param-deprecation.yml
+    - 79711-fix-play-stats-rescued.yml
+    - 79717-get-url-ciphers.yml
+    - 79740-aliases-warnings-deprecations-in-suboptions.yml
+    - adoc_fix_list.yml
+    - ansible-test-container-management.yml
+    - ansible-test-fix-python-3.11-traceback.yml
+    - ansible-test-pypi-proxy-fix.yml
+    - better-maybe-json-uri.yml
+    - local_bad_user.yml
+    - rejectlist_fix.yml
+    - unsorted.yml
+    - v2.14.2rc1_summary.yaml
+    - validate-module-ps-cmdlet.yml
+    release_date: '2023-01-23'
