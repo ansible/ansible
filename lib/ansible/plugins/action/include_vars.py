@@ -69,6 +69,18 @@ class ActionModule(ActionBase):
         if not isinstance(self.valid_extensions, list):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
 
+    def get_vars(self, old_vars, new_vars):
+        results = {}
+        if self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
+            for key, value in new_vars.items():
+                if key in old_vars:
+                    results[key] = combine_vars(old_vars[key], value, merge=self.hash_behaviour == 'merge')
+                else:
+                    results[key] = value
+        else:
+            results.update(new_vars)
+        return results
+
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
@@ -123,14 +135,7 @@ class ActionModule(ActionBase):
                     self._load_files(self.source_file)
                 )
                 if not failed:
-                    if self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-                        for key, value in updated_results.items():
-                            if key in task_vars:
-                                results[key] = combine_vars(task_vars[key], value, merge=self.hash_behaviour == 'merge')
-                            else:
-                                results[key] = value
-                    else:
-                        results.update(updated_results)
+                    results.update(updated_results)
 
             except AnsibleError as e:
                 failed = True
@@ -146,11 +151,8 @@ class ActionModule(ActionBase):
         if failed:
             result['failed'] = failed
             result['message'] = err_msg
-        elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-            for key, value in updated_results.items():
-                if key not in task_vars:
-                    continue
-                results[key] = combine_vars(task_vars[key], value, merge=self.hash_behaviour == 'merge')
+        else:
+            results.update(self.get_vars(task_vars, updated_results))
 
         result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
@@ -291,13 +293,7 @@ class ActionModule(ActionBase):
                     or (path.exists(filepath) and not self._ignore_file(filename))
                 ):
                     failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                    if not failed and self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-                        for key, value in loaded_data.items():
-                            if key not in results:
-                                results[key] = value
-                            else:
-                                results[key] = combine_vars(results[key], value, merge=self.hash_behaviour == 'merge')
-                    elif not failed:
-                        results.update(loaded_data)
+                    if not failed:
+                        results.update(self.get_vars(results, loaded_data))
 
         return failed, err_msg, results
