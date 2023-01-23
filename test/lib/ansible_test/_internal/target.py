@@ -402,8 +402,8 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
 class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
     def __init__(self) -> None:
-        self.name = None
-        self.path = None
+        self.name = ''
+        self.path = ''
         self.base_path: t.Optional[str] = None
         self.modules: tuple[str, ...] = tuple()
         self.aliases: tuple[str, ...] = tuple()
