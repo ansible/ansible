@@ -285,15 +285,15 @@ class ActionModule(ActionBase):
                     stop_iter = True
 
             if not stop_iter and not failed:
-                if (
-                    (
-                        self.ignore_unknown_extensions and path.exists(filepath)
-                        and not self._ignore_file(filename) and self._is_valid_file_ext(filename)
-                    )
-                    or (path.exists(filepath) and not self._ignore_file(filename))
-                ):
-                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                    if not failed:
-                        results.update(self.get_vars(results, loaded_data))
+                if self.ignore_unknown_extensions:
+                    if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(self.get_vars(results, loaded_data))
+                else:
+                    if path.exists(filepath) and not self._ignore_file(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(self.get_vars(results, loaded_data))
 
         return failed, err_msg, results
