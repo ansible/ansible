@@ -40,9 +40,11 @@ class VcenterProvider(CloudProvider):
 
         # VMware tests can be run on govcsim or BYO with a static config file.
         # The simulator is the default if no config is provided.
-        self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', 'govcsim')
+        self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', 'static')
 
         if self.vmware_test_platform == 'govcsim':
+            display.warning('The govcsim simulator is deprecated and will be removed in a future version of ansible-test. Use a static configuration instead.')
+
             self.uses_docker = True
             self.uses_config = False
         elif self.vmware_test_platform == 'static':
