@@ -208,6 +208,22 @@
       - "config.key2.b == 22"
       - "config.key3 == 3"
 
+- name: Include a vars dir with hash variables
+  include_vars:
+    dir: "{{ role_path }}/vars2/hashes/"
+    hash_behaviour: merge
+
+- name: Verify that the hash is merged
+  assert:
+    that:
+      - "{{ config | length }} == 4"
+      - "config.key0 == 0"
+      - "config.key1 == 1"
+      - "{{ config.key2 | length }} == 2"
+      - "config.key2.a == 21"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
 - include_vars:
     file: no_auto_unsafe.yml
   register: baz

@@ -123,7 +123,14 @@ class ActionModule(ActionBase):
                     self._load_files(self.source_file)
                 )
                 if not failed:
-                    results.update(updated_results)
+                    if self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
+                        for key, value in updated_results.items():
+                            if key in task_vars:
+                                results[key] = combine_vars(task_vars[key], value, merge=self.hash_behaviour == 'merge')
+                            else:
+                                results[key] = value
+                    else:
+                        results.update(updated_results)
 
             except AnsibleError as e:
                 failed = True
@@ -140,10 +147,10 @@ class ActionModule(ActionBase):
             result['failed'] = failed
             result['message'] = err_msg
         elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-            merge_hashes = self.hash_behaviour == 'merge'
-            for key, value in results.items():
-                old_value = task_vars.get(key, None)
-                results[key] = combine_vars(old_value, value, merge=merge_hashes)
+            for key, value in updated_results.items():
+                if key not in task_vars:
+                    continue
+                results[key] = combine_vars(task_vars[key], value, merge=self.hash_behaviour == 'merge')
 
         result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
@@ -276,15 +283,21 @@ class ActionModule(ActionBase):
                     stop_iter = True
 
             if not stop_iter and not failed:
-                if self.ignore_unknown_extensions:
-                    if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
-                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                        if not failed:
-                            results.update(loaded_data)
-                else:
-                    if path.exists(filepath) and not self._ignore_file(filename):
-                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                        if not failed:
-                            results.update(loaded_data)
+                if (
+                    (
+                        self.ignore_unknown_extensions and path.exists(filepath)
+                        and not self._ignore_file(filename) and self._is_valid_file_ext(filename)
+                    )
+                    or (path.exists(filepath) and not self._ignore_file(filename))
+                ):
+                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                    if not failed and self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
+                        for key, value in loaded_data.items():
+                            if key not in results:
+                                results[key] = value
+                            else:
+                                results[key] = combine_vars(results[key], value, merge=self.hash_behaviour == 'merge')
+                    elif not failed:
+                        results.update(loaded_data)
 
         return failed, err_msg, results
