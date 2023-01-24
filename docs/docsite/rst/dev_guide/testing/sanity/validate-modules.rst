@@ -54,7 +54,6 @@ Codes
   doc-type-does-not-match-spec                                 Documentation        Error                  Argument_spec defines type different than documentation does
   documentation-error                                          Documentation        Error                  Unknown ``DOCUMENTATION`` error
   documentation-syntax-error                                   Documentation        Error                  Invalid ``DOCUMENTATION`` schema
-  illegal-future-imports                                       Imports              Error                  Only the following ``from __future__`` imports are allowed: ``absolute_import``, ``division``, and ``print_function``.
   import-before-documentation                                  Imports              Error                  Import found before documentation variables. All imports must appear below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
   import-error                                                 Documentation        Error                  ``Exception`` attempting to import module for ``argument_spec`` introspection
   import-placement                                             Locations            Warning                Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
