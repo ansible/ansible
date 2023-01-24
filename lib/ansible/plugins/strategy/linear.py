@@ -313,11 +313,7 @@ class StrategyModule(StrategyBase):
                                     included_tasks.extend(final_block.get_tasks())
 
                                 for host in hosts_left:
-                                    # handlers are included regardless of _hosts so noop
-                                    # tasks do not have to be created for lockstep,
-                                    # not notified handlers are then simply skipped
-                                    # in the PlayIterator
-                                    if host in included_file._hosts or is_handler:
+                                    if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
 
                             display.debug("done iterating over new_blocks loaded from include file")

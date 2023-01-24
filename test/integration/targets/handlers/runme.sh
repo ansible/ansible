@@ -170,3 +170,5 @@ ansible-playbook test_flush_handlers_rescue_always.yml -i inventory.handlers "$@
 ansible-playbook test_fqcn_meta_flush_handlers.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 grep out.txt -e "handler ran"
 grep out.txt -e "after flush"
+
+ansible-playbook 79776.yml -i inventory.handlers "$@"
