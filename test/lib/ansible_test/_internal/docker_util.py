@@ -720,7 +720,7 @@ class DockerError(Exception):
 
 class ContainerNotFoundError(DockerError):
     """The container identified by `identifier` was not found."""
-    def __init__(self, identifier):
+    def __init__(self, identifier: str) -> None:
         super().__init__('The container "%s" was not found.' % identifier)
 
         self.identifier = identifier

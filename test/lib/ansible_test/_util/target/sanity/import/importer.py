@@ -44,7 +44,8 @@ def main():
         # noinspection PyCompatibility
         from importlib import import_module
     except ImportError:
-        def import_module(name):
+        def import_module(name, package=None):  # type: (str, str | None) -> types.ModuleType
+            assert package is None
             __import__(name)
             return sys.modules[name]
 

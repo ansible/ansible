@@ -844,12 +844,12 @@ def create_container_hooks(
         control_state: dict[str, tuple[list[str], list[SshProcess]]] = {}
         managed_state: dict[str, tuple[list[str], list[SshProcess]]] = {}
 
-        def pre_target(target):
+        def pre_target(target: IntegrationTarget) -> None:
             """Configure hosts for SSH port forwarding required by the specified target."""
             forward_ssh_ports(args, control_connections, '%s_hosts_prepare.yml' % control_type, control_state, target, HostType.control, control_contexts)
             forward_ssh_ports(args, managed_connections, '%s_hosts_prepare.yml' % managed_type, managed_state, target, HostType.managed, managed_contexts)
 
-        def post_target(target):
+        def post_target(target: IntegrationTarget) -> None:
             """Clean up previously configured SSH port forwarding which was required by the specified target."""
             cleanup_ssh_ports(args, control_connections, '%s_hosts_restore.yml' % control_type, control_state, target, HostType.control)
             cleanup_ssh_ports(args, managed_connections, '%s_hosts_restore.yml' % managed_type, managed_state, target, HostType.managed)

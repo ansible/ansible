@@ -333,10 +333,8 @@ class TestFailure(TestResult):
 
         return command
 
-    def find_docs(self):
-        """
-        :rtype: str
-        """
+    def find_docs(self) -> t.Optional[str]:
+        """Return the docs URL for this test or None if there is no docs URL."""
         if self.command != 'sanity':
             return None  # only sanity tests have docs links
 
