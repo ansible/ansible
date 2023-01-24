@@ -299,8 +299,6 @@ class ModuleValidator(Validator):
     # win_dsc is a dynamic arg spec, the docs won't ever match
     PS_ARG_VALIDATE_REJECTLIST = frozenset(('win_dsc.ps1', ))
 
-    ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
-
     def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
                  base_branch=None, git_cache=None, reporter=None, routing=None, plugin_type='module'):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
@@ -414,13 +412,10 @@ class ModuleValidator(Validator):
                     if isinstance(child, ast.Expr) and isinstance(child.value, ast.Constant) and isinstance(child.value.value, str):
                         continue
 
-                    # allowed from __future__ imports
+                    # allow __future__ imports (the specific allowed imports are checked by other sanity tests)
                     if isinstance(child, ast.ImportFrom) and child.module == '__future__':
-                        for future_import in child.names:
-                            if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
-                                break
-                        else:
-                            continue
+                        continue
+
                     return False
             return True
         except AttributeError:
@@ -676,29 +671,21 @@ class ModuleValidator(Validator):
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
-        min_doc_line = min(doc_info[key]['lineno'] for key in doc_info)
+        doc_line_numbers = [lineno for lineno in (doc_info[key]['lineno'] for key in doc_info) if lineno > 0]
+
+        min_doc_line = min(doc_line_numbers) if doc_line_numbers else None
         max_doc_line = max(doc_info[key]['end_lineno'] for key in doc_info)
 
         import_lines = []
 
         for child in self.ast.body:
             if isinstance(child, (ast.Import, ast.ImportFrom)):
+                # allow __future__ imports (the specific allowed imports are checked by other sanity tests)
                 if isinstance(child, ast.ImportFrom) and child.module == '__future__':
-                    # allowed from __future__ imports
-                    for future_import in child.names:
-                        if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='illegal-future-imports',
-                                msg=('Only the following from __future__ imports are allowed: %s'
-                                     % ', '.join(self.ACCEPTLIST_FUTURE_IMPORTS)),
-                                line=child.lineno
-                            )
-                            break
-                    else:  # for-else.  If we didn't find a problem nad break out of the loop, then this is a legal import
-                        continue
+                    continue
+
                 import_lines.append(child.lineno)
-                if child.lineno < min_doc_line:
+                if min_doc_line and child.lineno < min_doc_line:
                     self.reporter.error(
                         path=self.object_path,
                         code='import-before-documentation',
@@ -715,7 +702,7 @@ class ModuleValidator(Validator):
                 for grandchild in bodies:
                     if isinstance(grandchild, (ast.Import, ast.ImportFrom)):
                         import_lines.append(grandchild.lineno)
-                        if grandchild.lineno < min_doc_line:
+                        if min_doc_line and grandchild.lineno < min_doc_line:
                             self.reporter.error(
                                 path=self.object_path,
                                 code='import-before-documentation',
