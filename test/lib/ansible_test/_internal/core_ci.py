@@ -173,11 +173,11 @@ class AnsibleCoreCI:
             self.endpoint = self.default_endpoint
 
     @property
-    def available(self):
+    def available(self) -> bool:
         """Return True if Ansible Core CI is supported."""
         return self.ci_provider.supports_core_ci_auth()
 
-    def start(self):
+    def start(self) -> t.Optional[dict[str, t.Any]]:
         """Start instance."""
         if self.started:
             display.info(f'Skipping started {self.label} instance.', verbosity=1)
@@ -185,7 +185,7 @@ class AnsibleCoreCI:
 
         return self._start(self.ci_provider.prepare_core_ci_auth())
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop instance."""
         if not self.started:
             display.info(f'Skipping invalid {self.label} instance.', verbosity=1)
@@ -279,10 +279,10 @@ class AnsibleCoreCI:
         raise ApplicationError(f'Timeout waiting for {self.label} instance.')
 
     @property
-    def _uri(self):
+    def _uri(self) -> str:
         return f'{self.endpoint}/{self.stage}/{self.provider}/{self.instance_id}'
 
-    def _start(self, auth):
+    def _start(self, auth) -> dict[str, t.Any]:
         """Start instance."""
         display.info(f'Initializing new {self.label} instance using: {self._uri}', verbosity=1)
 
@@ -341,7 +341,7 @@ class AnsibleCoreCI:
             display.warning(f'{error}. Trying again after {sleep} seconds.')
             time.sleep(sleep)
 
-    def _clear(self):
+    def _clear(self) -> None:
         """Clear instance information."""
         try:
             self.connection = None
@@ -349,7 +349,7 @@ class AnsibleCoreCI:
         except FileNotFoundError:
             pass
 
-    def _load(self):
+    def _load(self) -> bool:
         """Load instance information."""
         try:
             data = read_text_file(self.path)

@@ -131,7 +131,7 @@ class CsCloudProvider(CloudProvider):
 
     def _get_credentials(self, container_name: str) -> dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
-        def check(value):
+        def check(value) -> bool:
             """Return True if the given configuration is valid JSON, otherwise return False."""
             # noinspection PyBroadException
             try:

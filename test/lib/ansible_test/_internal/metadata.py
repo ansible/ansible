@@ -19,7 +19,7 @@ from .diff import (
 
 class Metadata:
     """Metadata object for passing data to delegated tests."""
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metadata."""
         self.changes: dict[str, tuple[tuple[int, int], ...]] = {}
         self.cloud_config: t.Optional[dict[str, dict[str, t.Union[int, str, bool]]]] = None
@@ -82,7 +82,7 @@ class Metadata:
 
 class ChangeDescription:
     """Description of changes."""
-    def __init__(self):
+    def __init__(self) -> None:
         self.command: str = ''
         self.changed_paths: list[str] = []
         self.deleted_paths: list[str] = []

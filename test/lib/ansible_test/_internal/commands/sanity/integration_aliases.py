@@ -104,7 +104,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     ansible_only = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self._ci_config: dict[str, t.Any] = {}
@@ -307,10 +307,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return messages
 
-    def check_windows_targets(self):
-        """
-        :rtype: list[SanityMessage]
-        """
+    def check_windows_targets(self) -> list[SanityMessage]:
+        """Check Windows integration test targets and return messages with any issues found."""
         windows_targets = tuple(walk_windows_integration_targets())
 
         messages = []

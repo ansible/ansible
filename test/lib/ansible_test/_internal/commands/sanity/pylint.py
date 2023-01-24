@@ -58,7 +58,7 @@ from ...host_configs import (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.optional_error_codes.update([
             'ansible-deprecated-date',

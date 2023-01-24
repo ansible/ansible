@@ -351,7 +351,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
         return self.core_ci
 
-    def delete_instance(self):
+    def delete_instance(self) -> None:
         """Delete the AnsibleCoreCI VM instance."""
         core_ci = self.get_instance()
 
@@ -892,7 +892,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         return message
 
-    def check_cgroup_requirements(self):
+    def check_cgroup_requirements(self) -> None:
         """Check cgroup requirements for the container."""
         cgroup_version = get_docker_info(self.args).cgroup_version
 

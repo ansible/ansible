@@ -341,7 +341,7 @@ class IntegerParser(DynamicChoicesParser):
 
 class BooleanParser(ChoicesParser):
     """Composite argument parser for boolean (yes/no) values."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(['yes', 'no'])
 
     def parse(self, state: ParserState) -> bool:

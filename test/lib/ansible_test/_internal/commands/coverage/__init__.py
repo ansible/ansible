@@ -227,7 +227,7 @@ def read_python_coverage_legacy(path: str) -> PythonArcs:
         contents = read_text_file(path)
         contents = re.sub(r'''^!coverage.py: This is a private format, don't read it directly!''', '', contents)
         data = json.loads(contents)
-        arcs: PythonArcs = {filename: [tuple(arc) for arc in arcs] for filename, arcs in data['arcs'].items()}
+        arcs: PythonArcs = {filename: [t.cast(tuple[int, int], tuple(arc)) for arc in arc_list] for filename, arc_list in data['arcs'].items()}
     except Exception as ex:
         raise CoverageError(path, f'Error reading JSON coverage file: {ex}') from ex
 

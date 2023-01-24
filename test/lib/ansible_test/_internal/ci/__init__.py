@@ -152,6 +152,8 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
         private_key_pem = self.initialize_private_key()
         private_key = load_pem_private_key(to_bytes(private_key_pem), None, default_backend())
 
+        assert isinstance(private_key, ec.EllipticCurvePrivateKey)
+
         signature_raw_bytes = private_key.sign(payload_bytes, ec.ECDSA(hashes.SHA256()))
 
         return signature_raw_bytes

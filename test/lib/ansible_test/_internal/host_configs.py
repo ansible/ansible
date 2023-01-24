@@ -48,7 +48,7 @@ from .util import (
 @dataclasses.dataclass(frozen=True)
 class OriginCompletionConfig(PosixCompletionConfig):
     """Pseudo completion config for the origin."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name='origin')
 
     @property
@@ -65,7 +65,7 @@ class OriginCompletionConfig(PosixCompletionConfig):
         return version
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -513,7 +513,7 @@ class HostSettings:
         with open_binary_file(path) as settings_file:
             return pickle.load(settings_file)
 
-    def apply_defaults(self):
+    def apply_defaults(self) -> None:
         """Apply defaults to the host settings."""
         context = HostContext(controller_config=None)
         self.controller.apply_defaults(context, self.controller.get_defaults(context))

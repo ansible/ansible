@@ -84,25 +84,25 @@ def get_option_name(name: str) -> str:
 
 class PythonVersionUnsupportedError(ApplicationError):
     """A Python version was requested for a context which does not support that version."""
-    def __init__(self, context, version, versions):
+    def __init__(self, context: str, version: str, versions: c.Iterable[str]) -> None:
         super().__init__(f'Python {version} is not supported by environment `{context}`. Supported Python version(s) are: {", ".join(versions)}')
 
 
 class PythonVersionUnspecifiedError(ApplicationError):
     """A Python version was not specified for a context which is unknown, thus the Python version is unknown."""
-    def __init__(self, context):
+    def __init__(self, context: str) -> None:
         super().__init__(f'A Python version was not specified for environment `{context}`. Use the `--python` option to specify a Python version.')
 
 
 class ControllerNotSupportedError(ApplicationError):
     """Option(s) were specified which do not provide support for the controller and would be ignored because they are irrelevant for the target."""
-    def __init__(self, context):
+    def __init__(self, context: str) -> None:
         super().__init__(f'Environment `{context}` does not provide a Python version supported by the controller.')
 
 
 class OptionsConflictError(ApplicationError):
     """Option(s) were specified which conflict with other options."""
-    def __init__(self, first, second):
+    def __init__(self, first: c.Iterable[str], second: c.Iterable[str]) -> None:
         super().__init__(f'Options `{" ".join(first)}` cannot be combined with options `{" ".join(second)}`.')
 
 
@@ -170,22 +170,22 @@ class TargetMode(enum.Enum):
     NO_TARGETS = enum.auto()  # coverage
 
     @property
-    def one_host(self):
+    def one_host(self) -> bool:
         """Return True if only one host (the controller) should be used, otherwise return False."""
         return self in (TargetMode.SANITY, TargetMode.UNITS, TargetMode.NO_TARGETS)
 
     @property
-    def no_fallback(self):
+    def no_fallback(self) -> bool:
         """Return True if no fallback is acceptable for the controller (due to options not applying to the target), otherwise return False."""
         return self in (TargetMode.WINDOWS_INTEGRATION, TargetMode.NETWORK_INTEGRATION, TargetMode.NO_TARGETS)
 
     @property
-    def multiple_pythons(self):
+    def multiple_pythons(self) -> bool:
         """Return True if multiple Python versions are allowed, otherwise False."""
         return self in (TargetMode.SANITY, TargetMode.UNITS)
 
     @property
-    def has_python(self):
+    def has_python(self) -> bool:
         """Return True if this mode uses Python, otherwise False."""
         return self in (TargetMode.POSIX_INTEGRATION, TargetMode.SANITY, TargetMode.UNITS, TargetMode.SHELL)
 

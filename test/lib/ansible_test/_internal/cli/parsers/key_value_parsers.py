@@ -99,7 +99,7 @@ class ControllerKeyValueParser(KeyValueParser):
 
 class DockerKeyValueParser(KeyValueParser):
     """Composite argument parser for docker key/value pairs."""
-    def __init__(self, image, controller):
+    def __init__(self, image: str, controller: bool) -> None:
         self.controller = controller
         self.versions = get_docker_pythons(image, controller, False)
         self.allow_default = bool(get_docker_pythons(image, controller, True))
@@ -135,7 +135,7 @@ class DockerKeyValueParser(KeyValueParser):
 
 class PosixRemoteKeyValueParser(KeyValueParser):
     """Composite argument parser for POSIX remote key/value pairs."""
-    def __init__(self, name, controller):
+    def __init__(self, name: str, controller: bool) -> None:
         self.controller = controller
         self.versions = get_remote_pythons(name, controller, False)
         self.allow_default = bool(get_remote_pythons(name, controller, True))

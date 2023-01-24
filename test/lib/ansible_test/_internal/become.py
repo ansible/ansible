@@ -12,7 +12,7 @@ from .util import (
 class Become(metaclass=abc.ABCMeta):
     """Base class for become implementations."""
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         """The name of this plugin."""
         return cls.__name__.lower()
 
@@ -48,7 +48,7 @@ class Doas(Become):
 class DoasSudo(Doas):
     """Become using 'doas' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         """The name of this plugin."""
         return 'doas_sudo'
 
@@ -78,7 +78,7 @@ class Su(Become):
 class SuSudo(Su):
     """Become using 'su' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         """The name of this plugin."""
         return 'su_sudo'
 

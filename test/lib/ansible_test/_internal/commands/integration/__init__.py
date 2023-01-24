@@ -819,7 +819,7 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, test_dir: str, integration_dir: str, targets_dir: str, inventory_path: str, ansible_config: str, vars_file: str) -> None:
         self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir
@@ -831,17 +831,13 @@ class IntegrationEnvironment:
 class IntegrationCache(CommonCache):
     """Integration cache."""
     @property
-    def integration_targets(self):
-        """
-        :rtype: list[IntegrationTarget]
-        """
+    def integration_targets(self) -> list[IntegrationTarget]:
+        """The list of integration test targets."""
         return self.get('integration_targets', lambda: list(walk_integration_targets()))
 
     @property
-    def dependency_map(self):
-        """
-        :rtype: dict[str, set[IntegrationTarget]]
-        """
+    def dependency_map(self) -> dict[str, set[IntegrationTarget]]:
+        """The dependency map of integration test targets."""
         return self.get('dependency_map', lambda: generate_dependency_map(self.integration_targets))
 
 

@@ -40,7 +40,7 @@ CODE = 'azp'
 
 class AzurePipelines(CIProvider):
     """CI provider implementation for Azure Pipelines."""
-    def __init__(self):
+    def __init__(self) -> None:
         self.auth = AzurePipelinesAuthHelper()
 
     @staticmethod

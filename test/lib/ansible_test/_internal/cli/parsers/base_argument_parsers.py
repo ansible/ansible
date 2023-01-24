@@ -69,5 +69,5 @@ class TargetsNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
 
 class ControllerRequiredFirstError(CompletionError):
     """Exception raised when controller and target options are specified out-of-order."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('The `--controller` option must be specified before `--target` option(s).')
