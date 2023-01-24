@@ -1,0 +1,10 @@
+- hosts: A,B
+  gather_facts: false
+  force_handlers: true
+  tasks:
+    - command: echo
+      notify: handler1
+      when: inventory_hostname == "A"
+  handlers:
+    - name: handler1
+      include_tasks: 79776-handlers.yml
