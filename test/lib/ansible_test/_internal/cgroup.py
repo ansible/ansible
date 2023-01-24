@@ -29,7 +29,7 @@ class CGroupEntry:
     path: pathlib.PurePosixPath
 
     @property
-    def root_path(self):
+    def root_path(self) -> pathlib.PurePosixPath:
         """The root path for this cgroup subsystem."""
         return pathlib.PurePosixPath(CGroupPath.ROOT, self.subsystem)
 

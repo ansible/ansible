@@ -614,7 +614,7 @@ class OutputThread(ReaderThread):
             src.close()
 
 
-def common_environment():
+def common_environment() -> dict[str, str]:
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL=CONFIGURED_LOCALE,
@@ -797,17 +797,17 @@ class Display:
         3: cyan,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.verbosity = 0
         self.color = sys.stdout.isatty()
-        self.warnings = []
-        self.warnings_unique = set()
+        self.warnings: list[str] = []
+        self.warnings_unique: set[str] = set()
         self.fd = sys.stderr  # default to stderr until config is initialized to avoid early messages going to stdout
         self.rows = 0
         self.columns = 0
         self.truncate = 0
         self.redact = True
-        self.sensitive = set()
+        self.sensitive: set[str] = set()
 
         if os.isatty(0):
             self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
@@ -963,7 +963,7 @@ class HostConnectionError(ApplicationError):
             self._callback()
 
 
-def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
+def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
@@ -1094,7 +1094,7 @@ def load_module(path: str, name: str) -> None:
     spec.loader.exec_module(module)
 
 
-def sanitize_host_name(name):
+def sanitize_host_name(name: str) -> str:
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 

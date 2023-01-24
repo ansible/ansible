@@ -75,7 +75,7 @@ def configure_test_timeout(args: TestConfig) -> None:
     display.info('The %d minute test timeout expires in %s at %s.' % (
         timeout_duration, timeout_remaining, timeout_deadline), verbosity=1)
 
-    def timeout_handler(_dummy1, _dummy2):
+    def timeout_handler(_dummy1: t.Any, _dummy2: t.Any) -> None:
         """Runs when SIGUSR1 is received."""
         test_timeout.write(args)
 

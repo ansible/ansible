@@ -54,7 +54,7 @@ class CompletionConfig(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
 
 
@@ -107,17 +107,17 @@ class RemoteCompletionConfig(CompletionConfig):
     arch: t.Optional[str] = None
 
     @property
-    def platform(self):
+    def platform(self) -> str:
         """The name of the platform."""
         return self.name.partition('/')[0]
 
     @property
-    def version(self):
+    def version(self) -> str:
         """The version of the platform."""
         return self.name.partition('/')[2]
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return not self.version
 
@@ -166,7 +166,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
     placeholder: bool = False
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -276,7 +276,9 @@ def filter_completion(
 ) -> dict[str, TCompletionConfig]:
     """Return the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
     if controller_only:
-        completion = {name: config for name, config in completion.items() if isinstance(config, PosixCompletionConfig) and config.controller_supported}
+        # The cast is needed because mypy gets confused here and forgets that completion values are TCompletionConfig.
+        completion = {name: t.cast(TCompletionConfig, config) for name, config in completion.items() if
+                      isinstance(config, PosixCompletionConfig) and config.controller_supported}
 
     if not include_defaults:
         completion = {name: config for name, config in completion.items() if not config.is_default}

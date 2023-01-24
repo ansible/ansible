@@ -101,7 +101,7 @@ def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -
 
 class ExportedCoverageDataNotFound(ApplicationError):
     """Exception when no combined coverage data is present yet is required."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             'Coverage data must be exported before processing with the `--docker` or `--remote` option.\n'
             'Export coverage with `ansible-test coverage combine` using the `--export` option.\n'
