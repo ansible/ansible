@@ -158,7 +158,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         self.teardown_controller()
         self.teardown_target()
 
-    def setup_controller(self):
+    def setup_controller(self) -> None:
         """Perform setup for code coverage on the controller."""
         coverage_config_path = os.path.join(self.common_temp_path, COVERAGE_CONFIG_NAME)
         coverage_output_path = os.path.join(self.common_temp_path, ResultType.COVERAGE.name)
@@ -171,7 +171,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         os.mkdir(coverage_output_path)
         verified_chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
 
-    def setup_target(self):
+    def setup_target(self) -> None:
         """Perform setup for code coverage on the target."""
         if not self.target_profile:
             return

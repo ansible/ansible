@@ -119,7 +119,7 @@ def configure_target_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, p
 
     create_posix_inventory(args, inventory_path, [profile])
 
-    def cleanup_pypi_proxy():
+    def cleanup_pypi_proxy() -> None:
         """Undo changes made to configure the PyPI proxy."""
         run_playbook(args, inventory_path, 'pypi_proxy_restore.yml', capture=True)
 

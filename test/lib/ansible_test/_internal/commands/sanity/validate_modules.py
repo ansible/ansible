@@ -60,7 +60,7 @@ from ...host_configs import (
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.optional_error_codes.update([

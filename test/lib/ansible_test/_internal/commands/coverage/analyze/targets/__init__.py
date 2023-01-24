@@ -20,6 +20,7 @@ from .. import (
 )
 
 TargetKey = t.TypeVar('TargetKey', int, tuple[int, int])
+TFlexKey = t.TypeVar('TFlexKey', int, tuple[int, int], str)
 NamedPoints = dict[str, dict[TargetKey, set[str]]]
 IndexedPoints = dict[str, dict[TargetKey, set[int]]]
 Arcs = dict[str, dict[tuple[int, int], set[int]]]
@@ -120,10 +121,10 @@ def get_target_index(name: str, target_indexes: TargetIndexes) -> int:
 def expand_indexes(
         source_data: IndexedPoints,
         source_index: list[str],
-        format_func: c.Callable[[TargetKey], str],
-) -> NamedPoints:
+        format_func: c.Callable[[TargetKey], TFlexKey],
+) -> dict[str, dict[TFlexKey, set[str]]]:
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
-    combined_data: dict[str, dict[t.Any, set[str]]] = {}
+    combined_data: dict[str, dict[TFlexKey, set[str]]] = {}
 
     for covered_path, covered_points in source_data.items():
         combined_points = combined_data.setdefault(covered_path, {})

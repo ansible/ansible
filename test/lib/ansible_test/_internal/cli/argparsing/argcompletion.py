@@ -9,7 +9,7 @@ import typing as t
 
 class Substitute:
     """Substitute for missing class which accepts all arguments."""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
 
@@ -87,7 +87,7 @@ class OptionCompletionFinder(CompletionFinder):
     """
     enabled = bool(argcomplete)
 
-    def __init__(self, *args, validator=None, **kwargs):
+    def __init__(self, *args, validator=None, **kwargs) -> None:
         if validator:
             raise ValueError()
 

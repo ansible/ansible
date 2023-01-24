@@ -52,7 +52,7 @@ from .provider.layout.unsupported import (
 
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
-    def __init__(self):
+    def __init__(self) -> None:
         content_path = os.environ.get('ANSIBLE_TEST_CONTENT_ROOT')
         current_path = os.getcwd()
 
@@ -245,7 +245,7 @@ class PluginInfo:
 
 
 @cache
-def content_plugins():
+def content_plugins() -> dict[str, dict[str, PluginInfo]]:
     """
     Analyze content.
     The primary purpose of this analysis is to facilitate mapping of integration tests to the plugin(s) they are intended to test.
@@ -256,7 +256,7 @@ def content_plugins():
         plugin_paths = sorted(data_context().content.walk_files(plugin_directory))
         plugin_directory_offset = len(plugin_directory.split(os.path.sep))
 
-        plugin_files = {}
+        plugin_files: dict[str, list[str]] = {}
 
         for plugin_path in plugin_paths:
             plugin_filename = os.path.basename(plugin_path)

@@ -226,7 +226,7 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
                     target.on_target_failure()  # when the controller is delegated, report failures after delegation fails
 
 
-def insert_options(command, options):
+def insert_options(command: list[str], options: list[str]) -> list[str]:
     """Insert addition command line options into the given command and return the result."""
     result = []
 
