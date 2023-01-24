@@ -1626,6 +1626,7 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
     if 'build_ignore' not in collection_meta:  # installed collection, not src
         # FIXME: optimize this? use a different process? copy instead of build?
         collection_meta['build_ignore'] = []
+        collection_meta['manifest'] = None
     collection_manifest = _build_manifest(**collection_meta)
     file_manifest = _build_files_manifest(
         b_collection_path,
