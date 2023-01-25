@@ -9,4 +9,3 @@
       assert:
         that:
           - 200 is not defined
-
