@@ -1079,7 +1079,7 @@ class Jinja2Loader(PluginLoader):
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
 
         plugin = None
-        names = ['.'.join(cname, name) for cname in collection_list] + [name]
+        names = ['.'.join(cname, name) for cname in collection_list or []] + [name]
 
         # check cache
         for pname in self._j2_module_cache.keys():
