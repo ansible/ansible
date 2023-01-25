@@ -522,7 +522,7 @@ Suggestions to resolve:
 
   Suggestions to resolve:
   
-  If the module does not support the ``timeout`` variable directly it can be set via the ``ansible_command_timeout variable
+  If the module does not support the ``timeout`` option directly, most networking connection plugins can enable similar functionality with the ``ansible_command_timeout``  variable.
 
   .. code-block:: yaml
 
