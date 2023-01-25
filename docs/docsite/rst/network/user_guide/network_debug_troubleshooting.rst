@@ -509,7 +509,7 @@ Suggestions to resolve:
 
   Suggestions to resolve:
 
-  Some modules support a ``timeout`` option.
+  Some modules support a ``timeout`` option, which is different to the ``timeout`` keyword for tasks.
   
   .. code-block:: yaml
 
