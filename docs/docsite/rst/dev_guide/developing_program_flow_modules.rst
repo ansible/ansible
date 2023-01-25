@@ -689,7 +689,7 @@ This section will discuss the behavioral attributes for arguments:
       option = {
         'type': 'str',
         'removed_in_version': '2.0.0',
-        'collection_name': 'testns.testcol',
+        'removed_from_collection': 'testns.testcol',
       },
 
 :removed_at_date:
@@ -703,7 +703,7 @@ This section will discuss the behavioral attributes for arguments:
       option = {
         'type': 'str',
         'removed_at_date': '2020-12-31',
-        'collection_name': 'testns.testcol',
+        'removed_from_collection': 'testns.testcol',
       },
 
 :removed_from_collection:
