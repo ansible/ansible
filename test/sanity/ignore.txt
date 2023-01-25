@@ -11,6 +11,12 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
+lib/ansible/galaxy/collection/__init__.py mypy-3.9:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/__init__.py mypy-3.10:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/__init__.py mypy-3.11:attr-defined  # inline ignore has no effect
+lib/ansible/parsing/yaml/constructor.py mypy-3.9:type-var  # too many occurrences to ignore inline
+lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
+lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid

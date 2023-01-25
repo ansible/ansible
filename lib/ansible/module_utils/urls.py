@@ -99,7 +99,7 @@ except ImportError:
     import urllib2 as urllib_request  # type: ignore[no-redef]
     from urllib2 import AbstractHTTPHandler, BaseHandler  # type: ignore[no-redef]
 
-urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined]
+urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined,assignment]
 
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, unquote
@@ -181,7 +181,7 @@ try:
     from ssl import match_hostname, CertificateError
 except ImportError:
     try:
-        from backports.ssl_match_hostname import match_hostname, CertificateError  # type: ignore[misc]
+        from backports.ssl_match_hostname import match_hostname, CertificateError  # type: ignore[assignment]
     except ImportError:
         HAS_MATCH_HOSTNAME = False
 
@@ -1461,7 +1461,7 @@ class Request:
                 url = urlunparse(parsed_list)
 
             if use_gssapi:
-                if HTTPGSSAPIAuthHandler:
+                if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
                     handlers.append(HTTPGSSAPIAuthHandler(username, password))
                 else:
                     imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
