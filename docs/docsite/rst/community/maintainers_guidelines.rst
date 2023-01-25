@@ -62,7 +62,7 @@ Here are some techniques for communicating more efficiently and interactively wi
 * Find an existing :ref:`working_group_list` that is similar to your project and join the conversation.
 * `Request <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_ a new working group for your project.
 * `Create <https://hackmd.io/@ansible-community/community-matrix-faq#How-do-I-create-a-public-community-room>`_ a public chat for your working group or `ask <https://github.com/ansible/community/issues/new>`_ the community team.
-* Add information about the working group and related real-time chats to your project's ``README.md`` and to its contributor documentation.
+* Provide working group details and links to chat rooms in the contributor section of your project ``README.md``.
 * Encourage contributors to join the chats and add themselves to the working group.
 
 See the :ref:`Communication guide <communication_irc>` to learn more about real-time chat.
