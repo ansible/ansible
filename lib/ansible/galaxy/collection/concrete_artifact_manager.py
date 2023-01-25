@@ -31,9 +31,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
@@ -138,13 +136,10 @@ class ConcreteArtifactsManager:
         try:
             url, sha256_hash, token = self._galaxy_collection_cache[collection]
         except KeyError as key_err:
-            raise_from(
-                RuntimeError(
-                    'The is no known source for {coll!s}'.
-                    format(coll=collection),
-                ),
-                key_err,
-            )
+            raise RuntimeError(
+                'The is no known source for {coll!s}'.
+                format(coll=collection),
+            ) from key_err
 
         display.vvvv(
             "Fetching a collection tarball for '{collection!s}' from "
@@ -160,17 +155,14 @@ class ConcreteArtifactsManager:
                 token=token,
             )  # type: bytes
         except URLError as err:
-            raise_from(
-                AnsibleError(
-                    'Failed to download collection tar '
-                    "from '{coll_src!s}': {download_err!s}".
-                    format(
-                        coll_src=to_native(collection.src),
-                        download_err=to_native(err),
-                    ),
+            raise AnsibleError(
+                'Failed to download collection tar '
+                "from '{coll_src!s}': {download_err!s}".
+                format(
+                    coll_src=to_native(collection.src),
+                    download_err=to_native(err),
                 ),
-                err,
-            )
+            ) from err
         else:
             display.vvv(
                 "Collection '{coll!s}' obtained from "
@@ -220,17 +212,14 @@ class ConcreteArtifactsManager:
                     timeout=self.timeout
                 )
             except Exception as err:
-                raise_from(
-                    AnsibleError(
-                        'Failed to download collection tar '
-                        "from '{coll_src!s}': {download_err!s}".
-                        format(
-                            coll_src=to_native(collection.src),
-                            download_err=to_native(err),
-                        ),
+                raise AnsibleError(
+                    'Failed to download collection tar '
+                    "from '{coll_src!s}': {download_err!s}".
+                    format(
+                        coll_src=to_native(collection.src),
+                        download_err=to_native(err),
                     ),
-                    err,
-                )
+                ) from err
         elif collection.is_scm:
             b_artifact_path = _extract_collection_from_git(
                 collection.src,
@@ -301,13 +290,10 @@ class ConcreteArtifactsManager:
             try:
                 collection_meta = _get_meta_from_dir(b_artifact_path, self.require_build_metadata)
             except LookupError as lookup_err:
-                raise_from(
-                    AnsibleError(
-                        'Failed to find the collection dir deps: {err!s}'.
-                        format(err=to_native(lookup_err)),
-                    ),
-                    lookup_err,
-                )
+                raise AnsibleError(
+                    'Failed to find the collection dir deps: {err!s}'.
+                    format(err=to_native(lookup_err)),
+                ) from lookup_err
         elif collection.is_scm:
             collection_meta = {
                 'name': None,
@@ -429,29 +415,23 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     try:
         subprocess.check_call(git_clone_cmd)
     except subprocess.CalledProcessError as proc_err:
-        raise_from(
-            AnsibleError(  # should probably be LookupError
-                'Failed to clone a Git repository from `{repo_url!s}`.'.
-                format(repo_url=to_native(git_url)),
-            ),
-            proc_err,
-        )
+        raise AnsibleError(  # should probably be LookupError
+            'Failed to clone a Git repository from `{repo_url!s}`.'.
+            format(repo_url=to_native(git_url)),
+        ) from proc_err
 
     git_switch_cmd = git_executable, 'checkout', to_text(version)
     try:
         subprocess.check_call(git_switch_cmd, cwd=b_checkout_path)
     except subprocess.CalledProcessError as proc_err:
-        raise_from(
-            AnsibleError(  # should probably be LookupError
-                'Failed to switch a cloned Git repo `{repo_url!s}` '
-                'to the requested revision `{commitish!s}`.'.
-                format(
-                    commitish=to_native(version),
-                    repo_url=to_native(git_url),
-                ),
+        raise AnsibleError(  # should probably be LookupError
+            'Failed to switch a cloned Git repo `{repo_url!s}` '
+            'to the requested revision `{commitish!s}`.'.
+            format(
+                commitish=to_native(version),
+                repo_url=to_native(git_url),
             ),
-            proc_err,
-        )
+        ) from proc_err
 
     return (
         os.path.join(b_checkout_path, to_bytes(fragment))
@@ -620,17 +600,14 @@ def _get_meta_from_src_dir(
         try:
             manifest = yaml_load(manifest_file_obj)
         except yaml.error.YAMLError as yaml_err:
-            raise_from(
-                AnsibleError(
-                    "Failed to parse the galaxy.yml at '{path!s}' with "
-                    'the following error:\n{err_txt!s}'.
-                    format(
-                        path=to_native(galaxy_yml),
-                        err_txt=to_native(yaml_err),
-                    ),
+            raise AnsibleError(
+                "Failed to parse the galaxy.yml at '{path!s}' with "
+                'the following error:\n{err_txt!s}'.
+                format(
+                    path=to_native(galaxy_yml),
+                    err_txt=to_native(yaml_err),
                 ),
-                yaml_err,
-            )
+            ) from yaml_err
 
     if not isinstance(manifest, dict):
         if require_build_metadata:
