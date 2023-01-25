@@ -509,6 +509,8 @@ Suggestions to resolve:
 
   Suggestions to resolve:
 
+  Some modules support a ``timeout`` option, which is different to the ``timeout`` keyword for tasks.
+  
   .. code-block:: yaml
 
       - name: save running-config
@@ -519,6 +521,8 @@ Suggestions to resolve:
 
 
   Suggestions to resolve:
+  
+  If the module does not support the ``timeout`` option directly, most networking connection plugins can enable similar functionality with the ``ansible_command_timeout``  variable.
 
   .. code-block:: yaml
 
