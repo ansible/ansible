@@ -70,12 +70,22 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
+class ClassProperty:
+    def __set_name__(self, owner, name):
+        self.name = name
+
+    def __get__(self, obj, objtype=None):
+        return getattr(objtype, f'_{self.name}')()
+
+
 class FieldAttributeBase:
 
-    @classmethod  # type: ignore[misc]
-    @property
-    def fattributes(cls):
-        return cls._fattributes()
+    fattributes = ClassProperty()
+
+    # @classmethod
+    # @property
+    # def fattributes(cls):
+    #     return cls._fattributes()
 
     # mypy complains with "misc: Decorated property not supported"
     # when @property and @cache are used together,
