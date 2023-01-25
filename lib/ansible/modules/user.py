@@ -2513,10 +2513,18 @@ class DarwinUser(User):
         if rc != 0:
             self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
 
+        # Make the Gecos (alias display name) default to username
+        if self.comment is None:
+            self.comment = self.name
+
+        # Make user group default to 'staff'
+        if self.group is None:
+            self.group = 'staff'
+
         self._make_group_numerical()
         if self.uid is None:
             self.uid = str(self._get_next_uid(self.system))
-
+        
         # Homedir is not created by default
         if self.create_home:
             if self.home is None:
