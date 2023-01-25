@@ -84,7 +84,7 @@ The quarterly Ansible Contributor Summit is a global event that provides our con
 Weekly community Matrix/IRC meetings
 ------------------------------------
 
-The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` `Libera.Chat IRC <https://docs.ansible.com/ansible/devel/community/communication.html#ansible-community-on-irc>`_ channel or in the bridged `#community:ansible.com <https://matrix.to/#/#community:ansible.com>`_ room on `Matrix <https://docs.ansible.com/ansible/devel/community/communication.html#ansible-community-on-matrix>`_ to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
+The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` `Libera.Chat IRC <https://docs.ansible.com/ansible/devel/community/communication.html#ansible-community-on-irc>`_ channel or in the bridged `#community:ansible.com <https://matrix.to/#/#community:ansible.com>`_ room on `Matrix <https://docs.ansible.com/ansible/devel/community/communication.html#ansible-community-on-matrix>`_ to discuss important project questions. Join us! Here is our `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_.
 
 Expanding the collection community
 ===================================
