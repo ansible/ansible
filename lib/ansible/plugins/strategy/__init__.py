@@ -54,7 +54,7 @@ from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 display = Display()
@@ -750,6 +750,10 @@ class StrategyBase:
 
             # register final results
             if original_task.register:
+
+                if not isidentifier(original_task.register):
+                    raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % original_task.register)
+
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                 clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
