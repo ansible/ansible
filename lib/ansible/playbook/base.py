@@ -72,7 +72,7 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
 
 class FieldAttributeBase:
 
-    @classmethod
+    @classmethod  # type: ignore[misc]
     @property
     def fattributes(cls):
         return cls._fattributes()
