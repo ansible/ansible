@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - Use Python's native ``raise ... from`` instead of ``six.raise_from``.
