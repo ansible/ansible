@@ -124,7 +124,6 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
-from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
@@ -472,7 +471,7 @@ def build_collection(u_collection_path, u_output_path, force):
     try:
         collection_meta = _get_meta_from_src_dir(b_collection_path)
     except LookupError as lookup_err:
-        raise_from(AnsibleError(to_native(lookup_err)), lookup_err)
+        raise AnsibleError(to_native(lookup_err)) from lookup_err
 
     collection_manifest = _build_manifest(**collection_meta)
     file_manifest = _build_files_manifest(
@@ -1854,10 +1853,7 @@ def _resolve_depenency_map(
             ),
             conflict_causes,
         ))
-        raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
-            AnsibleError('\n'.join(error_msg_lines)),
-            dep_exc,
-        )
+        raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:
         parents = [
             "%s.%s:%s" % (p.namespace, p.name, p.ver)
@@ -1884,9 +1880,6 @@ def _resolve_depenency_map(
                 '* {req.fqcn!s}:{req.ver!s}'.format(req=req)
             )
 
-        raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
-            AnsibleError('\n'.join(error_msg_lines)),
-            dep_exc,
-        )
+        raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc
