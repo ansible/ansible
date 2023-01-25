@@ -54,10 +54,11 @@ See :ref:`communication` for more details on these communication channels.
 
 .. _wg_and_real_time_chat:
 
-Working Group and Real-time Chat Request
-----------------------------------------
+Establishing working group communication
+----------------------------------------------------------------
 
-Here are some techniques for communicating more efficiently and interactively within your community:
+Working groups depend on efficient, real-time communication.
+Project maintainers can use the following techniques to establish communication for working groups:
 
 * Find an existing :ref:`working_group_list` that is similar to your project and join the conversation.
 * `Request <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_ a new working group for your project.
