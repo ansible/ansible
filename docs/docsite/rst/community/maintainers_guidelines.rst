@@ -57,7 +57,7 @@ See :ref:`communication` for more details on these communication channels.
 Working Group and Real-time Chat Request
 ----------------------------------------
 
-To make communication within your community more efficient and interactive, you can:
+Here are some techniques for communicating more efficiently and interactively within your community:
 
 * Join existing suitable :ref:`working_group_list` and corresponding real-time chats if exist.
 * `Request <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_ a new working group for your project.
