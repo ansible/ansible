@@ -96,7 +96,7 @@ Expanding the collection community
 Here are some ways you can expand the community around your collection:
 
   * Give :ref:`newcomers a positive first experience <collection_new_contributors>`.
-  * Offer them to join related :ref:`real-time chats <wg_and_real_time_chat>`.
+  * Invite contributors to join :ref:`real-time chats <wg_and_real_time_chat>` related to your project.
   * Have :ref:`good documentation <maintainer_documentation>` with guidelines for new contributors.
   * Make people feel welcome personally and individually.
   * Use labels to show easy fixes and leave non-critical easy fixes to newcomers and offer to mentor them.
