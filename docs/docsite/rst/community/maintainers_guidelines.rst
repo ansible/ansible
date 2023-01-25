@@ -59,7 +59,7 @@ Working Group and Real-time Chat Request
 
 Here are some techniques for communicating more efficiently and interactively within your community:
 
-* Join existing suitable :ref:`working_group_list` and corresponding real-time chats if exist.
+* Find an existing :ref:`working_group_list` that is similar to your project and join the conversation.
 * `Request <https://github.com/ansible/community/blob/main/WORKING-GROUPS.md>`_ a new working group for your project.
 * `Create <https://hackmd.io/@ansible-community/community-matrix-faq#How-do-I-create-a-public-community-room>`_ a real-time chat for your working group or `ask <https://github.com/ansible/community/issues/new>`_ the community team to create it and make it official.
 * Add information about the working group and related real-time chats to your project's ``README.md`` and to its contributor documentation.
