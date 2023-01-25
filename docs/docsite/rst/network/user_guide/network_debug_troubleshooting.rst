@@ -509,7 +509,7 @@ Suggestions to resolve:
 
   Suggestions to resolve:
 
-  Some modules support a ``timeout`` variable.
+  Some modules support a ``timeout`` option.
   
   .. code-block:: yaml
 
