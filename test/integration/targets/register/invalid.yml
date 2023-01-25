@@ -1,0 +1,11 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: test registering
+      debug: msg='does nothing really but register this'
+      register: 200
+
+    - name: never gets here
+      assert:
+        that:
+          - 200 is not defined
