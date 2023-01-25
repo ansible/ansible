@@ -8,6 +8,3 @@ types-pyyaml
 types-requests
 types-setuptools
 types-toml
-MarkupSafe == 2.1.1  # temporary constraint to match other sanity tests
-packaging == 21.3  # temporary constraint to match other sanity tests
-typing_extensions == 4.3.0  # temporary constraint to match other sanity tests
