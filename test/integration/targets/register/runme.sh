@@ -9,4 +9,4 @@ ansible-playbook can_register.yml -i ../../inventory -v "$@"
 set +e
 result="$(ansible-playbook invalid.yml -i ../../inventory -v "$@" 2>&1)"
 set -e
-grep -q "Invalid variable name in " << "${result}"
+grep -q "Invalid variable name in " <<< "${result}"
