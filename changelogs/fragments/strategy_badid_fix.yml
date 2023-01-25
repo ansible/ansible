@@ -1,0 +1,2 @@
+bugfixes:
+  - strategy plugins now correctly identify bad registered variables, even on skip.
