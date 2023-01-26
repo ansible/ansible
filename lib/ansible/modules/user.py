@@ -86,13 +86,13 @@ options:
         version_added: "2.0"
     password:
         description:
-            - Optionally set the user password.
+            - If provided, set the user's password to the provided encrypted hash (Linux) or plain text password (macOS).
             - B(Linux:) Enter the hashed password as the value.
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate the hash of a password.
-            - B(macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
             - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
             - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
+            - B(macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
         type: str
     state:
         description:
