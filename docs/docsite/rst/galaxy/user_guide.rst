@@ -330,12 +330,12 @@ You can install roles and collections from the same requirements files
     roles:
       # Install a role from Ansible Galaxy.
       - name: geerlingguy.java
-        version: 1.9.6
+        version: "1.9.6" # note that ranges are not supported for roles
 
     collections:
       # Install a collection from Ansible Galaxy.
       - name: geerlingguy.php_roles
-        version: 0.9.3
+        version: ">=0.9.3"
         source: https://galaxy.ansible.com
 
 Installing multiple roles from multiple files
