@@ -27,6 +27,7 @@
     unarchive:
       dest: '{{ scm_path }}/namespace_3/collection_1'
       src: '{{ galaxy_dir }}/scratch/namespace_3-collection_1-1.0.0.tar.gz'
+      remote_src: yes
 
   - name: Commit the changes
     shell: git add ./; git commit -m 'add collection'
