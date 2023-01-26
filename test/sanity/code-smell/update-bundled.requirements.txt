@@ -1,3 +1,2 @@
 # edit "update-bundled.requirements.in" and generate with: hacking/update-sanity-requirements.py --test update-bundled
-packaging==21.3
-pyparsing==3.0.9
+packaging==23.0
