@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - fix installing collections in git repositories/directories which contain a MANIFEST.json file (https://github.com/ansible/ansible/issues/79796).
