@@ -1,13 +1,13 @@
 # edit "sanity.pylint.in" and generate with: hacking/update-sanity-requirements.py --test pylint
-astroid==2.12.12
+astroid==2.13.3
 dill==0.3.6
-isort==5.10.1
-lazy-object-proxy==1.7.1
+isort==5.11.4
+lazy-object-proxy==1.9.0
 mccabe==0.7.0
-platformdirs==2.5.2
-pylint==2.15.5
+platformdirs==2.6.2
+pylint==2.15.10
 PyYAML==6.0
 tomli==2.0.1
-tomlkit==0.11.5
-typing_extensions==4.3.0
+tomlkit==0.11.6
+typing_extensions==4.4.0
 wrapt==1.14.1
