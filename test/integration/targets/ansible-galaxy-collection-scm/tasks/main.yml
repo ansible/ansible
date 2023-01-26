@@ -30,6 +30,7 @@
   - include_tasks: ./download.yml
   - include_tasks: ./setup_collection_bad_version.yml
   - include_tasks: ./test_invalid_version.yml
+  - include_tasks: ./test_manifest_metadata.yml
 
   always:
 
