@@ -164,6 +164,8 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_url
 
+from ansible.module_utils.common.locale import get_best_parsable_locale
+
 try:
     import apt
     import apt_pkg
@@ -471,8 +473,11 @@ class UbuntuSourcesList(SourcesList):
     def _key_already_exists(self, key_fingerprint):
 
         if self.apt_key_bin:
+            locale = get_best_parsable_locale(self.module)
+            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
+            self.module.run_command_environ_update = APT_ENV
             rc, out, err = self.module.run_command([self.apt_key_bin, 'export', key_fingerprint], check_rc=True)
-            found = len(err) == 0
+            found = bool(not err or 'nothing exported' not in err)
         else:
             found = self._gpg_key_exists(key_fingerprint)
 
