@@ -12,6 +12,10 @@ from ....containers import (
     run_support_container,
 )
 
+from ....util import (
+    display,
+)
+
 from . import (
     CloudEnvironment,
     CloudEnvironmentConfig,
@@ -49,6 +53,8 @@ class ForemanProvider(CloudProvider):
     def setup(self) -> None:
         """Setup cloud resource before delegation and reg cleanup callback."""
         super().setup()
+
+        display.warning('The foreman test plugin is deprecated and will be removed in a future version of ansible-test.')
 
         if self._use_static_config():
             self._setup_static()
