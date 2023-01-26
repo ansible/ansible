@@ -100,7 +100,7 @@ Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on 
 #. Log in to the Galaxy website and open the `Preferences <https://galaxy.ansible.com/me/preferences>`_ view.
 #. Select **Show API key** and then copy it.
 
-#. Save your token in the `.ansible/galaxy_token` file.
+#. Save your token in the path set in the :ref:`GALAXY_TOKEN_PATH:`.
 
 
 Import a role
