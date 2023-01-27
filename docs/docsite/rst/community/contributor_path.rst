@@ -61,7 +61,12 @@ You can find some ideas on how you can contribute in :ref:`how_can_i_help`.
 
 If you are interested in contributing to collections, take a look at :ref:`collection contributions<collections_contributions>` and the `collection repository <https://github.com/ansible-collections/>`_'s  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
 
-You can also look for GitHub issues labeled with the ``easyfix``, ``good_first_issue``, and ``docs`` labels.  Add a comment on the GitHub issue to say you are looking at it and to ask for help if you need it.
+Take a look at GitHub issues labeled with the ``easyfix``, ``good_first_issue`` and ``docs`` labels for:
+
+- `Ansible collections <https://github.com/search?q=user%3Aansible-collections+label%3Aeasyfix%2Cdocs%2C%22good+first+issue%22+state%3Aopen&type=Issues>`_
+- `All other Ansible projects <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Aeasyfix%2Cdocs%2C%22good+first+issue%22+state%3Aopen&type=Issues>`_
+
+Add a comment on the GitHub issue you chose to say you are looking at it and to ask for help if you need it.
 
 Continue to contribute
 ======================
