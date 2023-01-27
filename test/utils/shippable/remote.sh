@@ -24,7 +24,7 @@ else
     target="shippable/posix/"
 fi
 
-stage="${S:-prod}"
+stage="${S:-dev}"
 provider="${P:-default}"
 
 # shellcheck disable=SC2086
