@@ -148,7 +148,7 @@ def ensure_type(value, value_type, origin=None):
             else:
                 errmsg = 'string'
 
-        elif value_type == 'string_literal':
+        elif value_type == 'raw':
             value = to_text(value, errors='surrogate_or_strict')
 
         # defaults to string type

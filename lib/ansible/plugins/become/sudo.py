@@ -63,7 +63,7 @@ DOCUMENTATION = """
         become_pass:
             description: Password to pass to sudo
             required: False
-            type: string_literal
+            type: raw
             vars:
               - name: ansible_become_password
               - name: ansible_become_pass
