@@ -885,6 +885,21 @@ releases:
     - mention_acl.yml
     - v2.14.1rc1_summary.yaml
     release_date: '2022-11-28'
+  2.14.2:
+    changes:
+      bugfixes:
+      - Fix traceback when using the ``template`` module and running with ``ANSIBLE_DEBUG=1``
+        (https://github.com/ansible/ansible/issues/79763)
+      release_summary: '| Release Date: 2023-01-30
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 79763-ansible_debug_template_tb_fix.yml
+    - v2.14.2_summary.yaml
+    release_date: '2023-01-30'
   2.14.2rc1:
     changes:
       bugfixes:

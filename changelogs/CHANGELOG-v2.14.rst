@@ -5,13 +5,13 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
-v2.14.2rc1
-==========
+v2.14.2
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2023-01-23
+| Release Date: 2023-01-30
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -49,6 +49,7 @@ Bugfixes
 --------
 
 - Correctly count rescued tasks in play recap (https://github.com/ansible/ansible/issues/79711)
+- Fix traceback when using the ``template`` module and running with ``ANSIBLE_DEBUG=1`` (https://github.com/ansible/ansible/issues/79763)
 - Fix using ``GALAXY_IGNORE_CERTS`` in conjunction with collections in requirements files which specify a specific ``source`` that isn't in the configured servers.
 - Fix using ``GALAXY_IGNORE_CERTS`` when downloading tarballs from Galaxy servers (https://github.com/ansible/ansible/issues/79557).
 - Module and role argument validation - include the valid suboption choices in the error when an invalid suboption is provided.
