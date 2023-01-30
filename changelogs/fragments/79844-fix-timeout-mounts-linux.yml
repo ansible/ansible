@@ -1,0 +1,2 @@
+bugfixes:
+  - setup gather_timeout - Fix timeout in get_mounts_facts for linux.

@@ -538,7 +538,7 @@ class LinuxHardware(Hardware):
         # start threads to query each mount
         results = {}
         pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
-        maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
+        maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
             fields = [self._replace_octal_escapes(field) for field in fields]
