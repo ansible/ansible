@@ -73,7 +73,6 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_modules_documenting
    sidecar
    developing_modules_general_windows
-   developing_modules_general_aci
    developing_modules_in_groups
    testing
    module_lifecycle
