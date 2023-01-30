@@ -228,7 +228,6 @@ test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/parsing/vault/test_vault.py pylint:disallowed-name
 test/units/playbook/role/test_role.py pylint:disallowed-name
 test/units/plugins/test_plugins.py pylint:disallowed-name
-test/units/template/test_templar.py pylint:disallowed-name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits
