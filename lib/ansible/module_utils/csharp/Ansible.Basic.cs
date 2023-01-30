@@ -16,6 +16,10 @@ using Newtonsoft.Json;
 using System.Web.Script.Serialization;
 #endif
 
+// Newtonsoft.Json may reference a different System.Runtime version (6.x) than loaded by PowerShell 7.3 (7.x).
+// Ignore CS1701 so the code can be compiled when warnings are reported as errors.
+//NoWarn -Name CS1701 -CLR Core
+
 // System.Diagnostics.EventLog.dll reference different versioned dlls that are
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
 //NoWarn -Name CS1702 -CLR Core
