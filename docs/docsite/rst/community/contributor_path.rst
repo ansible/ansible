@@ -68,7 +68,8 @@ Take a look at GitHub issues labeled with the ``easyfix`` and ``good_first_issue
 
 Issues labeled with the ``docs`` label in `Ansible collections <https://github.com/search?q=user%3Aansible-collections+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_ and `other <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_ Ansible projects can be also good to start with.
 
-Add a comment on the GitHub issue you chose to say you are looking at it and to ask for help if you need it.
+When you choose an issue to work on, add a comment directly on the GitHub issue to say you are looking at it and let others know to avoid conflicting work. 
+You can also ask for help in a comment if you need it.
 
 Continue to contribute
 ======================
