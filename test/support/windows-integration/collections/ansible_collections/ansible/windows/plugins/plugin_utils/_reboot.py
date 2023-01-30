@@ -27,7 +27,7 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 
-from ._quote import quote_pwsh
+from ansible_collections.ansible.windows.plugins.plugin_utils._quote import quote_pwsh
 
 
 # This is not ideal but the psrp connection plugin doesn't catch all these exceptions as an AnsibleConnectionFailure.
