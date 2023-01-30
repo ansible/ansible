@@ -44,7 +44,7 @@ Release schedule
 Ansible minor releases
 =======================
 
-Ansible 8.x minor releases will occur approximately every four weeks if changes to collections have been made or to align to a later ansible-core-2.15.x.  Ansible 8.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-8.0.0 ships with community.crypto 2.3.0; Ansible-6.1.0 may ship with community.crypto 2.4.0 but would not ship with community.crypto 3.0.0.
+Ansible 8.x minor releases will occur approximately every four weeks if changes to collections have been made or to align to a later ansible-core-2.15.x.  Ansible 8.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-8.0.0 ships with community.crypto 2.3.0; Ansible-8.1.0 may ship with community.crypto 2.4.0 but would not ship with community.crypto 3.0.0.
 
 
 .. note::
