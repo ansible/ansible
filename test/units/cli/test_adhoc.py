@@ -98,11 +98,7 @@ def test_ansible_version(capsys):
     with pytest.raises(SystemExit):
         adhoc_cli.run()
     version = capsys.readouterr()
-    try:
-        version_lines = version.out.splitlines()
-    except AttributeError:
-        # Python 2.6 does return a named tuple, so get the first item
-        version_lines = version[0].splitlines()
+    version_lines = version.out.splitlines()
 
     assert len(version_lines) == 9, 'Incorrect number of lines in "ansible --version" output'
     assert re.match(r'ansible \[core [0-9.a-z]+\]', version_lines[0]), 'Incorrect ansible version line in "ansible --version" output'
