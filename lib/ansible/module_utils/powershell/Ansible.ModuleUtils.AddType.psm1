@@ -66,7 +66,7 @@ Function Add-CSharpType {
 
         //TypeAccelerator -Name <AcceleratorName> -TypeName <Name of compiled type>
 
-    * Compile with unsafe support (Ansible 2.14+)
+    * Compile with unsafe support (Ansible 2.15+)
 
         //AllowUnsafe
     #>
