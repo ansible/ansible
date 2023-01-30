@@ -433,8 +433,7 @@ class TestPlayIterator(unittest.TestCase):
         while (task and task.action != 'debug'):
             _, task = itr.get_next_task_for_host(hosts[0])
 
-        if task is None:
-            raise Exception("iterated past end of play while looking for place to insert tasks")
+        self.assertIsNotNone(task, 'iterated past end of play while looking for place to insert tasks')
 
         # get the current host state and copy it so we can mutate it
         s = itr.get_host_state(hosts[0])

@@ -20,6 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import contextlib
+
 import ansible
 from io import BytesIO
 import json
@@ -60,8 +62,7 @@ class TestGalaxy(unittest.TestCase):
         cls.temp_dir = tempfile.mkdtemp(prefix='ansible-test_galaxy-')
         os.chdir(cls.temp_dir)
 
-        if os.path.exists("./delete_me"):
-            shutil.rmtree("./delete_me")
+        shutil.rmtree("./delete_me", ignore_errors=True)
 
         # creating framework for a role
         gc = GalaxyCLI(args=["ansible-galaxy", "init", "--offline", "delete_me"])
@@ -88,29 +89,22 @@ class TestGalaxy(unittest.TestCase):
     def makeTar(cls, output_file, source_dir):
         ''' used for making a tarfile from a role directory '''
         # adding directory into a tar file
-        try:
-            tar = tarfile.open(output_file, "w:gz")
+        with tarfile.open(output_file, "w:gz") as tar:
             tar.add(source_dir, arcname=os.path.basename(source_dir))
-        except AttributeError:  # tarfile obj. has no attribute __exit__ prior to python 2.    7
-            pass
-        finally:  # ensuring closure of tarfile obj
-            tar.close()
 
     @classmethod
     def tearDownClass(cls):
         '''After tests are finished removes things created in setUpClass'''
         # deleting the temp role directory
-        if os.path.exists(cls.role_dir):
-            shutil.rmtree(cls.role_dir)
-        if os.path.exists(cls.role_req):
+        shutil.rmtree(cls.role_dir, ignore_errors=True)
+        with contextlib.suppress(FileNotFoundError):
             os.remove(cls.role_req)
-        if os.path.exists(cls.role_tar):
+        with contextlib.suppress(FileNotFoundError):
             os.remove(cls.role_tar)
-        if os.path.isdir(cls.role_path):
-            shutil.rmtree(cls.role_path)
+        shutil.rmtree(cls.role_path, ignore_errors=True)
 
         os.chdir('/')
-        shutil.rmtree(cls.temp_dir)
+        shutil.rmtree(cls.temp_dir, ignore_errors=True)
 
     def setUp(self):
         # Reset the stored command line args
@@ -137,8 +131,7 @@ class TestGalaxy(unittest.TestCase):
         role_info = {'name': 'some_role_name',
                      'galaxy_info': galaxy_info}
         display_result = gc._display_role_info(role_info)
-        if display_result.find('\n\tgalaxy_info:') == -1:
-            self.fail('Expected galaxy_info to be indented once')
+        self.assertNotEqual(display_result.find('\n\tgalaxy_info:'), -1, 'Expected galaxy_info to be indented once')
 
     def test_run(self):
         ''' verifies that the GalaxyCLI object's api is created and that execute() is called. '''
@@ -277,8 +270,6 @@ class ValidRoleTests(object):
 
         # Make temp directory for testing
         cls.test_dir = tempfile.mkdtemp()
-        if not os.path.isdir(cls.test_dir):
-            os.makedirs(cls.test_dir)
 
         cls.role_dir = os.path.join(cls.test_dir, role_name)
         cls.role_name = role_name
@@ -298,8 +289,7 @@ class ValidRoleTests(object):
 
     @classmethod
     def tearDownClass(cls):
-        if os.path.isdir(cls.test_dir):
-            shutil.rmtree(cls.test_dir)
+        shutil.rmtree(cls.test_dir, ignore_errors=True)
 
     def test_metadata(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:

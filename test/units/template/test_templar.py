@@ -64,14 +64,6 @@ class BaseTemplar(object):
         return self._ansible_context._is_unsafe(obj)
 
 
-# class used for testing arbitrary objects passed to template
-class SomeClass(object):
-    foo = 'bar'
-
-    def __init__(self):
-        self.blip = 'blip'
-
-
 class SomeUnsafeClass(AnsibleUnsafe):
     def __init__(self):
         super(SomeUnsafeClass, self).__init__()
@@ -268,8 +260,6 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
             templar.available_variables = "foo=bam"
         except AssertionError:
             pass
-        except Exception as e:
-            self.fail(e)
 
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with
