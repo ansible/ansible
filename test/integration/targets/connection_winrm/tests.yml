@@ -6,6 +6,9 @@
   gather_facts: no
 
   tasks:
+  - name: reboot the host
+    ansible.windows.win_reboot:
+
   - name: setup remote tmp dir
     import_role:
       name: ../../setup_remote_tmp_dir
