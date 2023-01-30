@@ -35,14 +35,28 @@ To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 #. Be patient while Ansibot, our automated script, adds labels, pings the docs maintainers, and kicks off a CI testing run.
 #. Keep an eye on your PR - the docs team may ask you for changes.
 
-Reviewing open PRs and issues
-=============================
+Reviewing or solving open issues
+================================
 
-You can also contribute by reviewing open documentation `issues <https://github.com/ansible/ansible/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Adocs>`_ and `PRs <https://github.com/ansible/ansible/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3Adocs>`_. To add a helpful review, please:
+Review or solve open documentation issues for:
 
-- Include a comment - "looks good to me" only helps if we know why.
-- For issues, reproduce the problem.
-- For PRs, test the change.
+- `Ansible projects <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_
+- `Ansible collections <https://github.com/search?q=user%3Aansible-collections+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_
+
+Reviewing open PRs
+==================
+
+Review open documentation pull requests for:
+
+- Ansible `projects <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Adocs+state%3Aopen+type%3Apr>`_
+- Ansible `collections <https://github.com/search?q=user%3Aansible-collections+label%3Adocs+state%3Aopen+type%3Apr>`_
+
+To add a helpful review, please:
+
+- Test the change if applicable.
+- Think if it can be made better (including wording, structure, fixing typos and so on).
+- Suggest improvements.
+- Approve the change with the ``looks good to me`` comment.
 
 Opening a new issue and/or PR
 =============================
