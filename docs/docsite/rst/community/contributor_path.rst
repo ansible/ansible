@@ -63,10 +63,10 @@ If you are interested in contributing to collections, take a look at :ref:`colle
 
 Take a look at GitHub issues labeled with the ``easyfix`` and ``good_first_issue`` labels for:
 
-- `Ansible collections <https://github.com/search?q=user%3Aansible-collections+label%3Aeasyfix%2C%22good+first+issue%22+state%3Aopen&type=Issues>`_
+- `Ansible collections repositories <https://github.com/search?q=user%3Aansible-collections+label%3Aeasyfix%2C%22good+first+issue%22+state%3Aopen&type=Issues>`_
 - `All other Ansible projects <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Aeasyfix%2C%22good+first+issue%22+state%3Aopen&type=Issues>`_
 
-Issues labeled with the ``docs`` label in Ansible `collections <https://github.com/search?q=user%3Aansible-collections+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_ and `other <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_ Ansible projects can be also good to start with.
+Issues labeled with the ``docs`` label in `Ansible collections <https://github.com/search?q=user%3Aansible-collections+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_ and `other <https://github.com/search?q=user%3Aansible+user%3Aansible-community+label%3Adocs+state%3Aopen+type%3Aissue&type=Issues>`_ Ansible projects can be also good to start with.
 
 Add a comment on the GitHub issue you chose to say you are looking at it and to ask for help if you need it.
 
