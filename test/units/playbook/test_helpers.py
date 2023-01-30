@@ -52,10 +52,6 @@ class MixinForMocks(object):
         self.mock_inventory = MagicMock(name='MockInventory')
         self.mock_inventory._hosts_cache = dict()
 
-        def _get_host(host_name):
-            return None
-
-        self.mock_inventory.get_host.side_effect = _get_host
         # TODO: can we use a real VariableManager?
         self.mock_variable_manager = MagicMock(name='MockVariableManager')
         self.mock_variable_manager.get_vars.return_value = dict()
@@ -85,10 +81,6 @@ class MixinForMocks(object):
 class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def setUp(self):
         self._setup()
-
-    def _assert_is_task_list(self, results):
-        for result in results:
-            self.assertIsInstance(result, Task)
 
     def _assert_is_task_list_or_blocks(self, results):
         self.assertIsInstance(results, list)

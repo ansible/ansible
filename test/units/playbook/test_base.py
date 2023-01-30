@@ -26,8 +26,7 @@ from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
-from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
-from ansible.utils.sentinel import Sentinel
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 
 from units.mock.loader import DictDataLoader
 
@@ -330,12 +329,6 @@ class ExampleSubClass(base.Base):
 
     def __init__(self):
         super(ExampleSubClass, self).__init__()
-
-    def get_dep_chain(self):
-        if self._parent:
-            return self._parent.get_dep_chain()
-        else:
-            return None
 
 
 class BaseSubClass(base.Base):

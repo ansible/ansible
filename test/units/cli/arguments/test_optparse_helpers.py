@@ -14,10 +14,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible import __path__ as ansible_path
 from ansible.release import __version__ as ansible_version
 
-if C.DEFAULT_MODULE_PATH is None:
-    cpath = u'Default w/o overrides'
-else:
-    cpath = C.DEFAULT_MODULE_PATH
+cpath = C.DEFAULT_MODULE_PATH
 
 FAKE_PROG = u'ansible-cli-test'
 VERSION_OUTPUT = opt_help.version(prog=FAKE_PROG)
