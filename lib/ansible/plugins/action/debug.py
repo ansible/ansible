@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
 
         validation_result, new_module_args = self.validate_argument_spec(
             argument_spec={
-                'msg': {'type': 'raw'},
+                'msg': {'type': 'raw', 'default': 'Hello world!'},
                 'var': {'type': 'raw'},
                 'verbosity': {'type': 'int', 'default': 0},
             },
@@ -52,10 +52,7 @@ class ActionModule(ActionBase):
         verbosity = new_module_args['verbosity']
 
         if verbosity <= self._display.verbosity:
-            if new_module_args['msg']:
-                result['msg'] = new_module_args['msg']
-
-            elif new_module_args['var']:
+            if new_module_args['var']:
                 try:
                     results = self._templar.template(new_module_args['var'], convert_bare=True, fail_on_undefined=True)
                     if results == new_module_args['var']:
@@ -75,7 +72,7 @@ class ActionModule(ActionBase):
                 else:
                     result[new_module_args['var']] = results
             else:
-                result['msg'] = 'Hello world!'
+                result['msg'] = new_module_args['msg']
 
             # force flag to make debug output module always verbose
             result['_ansible_verbose_always'] = True
