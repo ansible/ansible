@@ -19,13 +19,14 @@ __metaclass__ = type
 
 import os
 import base64
-from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip, AnsibleParserError
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.parsing.vault import b_HEADER
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
-from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
+from ansible.utils.hashing import checksum, checksum_s, md5, md5s, secure_hash, secure_hash_s
 from ansible.utils.path import makedirs_safe, is_subpath
 
 display = Display()
@@ -50,6 +51,8 @@ class ActionModule(ActionBase):
             flat = boolean(self._task.args.get('flat'), strict=False)
             fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
             validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
+            encrypt = boolean(self._task.args.get('encrypt', False), strict=False)
+            vault_id = self._task.args.get('vault_id', None)
 
             msg = ''
             # validate source and dest are strings FIXME: use basic.py and module specs
@@ -61,6 +64,9 @@ class ActionModule(ActionBase):
 
             if source is None or dest is None:
                 msg = "src and dest are required"
+
+            if encrypt and vault_id is None:
+                msg = "vault_id is required when encryption is requested"
 
             if msg:
                 raise AnsibleActionFail(msg)
@@ -161,29 +167,61 @@ class ActionModule(ActionBase):
 
             dest = os.path.normpath(dest)
 
-            # calculate checksum for the local file
-            local_checksum = checksum(dest)
+            local_encrypted = False
+            b_file_path = to_bytes(dest, errors='surrogate_or_strict')
+            if self._loader.path_exists(b_file_path) and self._loader.is_file(b_file_path):
+                with open(to_bytes(dest), 'rb') as f:
+                    if self._loader._vault.is_encrypted(f.read(len(b_HEADER))):
+                        f.seek(0)
+                        data = f.read()
+                        if not self._loader._vault.secrets:
+                            raise AnsibleParserError("A vault password or secret must be specified to decrypt %s" % to_native(dest))
 
-            if remote_checksum != local_checksum:
+                        data, vault_id_used, vault_secret_used = self._loader._vault.decrypt_and_get_vault_id(data, filename=dest)
+                        local_encrypted = True
+                        local_checksum = checksum_s(data)
+
+            # calculate checksum for the local file
+            if not local_encrypted:
+                local_checksum = checksum(dest)
+
+            if remote_checksum != local_checksum or local_encrypted != encrypt or (local_encrypted and vault_id_used != vault_id):
                 # create the containing directories, if needed
                 makedirs_safe(os.path.dirname(dest))
 
                 # fetch the file and check for changes
                 if remote_data is None:
                     self._connection.fetch_file(source, dest)
-                else:
+                    if encrypt:
+                        with open(to_bytes(dest), "rb") as f:
+                            remote_data = f.read()
+                if remote_data is not None:
+                    if encrypt:
+                        remote_data = self._loader._vault.encrypt(remote_data, vault_id=vault_id)
                     try:
                         f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
                         f.write(remote_data)
                         f.close()
                     except (IOError, OSError) as e:
                         raise AnsibleActionFail("Failed to fetch the file: %s" % e)
-                new_checksum = secure_hash(dest)
-                # For backwards compatibility. We'll return None on FIPS enabled systems
-                try:
-                    new_md5 = md5(dest)
-                except ValueError:
-                    new_md5 = None
+
+                if encrypt:
+                    with open(to_bytes(dest), "rb") as f:
+                        new_data = f.read()
+                        plaintext = self._loader._vault.decrypt(new_data, filename=dest)
+                        new_checksum = secure_hash_s(plaintext)
+                        # For backwards compatibility. We'll return None on FIPS enabled systems
+                        try:
+                            new_md5 = md5s(plaintext)
+                        except ValueError:
+                            new_md5 = None
+                else:
+                    new_checksum = secure_hash(dest)
+                    # For backwards compatibility. We'll return None on FIPS enabled systems
+                    try:
+                        new_md5 = md5(dest)
+                    except ValueError:
+                        new_md5 = None
 
                 if validate_checksum and new_checksum != remote_checksum:
                     result.update(dict(failed=True, md5sum=new_md5,
@@ -195,10 +233,20 @@ class ActionModule(ActionBase):
                                    'remote_checksum': remote_checksum})
             else:
                 # For backwards compatibility. We'll return None on FIPS enabled systems
-                try:
-                    local_md5 = md5(dest)
-                except ValueError:
-                    local_md5 = None
+                if encrypt:
+                    with open(to_bytes(dest), "rb") as f:
+                        new_data = f.read()
+                        plaintext = self._loader._vault.decrypt(new_data, filename=dest)
+                        # For backwards compatibility. We'll return None on FIPS enabled systems
+                        try:
+                            local_md5 = md5s(plaintext)
+                        except ValueError:
+                            local_md5 = None
+                else:
+                    try:
+                        local_md5 = md5(dest)
+                    except ValueError:
+                        local_md5 = None
                 result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
 
         finally:
