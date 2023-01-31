@@ -65,6 +65,10 @@ Function Add-CSharpType {
     * Create automatic type accelerators to simplify long namespace names (Ansible 2.9+)
 
         //TypeAccelerator -Name <AcceleratorName> -TypeName <Name of compiled type>
+
+    * Compile with unsafe support (Ansible 2.15+)
+
+        //AllowUnsafe
     #>
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][String[]]$References,
@@ -117,6 +121,7 @@ Function Add-CSharpType {
     $assembly_pattern = [Regex]"//\s*AssemblyReference\s+-(?<Parameter>(Name)|(Type))\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
     $no_warn_pattern = [Regex]"//\s*NoWarn\s+-Name\s+(?<Name>[\w\d]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
     $type_pattern = [Regex]"//\s*TypeAccelerator\s+-Name\s+(?<Name>[\w.]*)\s+-TypeName\s+(?<TypeName>[\w.]*)"
+    $allow_unsafe_pattern = [Regex]"//\s*AllowUnsafe?"
 
     # PSCore vs PSDesktop use different methods to compile the code,
     # PSCore uses Roslyn and can compile the code purely in memory
@@ -142,11 +147,13 @@ Function Add-CSharpType {
         $ignore_warnings = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[String], [Microsoft.CodeAnalysis.ReportDiagnostic]]'
         $parse_options = ([Microsoft.CodeAnalysis.CSharp.CSharpParseOptions]::Default).WithPreprocessorSymbols($defined_symbols)
         $syntax_trees = [System.Collections.Generic.List`1[Microsoft.CodeAnalysis.SyntaxTree]]@()
+        $allow_unsafe = $false
         foreach ($reference in $References) {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Core]
             # //NoWarn -Name ... [-CLR Core]
             # //TypeAccelerator -Name ... -TypeName ...
+            # //AllowUnsafe
             $assembly_matches = $assembly_pattern.Matches($reference)
             foreach ($match in $assembly_matches) {
                 $clr = $match.Groups["CLR"].Value
@@ -180,6 +187,10 @@ Function Add-CSharpType {
             foreach ($match in $type_matches) {
                 $type_accelerators.Add(@{Name = $match.Groups["Name"].Value; TypeName = $match.Groups["TypeName"].Value })
             }
+
+            if ($allow_unsafe_pattern.Matches($reference).Count) {
+                $allow_unsafe = $true
+            }
         }
 
         # Release seems to contain the correct line numbers compared to
@@ -192,6 +203,10 @@ Function Add-CSharpType {
         if (-not $IgnoreWarnings.IsPresent) {
             $compiler_options = $compiler_options.WithGeneralDiagnosticOption([Microsoft.CodeAnalysis.ReportDiagnostic]::Error)
             $compiler_options = $compiler_options.WithSpecificDiagnosticOptions($ignore_warnings)
+        }
+
+        if ($allow_unsafe) {
+            $compiler_options = $compiler_options.WithAllowUnsafe($true)
         }
 
         # create compilation object
@@ -297,6 +312,7 @@ Function Add-CSharpType {
             # //AssemblyReference -Name ... [-CLR Framework]
             # //NoWarn -Name ... [-CLR Framework]
             # //TypeAccelerator -Name ... -TypeName ...
+            # //AllowUnsafe
             $assembly_matches = $assembly_pattern.Matches($reference)
             foreach ($match in $assembly_matches) {
                 $clr = $match.Groups["CLR"].Value
@@ -329,6 +345,10 @@ Function Add-CSharpType {
             $type_matches = $type_pattern.Matches($reference)
             foreach ($match in $type_matches) {
                 $type_accelerators.Add(@{Name = $match.Groups["Name"].Value; TypeName = $match.Groups["TypeName"].Value })
+            }
+
+            if ($allow_unsafe_pattern.Matches($reference).Count) {
+                $compiler_options.Add("/unsafe") > $null
             }
         }
         if ($ignore_warnings.Count -gt 0) {
