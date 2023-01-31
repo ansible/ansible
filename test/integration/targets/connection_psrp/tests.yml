@@ -6,6 +6,9 @@
   gather_facts: no
 
   tasks:
+  - name: reboot the host
+    ansible.windows.win_reboot:
+
   - name: test complex objects in raw output
     # until PyYAML is upgraded to 4.x we need to use the \U escape for a unicode codepoint
     # and enclose in a quote to it translates the \U
