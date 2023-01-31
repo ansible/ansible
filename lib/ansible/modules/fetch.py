@@ -56,6 +56,18 @@ options:
     - If using multiple hosts with the same filename, the file will be overwritten for each host.
     type: bool
     default: no
+  encrypt:
+    version_added: '2.15'
+    description:
+    - If enabled, the local file will be encrypted into a vault. In this case, the vault_id parameter is required.
+    type: bool
+    default: no
+  vault_id:
+    version_added: '2.15'
+    description:
+    - If encryption is enabled, this specifies the vault_id to use for the encryption.
+    - Mandatory if encryption is enabled.
+    type: string
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
@@ -76,7 +88,7 @@ attributes:
   safe_file_operations:
     support: none
   vault:
-    support: none
+    support: full
 notes:
 - When running fetch with C(become), the M(ansible.builtin.slurp) module will also be
   used to fetch the contents of the file for determining the remote
@@ -121,4 +133,12 @@ EXAMPLES = r'''
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
     flat: yes
+
+- name: Storing a file in an encrypted vault
+  ansible.builtin.fetch:
+    src: /tmp/uniquefile
+    dest: /tmp/special/
+    flat: yes
+    encrypt: yes
+    vault_id: myvault
 '''
