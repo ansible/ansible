@@ -34,23 +34,31 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
-        if 'msg' in self._task.args and 'var' in self._task.args:
-            return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}
+        validation_result, new_module_args = self.validate_argument_spec(
+            argument_spec={
+                'msg': {'type': 'raw'},
+                'var': {'type': 'raw'},
+                'verbosity': {'type': 'int', 'default': 0},
+            },
+            mutually_exclusive=(
+                ('msg', 'var'),
+            ),
+        )
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         # get task verbosity
-        verbosity = int(self._task.args.get('verbosity', 0))
+        verbosity = new_module_args['verbosity']
 
         if verbosity <= self._display.verbosity:
-            if 'msg' in self._task.args:
-                result['msg'] = self._task.args['msg']
+            if new_module_args['msg']:
+                result['msg'] = new_module_args['msg']
 
-            elif 'var' in self._task.args:
+            elif new_module_args['var']:
                 try:
-                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True)
-                    if results == self._task.args['var']:
+                    results = self._templar.template(new_module_args['var'], convert_bare=True, fail_on_undefined=True)
+                    if results == new_module_args['var']:
                         # if results is not str/unicode type, raise an exception
                         if not isinstance(results, string_types):
                             raise AnsibleUndefinedVariable
@@ -61,11 +69,11 @@ class ActionModule(ActionBase):
                     if self._display.verbosity > 0:
                         results += u": %s" % to_text(e)
 
-                if isinstance(self._task.args['var'], (list, dict)):
+                if isinstance(new_module_args['var'], (list, dict)):
                     # If var is a list or dict, use the type as key to display
-                    result[to_text(type(self._task.args['var']))] = results
+                    result[to_text(type(new_module_args['var']))] = results
                 else:
-                    result[self._task.args['var']] = results
+                    result[new_module_args['var']] = results
             else:
                 result['msg'] = 'Hello world!'
 
