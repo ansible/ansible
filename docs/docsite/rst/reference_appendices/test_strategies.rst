@@ -176,21 +176,26 @@ This is the great culmination of embedded tests:
           ansible.builtin.command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
-      roles:
+      tasks:
 
-         - common
-         - webserver
+        - ansible.builtin.include_role:
+            name: "{{ item }}"
+          loop:
+            - common
+            - webserver
+
+        - name: run any notified handlers
+          ansible.builtin.meta: flush_handlers
+
+        - name: test the configuration
+          ansible.builtin.include_role:
+            name: apply_testing_checks
 
       post_tasks:
 
         - name: add back to load balancer pool
           ansible.builtin.command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
-
-        - name: run the test role
-          include_role:
-            name: apply_testing_checks
-
 
 Of course in the above, the "take out of the pool" and "add back" steps would be replaced with a call to an Ansible load balancer
 module or appropriate shell command.  You might also have steps that use a monitoring module to start and end an outage window
