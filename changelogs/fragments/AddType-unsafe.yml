@@ -1,0 +1,2 @@
+minor_changes:
+- Ansible.ModuleUtils.AddType - Add support for compiling ``unsafe`` code with the ``//AllowUnsafe`` directive
