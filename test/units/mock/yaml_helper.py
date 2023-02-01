@@ -4,7 +4,6 @@ __metaclass__ = type
 import io
 import yaml
 
-from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
 
@@ -14,7 +13,6 @@ class YamlTestUtils(object):
         """Vault related tests will want to override this.
 
         Vault cases should setup a AnsibleLoader that has the vault password."""
-        return AnsibleLoader(stream)
 
     def _dump_stream(self, obj, stream, dumper=None):
         """Dump to a py2-unicode or py3-string stream."""
