@@ -129,6 +129,7 @@ lib/ansible/vars/hostvars.py pylint:disallowed-name
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
+test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/plugins/plugin_utils/check_pylint.py pylint:disallowed-name # ignore, required for testing
 test/integration/targets/ansible-test-integration/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-units/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-units/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -192,6 +193,7 @@ test/support/network-integration/collections/ansible_collections/ansible/netcomm
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pep8:E501
+test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pylint:used-before-assignment
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:disallowed-name
