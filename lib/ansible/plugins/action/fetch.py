@@ -189,7 +189,7 @@ class ActionModule(ActionBase):
                 dummy, vault_secret = match_encrypt_secret(self._loader._vault.secrets, vault_id)
 
             if remote_checksum != local_checksum or local_encrypted != encrypt or (local_encrypted and
-                (vault_id_used != vault_id or vault_secret_used != vault_secret)):
+                    (vault_id_used != vault_id or vault_secret_used != vault_secret)):
                 # create the containing directories, if needed
                 makedirs_safe(os.path.dirname(dest))
 
