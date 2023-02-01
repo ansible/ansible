@@ -59,7 +59,7 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd_service.py validate-modules:return-syntax-error
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
-# lib/ansible/modules/uri.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/uri.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/yum.py pylint:disallowed-name
