@@ -34,7 +34,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
-from ansible.utils.encrypt import passlib_or_crypt
+from ansible.utils.encrypt import passlib_or_crypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
@@ -283,6 +283,10 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     hashtype = passlib_mapping.get(hashtype, hashtype)
     try:
         return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+    except TypeError:
+        if PASSLIB_AVAILABLE and hashtype not in passlib_mapping:
+            display.warning(f"{hashtype} is not in the list of explicitly supported passlib algorithms: {','.join(passlib_mapping)}")
+        raise
     except AnsibleError as e:
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
 
