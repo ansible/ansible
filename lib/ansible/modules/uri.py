@@ -216,6 +216,17 @@ options:
     type: bool
     default: no
     version_added: '2.11'
+  oauth1:
+    description:
+      - Use L(OAuth 1.0a,https://oauth.net/core/1.0a/) to perform the authentication.
+      - Requires the Python library L(oauthlib,https://oauthlib.readthedocs.io/en/latest/installation.html) to be installed.
+      - A valid access token is required: this must be previously L(obtained,https://www.soapui.org/docs/oauth1/oauth1-overview/) by your consumer app.
+      - If I(signature_method) is one of the RSA options, the library variant C(oauthlib[signedtoken]) is required.
+      - I(client_key) and I(resource_owner_key) (i.e. the access token, previously authorized by the user) are always required.
+      - Other dictionary keys are necessary, depending on the I(signature_method) (see U(https://oauthlib.readthedocs.io/en/latest/oauth1/client.html)).
+    type: dict
+    elements: str
+    default: {}
   use_netrc:
     description:
       - Determining whether to use credentials from ``~/.netrc`` file
@@ -314,6 +325,16 @@ EXAMPLES = r'''
     return_content: yes
     headers:
       Cookie: "{{ login.cookies_string }}"
+
+- name: Connect to website using OAuth1 authentication
+  ansible.builtin.uri:
+    url: https://your.oauth.example.com/
+    method: GET
+    return_content: yes
+    oauth1:
+      client_key: consumer_identifier
+      resource_owner_key: access_token
+      rsa_key: "{{ lookup('ansible.builtin.file', 'rsa_key.pem') }}"
 
 - name: Queue build of a project in Jenkins
   ansible.builtin.uri:
@@ -554,7 +575,7 @@ def form_urlencoded(body):
 
 
 def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress,
-        ciphers, use_netrc):
+        ciphers, use_netrc, oauth1):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
 
@@ -574,6 +595,12 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
         kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+
+    if bool(oauth1):
+        import oauthlib.oauth1
+        realm = oauth1.pop('realm', None)
+        oauth1client = oauthlib.oauth1.Client(**oauth1)
+        url, headers, _ = oauth1client.sign(uri=url, http_method=method, body=data, headers=headers, realm=realm)
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
@@ -615,6 +642,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        oauth1=dict(type='dict', default={}, no_log=True),
     )
 
     module = AnsibleModule(
@@ -639,6 +667,7 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
+    oauth1 = module.params['oauth1']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -682,7 +711,7 @@ def main():
     start = datetime.datetime.utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
-                  decompress, ciphers, use_netrc)
+                  decompress, ciphers, use_netrc, oauth1)
 
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
