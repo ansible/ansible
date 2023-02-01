@@ -67,7 +67,7 @@ options:
     description:
     - If encryption is enabled, this specifies the vault_id to use for the encryption.
     - Mandatory if encryption is enabled.
-    type: string
+    type: str
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
@@ -89,6 +89,7 @@ attributes:
     support: none
   vault:
     support: full
+    version_added: '2.15'
 notes:
 - When running fetch with C(become), the M(ansible.builtin.slurp) module will also be
   used to fetch the contents of the file for determining the remote
