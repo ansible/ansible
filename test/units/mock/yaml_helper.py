@@ -4,7 +4,6 @@ __metaclass__ = type
 import io
 import yaml
 
-from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
@@ -19,17 +18,11 @@ class YamlTestUtils(object):
 
     def _dump_stream(self, obj, stream, dumper=None):
         """Dump to a py2-unicode or py3-string stream."""
-        if PY3:
-            return yaml.dump(obj, stream, Dumper=dumper)
-        else:
-            return yaml.dump(obj, stream, Dumper=dumper, encoding=None)
+        return yaml.dump(obj, stream, Dumper=dumper)
 
     def _dump_string(self, obj, dumper=None):
         """Dump to a py2-unicode or py3-string"""
-        if PY3:
-            return yaml.dump(obj, Dumper=dumper)
-        else:
-            return yaml.dump(obj, Dumper=dumper, encoding=None)
+        return yaml.dump(obj, Dumper=dumper)
 
     def _dump_load_cycle(self, obj):
         # Each pass though a dump or load revs the 'generation'
