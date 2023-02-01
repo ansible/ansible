@@ -220,9 +220,9 @@ options:
     description:
       - Use L(OAuth 1.0a,https://oauth.net/core/1.0a/) to perform the authentication.
       - Requires the Python library L(oauthlib,https://oauthlib.readthedocs.io/en/latest/installation.html) to be installed.
-      - A valid access token must be previously L(obtained,https://www.soapui.org/docs/oauth1/oauth1-overview/) by your consumer app.
       - If I(signature_method) is one of the RSA options, the library variant C(oauthlib[signedtoken]) is required.
-      - Other dictionary keys are necessary, depending on the I(signature_method) (see U(https://oauthlib.readthedocs.io/en/latest/oauth1/client.html)).
+      - A valid access token must be previously L(obtained,https://www.soapui.org/docs/oauth1/oauth1-overview/) by your consumer app.
+      - Other sub-options are required, depending on the I(signature_method) (see U(https://oauthlib.readthedocs.io/en/latest/oauth1/client.html)).
     type: dict
     default: {}
     version_added: '2.15'

@@ -463,6 +463,13 @@
     - PyOpenSSL
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
+
+- name: install oauthlib
+  pip:
+    name: "{{ item }}"
+  with_items:
+    - oauthlib[signedtoken]
+
 - name: validate the status_codes are correct
   uri:
     url: "https://{{ httpbin_host }}/status/202"
