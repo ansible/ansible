@@ -220,13 +220,66 @@ options:
     description:
       - Use L(OAuth 1.0a,https://oauth.net/core/1.0a/) to perform the authentication.
       - Requires the Python library L(oauthlib,https://oauthlib.readthedocs.io/en/latest/installation.html) to be installed.
-      - A valid access token is required: this must be previously L(obtained,https://www.soapui.org/docs/oauth1/oauth1-overview/) by your consumer app.
+      - A valid access token must be previously L(obtained,https://www.soapui.org/docs/oauth1/oauth1-overview/) by your consumer app.
       - If I(signature_method) is one of the RSA options, the library variant C(oauthlib[signedtoken]) is required.
-      - I(client_key) and I(resource_owner_key) (i.e. the access token, previously authorized by the user) are always required.
       - Other dictionary keys are necessary, depending on the I(signature_method) (see U(https://oauthlib.readthedocs.io/en/latest/oauth1/client.html)).
     type: dict
-    elements: str
     default: {}
+    version_added: '2.15'
+    suboptions:
+      client_key:
+        description:
+          - An identifier of the client/consumer app.
+        required: true
+        type: str
+      resource_owner_key:
+        description:
+          - The OAuth access token previously obtained by the consumer app and authorized by the user.
+          - The token must be valid, not expired.
+        required: true
+        type: str
+      signature_method:
+        description:
+          - OAuth1 defaults to using HMAC.
+          - Plaintext work on the same credentials as HMAC.
+          - RSA is different in that it does not use I(client_secret) nor I(resource_owner_secret). Instead it uses the private I(rsa_key) to sign requests.
+        type: str
+        default: HMAC-SHA1
+        choices:
+          - HMAC-SHA1
+          - HMAC-SHA256
+          - HMAC-SHA512
+          - RSA-SHA1
+          - RSA-SHA256
+          - RSA-SHA512
+          - PLAINTEXT
+      signature_type:
+        description:
+          - Where to put the signature.
+          - OAuth 1 commonly use the C(Authorization) header to pass the OAuth signature and other OAuth parameters.
+          - However you may also use the request URL query or the request body to pass the OAuth signature.
+        type: str
+        default: AUTH_HEADER
+        choices:
+          - AUTH_HEADER
+          - QUERY
+          - BODY
+      client_secret:
+        description:
+          - The secret used by the client/consumer to establish ownership of the I(client_key).
+          - This is only B(required) when I(signature_method) is C(HMAC-*) or C(PLAINTEXT).
+        type: str
+      resource_owner_secret:
+        description:
+          - The secret used by the client/consumer to establish ownership of a given I(access_token).
+          - This is only B(required) when I(signature_method) is C(HMAC-*) or C(PLAINTEXT).
+        type: str
+      rsa_key:
+        description:
+          - The content of the private key provided during client registration.
+          - This is only B(required) when I(signature_method) is C(RSA-*).
+          - If the key is saved in a file, you can use the C(ansible.builtin.file) lookup.
+        type: str
   use_netrc:
     description:
       - Determining whether to use credentials from ``~/.netrc`` file
@@ -600,7 +653,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
         import oauthlib.oauth1
         realm = oauth1.pop('realm', None)
         oauth1client = oauthlib.oauth1.Client(**oauth1)
-        url, headers, _ = oauth1client.sign(uri=url, http_method=method, body=data, headers=headers, realm=realm)
+        url, headers, data = oauth1client.sign(uri=url, http_method=method, body=data, headers=headers, realm=realm)
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
@@ -667,7 +720,7 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
-    oauth1 = module.params['oauth1']
+    dict_oauth1 = module.params['oauth1']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -711,7 +764,7 @@ def main():
     start = datetime.datetime.utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
-                  decompress, ciphers, use_netrc, oauth1)
+                  decompress, ciphers, use_netrc, dict_oauth1)
 
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
