@@ -23,7 +23,7 @@ from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip, A
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.parsing.vault import b_HEADER
+from ansible.parsing.vault import b_HEADER, match_encrypt_secret
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, md5s, secure_hash, secure_hash_s
@@ -185,7 +185,11 @@ class ActionModule(ActionBase):
             if not local_encrypted:
                 local_checksum = checksum(dest)
 
-            if remote_checksum != local_checksum or local_encrypted != encrypt or (local_encrypted and vault_id_used != vault_id):
+            if encrypt:
+                dummy, vault_secret = match_encrypt_secret(self._loader._vault.secrets, vault_id)
+
+            if remote_checksum != local_checksum or local_encrypted != encrypt or (local_encrypted and
+                (vault_id_used != vault_id or vault_secret_used != vault_secret)):
                 # create the containing directories, if needed
                 makedirs_safe(os.path.dirname(dest))
 
@@ -197,7 +201,7 @@ class ActionModule(ActionBase):
                             remote_data = f.read()
                 if remote_data is not None:
                     if encrypt:
-                        remote_data = self._loader._vault.encrypt(remote_data, vault_id=vault_id)
+                        remote_data = self._loader._vault.encrypt(remote_data, secret=vault_secret, vault_id=vault_id)
                     try:
                         f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
                         f.write(remote_data)
