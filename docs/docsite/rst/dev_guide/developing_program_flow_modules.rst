@@ -341,12 +341,6 @@ Files that are included from :file:`module_utils` are themselves scanned for
 imports of other Python modules from :file:`module_utils` to be included in
 the zipfile as well.
 
-.. warning::
-    At present, the Ansiballz Framework cannot determine whether an import
-    should be included if it is a relative import. Always use an absolute
-    import that has :py:mod:`ansible.module_utils` in it to allow Ansiballz to
-    determine that the file should be included.
-
 
 .. _flow_passing_module_args:
 
