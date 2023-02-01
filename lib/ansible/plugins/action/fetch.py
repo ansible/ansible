@@ -74,6 +74,9 @@ class ActionModule(ActionBase):
             source = self._connection._shell.join_path(source)
             source = self._remote_expand_user(source)
 
+            if encrypt:
+                dummy, vault_secret = match_encrypt_secret(self._loader._vault.secrets, vault_id)
+
             remote_stat = {}
             remote_checksum = None
             if not self._connection.become:
@@ -167,6 +170,7 @@ class ActionModule(ActionBase):
 
             dest = os.path.normpath(dest)
 
+            re_encrypt_needed = False
             local_encrypted = False
             b_file_path = to_bytes(dest, errors='surrogate_or_strict')
             if self._loader.path_exists(b_file_path) and self._loader.is_file(b_file_path):
@@ -180,16 +184,13 @@ class ActionModule(ActionBase):
                         data, vault_id_used, vault_secret_used = self._loader._vault.decrypt_and_get_vault_id(data, filename=dest)
                         local_encrypted = True
                         local_checksum = checksum_s(data)
+                        re_encrypt_needed = (vault_id_used != vault_id or vault_secret_used != vault_secret)
 
             # calculate checksum for the local file
             if not local_encrypted:
                 local_checksum = checksum(dest)
 
-            if encrypt:
-                dummy, vault_secret = match_encrypt_secret(self._loader._vault.secrets, vault_id)
-
-            if remote_checksum != local_checksum or local_encrypted != encrypt or (local_encrypted and
-                    (vault_id_used != vault_id or vault_secret_used != vault_secret)):
+            if remote_checksum != local_checksum or local_encrypted != encrypt or re_encrypt_needed:
                 # create the containing directories, if needed
                 makedirs_safe(os.path.dirname(dest))
 
