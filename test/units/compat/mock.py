@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    from unittest.mock import (
+    from unittest.mock import (  # pylint: disable=unused-import
         call,
         patch,
         mock_open,

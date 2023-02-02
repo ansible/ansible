@@ -6,7 +6,6 @@ import shutil
 import tempfile
 
 from units.compat.mock import patch, MagicMock, mock_open
-from ansible.module_utils import basic
 from ansible.module_utils.common._utils import get_all_subclasses
 from ansible.modules import hostname
 from units.modules.utils import ModuleTestCase, set_module_args

@@ -9,8 +9,6 @@ import pytest
 
 from ansible.executor.module_common import modify_module
 
-from test_module_common import templar
-
 
 FAKE_OLD_MODULE = b'''#!/usr/bin/python
 import sys

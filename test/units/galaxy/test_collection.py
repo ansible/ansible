@@ -20,10 +20,9 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import ansible.constants as C
 from ansible import context
-from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
+from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
-from ansible.plugins.loader import init_plugin_loader
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six.moves import builtins
 from ansible.utils import context_objects as co

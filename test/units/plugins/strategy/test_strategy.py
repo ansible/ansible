@@ -27,7 +27,6 @@ from unittest.mock import patch, MagicMock
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
-from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler

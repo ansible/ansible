@@ -24,7 +24,6 @@ from io import StringIO
 import pytest
 
 
-from ansible import constants as C
 from ansible.errors import AnsibleAuthenticationFailure
 from units.compat import unittest
 from unittest.mock import patch, MagicMock, PropertyMock

@@ -18,7 +18,6 @@ import yaml
 
 from io import BytesIO, StringIO
 from unittest.mock import MagicMock, patch
-from unittest import mock
 
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 

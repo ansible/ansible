@@ -12,10 +12,8 @@ import pytest
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
-from ansible.plugins.loader import become_loader
 from ansible.utils import context_objects as co
 
 

@@ -20,13 +20,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-import pytest
-
 # for testing
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock, mock_open, Mock
+from units.compat.mock import MagicMock
 
 from ansible.module_utils.facts.sysctl import get_sysctl
 

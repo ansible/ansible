@@ -89,15 +89,6 @@ class TestSlurp:
         assert amc._slurp('some_file') == '#!/usr/bin/python\ndef test(args):\nprint("hi")\n'
 
 
-@pytest.fixture
-def templar():
-    class FakeTemplar:
-        def template(self, template_string, *args, **kwargs):
-            return template_string
-
-    return FakeTemplar()
-
-
 class TestGetShebang:
     """Note: We may want to change the API of this function in the future.  It isn't a great API"""
     def test_no_interpreter_set(self, templar):
