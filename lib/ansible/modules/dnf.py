@@ -313,6 +313,14 @@ EXAMPLES = '''
     name: "*"
     state: latest
 
+- name: Update the webserver, depending on which is installed on the system. Do not install the other one
+  ansible.builtin.dnf:
+    name:
+      - httpd
+      - nginx
+    state: latest
+    update_only: yes
+
 - name: Install the nginx rpm from a remote repo
   ansible.builtin.dnf:
     name: 'http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm'
