@@ -46,6 +46,10 @@ def continue_condition(char, previous_chars):
     return char.lower() == b'c'
 
 
+def never_complete(char, previous_chars):
+    return False
+
+
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
@@ -110,21 +114,22 @@ class ActionModule(ActionBase):
         result['start'] = to_text(datetime.datetime.now())
         result['user_input'] = b''
 
+        default_input_complete = None
         if seconds is not None:
             if seconds < 1:
                 seconds = 1
 
             # show the timer and control prompts
             display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-            display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r")
 
             # show the prompt specified in the task
             if new_module_args['prompt']:
-                display.display(prompt)
-        else:
-            display.display(prompt)
+                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r")
+            else:
+                # corner case where enter does not continue, wait for timeout/interrupt only
+                prompt = "(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"
+                default_input_complete = never_complete
 
-        from ansible.executor.process.worker_sync import worker_queue, send_prompt
         user_input = b''
         with contextlib.suppress(AnsibleTimeoutExceeded):
             try:
@@ -133,9 +138,8 @@ class ActionModule(ActionBase):
                     signal.signal(signal.SIGALRM, timeout_handler)
                     signal.alarm(seconds)
 
-                send_prompt(echo=echo, seconds=seconds)
                 try:
-                    user_input = worker_queue.get()
+                    user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
                 except AnsiblePromptInterrupt:
                     user_input = None
                 except AnsiblePromptNoninteractive:
@@ -149,10 +153,9 @@ class ActionModule(ActionBase):
                     signal.alarm(0)
         # user interrupt
         if user_input is None:
-            display.display("Press 'C' to continue the play or 'A' to abort \r")
-            send_prompt(echo=echo, interrupt_input=interrupt_condition, complete_input=continue_condition)
+            prompt = "Press 'C' to continue the play or 'A' to abort \r"
             try:
-                user_input = worker_queue.get()
+                user_input = display.prompt_until(prompt, private=not echo, interrupt_input=interrupt_condition, complete_input=continue_condition)
             except AnsiblePromptInterrupt:
                 raise AnsibleError('user requested abort!')
 

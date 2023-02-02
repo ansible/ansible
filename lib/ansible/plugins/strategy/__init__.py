@@ -139,7 +139,7 @@ def results_thread_main(strategy):
                     strategy._results.append(result)
             elif isinstance(result, PromptSend):
                 try:
-                    value = display.do_non_blocking_read_until(**result.kwargs)
+                    value = display.prompt_until(result.prompt, **result.kwargs)
                 except AnsibleError as e:
                     value = e
                 except BaseException as e:

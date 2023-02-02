@@ -601,15 +601,14 @@ class Display(metaclass=Singleton):
             tty_size = 0
         self.columns = max(79, tty_size - 1)
 
-    def do_non_blocking_read_until(
-        self,
-        echo=False,  # type: bool
-        seconds=None,  # type: int
-        interrupt_input=None,  # type: t.Callable[[bytes, bytes], bool]
-        complete_input=None,  # type: t.Callable[[bytes, bytes], bool]
-    ):  # type: (...) -> bytes
-        if multiprocessing_context.parent_process() is not None:
-            raise NotImplementedError
+    def prompt_until(self, msg, private=False, seconds=None, interrupt_input=None, complete_input=None):
+        if self._final_q:
+            from ansible.executor.process.worker_sync import worker_id, worker_queue
+            self._final_q.send_prompt(
+                worker_id=worker_id, prompt=msg, private=private, seconds=seconds,
+                interrupt_input=interrupt_input, complete_input=complete_input
+            )
+            return worker_queue.get()
 
         if (
             self._stdin_fd is None
@@ -621,22 +620,32 @@ class Display(metaclass=Singleton):
         ):
             raise AnsiblePromptNoninteractive('stdin is not interactive')
 
+        # When seconds/interrupt_input/complete_input are all None, this does mostly the same thing as input/getpass,
+        # but self.prompt may raise a KeyboardInterrupt, which must be caught in the main thread.
+        # If the main thread handled this, it would also need to send a newline to the tty of any hanging pids.
+        # if seconds is None and interrupt_input is None and complete_input is None:
+        #     try:
+        #         return self.prompt(msg, private=private)
+        #     except KeyboardInterrupt:
+        #         # can't catch in the results_thread_main daemon thread
+        #         raise AnsiblePromptInterrupt('user interrupt')
+
+        self.display(msg)
         result = b''
         with self._lock:
             original_stdin_settings = termios.tcgetattr(self._stdin_fd)
             try:
-                setup_prompt(self._stdin_fd, self._stdout_fd, seconds, echo)
+                setup_prompt(self._stdin_fd, self._stdout_fd, seconds, not private)
 
                 # flush the buffer to make sure no previous key presses
                 # are read in below
                 termios.tcflush(self._stdin, termios.TCIFLUSH)
 
-                result = self._read_non_blocking_stdin(echo=echo, seconds=seconds, interrupt_input=interrupt_input, complete_input=complete_input)
+                # read input 1 char at a time until the optional timeout or complete/interrupt condition is met
+                return self._read_non_blocking_stdin(echo=not private, seconds=seconds, interrupt_input=interrupt_input, complete_input=complete_input)
             finally:
                 # restore the old settings for the duped stdin stdin_fd
                 termios.tcsetattr(self._stdin_fd, termios.TCSADRAIN, original_stdin_settings)
-
-        return result
 
     def _read_non_blocking_stdin(
         self,
@@ -645,6 +654,9 @@ class Display(metaclass=Singleton):
         interrupt_input=None,  # type: t.Callable[[bytes, bytes], bool]
         complete_input=None,  # type: t.Callable[[bytes, bytes], bool]
     ):  # type: (...) -> bytes
+
+        if self._final_q:
+            raise NotImplementedError
 
         if seconds is not None:
             start = time.time()

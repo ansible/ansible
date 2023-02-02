@@ -93,8 +93,7 @@ class ConnectionBase(AnsiblePlugin):
     def _new_stdin(self):
         display.deprecated(
             "The connection's stdin object is deprecated. "
-            "The plugin should signal the main results thread to retrieve "
-            "input using ansible.executor.process.worker_sync.",
+            "Call display.prompt_until(msg) instead.",
             version='2.19',
         )
         return self.__new_stdin

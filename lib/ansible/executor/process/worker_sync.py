@@ -42,10 +42,5 @@ class WorkerSync(sys.modules[__name__].__class__):  # type: ignore[misc]
             raise NotImplementedError
         self._worker_id = value
 
-    def send_prompt(self, **kwargs):
-        if self._worker_id is None:
-            raise ImportError("send_prompt cannot be imported outside of the WorkerProcess")
-        display._final_q.send_prompt(worker_id=self._worker_id, **kwargs)
-
 
 sys.modules[__name__].__class__ = WorkerSync
