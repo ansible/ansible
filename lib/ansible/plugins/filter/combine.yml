@@ -36,7 +36,6 @@ EXAMPLES: |
     # ab => {'a':1, 'b':3, 'c': 4}
     ab: {{ {'a':1, 'b':2} | combine({'b':3, 'c':4}) }}
 
-    # ab => {'a':1, 'b':3, 'c': 4}
     many: "{{ dict1 | combine(dict2, dict3, dict4) }}"
 
 RETURN:
