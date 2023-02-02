@@ -44,7 +44,7 @@ Environmental configuration
 Ansible also allows configuration of settings using environment variables.
 If these environment variables are set, they will override any setting loaded from the configuration file.
 
-You can get a full listing of available environment variables from :ref:`ansible_configuration_settings`.
+You can get a full listing of available environment variables for configuring core functionality from :ref:`ansible_configuration_settings`, and for configuring plugins in collections from :ref:`list_of_collection_env_vars`.
 
 
 .. _command_line_configuration:
