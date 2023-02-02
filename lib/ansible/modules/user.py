@@ -252,6 +252,12 @@ options:
             - Supported on Linux only.
         type: int
         version_added: "2.11"
+    password_expire_warn:
+        description:
+            - Number of days of warning before password expires.
+            - Supported on Linux only.
+        type: int
+        version_added: "2.15"
     umask:
         description:
             - Sets the umask of the user.
@@ -338,6 +344,11 @@ EXAMPLES = r'''
   ansible.builtin.user:
     name: pushkar15
     password_expire_min: 5
+
+- name: Set number of warning days for password expiration
+  ansible.builtin.user:
+    name: jane157
+    password_expire_warn: 30
 '''
 
 RETURN = r'''
@@ -562,6 +573,7 @@ class User(object):
         self.role = module.params['role']
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
+        self.password_expire_warn = module.params['password_expire_warn']
         self.umask = module.params['umask']
 
         if self.umask is not None and self.local:
@@ -1078,6 +1090,7 @@ class User(object):
     def set_password_expire(self):
         min_needs_change = self.password_expire_min is not None
         max_needs_change = self.password_expire_max is not None
+        warn_needs_change = self.password_expire_warn is not None
 
         if HAVE_SPWD:
             try:
@@ -1087,8 +1100,9 @@ class User(object):
 
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
             max_needs_change &= self.password_expire_max != shadow_info.sp_max
+            warn_needs_change &= self.password_expire_warn != shadow_info.sp_warn
 
-        if not (min_needs_change or max_needs_change):
+        if not (min_needs_change or max_needs_change or warn_needs_change):
             return (None, '', '')  # target state already reached
 
         command_name = 'chage'
@@ -1097,6 +1111,8 @@ class User(object):
             cmd.extend(["-m", self.password_expire_min])
         if max_needs_change:
             cmd.extend(["-M", self.password_expire_max])
+        if warn_needs_change:
+            cmd.extend(["-W", self.password_expire_warn])
         cmd.append(self.name)
 
         return self.execute_command(cmd)
@@ -3090,6 +3106,7 @@ def main():
             login_class=dict(type='str'),
             password_expire_max=dict(type='int', no_log=False),
             password_expire_min=dict(type='int', no_log=False),
+            password_expire_warn=dict(type='int', no_log=False),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
