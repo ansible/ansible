@@ -36,6 +36,8 @@ options:
     - Name of the user that should own the filesystem object, as would be fed to I(chown).
     - When left unspecified, it uses the current user unless you are root, in which
       case it can preserve the previous ownership.
+    - Specifying a numeric username will be assumed to be a user ID and not a username. Avoid numeric usernames to avoid this confusion.
+
     type: str
   group:
     description:
