@@ -54,26 +54,6 @@ def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
         sys.argv = real_argv
 
 
-@contextmanager
-def swap_stdout():
-    """
-    context manager that temporarily replaces stdout for tests that need to verify output
-    """
-    old_stdout = sys.stdout
-
-    if PY3:
-        fake_stream = StringIO()
-    else:
-        fake_stream = BytesIO()
-
-    try:
-        sys.stdout = fake_stream
-
-        yield fake_stream
-    finally:
-        sys.stdout = old_stdout
-
-
 class ModuleTestCase(unittest.TestCase):
     def setUp(self, module_args=None):
         if module_args is None:

@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.six import PY3
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeBytes, AnsibleUnsafeText, wrap_var
 from ansible.module_utils.common.text.converters import to_text, to_bytes
 
@@ -19,10 +18,7 @@ def test_wrap_var_bytes():
 
 
 def test_wrap_var_string():
-    if PY3:
-        assert isinstance(wrap_var('foo'), AnsibleUnsafeText)
-    else:
-        assert isinstance(wrap_var('foo'), AnsibleUnsafeBytes)
+    assert isinstance(wrap_var('foo'), AnsibleUnsafeText)
 
 
 def test_wrap_var_dict():
