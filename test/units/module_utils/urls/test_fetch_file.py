@@ -10,7 +10,6 @@ import os
 from ansible.module_utils.urls import fetch_file
 
 import pytest
-from units.compat.mock import MagicMock
 
 
 class FakeTemporaryFile:

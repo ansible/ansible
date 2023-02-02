@@ -22,7 +22,6 @@ from ansible.errors import AnsibleParserError
 from ansible.playbook.play import Play
 from ansible.playbook.task import Task
 from ansible.playbook.block import Block
-from ansible.playbook.collectionsearch import CollectionSearch
 
 import pytest
 

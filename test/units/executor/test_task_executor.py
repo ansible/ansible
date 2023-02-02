@@ -25,7 +25,7 @@ from units.compat import unittest
 from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
-from ansible.plugins.loader import action_loader, lookup_loader, module_loader
+from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 from ansible.module_utils.six import text_type
