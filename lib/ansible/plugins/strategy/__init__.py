@@ -30,6 +30,7 @@ import time
 
 from collections import deque
 from multiprocessing import Lock
+from multiprocessing.queues import Queue
 
 from jinja2.exceptions import UndefinedError
 
@@ -40,7 +41,7 @@ from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -53,6 +54,7 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
+from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
@@ -73,6 +75,15 @@ class StrategySentinel:
 
 
 _sentinel = StrategySentinel()
+
+
+class WorkerQueue(Queue):
+    """Queue that raises AnsibleError items on get()."""
+    def get(self, *args, **kwargs):
+        result = super(WorkerQueue, self).get(*args, **kwargs)
+        if isinstance(result, AnsibleError):
+            raise result
+        return result
 
 
 def post_process_whens(result, task, templar, task_vars):
@@ -126,6 +137,18 @@ def results_thread_main(strategy):
                 strategy.normalize_task_result(result)
                 with strategy._results_lock:
                     strategy._results.append(result)
+            elif isinstance(result, PromptSend):
+                try:
+                    value = display.do_non_blocking_read_until(**result.kwargs)
+                except AnsibleError as e:
+                    value = e
+                except BaseException as e:
+                    # relay unexpected errors so bugs in display are reported and don't cause workers to hang
+                    try:
+                        raise AnsibleError(f"{e}") from e
+                    except AnsibleError as e:
+                        value = e
+                strategy._worker_queues[result.worker_id].put(value)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
@@ -241,6 +264,8 @@ class StrategyBase:
 
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
+
+        self._worker_queues = dict()
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
@@ -385,7 +410,13 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
+                    worker_q = WorkerQueue(ctx=multiprocessing_context)
+                    self._worker_queues[self._cur_worker] = worker_q
+
+                    # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
+                    worker_prc = WorkerProcess(
+                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, worker_q, self._cur_worker
+                    )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()

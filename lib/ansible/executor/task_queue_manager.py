@@ -24,6 +24,7 @@ import sys
 import tempfile
 import threading
 import time
+import typing as t
 import multiprocessing.queues
 
 from ansible import constants as C
@@ -45,6 +46,7 @@ from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
+from dataclasses import dataclass, field
 
 __all__ = ['TaskQueueManager']
 
@@ -62,6 +64,20 @@ class DisplaySend:
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
+
+@dataclass
+class PromptSend:
+    worker_id: int
+    echo: bool = False
+    seconds: int = None
+    interrupt_input: t.Callable[[bytes, bytes], bool] = None
+    complete_input: t.Callable[[bytes, bytes], bool] = None
+
+    kwargs: t.Mapping = field(init=False, default_factory=dict)
+
+    def __post_init__(self):
+        self.kwargs = dict(echo=self.echo, seconds=self.seconds, interrupt_input=self.interrupt_input, complete_input=self.complete_input)
 
 
 class FinalQueue(multiprocessing.queues.Queue):
@@ -88,6 +104,12 @@ class FinalQueue(multiprocessing.queues.Queue):
     def send_display(self, *args, **kwargs):
         self.put(
             DisplaySend(*args, **kwargs),
+            block=False
+        )
+
+    def send_prompt(self, **kwargs):
+        self.put(
+            PromptSend(**kwargs),
             block=False
         )
 
