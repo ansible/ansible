@@ -221,6 +221,7 @@ import fcntl
 import sys
 import re
 
+from functools import wraps
 from termios import tcflush, TCIFLUSH
 from ansible.module_utils.compat.version import LooseVersion
 from binascii import hexlify
@@ -250,6 +251,24 @@ Are you sure you want to continue connecting (yes/no)?
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 
+def _deprecate_arg0(func):
+    @wraps(func)
+    def wrapper(obj, *args):
+        if len(args) >= 2:
+            deprecated_stdin = args[0]
+            display.deprecated(
+                "MyAddPolicy.__init__() got deprecated argument: 'new_stdin'. "
+                "Instantiate the class with the connection plugin as the only argument instead, "
+                "and prompting will occur via the worker queue.",
+                version='2.19'
+            )
+            args = args[1:]
+        else:
+            deprecated_stdin = None
+        return func(obj, deprecated_stdin, *args)
+    return wrapper
+
+
 class MyAddPolicy(object):
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
@@ -260,6 +279,8 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
+    # Delete decorator and new_stdin argument after deprecation period
+    @_deprecate_arg0
     def __init__(self, new_stdin, connection):
         self._new_stdin = new_stdin
         self.connection = connection
@@ -279,14 +300,21 @@ class MyAddPolicy(object):
 
             self.connection.connection_lock()
 
-            old_stdin = sys.stdin
-            sys.stdin = self._new_stdin
+            if self._new_stdin is not None:
+                old_stdin = sys.stdin
+                sys.stdin = self._new_stdin
 
-            # clear out any premature input on sys.stdin
-            tcflush(sys.stdin, TCIFLUSH)
+                # clear out any premature input on sys.stdin
+                tcflush(sys.stdin, TCIFLUSH)
 
-            inp = input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
-            sys.stdin = old_stdin
+                inp = input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
+                sys.stdin = old_stdin
+            else:
+                display.display(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
+
+                from ansible.executor.process.worker_sync import worker_queue, send_prompt
+                send_prompt(echo=False)
+                inp = to_text(worker_queue.get(), errors='surrogate_or_strict')
 
             self.connection.connection_unlock()
 
@@ -418,7 +446,7 @@ class Connection(ConnectionBase):
 
         ssh_connect_kwargs = self._parse_proxy_command(port)
 
-        ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
+        ssh.set_missing_host_key_policy(MyAddPolicy(self))
 
         conn_password = self.get_option('password') or self._play_context.password
 
