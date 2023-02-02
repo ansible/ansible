@@ -1,0 +1,3 @@
+bugfixes:
+  - user module - Removed ``password_expire_max`` from the return docs, as it is not returned.
+  - user module - Removed ``password_expire_min`` from the return docs, as it is not returned.
