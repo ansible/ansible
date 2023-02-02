@@ -66,6 +66,7 @@ lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
+lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:disallowed-name
@@ -177,6 +178,11 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
+test/support/integration/plugins/module_utils/network/common/utils.py pylint:unused-import
+test/support/integration/plugins/modules/sefcontext.py pylint:unused-import
+test/support/integration/plugins/modules/zypper.py pylint:unused-import
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:unused-import
+test/support/windows-integration/plugins/action/win_reboot.py pylint:unused-import
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
