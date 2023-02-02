@@ -21,7 +21,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from io import StringIO
-import pytest
 
 from units.compat import unittest
 from ansible.plugins.connection import local

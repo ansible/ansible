@@ -11,7 +11,7 @@ import io
 import pytest
 import sys
 
-from ansible.plugins.action import pause  # noqa: F401
+from ansible.plugins.action import pause  # pylint: disable=unused-import
 from ansible.module_utils.six import PY2
 
 builtin_import = 'builtins.__import__'

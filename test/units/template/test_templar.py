@@ -22,11 +22,9 @@ __metaclass__ = type
 from jinja2.runtime import Context
 
 from units.compat import unittest
-from unittest.mock import patch
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import string_types
 from ansible.plugins.loader import init_plugin_loader
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var

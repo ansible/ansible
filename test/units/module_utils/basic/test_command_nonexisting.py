@@ -1,13 +1,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
-import pytest
 import json
 import sys
 import pytest
 import subprocess
-import ansible.module_utils.basic
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
 
