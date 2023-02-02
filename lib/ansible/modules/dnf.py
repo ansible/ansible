@@ -317,7 +317,14 @@ EXAMPLES = '''
   ansible.builtin.dnf:
     name: "*"
     state: latest
-    update_only: true
+
+- name: Update the webserver, depending on which is installed on the system. Do not install the other one
+  ansible.builtin.dnf:
+    name:
+      - httpd
+      - nginx
+    state: latest
+    update_only: yes
 
 - name: Install the nginx rpm from a remote repo
   ansible.builtin.dnf:
