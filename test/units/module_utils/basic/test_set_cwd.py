@@ -8,12 +8,9 @@ __metaclass__ = type
 
 import json
 import os
-import shutil
 import tempfile
 
-import pytest
-
-from units.compat.mock import patch, MagicMock
+from units.compat.mock import patch
 from ansible.module_utils._text import to_bytes
 
 from ansible.module_utils import basic

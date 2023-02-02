@@ -24,7 +24,7 @@ from collections.abc import Container
 from units.compat import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.playbook.block import Block
 
 from units.mock.loader import DictDataLoader

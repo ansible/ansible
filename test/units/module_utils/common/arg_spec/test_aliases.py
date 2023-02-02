@@ -9,7 +9,6 @@ import pytest
 
 from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
-from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 
 # id, argument spec, parameters, expected parameters, deprecation, warning
 ALIAS_TEST_CASES = [
