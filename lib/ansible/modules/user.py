@@ -439,16 +439,6 @@ uid:
   returned: When I(uid) is passed to the module
   type: int
   sample: 1044
-password_expire_max:
-  description: Maximum number of days during which a password is valid.
-  returned: When user exists
-  type: int
-  sample: 20
-password_expire_min:
-  description: Minimum number of days between password change
-  returned: When user exists
-  type: int
-  sample: 20
 '''
 
 
