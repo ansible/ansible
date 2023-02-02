@@ -176,11 +176,20 @@ This is the great culmination of embedded tests:
           ansible.builtin.command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
-      roles:
+      tasks:
 
-         - common
-         - webserver
-         - apply_testing_checks
+        - ansible.builtin.include_role:
+            name: "{{ item }}"
+          loop:
+            - common
+            - webserver
+
+        - name: run any notified handlers
+          ansible.builtin.meta: flush_handlers
+
+        - name: test the configuration
+          ansible.builtin.include_role:
+            name: apply_testing_checks
 
       post_tasks:
 
