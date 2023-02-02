@@ -8,7 +8,7 @@ __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
-    import ansible_missing_lib
+    import ansible_missing_lib  # pylint: disable=unused-import
     HAS_LIB = True
 except ImportError as e:
     HAS_LIB = False
