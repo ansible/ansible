@@ -288,14 +288,14 @@ class CloudProvider(CloudBase):
             exclude.append(skip)
 
             if not self.uses_docker and self.uses_config:
-                display.warning('Excluding tests marked "%s" which require config (see "%s"): %s'
-                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+                display.warning('Excluding tests marked "%s" which require a "%s" config file (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_static_path, self.config_template_path, ', '.join(skipped)))
             elif self.uses_docker and not self.uses_config:
                 display.warning('Excluding tests marked "%s" which requires container support: %s'
                                 % (skip.rstrip('/'), ', '.join(skipped)))
             elif self.uses_docker and self.uses_config:
-                display.warning('Excluding tests marked "%s" which requires container support or config (see "%s"): %s'
-                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+                display.warning('Excluding tests marked "%s" which requires container support or a "%s" config file (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_static_path, self.config_template_path, ', '.join(skipped)))
 
     def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
