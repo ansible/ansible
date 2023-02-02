@@ -7,21 +7,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import argparse
 import importlib
-import os
 import pathlib
-import time
 import urllib.parse
-
-from collections import defaultdict
 
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.urls import Request
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
-from .. import errors  # pylint: disable=relative-beyond-top-level
 
 
 EXAMPLE_CONF = """
