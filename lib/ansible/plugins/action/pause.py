@@ -181,7 +181,7 @@ class ActionModule(ActionBase):
 
                 # show the timer and control prompts
                 display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r")
 
                 # show the prompt specified in the task
                 if new_module_args['prompt']:
