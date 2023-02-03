@@ -13,7 +13,6 @@ from itertools import chain
 
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.common.text.formatters import lenient_lowercase
 from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.errors import (
     AliasError,
