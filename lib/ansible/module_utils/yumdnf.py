@@ -15,7 +15,6 @@ __metaclass__ = type
 import os
 import time
 import glob
-import tempfile
 from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils._text import to_native

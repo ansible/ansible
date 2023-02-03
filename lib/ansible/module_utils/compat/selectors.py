@@ -35,7 +35,6 @@ _BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.1", "version_con
 #   Fix use of OSError exception for py3 and use the wrapper of kqueue.control so retries of
 #   interrupted syscalls work with kqueue
 
-import os.path
 import sys
 import types
 
