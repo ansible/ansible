@@ -18,4 +18,4 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # moved actual classes to __init__ kept here for backward compat with 3rd parties
-from ansible.plugins.cache import BaseCacheModule, BaseFileCacheModule
+from ansible.plugins.cache import BaseCacheModule, BaseFileCacheModule  # pylint: disable=unused-import
