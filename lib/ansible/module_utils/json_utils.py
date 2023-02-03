@@ -27,7 +27,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
+import json  # pylint: disable=unused-import
 
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
