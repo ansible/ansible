@@ -30,7 +30,7 @@ from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_P
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import add_fragments, find_plugin_docfile
+from ansible.utils.plugin_docs import add_fragments
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 

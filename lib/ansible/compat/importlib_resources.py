@@ -10,7 +10,7 @@ HAS_IMPORTLIB_RESOURCES = False
 
 if sys.version_info < (3, 10):
     try:
-        from importlib_resources import files  # type: ignore[import]
+        from importlib_resources import files  # type: ignore[import]  # pylint: disable=unused-import
     except ImportError:
         files = None  # type: ignore[assignment]
     else:
