@@ -9,7 +9,6 @@ __metaclass__ = type
 import os
 import resource
 import signal
-import sys
 import time
 
 UMASK = 0

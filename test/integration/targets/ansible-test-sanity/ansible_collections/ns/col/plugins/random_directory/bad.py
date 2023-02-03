@@ -5,4 +5,4 @@ __metaclass__ = type
 
 # This is not an allowed import, but since this file is in a plugins/ subdirectory that is not checked,
 # the import sanity test will not complain.
-import lxml
+import lxml  # pylint: disable=unused-import
