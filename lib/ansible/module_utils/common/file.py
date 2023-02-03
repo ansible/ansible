@@ -22,7 +22,7 @@ from ansible.module_utils.six import b, binary_type
 from ansible.module_utils.common.warnings import deprecate
 
 try:
-    import selinux
+    import selinux  # pylint: disable=unused-import
     HAVE_SELINUX = True
 except ImportError:
     HAVE_SELINUX = False

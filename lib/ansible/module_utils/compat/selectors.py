@@ -37,7 +37,7 @@ _BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.1", "version_con
 
 import os.path
 import sys
-import types
+import types  # pylint: disable=unused-import
 
 try:
     # Python 3.4+
