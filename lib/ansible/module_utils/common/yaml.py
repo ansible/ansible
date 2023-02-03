@@ -24,13 +24,13 @@ if HAS_YAML:
     try:
         from yaml import CSafeLoader as SafeLoader
         from yaml import CSafeDumper as SafeDumper
-        from yaml.cyaml import CParser as Parser  # type: ignore[attr-defined]
+        from yaml.cyaml import CParser as Parser  # type: ignore[attr-defined]  # pylint: disable=unused-import
 
         HAS_LIBYAML = True
     except (ImportError, AttributeError):
         from yaml import SafeLoader  # type: ignore[assignment]
         from yaml import SafeDumper  # type: ignore[assignment]
-        from yaml.parser import Parser  # type: ignore[misc]
+        from yaml.parser import Parser  # type: ignore[misc]  # pylint: disable=unused-import
 
     yaml_load = _partial(_yaml.load, Loader=SafeLoader)
     yaml_load_all = _partial(_yaml.load_all, Loader=SafeLoader)

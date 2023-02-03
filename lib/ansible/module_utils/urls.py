@@ -53,7 +53,7 @@ import socket
 import sys
 import tempfile
 import traceback
-import types
+import types  # pylint: disable=unused-import
 
 from contextlib import contextmanager
 
@@ -115,7 +115,7 @@ except Exception:
 
 try:
     # SNI Handling needs python2.7.9's SSLContext
-    from ssl import create_default_context, SSLContext
+    from ssl import create_default_context, SSLContext  # pylint: disable=unused-import
     HAS_SSLCONTEXT = True
 except ImportError:
     HAS_SSLCONTEXT = False
@@ -196,7 +196,7 @@ except ImportError:
 
 # Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
 try:
-    import urllib_gssapi
+    import urllib_gssapi  # pylint: disable=unused-import
     HAS_GSSAPI = True
 except ImportError:
     HAS_GSSAPI = False

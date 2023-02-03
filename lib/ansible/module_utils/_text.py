@@ -8,6 +8,7 @@ __metaclass__ = type
 """
 
 # Backwards compat for people still calling it from this package
+# pylint: disable=unused-import
 import codecs
 
 from ansible.module_utils.six import PY3, text_type, binary_type

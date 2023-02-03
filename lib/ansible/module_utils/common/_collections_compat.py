@@ -12,7 +12,7 @@ __metaclass__ = type
 
 try:
     """Python 3.3+ branch."""
-    from collections.abc import (
+    from collections.abc import (  # pylint: disable=unused-import
         MappingView,
         ItemsView,
         KeysView,

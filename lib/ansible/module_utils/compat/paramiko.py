@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import types
+import types  # pylint: disable=unused-import
 import warnings
 
 PARAMIKO_IMPORT_ERR = None
@@ -13,7 +13,7 @@ PARAMIKO_IMPORT_ERR = None
 try:
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', message='Blowfish has been deprecated', category=UserWarning)
-        import paramiko
+        import paramiko  # pylint: disable=unused-import
 # paramiko and gssapi are incompatible and raise AttributeError not ImportError
 # When running in FIPS mode, cryptography raises InternalError
 # https://bugzilla.redhat.com/show_bug.cgi?id=1778939
