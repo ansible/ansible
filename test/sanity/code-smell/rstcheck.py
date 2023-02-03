@@ -18,7 +18,7 @@ def main():
     cmd = [
         sys.executable,
         '-m', 'rstcheck',
-        '--report', 'warning',
+        '--report-level', 'warning',
         '--ignore-substitutions', ','.join(ignore_substitutions),
     ] + paths
 
