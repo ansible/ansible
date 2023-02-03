@@ -378,7 +378,7 @@ import sys
 
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_file
-from ansible.module_utils.six import PY2, text_type
+from ansible.module_utils.six import text_type
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule

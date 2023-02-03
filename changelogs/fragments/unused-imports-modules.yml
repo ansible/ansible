@@ -1,0 +1,2 @@
+minor_changes:
+  - "Removed unused imports from the following modules: apt, dnf, expect, pip, slurp, user, yum"

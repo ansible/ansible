@@ -353,7 +353,6 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 import datetime
 import fnmatch
-import itertools
 import locale as locale_module
 import os
 import random

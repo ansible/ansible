@@ -442,9 +442,7 @@ uid:
 '''
 
 
-import ctypes
 import ctypes.util
-import errno
 import grp
 import calendar
 import os
