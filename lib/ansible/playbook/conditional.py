@@ -25,10 +25,9 @@ import re
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
-from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
 

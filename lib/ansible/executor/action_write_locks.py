@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import multiprocessing.synchronize
 
@@ -29,7 +27,7 @@ if 'action_write_locks' not in globals():
     # Do not initialize this more than once because it seems to bash
     # the existing one.  multiprocessing must be reloading the module
     # when it forks?
-    action_write_locks = dict()  # type: dict[str | None, multiprocessing.synchronize.Lock]
+    action_write_locks: dict[str | None, multiprocessing.synchronize.Lock] = dict()
 
     # Below is a Lock for use when we weren't expecting a named module.  It gets used when an action
     # plugin invokes a module whose name does not match with the action's name.  Slightly less
