@@ -14,7 +14,6 @@ import stat
 import subprocess
 import tempfile
 import yaml
-from pprint import pprint
 from optparse import OptionParser
 from jinja2 import Environment
 

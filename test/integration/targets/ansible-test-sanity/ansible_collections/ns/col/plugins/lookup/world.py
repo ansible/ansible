@@ -19,7 +19,7 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.plugins.lookup import LookupBase
-from ansible import constants
+from ansible import constants  # pylint: disable=unused-import
 
 
 class LookupModule(LookupBase):

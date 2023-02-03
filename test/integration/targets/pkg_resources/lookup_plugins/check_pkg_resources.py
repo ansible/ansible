@@ -11,7 +11,7 @@ __metaclass__ = type
 
 # noinspection PyUnresolvedReferences
 try:
-    from pkg_resources import Requirement
+    from pkg_resources import Requirement  # pylint: disable=unused-import
 except ImportError:
     Requirement = None
 

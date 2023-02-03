@@ -20,7 +20,6 @@ DOCUMENTATION = '''
         required: True
 '''
 
-from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 

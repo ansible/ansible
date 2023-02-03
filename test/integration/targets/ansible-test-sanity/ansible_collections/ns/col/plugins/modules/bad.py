@@ -19,7 +19,7 @@ EXAMPLES = '''
 RETURN = ''''''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible import constants  # intentionally trigger pylint ansible-bad-module-import error
+from ansible import constants  # intentionally trigger pylint ansible-bad-module-import error  # pylint: disable=unused-import
 
 
 def main():
