@@ -18,7 +18,6 @@ import glob
 import tempfile
 from abc import ABCMeta, abstractmethod
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six import with_metaclass
 
 yumdnf_argument_spec = dict(
