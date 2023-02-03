@@ -19,7 +19,7 @@ from ansible.release import __version__ as ansible_core__version__
 # Pylint doesn't understand Python3 namespace modules.
 # pylint: disable=relative-beyond-top-level
 from ..commands import Command
-from ..errors import InvalidUserInput, MissingUserInput
+from ..errors import InvalidUserInput
 # pylint: enable=relative-beyond-top-level
 
 
