@@ -1,6 +1,5 @@
 """Tests for diff module."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import subprocess
@@ -42,12 +41,8 @@ def get_diff(base, head=None):
     return lines
 
 
-def get_parsed_diff(base, head=None):
-    """Return a parsed git diff between the base and head revision.
-    :type base: str
-    :type head: str | None
-    :rtype: list[FileDiff]
-    """
+def get_parsed_diff(base: str, head: str | None = None) -> list[FileDiff]:
+    """Return a parsed git diff between the base and head revision."""
     lines = get_diff(base, head)
     items = parse_diff(lines)
 
