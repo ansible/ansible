@@ -23,11 +23,9 @@ __metaclass__ = type
 
 from ansible import constants as C
 from ansible import context
-from ansible.module_utils.compat.paramiko import paramiko
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.display import Display
-from ansible.utils.ssh_functions import check_for_controlpersist
 
 
 display = Display()

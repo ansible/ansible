@@ -14,7 +14,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
-from ansible.utils.collection_loader._collection_finder import _get_collection_path, AnsibleCollectionRef
+from ansible.utils.collection_loader._collection_finder import _get_collection_path
 
 display = Display()
 

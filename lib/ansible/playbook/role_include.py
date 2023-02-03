@@ -23,7 +23,6 @@ from os.path import basename
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.block import Block
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude

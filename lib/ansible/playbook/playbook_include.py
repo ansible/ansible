@@ -25,7 +25,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import string_types
-from ansible.parsing.splitter import split_args, parse_kv
+from ansible.parsing.splitter import split_args
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base

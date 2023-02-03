@@ -6,8 +6,6 @@ __metaclass__ = type
 
 import os
 
-from collections import defaultdict
-
 from ansible.errors import AnsibleError
 from ansible.cli.galaxy import with_collection_artifacts_manager
 from ansible.galaxy.collection import find_existing_collections

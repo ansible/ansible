@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    from resolvelib.resolvers import (
+    from resolvelib.resolvers import (  # pylint: disable=unused-import
         ResolutionImpossible as CollectionDependencyResolutionImpossible,
         InconsistentCandidate as CollectionDependencyInconsistentCandidate,
     )
