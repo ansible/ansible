@@ -4,15 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import errno
 import os
 import stat
 import re
-import pwd
-import grp
 import time
-import shutil
-import traceback
 import fcntl
 import sys
 
