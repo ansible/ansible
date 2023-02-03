@@ -137,7 +137,7 @@ except Exception:
     except Exception:
         pass
 
-from ansible.module_utils.common._collections_compat import (
+from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,

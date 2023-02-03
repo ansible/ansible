@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.common._collections_compat import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
+from ansible.module_utils.six.moves.collections_abc import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
 
 
 class ImmutableDict(Hashable, Mapping):

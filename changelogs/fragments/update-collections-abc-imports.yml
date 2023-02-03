@@ -1,0 +1,4 @@
+minor_changes:
+  - Use ``ansible.module_utils.six.moves.collections_abc`` instead of ``ansible.module_utils.common._collections_compat``
+    in modules and module_utils.
+  - Use ``collections.abc`` instead of ``ansible.module_utils.common._collections_compat`` in controller code.

@@ -32,7 +32,8 @@ RETURN = """
     version_added: 1.0.0
 """
 
-from ansible.module_utils.common._collections_compat import Sequence
+from collections.abc import Sequence
+
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
 
