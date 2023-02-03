@@ -6,9 +6,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
-from ansible.module_utils.errors import AnsibleValidationErrorMultiple
 from ansible.utils.vars import combine_vars
 
 

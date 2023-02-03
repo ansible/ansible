@@ -30,8 +30,7 @@ from os import (
     tcgetpgrp,
 )
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 

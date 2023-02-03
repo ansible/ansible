@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 

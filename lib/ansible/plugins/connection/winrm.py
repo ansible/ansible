@@ -176,7 +176,7 @@ from urllib.parse import urlunsplit
 
 HAVE_KERBEROS = False
 try:
-    import kerberos
+    import kerberos  # pylint: disable=unused-import
     HAVE_KERBEROS = True
 except ImportError:
     pass
