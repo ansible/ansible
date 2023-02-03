@@ -271,7 +271,6 @@ import tempfile
 import operator
 import shlex
 import traceback
-import types
 
 from ansible.module_utils.compat.version import LooseVersion
 
