@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import sys
 
 
 def read_file(path):
