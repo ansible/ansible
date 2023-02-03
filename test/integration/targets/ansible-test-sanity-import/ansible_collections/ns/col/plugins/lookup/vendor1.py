@@ -16,10 +16,10 @@ RETURN = '''#'''
 
 from ansible.plugins.lookup import LookupBase
 # noinspection PyUnresolvedReferences
-from ansible.plugins import loader  # import the loader to verify it works when the collection loader has already been loaded
+from ansible.plugins import loader  # import the loader to verify it works when the collection loader has already been loaded  # pylint: disable=unused-import
 
 try:
-    import demo
+    import demo  # pylint: disable=unused-import
 except ImportError:
     pass
 else:

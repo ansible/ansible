@@ -44,7 +44,6 @@ DOCUMENTATION = '''
 import time
 import json
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseCacheModule

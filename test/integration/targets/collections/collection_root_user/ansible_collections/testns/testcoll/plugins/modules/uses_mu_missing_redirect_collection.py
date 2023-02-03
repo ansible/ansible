@@ -2,10 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-import sys
-
-from ..module_utils import missing_redirect_target_collection  # pylint: disable=relative-beyond-top-level
+from ..module_utils import missing_redirect_target_collection  # pylint: disable=relative-beyond-top-level,unused-import
 
 
 def main():

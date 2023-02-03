@@ -11,7 +11,6 @@ DOCUMENTATION = """
     version_added: "2.0"
     options: {}
 """
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 
