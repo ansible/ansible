@@ -20,7 +20,6 @@ __metaclass__ = type
 
 import ansible.module_utils.compat.typing as t
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
