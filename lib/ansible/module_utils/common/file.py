@@ -17,8 +17,6 @@ import fcntl
 import sys
 
 from contextlib import contextmanager
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import b, binary_type
 from ansible.module_utils.common.warnings import deprecate
 
 try:
