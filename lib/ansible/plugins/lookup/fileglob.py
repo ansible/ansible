@@ -50,7 +50,6 @@ import os
 import glob
 
 from ansible.plugins.lookup import LookupBase
-from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_text
 
 
