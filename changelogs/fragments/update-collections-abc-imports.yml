@@ -2,3 +2,5 @@ minor_changes:
   - Use ``ansible.module_utils.six.moves.collections_abc`` instead of ``ansible.module_utils.common._collections_compat``
     in modules and module_utils.
   - Use ``collections.abc`` instead of ``ansible.module_utils.common._collections_compat`` in controller code.
+  - ansible-test - Update the ``ansible-bad-import-from`` rule in the ``pylint`` sanity test to recommend
+    ``ansible.module_utils.six.moves.collections_abc`` instead of ``ansible.module_utils.common._collections_compat``.
