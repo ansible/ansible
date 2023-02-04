@@ -1,0 +1,122 @@
+https://github.com/ansible/ansible/pull/69642 $ ansible-playbook exercise2.yml -vvvv
+ansible-playbook 2.9.12
+  config file = /home/ktbyers/.ansible.cfg
+  configured module search path = ['/home/ktbyers/napalm-ansible/napalm_ansible/modules', '/home/ktbyers/ansible-extras/ntc-ansible/library']
+  ansible python module location = /home/ktbyers/VENV/py3_venv/lib64/python3.7/site-packages/ansible
+  executable location = /home/ktbyers/VENV/py3_venv/bin/ansible-playbook
+  python version = 3.7.8 (default, Jul 24 2020, 20:26:49) [GCC 7.3.1 20180712 (Red Hat 7.3.1-9)]
+Using /home/ktbyers/.ansible.cfg as config file
+setting up inventory plugins
+host_list declined parsing /home/ktbyers/ansible-hosts.ini as it did not pass its verify_file() method
+script declined parsing /home/ktbyers/ansible-hosts.ini as it did not pass its verify_file() method
+auto declined parsing /home/ktbyers/ansible-hosts.ini as it did not pass its verify_file() method
+yaml declined parsing /home/ktbyers/ansible-hosts.ini as it did not pass its verify_file() method
+Set default localhost to localhost
+Parsed /home/ktbyers/ansible-hosts.ini inventory source with ini plugin
+Loading callback plugin default of type stdout, v2.0 from /home/ktbyers/VENV/py3_venv/lib64/python3.7/site-packages/ansible/plugins/callback/default.py
+
+PLAYBOOK: exercise2.yml ************************************************************************************
+Positional arguments: exercise2.yml
+verbosity: 4
+connection: smart
+timeout: 10
+become_method: sudo
+tags: ('all',)
+inventory: ('/home/ktbyers/ansible-hosts.ini',)
+forks: 5
+1 plays in exercise2.yml
+
+PLAY [Test block and rescue] *******************************************************************************
+META: ran handlers
+
+TASK [Attempt configuration using an invalid password] *****************************************************
+task path: /home/ktbyers/ansible_course/class7/exercises/exercise2/exercise2.yml:7
+<arista5.lasthop.io> attempting to start connection
+<arista5.lasthop.io> using connection plugin network_cli
+<arista5.lasthop.io> local domain socket does not exist, starting it
+<arista5.lasthop.io> control socket path is /home/ktbyers/.ansible/pc/173ec2aa62
+<arista5.lasthop.io> local domain socket listeners started successfully
+<arista5.lasthop.io> loaded cliconf plugin eos from path /home/ktbyers/VENV/py3_venv/lib/python3.7/site-packages/ansible/plugins/cliconf/eos.py for network_os eos
+<arista5.lasthop.io> 
+<arista5.lasthop.io> local domain socket path is /home/ktbyers/.ansible/pc/173ec2aa62
+<arista5.lasthop.io> ESTABLISH LOCAL CONNECTION FOR USER: ktbyers
+<arista5.lasthop.io> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb `"&& mkdir "` echo /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634 `" && echo ansible-tmp-1598034716.4984322-31521-170479135808634="` echo /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634 `" ) && sleep 0'
+Using module file /home/ktbyers/VENV/py3_venv/lib64/python3.7/site-packages/ansible/modules/network/eos/eos_config.py
+<arista5.lasthop.io> PUT /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/tmpwajb7rvz TO /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py
+<arista5.lasthop.io> EXEC /bin/sh -c 'chmod u+x /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/ /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py && sleep 0'
+<arista5.lasthop.io> EXEC /bin/sh -c '/home/ktbyers/VENV/ansible/bin/python /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py && sleep 0'
+<arista5.lasthop.io> EXEC /bin/sh -c 'rm -f -r /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/ > /dev/null 2>&1 && sleep 0'
+The full traceback is:
+Traceback (most recent call last):
+  File "/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py", line 102, in <module>
+    _ansiballz_main()
+  File "/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py", line 94, in _ansiballz_main
+    invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
+  File "/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py", line 40, in invoke_module
+    runpy.run_module(mod_name='ansible.modules.network.eos.eos_config', init_globals=None, run_name='__main__', alter_sys=True)
+  File "/usr/lib64/python3.7/runpy.py", line 205, in run_module
+    return _run_module_code(code, init_globals, run_name, mod_spec)
+  File "/usr/lib64/python3.7/runpy.py", line 96, in _run_module_code
+    mod_name, mod_spec, pkg_name, script_name)
+  File "/usr/lib64/python3.7/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py", line 518, in <module>
+  File "/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py", line 397, in main
+  File "/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/module_utils/network/eos/eos.py", line 107, in get_connection
+  File "/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/module_utils/connection.py", line 185, in __rpc__
+ansible.module_utils.connection.ConnectionError: Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']
+fatal: [arista5]: FAILED! => {
+    "changed": false,
+    "module_stderr": "Traceback (most recent call last):\n  File \"/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py\", line 102, in <module>\n    _ansiballz_main()\n  File \"/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py\", line 94, in _ansiballz_main\n    invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)\n  File \"/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034716.4984322-31521-170479135808634/AnsiballZ_eos_config.py\", line 40, in invoke_module\n    runpy.run_module(mod_name='ansible.modules.network.eos.eos_config', init_globals=None, run_name='__main__', alter_sys=True)\n  File \"/usr/lib64/python3.7/runpy.py\", line 205, in run_module\n    return _run_module_code(code, init_globals, run_name, mod_spec)\n  File \"/usr/lib64/python3.7/runpy.py\", line 96, in _run_module_code\n    mod_name, mod_spec, pkg_name, script_name)\n  File \"/usr/lib64/python3.7/runpy.py\", line 85, in _run_code\n    exec(code, run_globals)\n  File \"/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py\", line 518, in <module>\n  File \"/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py\", line 397, in main\n  File \"/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/module_utils/network/eos/eos.py\", line 107, in get_connection\n  File \"/tmp/ansible_eos_config_payload_rtle3fxe/ansible_eos_config_payload.zip/ansible/module_utils/connection.py\", line 185, in __rpc__\nansible.module_utils.connection.ConnectionError: Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']\n",
+    "module_stdout": "",
+    "msg": "MODULE FAILURE\nSee stdout/stderr for the exact error",
+    "rc": 1
+}
+
+TASK [Try configuration again in rescue-block] *************************************************************
+task path: /home/ktbyers/ansible_course/class7/exercises/exercise2/exercise2.yml:16
+<arista5.lasthop.io> attempting to start connection
+<arista5.lasthop.io> using connection plugin network_cli
+<arista5.lasthop.io> found existing local domain socket, using it!
+<arista5.lasthop.io> network_cli_retry: attempt: 1, caught exception(Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']), pausing for 2 seconds
+<arista5.lasthop.io> network_cli_retry: attempt: 2, caught exception(Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']), pausing for 4 seconds
+<arista5.lasthop.io> network_cli_retry: attempt: 3, caught exception(Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']), pausing for 8 seconds
+<arista5.lasthop.io> updating play_context for connection
+<arista5.lasthop.io> 
+<arista5.lasthop.io> local domain socket path is /home/ktbyers/.ansible/pc/173ec2aa62
+<arista5.lasthop.io> ESTABLISH LOCAL CONNECTION FOR USER: ktbyers
+<arista5.lasthop.io> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb `"&& mkdir "` echo /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584 `" && echo ansible-tmp-1598034735.59588-31615-28790253704584="` echo /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584 `" ) && sleep 0'
+Using module file /home/ktbyers/VENV/py3_venv/lib64/python3.7/site-packages/ansible/modules/network/eos/eos_config.py
+<arista5.lasthop.io> PUT /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/tmpnss8077h TO /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py
+<arista5.lasthop.io> EXEC /bin/sh -c 'chmod u+x /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/ /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py && sleep 0'
+<arista5.lasthop.io> EXEC /bin/sh -c '/home/ktbyers/VENV/ansible/bin/python /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py && sleep 0'
+<arista5.lasthop.io> EXEC /bin/sh -c 'rm -f -r /home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/ > /dev/null 2>&1 && sleep 0'
+The full traceback is:
+Traceback (most recent call last):
+  File "/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py", line 102, in <module>
+    _ansiballz_main()
+  File "/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py", line 94, in _ansiballz_main
+    invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
+  File "/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py", line 40, in invoke_module
+    runpy.run_module(mod_name='ansible.modules.network.eos.eos_config', init_globals=None, run_name='__main__', alter_sys=True)
+  File "/usr/lib64/python3.7/runpy.py", line 205, in run_module
+    return _run_module_code(code, init_globals, run_name, mod_spec)
+  File "/usr/lib64/python3.7/runpy.py", line 96, in _run_module_code
+    mod_name, mod_spec, pkg_name, script_name)
+  File "/usr/lib64/python3.7/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py", line 518, in <module>
+  File "/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py", line 397, in main
+  File "/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/module_utils/network/eos/eos.py", line 107, in get_connection
+  File "/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/module_utils/connection.py", line 185, in __rpc__
+ansible.module_utils.connection.ConnectionError: Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']
+fatal: [arista5]: FAILED! => {
+    "changed": false,
+    "module_stderr": "Traceback (most recent call last):\n  File \"/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py\", line 102, in <module>\n    _ansiballz_main()\n  File \"/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py\", line 94, in _ansiballz_main\n    invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)\n  File \"/home/ktbyers/.ansible/tmp/ansible-local-31508i9l83shb/ansible-tmp-1598034735.59588-31615-28790253704584/AnsiballZ_eos_config.py\", line 40, in invoke_module\n    runpy.run_module(mod_name='ansible.modules.network.eos.eos_config', init_globals=None, run_name='__main__', alter_sys=True)\n  File \"/usr/lib64/python3.7/runpy.py\", line 205, in run_module\n    return _run_module_code(code, init_globals, run_name, mod_spec)\n  File \"/usr/lib64/python3.7/runpy.py\", line 96, in _run_module_code\n    mod_name, mod_spec, pkg_name, script_name)\n  File \"/usr/lib64/python3.7/runpy.py\", line 85, in _run_code\n    exec(code, run_globals)\n  File \"/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py\", line 518, in <module>\n  File \"/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/modules/network/eos/eos_config.py\", line 397, in main\n  File \"/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/module_utils/network/eos/eos.py\", line 107, in get_connection\n  File \"/tmp/ansible_eos_config_payload_88yr221o/ansible_eos_config_payload.zip/ansible/module_utils/connection.py\", line 185, in __rpc__\nansible.module_utils.connection.ConnectionError: Failed to authenticate: Bad authentication type; allowed types: ['publickey', 'keyboard-interactive']\n",
+    "module_stdout": "",
+    "msg": "MODULE FAILURE\nSee stdout/stderr for the exact error",
+    "rc": 1
+}
+
+PLAY RECAP *************************************************************************************************
+arista5                    : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=1    ignored=0 
