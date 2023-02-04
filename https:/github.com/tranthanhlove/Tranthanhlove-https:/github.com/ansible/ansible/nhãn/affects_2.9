@@ -1,0 +1,10 @@
+$ ansible --version
+ansible 2.9.27
+ config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/home/ubuntu/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/dist-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.17 (default, Nov 28 2022, 18:51:39) [GCC 7.5.0] # if using a version older than ansible-core 2.12 you should omit the '-t all'
+$ ansible-config dump --only-changed 
+DEFAULT_HOST_LIST(/etc/ansible/ansible.cfg) = [u'/etc/ansible/aws_ec2.yaml']
+INVENTORY_ENABLED(/etc/ansible/ansible.cfg) = [u'aws_ec2', u'aws_ssm']
