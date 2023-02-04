@@ -10,7 +10,7 @@ __metaclass__ = type
 import re
 from copy import deepcopy
 
-from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.six.moves.collections_abc import MutableMapping
 
 
 def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
