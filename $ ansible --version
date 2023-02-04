@@ -1,0 +1,1 @@
+ansible-config dump --only-changed -t all # if using a version older than ansible-core 2.12 you should omit the '-t all'$ ansible-config dump --only-changed -t all
