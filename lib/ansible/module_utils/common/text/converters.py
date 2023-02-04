@@ -10,7 +10,7 @@ import codecs
 import datetime
 import json
 
-from ansible.module_utils.common._collections_compat import Set
+from ansible.module_utils.six.moves.collections_abc import Set
 from ansible.module_utils.six import (
     PY3,
     binary_type,

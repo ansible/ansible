@@ -32,7 +32,7 @@ from ansible.module_utils.errors import (
 )
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
-from ansible.module_utils.common._collections_compat import (
+from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
     Set,
     Sequence,

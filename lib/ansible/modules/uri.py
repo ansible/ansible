@@ -445,7 +445,7 @@ from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
+from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
 
 JSON_CANDIDATES = {'json', 'javascript'}
