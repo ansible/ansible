@@ -78,7 +78,7 @@ You can use git repositories for collection dependencies during local developmen
 
    dependencies: {'git@github.com:organization/repo_name.git': 'devel'}
 
-.. warning
+.. warning::
 
    Do not use git repositories as dependencies for published collections. Dependencies for published collections must be other published collections.
 
