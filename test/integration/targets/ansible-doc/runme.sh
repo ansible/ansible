@@ -1,15 +1,26 @@
 #!/usr/bin/env bash
 
+# always set sane error behaviors, enable execution tracing later if sufficient verbosity requested
+set -eu
+
+verbosity=0
+
+# default to silent output for naked grep; -vvv+ will adjust this
 export GREP_OPTS=-q
 
-# shell tracing output is very large from this script; only enable if -v was passed
-while getopts v opt
+# shell tracing output is very large from this script; only enable if >= -vvv was passed
+while getopts :v opt
 do  case "$opt" in
-    v) export GREP_OPTS=; set -x;;
+      v) ((verbosity+=1)) ;;
+      *) ;;
     esac
 done
 
-set -eu
+if (( verbosity >= 3 ));
+then
+  set -x;
+  export GREP_OPTS= ;
+fi
 
 echo "running playbook-backed docs tests"
 ansible-playbook test.yml -i inventory "$@"
