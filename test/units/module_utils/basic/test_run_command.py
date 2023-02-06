@@ -147,7 +147,7 @@ class TestRunCommandArgs:
                               for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
                              indirect=['stdin'])
     def test_args(self, cmd, expected, shell, rc_am):
-        rc_am.run_command(cmd, use_unsafe_shell=shell)
+        rc_am.run_command(cmd, use_unsafe_shell=shell, prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.called
         args, kwargs = rc_am._subprocess.Popen.call_args
         assert args == (expected, )
@@ -163,17 +163,17 @@ class TestRunCommandArgs:
 class TestRunCommandCwd:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd(self, mocker, rc_am):
-        rc_am.run_command('/bin/ls', cwd='/new')
+        rc_am.run_command('/bin/ls', cwd='/new', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/new'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_relative_path(self, mocker, rc_am):
-        rc_am.run_command('/bin/ls', cwd='sub-dir')
+        rc_am.run_command('/bin/ls', cwd='sub-dir', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/home/foo/sub-dir'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_not_a_dir(self, mocker, rc_am):
-        rc_am.run_command('/bin/ls', cwd='/not-a-dir')
+        rc_am.run_command('/bin/ls', cwd='/not-a-dir', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/not-a-dir'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
@@ -212,14 +212,14 @@ class TestRunCommandRc:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_check_rc_false(self, rc_am):
         rc_am._subprocess.Popen.return_value.returncode = 1
-        (rc, _, _) = rc_am.run_command('/bin/false', check_rc=False)
+        (rc, _, _) = rc_am.run_command('/bin/false', check_rc=False, prompt_regex='i_dont_exist')
         assert rc == 1
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_check_rc_true(self, rc_am):
         rc_am._subprocess.Popen.return_value.returncode = 1
         with pytest.raises(SystemExit):
-            rc_am.run_command('/bin/false', check_rc=True)
+            rc_am.run_command('/bin/false', check_rc=True, prompt_regex='i_dont_exist')
         assert rc_am.fail_json.called
         args, kwargs = rc_am.fail_json.call_args
         assert kwargs['rc'] == 1
@@ -228,7 +228,7 @@ class TestRunCommandRc:
 class TestRunCommandOutput:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_text_stdin(self, rc_am):
-        (rc, stdout, stderr) = rc_am.run_command('/bin/foo', data='hello world')
+        (rc, stdout, stderr) = rc_am.run_command('/bin/foo', data='hello world', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.return_value.stdin.getvalue() == b'hello world\n'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
@@ -237,7 +237,7 @@ class TestRunCommandOutput:
                                      SpecialBytesIO(b'hello', fh=mocker.sentinel.stdout),
                                      mocker.sentinel.stderr:
                                      SpecialBytesIO(b'', fh=mocker.sentinel.stderr)}
-        (rc, stdout, stderr) = rc_am.run_command('/bin/cat hello.txt')
+        (rc, stdout, stderr) = rc_am.run_command('/bin/cat hello.txt', prompt_regex='i_dont_exist')
         assert rc == 0
         # module_utils function.  On py3 it returns text and py2 it returns
         # bytes because it's returning native strings
@@ -251,7 +251,7 @@ class TestRunCommandOutput:
                                      mocker.sentinel.stderr:
                                      SpecialBytesIO(u'لرئيسية'.encode('utf-8'),
                                                     fh=mocker.sentinel.stderr)}
-        (rc, stdout, stderr) = rc_am.run_command('/bin/something_ugly')
+        (rc, stdout, stderr) = rc_am.run_command('/bin/something_ugly', prompt_regex='i_dont_exist')
         assert rc == 0
         # module_utils function.  On py3 it returns text and py2 it returns
         # bytes because it's returning native strings
