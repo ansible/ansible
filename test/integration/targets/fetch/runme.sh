@@ -16,6 +16,14 @@ ln -s ../../setup_remote_tmp_dir roles/setup_remote_tmp_dir
 # create vault password files
 echo "secret" > vault_pass
 echo "secret1" > vault_pass1
+cat << "EOF" > ${OUTPUT_DIR}/orig_enc
+$ANSIBLE_VAULT;1.2;AES256;vault1
+31313538313965306339376134316466333462613034376263643035326338323961303466316434
+3738376564383234623363323463646436653962613463370a653136346538653962396433653139
+64633565623463633066346330306264626637383763633436316631393361333764393663343065
+3761666335336531380a353766633131626538346638663466396161666464306463336536663161
+6666
+EOF
 
 # run old type role tests
 ansible-playbook -i ../../inventory --vault-id default@vault_pass --vault-id vault1@vault_pass1 run_fetch_tests.yml -e "output_dir=${OUTPUT_DIR}" "$@"
