@@ -12,11 +12,33 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.loader import vars_loader
-from ansible.utils.collection_loader import AnsibleCollectionRef
+from ansible.plugins.vars.host_group_vars import VarsModule as host_group_vars
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
 display = Display()
+
+cached_vars_plugin_order = None
+cached_stateless_vars_plugins = {}
+
+
+def initialize_vars_plugin_caches():
+    auto = []
+    enabled = []
+
+    for auto_run_plugin in vars_loader.all(class_only=True):
+        if getattr(auto_run_plugin, 'REQUIRES_ENABLED', getattr(auto_run_plugin, 'REQUIRES_WHITELIST', False)):
+            continue
+        auto.append(auto_run_plugin._load_name)
+
+    for enabled_plugin in C.VARIABLE_PLUGINS_ENABLED:
+        plugin = vars_loader.get(enabled_plugin)
+        if plugin.__class__ is host_group_vars:
+            cached_stateless_vars_plugins[enabled_plugin] = plugin
+        enabled.append(enabled_plugin)
+
+    global cached_vars_plugin_order
+    cached_vars_plugin_order = auto + enabled
 
 
 def get_plugin_vars(loader, plugin, path, entities):
@@ -43,23 +65,19 @@ def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    vars_plugin_list = list(vars_loader.all())
-    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
-            vars_plugin = vars_loader.get(plugin_name)
-            if vars_plugin is None:
-                # Error if there's no play directory or the name is wrong?
-                continue
-            if vars_plugin not in vars_plugin_list:
-                vars_plugin_list.append(vars_plugin)
+    if cached_vars_plugin_order is None:
+        initialize_vars_plugin_caches()
 
-    for plugin in vars_plugin_list:
-        # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
+    for plugin_name in cached_vars_plugin_order:
+        if plugin_name in cached_stateless_vars_plugins:
+            plugin = cached_stateless_vars_plugins[plugin_name]
+        else:
+            plugin = vars_loader.get(plugin_name)
 
-        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
+        legacy = '.' not in plugin._load_name and plugin_name not in cached_stateless_vars_plugins
+        collection = '.' in plugin._load_name and plugin_name not in cached_stateless_vars_plugins
 
-        # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
-        needs_enabled = not builtin_or_legacy
+        needs_enabled = not legacy
         if hasattr(plugin, 'REQUIRES_ENABLED'):
             needs_enabled = plugin.REQUIRES_ENABLED
         elif hasattr(plugin, 'REQUIRES_WHITELIST'):
@@ -69,13 +87,11 @@ def get_vars_from_path(loader, path, entities, stage):
 
         # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
         # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-        if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+        if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
                 "This should be removed from the plugin %s." % plugin.ansible_name
             )
-        elif builtin_or_legacy and needs_enabled and not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
-            continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 

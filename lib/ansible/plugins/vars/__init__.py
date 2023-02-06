@@ -22,7 +22,11 @@ from ansible.plugins import AnsiblePlugin
 from ansible.utils.path import basedir
 from ansible.utils.display import Display
 
+import os
+
 display = Display()
+
+CANONICAL_PATHS = {}
 
 
 class BaseVarsPlugin(AnsiblePlugin):
@@ -38,4 +42,6 @@ class BaseVarsPlugin(AnsiblePlugin):
 
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
-        self._basedir = basedir(path)
+        if path not in CANONICAL_PATHS:
+            CANONICAL_PATHS[path] = os.path.realpath(basedir(path))
+        self._basedir = CANONICAL_PATHS[path]

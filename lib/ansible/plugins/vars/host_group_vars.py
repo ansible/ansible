@@ -55,18 +55,28 @@ DOCUMENTATION = '''
 
 import os
 from ansible.errors import AnsibleParserError
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.plugins.vars import BaseVarsPlugin
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
 FOUND = {}  # type: dict[str, list[str]]
+NAK = set()
+HOSTS = set()
+GROUPS = set()
 
 
 class VarsModule(BaseVarsPlugin):
 
     REQUIRES_ENABLED = True
+
+    # This plugin is stateless, cache the class so we can identify ansible.builtin.host_group_vars and only load it once
+    # TODO: allow singleton plugins in PluginLoader (object.__new__() is hardcoded) so 3rd party plugins can opt into this
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(VarsModule, cls).__new__(cls)
+        return cls.instance
 
     def get_vars(self, loader, path, entities, cache=True):
         ''' parses the inventory file '''
@@ -78,10 +88,15 @@ class VarsModule(BaseVarsPlugin):
 
         data = {}
         for entity in entities:
-            if isinstance(entity, Host):
+            entity_id = id(entity)
+            if entity_id in HOSTS or entity_id in GROUPS:
+                subdir = 'host_vars' if entity_id in HOSTS else 'group_vars'
+            elif isinstance(entity, Host):
                 subdir = 'host_vars'
+                HOSTS.add(entity_id)
             elif isinstance(entity, Group):
                 subdir = 'group_vars'
+                GROUPS.add(entity_id)
             else:
                 raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
@@ -90,11 +105,16 @@ class VarsModule(BaseVarsPlugin):
                 try:
                     found_files = []
                     # load vars
-                    b_opath = os.path.realpath(to_bytes(os.path.join(self._basedir, subdir)))
-                    opath = to_text(b_opath)
+                    opath = os.path.join(self._basedir, subdir)
+                    b_opath = to_bytes(opath)
+                    if cache and opath in NAK:
+                        continue
                     key = '%s.%s' % (entity.name, opath)
                     if cache and key in FOUND:
                         found_files = FOUND[key]
+                    elif cache and key in NAK:
+                        # cached "not there", don't scan again
+                        continue
                     else:
                         # no need to do much if path does not exist for basedir
                         if os.path.exists(b_opath):
@@ -104,6 +124,11 @@ class VarsModule(BaseVarsPlugin):
                                 FOUND[key] = found_files
                             else:
                                 self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                                # cache non-directory matches
+                                NAK.add(opath)
+                        else:
+                            # cache missing dirs so we don't have to keep looking for things beneath them
+                            NAK.add(opath)
 
                     for found in found_files:
                         new_data = loader.load_from_file(found, cache=True, unsafe=True)
