@@ -25,6 +25,38 @@
     dest: "{{ output_dir[1:] }}"
     flat: yes
 
+- name: Fetch the test file with encryption by default vault
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/fetched_enc"
+    encrypt: yes
+  register: fetched_enc_vd
+
+- name: Fetch the test file with encryption by vault1 over default
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/fetched_enc"
+    encrypt: yes
+    vault_id: vault1
+  register: fetched_enc_v1_1
+
+- name: Fetch the test file with encryption by vault1 again
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/fetched_enc"
+    encrypt: yes
+    vault_id: vault1
+  register: fetched_enc_v1_2
+
+- name: Fetch the test file with encryption by vault1 over pre-defined file
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/orig_enc"
+    flat: yes
+    encrypt: yes
+    vault_id: vault1
+  register: fetched_enc_v1_3
+
 - name: Assert that we fetched correctly
   assert:
     that:
@@ -36,3 +68,11 @@
       - lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"
       - fetch_check_mode is skipped
       - fetch_check_mode.msg is search('not \(yet\) supported')
+      - fetched_enc_vd is changed
+      - fetched_enc_vd.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched_enc_v1_1 is changed
+      - fetched_enc_v1_1.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched_enc_v1_2 is not changed
+      - fetched_enc_v1_2.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched_enc_v1_3 is not changed
+      - fetched_enc_v1_3.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"

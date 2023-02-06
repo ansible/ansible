@@ -28,6 +28,15 @@
   register: failed_fetch_dest_dir
   ignore_errors: true
 
+- name: Fetch with invalid vault_id
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+    encrypt: yes
+    vault_id: "invalid"
+  register: failed_fetch_invalid_vault
+  ignore_errors: true
+
 - name: Ensure fetch failed
   assert:
     that:
@@ -39,3 +48,5 @@
       - failed_fetch_no_access.msg is search('file is not readable')
       - failed_fetch_dest_dir is failed
       - failed_fetch_dest_dir.msg is search('dest is an existing directory')
+      - failed_fetch_invalid_vault is failed
+      - failed_fetch_invalid_vault.msg is search("Did not find a match for --encrypt-vault-id=invalid in the known vault-ids")
