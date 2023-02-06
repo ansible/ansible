@@ -47,8 +47,45 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
     filters = {}
 
     def make_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
-        """Make the given file executable."""
-        tar_info.mode |= stat.S_IXUSR | stat.S_IXOTH | stat.S_IXGRP
+        """
+        Make the given file executable and readable by all, and writeable by the owner.
+        Existing file type bits are preserved.
+        This ensures consistency of test results when using unprivileged users.
+        """
+        tar_info.mode &= ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        tar_info.mode |= (
+            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
+            stat.S_IWUSR
+        )
+
+        return tar_info
+
+    def make_non_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
+        """
+        Make the given file readable by all, and writeable by the owner.
+        Existing file type bits are preserved.
+        This ensures consistency of test results when using unprivileged users.
+        """
+        tar_info.mode &= ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        tar_info.mode |= (
+            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+            stat.S_IWUSR
+        )
+
+        return tar_info
+
+    def detect_permissions(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
+        """
+        Detect and apply the appropriate permissions for a file.
+        Existing file type bits are preserved.
+        This ensures consistency of test results when using unprivileged users.
+        """
+        if tar_info.mode & stat.S_IXUSR:
+            tar_info = make_executable(tar_info)
+        else:
+            tar_info = make_non_executable(tar_info)
+
         return tar_info
 
     if not ANSIBLE_SOURCE_ROOT:
@@ -109,7 +146,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
     with tarfile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
         for src, dst in files:
             display.info('%s -> %s' % (src, dst), verbosity=4)
-            tar.add(src, dst, filter=filters.get(dst))
+            tar.add(src, dst, filter=filters.get(dst, detect_permissions))
 
     duration = time.time() - start
     payload_size_bytes = os.path.getsize(dst_path)
