@@ -152,6 +152,11 @@
       - 'result.changed'
       - 'result.state == "present"'
       - 'result.repo == "{{test_ppa_spec}}"'
+      - '"sources_added" in result'
+      - 'result.sources_added | length == 1'
+      - '"git" in result.sources_added[0]'
+      - '"sources_removed" in result'
+      - 'result.sources_removed | length == 0'
       - result_cache is not changed
 
 - name: 'examine apt cache mtime'
@@ -166,6 +171,17 @@
 - name: remove repo by spec
   apt_repository: repo='{{test_ppa_spec}}' state=absent
   register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "absent"'
+      - 'result.repo == "{{test_ppa_spec}}"'
+      - '"sources_added" in result'
+      - 'result.sources_added | length == 0'
+      - '"sources_removed" in result'
+      - 'result.sources_removed | length == 1'
+      - '"git" in result.sources_removed[0]'
 
 # When installing a repo with the spec, the key is *NOT* added
 - name: 'ensure ppa key is absent (expect: pass)'
