@@ -66,8 +66,8 @@ options:
     version_added: '2.15'
     description:
     - If encryption is enabled, this specifies the vault_id to use for the encryption.
-    - Mandatory if encryption is enabled.
     type: str
+    default: default
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files

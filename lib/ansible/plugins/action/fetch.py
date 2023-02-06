@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
                 msg = "src and dest are required"
 
             if encrypt and vault_id is None:
-                msg = "vault_id is required when encryption is requested"
+                vault_id = "default"
 
             if msg:
                 raise AnsibleActionFail(msg)
