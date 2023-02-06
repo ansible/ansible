@@ -269,7 +269,7 @@ class ActionModule(ActionBase):
 
                 except KeyboardInterrupt:
                     signal.alarm(0)
-                    display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                    display.display("Press 'C' to continue the play or 'A' to abort \r")
                     if self._c_or_a(stdin):
                         clear_line(stdout)
                         break
