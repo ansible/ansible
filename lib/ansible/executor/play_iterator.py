@@ -571,7 +571,7 @@ class PlayIterator:
         Given the current HostState state, determines if the current block, or any child blocks,
         are in rescue mode.
         '''
-        if state.get_current_block().rescue:
+        if state.run_state == IteratingStates.TASKS and state.get_current_block().rescue:
             return True
         if state.tasks_child_state is not None:
             return self.is_any_block_rescuing(state.tasks_child_state)

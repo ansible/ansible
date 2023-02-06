@@ -22,24 +22,26 @@ ASSIGNMENT_DELIMITER = '='
 PATH_DELIMITER = '/'
 
 
-@dataclasses.dataclass(frozen=True)
+# This class was originally frozen. However, that causes issues when running under Python 3.11.
+# See: https://github.com/python/cpython/issues/99856
+@dataclasses.dataclass
 class Completion(Exception):
     """Base class for argument completion results."""
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class CompletionUnavailable(Completion):
     """Argument completion unavailable."""
     message: str = 'No completions available.'
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class CompletionError(Completion):
     """Argument completion error."""
     message: t.Optional[str] = None
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class CompletionSuccess(Completion):
     """Successful argument completion result."""
     list_mode: bool
@@ -287,6 +289,19 @@ class ChoicesParser(DynamicChoicesParser):
         return '|'.join(self.choices)
 
 
+class EnumValueChoicesParser(ChoicesParser):
+    """Composite argument parser which relies on a static list of choices derived from the values of an enum."""
+    def __init__(self, enum_type: t.Type[enum.Enum], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
+        self.enum_type = enum_type
+
+        super().__init__(choices=[str(item.value) for item in enum_type], conditions=conditions)
+
+    def parse(self, state: ParserState) -> t.Any:
+        """Parse the input from the given state and return the result."""
+        value = super().parse(state)
+        return self.enum_type(value)
+
+
 class IntegerParser(DynamicChoicesParser):
     """Composite argument parser for integers."""
     PATTERN = re.compile('^[1-9][0-9]*$')
@@ -326,7 +341,7 @@ class IntegerParser(DynamicChoicesParser):
 
 class BooleanParser(ChoicesParser):
     """Composite argument parser for boolean (yes/no) values."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(['yes', 'no'])
 
     def parse(self, state: ParserState) -> bool:

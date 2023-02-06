@@ -6,7 +6,8 @@
 # 2) Using the `--platform` option to provision temporary network instances on EC2.
 #
 # If you do not want to use the automatically provisioned temporary network instances,
-# fill in the @VAR placeholders below and save this file without the .template extension.
+# fill in the @VAR placeholders below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
 #
 # NOTE: Automatic provisioning of network instances on EC2 requires an ansible-core-ci API key.
 

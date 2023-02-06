@@ -21,7 +21,7 @@ description:
        like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(ansible.builtin.shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
-       arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
+       arguments, pass parameters using the C(args) L(task keyword,https://docs.ansible.com/ansible/latest/reference_appendices/playbooks_keywords.html#task)
        or use C(cmd) parameter.
      - Either a free form command or C(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(ansible.windows.win_command) module instead.
@@ -81,7 +81,7 @@ options:
     type: bool
     default: yes
     description:
-      - If set to C(yes), append a newline to stdin data.
+      - If set to C(true), append a newline to stdin data.
     version_added: "2.8"
   strip_empty_ends:
     description:

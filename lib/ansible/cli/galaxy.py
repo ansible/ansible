@@ -12,6 +12,7 @@ from ansible.cli import CLI
 
 import json
 import os.path
+import pathlib
 import re
 import shutil
 import sys
@@ -79,14 +80,10 @@ SERVER_DEF = [
 # config definition fields
 SERVER_ADDITIONAL = {
     'v3': {'default': 'False'},
-    'validate_certs': {'default': True, 'cli': [{'name': 'validate_certs'}]},
+    'validate_certs': {'cli': [{'name': 'validate_certs'}]},
     'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
 }
-
-# override default if the generic is set
-if C.GALAXY_IGNORE_CERTS is not None:
-    SERVER_ADDITIONAL['validate_certs'].update({'default': not C.GALAXY_IGNORE_CERTS})
 
 
 def with_collection_artifacts_manager(wrapped_method):
@@ -100,7 +97,9 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
-        artifacts_manager_kwargs = {'validate_certs': context.CLIARGS['validate_certs']}
+        # FIXME: use validate_certs context from Galaxy servers when downloading collections
+        # .get used here for when this is used in a non-CLI context
+        artifacts_manager_kwargs = {'validate_certs': context.CLIARGS.get('resolved_validate_certs', True)}
 
         keyring = context.CLIARGS.get('keyring', None)
         if keyring is not None:
@@ -157,8 +156,8 @@ def _get_collection_widths(collections):
     fqcn_set = {to_text(c.fqcn) for c in collections}
     version_set = {to_text(c.ver) for c in collections}
 
-    fqcn_length = len(max(fqcn_set, key=len))
-    version_length = len(max(version_set, key=len))
+    fqcn_length = len(max(fqcn_set or [''], key=len))
+    version_length = len(max(version_set or [''], key=len))
 
     return fqcn_length, version_length
 
@@ -197,7 +196,11 @@ class RoleDistributionServer:
 
 
 class GalaxyCLI(CLI):
-    '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
+    '''Command to manage Ansible roles and collections.
+
+       None of the CLI tools are designed to run concurrently with themselves.
+       Use an external scheduler and/or locking to ensure there are no clashing operations.
+    '''
 
     name = 'ansible-galaxy'
 
@@ -267,7 +270,6 @@ class GalaxyCLI(CLI):
 
         collections_path = opt_help.argparse.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
-                                      default=AnsibleCollectionConfig.collection_paths,
                                       action=opt_help.PrependListAction,
                                       help="One or more directories to search for collections in addition "
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
@@ -584,6 +586,8 @@ class GalaxyCLI(CLI):
 
         # ensure we have 'usable' cli option
         setattr(options, 'validate_certs', (None if options.ignore_certs is None else not options.ignore_certs))
+        # the default if validate_certs is None
+        setattr(options, 'resolved_validate_certs', (options.validate_certs if options.validate_certs is not None else not C.GALAXY_IGNORE_CERTS))
 
         display.verbosity = options.verbosity
         return options
@@ -641,6 +645,8 @@ class GalaxyCLI(CLI):
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
             v3 = server_options.pop('v3')
+            if server_options['validate_certs'] is None:
+                server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
             if v3:
@@ -676,9 +682,7 @@ class GalaxyCLI(CLI):
         cmd_server = context.CLIARGS['api_server']
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
-        # resolve validate_certs
-        v_config_default = True if C.GALAXY_IGNORE_CERTS is None else not C.GALAXY_IGNORE_CERTS
-        validate_certs = v_config_default if context.CLIARGS['validate_certs'] is None else context.CLIARGS['validate_certs']
+        validate_certs = context.CLIARGS['resolved_validate_certs']
         if cmd_server:
             # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
             # entry, otherwise create a new API entry for the server specified.
@@ -844,7 +848,7 @@ class GalaxyCLI(CLI):
                     name=coll_req['name'],
                 ),
                 coll_req['source'],
-                validate_certs=not context.CLIARGS['ignore_certs'],
+                validate_certs=context.CLIARGS['resolved_validate_certs'],
             ),
         )
 
@@ -1178,11 +1182,16 @@ class GalaxyCLI(CLI):
                         df.write(b_rendered)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
-                    shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
+                    shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path), follow_symlinks=False)
 
             for d in dirs:
                 b_dir_path = to_bytes(os.path.join(obj_path, rel_root, d), errors='surrogate_or_strict')
-                if not os.path.exists(b_dir_path):
+                if os.path.exists(b_dir_path):
+                    continue
+                b_src_dir = to_bytes(os.path.join(root, d), errors='surrogate_or_strict')
+                if os.path.islink(b_src_dir):
+                    shutil.copyfile(b_src_dir, b_dir_path, follow_symlinks=False)
+                else:
                     os.makedirs(b_dir_path)
 
         display.display("- %s %s was created successfully" % (galaxy_type.title(), obj_name))
@@ -1242,7 +1251,7 @@ class GalaxyCLI(CLI):
     def execute_verify(self, artifacts_manager=None):
 
         collections = context.CLIARGS['args']
-        search_paths = context.CLIARGS['collections_path']
+        search_paths = AnsibleCollectionConfig.collection_paths
         ignore_errors = context.CLIARGS['ignore_errors']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
@@ -1569,7 +1578,9 @@ class GalaxyCLI(CLI):
             display.warning(w)
 
         if not path_found:
-            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+            raise AnsibleOptionsError(
+                "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            )
 
         return 0
 
@@ -1584,100 +1595,66 @@ class GalaxyCLI(CLI):
             artifacts_manager.require_build_metadata = False
 
         output_format = context.CLIARGS['output_format']
-        collections_search_paths = set(context.CLIARGS['collections_path'])
         collection_name = context.CLIARGS['collection']
-        default_collections_path = AnsibleCollectionConfig.collection_paths
+        default_collections_path = set(C.COLLECTIONS_PATHS)
+        collections_search_paths = (
+            set(context.CLIARGS['collections_path'] or []) | default_collections_path | set(AnsibleCollectionConfig.collection_paths)
+        )
         collections_in_paths = {}
 
         warnings = []
         path_found = False
         collection_found = False
+
+        namespace_filter = None
+        collection_filter = None
+        if collection_name:
+            # list a specific collection
+
+            validate_collection_name(collection_name)
+            namespace_filter, collection_filter = collection_name.split('.')
+
+        collections = list(find_existing_collections(
+            list(collections_search_paths),
+            artifacts_manager,
+            namespace_filter=namespace_filter,
+            collection_filter=collection_filter,
+            dedupe=False
+        ))
+
+        seen = set()
+        fqcn_width, version_width = _get_collection_widths(collections)
+        for collection in sorted(collections, key=lambda c: c.src):
+            collection_found = True
+            collection_path = pathlib.Path(to_text(collection.src)).parent.parent.as_posix()
+
+            if output_format in {'yaml', 'json'}:
+                collections_in_paths[collection_path] = {
+                    collection.fqcn: {'version': collection.ver} for collection in collections
+                }
+            else:
+                if collection_path not in seen:
+                    _display_header(
+                        collection_path,
+                        'Collection',
+                        'Version',
+                        fqcn_width,
+                        version_width
+                    )
+                    seen.add(collection_path)
+                _display_collection(collection, fqcn_width, version_width)
+
+        path_found = False
         for path in collections_search_paths:
-            collection_path = GalaxyCLI._resolve_path(path)
             if not os.path.exists(path):
                 if path in default_collections_path:
                     # don't warn for missing default paths
                     continue
-                warnings.append("- the configured path {0} does not exist.".format(collection_path))
-                continue
-
-            if not os.path.isdir(collection_path):
-                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
-                continue
-
-            path_found = True
-
-            if collection_name:
-                # list a specific collection
-
-                validate_collection_name(collection_name)
-                namespace, collection = collection_name.split('.')
-
-                collection_path = validate_collection_path(collection_path)
-                b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
-
-                if not os.path.exists(b_collection_path):
-                    warnings.append("- unable to find {0} in collection paths".format(collection_name))
-                    continue
-
-                if not os.path.isdir(collection_path):
-                    warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
-                    continue
-
-                collection_found = True
-
-                try:
-                    collection = Requirement.from_dir_path_as_unknown(
-                        b_collection_path,
-                        artifacts_manager,
-                    )
-                except ValueError as val_err:
-                    six.raise_from(AnsibleError(val_err), val_err)
-
-                if output_format in {'yaml', 'json'}:
-                    collections_in_paths[collection_path] = {
-                        collection.fqcn: {'version': collection.ver}
-                    }
-
-                    continue
-
-                fqcn_width, version_width = _get_collection_widths([collection])
-
-                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
-                _display_collection(collection, fqcn_width, version_width)
-
+                warnings.append("- the configured path {0} does not exist.".format(path))
+            elif os.path.exists(path) and not os.path.isdir(path):
+                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(path))
             else:
-                # list all collections
-                collection_path = validate_collection_path(path)
-                if os.path.isdir(collection_path):
-                    display.vvv("Searching {0} for collections".format(collection_path))
-                    collections = list(find_existing_collections(
-                        collection_path, artifacts_manager,
-                    ))
-                else:
-                    # There was no 'ansible_collections/' directory in the path, so there
-                    # or no collections here.
-                    display.vvv("No 'ansible_collections' directory found at {0}".format(collection_path))
-                    continue
-
-                if not collections:
-                    display.vvv("No collections found at {0}".format(collection_path))
-                    continue
-
-                if output_format in {'yaml', 'json'}:
-                    collections_in_paths[collection_path] = {
-                        collection.fqcn: {'version': collection.ver} for collection in collections
-                    }
-
-                    continue
-
-                # Display header
-                fqcn_width, version_width = _get_collection_widths(collections)
-                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
-
-                # Sort collections by the namespace and name
-                for collection in sorted(collections, key=to_text):
-                    _display_collection(collection, fqcn_width, version_width)
+                path_found = True
 
         # Do not warn if the specific collection was found in any of the search paths
         if collection_found and collection_name:
@@ -1686,8 +1663,10 @@ class GalaxyCLI(CLI):
         for w in warnings:
             display.warning(w)
 
-        if not path_found:
-            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+        if not collections and not path_found:
+            raise AnsibleOptionsError(
+                "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            )
 
         if output_format == 'json':
             display.display(json.dumps(collections_in_paths))
@@ -1721,8 +1700,8 @@ class GalaxyCLI(CLI):
                                          tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'], page_size=page_size)
 
         if response['count'] == 0:
-            display.display("No roles match your search.", color=C.COLOR_ERROR)
-            return 1
+            display.warning("No roles match your search.")
+            return 0
 
         data = [u'']
 

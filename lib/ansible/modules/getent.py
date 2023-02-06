@@ -27,7 +27,6 @@ options:
             - Key from which to return values from the specified database, otherwise the
               full contents are returned.
         type: str
-        default: ''
     service:
         description:
             - Override all databases with the specified service
@@ -41,7 +40,7 @@ options:
         type: str
     fail_key:
         description:
-            - If a supplied key is missing this will make the task fail if C(yes).
+            - If a supplied key is missing this will make the task fail if C(true).
         type: bool
         default: 'yes'
 extends_documentation_fragment:

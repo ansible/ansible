@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import collections.abc as c
-import errno
 import enum
 import fcntl
 import importlib.util
@@ -467,10 +466,8 @@ def raw_command(
             cmd_bytes = [to_bytes(arg) for arg in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
             process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
-        except OSError as ex:
-            if ex.errno == errno.ENOENT:
-                raise ApplicationError('Required program "%s" not found.' % cmd[0])
-            raise
+        except FileNotFoundError as ex:
+            raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
 
         if communicate:
             data_bytes = to_optional_bytes(data)
@@ -614,7 +611,7 @@ class OutputThread(ReaderThread):
             src.close()
 
 
-def common_environment():
+def common_environment() -> dict[str, str]:
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL=CONFIGURED_LOCALE,
@@ -694,12 +691,11 @@ def verified_chmod(path: str, mode: int) -> None:
 
 
 def remove_tree(path: str) -> None:
-    """Remove the specified directory, siliently continuing if the directory does not exist."""
+    """Remove the specified directory, silently continuing if the directory does not exist."""
     try:
         shutil.rmtree(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
 
 
 def is_binary_file(path: str) -> bool:
@@ -797,17 +793,17 @@ class Display:
         3: cyan,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.verbosity = 0
         self.color = sys.stdout.isatty()
-        self.warnings = []
-        self.warnings_unique = set()
+        self.warnings: list[str] = []
+        self.warnings_unique: set[str] = set()
         self.fd = sys.stderr  # default to stderr until config is initialized to avoid early messages going to stdout
         self.rows = 0
         self.columns = 0
         self.truncate = 0
         self.redact = True
-        self.sensitive = set()
+        self.sensitive: set[str] = set()
 
         if os.isatty(0):
             self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
@@ -946,7 +942,24 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
-def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
+class HostConnectionError(ApplicationError):
+    """
+    Raised when the initial connection during host profile setup has failed and all retries have been exhausted.
+    Raised by provisioning code when one or more provisioning threads raise this exception.
+    Also raised when an SSH connection fails for the shell command.
+    """
+    def __init__(self, message: str, callback: t.Callable[[], None] = None) -> None:
+        super().__init__(message)
+
+        self._callback = callback
+
+    def run_callback(self) -> None:
+        """Run the error callback, if any."""
+        if self._callback:
+            self._callback()
+
+
+def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
@@ -1077,7 +1090,7 @@ def load_module(path: str, name: str) -> None:
     spec.loader.exec_module(module)
 
 
-def sanitize_host_name(name):
+def sanitize_host_name(name: str) -> str:
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 

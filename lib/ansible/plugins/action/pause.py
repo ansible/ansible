@@ -30,8 +30,7 @@ from os import (
     tcgetpgrp,
 )
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -182,7 +181,7 @@ class ActionModule(ActionBase):
 
                 # show the timer and control prompts
                 display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r")
 
                 # show the prompt specified in the task
                 if new_module_args['prompt']:
@@ -270,7 +269,7 @@ class ActionModule(ActionBase):
 
                 except KeyboardInterrupt:
                     signal.alarm(0)
-                    display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                    display.display("Press 'C' to continue the play or 'A' to abort \r")
                     if self._c_or_a(stdin):
                         clear_line(stdout)
                         break

@@ -34,7 +34,7 @@ def main():
                 'elements': 'dict',
                 'options': {
                     'thing': {},
-                    'other': {},
+                    'other': {'aliases': ['other_alias']},
                 },
             },
             'required_by': {
@@ -136,9 +136,111 @@ def main():
                     'bar': {
                         'type': 'str',
                         'default': 'baz',
+                        'aliases': ['bar_alias1', 'bar_alias2'],
                     },
                 },
             },
+            'deprecation_aliases': {
+                'type': 'str',
+                'aliases': [
+                    'deprecation_aliases_version',
+                    'deprecation_aliases_date',
+                ],
+                'deprecated_aliases': [
+                    {
+                        'name': 'deprecation_aliases_version',
+                        'version': '2.0.0',
+                        'collection_name': 'foo.bar',
+                    },
+                    {
+                        'name': 'deprecation_aliases_date',
+                        'date': '2023-01-01',
+                        'collection_name': 'foo.bar',
+                    },
+                ],
+            },
+            'deprecation_param_version': {
+                'type': 'str',
+                'removed_in_version': '2.0.0',
+                'removed_from_collection': 'foo.bar',
+            },
+            'deprecation_param_date': {
+                'type': 'str',
+                'removed_at_date': '2023-01-01',
+                'removed_from_collection': 'foo.bar',
+            },
+            'subdeprecation': {
+                'aliases': [
+                    'subdeprecation_alias',
+                ],
+                'type': 'dict',
+                'options': {
+                    'deprecation_aliases': {
+                        'type': 'str',
+                        'aliases': [
+                            'deprecation_aliases_version',
+                            'deprecation_aliases_date',
+                        ],
+                        'deprecated_aliases': [
+                            {
+                                'name': 'deprecation_aliases_version',
+                                'version': '2.0.0',
+                                'collection_name': 'foo.bar',
+                            },
+                            {
+                                'name': 'deprecation_aliases_date',
+                                'date': '2023-01-01',
+                                'collection_name': 'foo.bar',
+                            },
+                        ],
+                    },
+                    'deprecation_param_version': {
+                        'type': 'str',
+                        'removed_in_version': '2.0.0',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                    'deprecation_param_date': {
+                        'type': 'str',
+                        'removed_at_date': '2023-01-01',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                },
+            },
+            'subdeprecation_list': {
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'deprecation_aliases': {
+                        'type': 'str',
+                        'aliases': [
+                            'deprecation_aliases_version',
+                            'deprecation_aliases_date',
+                        ],
+                        'deprecated_aliases': [
+                            {
+                                'name': 'deprecation_aliases_version',
+                                'version': '2.0.0',
+                                'collection_name': 'foo.bar',
+                            },
+                            {
+                                'name': 'deprecation_aliases_date',
+                                'date': '2023-01-01',
+                                'collection_name': 'foo.bar',
+                            },
+                        ],
+                    },
+                    'deprecation_param_version': {
+                        'type': 'str',
+                        'removed_in_version': '2.0.0',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                    'deprecation_param_date': {
+                        'type': 'str',
+                        'removed_at_date': '2023-01-01',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                },
+            }
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),

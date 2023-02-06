@@ -19,6 +19,7 @@ from .config import (
 
 from .util import (
     ApplicationError,
+    HostConnectionError,
     display,
     open_binary_file,
     verify_sys_executable,
@@ -99,7 +100,7 @@ def prepare_profiles(
         args: TEnvironmentConfig,
         targets_use_pypi: bool = False,
         skip_setup: bool = False,
-        requirements: t.Optional[c.Callable[[TEnvironmentConfig, HostState], None]] = None,
+        requirements: t.Optional[c.Callable[[HostProfile], None]] = None,
 ) -> HostState:
     """
     Create new profiles, or load existing ones, and return them.
@@ -139,7 +140,7 @@ def prepare_profiles(
         check_controller_python(args, host_state)
 
         if requirements:
-            requirements(args, host_state)
+            requirements(host_state.controller_profile)
 
         def configure(profile: HostProfile) -> None:
             """Configure the given profile."""
@@ -147,6 +148,9 @@ def prepare_profiles(
 
             if not skip_setup:
                 profile.configure()
+
+            if requirements:
+                requirements(profile)
 
         dispatch_jobs([(profile, WrappedThread(functools.partial(configure, profile))) for profile in host_state.target_profiles])
 
@@ -185,13 +189,26 @@ def dispatch_jobs(jobs: list[tuple[HostProfile, WrappedThread]]) -> None:
         time.sleep(1)
 
     failed = False
+    connection_failures = 0
 
     for profile, thread in jobs:
         try:
             thread.wait_for_result()
-        except Exception as ex:  # pylint: disable=broad-except
-            display.error(f'Host {profile} job failed: {ex}\n{"".join(traceback.format_tb(ex.__traceback__))}')
+        except HostConnectionError as ex:
+            display.error(f'Host {profile.config} connection failed:\n{ex}')
             failed = True
+            connection_failures += 1
+        except ApplicationError as ex:
+            display.error(f'Host {profile.config} job failed:\n{ex}')
+            failed = True
+        except Exception as ex:  # pylint: disable=broad-except
+            name = f'{"" if ex.__class__.__module__ == "builtins" else ex.__class__.__module__ + "."}{ex.__class__.__qualname__}'
+            display.error(f'Host {profile.config} job failed:\nTraceback (most recent call last):\n'
+                          f'{"".join(traceback.format_tb(ex.__traceback__)).rstrip()}\n{name}: {ex}')
+            failed = True
+
+    if connection_failures:
+        raise HostConnectionError(f'Host job(s) failed, including {connection_failures} connection failure(s). See previous error(s) for details.')
 
     if failed:
         raise ApplicationError('Host job(s) failed. See previous error(s) for details.')

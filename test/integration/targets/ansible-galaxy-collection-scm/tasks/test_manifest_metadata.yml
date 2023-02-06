@@ -1,0 +1,55 @@
+- name: Test installing a collection from a git repo containing a MANIFEST.json
+  block:
+  - name: Create a temp directory for building the collection
+    file:
+      path: '{{ galaxy_dir }}/scratch'
+      state: directory
+
+  - name: Initialize a collection
+    command: 'ansible-galaxy collection init namespace_3.collection_1'
+    args:
+      chdir: '{{ galaxy_dir }}/scratch'
+
+  - name: Build the collection
+    command: 'ansible-galaxy collection build namespace_3/collection_1'
+    args:
+      chdir: '{{ galaxy_dir }}/scratch'
+
+  - name: Initialize git repository
+    command: 'git init {{ scm_path }}/namespace_3'
+
+  - name: Create the destination for the collection
+    file:
+      path: '{{ scm_path }}/namespace_3/collection_1'
+      state: directory
+
+  - name: Unarchive the collection in the git repo
+    unarchive:
+      dest: '{{ scm_path }}/namespace_3/collection_1'
+      src: '{{ galaxy_dir }}/scratch/namespace_3-collection_1-1.0.0.tar.gz'
+      remote_src: yes
+
+  - name: Commit the changes
+    shell: git add ./; git commit -m 'add collection'
+    args:
+      chdir: '{{ scm_path }}/namespace_3'
+
+  - name: Install the collection in the git repository
+    command: 'ansible-galaxy collection install git+file://{{ scm_path }}/namespace_3/.git'
+    register: result
+
+  - name: Assert the collection was installed successfully
+    assert:
+      that:
+        - '"namespace_3.collection_1:1.0.0 was installed successfully" in result.stdout_lines'
+
+  always:
+  - name: Clean up directories from test
+    file:
+      path: '{{ galaxy_dir }}/scratch'
+      state: absent
+    loop:
+    - '{{ galaxy_dir }}/scratch'
+    - '{{ scm_path }}/namespace_3'
+
+  - include_tasks: ./empty_installed_collections.yml

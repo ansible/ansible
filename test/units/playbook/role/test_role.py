@@ -24,7 +24,7 @@ from collections.abc import Container
 from units.compat import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.playbook.block import Block
 
 from units.mock.loader import DictDataLoader
@@ -177,7 +177,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -199,7 +199,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play, from_files=dict(tasks='custom_main'))
@@ -217,7 +217,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_handlers', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -238,7 +238,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -259,7 +259,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -280,7 +280,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -303,7 +303,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -323,7 +323,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -370,7 +370,7 @@ class TestRole(unittest.TestCase):
 
         mock_play = MagicMock()
         mock_play.collections = None
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_metadata', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -415,7 +415,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load(dict(role='foo_complex'), play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)

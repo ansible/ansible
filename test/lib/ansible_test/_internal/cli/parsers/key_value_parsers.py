@@ -10,6 +10,11 @@ from ...constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
+from ...completion import (
+    AuditMode,
+    CGroupVersion,
+)
+
 from ...util import (
     REMOTE_ARCHITECTURES,
 )
@@ -27,6 +32,7 @@ from ..argparsing.parsers import (
     BooleanParser,
     ChoicesParser,
     DocumentationState,
+    EnumValueChoicesParser,
     IntegerParser,
     KeyValueParser,
     Parser,
@@ -93,7 +99,7 @@ class ControllerKeyValueParser(KeyValueParser):
 
 class DockerKeyValueParser(KeyValueParser):
     """Composite argument parser for docker key/value pairs."""
-    def __init__(self, image, controller):
+    def __init__(self, image: str, controller: bool) -> None:
         self.controller = controller
         self.versions = get_docker_pythons(image, controller, False)
         self.allow_default = bool(get_docker_pythons(image, controller, True))
@@ -103,6 +109,8 @@ class DockerKeyValueParser(KeyValueParser):
         return dict(
             python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
             seccomp=ChoicesParser(SECCOMP_CHOICES),
+            cgroup=EnumValueChoicesParser(CGroupVersion),
+            audit=EnumValueChoicesParser(AuditMode),
             privileged=BooleanParser(),
             memory=IntegerParser(),
         )
@@ -116,6 +124,8 @@ class DockerKeyValueParser(KeyValueParser):
         state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
             f'  python={python_parser.document(state)}',
             f'  seccomp={ChoicesParser(SECCOMP_CHOICES).document(state)}',
+            f'  cgroup={EnumValueChoicesParser(CGroupVersion).document(state)}',
+            f'  audit={EnumValueChoicesParser(AuditMode).document(state)}',
             f'  privileged={BooleanParser().document(state)}',
             f'  memory={IntegerParser().document(state)}  # bytes',
         ])
@@ -125,7 +135,7 @@ class DockerKeyValueParser(KeyValueParser):
 
 class PosixRemoteKeyValueParser(KeyValueParser):
     """Composite argument parser for POSIX remote key/value pairs."""
-    def __init__(self, name, controller):
+    def __init__(self, name: str, controller: bool) -> None:
         self.controller = controller
         self.versions = get_remote_pythons(name, controller, False)
         self.allow_default = bool(get_remote_pythons(name, controller, True))

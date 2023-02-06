@@ -84,7 +84,7 @@ Continue by :ref:`learning how to build an inventory<get_started_inventory>`.
 
    `Ansible Demos <https://github.com/ansible/product-demos>`_
        Demonstrations of different Ansible usecases
-   `RHEL Labs <https://katacoda.com/rhel-labs>`_
+   `Ansible Labs <https://www.ansible.com/products/ansible-training>`_
        Labs to provide further knowledge on different topics
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

@@ -114,7 +114,7 @@ Non-native want JSON modules
 ----------------------------
 
 If a module has the string ``WANT_JSON`` in it anywhere, Ansible treats
-it as a non-native module that accepts a filename as its only command line
+it as a non-native module that accepts a filename as its only command-line
 parameter. The filename is for a temporary file containing a :term:`JSON`
 string containing the module's parameters. The module needs to open the file,
 read and parse the parameters, operate on the data, and print its return data
@@ -173,7 +173,7 @@ Executor/task_executor
 ----------------------
 
 The TaskExecutor receives the module name and parameters that were parsed from
-the :term:`playbook <playbooks>` (or from the command line in the case of
+the :term:`playbook <playbooks>` (or from the command-line in the case of
 :command:`/usr/bin/ansible`). It uses the name to decide whether it's looking
 at a module or an :ref:`Action Plugin <flow_action_plugins>`. If it's
 a module, it loads the :ref:`Normal Action Plugin <flow_normal_action_plugin>`
@@ -279,12 +279,12 @@ substitutions:
     this is better accessed by instantiating an `AnsibleModule` and
     then using :attr:`AnsibleModule.params`.
   - :code:`<<SELINUX_SPECIAL_FILESYSTEMS>>` substitutes a string which is
-    a comma separated list of file systems which have a file system dependent
+    a comma-separated list of file systems which have a file system dependent
     security context in SELinux. In new-style Python modules, if you really
     need this you should instantiate an `AnsibleModule` and then use
     :attr:`AnsibleModule._selinux_special_fs`. The variable has also changed
-    from a comma separated string of file system names to an actual python
-    list of filesystem names.
+    from a comma-separated string of file system names to an actual python
+    list of file system names.
   - :code:`<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>` substitutes the module
     parameters as a JSON string. Care must be taken to properly quote the
     string as JSON data may contain quotes. This pattern is not substituted
@@ -322,7 +322,7 @@ importing a module. This lets Ansible run both the wrapper script and the module
     * Ansible wraps the zipfile in the Python script for two reasons:
 
         * for compatibility with Python 2.6 which has a less
-          functional version of Python's ``-m`` command line switch.
+          functional version of Python's ``-m`` command-line switch.
 
         * so that pipelining will function properly. Pipelining needs to pipe the
           Python module into the Python interpreter on the remote node. Python
@@ -340,12 +340,6 @@ and :file:`ansible/module-utils/basic.py` is then included in the zipfile.
 Files that are included from :file:`module_utils` are themselves scanned for
 imports of other Python modules from :file:`module_utils` to be included in
 the zipfile as well.
-
-.. warning::
-    At present, the Ansiballz Framework cannot determine whether an import
-    should be included if it is a relative import. Always use an absolute
-    import that has :py:mod:`ansible.module_utils` in it to allow Ansiballz to
-    determine that the file should be included.
 
 
 .. _flow_passing_module_args:
@@ -378,79 +372,69 @@ Internal arguments
 ------------------
 
 Both :ref:`module_replacer` and :ref:`Ansiballz` send additional arguments to
-the module beyond those which the user specified in the playbook. These
+the Ansible module beyond those which the user specified in the playbook. These
 additional arguments are internal parameters that help implement global
-Ansible features. Modules often do not need to know about these explicitly as
-the features are implemented in :py:mod:`ansible.module_utils.basic` but certain
-features need support from the module so it's good to know about them.
+Ansible features. Modules often do not need to know about these explicitly because
+the features are implemented in :py:mod:`ansible.module_utils.basic`. However, certain
+features need support from modules and some knowledge of the internal arguments is useful.
 
-The internal arguments listed here are global. If you need to add a local internal argument to a custom module, create an action plugin for that specific module - see ``_original_basename`` in the `copy action plugin <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/action/copy.py#L329>`_ for an example.
+The internal arguments in this section are global. If you need to add a local internal argument to a custom module, create an action plugin for that specific module. See ``_original_basename`` in the `copy action plugin <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/action/copy.py#L329>`_ for an example.
+
 
 _ansible_no_log
 ^^^^^^^^^^^^^^^
 
-Boolean. Set to True whenever a parameter in a task or play specifies ``no_log``. Any module that calls :py:meth:`AnsibleModule.log` handles this automatically. If a module implements its own logging then
-it needs to check this value. To access in a module, instantiate an
-``AnsibleModule`` and then check the value of :attr:`AnsibleModule.no_log`.
+Type: ``bool``
+
+Set to ``True`` whenever an argument in a task or play specifies ``no_log``. Any module that calls the :py:meth:`AnsibleModule.log` function handles this action automatically. If you have a module that implements its own logging then you need to check the value of ``_ansible_no_log``. To access ``_ansible_no_log`` in a module, instantiate the ``AnsibleModule`` utility and then check the value of :attr:`AnsibleModule.no_log`.
 
 .. note::
-    ``no_log`` specified in a module's argument_spec is handled by a different mechanism.
+    ``no_log`` specified in a module's ``argument_spec`` is handled by a different mechanism.
+
 
 _ansible_debug
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
-Boolean. Turns more verbose logging on or off and turns on logging of
-external commands that the module executes. If a module uses
-:py:meth:`AnsibleModule.debug` rather than :py:meth:`AnsibleModule.log` then
-the messages are only logged if ``_ansible_debug`` is set to ``True``.
-To set, add ``debug: True`` to :file:`ansible.cfg` or set the environment
-variable :envvar:`ANSIBLE_DEBUG`. To access in a module, instantiate an
-``AnsibleModule`` and access :attr:`AnsibleModule._debug`.
+Type: ``bool``
+
+Operates verbose logging and logging of external commands that a module executes. If the module uses the :py:meth:`AnsibleModule.debug` function rather than the :py:meth:`AnsibleModule.log` function then the messages are only logged if you set the ``_ansible_debug`` argument to ``True``. To access ``_ansible_debug`` in a module, instantiate the ``AnsibleModule`` utility and access :attr:`AnsibleModule._debug`. For more details, see :ref:`DEFAULT_DEBUG`.
+
 
 _ansible_diff
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
-Boolean. If a module supports it, tells the module to show a unified diff of
-changes to be made to templated files. To set, pass the ``--diff`` command line
-option. To access in a module, instantiate an `AnsibleModule` and access
-:attr:`AnsibleModule._diff`.
+Type: ``bool``
+
+With this parameter you can configure your module to show a unified diff of changes that will be applied to the templated files. To access ``_ansible_diff`` in a module, instantiate the ``AnsibleModule`` utility and access :attr:`AnsibleModule._diff`. You can also access this parameter using the ``diff`` keyword in your playbook, or the relevant environment variable. For more details, see :ref:`playbook_keywords` and the :ref:`DIFF_ALWAYS` configuration option.
+
 
 _ansible_verbosity
 ^^^^^^^^^^^^^^^^^^
 
-Unused. This value could be used for finer grained control over logging.
+Type: ``int``
+
+You can use this argument to control the level (0 for none) of verbosity in logging. 
+
 
 _ansible_selinux_special_fs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-List. Names of filesystems which should have a special SELinux
-context. They are used by the `AnsibleModule` methods which operate on
-files (changing attributes, moving, and copying). To set, add a comma separated string of filesystem names in :file:`ansible.cfg`:
+Type: ``list``
+Elements: ``strings``
 
-.. code-block:: ini
+This argument provides modules with the names of file systems which should have a special SELinux context. They are used by the ``AnsibleModule`` methods which operate on files (changing attributes, moving, and copying).
 
-  # ansible.cfg
-  [selinux]
-  special_context_filesystems=nfs,vboxsf,fuse,ramfs,vfat
+Most modules can use the built-in ``AnsibleModule`` methods to manipulate files. To access in a module that needs to know about these special context file systems, instantiate ``AnsibleModule`` and examine the list in :attr:`AnsibleModule._selinux_special_fs`.
 
-Most modules can use the built-in ``AnsibleModule`` methods to manipulate
-files. To access in a module that needs to know about these special context filesystems, instantiate an ``AnsibleModule`` and examine the list in
-:attr:`AnsibleModule._selinux_special_fs`.
-
-This replaces :attr:`ansible.module_utils.basic.SELINUX_SPECIAL_FS` from
-:ref:`module_replacer`. In module replacer it was a comma separated string of
-filesystem names. Under Ansiballz it's an actual list.
+This argument replaces :attr:`ansible.module_utils.basic.SELINUX_SPECIAL_FS` from :ref:`module_replacer`. In the module replacer framework the argument was formatted as a comma-separated string of file system names. Under the Ansiballz framework it is a list. You can access ``_ansible_selinux_special_fs`` using the corresponding environment variable. For more details, see the :ref:`DEFAULT_SELINUX_SPECIAL_FS` configuration option.
 
 .. versionadded:: 2.1
+
 
 _ansible_syslog_facility
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This parameter controls which syslog facility Ansible module logs to. To set, change the ``syslog_facility`` value in :file:`ansible.cfg`. Most
-modules should just use :meth:`AnsibleModule.log` which will then make use of
-this. If a module has to use this on its own, it should instantiate an
-`AnsibleModule` and then retrieve the name of the syslog facility from
-:attr:`AnsibleModule._syslog_facility`. The Ansiballz code is less hacky than the old :ref:`module_replacer` code:
+This argument controls which syslog facility the module logs to. Most modules should just use the :meth:`AnsibleModule.log` function which will then make use of this. If a module has to use this on its own, it should instantiate the ``AnsibleModule`` method and then retrieve the name of the syslog facility from :attr:`AnsibleModule._syslog_facility`. The Ansiballz code is less elegant than the :ref:`module_replacer` code:
 
 .. code-block:: python
 
@@ -464,18 +448,75 @@ this. If a module has to use this on its own, it should instantiate an
         facility = getattr(syslog, facility_name, syslog.LOG_USER)
         syslog.openlog(NAME, 0, facility)
 
+For more details, see the :ref:`DEFAULT_SYSLOG_FACILITY` configuration option.
+
 .. versionadded:: 2.1
+
 
 _ansible_version
 ^^^^^^^^^^^^^^^^
 
-This parameter passes the version of Ansible that runs the module. To access
-it, a module should instantiate an `AnsibleModule` and then retrieve it
-from :attr:`AnsibleModule.ansible_version`. This replaces
-:attr:`ansible.module_utils.basic.ANSIBLE_VERSION` from
-:ref:`module_replacer`.
+This argument passes the version of Ansible to the module. To access it, a module should instantiate the ``AnsibleModule`` method and then retrieve the version from :attr:`AnsibleModule.ansible_version`. This replaces :attr:`ansible.module_utils.basic.ANSIBLE_VERSION` from :ref:`module_replacer`.
 
 .. versionadded:: 2.1
+
+
+_ansible_module_name
+^^^^^^^^^^^^^^^^^^^^
+
+Type: ``str``
+
+This argument passes the information to modules about their name. For more details see, the configuration option :ref:`DEFAULT_MODULE_NAME`.
+
+
+_ansible_string_conversion_action
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This argument provides instructions about what modules should do after the values of the user-specified module parameters are converted to strings. For more details, see the :ref:`STRING_CONVERSION_ACTION` configuration option.
+
+
+_ansible_keep_remote_files
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Type: ``bool``
+
+This argument provides instructions that modules must be ready if they need to keep the remote files. For more details, see the :ref:`DEFAULT_KEEP_REMOTE_FILES` configuration option.
+
+
+_ansible_socket
+^^^^^^^^^^^^^^^
+This argument provides modules with a socket for persistent connections. The argument is created using the :ref:`PERSISTENT_CONTROL_PATH_DIR` configuration option.
+
+
+_ansible_shell_executable
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Type: ``bool``
+
+This argument ensures that modules use the designated shell executable. For more details, see the :ref:`ansible_shell_executable` remote host environment parameter.
+
+
+_ansible_tmpdir
+^^^^^^^^^^^^^^^
+
+Type: ``str``
+
+This argument provides instructions to modules that all commands must use the designated temporary directory, if created. The action plugin designs this temporary directory.
+
+Modules can access this parameter by using the public ``tmpdir`` property. The ``tmpdir`` property will create a temporary directory if the action plugin did not set the parameter.
+
+The directory name is generated randomly, and the the root of the directory is determined by one of these:
+
+* :ref:`DEFAULT_LOCAL_TMP`
+* `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_
+* `system_tmpdirs <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-system_tmpdirs>`_
+
+As a result, using the ``ansible.cfg`` configuration file to activate or customize this setting will not guarantee that you control the full value.
+
+
+_ansible_remote_tmp
+^^^^^^^^^^^^^^^^^^^
+
+The module's ``tmpdir`` property creates a randomized directory name in this directory if the action plugin did not set ``_ansible_tmpdir``. For more details, see the `remote_tmp <https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-remote_tmp>`_ parameter of the shell plugin.
 
 
 .. _flow_module_return_values:
@@ -642,7 +683,7 @@ This section will discuss the behavioral attributes for arguments:
       option = {
         'type': 'str',
         'removed_in_version': '2.0.0',
-        'collection_name': 'testns.testcol',
+        'removed_from_collection': 'testns.testcol',
       },
 
 :removed_at_date:
@@ -656,7 +697,7 @@ This section will discuss the behavioral attributes for arguments:
       option = {
         'type': 'str',
         'removed_at_date': '2020-12-31',
-        'collection_name': 'testns.testcol',
+        'removed_from_collection': 'testns.testcol',
       },
 
 :removed_from_collection:

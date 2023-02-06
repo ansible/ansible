@@ -24,10 +24,11 @@ import re
 import shlex
 import time
 
+from collections.abc import Mapping, Sequence
+
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import text_type, string_types
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')

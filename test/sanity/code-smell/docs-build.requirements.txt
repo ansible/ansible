@@ -5,7 +5,7 @@ aiosignal==1.2.0
 alabaster==0.7.12
 ansible-pygments==0.1.1
 antsibull-core==1.2.0
-antsibull-docs==1.6.1
+antsibull-docs==1.9.0
 async-timeout==4.0.2
 asyncio-pool==0.6.0
 attrs==22.1.0
@@ -27,7 +27,7 @@ pyparsing==3.0.9
 pytz==2022.2.1
 PyYAML==6.0
 requests==2.28.1
-resolvelib==0.8.1
+resolvelib==0.9.0
 rstcheck==3.5.0
 semantic-version==2.10.0
 sh==1.14.3

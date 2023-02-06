@@ -11,6 +11,12 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
+lib/ansible/galaxy/collection/__init__.py mypy-3.9:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/__init__.py mypy-3.10:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/__init__.py mypy-3.11:attr-defined  # inline ignore has no effect
+lib/ansible/parsing/yaml/constructor.py mypy-3.9:type-var  # too many occurrences to ignore inline
+lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
+lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
@@ -30,13 +36,11 @@ lib/ansible/modules/copy.py pylint:disallowed-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
-lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/git.py pylint:disallowed-name
 lib/ansible/modules/git.py use-argspec-type-path
-lib/ansible/modules/git.py validate-modules:doc-missing-type
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
 lib/ansible/modules/iptables.py pylint:disallowed-name
 lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
@@ -62,6 +66,7 @@ lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
+lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:disallowed-name
@@ -74,8 +79,10 @@ lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends o
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
-lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
+lib/ansible/module_utils/distro/_distro.py pylint:ansible-format-automatic-specification # ignore bundled
+lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
+lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:disallowed-name
@@ -96,6 +103,7 @@ lib/ansible/module_utils/six/__init__.py no-dict-iteritems
 lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
 lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
+lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py pylint:arguments-renamed
 lib/ansible/module_utils/urls.py pylint:disallowed-name
@@ -123,6 +131,7 @@ lib/ansible/vars/hostvars.py pylint:disallowed-name
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
+test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/plugins/plugin_utils/check_pylint.py pylint:disallowed-name # ignore, required for testing
 test/integration/targets/ansible-test-integration/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-units/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-units/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -133,6 +142,7 @@ test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/un
 test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
+test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
@@ -169,6 +179,11 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
+test/support/integration/plugins/module_utils/network/common/utils.py pylint:unused-import
+test/support/integration/plugins/modules/sefcontext.py pylint:unused-import
+test/support/integration/plugins/modules/zypper.py pylint:unused-import
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:unused-import
+test/support/windows-integration/plugins/action/win_reboot.py pylint:unused-import
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
@@ -185,6 +200,7 @@ test/support/network-integration/collections/ansible_collections/ansible/netcomm
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pep8:E501
+test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pylint:used-before-assignment
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:disallowed-name
@@ -221,7 +237,6 @@ test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/parsing/vault/test_vault.py pylint:disallowed-name
 test/units/playbook/role/test_role.py pylint:disallowed-name
 test/units/plugins/test_plugins.py pylint:disallowed-name
-test/units/template/test_templar.py pylint:disallowed-name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits

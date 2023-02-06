@@ -24,6 +24,7 @@ from .encoding import (
 from .util import (
     cache,
     display,
+    get_ansible_version,
     remove_tree,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
@@ -95,7 +96,7 @@ class ResultType:
     TMP: ResultType = None
 
     @staticmethod
-    def _populate():
+    def _populate() -> None:
         ResultType.BOT = ResultType('bot')
         ResultType.COVERAGE = ResultType('coverage')
         ResultType.DATA = ResultType('data')
@@ -149,6 +150,31 @@ class CommonConfig:
     def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
         return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+
+
+def get_docs_url(url: str) -> str:
+    """
+    Return the given docs.ansible.com URL updated to match the running ansible-test version, if it is not a pre-release version.
+    The URL should be in the form: https://docs.ansible.com/ansible/devel/path/to/doc.html
+    Where 'devel' will be replaced with the current version, unless it is a pre-release version.
+    When run under a pre-release version, the URL will remain unchanged.
+    This serves to provide a fallback URL for pre-release versions.
+    It also makes searching the source for docs links easier, since a full URL is provided to this function.
+    """
+    url_prefix = 'https://docs.ansible.com/ansible-core/devel/'
+
+    if not url.startswith(url_prefix):
+        raise ValueError(f'URL "{url}" does not start with: {url_prefix}')
+
+    ansible_version = get_ansible_version()
+
+    if re.search(r'^[0-9.]+$', ansible_version):
+        url_version = '.'.join(ansible_version.split('.')[:2])
+        new_prefix = f'https://docs.ansible.com/ansible-core/{url_version}/'
+
+        url = url.replace(url_prefix, new_prefix)
+
+    return url
 
 
 def create_result_directories(args: CommonConfig) -> None:
@@ -262,7 +288,7 @@ def get_injector_path() -> str:
 
     verified_chmod(injector_path, MODE_DIRECTORY)
 
-    def cleanup_injector():
+    def cleanup_injector() -> None:
         """Remove the temporary injector directory."""
         remove_tree(injector_path)
 
@@ -362,7 +388,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     verified_chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
-def cleanup_python_paths():
+def cleanup_python_paths() -> None:
     """Clean up all temporary python directories."""
     for path in sorted(PYTHON_PATHS.values()):
         display.info('Cleaning up temporary python directory: %s' % path, verbosity=2)
@@ -423,7 +449,7 @@ def run_command(
                        output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
-def yamlcheck(python):
+def yamlcheck(python: PythonConfig) -> t.Optional[bool]:
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
     result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
 

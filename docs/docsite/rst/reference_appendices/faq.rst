@@ -138,7 +138,7 @@ or globally by setting ``ssh_args`` in ``ansible.cfg``.
 How do I get Ansible to notice a dead target in a timely manner?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option,
+You can add ``-o ServerAliveInterval=NumberOfSeconds`` with the ``ssh_args`` parameter in `SSH connection plugin <https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/ssh_connection.html#parameter-ssh_args>`_. Without this option,
 SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval``
 into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that
 ``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
@@ -618,10 +618,19 @@ Also array notation allows for dynamic variable composition, see dynamic_variabl
 
 Another problem with 'dot notation' is that some keys can cause problems because they collide with attributes and methods of python dictionaries.
 
+* Example of incorrect syntax when ``item`` is a dictionary:
+
 .. code-block:: jinja
 
-    item.update # this breaks if item is a dictionary, as 'update()' is a python method for dictionaries
-    item['update'] # this works
+    item.update
+
+This variant causes a syntax error because ``update()`` is a Python method for dictionaries.
+
+* Example of correct syntax:
+
+.. code-block:: jinja    
+    
+    item['update']
 
 
 .. _argsplat_unsafe:

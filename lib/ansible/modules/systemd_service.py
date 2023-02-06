@@ -108,7 +108,7 @@ EXAMPLES = '''
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
   ansible.builtin.systemd:
     state: restarted
-    daemon_reload: yes
+    daemon_reload: true
     name: crond
 
 - name: Reload service httpd, in all cases
@@ -119,22 +119,22 @@ EXAMPLES = '''
 - name: Enable service httpd and ensure it is not masked
   ansible.builtin.systemd:
     name: httpd
-    enabled: yes
+    enabled: true
     masked: no
 
 - name: Enable a timer unit for dnf-automatic
   ansible.builtin.systemd:
     name: dnf-automatic.timer
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Just force systemd to reread configs (2.4 and above)
   ansible.builtin.systemd:
-    daemon_reload: yes
+    daemon_reload: true
 
 - name: Just force systemd to re-execute itself (2.8 and above)
   ansible.builtin.systemd:
-    daemon_reexec: yes
+    daemon_reexec: true
 
 - name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
   ansible.builtin.systemd:
@@ -391,13 +391,19 @@ def main():
     if module.params['daemon_reload'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+            else:
+                module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
         if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
+            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+            else:
+                module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False

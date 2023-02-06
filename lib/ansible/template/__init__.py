@@ -518,7 +518,7 @@ class AnsibleEnvironment(NativeEnvironment):
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
-    concat = staticmethod(ansible_eval_concat)
+    concat = staticmethod(ansible_eval_concat)  # type: ignore[assignment]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -533,7 +533,7 @@ class AnsibleEnvironment(NativeEnvironment):
 
 
 class AnsibleNativeEnvironment(AnsibleEnvironment):
-    concat = staticmethod(ansible_native_concat)
+    concat = staticmethod(ansible_native_concat)  # type: ignore[assignment]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -99,6 +99,7 @@ from ...host_configs import (
 
 from ...host_profiles import (
     ControllerProfile,
+    ControllerHostProfile,
     HostProfile,
     PosixProfile,
     SshTargetHostProfile,
@@ -531,6 +532,10 @@ def command_integration_filtered(
                         if not tries:
                             raise
 
+                        if target.retry_never:
+                            display.warning(f'Skipping retry of test target "{target.name}" since it has been excluded from retries.')
+                            raise
+
                         display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                         display.verbosity = args.verbosity = 6
 
@@ -814,7 +819,7 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, test_dir: str, integration_dir: str, targets_dir: str, inventory_path: str, ansible_config: str, vars_file: str) -> None:
         self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir
@@ -826,17 +831,13 @@ class IntegrationEnvironment:
 class IntegrationCache(CommonCache):
     """Integration cache."""
     @property
-    def integration_targets(self):
-        """
-        :rtype: list[IntegrationTarget]
-        """
+    def integration_targets(self) -> list[IntegrationTarget]:
+        """The list of integration test targets."""
         return self.get('integration_targets', lambda: list(walk_integration_targets()))
 
     @property
-    def dependency_map(self):
-        """
-        :rtype: dict[str, set[IntegrationTarget]]
-        """
+    def dependency_map(self) -> dict[str, set[IntegrationTarget]]:
+        """The dependency map of integration test targets."""
         return self.get('dependency_map', lambda: generate_dependency_map(self.integration_targets))
 
 
@@ -957,13 +958,10 @@ def command_integration_filter(args: TIntegrationConfig,
     return host_state, internal_targets
 
 
-def requirements(args: IntegrationConfig, host_state: HostState) -> None:
-    """Install requirements."""
-    target_profile = host_state.target_profiles[0]
-
-    configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
-
-    if isinstance(target_profile, PosixProfile) and not isinstance(target_profile, ControllerProfile):
-        configure_pypi_proxy(args, target_profile)  # integration
-
-    install_requirements(args, host_state.controller_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+def requirements(host_profile: HostProfile) -> None:
+    """Install requirements after bootstrapping and delegation."""
+    if isinstance(host_profile, ControllerHostProfile) and host_profile.controller:
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration, windows-integration, network-integration
+        install_requirements(host_profile.args, host_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+    elif isinstance(host_profile, PosixProfile) and not isinstance(host_profile, ControllerProfile):
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration

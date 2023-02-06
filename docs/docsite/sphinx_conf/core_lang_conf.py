@@ -201,9 +201,9 @@ html_context = {
     'github_root_dir': 'devel/lib/ansible',
     'github_cli_version': 'devel/lib/ansible/cli/',
     'current_version': version,
-    'latest_version': '2.13',
+    'latest_version': '2.14',
     # list specifically out of order to make latest work
-    'available_versions': ('2.13_ja', '2.12_ja', '2.11_ja',),
+    'available_versions': ('2.14_ja', '2.13_ja', '2.12_ja',),
 }
 
 # Add extra CSS styles to the resulting HTML pages
@@ -336,16 +336,9 @@ autoclass_content = 'both'
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
                        'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
+                       'ansible_7': ('https://docs.ansible.com/ansible/7/', (None, '../ansible_7.inv')),
                        'ansible_6': ('https://docs.ansible.com/ansible/6/', (None, '../ansible_6.inv')),
-                       'ansible_5': ('https://docs.ansible.com/ansible/5/', (None, '../ansible_5.inv')),
-                       'ansible_4': ('https://docs.ansible.com/ansible/4/', (None, '../ansible_4.inv')),
-                       'ansible_3': ('https://docs.ansible.com/ansible/3/', (None, '../ansible_3.inv')),
-                       'ansible_2_10': ('https://docs.ansible.com/ansible/2.10/', (None, '../ansible_2_10.inv')),
                        'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
-                       'ansible_2_8': ('https://docs.ansible.com/ansible/2.8/', (None, '../ansible_2_8.inv')),
-                       'ansible_2_7': ('https://docs.ansible.com/ansible/2.7/', (None, '../ansible_2_7.inv')),
-                       'ansible_2_6': ('https://docs.ansible.com/ansible/2.6/', (None, '../ansible_2_6.inv')),
-                       'ansible_2_5': ('https://docs.ansible.com/ansible/2.5/', (None, '../ansible_2_5.inv')),
                        }
 
 # linckchecker settings

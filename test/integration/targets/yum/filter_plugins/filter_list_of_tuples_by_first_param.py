@@ -1,8 +1,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError, AnsibleFilterError
-
 
 def filter_list_of_tuples_by_first_param(lst, search, startswith=False):
     out = []

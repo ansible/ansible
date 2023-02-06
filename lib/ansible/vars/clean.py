@@ -13,7 +13,6 @@ from collections.abc import MutableMapping, MutableSequence
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils import six
-from ansible.module_utils._text import to_text
 from ansible.plugins.loader import connection_loader
 from ansible.utils.display import Display
 

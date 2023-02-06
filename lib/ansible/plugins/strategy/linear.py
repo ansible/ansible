@@ -170,10 +170,9 @@ class StrategyModule(StrategyBase):
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
-                    if not isinstance(task, Handler) and task._role and task._role.has_run(host):
-                        # If there is no metadata, the default behavior is to not allow duplicates,
-                        # if there is metadata, check to see if the allow_duplicates flag was set to true
-                        if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
+                    if not isinstance(task, Handler) and task._role:
+                        role_obj = self._get_cached_role(task, iterator._play)
+                        if role_obj.has_run(host) and role_obj._metadata.allow_duplicates is False:
                             display.debug("'%s' skipped because role has already run" % task)
                             continue
 
@@ -314,11 +313,7 @@ class StrategyModule(StrategyBase):
                                     included_tasks.extend(final_block.get_tasks())
 
                                 for host in hosts_left:
-                                    # handlers are included regardless of _hosts so noop
-                                    # tasks do not have to be created for lockstep,
-                                    # not notified handlers are then simply skipped
-                                    # in the PlayIterator
-                                    if host in included_file._hosts or is_handler:
+                                    if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
 
                             display.debug("done iterating over new_blocks loaded from include file")

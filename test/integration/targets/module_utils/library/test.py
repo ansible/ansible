@@ -72,12 +72,12 @@ from ansible.module_utils.spam8.ham import eggs
 results['spam8'] = (bacon.data, eggs)
 
 # Test that import of module_utils/qux1/quux.py using as works
-from ansible.module_utils.qux1 import quux as one
-results['qux1'] = one.data
+from ansible.module_utils.qux1 import quux as two
+results['qux1'] = two.data
 
 # Test that importing qux2/quux.py and qux2/quuz.py using as works
-from ansible.module_utils.qux2 import quux as one, quuz as two
-results['qux2'] = (one.data, two.data)
+from ansible.module_utils.qux2 import quux as three, quuz as four
+results['qux2'] = (three.data, four.data)
 
 # Test depth
 from ansible.module_utils.a.b.c.d.e.f.g.h import data

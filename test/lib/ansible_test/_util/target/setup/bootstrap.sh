@@ -162,6 +162,8 @@ bootstrap_remote_freebsd()
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
         case "${platform_version}/${python_version}" in
+            "12.4/3.9")
+                ;;
             *)
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
@@ -426,6 +428,9 @@ bootstrap()
 
     install_ssh_keys
     customize_bashrc
+
+    # allow tests to detect ansible-test bootstrapped instances, as well as the bootstrap type
+    echo "${bootstrap_type}" > /etc/ansible-test.bootstrap
 
     case "${bootstrap_type}" in
         "docker") bootstrap_docker ;;

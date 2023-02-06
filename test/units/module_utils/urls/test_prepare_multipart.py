@@ -7,8 +7,6 @@ __metaclass__ = type
 
 import os
 
-from io import StringIO
-
 from email.message import Message
 
 import pytest

@@ -10,7 +10,7 @@ import os
 import os.path
 import pytest
 
-from ansible.config.manager import ConfigManager, Setting, ensure_type, resolve_path, get_config_type
+from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils.six import integer_types, string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode

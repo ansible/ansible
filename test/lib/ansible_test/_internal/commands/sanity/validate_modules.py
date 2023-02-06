@@ -8,6 +8,7 @@ import typing as t
 
 from . import (
     DOCUMENTABLE_PLUGINS,
+    MULTI_FILE_PLUGINS,
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
@@ -59,7 +60,7 @@ from ...host_configs import (
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.optional_error_codes.update([
@@ -109,6 +110,10 @@ class ValidateModulesTest(SanitySingleVersion):
 
         for target in targets.include:
             target_per_type[self.get_plugin_type(target)].append(target)
+
+        # Remove plugins that cannot be associated to a single file (test and filter plugins).
+        for plugin_type in MULTI_FILE_PLUGINS:
+            target_per_type.pop(plugin_type, None)
 
         cmd = [
             python.path,

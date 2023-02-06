@@ -1,7 +1,6 @@
 """Functions for disk IO."""
 from __future__ import annotations
 
-import errno
 import io
 import json
 import os
@@ -32,11 +31,7 @@ def read_binary_file(path: str) -> bytes:
 
 def make_dirs(path: str) -> None:
     """Create a directory at path, including any necessary parent directories."""
-    try:
-        os.makedirs(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.EEXIST:
-            raise
+    os.makedirs(to_bytes(path), exist_ok=True)
 
 
 def write_json_file(path: str,
@@ -85,7 +80,7 @@ def open_binary_file(path: str, mode: str = 'rb') -> t.IO[bytes]:
 
 class SortedSetEncoder(json.JSONEncoder):
     """Encode sets as sorted lists."""
-    def default(self, o):
+    def default(self, o: t.Any) -> t.Any:
         """Return a serialized version of the `o` object."""
         if isinstance(o, set):
             return sorted(o)

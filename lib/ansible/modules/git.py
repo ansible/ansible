@@ -30,7 +30,7 @@ options:
             - The path of where the repository should be checked out. This
               is equivalent to C(git clone [repo_url] [directory]). The repository
               named in I(repo) is not appended to this path and the destination directory must be empty. This
-              parameter is required, unless I(clone) is set to C(no).
+              parameter is required, unless I(clone) is set to C(false).
         type: path
         required: true
     version:
@@ -54,7 +54,7 @@ options:
         description:
             - As of OpenSSH 7.5, "-o StrictHostKeyChecking=accept-new" can be
               used which is safer and will only accepts host keys which are
-              not present or are the same. if C(yes), ensure that
+              not present or are the same. if C(true), ensure that
               "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
         type: bool
         default: 'no'
@@ -81,6 +81,7 @@ options:
     reference:
         description:
             - Reference repository (see "git clone --reference ...").
+        type: str
         version_added: "1.4"
     remote:
         description:
@@ -99,10 +100,10 @@ options:
         version_added: "1.9"
     force:
         description:
-            - If C(yes), any modified files in the working
+            - If C(true), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
-              C(yes) and could not be disabled.  Prior to 1.9, the default was
-              C(yes).
+              C(true) and could not be disabled.  Prior to 1.9, the default was
+              C(true).
         type: bool
         default: 'no'
         version_added: "0.7"
@@ -115,13 +116,13 @@ options:
         version_added: "1.2"
     clone:
         description:
-            - If C(no), do not clone the repository even if it does not exist locally.
+            - If C(false), do not clone the repository even if it does not exist locally.
         type: bool
         default: 'yes'
         version_added: "1.9"
     update:
         description:
-            - If C(no), do not retrieve new revisions from the origin repository.
+            - If C(false), do not retrieve new revisions from the origin repository.
             - Operations like archive will work on the existing (old) repository and might
               not respond to changes to the options version or remote.
         type: bool
@@ -135,7 +136,7 @@ options:
         version_added: "1.4"
     bare:
         description:
-            - If C(yes), repository will be created as a bare repo, otherwise
+            - If C(true), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
         type: bool
         default: 'no'
@@ -149,7 +150,7 @@ options:
 
     recursive:
         description:
-            - If C(no), repository will be cloned without the --recursive
+            - If C(false), repository will be cloned without the --recursive
               option, skipping sub-modules.
         type: bool
         default: 'yes'
@@ -164,9 +165,9 @@ options:
 
     track_submodules:
         description:
-            - If C(yes), submodules will track the latest commit on their
+            - If C(true), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
-              C(no), submodules will be kept at the revision specified by the
+              C(false), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the --remote flag
               to git submodule update.
         type: bool
@@ -175,7 +176,7 @@ options:
 
     verify_commit:
         description:
-            - If C(yes), when cloning or checking out a I(version) verify the
+            - If C(true), when cloning or checking out a I(version) verify the
               signature of a GPG signed commit. This requires git version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
               be present in the GPG keyring.

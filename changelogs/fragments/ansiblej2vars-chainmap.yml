@@ -1,0 +1,2 @@
+minor_changes:
+  - "``AnsibleJ2Vars`` class that acts as a storage for all variables for templating purposes now uses ``collections.ChainMap`` internally."

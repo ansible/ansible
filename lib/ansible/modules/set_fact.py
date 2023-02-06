@@ -15,7 +15,7 @@ version_added: "1.2"
 description:
     - This action allows setting variables associated to the current host.
     - These variables will be available to subsequent plays during an ansible-playbook run via the host they were set on.
-    - Set C(cacheable) to C(yes) to save variables across executions using a fact cache.
+    - Set C(cacheable) to C(true) to save variables across executions using a fact cache.
       Variables will keep the set_fact precedence for the current run, but will used 'cached fact' precedence for subsequent ones.
     - Per the standard Ansible variable precedence rules, other types of variables have a higher priority, so this value may be overridden.
 options:
@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - action_core
 attributes:
     action:
-        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overriden
+        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overridden
         support: partial
     bypass_host_loop:
         support: none

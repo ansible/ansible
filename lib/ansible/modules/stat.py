@@ -48,7 +48,7 @@ options:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
       - This will add both C(mime_type) and C(charset) fields to the return, if possible.
-      - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(yes).
+      - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(true).
     type: bool
     default: yes
     aliases: [ mime, mime_type, mime-type ]

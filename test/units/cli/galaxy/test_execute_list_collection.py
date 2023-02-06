@@ -5,14 +5,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import pathlib
+
 import pytest
 
+from ansible import constants as C
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import collection
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 from ansible.module_utils._text import to_native
+from ansible.plugins.loader import init_plugin_loader
 
 
 def path_exists(path):
@@ -22,20 +26,18 @@ def path_exists(path):
         return False
     elif to_native(path) == 'nope':
         return False
-    else:
-        return True
+    return True
 
 
 def isdir(path):
     if to_native(path) == 'nope':
         return False
-    else:
-        return True
+    return True
 
 
 def cliargs(collections_paths=None, collection_name=None):
     if collections_paths is None:
-        collections_paths = ['~/root/.ansible/collections', '/usr/share/ansible/collections']
+        collections_paths = ['/root/.ansible/collections', '/usr/share/ansible/collections']
 
     context.CLIARGS._store = {
         'collections_path': collections_paths,
@@ -46,95 +48,61 @@ def cliargs(collections_paths=None, collection_name=None):
 
 
 @pytest.fixture
-def mock_collection_objects(mocker):
-    mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', side_effect=['/root/.ansible/collections', '/usr/share/ansible/collections'])
-    mocker.patch('ansible.cli.galaxy.validate_collection_path',
-                 side_effect=['/root/.ansible/collections/ansible_collections', '/usr/share/ansible/collections/ansible_collections'])
-
-    collection_args_1 = (
-        (
-            'sandwiches.pbj',
-            '1.5.0',
-            None,
-            'dir',
-            None,
-        ),
-        (
-            'sandwiches.reuben',
-            '2.5.0',
-            None,
-            'dir',
-            None,
-        ),
-    )
-
-    collection_args_2 = (
-        (
+def mock_from_path(mocker, monkeypatch):
+    collection_args = {
+        '/usr/share/ansible/collections/ansible_collections/sandwiches/pbj': (
             'sandwiches.pbj',
             '1.0.0',
-            None,
+            '/usr/share/ansible/collections/ansible_collections/sandwiches/pbj',
             'dir',
             None,
         ),
-        (
+        '/usr/share/ansible/collections/ansible_collections/sandwiches/ham': (
             'sandwiches.ham',
             '1.0.0',
-            None,
+            '/usr/share/ansible/collections/ansible_collections/sandwiches/ham',
             'dir',
             None,
         ),
-    )
+        '/root/.ansible/collections/ansible_collections/sandwiches/pbj': (
+            'sandwiches.pbj',
+            '1.5.0',
+            '/root/.ansible/collections/ansible_collections/sandwiches/pbj',
+            'dir',
+            None,
+        ),
+        '/root/.ansible/collections/ansible_collections/sandwiches/reuben': (
+            'sandwiches.reuben',
+            '2.5.0',
+            '/root/.ansible/collections/ansible_collections/sandwiches/reuben',
+            'dir',
+            None,
+        ),
+    }
 
-    collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
-    collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
+    def dispatch_requirement(path, am):
+        return Requirement(*collection_args[to_native(path)])
 
-    mocker.patch('ansible.cli.galaxy.find_existing_collections', side_effect=[collections_path_1, collections_path_2])
+    files_mock = mocker.MagicMock()
+    mocker.patch('ansible.galaxy.collection.files', return_value=files_mock)
+    files_mock.glob.return_value = []
 
+    mocker.patch.object(pathlib.Path, 'is_dir', return_value=True)
+    for path, args in collection_args.items():
+        files_mock.glob.return_value.append(pathlib.Path(args[2]))
 
-@pytest.fixture
-def mock_from_path(mocker):
-    def _from_path(collection_name='pbj'):
-        collection_args = {
-            'sandwiches.pbj': (
-                (
-                    'sandwiches.pbj',
-                    '1.5.0',
-                    None,
-                    'dir',
-                    None,
-                ),
-                (
-                    'sandwiches.pbj',
-                    '1.0.0',
-                    None,
-                    'dir',
-                    None,
-                ),
-            ),
-            'sandwiches.ham': (
-                (
-                    'sandwiches.ham',
-                    '1.0.0',
-                    None,
-                    'dir',
-                    None,
-                ),
-            ),
-        }
+    mocker.patch('ansible.galaxy.collection.Candidate.from_dir_path_as_unknown', side_effect=dispatch_requirement)
 
-        from_path_objects = [Requirement(*args) for args in collection_args[collection_name]]
-        mocker.patch('ansible.cli.galaxy.Requirement.from_dir_path_as_unknown', side_effect=from_path_objects)
-
-    return _from_path
+    monkeypatch.setattr(C, 'COLLECTIONS_PATHS', ['/root/.ansible/collections', '/usr/share/ansible/collections'])
 
 
-def test_execute_list_collection_all(mocker, capsys, mock_collection_objects, tmp_path_factory):
+def test_execute_list_collection_all(mocker, capsys, mock_from_path, tmp_path_factory):
     """Test listing all collections from multiple paths"""
 
     cliargs()
+    init_plugin_loader()
 
     mocker.patch('os.path.exists', return_value=True)
-    mocker.patch('os.path.isdir', return_value=True)
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list'])
     tmp_path = tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections')
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
@@ -152,21 +120,22 @@ def test_execute_list_collection_all(mocker, capsys, mock_collection_objects, tm
     assert out_lines[5] == 'sandwiches.reuben 2.5.0  '
     assert out_lines[6] == ''
     assert out_lines[7] == '# /usr/share/ansible/collections/ansible_collections'
-    assert out_lines[8] == 'Collection     Version'
-    assert out_lines[9] == '-------------- -------'
-    assert out_lines[10] == 'sandwiches.ham 1.0.0  '
-    assert out_lines[11] == 'sandwiches.pbj 1.0.0  '
+    assert out_lines[8] == 'Collection        Version'
+    assert out_lines[9] == '----------------- -------'
+    assert out_lines[10] == 'sandwiches.ham    1.0.0  '
+    assert out_lines[11] == 'sandwiches.pbj    1.0.0  '
 
 
-def test_execute_list_collection_specific(mocker, capsys, mock_collection_objects, mock_from_path, tmp_path_factory):
+def test_execute_list_collection_specific(mocker, capsys, mock_from_path, tmp_path_factory):
     """Test listing a specific collection"""
 
     collection_name = 'sandwiches.ham'
-    mock_from_path(collection_name)
 
     cliargs(collection_name=collection_name)
+    init_plugin_loader()
+
     mocker.patch('os.path.exists', path_exists)
-    mocker.patch('os.path.isdir', return_value=True)
+    # mocker.patch.object(pathlib.Path, 'is_dir', return_value=True)
     mocker.patch('ansible.galaxy.collection.validate_collection_name', collection_name)
     mocker.patch('ansible.cli.galaxy._get_collection_widths', return_value=(14, 5))
 
@@ -186,15 +155,16 @@ def test_execute_list_collection_specific(mocker, capsys, mock_collection_object
     assert out_lines[4] == 'sandwiches.ham 1.0.0  '
 
 
-def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_collection_objects, mock_from_path, tmp_path_factory):
+def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_from_path, tmp_path_factory):
     """Test listing a specific collection that exists at multiple paths"""
 
     collection_name = 'sandwiches.pbj'
-    mock_from_path(collection_name)
 
     cliargs(collection_name=collection_name)
+    init_plugin_loader()
+
     mocker.patch('os.path.exists', path_exists)
-    mocker.patch('os.path.isdir', return_value=True)
+    # mocker.patch.object(pathlib.Path, 'is_dir', return_value=True)
     mocker.patch('ansible.galaxy.collection.validate_collection_name', collection_name)
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', collection_name])
@@ -221,6 +191,8 @@ def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_collect
 def test_execute_list_collection_specific_invalid_fqcn(mocker, tmp_path_factory):
     """Test an invalid fully qualified collection name (FQCN)"""
 
+    init_plugin_loader()
+
     collection_name = 'no.good.name'
 
     cliargs(collection_name=collection_name)
@@ -238,6 +210,7 @@ def test_execute_list_collection_no_valid_paths(mocker, capsys, tmp_path_factory
     """Test listing collections when no valid paths are given"""
 
     cliargs()
+    init_plugin_loader()
 
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.isdir', return_value=False)
@@ -257,13 +230,14 @@ def test_execute_list_collection_no_valid_paths(mocker, capsys, tmp_path_factory
     assert 'exists, but it\nis not a directory.' in err
 
 
-def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_collection_objects, tmp_path_factory):
+def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_from_path, tmp_path_factory):
     """Test listing all collections when one invalid path is given"""
 
-    cliargs()
+    cliargs(collections_paths=['nope'])
+    init_plugin_loader()
+
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.isdir', isdir)
-    mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', side_effect=['/root/.ansible/collections', 'nope'])
     mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', '-p', 'nope'])

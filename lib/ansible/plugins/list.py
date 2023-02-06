@@ -14,7 +14,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
-from ansible.utils.collection_loader._collection_finder import _get_collection_path, AnsibleCollectionRef
+from ansible.utils.collection_loader._collection_finder import _get_collection_path
 
 display = Display()
 
@@ -44,6 +44,7 @@ def get_composite_name(collection, name, path, depth):
 
 
 def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
+    # TODO: update to use importlib.resources
 
     plugins = {}
 
@@ -112,14 +113,12 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
 def _list_j2_plugins_from_file(collection, plugin_path, ptype, plugin_name):
 
     ploader = getattr(loader, '{0}_loader'.format(ptype))
-    if collection in ('ansible.builtin', 'ansible.legacy'):
-        file_plugins = ploader.all()
-    else:
-        file_plugins = ploader.get_contained_plugins(collection, plugin_path, plugin_name)
+    file_plugins = ploader.get_contained_plugins(collection, plugin_path, plugin_name)
     return file_plugins
 
 
 def list_collection_plugins(ptype, collections, search_paths=None):
+    # TODO: update to use importlib.resources
 
     # starts at  {plugin_name: filepath, ...}, but changes at the end
     plugins = {}

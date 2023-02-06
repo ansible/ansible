@@ -1,12 +1,11 @@
 # edit "package-data.requirements.in" and generate with: hacking/update-sanity-requirements.py --test package-data
-antsibull-changelog==0.16.0
+antsibull-changelog==0.18.0
 docutils==0.17.1
 Jinja2==3.1.2
-MarkupSafe==2.1.1
-packaging==21.3
-pyparsing==3.0.9
+MarkupSafe==2.1.2
+packaging==23.0
 PyYAML==6.0
-resolvelib==0.8.1
+resolvelib==0.9.0
 rstcheck==3.5.0
 semantic-version==2.10.0
 straight.plugin==1.5.0

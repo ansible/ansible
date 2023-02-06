@@ -68,7 +68,7 @@ options:
     type: str
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
+      - Corresponds to the C(--no-install-recommends) option for I(apt). C(true) installs recommended packages.  C(false) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     aliases: [ install-recommends ]
     type: bool
@@ -141,14 +141,14 @@ options:
      version_added: "1.6"
   autoremove:
     description:
-      - If C(yes), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
+      - If C(true), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
       - Previous to version 2.4, autoclean was also an alias for autoremove, now it is its own separate command. See documentation for further information.
     type: bool
     default: 'no'
     version_added: "2.1"
   autoclean:
     description:
-      - If C(yes), cleans the local repository of retrieved package files that can no longer be downloaded.
+      - If C(true), cleans the local repository of retrieved package files that can no longer be downloaded.
     type: bool
     default: 'no'
     version_added: "2.4"
@@ -170,7 +170,7 @@ options:
   fail_on_autoremove:
     description:
       - 'Corresponds to the C(--no-remove) option for C(apt).'
-      - 'If C(yes), it is ensured that no packages will be removed or the task will fail.'
+      - 'If C(true), it is ensured that no packages will be removed or the task will fail.'
       - 'C(fail_on_autoremove) is only supported with state except C(absent)'
     type: bool
     default: 'no'
@@ -202,7 +202,7 @@ attributes:
     platform:
         platforms: debian
 notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
+   - Three of the upgrade modes (C(full), C(safe) and its alias C(true)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
    - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
      For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws
      a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
@@ -353,7 +353,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 import datetime
 import fnmatch
-import itertools
+import locale as locale_module
 import os
 import random
 import re
@@ -929,7 +929,8 @@ def install_deb(
 
 
 def remove(m, pkgspec, cache, purge=False, force=False,
-           dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
+           dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
+           allow_change_held_packages=False):
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
@@ -962,7 +963,21 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
+        if allow_change_held_packages:
+            allow_change_held_packages = '--allow-change-held-packages'
+        else:
+            allow_change_held_packages = ''
+
+        cmd = "%s -q -y %s %s %s %s %s %s remove %s" % (
+            APT_GET_CMD,
+            dpkg_options,
+            purge,
+            force_yes,
+            autoremove,
+            check_arg,
+            allow_change_held_packages,
+            packages
+        )
 
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
@@ -1203,6 +1218,7 @@ def main():
     # to make sure we use the best parsable locale when running commands
     # also set apt specific vars for desired behaviour
     locale = get_best_parsable_locale(module)
+    locale_module.setlocale(locale_module.LC_ALL, locale)
     # APT related constants
     APT_ENV_VARS = dict(
         DEBIAN_FRONTEND='noninteractive',
@@ -1470,7 +1486,16 @@ def main():
                 else:
                     module.fail_json(**retvals)
             elif p['state'] == 'absent':
-                remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
+                remove(
+                    module,
+                    packages,
+                    cache,
+                    p['purge'],
+                    force=force_yes,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    allow_change_held_packages=allow_change_held_packages
+                )
 
         except apt.cache.LockFailedException as lockFailedException:
             if time.time() < deadline:

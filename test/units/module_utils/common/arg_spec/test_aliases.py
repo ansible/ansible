@@ -9,7 +9,6 @@ import pytest
 
 from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
-from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 
 # id, argument spec, parameters, expected parameters, deprecation, warning
 ALIAS_TEST_CASES = [
@@ -57,7 +56,12 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
             'not_yo_path': '/tmp',
         },
-        {'version': '1.7', 'date': None, 'collection_name': None, 'name': 'not_yo_path'},
+        {
+            'version': '1.7',
+            'date': None,
+            'collection_name': None,
+            'msg': "Alias 'not_yo_path' is deprecated. See the module docs for more information",
+        },
         "",
     )
 ]

@@ -11,6 +11,7 @@ import fnmatch
 import functools
 import json
 import os
+import pathlib
 import queue
 import re
 import shutil
@@ -83,6 +84,7 @@ if t.TYPE_CHECKING:
     FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
 import ansible.constants as C
+from ansible.compat.importlib_resources import files
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
@@ -122,7 +124,6 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
-from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
@@ -470,7 +471,7 @@ def build_collection(u_collection_path, u_output_path, force):
     try:
         collection_meta = _get_meta_from_src_dir(b_collection_path)
     except LookupError as lookup_err:
-        raise_from(AnsibleError(to_native(lookup_err)), lookup_err)
+        raise AnsibleError(to_native(lookup_err)) from lookup_err
 
     collection_manifest = _build_manifest(**collection_meta)
     file_manifest = _build_files_manifest(
@@ -479,6 +480,7 @@ def build_collection(u_collection_path, u_output_path, force):
         collection_meta['name'],  # type: ignore[arg-type]
         collection_meta['build_ignore'],  # type: ignore[arg-type]
         collection_meta['manifest'],  # type: ignore[arg-type]
+        collection_meta['license_file'],  # type: ignore[arg-type]
     )
 
     artifact_tarball_file_name = '{ns!s}-{name!s}-{ver!s}.tar.gz'.format(
@@ -1062,8 +1064,9 @@ def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
     }
 
 
-def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_control):
-    # type: (bytes, str, str, list[str], dict[str, t.Any]) -> FilesManifestType
+def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns,
+                          manifest_control, license_file):
+    # type: (bytes, str, str, list[str], dict[str, t.Any], t.Optional[str]) -> FilesManifestType
     if ignore_patterns and manifest_control is not Sentinel:
         raise AnsibleError('"build_ignore" and "manifest" are mutually exclusive')
 
@@ -1073,14 +1076,15 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
             namespace,
             name,
             manifest_control,
+            license_file,
         )
 
     return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
 
-def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_control):
-    # type: (bytes, str, str, dict[str, t.Any]) -> FilesManifestType
-
+def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_control,
+                                  license_file):
+    # type: (bytes, str, str, dict[str, t.Any], t.Optional[str]) -> FilesManifestType
     if not HAS_DISTLIB:
         raise AnsibleError('Use of "manifest" requires the python "distlib" library')
 
@@ -1113,14 +1117,19 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
     else:
         directives.extend([
             'include meta/*.yml',
-            'include *.txt *.md *.rst COPYING LICENSE',
+            'include *.txt *.md *.rst *.license COPYING LICENSE',
+            'recursive-include .reuse **',
+            'recursive-include LICENSES **',
             'recursive-include tests **',
-            'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt',
-            'recursive-include roles **.yml **.yaml **.json **.j2',
-            'recursive-include playbooks **.yml **.yaml **.json',
-            'recursive-include changelogs **.yml **.yaml',
-            'recursive-include plugins */**.py',
+            'recursive-include docs **.rst **.yml **.yaml **.json **.j2 **.txt **.license',
+            'recursive-include roles **.yml **.yaml **.json **.j2 **.license',
+            'recursive-include playbooks **.yml **.yaml **.json **.license',
+            'recursive-include changelogs **.yml **.yaml **.license',
+            'recursive-include plugins */**.py */**.license',
         ])
+
+        if license_file:
+            directives.append(f'include {license_file}')
 
         plugins = set(l.package.split('.')[-1] for d, l in get_all_plugin_loaders())
         for plugin in sorted(plugins):
@@ -1132,8 +1141,8 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
                 )
 
         directives.extend([
-            'recursive-include plugins/modules **.ps1 **.yml **.yaml',
-            'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs',
+            'recursive-include plugins/modules **.ps1 **.yml **.yaml **.license',
+            'recursive-include plugins/module_utils **.ps1 **.psm1 **.cs **.license',
         ])
 
         directives.extend(control.directives)
@@ -1141,7 +1150,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
         directives.extend([
             f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
             'recursive-exclude tests/output **',
-            'global-exclude /.* /__pycache__',
+            'global-exclude /.* /__pycache__ *.pyc *.pyo *.bak *~ *.swp',
         ])
 
     display.vvv('Manifest Directives:')
@@ -1394,36 +1403,75 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
     return collection_output
 
 
-def find_existing_collections(path, artifacts_manager):
+def _normalize_collection_path(path):
+    str_path = path.as_posix() if isinstance(path, pathlib.Path) else path
+    return pathlib.Path(
+        # This is annoying, but GalaxyCLI._resolve_path did it
+        os.path.expandvars(str_path)
+    ).expanduser().absolute()
+
+
+def find_existing_collections(path_filter, artifacts_manager, namespace_filter=None, collection_filter=None, dedupe=True):
     """Locate all collections under a given path.
 
     :param path: Collection dirs layout search path.
     :param artifacts_manager: Artifacts manager.
     """
-    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if files is None:
+        raise AnsibleError('importlib_resources is not installed and is required')
 
-    # FIXME: consider using `glob.glob()` to simplify looping
-    for b_namespace in os.listdir(b_path):
-        b_namespace_path = os.path.join(b_path, b_namespace)
-        if os.path.isfile(b_namespace_path):
+    if path_filter and not is_sequence(path_filter):
+        path_filter = [path_filter]
+
+    paths = set()
+    for path in files('ansible_collections').glob('*/*/'):
+        path = _normalize_collection_path(path)
+        if not path.is_dir():
+            continue
+        if path_filter:
+            for pf in path_filter:
+                try:
+                    path.relative_to(_normalize_collection_path(pf))
+                except ValueError:
+                    continue
+                break
+            else:
+                continue
+        paths.add(path)
+
+    seen = set()
+    for path in paths:
+        namespace = path.parent.name
+        name = path.name
+        if namespace_filter and namespace != namespace_filter:
+            continue
+        if collection_filter and name != collection_filter:
             continue
 
-        # FIXME: consider feeding b_namespace_path to Candidate.from_dir_path to get subdirs automatically
-        for b_collection in os.listdir(b_namespace_path):
-            b_collection_path = os.path.join(b_namespace_path, b_collection)
-            if not os.path.isdir(b_collection_path):
-                continue
-
+        if dedupe:
             try:
-                req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
-            except ValueError as val_err:
-                raise_from(AnsibleError(val_err), val_err)
+                collection_path = files(f'ansible_collections.{namespace}.{name}')
+            except ImportError:
+                continue
+            if collection_path in seen:
+                continue
+            seen.add(collection_path)
+        else:
+            collection_path = path
 
-            display.vvv(
-                u"Found installed collection {coll!s} at '{path!s}'".
-                format(coll=to_text(req), path=to_text(req.src))
-            )
-            yield req
+        b_collection_path = to_bytes(collection_path.as_posix())
+
+        try:
+            req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
+        except ValueError as val_err:
+            display.warning(f'{val_err}')
+            continue
+
+        display.vvv(
+            u"Found installed collection {coll!s} at '{path!s}'".
+            format(coll=to_text(req), path=to_text(req.src))
+        )
+        yield req
 
 
 def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
@@ -1577,12 +1625,14 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
     if 'build_ignore' not in collection_meta:  # installed collection, not src
         # FIXME: optimize this? use a different process? copy instead of build?
         collection_meta['build_ignore'] = []
+        collection_meta['manifest'] = Sentinel
     collection_manifest = _build_manifest(**collection_meta)
     file_manifest = _build_files_manifest(
         b_collection_path,
         collection_meta['namespace'], collection_meta['name'],
         collection_meta['build_ignore'],
         collection_meta['manifest'],
+        collection_meta['license_file'],
     )
 
     collection_output_path = _build_collection_dir(
@@ -1804,10 +1854,7 @@ def _resolve_depenency_map(
             ),
             conflict_causes,
         ))
-        raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
-            AnsibleError('\n'.join(error_msg_lines)),
-            dep_exc,
-        )
+        raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:
         parents = [
             "%s.%s:%s" % (p.namespace, p.name, p.ver)
@@ -1834,9 +1881,6 @@ def _resolve_depenency_map(
                 '* {req.fqcn!s}:{req.ver!s}'.format(req=req)
             )
 
-        raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
-            AnsibleError('\n'.join(error_msg_lines)),
-            dep_exc,
-        )
+        raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc

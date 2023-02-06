@@ -28,11 +28,11 @@ options:
         Spaces around the operator are required.
       - You can also pass an absolute path for a binary which is provided by the package to install.
         See examples for more information.
-    required: true
     aliases:
         - pkg
     type: list
     elements: str
+    default: []
 
   list:
     description:
@@ -55,6 +55,7 @@ options:
         When specifying multiple repos, separate them with a ",".
     type: list
     elements: str
+    default: []
 
   disablerepo:
     description:
@@ -63,6 +64,7 @@ options:
         When specifying multiple repos, separate them with a ",".
     type: list
     elements: str
+    default: []
 
   conf_file:
     description:
@@ -95,7 +97,7 @@ options:
 
   autoremove:
     description:
-      - If C(yes), removes all "leaf" packages from the system that were originally
+      - If C(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
     type: bool
@@ -108,6 +110,7 @@ options:
     version_added: "2.7"
     type: list
     elements: str
+    default: []
   skip_broken:
     description:
       - Skip all unavailable packages or packages with broken dependencies
@@ -132,14 +135,14 @@ options:
     version_added: "2.7"
   security:
     description:
-      - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+      - If set to C(true), and C(state=latest) then only installs updates that have been marked security related.
       - Note that, similar to C(dnf upgrade-minimal), this filter applies to dependencies as well.
     type: bool
     default: "no"
     version_added: "2.7"
   bugfix:
     description:
-      - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - If set to C(true), and C(state=latest) then only installs updates that have been marked bugfix related.
       - Note that, similar to C(dnf upgrade-minimal), this filter applies to dependencies as well.
     default: "no"
     type: bool
@@ -151,12 +154,14 @@ options:
     version_added: "2.7"
     type: list
     elements: str
+    default: []
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     version_added: "2.7"
     type: list
+    default: []
     elements: str
   disable_excludes:
     description:
@@ -168,15 +173,15 @@ options:
     type: str
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(false), the SSL certificates will not be validated.
+      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
     type: bool
     default: "yes"
     version_added: "2.7"
   sslverify:
     description:
       - Disables SSL validation of the repository server for this transaction.
-      - This should be set to C(no) if one of the configured repositories is using an untrusted or self-signed certificate.
+      - This should be set to C(false) if one of the configured repositories is using an untrusted or self-signed certificate.
     type: bool
     default: "yes"
     version_added: "2.13"
@@ -227,7 +232,7 @@ options:
     version_added: "2.8"
   allowerasing:
     description:
-      - If C(yes) it allows  erasing  of  installed  packages to resolve dependencies.
+      - If C(true) it allows  erasing  of  installed  packages to resolve dependencies.
     required: false
     type: bool
     default: "no"
@@ -313,6 +318,14 @@ EXAMPLES = '''
     name: "*"
     state: latest
 
+- name: Update the webserver, depending on which is installed on the system. Do not install the other one
+  ansible.builtin.dnf:
+    name:
+      - httpd
+      - nginx
+    state: latest
+    update_only: yes
+
 - name: Install the nginx rpm from a remote repo
   ansible.builtin.dnf:
     name: 'http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm'
@@ -365,7 +378,7 @@ import sys
 
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_file
-from ansible.module_utils.six import PY2, text_type
+from ansible.module_utils.six import text_type
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule

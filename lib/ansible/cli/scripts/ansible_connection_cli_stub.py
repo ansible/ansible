@@ -6,7 +6,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import argparse
 import fcntl
 import hashlib
 import io
@@ -29,7 +28,7 @@ from ansible.module_utils.connection import Connection, ConnectionError, send_da
 from ansible.module_utils.service import fork_process
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import connection_loader
+from ansible.plugins.loader import connection_loader, init_plugin_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
@@ -230,6 +229,7 @@ def main(args=None):
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')
     args = parser.parse_args(args[1:] if args is not None else args)
+    init_plugin_loader()
 
     # initialize verbosity
     display.verbosity = args.verbosity

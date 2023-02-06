@@ -10,6 +10,7 @@ import re
 
 from ansible.errors import AnsibleParserError
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.plugins.loader import init_plugin_loader
 from ansible.utils.sentinel import Sentinel
 
 
@@ -119,6 +120,7 @@ class TestModArgsDwim:
         assert err.value.args[0] == msg
 
     def test_multiple_actions_ping_shell(self):
+        init_plugin_loader()
         args_dict = {'ping': 'data=hi', 'shell': 'echo hi'}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:
@@ -129,6 +131,7 @@ class TestModArgsDwim:
         assert actions == set(['ping', 'shell'])
 
     def test_bogus_action(self):
+        init_plugin_loader()
         args_dict = {'bogusaction': {}}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:

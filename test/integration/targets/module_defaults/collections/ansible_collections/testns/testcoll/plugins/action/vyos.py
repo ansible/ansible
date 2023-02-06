@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action.normal import ActionModule as ActionBase
-from ansible.utils.vars import merge_hash
 
 
 class ActionModule(ActionBase):

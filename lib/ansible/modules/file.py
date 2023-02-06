@@ -15,7 +15,7 @@ version_added: historical
 short_description: Manage files and file properties
 extends_documentation_fragment: [files, action_common_attributes]
 description:
-- Set attributes of files, symlinks or directories.
+- Set attributes of files, directories, or symlinks and their targets.
 - Alternatively, remove files, symlinks or directories.
 - Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
   M(ansible.builtin.template), and M(ansible.builtin.assemble).
@@ -72,7 +72,8 @@ options:
   follow:
     description:
     - This flag indicates that filesystem links, if they exist, should be followed.
-    - Previous to Ansible 2.5, this was C(no) by default.
+    - I(follow=yes) and I(state=link) can modify I(src) when combined with parameters such as I(mode).
+    - Previous to Ansible 2.5, this was C(false) by default.
     type: bool
     default: yes
     version_added: '1.8'
@@ -552,34 +553,38 @@ def execute_touch(path, follow, timestamps):
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
-    if not module.check_mode:
-        if prev_state == 'absent':
-            # Create an empty file if the filename did not already exist
-            try:
-                open(b_path, 'wb').close()
-                changed = True
-            except (OSError, IOError) as e:
-                raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
-
-        # Update the attributes on the file
-        diff = initial_diff(path, 'touch', prev_state)
-        file_args = module.load_file_common_arguments(module.params)
+    # If the file did not already exist
+    if prev_state == 'absent':
+        # if we are in check mode and the file is absent
+        # we can set the changed status to True and return
+        if module.check_mode:
+            result['changed'] = True
+            return result
+        # Create an empty file
         try:
-            changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-            changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
-        except SystemExit as e:
-            if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
-                # We take this to mean that fail_json() was called from
-                # somewhere in basic.py
-                if prev_state == 'absent':
-                    # If we just created the file we can safely remove it
-                    os.remove(b_path)
-            raise
+            open(b_path, 'wb').close()
+            changed = True
+        except (OSError, IOError) as e:
+            raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
+                                              % to_native(e, nonstring='simplerepr'),
+                                              'path': path})
+    # Update the attributes on the file
+    diff = initial_diff(path, 'touch', prev_state)
+    file_args = module.load_file_common_arguments(module.params)
+    try:
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+        changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+    except SystemExit as e:
+        if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
+            # We take this to mean that fail_json() was called from
+            # somewhere in basic.py
+            if prev_state == 'absent':
+                # If we just created the file we can safely remove it
+                os.remove(b_path)
+        raise
 
-        result['changed'] = changed
-        result['diff'] = diff
+    result['changed'] = changed
+    result['diff'] = diff
     return result
 
 

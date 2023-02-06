@@ -1,0 +1,2 @@
+minor_changes:
+  - Allow force deletion of a group even when it is the primary group of a user. (https://github.com/ansible/ansible/issues/77849)

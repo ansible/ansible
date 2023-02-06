@@ -41,11 +41,13 @@ options:
     aliases: [ pkg ]
     type: list
     elements: str
+    default: []
   exclude:
     description:
       - Package name(s) to exclude when state=present, or latest
     type: list
     elements: str
+    default: []
     version_added: "2.0"
   list:
     description:
@@ -72,6 +74,7 @@ options:
         separated string
     type: list
     elements: str
+    default: []
     version_added: "0.9"
   disablerepo:
     description:
@@ -82,6 +85,7 @@ options:
         separated string
     type: list
     elements: str
+    default: []
     version_added: "0.9"
   conf_file:
     description:
@@ -112,16 +116,16 @@ options:
     version_added: "1.9"
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
-      - Prior to 2.1 the code worked as if this was set to C(yes).
+      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(false), the SSL certificates will not be validated.
+      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - Prior to 2.1 the code worked as if this was set to C(true).
     type: bool
     default: "yes"
     version_added: "2.1"
   sslverify:
     description:
       - Disables SSL validation of the repository server for this transaction.
-      - This should be set to C(no) if one of the configured repositories is using an untrusted or self-signed certificate.
+      - This should be set to C(false) if one of the configured repositories is using an untrusted or self-signed certificate.
     type: bool
     default: "yes"
     version_added: "2.13"
@@ -142,13 +146,13 @@ options:
     version_added: "2.3"
   security:
     description:
-      - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+      - If set to C(true), and C(state=latest) then only installs updates that have been marked security related.
     type: bool
     default: "no"
     version_added: "2.4"
   bugfix:
     description:
-      - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - If set to C(true), and C(state=latest) then only installs updates that have been marked bugfix related.
     default: "no"
     type: bool
     version_added: "2.6"
@@ -171,6 +175,7 @@ options:
         The enabled plugin will not persist beyond the transaction.
     type: list
     elements: str
+    default: []
     version_added: "2.5"
   disable_plugin:
     description:
@@ -178,6 +183,7 @@ options:
         The disabled plugins will not persist beyond the transaction.
     type: list
     elements: str
+    default: []
     version_added: "2.5"
   releasever:
     description:
@@ -187,7 +193,7 @@ options:
     version_added: "2.7"
   autoremove:
     description:
-      - If C(yes), removes all "leaf" packages from the system that were originally
+      - If C(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
       - "NOTE: This feature requires yum >= 3.4.3 (RHEL/CentOS 7+)"
@@ -402,7 +408,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 import errno

@@ -40,7 +40,7 @@ class CsCloudProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
+        self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.5.0')
         self.host = ''
         self.port = 0
 
@@ -131,7 +131,7 @@ class CsCloudProvider(CloudProvider):
 
     def _get_credentials(self, container_name: str) -> dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
-        def check(value):
+        def check(value) -> bool:
             """Return True if the given configuration is valid JSON, otherwise return False."""
             # noinspection PyBroadException
             try:

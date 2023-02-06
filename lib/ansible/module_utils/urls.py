@@ -53,7 +53,7 @@ import socket
 import sys
 import tempfile
 import traceback
-import types
+import types  # pylint: disable=unused-import
 
 from contextlib import contextmanager
 
@@ -99,7 +99,7 @@ except ImportError:
     import urllib2 as urllib_request  # type: ignore[no-redef]
     from urllib2 import AbstractHTTPHandler, BaseHandler  # type: ignore[no-redef]
 
-urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined]
+urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined,assignment]
 
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, unquote
@@ -115,7 +115,7 @@ except Exception:
 
 try:
     # SNI Handling needs python2.7.9's SSLContext
-    from ssl import create_default_context, SSLContext
+    from ssl import create_default_context, SSLContext  # pylint: disable=unused-import
     HAS_SSLCONTEXT = True
 except ImportError:
     HAS_SSLCONTEXT = False
@@ -181,7 +181,7 @@ try:
     from ssl import match_hostname, CertificateError
 except ImportError:
     try:
-        from backports.ssl_match_hostname import match_hostname, CertificateError  # type: ignore[misc]
+        from backports.ssl_match_hostname import match_hostname, CertificateError  # type: ignore[assignment]
     except ImportError:
         HAS_MATCH_HOSTNAME = False
 
@@ -196,7 +196,7 @@ except ImportError:
 
 # Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
 try:
-    import urllib_gssapi
+    import urllib_gssapi  # pylint: disable=unused-import
     HAS_GSSAPI = True
 except ImportError:
     HAS_GSSAPI = False
@@ -1461,7 +1461,7 @@ class Request:
                 url = urlunparse(parsed_list)
 
             if use_gssapi:
-                if HTTPGSSAPIAuthHandler:
+                if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
                     handlers.append(HTTPGSSAPIAuthHandler(username, password))
                 else:
                     imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',

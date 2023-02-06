@@ -32,7 +32,7 @@ options:
     hidden:
         description:
             - macOS only, optionally hide the user from the login window and system preferences.
-            - The default will be C(yes) if the I(system) option is used.
+            - The default will be C(true) if the I(system) option is used.
         type: bool
         version_added: "2.6"
     non_unique:
@@ -61,8 +61,8 @@ options:
         elements: str
     append:
         description:
-            - If C(yes), add the user to the groups specified in C(groups).
-            - If C(no), user will only be added to the groups specified in C(groups),
+            - If C(true), add the user to the groups specified in C(groups).
+            - If C(false), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
         type: bool
         default: no
@@ -86,12 +86,13 @@ options:
         version_added: "2.0"
     password:
         description:
-            - Optionally set the user's password to this encrypted value.
-            - On macOS systems, this value has to be cleartext. Beware of security issues.
+            - If provided, set the user's password to the provided encrypted hash (Linux) or plain text password (macOS).
+            - B(Linux/Unix/POSIX:) Enter the hashed password as the value.
+            - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
+              for details on various ways to generate the hash of a password.
             - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
             - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
-            - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
-              for details on various ways to generate these password values.
+            - B(OS X/macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
         type: str
     state:
         description:
@@ -101,7 +102,7 @@ options:
         default: present
     create_home:
         description:
-            - Unless set to C(no), a home directory will be made for the user
+            - Unless set to C(false), a home directory will be made for the user
               when the account is created or if the home directory does not exist.
             - Changed from C(createhome) to C(create_home) in Ansible 2.5.
         type: bool
@@ -109,13 +110,13 @@ options:
         aliases: [ createhome ]
     move_home:
         description:
-            - "If set to C(yes) when used with C(home: ), attempt to move the user's old home
+            - "If set to C(true) when used with C(home: ), attempt to move the user's old home
               directory to the specified directory if it isn't there already and the old home exists."
         type: bool
         default: no
     system:
         description:
-            - When creating an account C(state=present), setting this to C(yes) makes the user a system account.
+            - When creating an account C(state=present), setting this to C(true) makes the user a system account.
             - This setting cannot be changed on existing users.
         type: bool
         default: no
@@ -438,22 +439,10 @@ uid:
   returned: When I(uid) is passed to the module
   type: int
   sample: 1044
-password_expire_max:
-  description: Maximum number of days during which a password is valid.
-  returned: When user exists
-  type: int
-  sample: 20
-password_expire_min:
-  description: Minimum number of days between password change
-  returned: When user exists
-  type: int
-  sample: 20
 '''
 
 
-import ctypes
 import ctypes.util
-import errno
 import grp
 import calendar
 import os

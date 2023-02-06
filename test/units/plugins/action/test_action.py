@@ -22,6 +22,7 @@ __metaclass__ = type
 
 import os
 import re
+from importlib import import_module
 
 from ansible import constants as C
 from units.compat import unittest
@@ -33,6 +34,7 @@ from ansible.module_utils.six.moves import shlex_quote, builtins
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
+from ansible.plugins.loader import init_plugin_loader
 from ansible.template import Templar
 from ansible.vars.clean import clean_facts
 
@@ -109,6 +111,11 @@ class TestActionBase(unittest.TestCase):
         self.assertEqual(results, {})
 
     def test_action_base__configure_module(self):
+        init_plugin_loader()
+        # Pre-populate the ansible.builtin collection
+        # so reading the ansible_builtin_runtime.yml happens
+        # before the mock_open below
+        import_module('ansible_collections.ansible.builtin')
         fake_loader = DictDataLoader({
         })
 
@@ -427,7 +434,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         assertThrowRegex(
-            'Failed to set file mode on remote temporary file',
+            'Failed to set file mode or acl on remote temporary files',
             execute=True)
         action_base._remote_chmod.return_value = {
             'rc': 0,

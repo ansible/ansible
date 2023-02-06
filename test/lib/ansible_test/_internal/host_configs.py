@@ -18,6 +18,8 @@ from .io import (
 )
 
 from .completion import (
+    AuditMode,
+    CGroupVersion,
     CompletionConfig,
     docker_completion,
     DockerCompletionConfig,
@@ -46,7 +48,7 @@ from .util import (
 @dataclasses.dataclass(frozen=True)
 class OriginCompletionConfig(PosixCompletionConfig):
     """Pseudo completion config for the origin."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name='origin')
 
     @property
@@ -63,7 +65,7 @@ class OriginCompletionConfig(PosixCompletionConfig):
         return version
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -282,6 +284,8 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
     memory: t.Optional[int] = None
     privileged: t.Optional[bool] = None
     seccomp: t.Optional[str] = None
+    cgroup: t.Optional[CGroupVersion] = None
+    audit: t.Optional[AuditMode] = None
 
     def get_defaults(self, context: HostContext) -> DockerCompletionConfig:
         """Return the default settings."""
@@ -312,6 +316,12 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
         if self.seccomp is None:
             self.seccomp = defaults.seccomp
+
+        if self.cgroup is None:
+            self.cgroup = defaults.cgroup_enum
+
+        if self.audit is None:
+            self.audit = defaults.audit_enum
 
         if self.privileged is None:
             self.privileged = False
@@ -503,7 +513,7 @@ class HostSettings:
         with open_binary_file(path) as settings_file:
             return pickle.load(settings_file)
 
-    def apply_defaults(self):
+    def apply_defaults(self) -> None:
         """Apply defaults to the host settings."""
         context = HostContext(controller_config=None)
         self.controller.apply_defaults(context, self.controller.get_defaults(context))

@@ -8,9 +8,6 @@ __metaclass__ = type
 import pytest
 
 from ansible.executor.module_common import modify_module
-from ansible.module_utils.six import PY2
-
-from test_module_common import templar
 
 
 FAKE_OLD_MODULE = b'''#!/usr/bin/python
@@ -22,10 +19,7 @@ print('{"result": "%s"}' % sys.executable)
 @pytest.fixture
 def fake_old_module_open(mocker):
     m = mocker.mock_open(read_data=FAKE_OLD_MODULE)
-    if PY2:
-        mocker.patch('__builtin__.open', m)
-    else:
-        mocker.patch('builtins.open', m)
+    mocker.patch('builtins.open', m)
 
 # this test no longer makes sense, since a Python module will always either have interpreter discovery run or
 # an explicit interpreter passed (so we'll never default to the module shebang)

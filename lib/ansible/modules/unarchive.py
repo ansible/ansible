@@ -92,11 +92,11 @@ options:
       - Command-line options with multiple elements must use multiple lines in the array, one for each element.
     type: list
     elements: str
-    default: ""
+    default: []
     version_added: "2.1"
   remote_src:
     description:
-      - Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller.
+      - Set to C(true) to indicate the archived file is already on the remote system and not local to the Ansible controller.
       - This option is mutually exclusive with C(copy).
     type: bool
     default: no
@@ -104,8 +104,8 @@ options:
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificate.
-      - Prior to 2.2 the code worked as if this was set to C(yes).
+      - This should only set to C(false) used on personally controlled sites using self-signed certificate.
+      - Prior to 2.2 the code worked as if this was set to C(true).
     type: bool
     default: yes
     version_added: "2.2"

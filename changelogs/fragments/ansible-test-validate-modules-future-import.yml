@@ -1,0 +1,7 @@
+minor_changes:
+  - ansible-test - The ``validate-modules`` sanity test no longer limits the ``__future__`` imports that can be used.
+                   Other sanity tests that check ``__future__`` imports remain unchanged. As a result, the error code
+                   ``illegal-future-imports`` is no longer used.
+bugfixes:
+  - ansible-test - The ``validate-modules`` sanity test now properly enforces documentation before imports for plugins.
+                   Previously this was only enforced for modules due to a coding error.

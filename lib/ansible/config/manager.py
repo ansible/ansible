@@ -11,7 +11,6 @@ import os.path
 import sys
 import stat
 import tempfile
-import traceback
 
 from collections import namedtuple
 from collections.abc import Mapping, Sequence

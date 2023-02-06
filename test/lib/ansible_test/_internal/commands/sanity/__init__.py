@@ -126,8 +126,12 @@ TARGET_SANITY_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'sanity')
 
 # NOTE: must match ansible.constants.DOCUMENTABLE_PLUGINS, but with 'module' replaced by 'modules'!
 DOCUMENTABLE_PLUGINS = (
-    'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'modules', 'shell', 'strategy', 'vars'
+    'become', 'cache', 'callback', 'cliconf', 'connection', 'filter', 'httpapi', 'inventory',
+    'lookup', 'netconf', 'modules', 'shell', 'strategy', 'test', 'vars',
 )
+
+# Plugin types that can have multiple plugins per file, and where filenames not always correspond to plugin names
+MULTI_FILE_PLUGINS = ('filter', 'test', )
 
 created_venvs: list[str] = []
 
@@ -827,7 +831,7 @@ class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
 
 class SanityCodeSmellTest(SanitySingleVersion):
     """Sanity test script."""
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
 
@@ -862,10 +866,10 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.extensions = []
             self.prefixes = []
             self.files = []
-            self.text: t.Optional[bool] = None
+            self.text = None
             self.ignore_self = False
-            self.minimum_python_version: t.Optional[str] = None
-            self.maximum_python_version: t.Optional[str] = None
+            self.minimum_python_version = None
+            self.maximum_python_version = None
 
             self.__all_targets = False
             self.__no_targets = True

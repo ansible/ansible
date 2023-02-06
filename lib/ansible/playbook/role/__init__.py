@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from collections.abc import Container, Mapping, Set, Sequence
+from types import MappingProxyType
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
@@ -110,7 +111,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self.public = public
         self.static = True
 
-        self._metadata = None
+        self._metadata = RoleMetadata()
         self._play = play
         self._parents = []
         self._dependencies = []
@@ -130,6 +131,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # Indicates whether this role was included via include/import_role
         self.from_include = from_include
 
+        self._hash = None
+
         super(Role, self).__init__()
 
     def __repr__(self):
@@ -140,36 +143,38 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             return '.'.join(x for x in (self._role_collection, self._role_name) if x)
         return self._role_name
 
+    def get_role_path(self):
+        # Purposefully using realpath for canonical path
+        return os.path.realpath(self._role_path)
+
+    def _get_hash_dict(self):
+        if self._hash:
+            return self._hash
+        self._hash = MappingProxyType(
+            {
+                'name': self.get_name(),
+                'path': self.get_role_path(),
+                'params': MappingProxyType(self.get_role_params()),
+                'when': self.when,
+                'tags': self.tags,
+                'from_files': MappingProxyType(self._from_files),
+                'vars': MappingProxyType(self.vars),
+                'from_include': self.from_include,
+            }
+        )
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, Role):
+            return False
+
+        return self._get_hash_dict() == other._get_hash_dict()
+
     @staticmethod
     def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=True):
         if from_files is None:
             from_files = {}
         try:
-            # The ROLE_CACHE is a dictionary of role names, with each entry
-            # containing another dictionary corresponding to a set of parameters
-            # specified for a role as the key and the Role() object itself.
-            # We use frozenset to make the dictionary hashable.
-
-            params = role_include.get_role_params()
-            if role_include.when is not None:
-                params['when'] = role_include.when
-            if role_include.tags is not None:
-                params['tags'] = role_include.tags
-            if from_files is not None:
-                params['from_files'] = from_files
-            if role_include.vars:
-                params['vars'] = role_include.vars
-
-            params['from_include'] = from_include
-
-            hashed_params = hash_params(params)
-            if role_include.get_name() in play.ROLE_CACHE:
-                for (entry, role_obj) in play.ROLE_CACHE[role_include.get_name()].items():
-                    if hashed_params == entry:
-                        if parent_role:
-                            role_obj.add_parent(parent_role)
-                        return role_obj
-
             # TODO: need to fix cycle detection in role load (maybe use an empty dict
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
@@ -177,11 +182,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.get_name() not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.get_name()] = dict()
+            role_path = r.get_role_path()
+            if role_path not in play.role_cache:
+                play.role_cache[role_path] = []
 
-            # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            play.ROLE_CACHE[role_include.get_name()][hashed_params] = r
+            # Using the role path as a cache key is done to improve performance when a large number of roles
+            # are in use in the play
+            if r not in play.role_cache[role_path]:
+                play.role_cache[role_path].append(r)
+
             return r
 
         except RuntimeError:
@@ -222,8 +231,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
-        else:
-            self._metadata = RoleMetadata()
 
         # reset collections list; roles do not inherit collections from parents, just use the defaults
         # FUTURE: use a private config default for this so we can allow it to be overridden later
@@ -422,10 +429,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''
 
         deps = []
-        if self._metadata:
-            for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, play=self._play, parent_role=self)
-                deps.append(r)
+        for role_include in self._metadata.dependencies:
+            r = Role.load(role_include, play=self._play, parent_role=self)
+            deps.append(r)
 
         return deps
 
@@ -493,14 +499,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
         # get exported variables from meta/dependencies
-        seen = set()
+        seen = []
         for dep in self.get_all_dependencies():
             # Avoid reruning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
             if dep not in seen:
                 # only take 'exportable' vars from deps
                 all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
-                seen.add(dep)
+                seen.append(dep)
 
         # role_vars come from vars/ in a role
         all_vars = combine_vars(all_vars, self._role_vars)
@@ -634,8 +640,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         res['_had_task_run'] = self._had_task_run.copy()
         res['_completed'] = self._completed.copy()
 
-        if self._metadata:
-            res['_metadata'] = self._metadata.serialize()
+        res['_metadata'] = self._metadata.serialize()
 
         if include_deps:
             deps = []

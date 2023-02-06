@@ -17,6 +17,7 @@ import warnings
 from collections import defaultdict, namedtuple
 from traceback import format_exc
 
+import ansible.module_utils.compat.typing as t
 from ansible import __version__ as ansible_version
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
@@ -29,7 +30,7 @@ from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_P
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import add_fragments, find_plugin_docfile
+from ansible.utils.plugin_docs import add_fragments
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 
@@ -42,6 +43,7 @@ except ImportError:
 
 import importlib.util
 
+_PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
@@ -1357,7 +1359,7 @@ def get_fqcr_and_name(resource, collection='ansible.builtin'):
 
 
 def _load_plugin_filter():
-    filters = defaultdict(frozenset)
+    filters = _PLUGIN_FILTERS
     user_set = False
     if C.PLUGIN_FILTERS_CFG is None:
         filter_cfg = '/etc/ansible/plugin_filters.yml'
@@ -1385,14 +1387,21 @@ def _load_plugin_filter():
         version = to_text(version)
         version = version.strip()
 
+        # Modules and action plugins share the same reject list since the difference between the
+        # two isn't visible to the users
         if version == u'1.0':
-            # Modules and action plugins share the same blacklist since the difference between the
-            # two isn't visible to the users
+
+            if 'module_blacklist' in filter_data:
+                display.deprecated("'module_blacklist' is being removed in favor of 'module_rejectlist'", version='2.18')
+                if 'module_rejectlist' not in filter_data:
+                    filter_data['module_rejectlist'] = filter_data['module_blacklist']
+                del filter_data['module_blacklist']
+
             try:
-                filters['ansible.modules'] = frozenset(filter_data['module_blacklist'])
+                filters['ansible.modules'] = frozenset(filter_data['module_rejectlist'])
             except TypeError:
                 display.warning(u'Unable to parse the plugin filter file {0} as'
-                                u' module_blacklist is not a list.'
+                                u' module_rejectlist is not a list.'
                                 u' Skipping.'.format(filter_cfg))
                 return filters
             filters['ansible.plugins.action'] = filters['ansible.modules']
@@ -1404,11 +1413,11 @@ def _load_plugin_filter():
             display.warning(u'The plugin filter file, {0} does not exist.'
                             u' Skipping.'.format(filter_cfg))
 
-    # Specialcase the stat module as Ansible can run very few things if stat is blacklisted.
+    # Specialcase the stat module as Ansible can run very few things if stat is rejected
     if 'stat' in filters['ansible.modules']:
-        raise AnsibleError('The stat module was specified in the module blacklist file, {0}, but'
+        raise AnsibleError('The stat module was specified in the module reject list file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'
-                           ' from the blacklist.'.format(to_native(filter_cfg)))
+                           ' from the reject list.'.format(to_native(filter_cfg)))
     return filters
 
 
@@ -1448,25 +1457,38 @@ def _does_collection_support_ansible_version(requirement_string, ansible_version
     return ss.contains(base_ansible_version)
 
 
-def _configure_collection_loader():
+def _configure_collection_loader(prefix_collections_path=None):
     if AnsibleCollectionConfig.collection_finder:
         # this must be a Python warning so that it can be filtered out by the import sanity test
         warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
-    finder = _AnsibleCollectionFinder(C.COLLECTIONS_PATHS, C.COLLECTIONS_SCAN_SYS_PATH)
+    if prefix_collections_path is None:
+        prefix_collections_path = []
+
+    paths = list(prefix_collections_path) + C.COLLECTIONS_PATHS
+    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 
     # this should succeed now
     AnsibleCollectionConfig.on_collection_load += _on_collection_load_handler
 
 
-# TODO: All of the following is initialization code   It should be moved inside of an initialization
-# function which is called at some point early in the ansible and ansible-playbook CLI startup.
+def init_plugin_loader(prefix_collections_path=None):
+    """Initialize the plugin filters and the collection loaders
 
-_PLUGIN_FILTERS = _load_plugin_filter()
+    This method must be called to configure and insert the collection python loaders
+    into ``sys.meta_path`` and ``sys.path_hooks``.
 
-_configure_collection_loader()
+    This method is only called in ``CLI.run`` after CLI args have been parsed, so that
+    instantiation of the collection finder can utilize parsed CLI args, and to not cause
+    side effects.
+    """
+    _load_plugin_filter()
+    _configure_collection_loader(prefix_collections_path)
+
+
+# TODO: Evaluate making these class instantiations lazy, but keep them in the global scope
 
 # doc fragments first
 fragment_loader = PluginLoader(

@@ -64,7 +64,7 @@ options:
         version_added: '2.10'
     validate_certs:
         description:
-            - If C(no), SSL certificates for the target repo will not be validated. This should only be used
+            - If C(false), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
@@ -142,8 +142,8 @@ EXAMPLES = '''
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:
-      repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/somerepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-      state: present
+        repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
 '''
 
 RETURN = '''#'''
