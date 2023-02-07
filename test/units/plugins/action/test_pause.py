@@ -58,7 +58,7 @@ def test_pause_missing_curses(mocker, monkeypatch):
     mod = importlib.import_module('ansible.plugins.action.pause')
 
     with pytest.raises(AttributeError):
-        mod.curses
+        mod.curses  # pylint: disable=pointless-statement
 
     assert mod.HAS_CURSES is False
     assert mod.MOVE_TO_BOL == b'\r'

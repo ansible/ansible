@@ -139,7 +139,7 @@ def function_other_timeout():
 
 @timeout.timeout(1)
 def function_raises():
-    1 / 0
+    return 1 / 0
 
 
 @timeout.timeout(1)
