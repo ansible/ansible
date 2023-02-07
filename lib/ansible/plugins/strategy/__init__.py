@@ -957,11 +957,9 @@ class StrategyBase:
                 for notification in list(host_state.handler_notifications):
                     for handler in self.get_notified_handlers(notification, iterator, templar):
                         if not handler.notify_host(target_host):
-                            raise AnsibleAssertionError(
-                                f"Handler notifications deduplication has failed as {handler.name} "
-                                "has been already notified. This appears to be a bug."
-                            )
-                        self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
+                            # NOTE even with notifications deduplicated this can still happen in case of handlers being
+                            # notified multiple times using different names, like role name or fqcn
+                            self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
                     iterator.clear_notification(target_host.name, notification)
 
                 if host_state.run_state == IteratingStates.HANDLERS:
