@@ -141,10 +141,8 @@ class TestVariableManager(unittest.TestCase):
         return
 
         # pylint: disable=unreachable
-        '''
-        Tests complex variations and combinations of get_vars() with different
-        objects to modify the context under which variables are merged.
-        '''
+        # Tests complex variations and combinations of get_vars() with different
+        # objects to modify the context under which variables are merged.
         # FIXME: BCS makethiswork
         # return True
 
