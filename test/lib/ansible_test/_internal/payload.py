@@ -27,6 +27,7 @@ from .util import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
 from .util_common import (
@@ -44,7 +45,18 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
         return
 
     files = list(data_context().ansible_source)
-    filters = {}
+    permissions: dict[str, int] = {}
+    filters: dict[str, t.Callable[[tarfile.TarInfo], t.Optional[tarfile.TarInfo]]] = {}
+
+    def apply_permissions(tar_info: tarfile.TarInfo, mode: int) -> t.Optional[tarfile.TarInfo]:
+        """
+        Apply the specified permissions to the given file.
+        Existing file type bits are preserved.
+        """
+        tar_info.mode &= ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        tar_info.mode |= mode
+
+        return tar_info
 
     def make_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """
@@ -52,14 +64,12 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
         Existing file type bits are preserved.
         This ensures consistency of test results when using unprivileged users.
         """
-        tar_info.mode &= ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
-        tar_info.mode |= (
+        return apply_permissions(
+            tar_info,
             stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
             stat.S_IWUSR
         )
-
-        return tar_info
 
     def make_non_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """
@@ -67,13 +77,11 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
         Existing file type bits are preserved.
         This ensures consistency of test results when using unprivileged users.
         """
-        tar_info.mode &= ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
-        tar_info.mode |= (
+        return apply_permissions(
+            tar_info,
             stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
             stat.S_IWUSR
         )
-
-        return tar_info
 
     def detect_permissions(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """
@@ -81,7 +89,14 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
         Existing file type bits are preserved.
         This ensures consistency of test results when using unprivileged users.
         """
-        if tar_info.mode & stat.S_IXUSR:
+        if tar_info.path.startswith('ansible/'):
+            mode = permissions.get(os.path.relpath(tar_info.path, 'ansible'))
+        else:
+            mode = None
+
+        if mode:
+            tar_info = apply_permissions(tar_info, mode)
+        elif tar_info.mode & stat.S_IXUSR:
             tar_info = make_executable(tar_info)
         else:
             tar_info = make_non_executable(tar_info)
@@ -122,10 +137,15 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
         # there are no extra files when testing ansible itself
         extra_files = []
 
+    payload_config = PayloadConfig(
+        files=content_files,
+        permissions=permissions,
+    )
+
     for callback in data_context().payload_callbacks:
         # execute callbacks only on the content paths
         # this is done before placing them in the appropriate subdirectory (see below)
-        callback(content_files)
+        callback(payload_config)
 
     # place ansible source files under the 'ansible' directory on the delegated host
     files = [(src, os.path.join('ansible', dst)) for src, dst in files]

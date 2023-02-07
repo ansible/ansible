@@ -50,6 +50,13 @@ from .provider.layout.unsupported import (
 )
 
 
+@dataclasses.dataclass(frozen=True)
+class PayloadConfig:
+    """Configuration required to build a source tree payload for delegation."""
+    files: list[tuple[str, str]]
+    permissions: dict[str, int]
+
+
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
     def __init__(self) -> None:
@@ -63,7 +70,7 @@ class DataContext:
         self.__source_providers = source_providers
         self.__ansible_source: t.Optional[tuple[tuple[str, str], ...]] = None
 
-        self.payload_callbacks: list[c.Callable[[list[tuple[str, str]]], None]] = []
+        self.payload_callbacks: list[c.Callable[[PayloadConfig], None]] = []
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
@@ -173,7 +180,7 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback: c.Callable[[list[tuple[str, str]]], None]) -> None:
+    def register_payload_callback(self, callback: c.Callable[[PayloadConfig], None]) -> None:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
