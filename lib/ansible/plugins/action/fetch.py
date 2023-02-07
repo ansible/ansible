@@ -167,25 +167,25 @@ class ActionModule(ActionBase):
 
             dest = os.path.normpath(dest)
 
-            # check if we already have local file and whether it is encrypted
-            re_encrypt_needed = False
-            local_encrypted = False
             b_dest = to_bytes(dest, errors='surrogate_or_strict')
-            if self._loader.path_exists(b_dest) and self._loader.is_file(b_dest):
-                with open(b_dest, 'rb') as f:
-                    if is_encrypted_file(f, count=len(b_HEADER)):
-                        data_enc = f.read()
-                        data, vault_id_used, vault_secret_used = self._loader._vault.decrypt_and_get_vault_id(data_enc, filename=dest)
-                        local_encrypted = True
-                        local_checksum = checksum_s(data)
-                        re_encrypt_needed = (vault_id_used != vault_id or vault_secret_used != vault_secret)
-
-            # calculate checksum for local unencrypted file - will return None for nonexistent file
-            if not local_encrypted:
+            if encrypt:
+                # if we want local encrypted, we need to check if the local payload matches remote file,
+                # and the same vault/secret has been used for encryption
+                update_needed = True
+                if self._loader.path_exists(b_dest) and self._loader.is_file(b_dest):
+                    with open(b_dest, 'rb') as f:
+                        if is_encrypted_file(f, count=len(b_HEADER)):
+                            data_enc = f.read()
+                            data, vault_id_used, vault_secret_used = self._loader._vault.decrypt_and_get_vault_id(data_enc, filename=dest)
+                            local_checksum = checksum_s(data)
+                            update_needed = (vault_id_used != vault_id or vault_secret_used != vault_secret or remote_checksum != local_checksum)
+            else:
+                # no local encryption, check only file checksum
                 local_checksum = checksum(dest)
+                update_needed = (remote_checksum != local_checksum)
 
-            # fetch file if: checksum differ, or encryption flag changed, or encrypted with different credentials
-            if remote_checksum != local_checksum or local_encrypted != encrypt or re_encrypt_needed:
+            # fetch file if needed
+            if update_needed:
                 # create the containing directories, if needed
                 makedirs_safe(os.path.dirname(dest))
 
