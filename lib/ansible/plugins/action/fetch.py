@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
             validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
             encrypt = boolean(self._task.args.get('encrypt', False), strict=False)
-            vault_id = self._task.args.get('vault_id', None)
+            vault_id = self._task.args.get('vault_id', "default")
 
             msg = ''
             # validate source and dest are strings FIXME: use basic.py and module specs
@@ -64,9 +64,6 @@ class ActionModule(ActionBase):
 
             if source is None or dest is None:
                 msg = "src and dest are required"
-
-            if encrypt and vault_id is None:
-                vault_id = "default"
 
             if msg:
                 raise AnsibleActionFail(msg)
