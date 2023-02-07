@@ -24,6 +24,7 @@ from .metadata import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
 from .host_configs import (
@@ -114,7 +115,7 @@ class EnvironmentConfig(CommonConfig):
         self.dev_systemd_debug: bool = args.dev_systemd_debug
         self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
 
-        def host_callback(files: list[tuple[str, str]]) -> None:
+        def host_callback(payload_config: PayloadConfig) -> None:
             """Add the host files to the payload file list."""
             config = self
 
@@ -122,6 +123,8 @@ class EnvironmentConfig(CommonConfig):
                 settings_path = os.path.join(config.host_path, 'settings.dat')
                 state_path = os.path.join(config.host_path, 'state.dat')
                 config_path = os.path.join(config.host_path, 'config.dat')
+
+                files = payload_config.files
 
                 files.append((os.path.abspath(settings_path), settings_path))
                 files.append((os.path.abspath(state_path), state_path))
@@ -225,9 +228,10 @@ class TestConfig(EnvironmentConfig):
         if self.coverage_check:
             self.coverage = True
 
-        def metadata_callback(files: list[tuple[str, str]]) -> None:
+        def metadata_callback(payload_config: PayloadConfig) -> None:
             """Add the metadata file to the payload file list."""
             config = self
+            files = payload_config.files
 
             if config.metadata_path:
                 files.append((os.path.abspath(config.metadata_path), config.metadata_path))
@@ -264,8 +268,10 @@ class SanityConfig(TestConfig):
         self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
-            def git_callback(files: list[tuple[str, str]]) -> None:
+            def git_callback(payload_config: PayloadConfig) -> None:
                 """Add files from the content root .git directory to the payload file list."""
+                files = payload_config.files
+
                 for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
                     paths = [os.path.join(dirpath, filename) for filename in filenames]
                     files.extend((path, os.path.relpath(path, data_context().content.root)) for path in paths)
