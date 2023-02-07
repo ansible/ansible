@@ -69,18 +69,6 @@ class ActionModule(ActionBase):
         if not isinstance(self.valid_extensions, list):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
 
-    def get_vars(self, old_vars, new_vars):
-        results = {}
-        if self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-            for key, value in new_vars.items():
-                if key in old_vars:
-                    results[key] = combine_vars(old_vars[key], value, merge=self.hash_behaviour == 'merge')
-                else:
-                    results[key] = value
-        else:
-            results.update(new_vars)
-        return results
-
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
@@ -151,8 +139,11 @@ class ActionModule(ActionBase):
         if failed:
             result['failed'] = failed
             result['message'] = err_msg
-        else:
-            results.update(self.get_vars(task_vars, updated_results))
+        elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
+            merge_hashes = self.hash_behaviour == 'merge'
+            for key, value in results.items():
+                old_value = task_vars.get(key, None)
+                results[key] = combine_vars(old_value, value, merge=merge_hashes)
 
         result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
@@ -289,11 +280,11 @@ class ActionModule(ActionBase):
                     if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
                         failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                         if not failed:
-                            results.update(self.get_vars(results, loaded_data))
+                            results.update(loaded_data)
                 else:
                     if path.exists(filepath) and not self._ignore_file(filename):
                         failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                         if not failed:
-                            results.update(self.get_vars(results, loaded_data))
+                            results.update(loaded_data)
 
         return failed, err_msg, results

@@ -213,14 +213,13 @@
     dir: "{{ role_path }}/vars2/hashes/"
     hash_behaviour: merge
 
-- name: Verify that the hash is merged
+- name: Verify that the hash is merged after vars files are accumulated
   assert:
     that:
-      - "{{ config | length }} == 4"
-      - "config.key0 == 0"
+      - "{{ config | length }} == 3"
+      - "config.key0 is undefined"
       - "config.key1 == 1"
-      - "{{ config.key2 | length }} == 2"
-      - "config.key2.a == 21"
+      - "{{ config.key2 | length }} == 1"
       - "config.key2.b == 22"
       - "config.key3 == 3"
 

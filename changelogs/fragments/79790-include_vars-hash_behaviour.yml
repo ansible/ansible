@@ -1,2 +1,0 @@
-minor_changes:
-  - include_vars - ``hash_behaviour`` applies to each file of variables when using ``dir``.
