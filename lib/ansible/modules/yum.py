@@ -568,7 +568,7 @@ class YumModule(YumDnf):
 
             # A sideeffect of accessing conf is that the configuration is
             # loaded and plugins are discovered
-            self.yum_base.conf
+            self.yum_base.conf  # pylint: disable=pointless-statement
 
             try:
                 for rid in self.disablerepo:
