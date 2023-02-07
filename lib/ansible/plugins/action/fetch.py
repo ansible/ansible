@@ -19,8 +19,8 @@ __metaclass__ = type
 
 import os
 import base64
-from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip, AnsibleParserError
-from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.vault import b_HEADER, match_encrypt_secret, is_encrypted_file
