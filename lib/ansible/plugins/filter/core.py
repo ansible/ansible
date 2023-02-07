@@ -192,8 +192,8 @@ def ternary(value, true_val, false_val, none_val=None):
 
 
 def regex_escape(string, re_type='python'):
+    """Escape all regular expressions special characters from STRING."""
     string = to_text(string, errors='surrogate_or_strict', nonstring='simplerepr')
-    '''Escape all regular expressions special characters from STRING.'''
     if re_type == 'python':
         return re.escape(string)
     elif re_type == 'posix_basic':
@@ -299,9 +299,9 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
 
 
 def mandatory(a, msg=None):
+    """Make a variable mandatory."""
     from jinja2.runtime import Undefined
 
-    ''' Make a variable mandatory '''
     if isinstance(a, Undefined):
         if a._undefined_name is not None:
             name = "'%s' " % to_text(a._undefined_name)
