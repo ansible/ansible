@@ -177,7 +177,6 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
             con.run(['mkdir', '-p'] + writable_dirs, capture=True)
             con.run(['chmod', '777'] + writable_dirs, capture=True)
             con.run(['chmod', '755', working_directory], capture=True)
-            con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)], capture=True)
             con.run(['useradd', pytest_user, '--create-home'], capture=True)
 
             con.run(insert_options(command, options + ['--requirements-mode', 'only']), capture=False)

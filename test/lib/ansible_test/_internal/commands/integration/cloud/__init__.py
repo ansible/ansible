@@ -47,6 +47,7 @@ from ....ci import (
 
 from ....data import (
     data_context,
+    PayloadConfig,
 )
 
 from ....docker_util import (
@@ -189,13 +190,14 @@ class CloudBase(metaclass=abc.ABCMeta):
         self.args = args
         self.platform = self.__module__.rsplit('.', 1)[-1]
 
-        def config_callback(files: list[tuple[str, str]]) -> None:
+        def config_callback(payload_config: PayloadConfig) -> None:
             """Add the config file to the payload file list."""
             if self.platform not in self.args.metadata.cloud_config:
                 return  # platform was initialized, but not used -- such as being skipped due to all tests being disabled
 
             if self._get_cloud_config(self._CONFIG_PATH, ''):
                 pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
+                files = payload_config.files
 
                 if pair not in files:
                     display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
