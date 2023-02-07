@@ -160,7 +160,7 @@ if not HAS_SSLCONTEXT and HAS_SSL:
         libssl = ctypes.CDLL(libssl_name)
         for method in ('TLSv1_1_method', 'TLSv1_2_method'):
             try:
-                libssl[method]
+                libssl[method]  # pylint: disable=pointless-statement
                 # Found something - we'll let openssl autonegotiate and hope
                 # the server has disabled sslv2 and 3.  best we can do.
                 PROTOCOL = ssl.PROTOCOL_SSLv23
