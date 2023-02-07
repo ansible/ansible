@@ -96,7 +96,9 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
 
         if mode:
             tar_info = apply_permissions(tar_info, mode)
-        elif tar_info.mode & stat.S_IXUSR:
+        elif tar_info.mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+            # If any execute bit is set, treat the file as executable.
+            # This ensures that sanity tests which check execute bits behave correctly.
             tar_info = make_executable(tar_info)
         else:
             tar_info = make_non_executable(tar_info)

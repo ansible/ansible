@@ -1,5 +1,5 @@
 bugfixes:
   - ansible-test - Use consistent file permissions when delegating tests to a container or remote host.
-                   Files executable by their owner will use permissions ``755``.
-                   Files not executable by their owner will use permissions ``644``.
+                   Files with any execute bit set will use permissions ``755``.
+                   All other files will use permissions ``644``.
                    (Resolves issue https://github.com/ansible/ansible/issues/75079)
