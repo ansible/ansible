@@ -59,7 +59,7 @@ options:
   encrypt:
     version_added: '2.15'
     description:
-    - If enabled, the local file will be encrypted into a vault. In this case, the vault_id parameter is required.
+    - If enabled, the local file will be encrypted into a vault.
     type: bool
     default: no
   vault_id:
