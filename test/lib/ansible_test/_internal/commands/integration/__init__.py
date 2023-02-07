@@ -90,6 +90,7 @@ from .cloud import (
 
 from ...data import (
     data_context,
+    PayloadConfig,
 )
 
 from ...host_configs import (
@@ -214,11 +215,13 @@ def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None
     if isinstance(args, PosixIntegrationConfig):
         return
 
-    def inventory_callback(files: list[tuple[str, str]]) -> None:
+    def inventory_callback(payload_config: PayloadConfig) -> None:
         """
         Add the inventory file to the payload file list.
         This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
         """
+        files = payload_config.files
+
         inventory_path = get_inventory_relative_path(args)
         inventory_tuple = inventory_path_src, inventory_path
 
@@ -937,11 +940,12 @@ def command_integration_filter(args: TIntegrationConfig,
     vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
-        def integration_config_callback(files: list[tuple[str, str]]) -> None:
+        def integration_config_callback(payload_config: PayloadConfig) -> None:
             """
             Add the integration config vars file to the payload file list.
             This will preserve the file during delegation even if the file is ignored by source control.
             """
+            files = payload_config.files
             files.append((vars_file_src, data_context().content.integration_vars_path))
 
         data_context().register_payload_callback(integration_config_callback)
