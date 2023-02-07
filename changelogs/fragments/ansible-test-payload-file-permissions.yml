@@ -3,3 +3,7 @@ bugfixes:
                    Files with any execute bit set will use permissions ``755``.
                    All other files will use permissions ``644``.
                    (Resolves issue https://github.com/ansible/ansible/issues/75079)
+breaking_changes:
+  - ansible-test - Integration tests which depend on specific file permissions when running in an ansible-test managed
+                   host environment may require changes. Tests that require permissions other than ``755`` or ``644`` 
+                   may need to be updated to set the necessary permissions as part of the test run.
