@@ -65,7 +65,7 @@ EXAMPLES = r'''
 
 - name: Wait for asynchronous job to end
   ansible.builtin.async_status:
-    jid: '{{ yum_sleeper.ansible_job_id }}'
+    jid: "'{{ yum_sleeper.ansible_job_id }}'"
   register: job_result
   until: job_result.finished
   retries: 100
