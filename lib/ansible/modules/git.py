@@ -826,7 +826,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         repo_path = get_repo_path(dest, bare)
     except (IOError, ValueError) as err:
         # No repo path found
-        """``.git`` file does not have a valid format for detached Git dir."""
+        # ``.git`` file does not have a valid format for detached Git dir.
         module.fail_json(
             msg='Current repo does not have a valid reference to a '
             'separate Git dir or it refers to the invalid path',
@@ -1283,7 +1283,7 @@ def main():
                     repo_path = separate_git_dir
         except (IOError, ValueError) as err:
             # No repo path found
-            """``.git`` file does not have a valid format for detached Git dir."""
+            # ``.git`` file does not have a valid format for detached Git dir.
             module.fail_json(
                 msg='Current repo does not have a valid reference to a '
                 'separate Git dir or it refers to the invalid path',
