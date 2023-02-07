@@ -66,7 +66,7 @@ class TestCachePluginAdjudicator(unittest.TestCase):
 
     def test___getitem__(self):
         with pytest.raises(KeyError):
-            self.cache['foo']
+            self.cache['foo']  # pylint: disable=pointless-statement
 
     def test_pop_with_default(self):
         assert self.cache.pop('foo', 'bar') == 'bar'
