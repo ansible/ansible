@@ -183,6 +183,8 @@ test/support/integration/plugins/module_utils/network/common/utils.py pylint:unu
 test/support/integration/plugins/modules/sefcontext.py pylint:unused-import
 test/support/integration/plugins/modules/zypper.py pylint:unused-import
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:unused-import
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/connection/network_cli.py pylint:pointless-string-statement
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/ipaddr.py pylint:pointless-string-statement
 test/support/windows-integration/plugins/action/win_reboot.py pylint:unused-import
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
