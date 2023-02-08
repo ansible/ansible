@@ -23,7 +23,7 @@ from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.parsing.vault import b_HEADER, match_encrypt_secret, is_encrypted_file
+from ansible.parsing.vault import b_HEADER, match_encrypt_secret, is_encrypted_file, AnsibleVaultError
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, md5s, secure_hash, secure_hash_s
@@ -172,13 +172,17 @@ class ActionModule(ActionBase):
                 # if we want local encrypted, we need to check if the local payload matches remote file,
                 # and the same vault/secret has been used for encryption
                 update_needed = True
+                local_checksum = None
                 if self._loader.path_exists(b_dest) and self._loader.is_file(b_dest):
                     with open(b_dest, 'rb') as f:
                         if is_encrypted_file(f, count=len(b_HEADER)):
                             data_enc = f.read()
-                            data, vault_id_used, vault_secret_used = self._loader._vault.decrypt_and_get_vault_id(data_enc, filename=dest)
-                            local_checksum = checksum_s(data)
-                            update_needed = (vault_id_used != vault_id or vault_secret_used != vault_secret or remote_checksum != local_checksum)
+                            try:
+                                data, vault_id_used, vault_secret_used = self._loader._vault.decrypt_and_get_vault_id(data_enc, filename=dest)
+                                local_checksum = checksum_s(data)
+                                update_needed = (vault_id_used != vault_id or vault_secret_used != vault_secret or remote_checksum != local_checksum)
+                            except AnsibleVaultError:
+                                pass
             else:
                 # no local encryption, check only file checksum
                 local_checksum = checksum(dest)
