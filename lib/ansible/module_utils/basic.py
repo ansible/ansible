@@ -5,6 +5,21 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import sys
+
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+_PY3_MIN = sys.version_info >= (3, 5)
+_PY2_MIN = (2, 7) <= sys.version_info < (3,)
+_PY_MIN = _PY3_MIN or _PY2_MIN
+
+if not _PY_MIN:
+    print(
+        '\n{"failed": true, '
+        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
+    )
+    sys.exit(1)
+
 FILE_ATTRIBUTES = {
     'A': 'noatime',
     'a': 'append',
@@ -49,7 +64,6 @@ import shutil
 import signal
 import stat
 import subprocess
-import sys
 import tempfile
 import time
 import traceback
@@ -253,18 +267,6 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 MODE_OPERATOR_RE = re.compile(r'[+=-]')
 USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
-
-# Used for determining if the system is running a new enough python version
-# and should only restrict on our documented minimum versions
-_PY3_MIN = sys.version_info >= (3, 5)
-_PY2_MIN = (2, 7) <= sys.version_info < (3,)
-_PY_MIN = _PY3_MIN or _PY2_MIN
-if not _PY_MIN:
-    print(
-        '\n{"failed": true, '
-        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
-    )
-    sys.exit(1)
 
 
 #

@@ -1,0 +1,2 @@
+bugfixes:
+  - basic.py module_utils - Perform Python version check much earlier to ensure it runs before other errors occur.
