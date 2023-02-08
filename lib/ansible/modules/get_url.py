@@ -92,6 +92,9 @@ options:
         checksum="sha256:http://example.com/path/sha256sum.txt"'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
+      - The Python ``hashlib`` module is responsible for providing the available algorithms.
+        The choices vary based on Python version and OpenSSL version.
+      - On systems running in FIPS compliant mode, the ``md5`` algorithm may be unavailable.
       - Additionally, if a checksum is passed to this parameter, and the file exist under
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
