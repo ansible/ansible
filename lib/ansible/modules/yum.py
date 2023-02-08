@@ -1283,15 +1283,13 @@ class YumModule(YumDnf):
         obsoletes = {}
         for line in out.split('\n'):
             line = line.split()
-            """
-            Ignore irrelevant lines:
-              - '*' in line matches lines like mirror lists: "* base: mirror.corbina.net"
-              - len(line) != 3 or 6 could be strings like:
-                  "This system is not registered with an entitlement server..."
-              - len(line) = 6 is package obsoletes
-              - checking for '.' in line[0] (package name) likely ensures that it is of format:
-                  "package_name.arch" (coreutils.x86_64)
-            """
+            # Ignore irrelevant lines:
+            #  - '*' in line matches lines like mirror lists: "* base: mirror.corbina.net"
+            #  - len(line) != 3 or 6 could be strings like:
+            #      "This system is not registered with an entitlement server..."
+            #  - len(line) = 6 is package obsoletes
+            #  - checking for '.' in line[0] (package name) likely ensures that it is of format:
+            #      "package_name.arch" (coreutils.x86_64)
             if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
 
@@ -1620,30 +1618,29 @@ class YumModule(YumDnf):
             self.yum_basecmd.extend(e_cmd)
 
         if self.state in ('installed', 'present', 'latest'):
-            """ The need of this entire if conditional has to be changed
-                this function is the ensure function that is called
-                in the main section.
-
-                This conditional tends to disable/enable repo for
-                install present latest action, same actually
-                can be done for remove and absent action
-
-                As solution I would advice to cal
-                try: self.yum_base.repos.disableRepo(disablerepo)
-                and
-                try: self.yum_base.repos.enableRepo(enablerepo)
-                right before any yum_cmd is actually called regardless
-                of yum action.
-
-                Please note that enable/disablerepo options are general
-                options, this means that we can call those with any action
-                option.  https://linux.die.net/man/8/yum
-
-                This docstring will be removed together when issue: #21619
-                will be solved.
-
-                This has been triggered by: #19587
-            """
+            # The need of this entire if conditional has to be changed
+            # this function is the ensure function that is called
+            # in the main section.
+            #
+            # This conditional tends to disable/enable repo for
+            # install present latest action, same actually
+            # can be done for remove and absent action
+            #
+            # As solution I would advice to cal
+            # try: self.yum_base.repos.disableRepo(disablerepo)
+            # and
+            # try: self.yum_base.repos.enableRepo(enablerepo)
+            # right before any yum_cmd is actually called regardless
+            # of yum action.
+            #
+            # Please note that enable/disablerepo options are general
+            # options, this means that we can call those with any action
+            # option.  https://linux.die.net/man/8/yum
+            #
+            # This docstring will be removed together when issue: #21619
+            # will be solved.
+            #
+            # This has been triggered by: #19587
 
             if self.update_cache:
                 self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])

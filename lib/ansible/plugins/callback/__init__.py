@@ -163,7 +163,7 @@ class CallbackBase(AnsiblePlugin):
 
         self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation', 'skip_reason')
 
-    ''' helper for callbacks, so they don't all have to include deepcopy '''
+    # helper for callbacks, so they don't all have to include deepcopy
     _copy_result = deepcopy
 
     def set_option(self, k, v):

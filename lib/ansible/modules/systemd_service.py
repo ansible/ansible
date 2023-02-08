@@ -367,7 +367,7 @@ def main():
     if os.getenv('XDG_RUNTIME_DIR') is None:
         os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
-    ''' Set CLI options depending on params '''
+    # Set CLI options depending on params
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
     if module.params['scope'] != 'system':
