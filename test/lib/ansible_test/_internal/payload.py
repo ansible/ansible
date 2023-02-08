@@ -91,7 +91,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
         """
         if tar_info.path.startswith('ansible/'):
             mode = permissions.get(os.path.relpath(tar_info.path, 'ansible'))
-        elif data_context().content.collection and tar_info.path.startswith(data_context().content.collection.directory):
+        elif data_context().content.collection and is_subdir(tar_info.path, data_context().content.collection.directory):
             mode = permissions.get(os.path.relpath(tar_info.path, data_context().content.collection.directory))
         else:
             mode = None
