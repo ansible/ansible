@@ -91,7 +91,7 @@ The playbook sets three of the seven values from the command line above: the gro
 
 The playbook contains one play with two tasks, and should generate output like this:
 
-.. code-block:: bash
+.. code-block:: shell
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos.vyos.vyos first_playbook.yml
 
@@ -115,7 +115,7 @@ The playbook contains one play with two tasks, and should generate output like t
 
 The extended first playbook has five tasks in a single play. Run it with the same command you used above. The output shows you the change Ansible made to the config:
 
-.. code-block:: bash
+.. code-block:: shell
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos.vyos.vyos first_playbook_ext.yml
 
