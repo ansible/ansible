@@ -1,0 +1,5 @@
+bugfixes:
+  - get_url module - Removed out-of-date documentation stating that ``hashlib`` is a third-party library.
+  - module_utils/basic.py - Fix detection of available hashing algorithms on Python 3.x.
+                            All supported algorithms are now available instead of being limited to a hard-coded list.
+                            This affects modules such as ``get_url`` which accept an arbitrary checksum algorithm.
