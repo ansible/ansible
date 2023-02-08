@@ -47,45 +47,7 @@ def get_exception():
     return sys.exc_info()[1]
 
 
-try:
-    # Python 2.6+
-    from ast import literal_eval
-except ImportError:
-    # a replacement for literal_eval that works with python 2.4. from:
-    # https://mail.python.org/pipermail/python-list/2009-September/551880.html
-    # which is essentially a cut/paste from an earlier (2.6) version of python's
-    # ast.py
-    from compiler import ast, parse
-    from ansible.module_utils.six import binary_type, integer_types, string_types, text_type
+from ast import literal_eval
 
-    def literal_eval(node_or_string):  # type: ignore[misc]
-        """
-        Safely evaluate an expression node or a string containing a Python
-        expression.  The string or node provided may only consist of the  following
-        Python literal structures: strings, numbers, tuples, lists, dicts,  booleans,
-        and None.
-        """
-        _safe_names = {'None': None, 'True': True, 'False': False}
-        if isinstance(node_or_string, string_types):
-            node_or_string = parse(node_or_string, mode='eval')
-        if isinstance(node_or_string, ast.Expression):
-            node_or_string = node_or_string.node
-
-        def _convert(node):
-            if isinstance(node, ast.Const) and isinstance(node.value, (text_type, binary_type, float, complex) + integer_types):
-                return node.value
-            elif isinstance(node, ast.Tuple):
-                return tuple(map(_convert, node.nodes))
-            elif isinstance(node, ast.List):
-                return list(map(_convert, node.nodes))
-            elif isinstance(node, ast.Dict):
-                return dict((_convert(k), _convert(v)) for k, v in node.items())
-            elif isinstance(node, ast.Name):
-                if node.name in _safe_names:
-                    return _safe_names[node.name]
-            elif isinstance(node, ast.UnarySub):
-                return -_convert(node.expr)  # pylint: disable=invalid-unary-operand-type
-            raise ValueError('malformed string')
-        return _convert(node_or_string)
 
 __all__ = ('get_exception', 'literal_eval')
