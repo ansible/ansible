@@ -70,7 +70,7 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
-class ClassProperty:
+class _ClassProperty:
     def __set_name__(self, owner, name):
         self.name = name
 
@@ -80,16 +80,8 @@ class ClassProperty:
 
 class FieldAttributeBase:
 
-    fattributes = ClassProperty()
+    fattributes = _ClassProperty()
 
-    # @classmethod
-    # @property
-    # def fattributes(cls):
-    #     return cls._fattributes()
-
-    # mypy complains with "misc: Decorated property not supported"
-    # when @property and @cache are used together,
-    # split fattributes above into two methods
     @classmethod
     @cache
     def _fattributes(cls):
