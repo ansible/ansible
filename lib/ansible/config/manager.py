@@ -144,16 +144,17 @@ def ensure_type(value, value_type, origin=None):
 
         elif value_type in ('str', 'string'):
             if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode, bool, int, float, complex)):
-                value = unquote(to_text(value, errors='surrogate_or_strict'))
+                value = to_text(value, errors='surrogate_or_strict')
+                if origin == 'ini':
+                    value = unquote(value)
             else:
                 errmsg = 'string'
 
-        elif value_type == 'raw':
-            value = to_text(value, errors='surrogate_or_strict')
-
         # defaults to string type
         elif isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
-            value = unquote(to_text(value, errors='surrogate_or_strict'))
+            value = to_text(value, errors='surrogate_or_strict')
+            if origin == 'ini':
+                value = unquote(value)
 
         if errmsg:
             raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))
