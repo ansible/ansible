@@ -1,0 +1,2 @@
+minor_changes:
+- Playbook objects - Replace deprecated stacked ``@classmethod`` and ``@property``
