@@ -88,7 +88,7 @@ attributes:
   safe_file_operations:
     support: none
   vault:
-    support: encrypt
+    support: full
     version_added: '2.15'
 notes:
 - When running fetch with C(become), the M(ansible.builtin.slurp) module will also be
