@@ -534,6 +534,10 @@ class TaskExecutor:
                                     "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
+            else:
+                # if we didn't get a dict, it means there's garbage remaining after k=v parsing, just give up
+                # see https://github.com/ansible/ansible/issues/79862
+                raise AnsibleError(f"invalid or malformed argument: '{variable_params}'")
 
         # update no_log to task value, now that we have it templated
         no_log = self._task.no_log
