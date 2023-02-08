@@ -10,3 +10,15 @@
     - name: "meta"
       debug:
         msg: Hello
+
+    - name: ensure malformed raw_params on arbitrary actions are not ignored
+      debug:
+        garbage {{"with a template"}}
+      ignore_errors: true
+      register: bad_templated_raw_param
+
+    - assert:
+        that:
+        - bad_templated_raw_param is failed
+        - |
+          "invalid or malformed argument: 'garbage with a template'" in bad_templated_raw_param.msg
