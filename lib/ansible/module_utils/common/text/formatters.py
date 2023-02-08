@@ -67,7 +67,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         unit = default_unit
 
     if unit is None:
-        ''' No unit given, returning raw number '''
+        # No unit given, returning raw number
         return int(round(num))
     range_key = unit[0].upper()
     try:

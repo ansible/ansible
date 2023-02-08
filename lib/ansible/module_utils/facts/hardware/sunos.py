@@ -175,9 +175,7 @@ class SunOSHardware(Hardware):
 
         prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
         rc, out, err = self.module.run_command(prtdiag_path)
-        """
-        rc returns 1
-        """
+        # rc returns 1
         if out:
             system_conf = out.split('\n')[0]
 
