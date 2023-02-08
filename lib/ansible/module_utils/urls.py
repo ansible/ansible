@@ -288,7 +288,7 @@ if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
     # Python Software Foundation License
 
-    """The match_hostname() function from Python 3.4, essential when using SSL."""
+    # The match_hostname() function from Python 3.4, essential when using SSL.
 
     try:
         # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not
