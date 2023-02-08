@@ -23,6 +23,10 @@ def main():
                 'type': 'str',
                 'choices': ['absent', 'present'],
             },
+            'default_value': {
+                'type': 'bool',
+                'default': True,
+            },
             'path': {},
             'content': {},
             'mapping': {
@@ -246,7 +250,7 @@ def main():
             ('state', 'present', ('path', 'content'), True),
         ),
         mutually_exclusive=(
-            ('path', 'content'),
+            ('path', 'content', 'default_value',),
         ),
         required_one_of=(
             ('required_one_of_one', 'required_one_of_two'),
