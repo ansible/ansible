@@ -388,8 +388,8 @@ Here is a simple mock of :meth:`AnsibleModule.run_command` (taken from :file:`te
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
-                with self.assertRaises(AnsibleExitJson) as result:
-                    my_module.main()
+            with self.assertRaises(AnsibleExitJson) as result:
+                my_module.main()
                 self.assertFalse(result.exception.args[0]['changed'])
         # Check that run_command has been called
         run_command.assert_called_once_with('/usr/bin/command args')
