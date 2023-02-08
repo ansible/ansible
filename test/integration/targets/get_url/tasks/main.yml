@@ -398,6 +398,8 @@
     port: '{{ http_port }}'
     state: started
 
+- include_tasks: hashlib.yml
+
 - name: download src with sha1 checksum url in check mode
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
