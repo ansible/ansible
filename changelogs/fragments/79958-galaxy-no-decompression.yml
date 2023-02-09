@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - concrete_artifact_manager - disables on-the-fly decompression of artifacts
+                                when downloading from a galaxy server to avoid
+                                checksum mismatches

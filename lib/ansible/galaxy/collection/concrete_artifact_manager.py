@@ -463,6 +463,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
         validate_certs=validate_certs,
         headers=None if token is None else token.headers(),
         unredirected_headers=['Authorization'], http_agent=user_agent(),
+        decompress=False,
         timeout=timeout
     )
 
