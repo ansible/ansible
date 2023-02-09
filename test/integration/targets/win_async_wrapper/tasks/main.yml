@@ -12,12 +12,12 @@
 - name: validate response
   assert:
     that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.ansible_job_id is match('j\d+\.\d+')
     - asyncresult.started == 1
     - asyncresult is started
     - asyncresult.finished == 0
     - asyncresult is not finished
-    - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
+    - asyncresult.results_file is search('\.ansible_async.+j\d+\.\d+')
      # ensure that async is actually async- this test will fail if # hosts > forks or if the target host is VERY slow
     - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 15
 
@@ -31,7 +31,7 @@
 - name: validate response
   assert:
     that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.ansible_job_id is match('j\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult is finished
     - asyncresult is changed
@@ -69,7 +69,7 @@
 - name: validate response
   assert:
     that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.ansible_job_id is match('j\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult is finished
     - asyncresult is changed
@@ -107,7 +107,7 @@
 - name: validate response
   assert:
     that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.ansible_job_id is match('j\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult is finished
     - asyncresult is not changed
@@ -125,7 +125,7 @@
 - name: validate response
   assert:
     that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.ansible_job_id is match('j\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult is finished
     - asyncresult is changed
@@ -143,7 +143,7 @@
 - name: validate response
   assert:
     that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.ansible_job_id is match('j\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult is finished
     - asyncresult is not changed
@@ -231,7 +231,7 @@
 #    - item is finished
 #    - item.slept_sec == 3
 #    - item is changed
-#    - item.ansible_job_id is match('\d+\.\d+')
+#    - item.ansible_job_id is match('j\d+\.\d+')
 #  with_items: "{{ asyncout.results }}"
 
 # this part of the test is flaky- Windows PIDs are reused aggressively, so this occasionally fails due to a new process with the same ID
