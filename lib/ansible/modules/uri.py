@@ -143,7 +143,7 @@ options:
       - This should only set to C(false) used on personally controlled sites using self-signed certificates.
       - Prior to 1.9.2 the code defaulted to C(false).
     type: bool
-    default: yes
+    default: true
     version_added: '1.9.2'
   client_cert:
     description:
@@ -185,7 +185,7 @@ options:
     description:
       - If C(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
-    default: yes
+    default: true
   unix_socket:
     description:
     - Path to Unix domain socket to use for connection
@@ -253,7 +253,7 @@ EXAMPLES = r'''
 - name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
   ansible.builtin.uri:
     url: http://www.example.com
-    return_content: yes
+    return_content: true
   register: this
   failed_when: "'AWESOME' not in this.content"
 
@@ -264,7 +264,7 @@ EXAMPLES = r'''
     password: your_pass
     method: POST
     body: "{{ lookup('ansible.builtin.file','issue.json') }}"
-    force_basic_auth: yes
+    force_basic_auth: true
     status_code: 201
     body_format: json
 
@@ -311,7 +311,7 @@ EXAMPLES = r'''
   ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
-    return_content: yes
+    return_content: true
     headers:
       Cookie: "{{ login.cookies_string }}"
 
@@ -321,7 +321,7 @@ EXAMPLES = r'''
     user: "{{ jenkins.user }}"
     password: "{{ jenkins.password }}"
     method: GET
-    force_basic_auth: yes
+    force_basic_auth: true
     status_code: 201
 
 - name: POST from contents of local file
@@ -335,7 +335,7 @@ EXAMPLES = r'''
     url: https://httpbin.org/post
     method: POST
     src: /path/to/my/file.json
-    remote_src: yes
+    remote_src: true
 
 - name: Create workspaces in Log analytics Azure
   ansible.builtin.uri:
