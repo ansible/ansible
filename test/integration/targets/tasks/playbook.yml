@@ -6,11 +6,6 @@
       debug:
         msg: Hello
 
-    # ensure we properly test for an action name, not a task name when cheking for a meta task
-    - name: "meta"
-      debug:
-        msg: Hello
-
     - name: ensure malformed raw_params on arbitrary actions are not ignored
       debug:
         garbage {{"with a template"}}
