@@ -88,6 +88,7 @@ from ...host_profiles import (
 
 class TestContext:
     """Contexts that unit tests run in based on the type of content."""
+
     controller = 'controller'
     modules = 'modules'
     module_utils = 'module_utils'

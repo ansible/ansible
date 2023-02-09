@@ -243,6 +243,7 @@ def get_docker_info(args: CommonConfig) -> DockerInfo:
 
 class SystemdControlGroupV1Status(enum.Enum):
     """The state of the cgroup v1 systemd hierarchy on the container host."""
+
     SUBSYSTEM_MISSING = 'The systemd cgroup subsystem was not found.'
     FILESYSTEM_NOT_MOUNTED = 'The "/sys/fs/cgroup/systemd" filesystem is not mounted.'
     MOUNT_TYPE_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount type is not correct.'
@@ -252,6 +253,7 @@ class SystemdControlGroupV1Status(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class ContainerHostProperties:
     """Container host properties detected at run time."""
+
     audit_code: str
     max_open_files: int
     loginuid: t.Optional[int]
@@ -423,6 +425,7 @@ def run_utility_container(
 
 class DockerCommand:
     """Details about the available docker command."""
+
     def __init__(self, command: str, executable: str, version: str) -> None:
         self.command = command
         self.executable = executable
@@ -720,6 +723,7 @@ class DockerError(Exception):
 
 class ContainerNotFoundError(DockerError):
     """The container identified by `identifier` was not found."""
+
     def __init__(self, identifier: str) -> None:
         super().__init__('The container "%s" was not found.' % identifier)
 
@@ -728,6 +732,7 @@ class ContainerNotFoundError(DockerError):
 
 class DockerInspect:
     """The results of `docker inspect` for a single container."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -847,6 +852,7 @@ def docker_network_disconnect(args: CommonConfig, container_id: str, network: st
 
 class DockerImageInspect:
     """The results of `docker image inspect` for a single image."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -909,6 +915,7 @@ def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -
 
 class DockerNetworkInspect:
     """The results of `docker network inspect` for a single network."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection

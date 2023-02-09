@@ -9,6 +9,7 @@ import re
 
 class CGroupPath:
     """Linux cgroup path constants."""
+
     ROOT = '/sys/fs/cgroup'
     SYSTEMD = '/sys/fs/cgroup/systemd'
     SYSTEMD_RELEASE_AGENT = '/sys/fs/cgroup/systemd/release_agent'
@@ -16,6 +17,7 @@ class CGroupPath:
 
 class MountType:
     """Linux filesystem mount type constants."""
+
     TMPFS = 'tmpfs'
     CGROUP_V1 = 'cgroup'
     CGROUP_V2 = 'cgroup2'
@@ -24,6 +26,7 @@ class MountType:
 @dataclasses.dataclass(frozen=True)
 class CGroupEntry:
     """A single cgroup entry parsed from '/proc/{pid}/cgroup' in the proc filesystem."""
+
     id: int
     subsystem: str
     path: pathlib.PurePosixPath
@@ -58,6 +61,7 @@ class CGroupEntry:
 @dataclasses.dataclass(frozen=True)
 class MountEntry:
     """A single mount info entry parsed from '/proc/{pid}/mountinfo' in the proc filesystem."""
+
     mount_id: int
     parent_id: int
     device_major: int

@@ -252,12 +252,14 @@ License: GPLv3+
 
 class CollectionDetail:
     """Collection detail."""
+
     def __init__(self) -> None:
         self.version: t.Optional[str] = None
 
 
 class CollectionDetailError(ApplicationError):
     """An error occurred retrieving collection detail."""
+
     def __init__(self, reason: str) -> None:
         super().__init__('Error collecting collection detail: %s' % reason)
         self.reason = reason

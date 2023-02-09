@@ -53,12 +53,14 @@ from .provider.layout.unsupported import (
 @dataclasses.dataclass(frozen=True)
 class PayloadConfig:
     """Configuration required to build a source tree payload for delegation."""
+
     files: list[tuple[str, str]]
     permissions: dict[str, int]
 
 
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
+
     def __init__(self) -> None:
         content_path = os.environ.get('ANSIBLE_TEST_CONTENT_ROOT')
         current_path = os.getcwd()
@@ -246,6 +248,7 @@ def data_context() -> DataContext:
 @dataclasses.dataclass(frozen=True)
 class PluginInfo:
     """Information about an Ansible plugin."""
+
     plugin_type: str
     name: str
     paths: list[str]

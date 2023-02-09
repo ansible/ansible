@@ -20,6 +20,7 @@ from . import (
 
 class DigitalOceanCloudProvider(CloudProvider):
     """Checks if a configuration file has been passed or fixtures are going to be used for testing"""
+
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
@@ -34,6 +35,7 @@ class DigitalOceanCloudProvider(CloudProvider):
 
 class DigitalOceanCloudEnvironment(CloudEnvironment):
     """Updates integration test environment after delegation. Will setup the config file as parameter."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()

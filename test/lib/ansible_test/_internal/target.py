@@ -401,6 +401,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
 
 class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
+
     def __init__(self) -> None:
         self.name = ''
         self.path = ''
@@ -435,6 +436,7 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 
 class TestTarget(CompletionTarget):
     """Generic test target."""
+
     def __init__(
         self,
         path: str,
@@ -476,6 +478,7 @@ class TestTarget(CompletionTarget):
 
 class IntegrationTargetType(enum.Enum):
     """Type of integration test target."""
+
     CONTROLLER = enum.auto()
     TARGET = enum.auto()
     UNKNOWN = enum.auto()
@@ -692,6 +695,7 @@ class IntegrationTarget(CompletionTarget):
 
 class TargetPatternsNotMatched(ApplicationError):
     """One or more targets were not matched when a match was required."""
+
     def __init__(self, patterns: set[str]) -> None:
         self.patterns = sorted(patterns)
 

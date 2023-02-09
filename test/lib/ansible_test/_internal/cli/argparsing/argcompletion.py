@@ -9,6 +9,7 @@ import typing as t
 
 class Substitute:
     """Substitute for missing class which accepts all arguments."""
+
     def __init__(self, *args, **kwargs) -> None:
         pass
 
@@ -35,6 +36,7 @@ class CompType(enum.Enum):
     Bash COMP_TYPE argument completion types.
     For documentation, see: https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html#index-COMP_005fTYPE
     """
+
     COMPLETION = '\t'
     """
     Standard completion, typically triggered by a single tab.
@@ -85,6 +87,7 @@ class OptionCompletionFinder(CompletionFinder):
     Custom completion finder for argcomplete.
     It provides support for running completion in list mode, which argcomplete natively handles the same as standard completion.
     """
+
     enabled = bool(argcomplete)
 
     def __init__(self, *args, validator=None, **kwargs) -> None:

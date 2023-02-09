@@ -68,6 +68,7 @@ COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'coverage')
 
@@ -340,6 +341,7 @@ def sanitize_filename(
 
 class PathChecker:
     """Checks code coverage paths to verify they are valid and reports on the findings."""
+
     def __init__(self, args: CoverageConfig, collection_search_re: t.Optional[t.Pattern] = None) -> None:
         self.args = args
         self.collection_search_re = collection_search_re

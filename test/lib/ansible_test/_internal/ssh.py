@@ -32,6 +32,7 @@ from .config import (
 @dataclasses.dataclass
 class SshConnectionDetail:
     """Information needed to establish an SSH connection to a host."""
+
     name: str
     host: str
     port: t.Optional[int]
@@ -76,6 +77,7 @@ class SshConnectionDetail:
 
 class SshProcess:
     """Wrapper around an SSH process."""
+
     def __init__(self, process: t.Optional[subprocess.Popen]) -> None:
         self._process = process
         self.pending_forwards: t.Optional[list[tuple[str, int]]] = None

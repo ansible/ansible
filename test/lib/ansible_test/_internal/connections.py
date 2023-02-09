@@ -44,6 +44,7 @@ from .become import (
 
 class Connection(metaclass=abc.ABCMeta):
     """Base class for connecting to a host."""
+
     @abc.abstractmethod
     def run(self,
             command: list[str],
@@ -90,6 +91,7 @@ class Connection(metaclass=abc.ABCMeta):
 
 class LocalConnection(Connection):
     """Connect to localhost."""
+
     def __init__(self, args: EnvironmentConfig) -> None:
         self.args = args
 
@@ -117,6 +119,7 @@ class LocalConnection(Connection):
 
 class SshConnection(Connection):
     """Connect to a host using SSH."""
+
     def __init__(self, args: EnvironmentConfig, settings: SshConnectionDetail, become: t.Optional[Become] = None) -> None:
         self.args = args
         self.settings = settings
@@ -213,6 +216,7 @@ class SshConnection(Connection):
 
 class DockerConnection(Connection):
     """Connect to a host using Docker."""
+
     def __init__(self, args: EnvironmentConfig, container_id: str, user: t.Optional[str] = None) -> None:
         self.args = args
         self.container_id = container_id

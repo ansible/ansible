@@ -150,6 +150,7 @@ class ContentLayout(Layout):
 
 class LayoutMessages:
     """Messages generated during layout creation that should be deferred for later display."""
+
     def __init__(self) -> None:
         self.info: list[str] = []
         self.warning: list[str] = []
@@ -173,6 +174,7 @@ class CollectionDetail:
 
 class LayoutProvider(PathProvider):
     """Base class for layout providers."""
+
     PLUGIN_TYPES = (
         'action',
         'become',

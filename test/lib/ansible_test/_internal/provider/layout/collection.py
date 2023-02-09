@@ -17,6 +17,7 @@ from ...util import (
 
 class CollectionLayout(LayoutProvider):
     """Layout provider for Ansible collections."""
+
     @staticmethod
     def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""

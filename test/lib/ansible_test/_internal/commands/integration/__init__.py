@@ -822,6 +822,7 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
+
     def __init__(self, test_dir: str, integration_dir: str, targets_dir: str, inventory_path: str, ansible_config: str, vars_file: str) -> None:
         self.test_dir = test_dir
         self.integration_dir = integration_dir
@@ -833,6 +834,7 @@ class IntegrationEnvironment:
 
 class IntegrationCache(CommonCache):
     """Integration cache."""
+
     @property
     def integration_targets(self) -> list[IntegrationTarget]:
         """The list of integration test targets."""
@@ -940,6 +942,7 @@ def command_integration_filter(args: TIntegrationConfig,
     vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
+
         def integration_config_callback(payload_config: PayloadConfig) -> None:
             """
             Add the integration config vars file to the payload file list.

@@ -181,6 +181,7 @@ def cloud_init(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) 
 
 class CloudBase(metaclass=abc.ABCMeta):
     """Base class for cloud plugins."""
+
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
     _MANAGED = 'managed'
@@ -259,6 +260,7 @@ class CloudBase(metaclass=abc.ABCMeta):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
+
     def __init__(self, args: IntegrationConfig, config_extension: str = '.ini') -> None:
         super().__init__(args)
 
@@ -358,6 +360,7 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
+
     def setup_once(self) -> None:
         """Run setup if it has not already been run."""
         if self.setup_executed:

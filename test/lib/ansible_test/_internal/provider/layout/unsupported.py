@@ -9,6 +9,7 @@ from . import (
 
 class UnsupportedLayout(LayoutProvider):
     """Layout provider for an unsupported directory layout."""
+
     sequence = 0  # disable automatic detection
 
     @staticmethod

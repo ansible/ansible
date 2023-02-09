@@ -134,6 +134,7 @@ class PythonParser(Parser):
 
 class PlatformParser(ChoicesParser):
     """Composite argument parser for "{platform}/{version}" formatted choices."""
+
     def __init__(self, choices: list[str]) -> None:
         super().__init__(choices, conditions=MatchConditions.CHOICE | MatchConditions.ANY)
 
@@ -152,6 +153,7 @@ class SshConnectionParser(Parser):
     Composite argument parser for connecting to a host using SSH.
     Format: user@host[:port]
     """
+
     EXPECTED_FORMAT = '{user}@{host}[:{port}]'
 
     def parse(self, state: ParserState) -> t.Any:

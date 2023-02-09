@@ -75,6 +75,7 @@ from ..ci import (
 
 class ControllerMode(enum.Enum):
     """Type of provisioning to use for the controller."""
+
     NO_DELEGATION = enum.auto()
     ORIGIN = enum.auto()
     DELEGATED = enum.auto()

@@ -48,6 +48,7 @@ from .util import (
 @dataclasses.dataclass(frozen=True)
 class OriginCompletionConfig(PosixCompletionConfig):
     """Pseudo completion config for the origin."""
+
     def __init__(self) -> None:
         super().__init__(name='origin')
 
@@ -73,6 +74,7 @@ class OriginCompletionConfig(PosixCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class HostContext:
     """Context used when getting and applying defaults for host configurations."""
+
     controller_config: t.Optional['PosixConfig']
 
     @property
@@ -84,6 +86,7 @@ class HostContext:
 @dataclasses.dataclass
 class HostConfig(metaclass=abc.ABCMeta):
     """Base class for host configuration."""
+
     @abc.abstractmethod
     def get_defaults(self, context: HostContext) -> CompletionConfig:
         """Return the default settings."""
@@ -104,6 +107,7 @@ class HostConfig(metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class PythonConfig(metaclass=abc.ABCMeta):
     """Configuration for Python."""
+
     version: t.Optional[str] = None
     path: t.Optional[str] = None
 
@@ -142,6 +146,7 @@ class PythonConfig(metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class NativePythonConfig(PythonConfig):
     """Configuration for native Python."""
+
     @property
     def is_managed(self) -> bool:
         """
@@ -154,6 +159,7 @@ class NativePythonConfig(PythonConfig):
 @dataclasses.dataclass
 class VirtualPythonConfig(PythonConfig):
     """Configuration for Python in a virtual environment."""
+
     system_site_packages: t.Optional[bool] = None
 
     def apply_defaults(self, context: HostContext, defaults: PosixCompletionConfig) -> None:
@@ -175,6 +181,7 @@ class VirtualPythonConfig(PythonConfig):
 @dataclasses.dataclass
 class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
     """Base class for POSIX host configuration."""
+
     python: t.Optional[PythonConfig] = None
 
     @property
@@ -199,6 +206,7 @@ class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class ControllerHostConfig(PosixConfig, metaclass=abc.ABCMeta):
     """Base class for host configurations which support the controller."""
+
     @abc.abstractmethod
     def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
@@ -207,6 +215,7 @@ class ControllerHostConfig(PosixConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
     """Base class for remote host configuration."""
+
     name: t.Optional[str] = None
     provider: t.Optional[str] = None
     arch: t.Optional[str] = None
@@ -245,6 +254,7 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class PosixSshConfig(PosixConfig):
     """Configuration for a POSIX SSH host."""
+
     user: t.Optional[str] = None
     host: t.Optional[str] = None
     port: t.Optional[int] = None
@@ -265,6 +275,7 @@ class PosixSshConfig(PosixConfig):
 @dataclasses.dataclass
 class InventoryConfig(HostConfig):
     """Configuration using inventory."""
+
     path: t.Optional[str] = None
 
     def get_defaults(self, context: HostContext) -> InventoryCompletionConfig:
@@ -279,6 +290,7 @@ class InventoryConfig(HostConfig):
 @dataclasses.dataclass
 class DockerConfig(ControllerHostConfig, PosixConfig):
     """Configuration for a docker host."""
+
     name: t.Optional[str] = None
     image: t.Optional[str] = None
     memory: t.Optional[int] = None
@@ -343,6 +355,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
     """Configuration for a POSIX remote host."""
+
     become: t.Optional[str] = None
 
     def get_defaults(self, context: HostContext) -> PosixRemoteCompletionConfig:
@@ -385,6 +398,7 @@ class WindowsConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remote Windows host."""
+
     def get_defaults(self, context: HostContext) -> WindowsRemoteCompletionConfig:
         """Return the default settings."""
         return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
@@ -403,6 +417,7 @@ class NetworkConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
     """Configuration for a remote network host."""
+
     collection: t.Optional[str] = None
     connection: t.Optional[str] = None
 
@@ -431,6 +446,7 @@ class NetworkInventoryConfig(InventoryConfig, NetworkConfig):
 @dataclasses.dataclass
 class OriginConfig(ControllerHostConfig, PosixConfig):
     """Configuration for the origin host."""
+
     def get_defaults(self, context: HostContext) -> OriginCompletionConfig:
         """Return the default settings."""
         return OriginCompletionConfig()
@@ -448,6 +464,7 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class ControllerConfig(PosixConfig):
     """Configuration for the controller host."""
+
     controller: t.Optional[PosixConfig] = None
 
     def get_defaults(self, context: HostContext) -> PosixCompletionConfig:
@@ -482,6 +499,7 @@ class ControllerConfig(PosixConfig):
 
 class FallbackReason(enum.Enum):
     """Reason fallback was performed."""
+
     ENVIRONMENT = enum.auto()
     PYTHON = enum.auto()
 
@@ -489,6 +507,7 @@ class FallbackReason(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class FallbackDetail:
     """Details about controller fallback behavior."""
+
     reason: FallbackReason
     message: str
 
@@ -496,6 +515,7 @@ class FallbackDetail:
 @dataclasses.dataclass(frozen=True)
 class HostSettings:
     """Host settings for the controller and targets."""
+
     controller: ControllerHostConfig
     targets: list[HostConfig]
     skipped_python_versions: list[str]

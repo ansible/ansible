@@ -32,18 +32,21 @@ class Completion(Exception):
 @dataclasses.dataclass
 class CompletionUnavailable(Completion):
     """Argument completion unavailable."""
+
     message: str = 'No completions available.'
 
 
 @dataclasses.dataclass
 class CompletionError(Completion):
     """Argument completion error."""
+
     message: t.Optional[str] = None
 
 
 @dataclasses.dataclass
 class CompletionSuccess(Completion):
     """Successful argument completion result."""
+
     list_mode: bool
     consumed: str
     continuation: str
@@ -72,6 +75,7 @@ class CompletionSuccess(Completion):
 
 class ParserMode(enum.Enum):
     """Mode the parser is operating in."""
+
     PARSE = enum.auto()
     COMPLETE = enum.auto()
     LIST = enum.auto()
@@ -84,6 +88,7 @@ class ParserError(Exception):
 @dataclasses.dataclass
 class ParserBoundary:
     """Boundary details for parsing composite input."""
+
     delimiters: str
     required: bool
     match: t.Optional[str] = None
@@ -93,6 +98,7 @@ class ParserBoundary:
 @dataclasses.dataclass
 class ParserState:
     """State of the composite argument parser."""
+
     mode: ParserMode
     remainder: str = ''
     consumed: str = ''
@@ -194,11 +200,13 @@ class ParserState:
 @dataclasses.dataclass
 class DocumentationState:
     """State of the composite argument parser's generated documentation."""
+
     sections: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 class Parser(metaclass=abc.ABCMeta):
     """Base class for all composite argument parsers."""
+
     @abc.abstractmethod
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
@@ -210,6 +218,7 @@ class Parser(metaclass=abc.ABCMeta):
 
 class MatchConditions(enum.Flag):
     """Acceptable condition(s) for matching user input to available choices."""
+
     CHOICE = enum.auto()
     """Match any choice."""
     ANY = enum.auto()
@@ -220,6 +229,7 @@ class MatchConditions(enum.Flag):
 
 class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers which use a list of choices that can be generated during completion."""
+
     def __init__(self, conditions: MatchConditions = MatchConditions.CHOICE) -> None:
         self.conditions = conditions
 
@@ -275,6 +285,7 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
 
 class ChoicesParser(DynamicChoicesParser):
     """Composite argument parser which relies on a static list of choices."""
+
     def __init__(self, choices: list[str], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
         self.choices = choices
 
@@ -291,6 +302,7 @@ class ChoicesParser(DynamicChoicesParser):
 
 class EnumValueChoicesParser(ChoicesParser):
     """Composite argument parser which relies on a static list of choices derived from the values of an enum."""
+
     def __init__(self, enum_type: t.Type[enum.Enum], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
         self.enum_type = enum_type
 
@@ -304,6 +316,7 @@ class EnumValueChoicesParser(ChoicesParser):
 
 class IntegerParser(DynamicChoicesParser):
     """Composite argument parser for integers."""
+
     PATTERN = re.compile('^[1-9][0-9]*$')
 
     def __init__(self, maximum: t.Optional[int] = None) -> None:
@@ -341,6 +354,7 @@ class IntegerParser(DynamicChoicesParser):
 
 class BooleanParser(ChoicesParser):
     """Composite argument parser for boolean (yes/no) values."""
+
     def __init__(self) -> None:
         super().__init__(['yes', 'no'])
 
@@ -352,6 +366,7 @@ class BooleanParser(ChoicesParser):
 
 class AnyParser(ChoicesParser):
     """Composite argument parser which accepts any input value."""
+
     def __init__(self, nothing: bool = False, no_match_message: t.Optional[str] = None) -> None:
         self.no_match_message = no_match_message
 
@@ -379,6 +394,7 @@ class AnyParser(ChoicesParser):
 
 class RelativePathNameParser(DynamicChoicesParser):
     """Composite argument parser for relative path names."""
+
     RELATIVE_NAMES = ['.', '..']
 
     def __init__(self, choices: list[str]) -> None:
@@ -400,6 +416,7 @@ class RelativePathNameParser(DynamicChoicesParser):
 
 class FileParser(Parser):
     """Composite argument parser for absolute or relative file paths."""
+
     def parse(self, state: ParserState) -> str:
         """Parse the input from the given state and return the result."""
         if state.mode == ParserMode.PARSE:
@@ -432,6 +449,7 @@ class FileParser(Parser):
 
 class AbsolutePathParser(Parser):
     """Composite argument parser for absolute file paths. Paths are only verified for proper syntax, not for existence."""
+
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         path = ''
@@ -450,6 +468,7 @@ class AbsolutePathParser(Parser):
 
 class NamespaceParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers that store their results in a namespace."""
+
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = state.current_namespace
@@ -496,6 +515,7 @@ class NamespaceParser(Parser, metaclass=abc.ABCMeta):
 
 class NamespaceWrappedParser(NamespaceParser):
     """Composite argument parser that wraps a non-namespace parser and stores the result in a namespace."""
+
     def __init__(self, dest: str, parser: Parser) -> None:
         self._dest = dest
         self.parser = parser
@@ -512,6 +532,7 @@ class NamespaceWrappedParser(NamespaceParser):
 
 class KeyValueParser(Parser, metaclass=abc.ABCMeta):
     """Base class for key/value composite argument parsers."""
+
     @abc.abstractmethod
     def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of key names and value parsers."""
@@ -538,6 +559,7 @@ class KeyValueParser(Parser, metaclass=abc.ABCMeta):
 
 class PairParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers consisting of a left and right argument parser, with input separated by a delimiter."""
+
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = self.create_namespace()
@@ -577,6 +599,7 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
 
 class TypeParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers which parse a type name, a colon and then parse results based on the type given by the type name."""
+
     def get_parsers(self, state: ParserState) -> dict[str, Parser]:  # pylint: disable=unused-argument
         """Return a dictionary of type names and type parsers."""
         return self.get_stateless_parsers()

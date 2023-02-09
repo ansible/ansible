@@ -54,6 +54,7 @@ from .data import (
 @dataclasses.dataclass(frozen=True)
 class Resource(metaclass=abc.ABCMeta):
     """Base class for Ansible Core CI resources."""
+
     @abc.abstractmethod
     def as_tuple(self) -> tuple[str, str, str, str]:
         """Return the resource as a tuple of platform, version, architecture and provider."""
@@ -71,6 +72,7 @@ class Resource(metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class VmResource(Resource):
     """Details needed to request a VM from Ansible Core CI."""
+
     platform: str
     version: str
     architecture: str
@@ -94,6 +96,7 @@ class VmResource(Resource):
 @dataclasses.dataclass(frozen=True)
 class CloudResource(Resource):
     """Details needed to request cloud credentials from Ansible Core CI."""
+
     platform: str
 
     def as_tuple(self) -> tuple[str, str, str, str]:
@@ -112,6 +115,7 @@ class CloudResource(Resource):
 
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
+
     DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
 
     def __init__(
@@ -420,6 +424,7 @@ class AnsibleCoreCI:
 
 class CoreHttpError(HttpError):
     """HTTP response as an error."""
+
     def __init__(self, status: int, remote_message: str, remote_stack_trace: str) -> None:
         super().__init__(status, f'{remote_message}{remote_stack_trace}')
 
@@ -429,6 +434,7 @@ class CoreHttpError(HttpError):
 
 class SshKey:
     """Container for SSH key used to connect to remote instances."""
+
     KEY_TYPE = 'rsa'  # RSA is used to maintain compatibility with paramiko and EC2
     KEY_NAME = f'id_{KEY_TYPE}'
     PUB_NAME = f'{KEY_NAME}.pub'

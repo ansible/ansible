@@ -66,6 +66,7 @@ CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 class ShellScriptTemplate:
     """A simple substitution template for shell scripts."""
+
     def __init__(self, template: str) -> None:
         self.template = template
 
@@ -87,6 +88,7 @@ class ShellScriptTemplate:
 
 class ResultType:
     """Test result type."""
+
     BOT: ResultType = None
     COVERAGE: ResultType = None
     DATA: ResultType = None
@@ -128,6 +130,7 @@ ResultType._populate()  # pylint: disable=protected-access
 
 class CommonConfig:
     """Configuration common to all commands."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         self.command = command
         self.interactive = False

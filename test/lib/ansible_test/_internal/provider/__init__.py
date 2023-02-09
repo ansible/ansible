@@ -48,6 +48,7 @@ def find_path_provider(provider_type: t.Type[TPathProvider],
 
 class ProviderNotFoundForPath(ApplicationError):
     """Exception generated when a path based provider cannot be found for a given path."""
+
     def __init__(self, provider_type: t.Type, path: str) -> None:
         super().__init__('No %s found for path: %s' % (provider_type.__name__, path))
 
@@ -57,6 +58,7 @@ class ProviderNotFoundForPath(ApplicationError):
 
 class PathProvider(metaclass=abc.ABCMeta):
     """Base class for provider plugins that are path based."""
+
     sequence = 500
     priority = 500
 

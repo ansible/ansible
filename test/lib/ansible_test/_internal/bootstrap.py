@@ -26,6 +26,7 @@ from .core_ci import (
 @dataclasses.dataclass
 class Bootstrap:
     """Base class for bootstrapping systems."""
+
     controller: bool
     python_versions: list[str]
     ssh_key: SshKey
@@ -65,6 +66,7 @@ class Bootstrap:
 @dataclasses.dataclass
 class BootstrapDocker(Bootstrap):
     """Bootstrap docker instances."""
+
     def get_variables(self) -> dict[str, t.Union[str, list[str]]]:
         """The variables to template in the bootstrapping script."""
         variables = super().get_variables()
@@ -80,6 +82,7 @@ class BootstrapDocker(Bootstrap):
 @dataclasses.dataclass
 class BootstrapRemote(Bootstrap):
     """Bootstrap remote instances."""
+
     platform: str
     platform_version: str
 

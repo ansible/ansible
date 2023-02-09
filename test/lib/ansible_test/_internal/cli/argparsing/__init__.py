@@ -34,6 +34,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     These registered completions, if provided, are used to filter the final completion results.
     This works around a known bug: https://github.com/kislyuk/argcomplete/issues/221
     """
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -86,6 +87,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
 
 class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     """Base class for actions that parse composite arguments."""
+
     documentation_state: dict[t.Type[CompositeAction], DocumentationState] = {}
 
     def __init__(
@@ -134,6 +136,7 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
 
 class CompositeActionCompletionFinder(RegisteredCompletionFinder):
     """Completion finder with support for composite argument parsing."""
+
     def get_completions(
         self,
         prefix: str,

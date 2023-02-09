@@ -70,6 +70,7 @@ VIRTUALENV_VERSION = '16.7.12'
 
 class PipUnavailableError(ApplicationError):
     """Exception raised when pip is not available."""
+
     def __init__(self, python: PythonConfig) -> None:
         super().__init__(f'Python {python.version} at "{python.path}" does not have pip available.')
 
@@ -87,6 +88,7 @@ class PipCommand:
 @dataclasses.dataclass(frozen=True)
 class PipInstall(PipCommand):
     """Details required to perform a pip install."""
+
     requirements: list[tuple[str, str]]
     constraints: list[tuple[str, str]]
     packages: list[str]
@@ -102,6 +104,7 @@ class PipInstall(PipCommand):
 @dataclasses.dataclass(frozen=True)
 class PipUninstall(PipCommand):
     """Details required to perform a pip uninstall."""
+
     packages: list[str]
     ignore_errors: bool
 
@@ -114,6 +117,7 @@ class PipVersion(PipCommand):
 @dataclasses.dataclass(frozen=True)
 class PipBootstrap(PipCommand):
     """Details required to bootstrap pip."""
+
     pip_version: str
     packages: list[str]
 

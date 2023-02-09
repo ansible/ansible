@@ -80,6 +80,7 @@ def open_binary_file(path: str, mode: str = 'rb') -> t.IO[bytes]:
 
 class SortedSetEncoder(json.JSONEncoder):
     """Encode sets as sorted lists."""
+
     def default(self, o: t.Any) -> t.Any:
         """Return a serialized version of the `o` object."""
         if isinstance(o, set):
