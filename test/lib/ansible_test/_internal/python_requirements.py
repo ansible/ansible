@@ -77,7 +77,7 @@ class PipUnavailableError(ApplicationError):
 
 @dataclasses.dataclass(frozen=True)
 class PipCommand:
-    """Base class for pip commands."""""
+    """Base class for pip commands."""
 
     def serialize(self) -> tuple[str, dict[str, t.Any]]:
         """Return a serialized representation of this command."""
