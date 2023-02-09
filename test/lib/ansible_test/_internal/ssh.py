@@ -151,10 +151,10 @@ class SshProcess:
 
 
 def create_ssh_command(
-        ssh: SshConnectionDetail,
-        options: t.Optional[dict[str, t.Union[str, int]]] = None,
-        cli_args: list[str] = None,
-        command: t.Optional[str] = None,
+    ssh: SshConnectionDetail,
+    options: t.Optional[dict[str, t.Union[str, int]]] = None,
+    cli_args: list[str] = None,
+    command: t.Optional[str] = None,
 ) -> list[str]:
     """Create an SSH command using the specified options."""
     cmd = [
@@ -207,11 +207,11 @@ def ssh_options_to_str(options: t.Union[dict[str, t.Union[int, str]], dict[str, 
 
 
 def run_ssh_command(
-        args: EnvironmentConfig,
-        ssh: SshConnectionDetail,
-        options: t.Optional[dict[str, t.Union[str, int]]] = None,
-        cli_args: list[str] = None,
-        command: t.Optional[str] = None,
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    options: t.Optional[dict[str, t.Union[str, int]]] = None,
+    cli_args: list[str] = None,
+    command: t.Optional[str] = None,
 ) -> SshProcess:
     """Run the specified SSH command, returning the created SshProcess instance created."""
     cmd = create_ssh_command(ssh, options, cli_args, command)
@@ -233,9 +233,9 @@ def run_ssh_command(
 
 
 def create_ssh_port_forwards(
-        args: EnvironmentConfig,
-        ssh: SshConnectionDetail,
-        forwards: list[tuple[str, int]],
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    forwards: list[tuple[str, int]],
 ) -> SshProcess:
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
@@ -257,9 +257,9 @@ def create_ssh_port_forwards(
 
 
 def create_ssh_port_redirects(
-        args: EnvironmentConfig,
-        ssh: SshConnectionDetail,
-        redirects: list[tuple[int, str, int]],
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    redirects: list[tuple[int, str, int]],
 ) -> SshProcess:
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
     options: dict[str, t.Union[str, int]] = {}
