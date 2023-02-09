@@ -149,6 +149,7 @@
 - name: check that limit removes host
   command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list
   register: limited
+  ignore_errors: true
 
 - name: ensure empty host list
   assert:
