@@ -319,7 +319,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
 
         exec_manifest["actions"].insert(0, 'async_watchdog')
         exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
+        exec_manifest["async_jid"] = f'j{random.randint(0, 999999999999)}'
         exec_manifest["async_timeout_sec"] = async_timeout
         exec_manifest["async_startup_timeout"] = C.config.get_config_value("WIN_ASYNC_STARTUP_TIMEOUT", variables=task_vars)
 

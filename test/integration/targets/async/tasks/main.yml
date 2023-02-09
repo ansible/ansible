@@ -122,7 +122,7 @@
 - name: assert task failed correctly
   assert:
     that:
-    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
     - async_result is finished
     - async_result is not changed
@@ -140,7 +140,7 @@
 - name: validate response
   assert:
     that:
-    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
     - async_result is finished
     - async_result.changed == false
@@ -159,7 +159,7 @@
 - name: validate response
   assert:
     that:
-    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
     - async_result is finished
     - async_result.changed == true
@@ -176,7 +176,7 @@
 - name: validate response
   assert:
     that:
-    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
     - async_result is finished
     - async_result.changed == true
