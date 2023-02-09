@@ -321,7 +321,8 @@ class InventoryCLI(CLI):
                     results.update(format_group(subgroup))
                     seen.add(subgroup.name)
             if context.CLIARGS['export']:
-                results[group.name]['vars'] = self._get_group_variables(group)
+                if valid_hosts is None or results[group.name]['hosts']:
+                    results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
             if not results[group.name]:
@@ -373,9 +374,10 @@ class InventoryCLI(CLI):
                     results[group.name]['hosts'][h.name] = myvars
 
             if context.CLIARGS['export']:
-                gvars = self._get_group_variables(group)
-                if gvars:
-                    results[group.name]['vars'] = gvars
+                if valid_hosts is None or results[group.name]['hosts']:
+                    gvars = self._get_group_variables(group)
+                    if gvars:
+                        results[group.name]['vars'] = gvars
 
             self._remove_empty(results[group.name])
 
@@ -417,7 +419,8 @@ class InventoryCLI(CLI):
                         results[group.name]['hosts'] = {host.name: host_vars}
 
             if context.CLIARGS['export']:
-                results[group.name]['vars'] = self._get_group_variables(group)
+                if valid_hosts is None or results[group.name]['hosts']:
+                    results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
             if not results[group.name]:
