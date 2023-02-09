@@ -1,0 +1,3 @@
+minor_changes:
+  - Cache host_group_vars after instantiating it once since it is stateless. Also limit the amount of repetitive work it needs to do every time it runs.
+  - Call PluginLoader.all() once for vars plugins, and load vars plugins that run automatically or are enabled specifically after that.
