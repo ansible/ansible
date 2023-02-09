@@ -135,8 +135,8 @@ run_test default test.yml
 # Check for async output
 # NOTE: regex to match 1 or more digits works for both BSD and GNU grep
 ansible-playbook -i inventory test_async.yml 2>&1 | tee async_test.out
-grep "ASYNC OK .* jid=[0-9]\{1,\}" async_test.out
-grep "ASYNC FAILED .* jid=[0-9]\{1,\}" async_test.out
+grep "ASYNC OK .* jid=j[0-9]\{1,\}" async_test.out
+grep "ASYNC FAILED .* jid=j[0-9]\{1,\}" async_test.out
 rm -f async_test.out
 
 # Hide skipped
