@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import re
 
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
@@ -32,10 +31,6 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
 
 display = Display()
-
-DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
-LOOKUP_REGEX = re.compile(r'lookup\s*\(')
-VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
 
 class Conditional:
@@ -61,18 +56,6 @@ class Conditional:
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):
             setattr(self, name, [value])
-
-    def extract_defined_undefined(self, conditional):
-        results = []
-
-        cond = conditional
-        m = DEFINED_REGEX.search(cond)
-        while m:
-            results.append(m.groups())
-            cond = cond[m.end():]
-            m = DEFINED_REGEX.search(cond)
-
-        return results
 
     def evaluate_conditional(self, templar, all_vars):
         '''
@@ -191,30 +174,4 @@ class Conditional:
             else:
                 raise AnsibleError("unable to evaluate conditional: %s" % original)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
-            # the templating failed, meaning most likely a variable was undefined. If we happened
-            # to be looking for an undefined variable, return True, otherwise fail
-            try:
-                # first we extract the variable name from the error message
-                var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
-                # next we extract all defined/undefined tests from the conditional string
-                def_undef = self.extract_defined_undefined(conditional)
-                # then we loop through these, comparing the error variable name against
-                # each def/undef test we found above. If there is a match, we determine
-                # whether the logic/state mean the variable should exist or not and return
-                # the corresponding True/False
-                for (du_var, logic, state) in def_undef:
-                    # when we compare the var names, normalize quotes because something
-                    # like hostvars['foo'] may be tested against hostvars["foo"]
-                    if var_name.replace("'", '"') == du_var.replace("'", '"'):
-                        # the should exist is a xor test between a negation in the logic portion
-                        # against the state (defined or undefined)
-                        should_exist = ('not' in logic) != (state == 'defined')
-                        if should_exist:
-                            return False
-                        else:
-                            return True
-                # as nothing above matched the failed var name, re-raise here to
-                # trigger the AnsibleUndefinedVariable exception again below
-                raise
-            except Exception:
-                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
+            raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))

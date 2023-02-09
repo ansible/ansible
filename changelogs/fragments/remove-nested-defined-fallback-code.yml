@@ -1,0 +1,2 @@
+minor_chages:
+  - Remove fallback code for when ``defined``/``undefined`` tests were used on objects containing nested undefined variables; due to changes in lazy evalution of Jinja2 expressions it is no longer needed.
