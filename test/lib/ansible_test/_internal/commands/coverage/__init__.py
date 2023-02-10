@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import collections.abc as c
-import errno
 import json
 import os
 import re
@@ -135,11 +134,8 @@ def get_coverage_files(language: str, path: t.Optional[str] = None) -> list[str]
     try:
         coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                           if '=coverage.' in f and '=%s' % language in f]
-    except IOError as ex:
-        if ex.errno == errno.ENOENT:
-            return []
-
-        raise
+    except FileNotFoundError:
+        return []
 
     return coverage_files
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import collections.abc as c
-import errno
 import enum
 import fcntl
 import importlib.util
@@ -467,10 +466,8 @@ def raw_command(
             cmd_bytes = [to_bytes(arg) for arg in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
             process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
-        except OSError as ex:
-            if ex.errno == errno.ENOENT:
-                raise ApplicationError('Required program "%s" not found.' % cmd[0])
-            raise
+        except FileNotFoundError as ex:
+            raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
 
         if communicate:
             data_bytes = to_optional_bytes(data)
@@ -694,12 +691,11 @@ def verified_chmod(path: str, mode: int) -> None:
 
 
 def remove_tree(path: str) -> None:
-    """Remove the specified directory, siliently continuing if the directory does not exist."""
+    """Remove the specified directory, silently continuing if the directory does not exist."""
     try:
         shutil.rmtree(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
 
 
 def is_binary_file(path: str) -> bool:
