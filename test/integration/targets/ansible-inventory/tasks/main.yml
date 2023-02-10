@@ -153,7 +153,7 @@
 - name: ensure empty host list
   assert:
     that:
-      - "'something' in inv['_meta']['hosvars']"
+      - "'something' in inv['_meta']['hostvars']"
   vars:
     inv: '{{ limited.stdout|from_json}}'
 
@@ -164,6 +164,6 @@
 - name: ensure empty host list
   assert:
     that:
-      - "'something' not in inv['_meta']['hosvars']"
+      - "'something' not in inv['_meta']['hostvars']"
   vars:
     inv: '{{ limited.stdout|from_json}}'
