@@ -223,14 +223,14 @@ imap = map
 
 try:
     # Python 2
-    unicode  # type: ignore[has-type]  # pylint: disable=used-before-assignment
+    unicode  # type: ignore[used-before-def]  # pylint: disable=used-before-assignment
 except NameError:
     # Python 3
     unicode = text_type
 
 try:
     # Python 2
-    basestring  # type: ignore[has-type]  # pylint: disable=used-before-assignment
+    basestring  # type: ignore[used-before-def,has-type]  # pylint: disable=used-before-assignment
 except NameError:
     # Python 3
     basestring = string_types

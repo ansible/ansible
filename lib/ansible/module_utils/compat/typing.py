@@ -19,7 +19,7 @@ except Exception:  # pylint: disable=broad-except
 
 
 try:
-    cast
+    cast  # type: ignore[used-before-def]
 except NameError:
     def cast(typ, val):  # type: ignore[no-redef]
         return val
