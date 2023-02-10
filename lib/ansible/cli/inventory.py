@@ -79,7 +79,8 @@ class InventoryCLI(CLI):
         # Actions
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
-        action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script. It will ignore limit')
+        action_group.add_argument("--host", action="store", default=None, dest='host',
+                                  help='Output specific host info, works as inventory script. It will ignore limit')
         action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
                                   help='create inventory graph, if supplying pattern it must be a valid group name. It will ignore limit')
         self.parser.add_argument_group(action_group)
@@ -253,7 +254,7 @@ class InventoryCLI(CLI):
         return dump
 
     @staticmethod
-    Def _remove_empty_keys(dump):
+    def _remove_empty_keys(dump):
         # remove empty keys
         for x in ('hosts', 'vars', 'children'):
             if x in dump and not dump[x]:
