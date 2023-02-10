@@ -683,19 +683,21 @@ def create_support_container_context(
 
 class ContainerDescriptor:
     """Information about a support container."""
-    def __init__(self,
-                 image: str,
-                 context: str,
-                 name: str,
-                 container_id: str,
-                 ports: list[int],
-                 aliases: list[str],
-                 publish_ports: bool,
-                 running: bool,
-                 existing: bool,
-                 cleanup: CleanupMode,
-                 env: t.Optional[dict[str, str]],
-                 ) -> None:
+
+    def __init__(
+        self,
+        image: str,
+        context: str,
+        name: str,
+        container_id: str,
+        ports: list[int],
+        aliases: list[str],
+        publish_ports: bool,
+        running: bool,
+        existing: bool,
+        cleanup: CleanupMode,
+        env: t.Optional[dict[str, str]],
+    ) -> None:
         self.image = image
         self.context = context
         self.name = name
@@ -762,23 +764,26 @@ class ContainerDescriptor:
 
 class SupportContainer:
     """Information about a running support container available for use by tests."""
-    def __init__(self,
-                 container: DockerInspect,
-                 container_ip: str,
-                 published_ports: dict[int, int],
-                 ) -> None:
+
+    def __init__(
+        self,
+        container: DockerInspect,
+        container_ip: str,
+        published_ports: dict[int, int],
+    ) -> None:
         self.container = container
         self.container_ip = container_ip
         self.published_ports = published_ports
 
 
-def wait_for_file(args: EnvironmentConfig,
-                  container_name: str,
-                  path: str,
-                  sleep: int,
-                  tries: int,
-                  check: t.Optional[c.Callable[[str], bool]] = None,
-                  ) -> str:
+def wait_for_file(
+    args: EnvironmentConfig,
+    container_name: str,
+    path: str,
+    sleep: int,
+    tries: int,
+    check: t.Optional[c.Callable[[str], bool]] = None,
+) -> str:
     """Wait for the specified file to become available in the requested container and return its contents."""
     display.info('Waiting for container "%s" to provide file: %s' % (container_name, path))
 

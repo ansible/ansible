@@ -17,10 +17,12 @@ from .. import (
 
 class Layout:
     """Description of content locations and helper methods to access content."""
-    def __init__(self,
-                 root: str,
-                 paths: list[str],
-                 ) -> None:
+
+    def __init__(
+        self,
+        root: str,
+        paths: list[str],
+    ) -> None:
         self.root = root
 
         self.__paths = paths  # contains both file paths and symlinked directory paths (ending with os.path.sep)
@@ -74,25 +76,27 @@ class Layout:
 
 class ContentLayout(Layout):
     """Information about the current Ansible content being tested."""
-    def __init__(self,
-                 root: str,
-                 paths: list[str],
-                 plugin_paths: dict[str, str],
-                 collection: t.Optional[CollectionDetail],
-                 test_path: str,
-                 results_path: str,
-                 sanity_path: str,
-                 sanity_messages: t.Optional[LayoutMessages],
-                 integration_path: str,
-                 integration_targets_path: str,
-                 integration_vars_path: str,
-                 integration_messages: t.Optional[LayoutMessages],
-                 unit_path: str,
-                 unit_module_path: str,
-                 unit_module_utils_path: str,
-                 unit_messages: t.Optional[LayoutMessages],
-                 unsupported: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        root: str,
+        paths: list[str],
+        plugin_paths: dict[str, str],
+        collection: t.Optional[CollectionDetail],
+        test_path: str,
+        results_path: str,
+        sanity_path: str,
+        sanity_messages: t.Optional[LayoutMessages],
+        integration_path: str,
+        integration_targets_path: str,
+        integration_vars_path: str,
+        integration_messages: t.Optional[LayoutMessages],
+        unit_path: str,
+        unit_module_path: str,
+        unit_module_utils_path: str,
+        unit_messages: t.Optional[LayoutMessages],
+        unsupported: bool = False,
+    ) -> None:
         super().__init__(root, paths)
 
         self.plugin_paths = plugin_paths
@@ -159,11 +163,13 @@ class LayoutMessages:
 
 class CollectionDetail:
     """Details about the layout of the current collection."""
-    def __init__(self,
-                 name: str,
-                 namespace: str,
-                 root: str,
-                 ) -> None:
+
+    def __init__(
+        self,
+        name: str,
+        namespace: str,
+        root: str,
+    ) -> None:
         self.name = name
         self.namespace = namespace
         self.root = root

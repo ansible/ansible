@@ -86,11 +86,12 @@ def walk_internal_targets(
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
-def filter_targets(targets: c.Iterable[TCompletionTarget],
-                   patterns: list[str],
-                   include: bool = True,
-                   errors: bool = True,
-                   ) -> c.Iterable[TCompletionTarget]:
+def filter_targets(
+    targets: c.Iterable[TCompletionTarget],
+    patterns: list[str],
+    include: bool = True,
+    errors: bool = True,
+) -> c.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
     compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None

@@ -228,12 +228,14 @@ class Inventory:
 
 class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for host profiles."""
-    def __init__(self,
-                 *,
-                 args: EnvironmentConfig,
-                 config: THostConfig,
-                 targets: t.Optional[list[HostConfig]],
-                 ) -> None:
+
+    def __init__(
+        self,
+        *,
+        args: EnvironmentConfig,
+        config: THostConfig,
+        targets: t.Optional[list[HostConfig]],
+    ) -> None:
         self.args = args
         self.config = config
         self.controller = bool(targets)

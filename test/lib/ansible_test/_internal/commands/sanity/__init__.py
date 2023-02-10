@@ -531,11 +531,13 @@ class SanityIgnoreParser:
 
 class SanityIgnoreProcessor:
     """Processor for sanity test ignores for a single run of one sanity test."""
-    def __init__(self,
-                 args: SanityConfig,
-                 test: SanityTest,
-                 python_version: t.Optional[str],
-                 ) -> None:
+
+    def __init__(
+        self,
+        args: SanityConfig,
+        test: SanityTest,
+        python_version: t.Optional[str],
+    ) -> None:
         name = test.name
         code = test.error_code
 

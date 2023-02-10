@@ -902,9 +902,10 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
     return exclude
 
 
-def command_integration_filter(args: TIntegrationConfig,
-                               targets: c.Iterable[TIntegrationTarget],
-                               ) -> tuple[HostState, tuple[TIntegrationTarget, ...]]:
+def command_integration_filter(
+    args: TIntegrationConfig,
+    targets: c.Iterable[TIntegrationTarget],
+) -> tuple[HostState, tuple[TIntegrationTarget, ...]]:
     """Filter the given integration test targets."""
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)

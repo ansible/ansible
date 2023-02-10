@@ -538,14 +538,16 @@ class SshKey:
 
 class InstanceConnection:
     """Container for remote instance status and connection details."""
-    def __init__(self,
-                 running: bool,
-                 hostname: t.Optional[str] = None,
-                 port: t.Optional[int] = None,
-                 username: t.Optional[str] = None,
-                 password: t.Optional[str] = None,
-                 response_json: t.Optional[dict[str, t.Any]] = None,
-                 ) -> None:
+
+    def __init__(
+        self,
+        running: bool,
+        hostname: t.Optional[str] = None,
+        port: t.Optional[int] = None,
+        username: t.Optional[str] = None,
+        password: t.Optional[str] = None,
+        response_json: t.Optional[dict[str, t.Any]] = None,
+    ) -> None:
         self.running = running
         self.hostname = hostname
         self.port = port

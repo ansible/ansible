@@ -122,11 +122,12 @@ class DataContext:
         return collections
 
     @staticmethod
-    def __create_content_layout(layout_providers: list[t.Type[LayoutProvider]],
-                                source_providers: list[t.Type[SourceProvider]],
-                                root: str,
-                                walk: bool,
-                                ) -> ContentLayout:
+    def __create_content_layout(
+        layout_providers: list[t.Type[LayoutProvider]],
+        source_providers: list[t.Type[SourceProvider]],
+        root: str,
+        walk: bool,
+    ) -> ContentLayout:
         """Create a content layout using the given providers and root path."""
         try:
             layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)

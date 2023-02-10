@@ -34,12 +34,13 @@ def make_dirs(path: str) -> None:
     os.makedirs(to_bytes(path), exist_ok=True)
 
 
-def write_json_file(path: str,
-                    content: t.Any,
-                    create_directories: bool = False,
-                    formatted: bool = True,
-                    encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
-                    ) -> str:
+def write_json_file(
+    path: str,
+    content: t.Any,
+    create_directories: bool = False,
+    formatted: bool = True,
+    encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
+) -> str:
     """Write the given json content to the specified path, optionally creating missing directories."""
     text_content = json.dumps(content,
                               sort_keys=formatted,

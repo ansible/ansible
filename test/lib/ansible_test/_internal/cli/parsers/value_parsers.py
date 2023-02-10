@@ -60,12 +60,14 @@ class PythonParser(Parser):
     Known docker/remote environments limit the available Python versions to configured values known to be valid.
     The origin host and unknown environments assume all relevant Python versions are available.
     """
-    def __init__(self,
-                 versions: c.Sequence[str],
-                 *,
-                 allow_default: bool,
-                 allow_venv: bool,
-                 ):
+
+    def __init__(
+        self,
+        versions: c.Sequence[str],
+        *,
+        allow_default: bool,
+        allow_venv: bool,
+    ):
         version_choices = list(versions)
 
         if allow_default:
