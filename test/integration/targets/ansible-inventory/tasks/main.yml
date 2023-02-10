@@ -146,13 +146,24 @@
     loop_var: toml_package
   when: toml_package is not contains 'tomllib' or (toml_package is contains 'tomllib' and ansible_facts.python.version_info >= [3, 11])
 
-- name: check that limit removes host
-  command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list
+- name: check baseline
+  command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list
   register: limited
-  ignore_errors: true
 
 - name: ensure empty host list
   assert:
     that:
-      - "'ERROR' in limited.stderr or 'ERROR' in limited.stdout"
-      - "'--limit' in limited.stderr or '--limit' in limited.stdout"
+      - "'something' in inv['_meta']['hosvars']"
+  vars:
+    inv: '{{ limited.stdout|from_json}}'
+
+- name: check that limit removes host
+  command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list
+  register: limited
+
+- name: ensure empty host list
+  assert:
+    that:
+      - "'something' not in inv['_meta']['hosvars']"
+  vars:
+    inv: '{{ limited.stdout|from_json}}'
