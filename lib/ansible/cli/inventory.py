@@ -146,7 +146,7 @@ class InventoryCLI(CLI):
         else:
             if context.CLIARGS['subset']:
                 # not doing single host, set limit in general if given
-                self.invenotry.subset(context.CLIARGS['subset'])
+                self.inventory.subset(context.CLIARGS['subset'])
 
             if context.CLIARGS['graph']:
                 results = self.inventory_graph()
@@ -353,7 +353,7 @@ class InventoryCLI(CLI):
             # hosts for group
             results[group.name]['hosts'] = {}
             if group.name != 'all':
-                for h in self.invenotry.get_hosts(group.name):
+                for h in self.inventory.get_hosts(group.name):
                     myvars = {}
                     if h.name not in seen:  # avoid defining host vars more than once
                         seen.append(h.name)
