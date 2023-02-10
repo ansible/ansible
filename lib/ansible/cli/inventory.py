@@ -79,9 +79,9 @@ class InventoryCLI(CLI):
         # Actions
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
-        action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
+        action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script. It will ignore limit')
         action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
-                                  help='create inventory graph, if supplying pattern it must be a valid group name')
+                                  help='create inventory graph, if supplying pattern it must be a valid group name. It will ignore limit')
         self.parser.add_argument_group(action_group)
 
         # graph
@@ -280,7 +280,7 @@ class InventoryCLI(CLI):
             result.extend(self._graph_group(kid, depth))
 
         if group.name != 'all':
-            for host in self.inventory.get_hosts(group.name):
+            for host in group.hosts:
                 result.append(self._graph_name(host.name, depth))
                 if context.CLIARGS['show_vars']:
                     result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
