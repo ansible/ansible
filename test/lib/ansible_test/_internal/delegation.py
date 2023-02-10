@@ -266,12 +266,12 @@ def download_results(args: EnvironmentConfig, con: Connection, content_root: str
 
 
 def generate_command(
-        args: EnvironmentConfig,
-        python: PythonConfig,
-        ansible_bin_path: str,
-        content_root: str,
-        exclude: list[str],
-        require: list[str],
+    args: EnvironmentConfig,
+    python: PythonConfig,
+    ansible_bin_path: str,
+    content_root: str,
+    exclude: list[str],
+    require: list[str],
 ) -> list[str]:
     """Generate the command necessary to delegate ansible-test."""
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
@@ -318,10 +318,10 @@ def generate_command(
 
 
 def filter_options(
-        args: EnvironmentConfig,
-        argv: list[str],
-        exclude: list[str],
-        require: list[str],
+    args: EnvironmentConfig,
+    argv: list[str],
+    exclude: list[str],
+    require: list[str],
 ) -> c.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [

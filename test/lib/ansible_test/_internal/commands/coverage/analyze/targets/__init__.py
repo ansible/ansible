@@ -119,9 +119,9 @@ def get_target_index(name: str, target_indexes: TargetIndexes) -> int:
 
 
 def expand_indexes(
-        source_data: IndexedPoints,
-        source_index: list[str],
-        format_func: c.Callable[[TargetKey], TFlexKey],
+    source_data: IndexedPoints,
+    source_index: list[str],
+    format_func: c.Callable[[TargetKey], TFlexKey],
 ) -> dict[str, dict[TFlexKey, set[str]]]:
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
     combined_data: dict[str, dict[TFlexKey, set[str]]] = {}

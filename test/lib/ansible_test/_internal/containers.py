@@ -108,19 +108,19 @@ class CleanupMode(enum.Enum):
 
 
 def run_support_container(
-        args: EnvironmentConfig,
-        context: str,
-        image: str,
-        name: str,
-        ports: list[int],
-        aliases: t.Optional[list[str]] = None,
-        start: bool = True,
-        allow_existing: bool = False,
-        cleanup: t.Optional[CleanupMode] = None,
-        cmd: t.Optional[list[str]] = None,
-        env: t.Optional[dict[str, str]] = None,
-        options: t.Optional[list[str]] = None,
-        publish_ports: bool = True,
+    args: EnvironmentConfig,
+    context: str,
+    image: str,
+    name: str,
+    ports: list[int],
+    aliases: t.Optional[list[str]] = None,
+    start: bool = True,
+    allow_existing: bool = False,
+    cleanup: t.Optional[CleanupMode] = None,
+    cmd: t.Optional[list[str]] = None,
+    env: t.Optional[dict[str, str]] = None,
+    options: t.Optional[list[str]] = None,
+    publish_ports: bool = True,
 ) -> t.Optional[ContainerDescriptor]:
     """
     Start a container used to support tests, but not run them.
@@ -236,12 +236,12 @@ def run_support_container(
 
 
 def run_container(
-        args: EnvironmentConfig,
-        image: str,
-        name: str,
-        options: t.Optional[list[str]],
-        cmd: t.Optional[list[str]] = None,
-        create_only: bool = False,
+    args: EnvironmentConfig,
+    image: str,
+    name: str,
+    options: t.Optional[list[str]],
+    cmd: t.Optional[list[str]] = None,
+    create_only: bool = False,
 ) -> str:
     """Run a container using the given docker image."""
     options = list(options or [])
@@ -594,8 +594,8 @@ class SupportContainerContext:
 
 @contextlib.contextmanager
 def support_container_context(
-        args: EnvironmentConfig,
-        ssh: t.Optional[SshConnectionDetail],
+    args: EnvironmentConfig,
+    ssh: t.Optional[SshConnectionDetail],
 ) -> c.Iterator[t.Optional[ContainerDatabase]]:
     """Create a context manager for integration tests that use support containers."""
     if not isinstance(args, (IntegrationConfig, UnitsConfig, SanityConfig, ShellConfig)):
@@ -617,9 +617,9 @@ def support_container_context(
 
 
 def create_support_container_context(
-        args: EnvironmentConfig,
-        ssh: t.Optional[SshConnectionDetail],
-        containers: ContainerDatabase,
+    args: EnvironmentConfig,
+    ssh: t.Optional[SshConnectionDetail],
+    containers: ContainerDatabase,
 ) -> SupportContainerContext:
     """Context manager that provides SSH port forwards. Returns updated container metadata."""
     host_type = HostType.control
@@ -819,9 +819,9 @@ def create_hosts_entries(context: dict[str, ContainerAccess]) -> list[str]:
 
 
 def create_container_hooks(
-        args: IntegrationConfig,
-        control_connections: list[SshConnectionDetail],
-        managed_connections: t.Optional[list[SshConnectionDetail]],
+    args: IntegrationConfig,
+    control_connections: list[SshConnectionDetail],
+    managed_connections: t.Optional[list[SshConnectionDetail]],
 ) -> tuple[t.Optional[c.Callable[[IntegrationTarget], None]], t.Optional[c.Callable[[IntegrationTarget], None]]]:
     """Return pre and post target callbacks for enabling and disabling container access for each test target."""
     containers = get_container_database(args)
@@ -873,13 +873,13 @@ def create_managed_contexts(control_contexts: dict[str, dict[str, ContainerAcces
 
 
 def forward_ssh_ports(
-        args: IntegrationConfig,
-        ssh_connections: t.Optional[list[SshConnectionDetail]],
-        playbook: str,
-        target_state: dict[str, tuple[list[str], list[SshProcess]]],
-        target: IntegrationTarget,
-        host_type: str,
-        contexts: dict[str, dict[str, ContainerAccess]],
+    args: IntegrationConfig,
+    ssh_connections: t.Optional[list[SshConnectionDetail]],
+    playbook: str,
+    target_state: dict[str, tuple[list[str], list[SshProcess]]],
+    target: IntegrationTarget,
+    host_type: str,
+    contexts: dict[str, dict[str, ContainerAccess]],
 ) -> None:
     """Configure port forwarding using SSH and write hosts file entries."""
     if ssh_connections is None:
@@ -944,12 +944,12 @@ def forward_ssh_ports(
 
 
 def cleanup_ssh_ports(
-        args: IntegrationConfig,
-        ssh_connections: list[SshConnectionDetail],
-        playbook: str,
-        target_state: dict[str, tuple[list[str], list[SshProcess]]],
-        target: IntegrationTarget,
-        host_type: str,
+    args: IntegrationConfig,
+    ssh_connections: list[SshConnectionDetail],
+    playbook: str,
+    target_state: dict[str, tuple[list[str], list[SshProcess]]],
+    target: IntegrationTarget,
+    host_type: str,
 ) -> None:
     """Stop previously configured SSH port forwarding and remove previously written hosts file entries."""
     state = target_state.pop(target.name, None)

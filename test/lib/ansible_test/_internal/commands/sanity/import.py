@@ -122,8 +122,8 @@ class ImportTest(SanityMultipleVersion):
         messages = []
 
         for import_type, test in (
-                ('module', _get_module_test(True)),
-                ('plugin', _get_module_test(False)),
+            ('module', _get_module_test(True)),
+            ('plugin', _get_module_test(False)),
         ):
             if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
                 continue

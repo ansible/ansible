@@ -285,9 +285,9 @@ def _get_coverage_targets(args: CoverageCombineConfig, walk_func: c.Callable) ->
 
 
 def _build_stub_groups(
-        args: CoverageCombineConfig,
-        sources: list[tuple[str, int]],
-        default_stub_value: c.Callable[[list[str]], dict[str, TValue]],
+    args: CoverageCombineConfig,
+    sources: list[tuple[str, int]],
+    default_stub_value: c.Callable[[list[str]], dict[str, TValue]],
 ) -> dict[str, dict[str, TValue]]:
     """
     Split the given list of sources with line counts into groups, maintaining a maximum line count for each group.

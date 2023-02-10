@@ -29,9 +29,9 @@ from ..environments import (
 
 
 def do_sanity(
-        subparsers,
-        parent: argparse.ArgumentParser,
-        completer: CompositeActionCompletionFinder,
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `sanity` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(

@@ -191,9 +191,9 @@ class TargetMode(enum.Enum):
 
 
 def convert_legacy_args(
-        argv: list[str],
-        args: t.Union[argparse.Namespace, types.SimpleNamespace],
-        mode: TargetMode,
+    argv: list[str],
+    args: t.Union[argparse.Namespace, types.SimpleNamespace],
+    mode: TargetMode,
 ) -> HostSettings:
     """Convert pre-split host arguments in the given namespace to their split counterparts."""
     old_options = LegacyHostOptions.create(args)
@@ -262,9 +262,9 @@ def convert_legacy_args(
 
 
 def controller_targets(
-        mode: TargetMode,
-        options: LegacyHostOptions,
-        controller: ControllerHostConfig,
+    mode: TargetMode,
+    options: LegacyHostOptions,
+    controller: ControllerHostConfig,
 ) -> list[HostConfig]:
     """Return the configuration for controller targets."""
     python = native_python(options)
@@ -288,8 +288,8 @@ def native_python(options: LegacyHostOptions) -> t.Optional[NativePythonConfig]:
 
 
 def get_legacy_host_config(
-        mode: TargetMode,
-        options: LegacyHostOptions,
+    mode: TargetMode,
+    options: LegacyHostOptions,
 ) -> tuple[ControllerHostConfig, list[HostConfig], t.Optional[FallbackDetail]]:
     """
     Returns controller and target host configs derived from the provided legacy host options.

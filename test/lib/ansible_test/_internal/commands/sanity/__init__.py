@@ -635,11 +635,11 @@ class SanitySkipped(TestSkipped):
 class SanityFailure(TestFailure):
     """Sanity test failure."""
     def __init__(
-            self,
-            test: str,
-            python_version: t.Optional[str] = None,
-            messages: t.Optional[c.Sequence[SanityMessage]] = None,
-            summary: t.Optional[str] = None,
+        self,
+        test: str,
+        python_version: t.Optional[str] = None,
+        messages: t.Optional[c.Sequence[SanityMessage]] = None,
+        summary: t.Optional[str] = None,
     ) -> None:
         super().__init__(COMMAND, test, python_version, messages, summary)
 
@@ -1101,11 +1101,11 @@ def sanity_get_tests() -> tuple[SanityTest, ...]:
 
 
 def create_sanity_virtualenv(
-        args: SanityConfig,
-        python: PythonConfig,
-        name: str,
-        coverage: bool = False,
-        minimize: bool = False,
+    args: SanityConfig,
+    python: PythonConfig,
+    name: str,
+    coverage: bool = False,
+    minimize: bool = False,
 ) -> t.Optional[VirtualPythonConfig]:
     """Return an existing sanity virtual environment matching the requested parameters or create a new one."""
     commands = collect_requirements(  # create_sanity_virtualenv()

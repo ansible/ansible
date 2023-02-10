@@ -36,7 +36,7 @@ from ...python_requirements import (
     install_requirements,
 )
 
-from ... target import (
+from ...target import (
     walk_module_targets,
 )
 
@@ -158,11 +158,11 @@ def get_python_modules() -> dict[str, str]:
 
 
 def enumerate_python_arcs(
-        path: str,
-        coverage: coverage_module,
-        modules: dict[str, str],
-        collection_search_re: t.Optional[t.Pattern],
-        collection_sub_re: t.Optional[t.Pattern],
+    path: str,
+    coverage: coverage_module,
+    modules: dict[str, str],
+    collection_search_re: t.Optional[t.Pattern],
+    collection_sub_re: t.Optional[t.Pattern],
 ) -> c.Generator[tuple[str, set[tuple[int, int]]], None, None]:
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
@@ -235,9 +235,9 @@ def read_python_coverage_legacy(path: str) -> PythonArcs:
 
 
 def enumerate_powershell_lines(
-        path: str,
-        collection_search_re: t.Optional[t.Pattern],
-        collection_sub_re: t.Optional[t.Pattern],
+    path: str,
+    collection_search_re: t.Optional[t.Pattern],
+    collection_sub_re: t.Optional[t.Pattern],
 ) -> c.Generator[tuple[str, dict[int, int]], None, None]:
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
@@ -274,10 +274,10 @@ def enumerate_powershell_lines(
 
 
 def sanitize_filename(
-        filename: str,
-        modules: t.Optional[dict[str, str]] = None,
-        collection_search_re: t.Optional[t.Pattern] = None,
-        collection_sub_re: t.Optional[t.Pattern] = None,
+    filename: str,
+    modules: t.Optional[dict[str, str]] = None,
+    collection_search_re: t.Optional[t.Pattern] = None,
+    collection_sub_re: t.Optional[t.Pattern] = None,
 ) -> t.Optional[str]:
     """Convert the given code coverage path to a local absolute path and return its, or None if the path is not valid."""
     ansible_path = os.path.abspath('lib/ansible/') + '/'
