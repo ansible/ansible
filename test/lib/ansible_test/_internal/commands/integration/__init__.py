@@ -243,9 +243,9 @@ def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None
 
 @contextlib.contextmanager
 def integration_test_environment(
-        args: IntegrationConfig,
-        target: IntegrationTarget,
-        inventory_path_src: str,
+    args: IntegrationConfig,
+    target: IntegrationTarget,
+    inventory_path_src: str,
 ) -> c.Iterator[IntegrationEnvironment]:
     """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
@@ -346,9 +346,9 @@ def integration_test_environment(
 
 @contextlib.contextmanager
 def integration_test_config_file(
-        args: IntegrationConfig,
-        env_config: CloudEnvironmentConfig,
-        integration_dir: str,
+    args: IntegrationConfig,
+    env_config: CloudEnvironmentConfig,
+    integration_dir: str,
 ) -> c.Iterator[t.Optional[str]]:
     """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
@@ -375,10 +375,10 @@ def integration_test_config_file(
 
 
 def create_inventory(
-        args: IntegrationConfig,
-        host_state: HostState,
-        inventory_path: str,
-        target: IntegrationTarget,
+    args: IntegrationConfig,
+    host_state: HostState,
+    inventory_path: str,
+    target: IntegrationTarget,
 ) -> None:
     """Create inventory."""
     if isinstance(args, PosixIntegrationConfig):
@@ -401,13 +401,13 @@ def create_inventory(
 
 
 def command_integration_filtered(
-        args: IntegrationConfig,
-        host_state: HostState,
-        targets: tuple[IntegrationTarget, ...],
-        all_targets: tuple[IntegrationTarget, ...],
-        inventory_path: str,
-        pre_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
-        post_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
+    args: IntegrationConfig,
+    host_state: HostState,
+    targets: tuple[IntegrationTarget, ...],
+    all_targets: tuple[IntegrationTarget, ...],
+    inventory_path: str,
+    pre_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
+    post_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
 ):
     """Run integration tests for the specified targets."""
     found = False
@@ -580,12 +580,12 @@ def command_integration_filtered(
 
 
 def command_integration_script(
-        args: IntegrationConfig,
-        host_state: HostState,
-        target: IntegrationTarget,
-        test_dir: str,
-        inventory_path: str,
-        coverage_manager: CoverageManager,
+    args: IntegrationConfig,
+    host_state: HostState,
+    target: IntegrationTarget,
+    test_dir: str,
+    inventory_path: str,
+    coverage_manager: CoverageManager,
 ):
     """Run an integration test script."""
     display.info('Running %s integration test script' % target.name)
@@ -632,13 +632,13 @@ def command_integration_script(
 
 
 def command_integration_role(
-        args: IntegrationConfig,
-        host_state: HostState,
-        target: IntegrationTarget,
-        start_at_task: t.Optional[str],
-        test_dir: str,
-        inventory_path: str,
-        coverage_manager: CoverageManager,
+    args: IntegrationConfig,
+    host_state: HostState,
+    target: IntegrationTarget,
+    start_at_task: t.Optional[str],
+    test_dir: str,
+    inventory_path: str,
+    coverage_manager: CoverageManager,
 ):
     """Run an integration test role."""
     display.info('Running %s integration test role' % target.name)
@@ -751,15 +751,15 @@ def command_integration_role(
 
 
 def run_setup_targets(
-        args: IntegrationConfig,
-        host_state: HostState,
-        test_dir: str,
-        target_names: c.Sequence[str],
-        targets_dict: dict[str, IntegrationTarget],
-        targets_executed: set[str],
-        inventory_path: str,
-        coverage_manager: CoverageManager,
-        always: bool,
+    args: IntegrationConfig,
+    host_state: HostState,
+    test_dir: str,
+    target_names: c.Sequence[str],
+    targets_dict: dict[str, IntegrationTarget],
+    targets_executed: set[str],
+    inventory_path: str,
+    coverage_manager: CoverageManager,
+    always: bool,
 ):
     """Run setup targets."""
     for target_name in target_names:
@@ -782,13 +782,13 @@ def run_setup_targets(
 
 
 def integration_environment(
-        args: IntegrationConfig,
-        target: IntegrationTarget,
-        test_dir: str,
-        inventory_path: str,
-        ansible_config: t.Optional[str],
-        env_config: t.Optional[CloudEnvironmentConfig],
-        test_env: IntegrationEnvironment,
+    args: IntegrationConfig,
+    target: IntegrationTarget,
+    test_dir: str,
+    inventory_path: str,
+    ansible_config: t.Optional[str],
+    env_config: t.Optional[CloudEnvironmentConfig],
+    test_env: IntegrationEnvironment,
 ) -> dict[str, str]:
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)

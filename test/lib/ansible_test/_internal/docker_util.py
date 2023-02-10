@@ -401,11 +401,11 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
 
 
 def run_utility_container(
-        args: CommonConfig,
-        name: str,
-        cmd: list[str],
-        options: list[str],
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    name: str,
+    cmd: list[str],
+    options: list[str],
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
     options = options + [
@@ -670,30 +670,30 @@ def docker_cp_to(args: CommonConfig, container_id: str, src: str, dst: str) -> N
 
 
 def docker_create(
-        args: CommonConfig,
-        image: str,
-        options: list[str],
-        cmd: list[str] = None,
+    args: CommonConfig,
+    image: str,
+    options: list[str],
+    cmd: list[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Create a container using the given docker image."""
     return docker_command(args, ['create'] + options + [image] + cmd, capture=True)
 
 
 def docker_run(
-        args: CommonConfig,
-        image: str,
-        options: list[str],
-        cmd: list[str] = None,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    image: str,
+    options: list[str],
+    cmd: list[str] = None,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a container using the given docker image."""
     return docker_command(args, ['run'] + options + [image] + cmd, data=data, capture=True)
 
 
 def docker_start(
-        args: CommonConfig,
-        container_id: str,
-        options: list[str],
+    args: CommonConfig,
+    container_id: str,
+    options: list[str],
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Start a container by name or ID."""
     return docker_command(args, ['start'] + options + [container_id], capture=True)
@@ -943,16 +943,16 @@ def docker_logs(args: CommonConfig, container_id: str) -> None:
 
 
 def docker_exec(
-        args: CommonConfig,
-        container_id: str,
-        cmd: list[str],
-        capture: bool,
-        options: t.Optional[list[str]] = None,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    container_id: str,
+    cmd: list[str],
+    capture: bool,
+    options: t.Optional[list[str]] = None,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Execute the given command in the specified container."""
     if not options:
@@ -966,15 +966,15 @@ def docker_exec(
 
 
 def docker_command(
-        args: CommonConfig,
-        cmd: list[str],
-        capture: bool,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        always: bool = False,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    cmd: list[str],
+    capture: bool,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    always: bool = False,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified docker command."""
     env = docker_environment()

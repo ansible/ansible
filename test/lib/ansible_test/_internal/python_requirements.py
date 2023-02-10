@@ -122,14 +122,14 @@ class PipBootstrap(PipCommand):
 
 
 def install_requirements(
-        args: EnvironmentConfig,
-        python: PythonConfig,
-        ansible: bool = False,
-        command: bool = False,
-        coverage: bool = False,
-        virtualenv: bool = False,
-        controller: bool = True,
-        connection: t.Optional[Connection] = None,
+    args: EnvironmentConfig,
+    python: PythonConfig,
+    ansible: bool = False,
+    command: bool = False,
+    coverage: bool = False,
+    virtualenv: bool = False,
+    controller: bool = True,
+    connection: t.Optional[Connection] = None,
 ) -> None:
     """Install requirements for the given Python using the specified arguments."""
     create_result_directories(args)
@@ -197,15 +197,15 @@ def collect_bootstrap(python: PythonConfig) -> list[PipCommand]:
 
 
 def collect_requirements(
-        python: PythonConfig,
-        controller: bool,
-        ansible: bool,
-        cryptography: bool,
-        coverage: bool,
-        virtualenv: bool,
-        minimize: bool,
-        command: t.Optional[str],
-        sanity: t.Optional[str],
+    python: PythonConfig,
+    controller: bool,
+    ansible: bool,
+    cryptography: bool,
+    coverage: bool,
+    virtualenv: bool,
+    minimize: bool,
+    command: t.Optional[str],
+    sanity: t.Optional[str],
 ) -> list[PipCommand]:
     """Collect requirements for the given Python using the specified arguments."""
     commands: list[PipCommand] = []
@@ -252,10 +252,10 @@ def collect_requirements(
 
 
 def run_pip(
-        args: EnvironmentConfig,
-        python: PythonConfig,
-        commands: list[PipCommand],
-        connection: t.Optional[Connection],
+    args: EnvironmentConfig,
+    python: PythonConfig,
+    commands: list[PipCommand],
+    connection: t.Optional[Connection],
 ) -> None:
     """Run the specified pip commands for the given Python, and optionally the specified host."""
     connection = connection or LocalConnection(args)
@@ -367,10 +367,10 @@ def collect_integration_install(command: str, controller: bool) -> list[PipInsta
 
 
 def collect_install(
-        requirements_paths: list[tuple[str, str]],
-        constraints_paths: list[tuple[str, str]],
-        packages: t.Optional[list[str]] = None,
-        constraints: bool = True,
+    requirements_paths: list[tuple[str, str]],
+    constraints_paths: list[tuple[str, str]],
+    packages: t.Optional[list[str]] = None,
+    constraints: bool = True,
 ) -> list[PipInstall]:
     """Build a pip install list from the given requirements, constraints and packages."""
     # listing content constraints first gives them priority over constraints provided by ansible-test

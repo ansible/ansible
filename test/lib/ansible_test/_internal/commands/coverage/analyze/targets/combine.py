@@ -58,10 +58,10 @@ def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombine
 
 
 def merge_indexes(
-        source_data: IndexedPoints,
-        source_index: list[str],
-        combined_data: IndexedPoints,
-        combined_index: TargetIndexes,
+    source_data: IndexedPoints,
+    source_index: list[str],
+    combined_data: IndexedPoints,
+    combined_index: TargetIndexes,
 ) -> None:
     """Merge indexes from the source into the combined data set (arcs or lines)."""
     for covered_path, covered_points in source_data.items():
