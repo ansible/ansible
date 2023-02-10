@@ -253,7 +253,7 @@ class InventoryCLI(CLI):
         return dump
 
     @staticmethod
-    def _remove_empty(dump):
+    Def _remove_empty_keys(dump):
         # remove empty keys
         for x in ('hosts', 'vars', 'children'):
             if x in dump and not dump[x]:
@@ -316,7 +316,8 @@ class InventoryCLI(CLI):
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
-            self._remove_empty(results[group.name])
+            self._remove_empty_keys(results[group.name])
+            # remove empty groups
             if not results[group.name]:
                 del results[group.name]
 
@@ -365,7 +366,10 @@ class InventoryCLI(CLI):
                 if gvars:
                     results[group.name]['vars'] = gvars
 
-            self._remove_empty(results[group.name])
+            self._remove_empty_keys(results[group.name])
+            # remove empty groups
+            if not results[group.name]:
+                del results[group.name]
 
             return results
 
@@ -402,7 +406,8 @@ class InventoryCLI(CLI):
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
-            self._remove_empty(results[group.name])
+            self._remove_empty_keys(results[group.name])
+            # remove empty groups
             if not results[group.name]:
                 del results[group.name]
 
