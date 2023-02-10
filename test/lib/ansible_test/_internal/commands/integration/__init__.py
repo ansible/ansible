@@ -357,12 +357,12 @@ def integration_test_config_file(
 
     config_vars = (env_config.ansible_vars or {}).copy()
 
-    config_vars.update(dict(
+    config_vars.update(
         ansible_test=dict(
             environment=env_config.env_vars,
             module_defaults=env_config.module_defaults,
         )
-    ))
+    )
 
     config_file = json.dumps(config_vars, indent=4, sort_keys=True)
 
@@ -615,10 +615,10 @@ def command_integration_script(
         env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
-        env.update(dict(
+        env.update(
             # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
             ANSIBLE_PLAYBOOK_DIR=cwd,
-        ))
+        )
 
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
@@ -653,9 +653,9 @@ def command_integration_role(
     if isinstance(args, WindowsIntegrationConfig):
         hosts = 'windows'
         gather_facts = False
-        variables.update(dict(
+        variables.update(
             win_output_dir=r'C:\ansible_testing',
-        ))
+        )
     elif isinstance(args, NetworkIntegrationConfig):
         hosts = target.network_platform
         gather_facts = False
@@ -700,10 +700,10 @@ def command_integration_role(
             if env_config.ansible_vars:
                 variables.update(env_config.ansible_vars)
 
-            play.update(dict(
+            play.update(
                 environment=env_config.env_vars,
                 module_defaults=env_config.module_defaults,
-            ))
+            )
 
         playbook = json.dumps([play], indent=4, sort_keys=True)
 
@@ -736,10 +736,10 @@ def command_integration_role(
             env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
             cwd = test_env.integration_dir
 
-            env.update(dict(
+            env.update(
                 # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
                 ANSIBLE_PLAYBOOK_DIR=cwd,
-            ))
+            )
 
             if env_config and env_config.env_vars:
                 env.update(env_config.env_vars)
@@ -807,13 +807,13 @@ def integration_environment(
     )
 
     if args.debug_strategy:
-        env.update(dict(ANSIBLE_STRATEGY='debug'))
+        env.update(ANSIBLE_STRATEGY='debug')
 
     if 'non_local/' in target.aliases:
         if args.coverage:
             display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
 
-        env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
+        env.update(ANSIBLE_TEST_REMOTE_INTERPRETER='')
 
     env.update(integration)
 

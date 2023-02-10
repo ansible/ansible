@@ -57,7 +57,7 @@ class SshConnectionDetail:
             # See: https://www.openssh.com/txt/release-8.8
             algorithms = '+ssh-rsa'  # append the algorithm to the default list, requires OpenSSH 7.0 or later
 
-            options.update(dict(
+            options.update(
                 # Host key signature algorithms that the client wants to use.
                 # Available options can be found with `ssh -Q HostKeyAlgorithms` or `ssh -Q key` on older clients.
                 # This option was updated in OpenSSH 7.0, released on 2015-08-11, to support the "+" prefix.
@@ -70,7 +70,7 @@ class SshConnectionDetail:
                 # This option is an alias for PubkeyAcceptedAlgorithms, which was added in OpenSSH 8.5.
                 # See: https://www.openssh.com/txt/release-8.5
                 PubkeyAcceptedKeyTypes=algorithms,
-            ))
+            )
 
         return options
 

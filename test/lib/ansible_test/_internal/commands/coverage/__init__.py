@@ -97,7 +97,7 @@ def initialize_coverage(args: CoverageConfig, host_state: HostState) -> coverage
 def run_coverage(args: CoverageConfig, host_state: HostState, output_file: str, command: str, cmd: list[str]) -> None:
     """Run the coverage cli tool with the specified options."""
     env = common_environment()
-    env.update(dict(COVERAGE_FILE=output_file))
+    env.update(COVERAGE_FILE=output_file)
 
     cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 

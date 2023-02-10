@@ -307,7 +307,7 @@ class AnsibleCoreCI:
             )
         )
 
-        data.update(dict(auth=auth))
+        data.update(auth=auth)
 
         headers = {
             'Content-Type': 'application/json',

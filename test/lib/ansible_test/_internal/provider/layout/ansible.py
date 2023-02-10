@@ -21,10 +21,10 @@ class AnsibleLayout(LayoutProvider):
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, os.path.join('lib/ansible/plugins', p)) for p in self.PLUGIN_TYPES)
 
-        plugin_paths.update(dict(
+        plugin_paths.update(
             modules='lib/ansible/modules',
             module_utils='lib/ansible/module_utils',
-        ))
+        )
 
         return ContentLayout(root,
                              paths,
