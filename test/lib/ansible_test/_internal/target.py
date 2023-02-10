@@ -65,10 +65,10 @@ def walk_completion_targets(targets: c.Iterable[CompletionTarget], prefix: str, 
 
 
 def walk_internal_targets(
-        targets: c.Iterable[TCompletionTarget],
-        includes: t.Optional[list[str]] = None,
-        excludes: t.Optional[list[str]] = None,
-        requires: t.Optional[list[str]] = None,
+    targets: c.Iterable[TCompletionTarget],
+    includes: t.Optional[list[str]] = None,
+    excludes: t.Optional[list[str]] = None,
+    requires: t.Optional[list[str]] = None,
 ) -> tuple[TCompletionTarget, ...]:
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
@@ -256,13 +256,13 @@ def load_integration_prefixes() -> dict[str, str]:
 
 
 def walk_test_targets(
-        path: t.Optional[str] = None,
-        module_path: t.Optional[str] = None,
-        extensions: t.Optional[tuple[str, ...]] = None,
-        prefix: t.Optional[str] = None,
-        extra_dirs: t.Optional[tuple[str, ...]] = None,
-        include_symlinks: bool = False,
-        include_symlinked_directories: bool = False,
+    path: t.Optional[str] = None,
+    module_path: t.Optional[str] = None,
+    extensions: t.Optional[tuple[str, ...]] = None,
+    prefix: t.Optional[str] = None,
+    extra_dirs: t.Optional[tuple[str, ...]] = None,
+    include_symlinks: bool = False,
+    include_symlinked_directories: bool = False,
 ) -> c.Iterable[TestTarget]:
     """Iterate over available test targets."""
     if path:
@@ -436,12 +436,12 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 class TestTarget(CompletionTarget):
     """Generic test target."""
     def __init__(
-            self,
-            path: str,
-            module_path: t.Optional[str],
-            module_prefix: t.Optional[str],
-            base_path: str,
-            symlink: t.Optional[bool] = None,
+        self,
+        path: str,
+        module_path: t.Optional[str],
+        module_prefix: t.Optional[str],
+        base_path: str,
+        symlink: t.Optional[bool] = None,
     ) -> None:
         super().__init__()
 

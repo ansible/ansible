@@ -26,10 +26,10 @@ from ...environments import (
 
 
 def do_posix_integration(
-        subparsers,
-        parent: argparse.ArgumentParser,
-        add_integration_common: c.Callable[[argparse.ArgumentParser], None],
-        completer: CompositeActionCompletionFinder,
+    subparsers,
+    parent: argparse.ArgumentParser,
+    add_integration_common: c.Callable[[argparse.ArgumentParser], None],
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `integration` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(

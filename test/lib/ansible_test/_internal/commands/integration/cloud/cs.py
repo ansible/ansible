@@ -136,7 +136,7 @@ class CsCloudProvider(CloudProvider):
             # noinspection PyBroadException
             try:
                 json.loads(value)
-            except Exception:   # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 return False  # sometimes the file exists but is not yet valid JSON
 
             return True

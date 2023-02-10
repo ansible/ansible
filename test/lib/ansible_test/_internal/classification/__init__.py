@@ -379,9 +379,9 @@ class PathMapper:
         if is_subdir(path, data_context().content.integration_path):
             if dirname == data_context().content.integration_path:
                 for command in (
-                        'integration',
-                        'windows-integration',
-                        'network-integration',
+                    'integration',
+                    'windows-integration',
+                    'network-integration',
                 ):
                     if name == command and ext == '.cfg':
                         return {
@@ -641,19 +641,19 @@ class PathMapper:
 
         if '/' not in path:
             if path in (
-                    '.gitignore',
-                    'COPYING',
-                    'LICENSE',
-                    'Makefile',
+                '.gitignore',
+                'COPYING',
+                'LICENSE',
+                'Makefile',
             ):
                 return minimal
 
             if ext in (
-                    '.in',
-                    '.md',
-                    '.rst',
-                    '.toml',
-                    '.txt',
+                '.in',
+                '.md',
+                '.rst',
+                '.toml',
+                '.txt',
             ):
                 return minimal
 
@@ -757,17 +757,17 @@ class PathMapper:
 
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
             if name in (
-                    'integration',
-                    'network-integration',
-                    'windows-integration',
+                'integration',
+                'network-integration',
+                'windows-integration',
             ):
                 return {
                     name: self.integration_all_target,
                 }
 
             if name in (
-                    'sanity',
-                    'units',
+                'sanity',
+                'units',
             ):
                 return {
                     name: 'all',
@@ -826,11 +826,11 @@ class PathMapper:
 
         if '/' not in path:
             if path in (
-                    '.gitattributes',
-                    '.gitignore',
-                    '.mailmap',
-                    'COPYING',
-                    'Makefile',
+                '.gitattributes',
+                '.gitignore',
+                '.mailmap',
+                'COPYING',
+                'Makefile',
             ):
                 return minimal
 
@@ -840,11 +840,11 @@ class PathMapper:
                 return all_tests(self.args)  # broad impact, run all tests
 
             if ext in (
-                    '.in',
-                    '.md',
-                    '.rst',
-                    '.toml',
-                    '.txt',
+                '.in',
+                '.md',
+                '.rst',
+                '.toml',
+                '.txt',
             ):
                 return minimal
 

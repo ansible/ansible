@@ -215,12 +215,12 @@ class TestSkipped(TestResult):
 class TestFailure(TestResult):
     """Test failure."""
     def __init__(
-            self,
-            command: str,
-            test: str,
-            python_version: t.Optional[str] = None,
-            messages: t.Optional[c.Sequence[TestMessage]] = None,
-            summary: t.Optional[str] = None,
+        self,
+        command: str,
+        test: str,
+        python_version: t.Optional[str] = None,
+        messages: t.Optional[c.Sequence[TestMessage]] = None,
+        summary: t.Optional[str] = None,
     ):
         super().__init__(command, test, python_version)
 
@@ -379,14 +379,14 @@ class TestFailure(TestResult):
 class TestMessage:
     """Single test message for one file."""
     def __init__(
-            self,
-            message: str,
-            path: str,
-            line: int = 0,
-            column: int = 0,
-            level: str = 'error',
-            code: t.Optional[str] = None,
-            confidence: t.Optional[int] = None,
+        self,
+        message: str,
+        path: str,
+        line: int = 0,
+        column: int = 0,
+        level: str = 'error',
+        code: t.Optional[str] = None,
+        confidence: t.Optional[int] = None,
     ):
         self.__path = path
         self.__line = line

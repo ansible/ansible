@@ -396,14 +396,14 @@ def cleanup_python_paths() -> None:
 
 
 def intercept_python(
-        args: CommonConfig,
-        python: PythonConfig,
-        cmd: list[str],
-        env: dict[str, str],
-        capture: bool,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        always: bool = False,
+    args: CommonConfig,
+    python: PythonConfig,
+    cmd: list[str],
+    env: dict[str, str],
+    capture: bool,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    always: bool = False,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """
     Run a command while intercepting invocations of Python to control the version used.
@@ -428,20 +428,20 @@ def intercept_python(
 
 
 def run_command(
-        args: CommonConfig,
-        cmd: c.Iterable[str],
-        capture: bool,
-        env: t.Optional[dict[str, str]] = None,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        always: bool = False,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        cmd_verbosity: int = 1,
-        str_errors: str = 'strict',
-        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+    args: CommonConfig,
+    cmd: c.Iterable[str],
+    capture: bool,
+    env: t.Optional[dict[str, str]] = None,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    always: bool = False,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    cmd_verbosity: int = 1,
+    str_errors: str = 'strict',
+    error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always

@@ -345,19 +345,19 @@ def get_available_python_versions() -> dict[str, str]:
 
 
 def raw_command(
-        cmd: c.Iterable[str],
-        capture: bool,
-        env: t.Optional[dict[str, str]] = None,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        explain: bool = False,
-        stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
-        stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        cmd_verbosity: int = 1,
-        str_errors: str = 'strict',
-        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+    cmd: c.Iterable[str],
+    capture: bool,
+    env: t.Optional[dict[str, str]] = None,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    explain: bool = False,
+    stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
+    stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    cmd_verbosity: int = 1,
+    str_errors: str = 'strict',
+    error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
@@ -496,12 +496,12 @@ def raw_command(
 
 
 def communicate_with_process(
-        process: subprocess.Popen,
-        stdin: t.Optional[bytes],
-        stdout: bool,
-        stderr: bool,
-        capture: bool,
-        output_stream: OutputStream,
+    process: subprocess.Popen,
+    stdin: t.Optional[bytes],
+    stdout: bool,
+    stderr: bool,
+    capture: bool,
+    output_stream: OutputStream,
 ) -> tuple[bytes, bytes]:
     """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
     threads: list[WrappedThread] = []
@@ -855,11 +855,11 @@ class Display:
             self.print_message(message, color=color, truncate=truncate)
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
-            self,
-            message: str,
-            color: t.Optional[str] = None,
-            stderr: bool = False,
-            truncate: bool = False,
+        self,
+        message: str,
+        color: t.Optional[str] = None,
+        stderr: bool = False,
+        truncate: bool = False,
     ) -> None:
         """Display a message."""
         if self.redact and self.sensitive:
@@ -901,13 +901,13 @@ class ApplicationWarning(Exception):
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
     def __init__(
-            self,
-            cmd: list[str],
-            status: int = 0,
-            stdout: t.Optional[str] = None,
-            stderr: t.Optional[str] = None,
-            runtime: t.Optional[float] = None,
-            error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+        self,
+        cmd: list[str],
+        status: int = 0,
+        stdout: t.Optional[str] = None,
+        stderr: t.Optional[str] = None,
+        runtime: t.Optional[float] = None,
+        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
     ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
