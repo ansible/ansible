@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-playbook -K breaks when passwords have quotes (https://github.com/ansible/ansible/issues/79836).
