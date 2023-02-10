@@ -113,10 +113,10 @@ class AnsibleCoreCI:
     DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
 
     def __init__(
-            self,
-            args: EnvironmentConfig,
-            resource: Resource,
-            load: bool = True,
+        self,
+        args: EnvironmentConfig,
+        resource: Resource,
+        load: bool = True,
     ) -> None:
         self.args = args
         self.resource = resource

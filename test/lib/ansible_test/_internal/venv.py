@@ -41,8 +41,8 @@ from .python_requirements import (
 
 
 def get_virtual_python(
-        args: EnvironmentConfig,
-        python: VirtualPythonConfig,
+    args: EnvironmentConfig,
+    python: VirtualPythonConfig,
 ) -> VirtualPythonConfig:
     """Create a virtual environment for the given Python and return the path to its root."""
     if python.system_site_packages:

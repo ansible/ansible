@@ -1411,9 +1411,9 @@ def get_config_profile_type_map() -> dict[t.Type[HostConfig], t.Type[HostProfile
 
 
 def create_host_profile(
-        args: EnvironmentConfig,
-        config: HostConfig,
-        controller: bool,
+    args: EnvironmentConfig,
+    config: HostConfig,
+    controller: bool,
 ) -> HostProfile:
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]
