@@ -62,7 +62,7 @@ class StrategyModule(StrategyBase):
         '''
         noop_task = Task()
         noop_task.action = 'meta'
-        noop_task.args['_raw_params'] = 'noop'
+        noop_task.args = {'_raw_params': 'noop'}
         noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 

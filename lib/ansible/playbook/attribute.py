@@ -107,6 +107,9 @@ class Attribute:
     def __ge__(self, other):
         return other.priority >= self.priority
 
+    def get_default_value(self):
+        return self.default() if callable(self.default) else self.default
+
     def __get__(self, obj, obj_type=None):
         method = f'_get_attr_{self.name}'
         if hasattr(obj, method):
@@ -122,10 +125,7 @@ class Attribute:
             value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
-            value = self.default
-            if callable(value):
-                value = value()
-                setattr(obj, f'_{self.name}', value)
+            value = self.get_default_value()
 
         return value
 
@@ -173,10 +173,7 @@ class FieldAttribute(Attribute):
                     value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
-            value = self.default
-            if callable(value):
-                value = value()
-                setattr(obj, f'_{self.name}', value)
+            value = self.get_default_value()
 
         return value
 

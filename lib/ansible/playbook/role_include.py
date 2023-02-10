@@ -92,6 +92,8 @@ class IncludeRole(TaskInclude):
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
         if self.statically_loaded or self.public:
+            if not myplay.roles:
+                myplay.roles = myplay.fattributes["roles"].get_default_value()
             myplay.roles.append(actual_role)
 
         # save this for later use

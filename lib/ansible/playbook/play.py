@@ -242,6 +242,8 @@ class Play(Base, Taggable, CollectionSearch):
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
 
+        if not self.roles:
+            self.roles = self.fattributes["roles"].get_default_value()
         self.roles[:0] = roles
 
         return self.roles
@@ -320,7 +322,7 @@ class Play(Base, Taggable, CollectionSearch):
         if self.force_handlers:
             noop_task = Task()
             noop_task.action = 'meta'
-            noop_task.args['_raw_params'] = 'noop'
+            noop_task.args = {'_raw_params': 'noop'}
             noop_task.implicit = True
             noop_task.set_loader(self._loader)
 
