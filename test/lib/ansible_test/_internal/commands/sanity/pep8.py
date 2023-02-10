@@ -67,7 +67,7 @@ class Pep8Test(SanitySingleVersion):
             '--max-line-length', '160',
             '--config', '/dev/null',
             '--ignore', ','.join(sorted(current_ignore)),
-        ] + paths
+        ] + paths  # fmt: skip
 
         if paths:
             try:

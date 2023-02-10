@@ -413,7 +413,7 @@ def run_utility_container(
     options = options + [
         '--name', name,
         '--rm',
-    ]
+    ]  # fmt: skip
 
     if data:
         options.append('-i')

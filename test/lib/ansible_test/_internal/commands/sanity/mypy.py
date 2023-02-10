@@ -233,7 +233,7 @@ class MypyTest(SanityMultipleVersion):
             # Below are context specific arguments.
             # They are primarily useful for listing individual 'ignore_missing_imports' entries instead of using a global ignore.
             '--config-file', config_path,
-        ]
+        ]  # fmt: skip
 
         cmd.extend(context_paths)
 

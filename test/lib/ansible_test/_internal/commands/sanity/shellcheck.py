@@ -69,7 +69,7 @@ class ShellcheckTest(SanityVersionNeutral):
             'shellcheck',
             '-e', ','.join(sorted(exclude)),
             '--format', 'checkstyle',
-        ] + paths
+        ] + paths  # fmt: skip
 
         try:
             stdout, stderr = run_command(args, cmd, capture=True)

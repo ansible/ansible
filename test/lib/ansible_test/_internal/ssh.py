@@ -163,7 +163,7 @@ def create_ssh_command(
         'ssh',
         '-n',  # prevent reading from stdin
         '-i', ssh.identity_file,  # file from which the identity for public key authentication is read
-    ]
+    ]  # fmt: skip
 
     if not command:
         cmd.append('-N')  # do not execute a remote command

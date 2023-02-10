@@ -256,14 +256,13 @@ def command_units(args: UnitsConfig) -> None:
             '--forked',
             '-r', 'a',
             '-n', str(args.num_workers) if args.num_workers else 'auto',
-            '--color',
-            'yes' if args.color else 'no',
+            '--color', 'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest', 'config', config_name),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
             '--strict-markers',  # added in pytest 4.5.0
             '--rootdir', data_context().content.root,
-        ]
+        ]  # fmt:skip
 
         if not data_context().content.collection:
             cmd.append('--durations=25')

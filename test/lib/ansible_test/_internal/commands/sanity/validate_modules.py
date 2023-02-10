@@ -120,7 +120,7 @@ class ValidateModulesTest(SanitySingleVersion):
             os.path.join(SANITY_ROOT, 'validate-modules', 'validate.py'),
             '--format', 'json',
             '--arg-spec',
-        ]
+        ]  # fmt: skip
 
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])

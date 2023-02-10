@@ -229,7 +229,7 @@ class PylintTest(SanitySingleVersion):
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(sorted(load_plugins)),
-        ] + paths
+        ] + paths  # fmt: skip
 
         if data_context().content.collection:
             cmd.extend(['--collection-name', data_context().content.collection.full_name])
