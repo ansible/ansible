@@ -111,6 +111,7 @@ ansible-inventory  -i inv_with_int.yml --list "$@"
 {
 	cd 1/2
 	ansible-playbook -e @../vars.yml -i 'web_host.example.com,' -i inventory.yml 3/extra_vars_relative.yml "$@"
+	cd -
 }
 
 # test support for encrypted values for inventory options
