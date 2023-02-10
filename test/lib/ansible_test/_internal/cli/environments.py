@@ -253,7 +253,8 @@ def add_legacy_environment_options(
 ):
     """Add legacy options for controlling the test environment."""
     environment: argparse.ArgumentParser = parser.add_argument_group(  # type: ignore[assignment]  # real type private
-        title='environment arguments (mutually exclusive with "composite environment arguments" below)')
+        title='environment arguments (mutually exclusive with "composite environment arguments" below)',
+    )
 
     add_environments_python(environment, target_mode)
     add_environments_host(environment, controller_mode, target_mode)
@@ -384,7 +385,8 @@ def add_environment_venv(
     environments_parser.add_argument(
         '--venv-system-site-packages',
         action='store_true',
-        help='enable system site packages')
+        help='enable system site packages',
+    )
 
 
 def add_global_docker(

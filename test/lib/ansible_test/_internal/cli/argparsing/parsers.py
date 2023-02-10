@@ -461,7 +461,7 @@ class AbsolutePathParser(Parser):
                 else:
                     path += ChoicesParser([PATH_DELIMITER]).parse(state)
 
-                path += (boundary.match or '')
+                path += boundary.match or ''
 
         return path
 

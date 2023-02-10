@@ -314,7 +314,7 @@ def integration_test_environment(
         directory_copies = [
             (
                 os.path.join(integration_targets_relative_path, target.relative_path),
-                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path)
+                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path),
             )
             for target in target_dependencies
         ]

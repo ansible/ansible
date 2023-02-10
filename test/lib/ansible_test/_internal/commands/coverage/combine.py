@@ -108,7 +108,8 @@ class ExportedCoverageDataNotFound(ApplicationError):
         super().__init__(
             'Coverage data must be exported before processing with the `--docker` or `--remote` option.\n'
             'Export coverage with `ansible-test coverage combine` using the `--export` option.\n'
-            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path)
+            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path
+        )
 
 
 def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> list[str]:

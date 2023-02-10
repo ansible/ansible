@@ -49,7 +49,7 @@ class CGroupEntry:
         return cls(
             id=int(cid),
             subsystem=subsystem.removeprefix('name='),
-            path=pathlib.PurePosixPath(path)
+            path=pathlib.PurePosixPath(path),
         )
 
     @classmethod

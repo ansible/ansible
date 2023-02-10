@@ -43,7 +43,8 @@ def do_sanity(
     parser.set_defaults(
         func=command_sanity,
         targets_func=walk_sanity_targets,
-        config=SanityConfig)
+        config=SanityConfig,
+    )
 
     sanity = parser.add_argument_group(title='sanity test arguments')
 
@@ -113,7 +114,7 @@ def do_sanity(
     sanity.add_argument(
         '--prime-venvs',
         action='store_true',
-        help='prepare virtual environments without running tests'
+        help='prepare virtual environments without running tests',
     )
 
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SANITY)  # sanity

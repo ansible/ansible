@@ -148,7 +148,7 @@ def run_support_container(
         if current_container_id:
             publish_ports = False  # publishing ports is pointless if already running in a docker container
 
-    options = (options or [])
+    options = options or []
 
     if start:
         options.append('-dt')  # the -t option is required to cause systemd in the container to log output to the console

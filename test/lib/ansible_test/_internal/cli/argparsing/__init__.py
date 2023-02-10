@@ -258,7 +258,7 @@ def complete(
                 list_mode=True,  # abuse list mode to enable preservation of the literal results
                 consumed='',
                 continuation='',
-                matches=['completion', 'invalid']
+                matches=['completion', 'invalid'],
             )
         else:
             answer = ex

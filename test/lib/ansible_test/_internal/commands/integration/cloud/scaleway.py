@@ -43,7 +43,7 @@ class ScalewayCloudEnvironment(CloudEnvironment):
 
         env_vars = dict(
             SCW_API_KEY=parser.get('default', 'key'),
-            SCW_ORG=parser.get('default', 'org')
+            SCW_ORG=parser.get('default', 'org'),
         )
 
         display.sensitive.add(env_vars['SCW_API_KEY'])
