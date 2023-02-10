@@ -154,5 +154,5 @@
 - name: ensure empty host list
   assert:
     that:
-      - "'ERROR' in limited.stderr or 'ERROR' in lmited.stdout"
-      - "'--limit' in limited.stderr or '--limit' in lmited.stdout"
+      - "'ERROR' in limited.stderr or 'ERROR' in limited.stdout"
+      - "'--limit' in limited.stderr or '--limit' in limited.stdout"
