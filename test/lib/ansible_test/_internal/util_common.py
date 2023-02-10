@@ -449,8 +449,21 @@ def run_command(
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
-                       output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+    return raw_command(
+        cmd,
+        capture=capture,
+        env=env,
+        data=data,
+        cwd=cwd,
+        explain=explain,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        output_stream=output_stream,
+        cmd_verbosity=cmd_verbosity,
+        str_errors=str_errors,
+        error_callback=error_callback,
+    )
 
 
 def yamlcheck(python: PythonConfig) -> t.Optional[bool]:

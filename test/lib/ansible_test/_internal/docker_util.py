@@ -968,8 +968,16 @@ def docker_exec(
     if data or stdin or stdout:
         options.append('-i')
 
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive,
-                          output_stream=output_stream, data=data)
+    return docker_command(
+        args,
+        ['exec'] + options + [container_id] + cmd,
+        capture=capture,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        output_stream=output_stream,
+        data=data,
+    )
 
 
 def docker_command(
@@ -990,8 +998,18 @@ def docker_command(
     if command[0] == 'podman' and get_podman_remote():
         command.append('--remote')
 
-    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always,
-                       output_stream=output_stream, data=data)
+    return run_command(
+        args,
+        command + cmd,
+        env=env,
+        capture=capture,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        always=always,
+        output_stream=output_stream,
+        data=data,
+    )
 
 
 def docker_environment() -> dict[str, str]:
