@@ -96,7 +96,7 @@ class ResultType:
     TMP: ResultType = None
 
     @staticmethod
-    def _populate():
+    def _populate() -> None:
         ResultType.BOT = ResultType('bot')
         ResultType.COVERAGE = ResultType('coverage')
         ResultType.DATA = ResultType('data')
@@ -288,7 +288,7 @@ def get_injector_path() -> str:
 
     verified_chmod(injector_path, MODE_DIRECTORY)
 
-    def cleanup_injector():
+    def cleanup_injector() -> None:
         """Remove the temporary injector directory."""
         remove_tree(injector_path)
 
@@ -388,7 +388,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     verified_chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
-def cleanup_python_paths():
+def cleanup_python_paths() -> None:
     """Clean up all temporary python directories."""
     for path in sorted(PYTHON_PATHS.values()):
         display.info('Cleaning up temporary python directory: %s' % path, verbosity=2)
@@ -449,7 +449,7 @@ def run_command(
                        output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
-def yamlcheck(python):
+def yamlcheck(python: PythonConfig) -> t.Optional[bool]:
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
     result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
 

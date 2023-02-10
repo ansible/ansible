@@ -81,13 +81,13 @@ def detect_changes(args: TestConfig) -> t.Optional[list[str]]:
 
 class NoChangesDetected(ApplicationWarning):
     """Exception when change detection was performed, but no changes were found."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('No changes detected.')
 
 
 class NoTestsForChanges(ApplicationWarning):
     """Exception when changes detected, but no tests trigger as a result."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('No tests found for detected changes.')
 
 
@@ -111,5 +111,5 @@ class ListTargets(Exception):
 
 class AllTargetsSkipped(ApplicationWarning):
     """All targets skipped."""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('All targets skipped.')

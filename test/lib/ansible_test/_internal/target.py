@@ -136,10 +136,8 @@ def filter_targets(targets: c.Iterable[TCompletionTarget],
             raise TargetPatternsNotMatched(unmatched)
 
 
-def walk_module_targets():
-    """
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_module_targets() -> c.Iterable[TestTarget]:
+    """Iterate through the module test targets."""
     for target in walk_test_targets(path=data_context().content.module_path, module_path=data_context().content.module_path, extensions=MODULE_EXTENSIONS):
         if not target.module:
             continue
@@ -244,10 +242,8 @@ def walk_integration_targets() -> c.Iterable[IntegrationTarget]:
         yield IntegrationTarget(to_text(path), modules, prefixes)
 
 
-def load_integration_prefixes():
-    """
-    :rtype: dict[str, str]
-    """
+def load_integration_prefixes() -> dict[str, str]:
+    """Load and return the integration test prefixes."""
     path = data_context().content.integration_path
     file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
     prefixes = {}
@@ -313,7 +309,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
     role_targets = [target for target in integration_targets if target.type == 'role']
     hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
 
-    dependencies = collections.defaultdict(set)
+    dependencies: collections.defaultdict[str, set[str]] = collections.defaultdict(set)
 
     # handle setup dependencies
     for target in integration_targets:
@@ -405,12 +401,12 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
 
 class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
-    def __init__(self):
-        self.name = None
-        self.path = None
-        self.base_path = None
-        self.modules = tuple()
-        self.aliases = tuple()
+    def __init__(self) -> None:
+        self.name = ''
+        self.path = ''
+        self.base_path: t.Optional[str] = None
+        self.modules: tuple[str, ...] = tuple()
+        self.aliases: tuple[str, ...] = tuple()
 
     def __eq__(self, other):
         if isinstance(other, CompletionTarget):
@@ -446,7 +442,7 @@ class TestTarget(CompletionTarget):
             module_prefix: t.Optional[str],
             base_path: str,
             symlink: t.Optional[bool] = None,
-    ):
+    ) -> None:
         super().__init__()
 
         if symlink is None:
@@ -665,8 +661,6 @@ class IntegrationTarget(CompletionTarget):
 
         target_type, actual_type = categorize_integration_test(self.name, list(static_aliases), force_target)
 
-        self._remove_group(groups, 'context')
-
         groups.extend(['context/', f'context/{target_type.name.lower()}'])
 
         if target_type != actual_type:
@@ -694,10 +688,6 @@ class IntegrationTarget(CompletionTarget):
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
         self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
-
-    @staticmethod
-    def _remove_group(groups, group):
-        return [g for g in groups if g != group and not g.startswith('%s/' % group)]
 
 
 class TargetPatternsNotMatched(ApplicationError):
