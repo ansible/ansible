@@ -143,17 +143,22 @@ class InventoryCLI(CLI):
             # FIXME: should we template first?
             results = self.dump(myvars)
 
-        elif context.CLIARGS['graph']:
-            results = self.inventory_graph()
-        elif context.CLIARGS['list']:
-            top = self._get_group('all')
-            if context.CLIARGS['yaml']:
-                results = self.yaml_inventory(top)
-            elif context.CLIARGS['toml']:
-                results = self.toml_inventory(top)
-            else:
-                results = self.json_inventory(top)
-            results = self.dump(results)
+        else:
+            if context.CLIARGS['subset']:
+                # not doing single host, set limit in general if given
+                self.invenotry.subset(context.CLIARGS['subset'])
+
+            if context.CLIARGS['graph']:
+                results = self.inventory_graph()
+            elif context.CLIARGS['list']:
+                top = self._get_group('all')
+                if context.CLIARGS['yaml']:
+                    results = self.yaml_inventory(top)
+                elif context.CLIARGS['toml']:
+                    results = self.toml_inventory(top)
+                else:
+                    results = self.json_inventory(top)
+                results = self.dump(results)
 
         if results:
             outfile = context.CLIARGS['output_file']
@@ -267,17 +272,15 @@ class InventoryCLI(CLI):
             name = "  |" * (depth) + "--%s" % name
         return name
 
-    def _graph_group(self, group, valid_hosts, depth=0):
+    def _graph_group(self, group, depth=0):
 
         result = [self._graph_name('@%s:' % group.name, depth)]
         depth = depth + 1
         for kid in group.child_groups:
-            result.extend(self._graph_group(kid, valid_hosts, depth))
+            result.extend(self._graph_group(kid, depth))
 
         if group.name != 'all':
-            for host in group.hosts:
-                if valid_hosts is not None and host not in valid_hosts:
-                    continue
+            for host in self.inventory.get_hosts(group.name):
                 result.append(self._graph_name(host.name, depth))
                 if context.CLIARGS['show_vars']:
                     result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
@@ -289,31 +292,21 @@ class InventoryCLI(CLI):
 
     def inventory_graph(self):
 
-        valid_hosts = None
-        if context.CLIARGS['subset']:
-            valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
-
         start_at = self._get_group(context.CLIARGS['pattern'])
         if start_at:
-            return '\n'.join(self._graph_group(start_at, valid_hosts))
+            return '\n'.join(self._graph_group(start_at))
         else:
             raise AnsibleOptionsError("Pattern must be valid group name when using --graph")
 
     def json_inventory(self, top):
 
         seen = set()
-        valid_hosts = None
-        if context.CLIARGS['subset']:
-            valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
 
         def format_group(group):
             results = {}
             results[group.name] = {}
             if group.name != 'all':
-                if valid_hosts is not None:
-                    results[group.name]['hosts'] = [h.name for h in group.hosts if h in valid_hosts]
-                else:
-                    results[group.name]['hosts'] = [h.name for h in group.hosts]
+                results[group.name]['hosts'] = [h.name for h in self.inventory.get_hosts(group.name)]
             results[group.name]['children'] = []
             for subgroup in group.child_groups:
                 results[group.name]['children'].append(subgroup.name)
@@ -321,8 +314,7 @@ class InventoryCLI(CLI):
                     results.update(format_group(subgroup))
                     seen.add(subgroup.name)
             if context.CLIARGS['export']:
-                if valid_hosts is None or results[group.name]['hosts']:
-                    results[group.name]['vars'] = self._get_group_variables(group)
+                results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
             if not results[group.name]:
@@ -345,9 +337,6 @@ class InventoryCLI(CLI):
     def yaml_inventory(self, top):
 
         seen = []
-        valid_hosts = None
-        if context.CLIARGS['subset']:
-            valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
 
         def format_group(group):
             results = {}
@@ -364,9 +353,7 @@ class InventoryCLI(CLI):
             # hosts for group
             results[group.name]['hosts'] = {}
             if group.name != 'all':
-                for h in group.hosts:
-                    if valid_hosts is not None and h not in valid_hosts:
-                        continue
+                for h in self.invenotry.get_hosts(group.name):
                     myvars = {}
                     if h.name not in seen:  # avoid defining host vars more than once
                         seen.append(h.name)
@@ -374,10 +361,9 @@ class InventoryCLI(CLI):
                     results[group.name]['hosts'][h.name] = myvars
 
             if context.CLIARGS['export']:
-                if valid_hosts is None or results[group.name]['hosts']:
-                    gvars = self._get_group_variables(group)
-                    if gvars:
-                        results[group.name]['vars'] = gvars
+                gvars = self._get_group_variables(group)
+                if gvars:
+                    results[group.name]['vars'] = gvars
 
             self._remove_empty(results[group.name])
 
@@ -388,9 +374,6 @@ class InventoryCLI(CLI):
     def toml_inventory(self, top):
         seen = set()
         has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
-        valid_hosts = None
-        if context.CLIARGS['subset']:
-            valid_hosts = CLI.get_host_list(self.inventory, context.CLIARGS['subset'])
 
         def format_group(group):
             results = {}
@@ -405,9 +388,7 @@ class InventoryCLI(CLI):
                 results.update(format_group(subgroup))
 
             if group.name != 'all':
-                for host in group.hosts:
-                    if valid_hosts is not None and host not in valid_hosts:
-                        continue
+                for host in self.inventory.get_hosts(group.name):
                     if host.name not in seen:
                         seen.add(host.name)
                         host_vars = self._get_host_variables(host=host)
@@ -419,8 +400,7 @@ class InventoryCLI(CLI):
                         results[group.name]['hosts'] = {host.name: host_vars}
 
             if context.CLIARGS['export']:
-                if valid_hosts is None or results[group.name]['hosts']:
-                    results[group.name]['vars'] = self._get_group_variables(group)
+                results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
             if not results[group.name]:
