@@ -37,9 +37,9 @@ from .xml import (
 
 
 def do_coverage(
-        subparsers,
-        parent: argparse.ArgumentParser,
-        completer: CompositeActionCompletionFinder,
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for all `coverage` commands."""
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[parent])
@@ -61,7 +61,7 @@ def do_coverage(
 
 
 def add_coverage_common(
-        parser: argparse.ArgumentParser,
+    parser: argparse.ArgumentParser,
 ):
     """Add common coverage arguments."""
     parser.add_argument(
