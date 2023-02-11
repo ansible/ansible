@@ -28,6 +28,7 @@ Instead of using ``import another_library``:
        ANOTHER_LIBRARY_IMPORT_ERROR = traceback.format_exc()
    else:
        HAS_ANOTHER_LIBRARY = True
+       ANOTHER_LIBRARY_IMPORT_ERROR = None
 
 .. note::
 
