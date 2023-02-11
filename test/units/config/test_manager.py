@@ -74,6 +74,7 @@ ensure_unquoting_test_data = [
     ('""value""', '"value"', 'str', 'ini')
 ]
 
+
 class TestConfigManager:
     @classmethod
     def setup_class(cls):
