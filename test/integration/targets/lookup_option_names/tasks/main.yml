@@ -1,0 +1,10 @@
+---
+- name: Test lookup option names
+  assert:
+    that:
+      - lookup_result['kwargs'][item] == 'testval'
+      - query_result[0]['kwargs'][item] == 'testval'
+  vars:
+    lookup_result: "{{ lookup('test_echo', **{item: 'testval'}) }}"
+    query_result: "{{ query('test_echo', **{item: 'testval'}) }}"
+  loop: "{{ lookup_names }}"
