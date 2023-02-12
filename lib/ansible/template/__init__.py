@@ -810,16 +810,16 @@ class Templar:
 
         return now
 
-    def _query_lookup(self, name_, *args, **kwargs):
+    def _query_lookup(self, ansible_lookup_name, *args, **kwargs):
         ''' wrapper for lookup, force wantlist true'''
         kwargs['wantlist'] = True
-        return self._lookup(name_, *args, **kwargs)
+        return self._lookup(ansible_lookup_name, *args, **kwargs)
 
-    def _lookup(self, name_, *args, **kwargs):
-        instance = lookup_loader.get(name_, loader=self._loader, templar=self)
+    def _lookup(self, ansible_lookup_name, *args, **kwargs):
+        instance = lookup_loader.get(ansible_lookup_name, loader=self._loader, templar=self)
 
         if instance is None:
-            raise AnsibleError("lookup plugin (%s) not found" % name_)
+            raise AnsibleError("lookup plugin (%s) not found" % ansible_lookup_name)
 
         wantlist = kwargs.pop('wantlist', False)
         allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
@@ -847,7 +847,7 @@ class Templar:
         except Exception as e:
             # errors not handled by lookup
             msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
-                  (name_, type(e), to_text(e))
+                  (ansible_lookup_name, type(e), to_text(e))
             if errors == 'warn':
                 display.warning(msg)
             elif errors == 'ignore':
@@ -859,8 +859,8 @@ class Templar:
 
         if not is_sequence(ran):
             display.deprecated(
-                f'The lookup plugin \'{name_}\' was expected to return a list, got \'{type(ran)}\' instead. '
-                f'The lookup plugin \'{name_}\' needs to be changed to return a list. '
+                f'The lookup plugin \'{ansible_lookup_name}\' was expected to return a list, got \'{type(ran)}\' instead. '
+                f'The lookup plugin \'{ansible_lookup_name}\' needs to be changed to return a list. '
                 'This will be an error in Ansible 2.18',
                 version='2.18'
             )
@@ -882,7 +882,7 @@ class Templar:
                 # the case:
                 if not isinstance(ran, Sequence):
                     raise AnsibleError("The lookup plugin '%s' did not return a list."
-                                       % name_)
+                                       % ansible_lookup_name)
 
                 # The TypeError we can recover from is when the value *inside* of the list
                 # is not a string
