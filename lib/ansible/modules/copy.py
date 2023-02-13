@@ -160,7 +160,7 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     owner: foo
     group: foo
-    mode: '0644'
+    mode: 0644
 
 - name: Copy file with owner and permission, using symbolic representation
   ansible.builtin.copy:
@@ -184,7 +184,7 @@ EXAMPLES = r'''
     dest: /etc/ntp.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: '644'
     backup: yes
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
