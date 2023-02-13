@@ -81,18 +81,21 @@ def detect_changes(args: TestConfig) -> t.Optional[list[str]]:
 
 class NoChangesDetected(ApplicationWarning):
     """Exception when change detection was performed, but no changes were found."""
+
     def __init__(self) -> None:
         super().__init__('No changes detected.')
 
 
 class NoTestsForChanges(ApplicationWarning):
     """Exception when changes detected, but no tests trigger as a result."""
+
     def __init__(self) -> None:
         super().__init__('No tests found for detected changes.')
 
 
 class Delegate(Exception):
     """Trigger command delegation."""
+
     def __init__(self, host_state: HostState, exclude: list[str] = None, require: list[str] = None) -> None:
         super().__init__()
 
@@ -103,6 +106,7 @@ class Delegate(Exception):
 
 class ListTargets(Exception):
     """List integration test targets instead of executing them."""
+
     def __init__(self, target_names: list[str]) -> None:
         super().__init__()
 
@@ -111,5 +115,6 @@ class ListTargets(Exception):
 
 class AllTargetsSkipped(ApplicationWarning):
     """All targets skipped."""
+
     def __init__(self) -> None:
         super().__init__('All targets skipped.')

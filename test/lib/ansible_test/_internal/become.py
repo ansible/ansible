@@ -11,6 +11,7 @@ from .util import (
 
 class Become(metaclass=abc.ABCMeta):
     """Base class for become implementations."""
+
     @classmethod
     def name(cls) -> str:
         """The name of this plugin."""
@@ -28,6 +29,7 @@ class Become(metaclass=abc.ABCMeta):
 
 class Doas(Become):
     """Become using 'doas'."""
+
     @property
     def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
@@ -47,6 +49,7 @@ class Doas(Become):
 
 class DoasSudo(Doas):
     """Become using 'doas' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
+
     @classmethod
     def name(cls) -> str:
         """The name of this plugin."""
@@ -60,6 +63,7 @@ class DoasSudo(Doas):
 
 class Su(Become):
     """Become using 'su'."""
+
     @property
     def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
@@ -77,6 +81,7 @@ class Su(Become):
 
 class SuSudo(Su):
     """Become using 'su' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
+
     @classmethod
     def name(cls) -> str:
         """The name of this plugin."""
@@ -90,6 +95,7 @@ class SuSudo(Su):
 
 class Sudo(Become):
     """Become using 'sudo'."""
+
     @property
     def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""

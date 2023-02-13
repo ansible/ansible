@@ -40,6 +40,7 @@ CODE = 'azp'
 
 class AzurePipelines(CIProvider):
     """CI provider implementation for Azure Pipelines."""
+
     def __init__(self) -> None:
         self.auth = AzurePipelinesAuthHelper()
 
@@ -143,6 +144,7 @@ class AzurePipelinesAuthHelper(CryptographyAuthHelper):
     Authentication helper for Azure Pipelines.
     Based on cryptography since it is provided by the default Azure Pipelines environment.
     """
+
     def publish_public_key(self, public_key_pem: str) -> None:
         """Publish the given public key."""
         try:
@@ -162,6 +164,7 @@ class AzurePipelinesAuthHelper(CryptographyAuthHelper):
 
 class AzurePipelinesChanges:
     """Change information for an Azure Pipelines build."""
+
     def __init__(self, args: CommonConfig) -> None:
         self.args = args
         self.git = Git()

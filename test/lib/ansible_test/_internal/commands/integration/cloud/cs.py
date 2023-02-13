@@ -35,6 +35,7 @@ from . import (
 
 class CsCloudProvider(CloudProvider):
     """CloudStack cloud provider plugin. Sets up cloud resources before delegation."""
+
     DOCKER_SIMULATOR_NAME = 'cloudstack-sim'
 
     def __init__(self, args: IntegrationConfig) -> None:
@@ -131,6 +132,7 @@ class CsCloudProvider(CloudProvider):
 
     def _get_credentials(self, container_name: str) -> dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
+
         def check(value) -> bool:
             """Return True if the given configuration is valid JSON, otherwise return False."""
             # noinspection PyBroadException
@@ -148,6 +150,7 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()

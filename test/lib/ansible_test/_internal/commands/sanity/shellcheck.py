@@ -44,6 +44,7 @@ from ...config import (
 
 class ShellcheckTest(SanityVersionNeutral):
     """Sanity test using shellcheck."""
+
     @property
     def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
@@ -68,7 +69,7 @@ class ShellcheckTest(SanityVersionNeutral):
             'shellcheck',
             '-e', ','.join(sorted(exclude)),
             '--format', 'checkstyle',
-        ] + paths
+        ] + paths  # fmt: skip
 
         try:
             stdout, stderr = run_command(args, cmd, capture=True)

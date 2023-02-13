@@ -95,6 +95,7 @@ support_containers_mutex = threading.Lock()
 
 class HostType:
     """Enum representing the types of hosts involved in running tests."""
+
     origin = 'origin'
     control = 'control'
     managed = 'managed'
@@ -102,6 +103,7 @@ class HostType:
 
 class CleanupMode(enum.Enum):
     """How container cleanup should be handled."""
+
     YES = enum.auto()
     NO = enum.auto()
     INFO = enum.auto()
@@ -146,7 +148,7 @@ def run_support_container(
         if current_container_id:
             publish_ports = False  # publishing ports is pointless if already running in a docker container
 
-    options = (options or [])
+    options = options or []
 
     if start:
         options.append('-dt')  # the -t option is required to cause systemd in the container to log output to the console
@@ -378,6 +380,7 @@ def get_container_database(args: EnvironmentConfig) -> ContainerDatabase:
 
 class ContainerAccess:
     """Information needed for one test host to access a single container supporting tests."""
+
     def __init__(self, host_ip: str, names: list[str], ports: t.Optional[list[int]], forwards: t.Optional[dict[int, int]]) -> None:
         # if forwards is set
         #   this is where forwards are sent (it is the host that provides an indirect connection to the containers on alternate ports)
@@ -437,6 +440,7 @@ class ContainerAccess:
 
 class ContainerDatabase:
     """Database of running containers used to support tests."""
+
     def __init__(self, data: dict[str, dict[str, dict[str, ContainerAccess]]]) -> None:
         self.data = data
 
@@ -576,6 +580,7 @@ def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
 
 class SupportContainerContext:
     """Context object for tracking information relating to access of support containers."""
+
     def __init__(self, containers: ContainerDatabase, process: t.Optional[SshProcess]) -> None:
         self.containers = containers
         self.process = process
@@ -678,19 +683,21 @@ def create_support_container_context(
 
 class ContainerDescriptor:
     """Information about a support container."""
-    def __init__(self,
-                 image: str,
-                 context: str,
-                 name: str,
-                 container_id: str,
-                 ports: list[int],
-                 aliases: list[str],
-                 publish_ports: bool,
-                 running: bool,
-                 existing: bool,
-                 cleanup: CleanupMode,
-                 env: t.Optional[dict[str, str]],
-                 ) -> None:
+
+    def __init__(
+        self,
+        image: str,
+        context: str,
+        name: str,
+        container_id: str,
+        ports: list[int],
+        aliases: list[str],
+        publish_ports: bool,
+        running: bool,
+        existing: bool,
+        cleanup: CleanupMode,
+        env: t.Optional[dict[str, str]],
+    ) -> None:
         self.image = image
         self.context = context
         self.name = name
@@ -757,23 +764,26 @@ class ContainerDescriptor:
 
 class SupportContainer:
     """Information about a running support container available for use by tests."""
-    def __init__(self,
-                 container: DockerInspect,
-                 container_ip: str,
-                 published_ports: dict[int, int],
-                 ) -> None:
+
+    def __init__(
+        self,
+        container: DockerInspect,
+        container_ip: str,
+        published_ports: dict[int, int],
+    ) -> None:
         self.container = container
         self.container_ip = container_ip
         self.published_ports = published_ports
 
 
-def wait_for_file(args: EnvironmentConfig,
-                  container_name: str,
-                  path: str,
-                  sleep: int,
-                  tries: int,
-                  check: t.Optional[c.Callable[[str], bool]] = None,
-                  ) -> str:
+def wait_for_file(
+    args: EnvironmentConfig,
+    container_name: str,
+    path: str,
+    sleep: int,
+    tries: int,
+    check: t.Optional[c.Callable[[str], bool]] = None,
+) -> str:
     """Wait for the specified file to become available in the requested container and return its contents."""
     display.info('Waiting for container "%s" to provide file: %s' % (container_name, path))
 
@@ -853,6 +863,7 @@ def create_container_hooks(
             """Clean up previously configured SSH port forwarding which was required by the specified target."""
             cleanup_ssh_ports(args, control_connections, '%s_hosts_restore.yml' % control_type, control_state, target, HostType.control)
             cleanup_ssh_ports(args, managed_connections, '%s_hosts_restore.yml' % managed_type, managed_state, target, HostType.managed)
+
     else:
         pre_target, post_target = None, None
 

@@ -39,6 +39,7 @@ class ChangeDetectionNotSupported(ApplicationError):
 
 class CIProvider(metaclass=abc.ABCMeta):
     """Base class for CI provider plugins."""
+
     priority = 500
 
     @staticmethod
@@ -103,6 +104,7 @@ def get_ci_provider() -> CIProvider:
 
 class AuthHelper(metaclass=abc.ABCMeta):
     """Public key based authentication helper for Ansible Core CI."""
+
     def sign_request(self, request: dict[str, t.Any]) -> None:
         """Sign the given auth request and make the public key available."""
         payload_bytes = to_bytes(json.dumps(request, sort_keys=True))
@@ -141,6 +143,7 @@ class AuthHelper(metaclass=abc.ABCMeta):
 
 class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
     """Cryptography based public key based authentication helper for Ansible Core CI."""
+
     def sign_bytes(self, payload_bytes: bytes) -> bytes:
         """Sign the given payload and return the signature, initializing a new key pair if required."""
         # import cryptography here to avoid overhead and failures in environments which do not use/provide it
@@ -186,6 +189,7 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
 
 class OpenSSLAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
     """OpenSSL based public key based authentication helper for Ansible Core CI."""
+
     def sign_bytes(self, payload_bytes: bytes) -> bytes:
         """Sign the given payload and return the signature, initializing a new key pair if required."""
         private_key_pem = self.initialize_private_key()

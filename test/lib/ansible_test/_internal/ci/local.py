@@ -36,6 +36,7 @@ CODE = ''  # not really a CI provider, so use an empty string for the code
 
 class Local(CIProvider):
     """CI provider implementation when not using CI."""
+
     priority = 1000
 
     @staticmethod
@@ -149,6 +150,7 @@ class Local(CIProvider):
 
 class InvalidBranch(ApplicationError):
     """Exception for invalid branch specification."""
+
     def __init__(self, branch: str, reason: str) -> None:
         message = 'Invalid branch: %s\n%s' % (branch, reason)
 
@@ -159,6 +161,7 @@ class InvalidBranch(ApplicationError):
 
 class LocalChanges:
     """Change information for local work."""
+
     def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.git = Git()

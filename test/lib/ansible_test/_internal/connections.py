@@ -44,33 +44,37 @@ from .become import (
 
 class Connection(metaclass=abc.ABCMeta):
     """Base class for connecting to a host."""
+
     @abc.abstractmethod
-    def run(self,
-            command: list[str],
-            capture: bool,
-            interactive: bool = False,
-            data: t.Optional[str] = None,
-            stdin: t.Optional[t.IO[bytes]] = None,
-            stdout: t.Optional[t.IO[bytes]] = None,
-            output_stream: t.Optional[OutputStream] = None,
-            ) -> tuple[t.Optional[str], t.Optional[str]]:
+    def run(
+        self,
+        command: list[str],
+        capture: bool,
+        interactive: bool = False,
+        data: t.Optional[str] = None,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        output_stream: t.Optional[OutputStream] = None,
+    ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
 
-    def extract_archive(self,
-                        chdir: str,
-                        src: t.IO[bytes],
-                        ):
+    def extract_archive(
+        self,
+        chdir: str,
+        src: t.IO[bytes],
+    ):
         """Extract the given archive file stream in the specified directory."""
         tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
 
         retry(lambda: self.run(tar_cmd, stdin=src, capture=True))
 
-    def create_archive(self,
-                       chdir: str,
-                       name: str,
-                       dst: t.IO[bytes],
-                       exclude: t.Optional[str] = None,
-                       ):
+    def create_archive(
+        self,
+        chdir: str,
+        name: str,
+        dst: t.IO[bytes],
+        exclude: t.Optional[str] = None,
+    ):
         """Create the specified archive file stream from the specified directory, including the given name and optionally excluding the given name."""
         tar_cmd = ['tar', 'cf', '-', '-C', chdir]
         gzip_cmd = ['gzip']
@@ -90,18 +94,20 @@ class Connection(metaclass=abc.ABCMeta):
 
 class LocalConnection(Connection):
     """Connect to localhost."""
+
     def __init__(self, args: EnvironmentConfig) -> None:
         self.args = args
 
-    def run(self,
-            command: list[str],
-            capture: bool,
-            interactive: bool = False,
-            data: t.Optional[str] = None,
-            stdin: t.Optional[t.IO[bytes]] = None,
-            stdout: t.Optional[t.IO[bytes]] = None,
-            output_stream: t.Optional[OutputStream] = None,
-            ) -> tuple[t.Optional[str], t.Optional[str]]:
+    def run(
+        self,
+        command: list[str],
+        capture: bool,
+        interactive: bool = False,
+        data: t.Optional[str] = None,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        output_stream: t.Optional[OutputStream] = None,
+    ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         return run_command(
             args=self.args,
@@ -117,6 +123,7 @@ class LocalConnection(Connection):
 
 class SshConnection(Connection):
     """Connect to a host using SSH."""
+
     def __init__(self, args: EnvironmentConfig, settings: SshConnectionDetail, become: t.Optional[Become] = None) -> None:
         self.args = args
         self.settings = settings
@@ -136,15 +143,16 @@ class SshConnection(Connection):
 
         self.options.extend(ssh_options_to_list(ssh_options))
 
-    def run(self,
-            command: list[str],
-            capture: bool,
-            interactive: bool = False,
-            data: t.Optional[str] = None,
-            stdin: t.Optional[t.IO[bytes]] = None,
-            stdout: t.Optional[t.IO[bytes]] = None,
-            output_stream: t.Optional[OutputStream] = None,
-            ) -> tuple[t.Optional[str], t.Optional[str]]:
+    def run(
+        self,
+        command: list[str],
+        capture: bool,
+        interactive: bool = False,
+        data: t.Optional[str] = None,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        output_stream: t.Optional[OutputStream] = None,
+    ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         options = list(self.options)
 
@@ -213,20 +221,22 @@ class SshConnection(Connection):
 
 class DockerConnection(Connection):
     """Connect to a host using Docker."""
+
     def __init__(self, args: EnvironmentConfig, container_id: str, user: t.Optional[str] = None) -> None:
         self.args = args
         self.container_id = container_id
         self.user: t.Optional[str] = user
 
-    def run(self,
-            command: list[str],
-            capture: bool,
-            interactive: bool = False,
-            data: t.Optional[str] = None,
-            stdin: t.Optional[t.IO[bytes]] = None,
-            stdout: t.Optional[t.IO[bytes]] = None,
-            output_stream: t.Optional[OutputStream] = None,
-            ) -> tuple[t.Optional[str], t.Optional[str]]:
+    def run(
+        self,
+        command: list[str],
+        capture: bool,
+        interactive: bool = False,
+        data: t.Optional[str] = None,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        output_stream: t.Optional[OutputStream] = None,
+    ) -> tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         options = []
 

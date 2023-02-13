@@ -12,6 +12,7 @@ from .util import (
 
 class Git:
     """Wrapper around git command-line tools."""
+
     def __init__(self, root: t.Optional[str] = None) -> None:
         self.git = 'git'
         self.root = root

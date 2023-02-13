@@ -84,6 +84,7 @@ def _get_module_test(module_restrictions: bool) -> c.Callable[[str], bool]:
 
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
+
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if data_context().content.is_ansible:

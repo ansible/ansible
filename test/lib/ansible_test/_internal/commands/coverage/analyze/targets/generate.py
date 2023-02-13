@@ -52,6 +52,7 @@ from . import (
 
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets generate` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 

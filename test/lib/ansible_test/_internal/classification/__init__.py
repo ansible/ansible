@@ -176,6 +176,7 @@ def categorize_changes(args: TestConfig, paths: list[str], verbose_command: t.Op
 
 class PathMapper:
     """Map file paths to test commands and targets."""
+
     def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.integration_all_target = get_integration_all_target(self.args)

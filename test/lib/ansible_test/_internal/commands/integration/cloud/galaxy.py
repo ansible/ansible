@@ -77,6 +77,7 @@ class GalaxyProvider(CloudProvider):
     Galaxy plugin. Sets up pulp (ansible-galaxy) servers for tests.
     The pulp source itself resides at: https://github.com/pulp/pulp-oci-images
     """
+
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
@@ -143,6 +144,7 @@ class GalaxyProvider(CloudProvider):
 
 class GalaxyEnvironment(CloudEnvironment):
     """Galaxy environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         pulp_user = str(self._get_cloud_config('PULP_USER'))

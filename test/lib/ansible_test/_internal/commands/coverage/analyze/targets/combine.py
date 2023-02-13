@@ -28,6 +28,7 @@ from . import (
 
 class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets combine` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
