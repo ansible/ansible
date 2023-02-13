@@ -86,7 +86,7 @@ def main():
                 continue
             elif re.search('^roles/[^/]+/(?:files|templates)/', path):
                 is_role_file = True
-            elif re.search('^tests?/integration/targets/[^/]+/(?:files|templates)/', path):
+            elif re.search('^tests/integration/targets/[^/]+/(?:files|templates)/', path):
                 is_role_file = True
             elif path.startswith('test/integration/targets/') or path.startswith('tests/integration/targets/'):
                 is_integration = True
