@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Removed the ``ansible-format-automatic-specification`` rule from the ``pylint`` sanity test,
+                   now that Python 2.6 is no longer supported.
