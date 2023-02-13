@@ -38,6 +38,7 @@ from ...util import (
 
 class BinSymlinksTest(SanityVersionNeutral):
     """Sanity test for symlinks in the bin directory."""
+
     ansible_only = True
 
     @property

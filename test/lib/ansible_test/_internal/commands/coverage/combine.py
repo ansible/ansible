@@ -103,11 +103,13 @@ def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -
 
 class ExportedCoverageDataNotFound(ApplicationError):
     """Exception when no combined coverage data is present yet is required."""
+
     def __init__(self) -> None:
         super().__init__(
             'Coverage data must be exported before processing with the `--docker` or `--remote` option.\n'
             'Export coverage with `ansible-test coverage combine` using the `--export` option.\n'
-            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path)
+            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path
+        )
 
 
 def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> list[str]:
@@ -353,6 +355,7 @@ def get_coverage_group(args: CoverageCombineConfig, coverage_file: str) -> t.Opt
 
 class CoverageCombineConfig(CoverageConfig):
     """Configuration for the coverage combine command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 

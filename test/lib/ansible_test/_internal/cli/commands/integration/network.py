@@ -50,7 +50,8 @@ def do_network_integration(
     parser.set_defaults(
         func=command_network_integration,
         targets_func=walk_network_integration_targets,
-        config=NetworkIntegrationConfig)
+        config=NetworkIntegrationConfig,
+    )
 
     network_integration = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='network integration test arguments'))
 

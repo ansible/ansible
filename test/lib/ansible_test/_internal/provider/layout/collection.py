@@ -17,6 +17,7 @@ from ...util import (
 
 class CollectionLayout(LayoutProvider):
     """Layout provider for Ansible collections."""
+
     @staticmethod
     def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
@@ -52,28 +53,29 @@ class CollectionLayout(LayoutProvider):
         integration_targets_path = self.__check_integration_path(paths, integration_messages)
         self.__check_unit_path(paths, unit_messages)
 
-        return ContentLayout(root,
-                             paths,
-                             plugin_paths=plugin_paths,
-                             collection=CollectionDetail(
-                                 name=collection_name,
-                                 namespace=collection_namespace,
-                                 root=collection_root,
-                             ),
-                             test_path='tests',
-                             results_path='tests/output',
-                             sanity_path='tests/sanity',
-                             sanity_messages=sanity_messages,
-                             integration_path='tests/integration',
-                             integration_targets_path=integration_targets_path.rstrip(os.path.sep),
-                             integration_vars_path='tests/integration/integration_config.yml',
-                             integration_messages=integration_messages,
-                             unit_path='tests/unit',
-                             unit_module_path='tests/unit/plugins/modules',
-                             unit_module_utils_path='tests/unit/plugins/module_utils',
-                             unit_messages=unit_messages,
-                             unsupported=not (is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
-                             )
+        return ContentLayout(
+            root,
+            paths,
+            plugin_paths=plugin_paths,
+            collection=CollectionDetail(
+                name=collection_name,
+                namespace=collection_namespace,
+                root=collection_root,
+            ),
+            test_path='tests',
+            results_path='tests/output',
+            sanity_path='tests/sanity',
+            sanity_messages=sanity_messages,
+            integration_path='tests/integration',
+            integration_targets_path=integration_targets_path.rstrip(os.path.sep),
+            integration_vars_path='tests/integration/integration_config.yml',
+            integration_messages=integration_messages,
+            unit_path='tests/unit',
+            unit_module_path='tests/unit/plugins/modules',
+            unit_module_utils_path='tests/unit/plugins/module_utils',
+            unit_messages=unit_messages,
+            unsupported=not (is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
+        )
 
     @staticmethod
     def __check_test_path(paths: list[str], messages: LayoutMessages) -> None:

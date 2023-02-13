@@ -22,6 +22,7 @@ from .util_common import (
 
 class HttpClient:
     """Make HTTP requests via curl."""
+
     def __init__(self, args: CommonConfig, always: bool = False, insecure: bool = False, proxy: t.Optional[str] = None) -> None:
         self.args = args
         self.always = always
@@ -113,6 +114,7 @@ class HttpClient:
 
 class HttpResponse:
     """HTTP response from curl."""
+
     def __init__(self, method: str, url: str, status_code: int, response: str) -> None:
         self.method = method
         self.url = url
@@ -129,6 +131,7 @@ class HttpResponse:
 
 class HttpError(ApplicationError):
     """HTTP response as an error."""
+
     def __init__(self, status: int, message: str) -> None:
         super().__init__('%s: %s' % (status, message))
         self.status = status

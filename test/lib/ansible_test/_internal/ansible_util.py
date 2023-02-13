@@ -114,27 +114,27 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         # standard path injection is not effective for ansible-connection, instead the location must be configured
         # ansible-connection only requires the injector for code coverage
         # the correct python interpreter is already selected using the sys.executable used to invoke ansible
-        ansible.update(dict(
+        ansible.update(
             ANSIBLE_CONNECTION_PATH=os.path.join(get_injector_path(), 'ansible-connection'),
-        ))
+        )
 
     if isinstance(args, PosixIntegrationConfig):
-        ansible.update(dict(
+        ansible.update(
             ANSIBLE_PYTHON_INTERPRETER='/set/ansible_python_interpreter/in/inventory',  # force tests to set ansible_python_interpreter in inventory
-        ))
+        )
 
     env.update(ansible)
 
     if args.debug:
-        env.update(dict(
+        env.update(
             ANSIBLE_DEBUG='true',
             ANSIBLE_LOG_PATH=os.path.join(ResultType.LOGS.name, 'debug.log'),
-        ))
+        )
 
     if data_context().content.collection:
-        env.update(dict(
+        env.update(
             ANSIBLE_COLLECTIONS_PATH=data_context().content.collection.root,
-        ))
+        )
 
     if data_context().content.is_ansible:
         env.update(configure_plugin_paths(args))
@@ -252,12 +252,14 @@ License: GPLv3+
 
 class CollectionDetail:
     """Collection detail."""
+
     def __init__(self) -> None:
         self.version: t.Optional[str] = None
 
 
 class CollectionDetailError(ApplicationError):
     """An error occurred retrieving collection detail."""
+
     def __init__(self, reason: str) -> None:
         super().__init__('Error collecting collection detail: %s' % reason)
         self.reason = reason

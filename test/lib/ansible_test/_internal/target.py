@@ -86,11 +86,12 @@ def walk_internal_targets(
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
-def filter_targets(targets: c.Iterable[TCompletionTarget],
-                   patterns: list[str],
-                   include: bool = True,
-                   errors: bool = True,
-                   ) -> c.Iterable[TCompletionTarget]:
+def filter_targets(
+    targets: c.Iterable[TCompletionTarget],
+    patterns: list[str],
+    include: bool = True,
+    errors: bool = True,
+) -> c.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
     compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
@@ -401,6 +402,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
 
 class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
+
     def __init__(self) -> None:
         self.name = ''
         self.path = ''
@@ -435,6 +437,7 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 
 class TestTarget(CompletionTarget):
     """Generic test target."""
+
     def __init__(
         self,
         path: str,
@@ -476,6 +479,7 @@ class TestTarget(CompletionTarget):
 
 class IntegrationTargetType(enum.Enum):
     """Type of integration test target."""
+
     CONTROLLER = enum.auto()
     TARGET = enum.auto()
     UNKNOWN = enum.auto()
@@ -692,6 +696,7 @@ class IntegrationTarget(CompletionTarget):
 
 class TargetPatternsNotMatched(ApplicationError):
     """One or more targets were not matched when a match was required."""
+
     def __init__(self, patterns: set[str]) -> None:
         self.patterns = sorted(patterns)
 

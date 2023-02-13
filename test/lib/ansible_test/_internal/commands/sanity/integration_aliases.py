@@ -61,6 +61,7 @@ from ...host_configs import (
 
 class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
+
     CI_YML = '.azure-pipelines/azure-pipelines.yml'
     TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
 
@@ -424,5 +425,6 @@ class IntegrationAliasesTest(SanitySingleVersion):
 @dataclasses.dataclass
 class Results:
     """Check results."""
+
     comments: list[str]
     labels: dict[str, bool]

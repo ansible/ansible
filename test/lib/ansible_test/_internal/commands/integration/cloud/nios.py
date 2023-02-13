@@ -21,6 +21,7 @@ from . import (
 
 class NiosProvider(CloudProvider):
     """Nios plugin. Sets up NIOS mock server for tests."""
+
     DOCKER_SIMULATOR_NAME = 'nios-simulator'
 
     # Default image to run the nios simulator.
@@ -82,6 +83,7 @@ class NiosProvider(CloudProvider):
 
 class NiosEnvironment(CloudEnvironment):
     """NIOS environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(

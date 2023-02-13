@@ -18,6 +18,7 @@ def parse_diff(lines: list[str]) -> list[FileDiff]:
 
 class FileDiff:
     """Parsed diff for a single file."""
+
     def __init__(self, old_path: str, new_path: str) -> None:
         self.old = DiffSide(old_path, new=False)
         self.new = DiffSide(new_path, new=True)
@@ -36,6 +37,7 @@ class FileDiff:
 
 class DiffSide:
     """Parsed diff for a single 'side' of a single file."""
+
     def __init__(self, path: str, new: bool) -> None:
         self.path = path
         self.new = new
@@ -109,6 +111,7 @@ class DiffSide:
 
 class DiffParser:
     """Parse diff lines."""
+
     def __init__(self, lines: list[str]) -> None:
         self.lines = lines
         self.files: list[FileDiff] = []

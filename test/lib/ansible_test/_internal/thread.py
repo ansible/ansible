@@ -15,6 +15,7 @@ TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
 
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
+
     def __init__(self, action: c.Callable[[], t.Any]) -> None:
         super().__init__()
         self._result: queue.Queue[t.Any] = queue.Queue()

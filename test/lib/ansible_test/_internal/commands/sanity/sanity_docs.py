@@ -27,6 +27,7 @@ from ...data import (
 
 class SanityDocsTest(SanityVersionNeutral):
     """Sanity test for documentation of sanity tests."""
+
     ansible_only = True
 
     @property

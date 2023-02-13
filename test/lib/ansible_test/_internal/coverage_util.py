@@ -60,6 +60,7 @@ from .thread import (
 @dataclasses.dataclass(frozen=True)
 class CoverageVersion:
     """Details about a coverage version and its supported Python versions."""
+
     coverage_version: str
     schema_version: int
     min_python: tuple[int, int]
@@ -81,6 +82,7 @@ CONTROLLER_COVERAGE_VERSION = COVERAGE_VERSIONS[0]
 
 class CoverageError(ApplicationError):
     """Exception caused while attempting to read a coverage file."""
+
     def __init__(self, path: str, message: str) -> None:
         self.path = path
         self.message = message

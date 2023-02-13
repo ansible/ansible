@@ -231,6 +231,7 @@ def relative_to_absolute(name: str, level: int, module: str, path: str, lineno: 
 
 class ModuleUtilFinder(ast.NodeVisitor):
     """AST visitor to find valid module_utils imports."""
+
     def __init__(self, path: str, module_utils: set[str]) -> None:
         self.path = path
         self.module_utils = module_utils

@@ -78,12 +78,13 @@ def get_virtual_python(
     return virtual_environment_python
 
 
-def create_virtual_environment(args: EnvironmentConfig,
-                               python: PythonConfig,
-                               path: str,
-                               system_site_packages: bool = False,
-                               pip: bool = False,
-                               ) -> bool:
+def create_virtual_environment(
+    args: EnvironmentConfig,
+    python: PythonConfig,
+    path: str,
+    system_site_packages: bool = False,
+    pip: bool = False,
+) -> bool:
     """Create a virtual environment using venv or virtualenv for the requested Python version."""
     if not os.path.exists(python.path):
         # the requested python version could not be found
@@ -180,12 +181,13 @@ def get_python_real_prefix(python_path: str) -> t.Optional[str]:
     return real_prefix
 
 
-def run_venv(args: EnvironmentConfig,
-             run_python: str,
-             system_site_packages: bool,
-             pip: bool,
-             path: str,
-             ) -> bool:
+def run_venv(
+    args: EnvironmentConfig,
+    run_python: str,
+    system_site_packages: bool,
+    pip: bool,
+    path: str,
+) -> bool:
     """Create a virtual environment using the 'venv' module. Not available on Python 2.x."""
     cmd = [run_python, '-m', 'venv']
 
@@ -210,13 +212,14 @@ def run_venv(args: EnvironmentConfig,
     return True
 
 
-def run_virtualenv(args: EnvironmentConfig,
-                   run_python: str,
-                   env_python: str,
-                   system_site_packages: bool,
-                   pip: bool,
-                   path: str,
-                   ) -> bool:
+def run_virtualenv(
+    args: EnvironmentConfig,
+    run_python: str,
+    env_python: str,
+    system_site_packages: bool,
+    pip: bool,
+    path: str,
+) -> bool:
     """Create a virtual environment using the 'virtualenv' module."""
     # always specify which interpreter to use to guarantee the desired interpreter is provided
     # otherwise virtualenv may select a different interpreter than the one running virtualenv

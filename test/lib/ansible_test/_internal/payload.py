@@ -69,7 +69,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
             stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
             stat.S_IWUSR
-        )
+        )  # fmt: skip
 
     def make_non_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """
@@ -81,7 +81,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
             tar_info,
             stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
             stat.S_IWUSR
-        )
+        )  # fmt: skip
 
     def detect_permissions(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """

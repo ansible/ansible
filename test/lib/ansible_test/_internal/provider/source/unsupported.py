@@ -8,6 +8,7 @@ from . import (
 
 class UnsupportedSource(SourceProvider):
     """Source provider to use when the layout is unsupported."""
+
     sequence = 0  # disable automatic detection
 
     @staticmethod

@@ -47,6 +47,7 @@ THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 
 class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for target filters."""
+
     def __init__(self, args: IntegrationConfig, configs: list[THostConfig], controller: bool) -> None:
         self.args = args
         self.configs = configs
@@ -138,6 +139,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
 class PosixTargetFilter(TargetFilter[TPosixConfig]):
     """Target filter for POSIX hosts."""
+
     def filter_targets(self, targets: list[IntegrationTarget], exclude: set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)
@@ -151,6 +153,7 @@ class PosixTargetFilter(TargetFilter[TPosixConfig]):
 
 class DockerTargetFilter(PosixTargetFilter[DockerConfig]):
     """Target filter for docker hosts."""
+
     def filter_targets(self, targets: list[IntegrationTarget], exclude: set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)
@@ -167,6 +170,7 @@ class PosixSshTargetFilter(PosixTargetFilter[PosixSshConfig]):
 
 class RemoteTargetFilter(TargetFilter[TRemoteConfig]):
     """Target filter for remote Ansible Core CI managed hosts."""
+
     def filter_profiles(self, profiles: list[THostProfile], target: IntegrationTarget) -> list[THostProfile]:
         """Filter the list of profiles, returning only those which are not skipped for the given target."""
         profiles = super().filter_profiles(profiles, target)
@@ -224,6 +228,7 @@ class NetworkInventoryTargetFilter(TargetFilter[NetworkInventoryConfig]):
 
 class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
     """Target filter for localhost."""
+
     def filter_targets(self, targets: list[IntegrationTarget], exclude: set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)

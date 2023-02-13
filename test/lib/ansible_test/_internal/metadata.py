@@ -19,6 +19,7 @@ from .diff import (
 
 class Metadata:
     """Metadata object for passing data to delegated tests."""
+
     def __init__(self) -> None:
         """Initialize metadata."""
         self.changes: dict[str, tuple[tuple[int, int], ...]] = {}
@@ -82,6 +83,7 @@ class Metadata:
 
 class ChangeDescription:
     """Description of changes."""
+
     def __init__(self) -> None:
         self.command: str = ''
         self.changed_paths: list[str] = []

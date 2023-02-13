@@ -58,6 +58,7 @@ from ...host_configs import (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
+
     def __init__(self) -> None:
         super().__init__()
         self.optional_error_codes.update([
@@ -106,6 +107,7 @@ class PylintTest(SanitySingleVersion):
 
         def filter_path(path_filter: str = None) -> c.Callable[[str], bool]:
             """Return a function that filters out paths which are not a subdirectory of the given path."""
+
             def context_filter(path_to_filter: str) -> bool:
                 """Return true if the given path matches, otherwise return False."""
                 return is_subdir(path_to_filter, path_filter)
@@ -227,7 +229,7 @@ class PylintTest(SanitySingleVersion):
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(sorted(load_plugins)),
-        ] + paths
+        ] + paths  # fmt: skip
 
         if data_context().content.collection:
             cmd.extend(['--collection-name', data_context().content.collection.full_name])
