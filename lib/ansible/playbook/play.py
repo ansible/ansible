@@ -243,6 +243,7 @@ class Play(Base, Taggable, CollectionSearch):
             roles.append(Role.load(ri, play=self))
 
         if not self.roles:
+            # see Attribute.default docstring for an explanation why this is needed
             self.roles = self.fattributes["roles"].get_default_value()
         self.roles[:0] = roles
 

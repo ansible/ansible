@@ -52,6 +52,15 @@ class Attribute:
             that a keyword should not be documented.  mpdehaan had plans to remove attributes marked
             private from the ds so they would not have been available at all.
         :kwarg default: Default value if unspecified in the YAML document.
+            WARNING! For default values that can be mutated in-place like dictionaries, lists and sets a special care
+            must be taken when amending a value of such an Attribute. The default value is created on access,
+            e.g. by calling `list()` and returned by the `__get__()` method. That returned value is not
+            stored on the object, so trying to do assignments such as `play.roles[:0] = [roles_to_prepend]` or
+            `play.roles.append(another_role)` when `play.roles` "holds" a default value will result in data assigned
+            being lost. To avoid this, the value of an Attribute must be explicitly initialized, for example:
+            `play.roles = play.fattributes["roles"].get_default_value()` before attempting such operations.
+            The reason why the created value cannot be stored on the object on return from `__get__` is that
+            it would break inheritance by preventing looking up parent values.
         :kwarg required: Whether or not the YAML document must contain this field.
             If the attribute is None when post-validated, an error will be raised.
         :kwarg listof: If isa is set to "list", this can optionally be set to

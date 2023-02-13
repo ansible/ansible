@@ -93,6 +93,7 @@ class IncludeRole(TaskInclude):
 
         if self.statically_loaded or self.public:
             if not myplay.roles:
+                # see Attribute.default docstring for an explanation why this is needed
                 myplay.roles = myplay.fattributes["roles"].get_default_value()
             myplay.roles.append(actual_role)
 
