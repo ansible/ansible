@@ -29,6 +29,7 @@ from .become import (
 
 class CGroupVersion(enum.Enum):
     """The control group version(s) required by a container."""
+
     NONE = 'none'
     V1_ONLY = 'v1-only'
     V2_ONLY = 'v2-only'
@@ -40,6 +41,7 @@ class CGroupVersion(enum.Enum):
 
 class AuditMode(enum.Enum):
     """The audit requirements of a container."""
+
     NONE = 'none'
     REQUIRED = 'required'
 
@@ -50,6 +52,7 @@ class AuditMode(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class CompletionConfig(metaclass=abc.ABCMeta):
     """Base class for completion configuration."""
+
     name: str
 
     @property
@@ -61,6 +64,7 @@ class CompletionConfig(metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of POSIX environments."""
+
     @property
     @abc.abstractmethod
     def supported_pythons(self) -> list[str]:
@@ -85,6 +89,7 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of Python environments."""
+
     python: str = ''
     python_dir: str = '/usr/bin'
 
@@ -103,6 +108,7 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class RemoteCompletionConfig(CompletionConfig):
     """Base class for completion configuration of remote environments provisioned through Ansible Core CI."""
+
     provider: t.Optional[str] = None
     arch: t.Optional[str] = None
 
@@ -132,6 +138,7 @@ class RemoteCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class InventoryCompletionConfig(CompletionConfig):
     """Configuration for inventory files."""
+
     def __init__(self) -> None:
         super().__init__(name='inventory')
 
@@ -144,6 +151,7 @@ class InventoryCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixSshCompletionConfig(PythonCompletionConfig):
     """Configuration for a POSIX host reachable over SSH."""
+
     def __init__(self, user: str, host: str) -> None:
         super().__init__(
             name=f'{user}@{host}',
@@ -159,6 +167,7 @@ class PosixSshCompletionConfig(PythonCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class DockerCompletionConfig(PythonCompletionConfig):
     """Configuration for Docker containers."""
+
     image: str = ''
     seccomp: str = 'default'
     cgroup: str = CGroupVersion.V1_V2.value
@@ -201,6 +210,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote network platforms."""
+
     collection: str = ''
     connection: str = ''
     placeholder: bool = False
@@ -213,6 +223,7 @@ class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig):
     """Configuration for remote POSIX platforms."""
+
     become: t.Optional[str] = None
     placeholder: bool = False
 

@@ -25,6 +25,7 @@ from . import (
 
 class ForemanProvider(CloudProvider):
     """Foreman plugin. Sets up Foreman stub server for tests."""
+
     DOCKER_SIMULATOR_NAME = 'foreman-stub'
 
     # Default image to run Foreman stub from.
@@ -88,6 +89,7 @@ class ForemanProvider(CloudProvider):
 
 class ForemanEnvironment(CloudEnvironment):
     """Foreman environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         env_vars = dict(

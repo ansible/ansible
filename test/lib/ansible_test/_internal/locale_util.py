@@ -21,6 +21,7 @@ It was not needed in previous ansible-core releases since they do not verify the
 
 class LocaleError(SystemExit):
     """Exception to raise when locale related errors occur."""
+
     def __init__(self, message: str) -> None:
         super().__init__(f'ERROR: {message}')
 
