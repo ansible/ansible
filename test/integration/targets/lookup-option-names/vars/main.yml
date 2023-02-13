@@ -1,4 +1,4 @@
 ---
 lookup_names:
   # https://github.com/ansible/ansible/issues/79838
-  - name
+  - test
