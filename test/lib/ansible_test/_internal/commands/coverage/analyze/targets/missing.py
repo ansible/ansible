@@ -32,6 +32,7 @@ from . import (
 
 class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets missing` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
