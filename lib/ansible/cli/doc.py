@@ -1144,6 +1144,11 @@ class DocCLI(CLI, RoleMixin):
                 text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc),
                                                    limit, initial_indent=opt_indent,
                                                    subsequent_indent=opt_indent))
+            if doc.get('version_added'):
+                version_added = doc.pop('version_added')
+                version_added_collection = doc.pop('version_added_collection', None)
+                text.append("ADDED IN: %s\n" % DocCLI._format_version_added(version_added, version_added_collection))
+
             if doc.get('options'):
                 text.append("OPTIONS (= is mandatory):\n")
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
