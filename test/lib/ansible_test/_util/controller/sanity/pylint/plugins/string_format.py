@@ -11,6 +11,9 @@ from pylint.checkers import utils
 from pylint.checkers.utils import check_messages
 
 MSGS = {
+    'E9305': ("disabled",  # kept for backwards compatibility with inline ignores, remove after 2.14 is EOL
+              "ansible-format-automatic-specification",
+              "disabled"),
     'E9390': ("bytes object has no .format attribute",
               "ansible-no-format-on-bytestring",
               "Used when a bytestring was used as a PEP 3101 format string "
