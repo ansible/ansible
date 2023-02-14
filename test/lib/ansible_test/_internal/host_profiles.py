@@ -506,6 +506,13 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         cgroup_version = get_docker_info(self.args).cgroup_version
 
+        # Podman 4.4.0 updated containers/common to 0.51.0, which removed the SYS_CHROOT capability from the default list.
+        # This capability is needed by services such as sshd, so is unconditionally added here.
+        # See: https://github.com/containers/podman/releases/tag/v4.4.0
+        # See: https://github.com/containers/common/releases/tag/v0.51.0
+        # See: https://github.com/containers/common/pull/1240
+        options.extend(('--cap-add', 'SYS_CHROOT'))
+
         # Without AUDIT_WRITE the following errors may appear in the system logs of a container after attempting to log in using SSH:
         #
         #   fatal: linux_audit_write_entry failed: Operation not permitted
