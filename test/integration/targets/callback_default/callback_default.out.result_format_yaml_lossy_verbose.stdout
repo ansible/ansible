@@ -43,6 +43,7 @@ fatal: [testhost]: FAILED! =>
 TASK [Skipped task] ************************************************************
 skipping: [testhost] => 
     changed: false
+    false_condition: false
     skip_reason: Conditional result was False
 
 TASK [Task with var in name (foo bar)] *****************************************
@@ -120,6 +121,7 @@ ok: [testhost] => (item=debug-3) =>
     msg: debug-3
 skipping: [testhost] => (item=debug-4)  => 
     ansible_loop_var: item
+    false_condition: item != 4
     item: 4
 fatal: [testhost]: FAILED! => 
     msg: One or more items failed
@@ -199,9 +201,11 @@ skipping: [testhost] =>
 TASK [debug] *******************************************************************
 skipping: [testhost] => (item=1)  => 
     ansible_loop_var: item
+    false_condition: false
     item: 1
 skipping: [testhost] => (item=2)  => 
     ansible_loop_var: item
+    false_condition: false
     item: 2
 skipping: [testhost] => 
     msg: All items skipped
