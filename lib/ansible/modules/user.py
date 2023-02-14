@@ -2377,7 +2377,7 @@ class DarwinUser(User):
         if self.password:
             cmd += ['-passwd', '/Users/%s' % self.name, self.password]
         else:
-            cmd += ['-create', '/Users/%s' % self.name, 'Password', '*']
+            cmd += ['-passwd', '/Users/%s' % self.name, '']
         (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Error when changing password', err=err, out=out, rc=rc)
