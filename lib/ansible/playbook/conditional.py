@@ -59,8 +59,7 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [value])
 
-    def evaluate_conditional(self, templar: Templar, all_vars: dict[str, t.Any]
-    ) -> bool:
+    def evaluate_conditional(self, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
         '''
         Loops through the conditionals set on this object, returning
         False if any of them evaluate as such.
