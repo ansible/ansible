@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Support Podman 4.4.0+ by adding the ``SYS_CHROOT`` capability when running containers.
