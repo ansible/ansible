@@ -105,6 +105,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             raise AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
+            if use_handlers:
+                raise AnsibleParserError("Using a block as a handler is not supported.", obj=task_ds)
             t = Block.load(
                 task_ds,
                 play=play,
