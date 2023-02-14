@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix comparing group IDs to existing group names so groups are not always updated (https://github.com/ansible/ansible/issues/79956).
