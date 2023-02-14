@@ -87,7 +87,7 @@ class Conditional:
             ds = getattr(self, "_ds")
 
         result = True
-        failed_conditional: t.Optional[str] = None
+        false_condition: t.Optional[str] = None
         try:
             for conditional in self.when:
 
@@ -105,7 +105,7 @@ class Conditional:
 
                 display.debug("Evaluated conditional (%s): %s" % (conditional, res))
                 if not result:
-                    failed_conditional = conditional
+                    false_condition = conditional
                     break
 
         except Exception as e:
@@ -115,7 +115,7 @@ class Conditional:
                 obj=ds,
             )
 
-        return result, failed_conditional
+        return result, false_condition
 
     def _check_conditional(self, conditional, templar, all_vars):
         """
