@@ -2524,7 +2524,7 @@ class DarwinUser(User):
         self._make_group_numerical()
         if self.uid is None:
             self.uid = str(self._get_next_uid(self.system))
-        
+
         # Homedir is not created by default
         if self.create_home:
             if self.home is None:
