@@ -855,7 +855,7 @@ class User(object):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set(remove_existing=False)
+                groups = self.get_groups_set(remove_existing=False, names_only=True)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
@@ -996,16 +996,22 @@ class User(object):
         except (ValueError, KeyError):
             return list(grp.getgrnam(group))
 
-    def get_groups_set(self, remove_existing=True):
+    def get_groups_set(self, remove_existing=True, names_only=False):
         if self.groups is None:
             return None
         info = self.user_info()
         groups = set(x.strip() for x in self.groups.split(',') if x)
+        group_names = set()
         for g in groups.copy():
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
-            if info and remove_existing and self.group_info(g)[2] == info[3]:
+            group_info = self.group_info(g)
+            if info and remove_existing and group_info[2] == info[3]:
                 groups.remove(g)
+            elif names_only:
+                group_names.add(group_info[0])
+        if names_only:
+            return group_names
         return groups
 
     def user_group_membership(self, exclude_primary=True):
@@ -1511,7 +1517,7 @@ class FreeBsdUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.get_groups_set()
+            groups = self.get_groups_set(names_only=True)
 
             group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
@@ -1705,7 +1711,7 @@ class OpenBSDUser(User):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set()
+                groups = self.get_groups_set(names_only=True)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
@@ -1881,7 +1887,7 @@ class NetBSDUser(User):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set()
+                groups = self.get_groups_set(names_only=True)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
@@ -2115,7 +2121,7 @@ class SunOS(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.get_groups_set()
+            groups = self.get_groups_set(names_only=True)
             group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
 
@@ -2392,7 +2398,7 @@ class DarwinUser(User):
 
         current = set(self._list_user_groups())
         if self.groups is not None:
-            target = set(self.groups.split(','))
+            target = self.get_groups_set(names_only=True)
         else:
             target = set([])
 
@@ -2676,7 +2682,7 @@ class AIX(User):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set()
+                groups = self.get_groups_set(names_only=True)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
@@ -2874,7 +2880,7 @@ class HPUX(User):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set(remove_existing=False)
+                groups = self.get_groups_set(remove_existing=False, names_only=True)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
