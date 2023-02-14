@@ -61,6 +61,7 @@ from ...host_configs import (
 
 class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
+
     CI_YML = '.azure-pipelines/azure-pipelines.yml'
     TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
 
@@ -322,10 +323,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return messages
 
     def check_ci_group(
-            self,
-            targets: tuple[CompletionTarget, ...],
-            find: str,
-            find_incidental: t.Optional[list[str]] = None,
+        self,
+        targets: tuple[CompletionTarget, ...],
+        find: str,
+        find_incidental: t.Optional[list[str]] = None,
     ) -> list[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
@@ -424,5 +425,6 @@ class IntegrationAliasesTest(SanitySingleVersion):
 @dataclasses.dataclass
 class Results:
     """Check results."""
+
     comments: list[str]
     labels: dict[str, bool]

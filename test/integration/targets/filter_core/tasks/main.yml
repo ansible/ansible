@@ -454,6 +454,30 @@
       - password_hash_2 is failed
       - "'not support' in password_hash_2.msg"
 
+- name: install passlib if needed
+  pip:
+    name: passlib
+    state: present
+  register: installed_passlib
+
+- name: test using passlib with an unsupported hash type
+  set_fact:
+    foo: '{{"hey"|password_hash("msdcc")}}'
+  ignore_errors: yes
+  register: unsupported_hash_type
+
+- name: remove passlib if it was installed
+  pip:
+    name: passlib
+    state: absent
+  when: installed_passlib.changed
+
+- assert:
+    that:
+      - unsupported_hash_type.msg == msg
+  vars:
+    msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
+
 - name: Verify to_uuid throws on weird namespace
   set_fact:
     foo: '{{"hey"|to_uuid(namespace=22)}}'

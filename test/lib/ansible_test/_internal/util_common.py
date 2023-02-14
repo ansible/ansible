@@ -66,6 +66,7 @@ CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 class ShellScriptTemplate:
     """A simple substitution template for shell scripts."""
+
     def __init__(self, template: str) -> None:
         self.template = template
 
@@ -87,6 +88,7 @@ class ShellScriptTemplate:
 
 class ResultType:
     """Test result type."""
+
     BOT: ResultType = None
     COVERAGE: ResultType = None
     DATA: ResultType = None
@@ -128,6 +130,7 @@ ResultType._populate()  # pylint: disable=protected-access
 
 class CommonConfig:
     """Configuration common to all commands."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         self.command = command
         self.interactive = False
@@ -237,12 +240,13 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
             yield tempfile_fd.name
 
 
-def write_json_test_results(category: ResultType,
-                            name: str,
-                            content: t.Union[list[t.Any], dict[str, t.Any]],
-                            formatted: bool = True,
-                            encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
-                            ) -> None:
+def write_json_test_results(
+    category: ResultType,
+    name: str,
+    content: t.Union[list[t.Any], dict[str, t.Any]],
+    formatted: bool = True,
+    encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
+) -> None:
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
     write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
@@ -396,14 +400,14 @@ def cleanup_python_paths() -> None:
 
 
 def intercept_python(
-        args: CommonConfig,
-        python: PythonConfig,
-        cmd: list[str],
-        env: dict[str, str],
-        capture: bool,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        always: bool = False,
+    args: CommonConfig,
+    python: PythonConfig,
+    cmd: list[str],
+    env: dict[str, str],
+    capture: bool,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    always: bool = False,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """
     Run a command while intercepting invocations of Python to control the version used.
@@ -428,25 +432,38 @@ def intercept_python(
 
 
 def run_command(
-        args: CommonConfig,
-        cmd: c.Iterable[str],
-        capture: bool,
-        env: t.Optional[dict[str, str]] = None,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        always: bool = False,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        cmd_verbosity: int = 1,
-        str_errors: str = 'strict',
-        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+    args: CommonConfig,
+    cmd: c.Iterable[str],
+    capture: bool,
+    env: t.Optional[dict[str, str]] = None,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    always: bool = False,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    cmd_verbosity: int = 1,
+    str_errors: str = 'strict',
+    error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
-                       output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+    return raw_command(
+        cmd,
+        capture=capture,
+        env=env,
+        data=data,
+        cwd=cwd,
+        explain=explain,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        output_stream=output_stream,
+        cmd_verbosity=cmd_verbosity,
+        str_errors=str_errors,
+        error_callback=error_callback,
+    )
 
 
 def yamlcheck(python: PythonConfig) -> t.Optional[bool]:

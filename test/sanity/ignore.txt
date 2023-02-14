@@ -80,7 +80,6 @@ lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bu
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
-lib/ansible/module_utils/distro/_distro.py pylint:ansible-format-automatic-specification # ignore bundled
 lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
 lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
@@ -183,6 +182,8 @@ test/support/integration/plugins/module_utils/network/common/utils.py pylint:unu
 test/support/integration/plugins/modules/sefcontext.py pylint:unused-import
 test/support/integration/plugins/modules/zypper.py pylint:unused-import
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:unused-import
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/connection/network_cli.py pylint:pointless-string-statement
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/ipaddr.py pylint:pointless-string-statement
 test/support/windows-integration/plugins/action/win_reboot.py pylint:unused-import
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate

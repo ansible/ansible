@@ -30,7 +30,7 @@ if HAS_YAML:
     except (ImportError, AttributeError):
         from yaml import SafeLoader  # type: ignore[assignment]
         from yaml import SafeDumper  # type: ignore[assignment]
-        from yaml.parser import Parser  # type: ignore[misc]  # pylint: disable=unused-import
+        from yaml.parser import Parser  # type: ignore[assignment]  # pylint: disable=unused-import
 
     yaml_load = _partial(_yaml.load, Loader=SafeLoader)
     yaml_load_all = _partial(_yaml.load_all, Loader=SafeLoader)

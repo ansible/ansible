@@ -5,6 +5,21 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import sys
+
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+_PY3_MIN = sys.version_info >= (3, 5)
+_PY2_MIN = (2, 7) <= sys.version_info < (3,)
+_PY_MIN = _PY3_MIN or _PY2_MIN
+
+if not _PY_MIN:
+    print(
+        '\n{"failed": true, '
+        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
+    )
+    sys.exit(1)
+
 FILE_ATTRIBUTES = {
     'A': 'noatime',
     'a': 'append',
@@ -49,7 +64,6 @@ import shutil
 import signal
 import stat
 import subprocess
-import sys
 import tempfile
 import time
 import traceback
@@ -101,41 +115,47 @@ from ansible.module_utils.common.text.formatters import (
     SIZE_RANGES,
 )
 
+import hashlib
+
+
+def _get_available_hash_algorithms():
+    """Return a dictionary of available hash function names and their associated function."""
+    try:
+        # Algorithms available in Python 2.7.9+ and Python 3.2+
+        # https://docs.python.org/2.7/library/hashlib.html#hashlib.algorithms_available
+        # https://docs.python.org/3.2/library/hashlib.html#hashlib.algorithms_available
+        algorithm_names = hashlib.algorithms_available
+    except AttributeError:
+        # Algorithms in Python 2.7.x (used only for Python 2.7.0 through 2.7.8)
+        # https://docs.python.org/2.7/library/hashlib.html#hashlib.hashlib.algorithms
+        algorithm_names = set(hashlib.algorithms)
+
+    algorithms = {}
+
+    for algorithm_name in algorithm_names:
+        algorithm_func = getattr(hashlib, algorithm_name, None)
+
+        if algorithm_func:
+            try:
+                # Make sure the algorithm is actually available for use.
+                # Not all algorithms listed as available are actually usable.
+                # For example, md5 is not available in FIPS mode.
+                algorithm_func()
+            except Exception:
+                pass
+            else:
+                algorithms[algorithm_name] = algorithm_func
+
+    return algorithms
+
+
+AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
+
 try:
     from ansible.module_utils.common._json_compat import json
 except ImportError as e:
     print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
     sys.exit(1)
-
-
-AVAILABLE_HASH_ALGORITHMS = dict()
-try:
-    import hashlib
-
-    # python 2.7.9+ and 2.7.0+
-    for attribute in ('available_algorithms', 'algorithms'):
-        algorithms = getattr(hashlib, attribute, None)
-        if algorithms:
-            break
-    if algorithms is None:
-        # python 2.5+
-        algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
-    for algorithm in algorithms:
-        AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
-
-    # we may have been able to import md5 but it could still not be available
-    try:
-        hashlib.md5()
-    except ValueError:
-        AVAILABLE_HASH_ALGORITHMS.pop('md5', None)
-except Exception:
-    import sha
-    AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
-    try:
-        import md5
-        AVAILABLE_HASH_ALGORITHMS['md5'] = md5.md5
-    except Exception:
-        pass
 
 from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
@@ -203,14 +223,14 @@ imap = map
 
 try:
     # Python 2
-    unicode  # type: ignore[has-type]  # pylint: disable=used-before-assignment
+    unicode  # type: ignore[used-before-def]  # pylint: disable=used-before-assignment
 except NameError:
     # Python 3
     unicode = text_type
 
 try:
     # Python 2
-    basestring  # type: ignore[has-type]  # pylint: disable=used-before-assignment
+    basestring  # type: ignore[used-before-def,has-type]  # pylint: disable=used-before-assignment
 except NameError:
     # Python 3
     basestring = string_types
@@ -247,18 +267,6 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 MODE_OPERATOR_RE = re.compile(r'[+=-]')
 USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
-
-# Used for determining if the system is running a new enough python version
-# and should only restrict on our documented minimum versions
-_PY3_MIN = sys.version_info >= (3, 5)
-_PY2_MIN = (2, 7) <= sys.version_info < (3,)
-_PY_MIN = _PY3_MIN or _PY2_MIN
-if not _PY_MIN:
-    print(
-        '\n{"failed": true, '
-        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
-    )
-    sys.exit(1)
 
 
 #

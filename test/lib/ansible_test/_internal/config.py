@@ -24,6 +24,7 @@ from .metadata import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
 from .host_configs import (
@@ -41,6 +42,7 @@ THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 
 class TerminateMode(enum.Enum):
     """When to terminate instances."""
+
     ALWAYS = enum.auto()
     NEVER = enum.auto()
     SUCCESS = enum.auto()
@@ -52,6 +54,7 @@ class TerminateMode(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class ModulesConfig:
     """Configuration for modules."""
+
     python_requires: str
     python_versions: tuple[str, ...]
     controller_only: bool
@@ -60,6 +63,7 @@ class ModulesConfig:
 @dataclasses.dataclass(frozen=True)
 class ContentConfig:
     """Configuration for all content."""
+
     modules: ModulesConfig
     python_versions: tuple[str, ...]
     py2_support: bool
@@ -67,6 +71,7 @@ class ContentConfig:
 
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
@@ -114,7 +119,7 @@ class EnvironmentConfig(CommonConfig):
         self.dev_systemd_debug: bool = args.dev_systemd_debug
         self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
 
-        def host_callback(files: list[tuple[str, str]]) -> None:
+        def host_callback(payload_config: PayloadConfig) -> None:
             """Add the host files to the payload file list."""
             config = self
 
@@ -122,6 +127,8 @@ class EnvironmentConfig(CommonConfig):
                 settings_path = os.path.join(config.host_path, 'settings.dat')
                 state_path = os.path.join(config.host_path, 'state.dat')
                 config_path = os.path.join(config.host_path, 'config.dat')
+
+                files = payload_config.files
 
                 files.append((os.path.abspath(settings_path), settings_path))
                 files.append((os.path.abspath(state_path), state_path))
@@ -196,6 +203,7 @@ class EnvironmentConfig(CommonConfig):
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
@@ -225,9 +233,10 @@ class TestConfig(EnvironmentConfig):
         if self.coverage_check:
             self.coverage = True
 
-        def metadata_callback(files: list[tuple[str, str]]) -> None:
+        def metadata_callback(payload_config: PayloadConfig) -> None:
             """Add the metadata file to the payload file list."""
             config = self
+            files = payload_config.files
 
             if config.metadata_path:
                 files.append((os.path.abspath(config.metadata_path), config.metadata_path))
@@ -237,6 +246,7 @@ class TestConfig(EnvironmentConfig):
 
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'shell')
 
@@ -250,6 +260,7 @@ class ShellConfig(EnvironmentConfig):
 
 class SanityConfig(TestConfig):
     """Configuration for the sanity command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'sanity')
 
@@ -264,8 +275,11 @@ class SanityConfig(TestConfig):
         self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
-            def git_callback(files: list[tuple[str, str]]) -> None:
+
+            def git_callback(payload_config: PayloadConfig) -> None:
                 """Add files from the content root .git directory to the payload file list."""
+                files = payload_config.files
+
                 for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
                     paths = [os.path.join(dirpath, filename) for filename in filenames]
                     files.extend((path, os.path.relpath(path, data_context().content.root)) for path in paths)
@@ -275,6 +289,7 @@ class SanityConfig(TestConfig):
 
 class IntegrationConfig(TestConfig):
     """Configuration for the integration command."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
@@ -319,18 +334,21 @@ TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound=IntegrationConfig)
 
 class PosixIntegrationConfig(IntegrationConfig):
     """Configuration for the posix integration command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'integration')
 
 
 class WindowsIntegrationConfig(IntegrationConfig):
     """Configuration for the windows integration command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'windows-integration')
 
 
 class NetworkIntegrationConfig(IntegrationConfig):
     """Configuration for the network integration command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'network-integration')
 
@@ -339,6 +357,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
 class UnitsConfig(TestConfig):
     """Configuration for the units command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'units')
 

@@ -45,6 +45,7 @@ from ...data import (
 
 class PslintTest(SanityVersionNeutral):
     """Sanity test using PSScriptAnalyzer."""
+
     @property
     def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""

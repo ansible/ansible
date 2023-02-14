@@ -65,10 +65,10 @@ def walk_completion_targets(targets: c.Iterable[CompletionTarget], prefix: str, 
 
 
 def walk_internal_targets(
-        targets: c.Iterable[TCompletionTarget],
-        includes: t.Optional[list[str]] = None,
-        excludes: t.Optional[list[str]] = None,
-        requires: t.Optional[list[str]] = None,
+    targets: c.Iterable[TCompletionTarget],
+    includes: t.Optional[list[str]] = None,
+    excludes: t.Optional[list[str]] = None,
+    requires: t.Optional[list[str]] = None,
 ) -> tuple[TCompletionTarget, ...]:
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
@@ -86,11 +86,12 @@ def walk_internal_targets(
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
-def filter_targets(targets: c.Iterable[TCompletionTarget],
-                   patterns: list[str],
-                   include: bool = True,
-                   errors: bool = True,
-                   ) -> c.Iterable[TCompletionTarget]:
+def filter_targets(
+    targets: c.Iterable[TCompletionTarget],
+    patterns: list[str],
+    include: bool = True,
+    errors: bool = True,
+) -> c.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
     compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
@@ -256,13 +257,13 @@ def load_integration_prefixes() -> dict[str, str]:
 
 
 def walk_test_targets(
-        path: t.Optional[str] = None,
-        module_path: t.Optional[str] = None,
-        extensions: t.Optional[tuple[str, ...]] = None,
-        prefix: t.Optional[str] = None,
-        extra_dirs: t.Optional[tuple[str, ...]] = None,
-        include_symlinks: bool = False,
-        include_symlinked_directories: bool = False,
+    path: t.Optional[str] = None,
+    module_path: t.Optional[str] = None,
+    extensions: t.Optional[tuple[str, ...]] = None,
+    prefix: t.Optional[str] = None,
+    extra_dirs: t.Optional[tuple[str, ...]] = None,
+    include_symlinks: bool = False,
+    include_symlinked_directories: bool = False,
 ) -> c.Iterable[TestTarget]:
     """Iterate over available test targets."""
     if path:
@@ -401,6 +402,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
 
 class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
+
     def __init__(self) -> None:
         self.name = ''
         self.path = ''
@@ -435,13 +437,14 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 
 class TestTarget(CompletionTarget):
     """Generic test target."""
+
     def __init__(
-            self,
-            path: str,
-            module_path: t.Optional[str],
-            module_prefix: t.Optional[str],
-            base_path: str,
-            symlink: t.Optional[bool] = None,
+        self,
+        path: str,
+        module_path: t.Optional[str],
+        module_prefix: t.Optional[str],
+        base_path: str,
+        symlink: t.Optional[bool] = None,
     ) -> None:
         super().__init__()
 
@@ -476,6 +479,7 @@ class TestTarget(CompletionTarget):
 
 class IntegrationTargetType(enum.Enum):
     """Type of integration test target."""
+
     CONTROLLER = enum.auto()
     TARGET = enum.auto()
     UNKNOWN = enum.auto()
@@ -692,6 +696,7 @@ class IntegrationTarget(CompletionTarget):
 
 class TargetPatternsNotMatched(ApplicationError):
     """One or more targets were not matched when a match was required."""
+
     def __init__(self, patterns: set[str]) -> None:
         self.patterns = sorted(patterns)
 

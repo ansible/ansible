@@ -6,6 +6,7 @@ import dataclasses
 import json
 import os
 import re
+import stat
 import traceback
 import uuid
 import time
@@ -46,12 +47,14 @@ from .ci import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
 
 @dataclasses.dataclass(frozen=True)
 class Resource(metaclass=abc.ABCMeta):
     """Base class for Ansible Core CI resources."""
+
     @abc.abstractmethod
     def as_tuple(self) -> tuple[str, str, str, str]:
         """Return the resource as a tuple of platform, version, architecture and provider."""
@@ -69,6 +72,7 @@ class Resource(metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class VmResource(Resource):
     """Details needed to request a VM from Ansible Core CI."""
+
     platform: str
     version: str
     architecture: str
@@ -92,6 +96,7 @@ class VmResource(Resource):
 @dataclasses.dataclass(frozen=True)
 class CloudResource(Resource):
     """Details needed to request cloud credentials from Ansible Core CI."""
+
     platform: str
 
     def as_tuple(self) -> tuple[str, str, str, str]:
@@ -110,13 +115,14 @@ class CloudResource(Resource):
 
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
+
     DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
 
     def __init__(
-            self,
-            args: EnvironmentConfig,
-            resource: Resource,
-            load: bool = True,
+        self,
+        args: EnvironmentConfig,
+        resource: Resource,
+        load: bool = True,
     ) -> None:
         self.args = args
         self.resource = resource
@@ -301,7 +307,7 @@ class AnsibleCoreCI:
             )
         )
 
-        data.update(dict(auth=auth))
+        data.update(auth=auth)
 
         headers = {
             'Content-Type': 'application/json',
@@ -418,6 +424,7 @@ class AnsibleCoreCI:
 
 class CoreHttpError(HttpError):
     """HTTP response as an error."""
+
     def __init__(self, status: int, remote_message: str, remote_stack_trace: str) -> None:
         super().__init__(status, f'{remote_message}{remote_stack_trace}')
 
@@ -427,6 +434,7 @@ class CoreHttpError(HttpError):
 
 class SshKey:
     """Container for SSH key used to connect to remote instances."""
+
     KEY_TYPE = 'rsa'  # RSA is used to maintain compatibility with paramiko and EC2
     KEY_NAME = f'id_{KEY_TYPE}'
     PUB_NAME = f'{KEY_NAME}.pub'
@@ -441,13 +449,18 @@ class SshKey:
         key, pub = key_pair
         key_dst, pub_dst = self.get_in_tree_key_pair_paths()
 
-        def ssh_key_callback(files: list[tuple[str, str]]) -> None:
+        def ssh_key_callback(payload_config: PayloadConfig) -> None:
             """
             Add the SSH keys to the payload file list.
             They are either outside the source tree or in the cache dir which is ignored by default.
             """
+            files = payload_config.files
+            permissions = payload_config.permissions
+
             files.append((key, os.path.relpath(key_dst, data_context().content.root)))
             files.append((pub, os.path.relpath(pub_dst, data_context().content.root)))
+
+            permissions[os.path.relpath(key_dst, data_context().content.root)] = stat.S_IRUSR | stat.S_IWUSR
 
         data_context().register_payload_callback(ssh_key_callback)
 
@@ -525,14 +538,16 @@ class SshKey:
 
 class InstanceConnection:
     """Container for remote instance status and connection details."""
-    def __init__(self,
-                 running: bool,
-                 hostname: t.Optional[str] = None,
-                 port: t.Optional[int] = None,
-                 username: t.Optional[str] = None,
-                 password: t.Optional[str] = None,
-                 response_json: t.Optional[dict[str, t.Any]] = None,
-                 ) -> None:
+
+    def __init__(
+        self,
+        running: bool,
+        hostname: t.Optional[str] = None,
+        port: t.Optional[int] = None,
+        username: t.Optional[str] = None,
+        password: t.Optional[str] = None,
+        response_json: t.Optional[dict[str, t.Any]] = None,
+    ) -> None:
         self.running = running
         self.hostname = hostname
         self.port = port

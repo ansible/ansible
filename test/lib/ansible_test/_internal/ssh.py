@@ -32,6 +32,7 @@ from .config import (
 @dataclasses.dataclass
 class SshConnectionDetail:
     """Information needed to establish an SSH connection to a host."""
+
     name: str
     host: str
     port: t.Optional[int]
@@ -56,7 +57,7 @@ class SshConnectionDetail:
             # See: https://www.openssh.com/txt/release-8.8
             algorithms = '+ssh-rsa'  # append the algorithm to the default list, requires OpenSSH 7.0 or later
 
-            options.update(dict(
+            options.update(
                 # Host key signature algorithms that the client wants to use.
                 # Available options can be found with `ssh -Q HostKeyAlgorithms` or `ssh -Q key` on older clients.
                 # This option was updated in OpenSSH 7.0, released on 2015-08-11, to support the "+" prefix.
@@ -69,13 +70,14 @@ class SshConnectionDetail:
                 # This option is an alias for PubkeyAcceptedAlgorithms, which was added in OpenSSH 8.5.
                 # See: https://www.openssh.com/txt/release-8.5
                 PubkeyAcceptedKeyTypes=algorithms,
-            ))
+            )
 
         return options
 
 
 class SshProcess:
     """Wrapper around an SSH process."""
+
     def __init__(self, process: t.Optional[subprocess.Popen]) -> None:
         self._process = process
         self.pending_forwards: t.Optional[list[tuple[str, int]]] = None
@@ -151,17 +153,17 @@ class SshProcess:
 
 
 def create_ssh_command(
-        ssh: SshConnectionDetail,
-        options: t.Optional[dict[str, t.Union[str, int]]] = None,
-        cli_args: list[str] = None,
-        command: t.Optional[str] = None,
+    ssh: SshConnectionDetail,
+    options: t.Optional[dict[str, t.Union[str, int]]] = None,
+    cli_args: list[str] = None,
+    command: t.Optional[str] = None,
 ) -> list[str]:
     """Create an SSH command using the specified options."""
     cmd = [
         'ssh',
         '-n',  # prevent reading from stdin
         '-i', ssh.identity_file,  # file from which the identity for public key authentication is read
-    ]
+    ]  # fmt: skip
 
     if not command:
         cmd.append('-N')  # do not execute a remote command
@@ -207,11 +209,11 @@ def ssh_options_to_str(options: t.Union[dict[str, t.Union[int, str]], dict[str, 
 
 
 def run_ssh_command(
-        args: EnvironmentConfig,
-        ssh: SshConnectionDetail,
-        options: t.Optional[dict[str, t.Union[str, int]]] = None,
-        cli_args: list[str] = None,
-        command: t.Optional[str] = None,
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    options: t.Optional[dict[str, t.Union[str, int]]] = None,
+    cli_args: list[str] = None,
+    command: t.Optional[str] = None,
 ) -> SshProcess:
     """Run the specified SSH command, returning the created SshProcess instance created."""
     cmd = create_ssh_command(ssh, options, cli_args, command)
@@ -233,9 +235,9 @@ def run_ssh_command(
 
 
 def create_ssh_port_forwards(
-        args: EnvironmentConfig,
-        ssh: SshConnectionDetail,
-        forwards: list[tuple[str, int]],
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    forwards: list[tuple[str, int]],
 ) -> SshProcess:
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
@@ -257,9 +259,9 @@ def create_ssh_port_forwards(
 
 
 def create_ssh_port_redirects(
-        args: EnvironmentConfig,
-        ssh: SshConnectionDetail,
-        redirects: list[tuple[int, str, int]],
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    redirects: list[tuple[int, str, int]],
 ) -> SshProcess:
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
     options: dict[str, t.Union[str, int]] = {}

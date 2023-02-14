@@ -47,6 +47,7 @@ from ....ci import (
 
 from ....data import (
     data_context,
+    PayloadConfig,
 )
 
 from ....docker_util import (
@@ -180,6 +181,7 @@ def cloud_init(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) 
 
 class CloudBase(metaclass=abc.ABCMeta):
     """Base class for cloud plugins."""
+
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
     _MANAGED = 'managed'
@@ -189,13 +191,14 @@ class CloudBase(metaclass=abc.ABCMeta):
         self.args = args
         self.platform = self.__module__.rsplit('.', 1)[-1]
 
-        def config_callback(files: list[tuple[str, str]]) -> None:
+        def config_callback(payload_config: PayloadConfig) -> None:
             """Add the config file to the payload file list."""
             if self.platform not in self.args.metadata.cloud_config:
                 return  # platform was initialized, but not used -- such as being skipped due to all tests being disabled
 
             if self._get_cloud_config(self._CONFIG_PATH, ''):
                 pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
+                files = payload_config.files
 
                 if pair not in files:
                     display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
@@ -257,6 +260,7 @@ class CloudBase(metaclass=abc.ABCMeta):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
+
     def __init__(self, args: IntegrationConfig, config_extension: str = '.ini') -> None:
         super().__init__(args)
 
@@ -356,6 +360,7 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
+
     def setup_once(self) -> None:
         """Run setup if it has not already been run."""
         if self.setup_executed:
@@ -377,12 +382,14 @@ class CloudEnvironment(CloudBase):
 
 class CloudEnvironmentConfig:
     """Configuration for the environment."""
-    def __init__(self,
-                 env_vars: t.Optional[dict[str, str]] = None,
-                 ansible_vars: t.Optional[dict[str, t.Any]] = None,
-                 module_defaults: t.Optional[dict[str, dict[str, t.Any]]] = None,
-                 callback_plugins: t.Optional[list[str]] = None,
-                 ):
+
+    def __init__(
+        self,
+        env_vars: t.Optional[dict[str, str]] = None,
+        ansible_vars: t.Optional[dict[str, t.Any]] = None,
+        module_defaults: t.Optional[dict[str, dict[str, t.Any]]] = None,
+        callback_plugins: t.Optional[list[str]] = None,
+    ):
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars
         self.module_defaults = module_defaults

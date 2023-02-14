@@ -177,7 +177,6 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
             con.run(['mkdir', '-p'] + writable_dirs, capture=True)
             con.run(['chmod', '777'] + writable_dirs, capture=True)
             con.run(['chmod', '755', working_directory], capture=True)
-            con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)], capture=True)
             con.run(['useradd', pytest_user, '--create-home'], capture=True)
 
             con.run(insert_options(command, options + ['--requirements-mode', 'only']), capture=False)
@@ -267,12 +266,12 @@ def download_results(args: EnvironmentConfig, con: Connection, content_root: str
 
 
 def generate_command(
-        args: EnvironmentConfig,
-        python: PythonConfig,
-        ansible_bin_path: str,
-        content_root: str,
-        exclude: list[str],
-        require: list[str],
+    args: EnvironmentConfig,
+    python: PythonConfig,
+    ansible_bin_path: str,
+    content_root: str,
+    exclude: list[str],
+    require: list[str],
 ) -> list[str]:
     """Generate the command necessary to delegate ansible-test."""
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
@@ -319,10 +318,10 @@ def generate_command(
 
 
 def filter_options(
-        args: EnvironmentConfig,
-        argv: list[str],
-        exclude: list[str],
-        require: list[str],
+    args: EnvironmentConfig,
+    argv: list[str],
+    exclude: list[str],
+    require: list[str],
 ) -> c.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [

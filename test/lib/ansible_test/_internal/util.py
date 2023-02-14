@@ -129,6 +129,7 @@ class Architecture:
     Normalized architecture names.
     These are the architectures supported by ansible-test, such as when provisioning remote instances.
     """
+
     X86_64 = 'x86_64'
     AARCH64 = 'aarch64'
 
@@ -345,19 +346,19 @@ def get_available_python_versions() -> dict[str, str]:
 
 
 def raw_command(
-        cmd: c.Iterable[str],
-        capture: bool,
-        env: t.Optional[dict[str, str]] = None,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        explain: bool = False,
-        stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
-        stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        cmd_verbosity: int = 1,
-        str_errors: str = 'strict',
-        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+    cmd: c.Iterable[str],
+    capture: bool,
+    env: t.Optional[dict[str, str]] = None,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    explain: bool = False,
+    stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
+    stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    cmd_verbosity: int = 1,
+    str_errors: str = 'strict',
+    error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
@@ -496,12 +497,12 @@ def raw_command(
 
 
 def communicate_with_process(
-        process: subprocess.Popen,
-        stdin: t.Optional[bytes],
-        stdout: bool,
-        stderr: bool,
-        capture: bool,
-        output_stream: OutputStream,
+    process: subprocess.Popen,
+    stdin: t.Optional[bytes],
+    stdout: bool,
+    stderr: bool,
+    capture: bool,
+    output_stream: OutputStream,
 ) -> tuple[bytes, bytes]:
     """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
     threads: list[WrappedThread] = []
@@ -553,6 +554,7 @@ def communicate_with_process(
 
 class WriterThread(WrappedThread):
     """Thread to write data to stdin of a subprocess."""
+
     def __init__(self, handle: t.IO[bytes], data: bytes) -> None:
         super().__init__(self._run)
 
@@ -570,6 +572,7 @@ class WriterThread(WrappedThread):
 
 class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
     """Thread to read stdout from a subprocess."""
+
     def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO) -> None:
         super().__init__(self._run)
 
@@ -584,6 +587,7 @@ class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
 
 class CaptureThread(ReaderThread):
     """Thread to capture stdout from a subprocess into a buffer."""
+
     def _run(self) -> None:
         """Workload to run on a thread."""
         src = self.handle
@@ -598,6 +602,7 @@ class CaptureThread(ReaderThread):
 
 class OutputThread(ReaderThread):
     """Thread to pass stdout from a subprocess to stdout."""
+
     def _run(self) -> None:
         """Workload to run on a thread."""
         src = self.handle
@@ -778,6 +783,7 @@ def generate_password() -> str:
 
 class Display:
     """Manages color console output."""
+
     clear = '\033[0m'
     red = '\033[31m'
     green = '\033[32m'
@@ -855,11 +861,11 @@ class Display:
             self.print_message(message, color=color, truncate=truncate)
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
-            self,
-            message: str,
-            color: t.Optional[str] = None,
-            stderr: bool = False,
-            truncate: bool = False,
+        self,
+        message: str,
+        color: t.Optional[str] = None,
+        stderr: bool = False,
+        truncate: bool = False,
     ) -> None:
         """Display a message."""
         if self.redact and self.sensitive:
@@ -886,6 +892,7 @@ class Display:
 
 class InternalError(Exception):
     """An unhandled internal error indicating a bug in the code."""
+
     def __init__(self, message: str) -> None:
         super().__init__(f'An internal error has occurred in ansible-test: {message}')
 
@@ -900,14 +907,15 @@ class ApplicationWarning(Exception):
 
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
+
     def __init__(
-            self,
-            cmd: list[str],
-            status: int = 0,
-            stdout: t.Optional[str] = None,
-            stderr: t.Optional[str] = None,
-            runtime: t.Optional[float] = None,
-            error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+        self,
+        cmd: list[str],
+        status: int = 0,
+        stdout: t.Optional[str] = None,
+        stderr: t.Optional[str] = None,
+        runtime: t.Optional[float] = None,
+        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
     ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
@@ -936,6 +944,7 @@ class SubprocessError(ApplicationError):
 
 class MissingEnvironmentVariable(ApplicationError):
     """Error caused by missing environment variable."""
+
     def __init__(self, name: str) -> None:
         super().__init__('Missing environment variable: %s' % name)
 
@@ -948,6 +957,7 @@ class HostConnectionError(ApplicationError):
     Raised by provisioning code when one or more provisioning threads raise this exception.
     Also raised when an SSH connection fails for the shell command.
     """
+
     def __init__(self, message: str, callback: t.Callable[[], None] = None) -> None:
         super().__init__(message)
 

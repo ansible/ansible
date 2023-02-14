@@ -60,6 +60,7 @@ from .thread import (
 @dataclasses.dataclass(frozen=True)
 class CoverageVersion:
     """Details about a coverage version and its supported Python versions."""
+
     coverage_version: str
     schema_version: int
     min_python: tuple[int, int]
@@ -81,6 +82,7 @@ CONTROLLER_COVERAGE_VERSION = COVERAGE_VERSIONS[0]
 
 class CoverageError(ApplicationError):
     """Exception caused while attempting to read a coverage file."""
+
     def __init__(self, path: str, message: str) -> None:
         self.path = path
         self.message = message
@@ -143,14 +145,14 @@ def get_sqlite_schema_version(path: str) -> int:
 
 
 def cover_python(
-        args: TestConfig,
-        python: PythonConfig,
-        cmd: list[str],
-        target_name: str,
-        env: dict[str, str],
-        capture: bool,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
+    args: TestConfig,
+    python: PythonConfig,
+    cmd: list[str],
+    target_name: str,
+    env: dict[str, str],
+    capture: bool,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a command while collecting Python code coverage."""
     if args.coverage:
@@ -176,9 +178,9 @@ def get_coverage_platform(config: HostConfig) -> str:
 
 
 def get_coverage_environment(
-        args: TestConfig,
-        target_name: str,
-        version: str,
+    args: TestConfig,
+    target_name: str,
+    version: str,
 ) -> dict[str, str]:
     """Return environment variables needed to collect code coverage."""
     # unit tests, sanity tests and other special cases (localhost only)

@@ -13,6 +13,7 @@ from ..argparsing.parsers import (
 
 class ControllerNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     """Base class for controller namespace parsers."""
+
     @property
     def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
@@ -28,6 +29,7 @@ class ControllerNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
 
 class TargetNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     """Base class for target namespace parsers involving a single target."""
+
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
@@ -51,6 +53,7 @@ class TargetNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
 
 class TargetsNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     """Base class for controller namespace parsers involving multiple targets."""
+
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
@@ -69,5 +72,6 @@ class TargetsNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
 
 class ControllerRequiredFirstError(CompletionError):
     """Exception raised when controller and target options are specified out-of-order."""
+
     def __init__(self) -> None:
         super().__init__('The `--controller` option must be specified before `--target` option(s).')

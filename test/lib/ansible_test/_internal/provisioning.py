@@ -55,6 +55,7 @@ class PrimeContainers(ApplicationError):
 @dataclasses.dataclass(frozen=True)
 class HostState:
     """State of hosts and profiles to be passed to ansible-test during delegation."""
+
     controller_profile: ControllerHostProfile
     target_profiles: list[HostProfile]
 
@@ -97,10 +98,10 @@ class HostState:
 
 
 def prepare_profiles(
-        args: TEnvironmentConfig,
-        targets_use_pypi: bool = False,
-        skip_setup: bool = False,
-        requirements: t.Optional[c.Callable[[HostProfile], None]] = None,
+    args: TEnvironmentConfig,
+    targets_use_pypi: bool = False,
+    skip_setup: bool = False,
+    requirements: t.Optional[c.Callable[[HostProfile], None]] = None,
 ) -> HostState:
     """
     Create new profiles, or load existing ones, and return them.

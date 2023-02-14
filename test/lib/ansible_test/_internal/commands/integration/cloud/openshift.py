@@ -30,6 +30,7 @@ from . import (
 
 class OpenShiftCloudProvider(CloudProvider):
     """OpenShift cloud provider plugin. Sets up cloud resources before delegation."""
+
     DOCKER_CONTAINER_NAME = 'openshift-origin'
 
     def __init__(self, args: IntegrationConfig) -> None:
@@ -103,6 +104,7 @@ class OpenShiftCloudProvider(CloudProvider):
 
 class OpenShiftCloudEnvironment(CloudEnvironment):
     """OpenShift cloud environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         env_vars = dict(

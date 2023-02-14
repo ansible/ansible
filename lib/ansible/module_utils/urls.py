@@ -160,7 +160,7 @@ if not HAS_SSLCONTEXT and HAS_SSL:
         libssl = ctypes.CDLL(libssl_name)
         for method in ('TLSv1_1_method', 'TLSv1_2_method'):
             try:
-                libssl[method]
+                libssl[method]  # pylint: disable=pointless-statement
                 # Found something - we'll let openssl autonegotiate and hope
                 # the server has disabled sslv2 and 3.  best we can do.
                 PROTOCOL = ssl.PROTOCOL_SSLv23
@@ -288,7 +288,7 @@ if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
     # Python Software Foundation License
 
-    """The match_hostname() function from Python 3.4, essential when using SSL."""
+    # The match_hostname() function from Python 3.4, essential when using SSL.
 
     try:
         # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not

@@ -243,6 +243,7 @@ def get_docker_info(args: CommonConfig) -> DockerInfo:
 
 class SystemdControlGroupV1Status(enum.Enum):
     """The state of the cgroup v1 systemd hierarchy on the container host."""
+
     SUBSYSTEM_MISSING = 'The systemd cgroup subsystem was not found.'
     FILESYSTEM_NOT_MOUNTED = 'The "/sys/fs/cgroup/systemd" filesystem is not mounted.'
     MOUNT_TYPE_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount type is not correct.'
@@ -252,6 +253,7 @@ class SystemdControlGroupV1Status(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class ContainerHostProperties:
     """Container host properties detected at run time."""
+
     audit_code: str
     max_open_files: int
     loginuid: t.Optional[int]
@@ -401,17 +403,17 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
 
 
 def run_utility_container(
-        args: CommonConfig,
-        name: str,
-        cmd: list[str],
-        options: list[str],
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    name: str,
+    cmd: list[str],
+    options: list[str],
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
     options = options + [
         '--name', name,
         '--rm',
-    ]
+    ]  # fmt: skip
 
     if data:
         options.append('-i')
@@ -423,6 +425,7 @@ def run_utility_container(
 
 class DockerCommand:
     """Details about the available docker command."""
+
     def __init__(self, command: str, executable: str, version: str) -> None:
         self.command = command
         self.executable = executable
@@ -670,30 +673,30 @@ def docker_cp_to(args: CommonConfig, container_id: str, src: str, dst: str) -> N
 
 
 def docker_create(
-        args: CommonConfig,
-        image: str,
-        options: list[str],
-        cmd: list[str] = None,
+    args: CommonConfig,
+    image: str,
+    options: list[str],
+    cmd: list[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Create a container using the given docker image."""
     return docker_command(args, ['create'] + options + [image] + cmd, capture=True)
 
 
 def docker_run(
-        args: CommonConfig,
-        image: str,
-        options: list[str],
-        cmd: list[str] = None,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    image: str,
+    options: list[str],
+    cmd: list[str] = None,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a container using the given docker image."""
     return docker_command(args, ['run'] + options + [image] + cmd, data=data, capture=True)
 
 
 def docker_start(
-        args: CommonConfig,
-        container_id: str,
-        options: list[str],
+    args: CommonConfig,
+    container_id: str,
+    options: list[str],
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Start a container by name or ID."""
     return docker_command(args, ['start'] + options + [container_id], capture=True)
@@ -720,6 +723,7 @@ class DockerError(Exception):
 
 class ContainerNotFoundError(DockerError):
     """The container identified by `identifier` was not found."""
+
     def __init__(self, identifier: str) -> None:
         super().__init__('The container "%s" was not found.' % identifier)
 
@@ -728,6 +732,7 @@ class ContainerNotFoundError(DockerError):
 
 class DockerInspect:
     """The results of `docker inspect` for a single container."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -847,6 +852,7 @@ def docker_network_disconnect(args: CommonConfig, container_id: str, network: st
 
 class DockerImageInspect:
     """The results of `docker image inspect` for a single image."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -909,6 +915,7 @@ def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -
 
 class DockerNetworkInspect:
     """The results of `docker network inspect` for a single network."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -943,16 +950,16 @@ def docker_logs(args: CommonConfig, container_id: str) -> None:
 
 
 def docker_exec(
-        args: CommonConfig,
-        container_id: str,
-        cmd: list[str],
-        capture: bool,
-        options: t.Optional[list[str]] = None,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    container_id: str,
+    cmd: list[str],
+    capture: bool,
+    options: t.Optional[list[str]] = None,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Execute the given command in the specified container."""
     if not options:
@@ -961,20 +968,28 @@ def docker_exec(
     if data or stdin or stdout:
         options.append('-i')
 
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive,
-                          output_stream=output_stream, data=data)
+    return docker_command(
+        args,
+        ['exec'] + options + [container_id] + cmd,
+        capture=capture,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        output_stream=output_stream,
+        data=data,
+    )
 
 
 def docker_command(
-        args: CommonConfig,
-        cmd: list[str],
-        capture: bool,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        always: bool = False,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    cmd: list[str],
+    capture: bool,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    always: bool = False,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified docker command."""
     env = docker_environment()
@@ -983,8 +998,18 @@ def docker_command(
     if command[0] == 'podman' and get_podman_remote():
         command.append('--remote')
 
-    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always,
-                       output_stream=output_stream, data=data)
+    return run_command(
+        args,
+        command + cmd,
+        env=env,
+        capture=capture,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        always=always,
+        output_stream=output_stream,
+        data=data,
+    )
 
 
 def docker_environment() -> dict[str, str]:

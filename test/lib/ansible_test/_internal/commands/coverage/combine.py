@@ -34,6 +34,7 @@ from ...executor import (
 
 from ...data import (
     data_context,
+    PayloadConfig,
 )
 
 from ...host_configs import (
@@ -82,9 +83,10 @@ def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -
 
             pairs = [(path, os.path.relpath(path, data_context().content.root)) for path in exported_paths]
 
-            def coverage_callback(files: list[tuple[str, str]]) -> None:
+            def coverage_callback(payload_config: PayloadConfig) -> None:
                 """Add the coverage files to the payload file list."""
                 display.info('Including %d exported coverage file(s) in payload.' % len(pairs), verbosity=1)
+                files = payload_config.files
                 files.extend(pairs)
 
             data_context().register_payload_callback(coverage_callback)
@@ -101,11 +103,13 @@ def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -
 
 class ExportedCoverageDataNotFound(ApplicationError):
     """Exception when no combined coverage data is present yet is required."""
+
     def __init__(self) -> None:
         super().__init__(
             'Coverage data must be exported before processing with the `--docker` or `--remote` option.\n'
             'Export coverage with `ansible-test coverage combine` using the `--export` option.\n'
-            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path)
+            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path
+        )
 
 
 def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> list[str]:
@@ -283,9 +287,9 @@ def _get_coverage_targets(args: CoverageCombineConfig, walk_func: c.Callable) ->
 
 
 def _build_stub_groups(
-        args: CoverageCombineConfig,
-        sources: list[tuple[str, int]],
-        default_stub_value: c.Callable[[list[str]], dict[str, TValue]],
+    args: CoverageCombineConfig,
+    sources: list[tuple[str, int]],
+    default_stub_value: c.Callable[[list[str]], dict[str, TValue]],
 ) -> dict[str, dict[str, TValue]]:
     """
     Split the given list of sources with line counts into groups, maintaining a maximum line count for each group.
@@ -351,6 +355,7 @@ def get_coverage_group(args: CoverageCombineConfig, coverage_file: str) -> t.Opt
 
 class CoverageCombineConfig(CoverageConfig):
     """Configuration for the coverage combine command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 

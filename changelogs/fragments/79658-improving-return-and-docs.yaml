@@ -1,0 +1,2 @@
+minor_changes:
+  - apt_repository - adds ``sources_added`` and ``sources_removed`` to the return of the module (https://github.com/ansible/ansible/issues/79306).

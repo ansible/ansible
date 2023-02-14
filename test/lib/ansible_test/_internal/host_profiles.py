@@ -139,6 +139,7 @@ TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
 
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
+
     def __init__(self, args: CommonConfig, reason: str) -> None:
         engine = require_docker().command
         dd_wsl2 = get_docker_info(args).docker_desktop_wsl2
@@ -181,6 +182,7 @@ NOTE: These changes must be applied each time the container host is rebooted.
 @dataclasses.dataclass(frozen=True)
 class Inventory:
     """Simple representation of an Ansible inventory."""
+
     host_groups: dict[str, dict[str, dict[str, t.Union[str, int]]]]
     extra_groups: t.Optional[dict[str, list[str]]] = None
 
@@ -226,12 +228,14 @@ class Inventory:
 
 class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for host profiles."""
-    def __init__(self,
-                 *,
-                 args: EnvironmentConfig,
-                 config: THostConfig,
-                 targets: t.Optional[list[HostConfig]],
-                 ) -> None:
+
+    def __init__(
+        self,
+        *,
+        args: EnvironmentConfig,
+        config: THostConfig,
+        targets: t.Optional[list[HostConfig]],
+    ) -> None:
         self.args = args
         self.config = config
         self.controller = bool(targets)
@@ -272,6 +276,7 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
 class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
     """Base class for POSIX host profiles."""
+
     @property
     def python(self) -> PythonConfig:
         """
@@ -293,6 +298,7 @@ class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
 
 class ControllerHostProfile(PosixProfile[TControllerHostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles usable as a controller."""
+
     @abc.abstractmethod
     def get_origin_controller_connection(self) -> Connection:
         """Return a connection for accessing the host as a controller from the origin."""
@@ -304,6 +310,7 @@ class ControllerHostProfile(PosixProfile[TControllerHostConfig], metaclass=abc.A
 
 class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles offering SSH connectivity."""
+
     @abc.abstractmethod
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -311,6 +318,7 @@ class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 
 class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
     """Base class for remote instance profiles."""
+
     @property
     def core_ci_state(self) -> t.Optional[dict[str, str]]:
         """The saved Ansible Core CI state."""
@@ -387,6 +395,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
 class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[ControllerConfig]):
     """Host profile for the controller as a target."""
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
@@ -409,6 +418,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     @dataclasses.dataclass(frozen=True)
     class InitConfig:
         """Configuration details required to run the container init."""
+
         options: list[str]
         command: str
         command_privileged: bool
@@ -996,9 +1006,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             display.info(last_error)
 
             if not self.args.delegate and not self.args.host_path:
+
                 def callback() -> None:
                     """Callback to run during error display."""
                     self.on_target_failure()  # when the controller is not delegated, report failures immediately
+
             else:
                 callback = None
 
@@ -1098,6 +1110,7 @@ class NetworkInventoryProfile(HostProfile[NetworkInventoryConfig]):
 
 class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
     """Host profile for a network remote instance."""
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
@@ -1174,6 +1187,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
 class OriginProfile(ControllerHostProfile[OriginConfig]):
     """Host profile for origin."""
+
     def get_origin_controller_connection(self) -> LocalConnection:
         """Return a connection for accessing the host as a controller from the origin."""
         return LocalConnection(self.args)
@@ -1185,6 +1199,7 @@ class OriginProfile(ControllerHostProfile[OriginConfig]):
 
 class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile[PosixRemoteConfig]):
     """Host profile for a POSIX remote instance."""
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
@@ -1291,6 +1306,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
 class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSshConfig]):
     """Host profile for a POSIX SSH instance."""
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
@@ -1307,6 +1323,7 @@ class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSs
 
 class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
     """Host profile for a Windows inventory."""
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         inventory = parse_inventory(self.args, self.config.path)
@@ -1331,6 +1348,7 @@ class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
 
 class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
     """Host profile for a Windows remote instance."""
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
@@ -1411,9 +1429,9 @@ def get_config_profile_type_map() -> dict[t.Type[HostConfig], t.Type[HostProfile
 
 
 def create_host_profile(
-        args: EnvironmentConfig,
-        config: HostConfig,
-        controller: bool,
+    args: EnvironmentConfig,
+    config: HostConfig,
+    controller: bool,
 ) -> HostProfile:
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]

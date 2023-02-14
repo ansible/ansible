@@ -31,6 +31,7 @@ from . import (
 
 class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets filter` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
@@ -97,9 +98,9 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
 
 def filter_data(
-        data: NamedPoints,
-        path_filter_func: c.Callable[[str], bool],
-        target_filter_func: c.Callable[[set[str]], set[str]],
+    data: NamedPoints,
+    path_filter_func: c.Callable[[str], bool],
+    target_filter_func: c.Callable[[set[str]], set[str]],
 ) -> NamedPoints:
     """Filter the data set using the specified filter function."""
     result: NamedPoints = {}

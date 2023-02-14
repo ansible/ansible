@@ -75,16 +75,17 @@ from ..ci import (
 
 class ControllerMode(enum.Enum):
     """Type of provisioning to use for the controller."""
+
     NO_DELEGATION = enum.auto()
     ORIGIN = enum.auto()
     DELEGATED = enum.auto()
 
 
 def add_environments(
-        parser: argparse.ArgumentParser,
-        completer: CompositeActionCompletionFinder,
-        controller_mode: ControllerMode,
-        target_mode: TargetMode,
+    parser: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
+    controller_mode: ControllerMode,
+    target_mode: TargetMode,
 ) -> None:
     """Add arguments for the environments used to run ansible-test and commands it invokes."""
     no_environment = controller_mode == ControllerMode.NO_DELEGATION and target_mode == TargetMode.NO_TARGETS
@@ -114,8 +115,8 @@ def add_environments(
 
 
 def add_global_options(
-        parser: argparse.ArgumentParser,
-        controller_mode: ControllerMode,
+    parser: argparse.ArgumentParser,
+    controller_mode: ControllerMode,
 ):
     """Add global options for controlling the test environment that work with both the legacy and composite options."""
     global_parser = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='global environment arguments'))
@@ -156,10 +157,10 @@ def add_global_options(
 
 
 def add_composite_environment_options(
-        parser: argparse.ArgumentParser,
-        completer: CompositeActionCompletionFinder,
-        controller_mode: ControllerMode,
-        target_mode: TargetMode,
+    parser: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
+    controller_mode: ControllerMode,
+    target_mode: TargetMode,
 ) -> list[t.Type[CompositeAction]]:
     """Add composite options for controlling the test environment."""
     composite_parser = t.cast(argparse.ArgumentParser, parser.add_argument_group(
@@ -246,21 +247,22 @@ def add_composite_environment_options(
 
 
 def add_legacy_environment_options(
-        parser: argparse.ArgumentParser,
-        controller_mode: ControllerMode,
-        target_mode: TargetMode,
+    parser: argparse.ArgumentParser,
+    controller_mode: ControllerMode,
+    target_mode: TargetMode,
 ):
     """Add legacy options for controlling the test environment."""
     environment: argparse.ArgumentParser = parser.add_argument_group(  # type: ignore[assignment]  # real type private
-        title='environment arguments (mutually exclusive with "composite environment arguments" below)')
+        title='environment arguments (mutually exclusive with "composite environment arguments" below)',
+    )
 
     add_environments_python(environment, target_mode)
     add_environments_host(environment, controller_mode, target_mode)
 
 
 def add_environments_python(
-        environments_parser: argparse.ArgumentParser,
-        target_mode: TargetMode,
+    environments_parser: argparse.ArgumentParser,
+    target_mode: TargetMode,
 ) -> None:
     """Add environment arguments to control the Python version(s) used."""
     python_versions: tuple[str, ...]
@@ -285,9 +287,9 @@ def add_environments_python(
 
 
 def add_environments_host(
-        environments_parser: argparse.ArgumentParser,
-        controller_mode: ControllerMode,
-        target_mode: TargetMode,
+    environments_parser: argparse.ArgumentParser,
+    controller_mode: ControllerMode,
+    target_mode: TargetMode,
 ) -> None:
     """Add environment arguments for the given host and argument modes."""
     environments_exclusive_group: argparse.ArgumentParser = environments_parser.add_mutually_exclusive_group()  # type: ignore[assignment]  # real type private
@@ -341,7 +343,7 @@ def add_environment_network(
 
 
 def add_environment_windows(
-        environments_parser: argparse.ArgumentParser,
+    environments_parser: argparse.ArgumentParser,
 ) -> None:
     """Add environment arguments for running on a windows host."""
     register_completer(environments_parser.add_argument(
@@ -359,7 +361,7 @@ def add_environment_windows(
 
 
 def add_environment_local(
-        exclusive_parser: argparse.ArgumentParser,
+    exclusive_parser: argparse.ArgumentParser,
 ) -> None:
     """Add environment arguments for running on the local (origin) host."""
     exclusive_parser.add_argument(
@@ -370,8 +372,8 @@ def add_environment_local(
 
 
 def add_environment_venv(
-        exclusive_parser: argparse.ArgumentParser,
-        environments_parser: argparse.ArgumentParser,
+    exclusive_parser: argparse.ArgumentParser,
+    environments_parser: argparse.ArgumentParser,
 ) -> None:
     """Add environment arguments for running in ansible-test managed virtual environments."""
     exclusive_parser.add_argument(
@@ -383,12 +385,13 @@ def add_environment_venv(
     environments_parser.add_argument(
         '--venv-system-site-packages',
         action='store_true',
-        help='enable system site packages')
+        help='enable system site packages',
+    )
 
 
 def add_global_docker(
-        parser: argparse.ArgumentParser,
-        controller_mode: ControllerMode,
+    parser: argparse.ArgumentParser,
+    controller_mode: ControllerMode,
 ) -> None:
     """Add global options for Docker."""
     if controller_mode != ControllerMode.DELEGATED:
@@ -450,9 +453,9 @@ def add_global_docker(
 
 
 def add_environment_docker(
-        exclusive_parser: argparse.ArgumentParser,
-        environments_parser: argparse.ArgumentParser,
-        target_mode: TargetMode,
+    exclusive_parser: argparse.ArgumentParser,
+    environments_parser: argparse.ArgumentParser,
+    target_mode: TargetMode,
 ) -> None:
     """Add environment arguments for running in docker containers."""
     if target_mode in (TargetMode.POSIX_INTEGRATION, TargetMode.SHELL):
@@ -490,8 +493,8 @@ def add_environment_docker(
 
 
 def add_global_remote(
-        parser: argparse.ArgumentParser,
-        controller_mode: ControllerMode,
+    parser: argparse.ArgumentParser,
+    controller_mode: ControllerMode,
 ) -> None:
     """Add global options for remote instances."""
     if controller_mode != ControllerMode.DELEGATED:
@@ -529,9 +532,9 @@ def add_global_remote(
 
 
 def add_environment_remote(
-        exclusive_parser: argparse.ArgumentParser,
-        environments_parser: argparse.ArgumentParser,
-        target_mode: TargetMode,
+    exclusive_parser: argparse.ArgumentParser,
+    environments_parser: argparse.ArgumentParser,
+    target_mode: TargetMode,
 ) -> None:
     """Add environment arguments for running in ansible-core-ci provisioned remote virtual machines."""
     if target_mode == TargetMode.POSIX_INTEGRATION:

@@ -50,8 +50,17 @@ from .provider.layout.unsupported import (
 )
 
 
+@dataclasses.dataclass(frozen=True)
+class PayloadConfig:
+    """Configuration required to build a source tree payload for delegation."""
+
+    files: list[tuple[str, str]]
+    permissions: dict[str, int]
+
+
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
+
     def __init__(self) -> None:
         content_path = os.environ.get('ANSIBLE_TEST_CONTENT_ROOT')
         current_path = os.getcwd()
@@ -63,7 +72,7 @@ class DataContext:
         self.__source_providers = source_providers
         self.__ansible_source: t.Optional[tuple[tuple[str, str], ...]] = None
 
-        self.payload_callbacks: list[c.Callable[[list[tuple[str, str]]], None]] = []
+        self.payload_callbacks: list[c.Callable[[PayloadConfig], None]] = []
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
@@ -113,11 +122,12 @@ class DataContext:
         return collections
 
     @staticmethod
-    def __create_content_layout(layout_providers: list[t.Type[LayoutProvider]],
-                                source_providers: list[t.Type[SourceProvider]],
-                                root: str,
-                                walk: bool,
-                                ) -> ContentLayout:
+    def __create_content_layout(
+        layout_providers: list[t.Type[LayoutProvider]],
+        source_providers: list[t.Type[SourceProvider]],
+        root: str,
+        walk: bool,
+    ) -> ContentLayout:
         """Create a content layout using the given providers and root path."""
         try:
             layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
@@ -173,7 +183,7 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback: c.Callable[[list[tuple[str, str]]], None]) -> None:
+    def register_payload_callback(self, callback: c.Callable[[PayloadConfig], None]) -> None:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
@@ -239,6 +249,7 @@ def data_context() -> DataContext:
 @dataclasses.dataclass(frozen=True)
 class PluginInfo:
     """Information about an Ansible plugin."""
+
     plugin_type: str
     name: str
     paths: list[str]

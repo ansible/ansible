@@ -60,6 +60,7 @@ def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
 
 class TestResult:
     """Base class for test results."""
+
     def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         self.command = command
         self.test = test
@@ -128,6 +129,7 @@ class TestResult:
 
 class TestTimeout(TestResult):
     """Test timeout."""
+
     def __init__(self, timeout_duration: int) -> None:
         super().__init__(command='timeout', test='')
 
@@ -180,6 +182,7 @@ One or more of the following situations may be responsible:
 
 class TestSuccess(TestResult):
     """Test success."""
+
     def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         test_case = junit_xml.TestCase(classname=self.command, name=self.name)
@@ -189,6 +192,7 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
+
     def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(command, test, python_version)
 
@@ -214,13 +218,14 @@ class TestSkipped(TestResult):
 
 class TestFailure(TestResult):
     """Test failure."""
+
     def __init__(
-            self,
-            command: str,
-            test: str,
-            python_version: t.Optional[str] = None,
-            messages: t.Optional[c.Sequence[TestMessage]] = None,
-            summary: t.Optional[str] = None,
+        self,
+        command: str,
+        test: str,
+        python_version: t.Optional[str] = None,
+        messages: t.Optional[c.Sequence[TestMessage]] = None,
+        summary: t.Optional[str] = None,
     ):
         super().__init__(command, test, python_version)
 
@@ -378,15 +383,16 @@ class TestFailure(TestResult):
 
 class TestMessage:
     """Single test message for one file."""
+
     def __init__(
-            self,
-            message: str,
-            path: str,
-            line: int = 0,
-            column: int = 0,
-            level: str = 'error',
-            code: t.Optional[str] = None,
-            confidence: t.Optional[int] = None,
+        self,
+        message: str,
+        path: str,
+        line: int = 0,
+        column: int = 0,
+        level: str = 'error',
+        code: t.Optional[str] = None,
+        confidence: t.Optional[int] = None,
     ):
         self.__path = path
         self.__line = line

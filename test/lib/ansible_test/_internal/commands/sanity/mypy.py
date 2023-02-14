@@ -60,6 +60,7 @@ from ...host_configs import (
 
 class MypyTest(SanityMultipleVersion):
     """Sanity test which executes mypy."""
+
     ansible_only = True
 
     vendored_paths = (
@@ -176,11 +177,11 @@ class MypyTest(SanityMultipleVersion):
 
     @staticmethod
     def test_context(
-            args: SanityConfig,
-            virtualenv_python: VirtualPythonConfig,
-            python: PythonConfig,
-            context: MyPyContext,
-            paths: list[str],
+        args: SanityConfig,
+        virtualenv_python: VirtualPythonConfig,
+        python: PythonConfig,
+        context: MyPyContext,
+        paths: list[str],
     ) -> list[SanityMessage]:
         """Run mypy tests for the specified context."""
         context_paths = [path for path in paths if any(is_subdir(path, match_path) for match_path in context.paths)]
@@ -232,7 +233,7 @@ class MypyTest(SanityMultipleVersion):
             # Below are context specific arguments.
             # They are primarily useful for listing individual 'ignore_missing_imports' entries instead of using a global ignore.
             '--config-file', config_path,
-        ]
+        ]  # fmt: skip
 
         cmd.extend(context_paths)
 
@@ -265,6 +266,7 @@ class MypyTest(SanityMultipleVersion):
 @dataclasses.dataclass(frozen=True)
 class MyPyContext:
     """Context details for a single run of mypy."""
+
     name: str
     paths: list[str]
     python_versions: tuple[str, ...]

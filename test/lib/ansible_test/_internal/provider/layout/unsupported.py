@@ -9,6 +9,7 @@ from . import (
 
 class UnsupportedLayout(LayoutProvider):
     """Layout provider for an unsupported directory layout."""
+
     sequence = 0  # disable automatic detection
 
     @staticmethod
@@ -20,21 +21,22 @@ class UnsupportedLayout(LayoutProvider):
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, p) for p in self.PLUGIN_TYPES)
 
-        return ContentLayout(root,
-                             paths,
-                             plugin_paths=plugin_paths,
-                             collection=None,
-                             test_path='',
-                             results_path='',
-                             sanity_path='',
-                             sanity_messages=None,
-                             integration_path='',
-                             integration_targets_path='',
-                             integration_vars_path='',
-                             integration_messages=None,
-                             unit_path='',
-                             unit_module_path='',
-                             unit_module_utils_path='',
-                             unit_messages=None,
-                             unsupported=True,
-                             )
+        return ContentLayout(
+            root,
+            paths,
+            plugin_paths=plugin_paths,
+            collection=None,
+            test_path='',
+            results_path='',
+            sanity_path='',
+            sanity_messages=None,
+            integration_path='',
+            integration_targets_path='',
+            integration_vars_path='',
+            integration_messages=None,
+            unit_path='',
+            unit_module_path='',
+            unit_module_utils_path='',
+            unit_messages=None,
+            unsupported=True,
+        )

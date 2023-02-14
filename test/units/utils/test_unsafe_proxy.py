@@ -91,12 +91,12 @@ def test_wrap_var_no_ref():
         'text': 'text',
     }
     wrapped_thing = wrap_var(thing)
-    thing is not wrapped_thing
-    thing['foo'] is not wrapped_thing['foo']
-    thing['bar'][0] is not wrapped_thing['bar'][0]
-    thing['baz'][0] is not wrapped_thing['baz'][0]
-    thing['none'] is not wrapped_thing['none']
-    thing['text'] is not wrapped_thing['text']
+    assert thing is not wrapped_thing
+    assert thing['foo'] is not wrapped_thing['foo']
+    assert thing['bar'][0] is not wrapped_thing['bar'][0]
+    assert thing['baz'][0] is not wrapped_thing['baz'][0]
+    assert thing['none'] is wrapped_thing['none']
+    assert thing['text'] is not wrapped_thing['text']
 
 
 def test_AnsibleUnsafeText():
