@@ -172,3 +172,12 @@ grep out.txt -e "handler ran"
 grep out.txt -e "after flush"
 
 ansible-playbook 79776.yml -i inventory.handlers "$@"
+
+ansible-playbook test_block_as_handler.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using a block as a handler is not supported."
+
+ansible-playbook test_block_as_handler-include.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using a block as a handler is not supported."
+
+ansible-playbook test_block_as_handler-import.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using a block as a handler is not supported."

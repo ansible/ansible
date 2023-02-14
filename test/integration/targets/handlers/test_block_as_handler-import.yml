@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug:
+  handlers:
+    - name: handler
+      import_tasks: test_block_as_handler-include_import-handlers.yml
