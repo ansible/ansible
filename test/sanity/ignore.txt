@@ -195,7 +195,6 @@ test/support/integration/plugins/module_utils/network/common/utils.py pylint:use
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/netconf/netconf.py pylint:used-before-assignment
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/network.py pylint:consider-using-dict-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:use-a-generator
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
