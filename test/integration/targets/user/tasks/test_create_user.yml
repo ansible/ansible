@@ -36,10 +36,10 @@
 
 - name: run existing user check tests
   user:
-    name: '{{ user_names.stdout_lines | random }}'
+    name: "{{ user_names.stdout_lines | random }}"
     state: present
     create_home: no
-  loop: '{{ range(1, 5+1) | list }}'
+  loop: "{{ range(1, 5+1) | list }}"
   register: user_test1
 
 - debug:
