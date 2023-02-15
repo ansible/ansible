@@ -55,11 +55,11 @@
 - name: validate changed results for testcase 1
   assert:
     that:
-      - 'user_test1.results[0] is not changed'
-      - 'user_test1.results[1] is not changed'
-      - 'user_test1.results[2] is not changed'
-      - 'user_test1.results[3] is not changed'
-      - 'user_test1.results[4] is not changed'
+      - "user_test1.results[0] is not changed"
+      - "user_test1.results[1] is not changed"
+      - "user_test1.results[2] is not changed"
+      - "user_test1.results[3] is not changed"
+      - "user_test1.results[4] is not changed"
       - "user_test1.results[0]['state'] == 'present'"
       - "user_test1.results[1]['state'] == 'present'"
       - "user_test1.results[2]['state'] == 'present'"
