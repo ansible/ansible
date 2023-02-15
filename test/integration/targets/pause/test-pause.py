@@ -168,6 +168,7 @@ pause_test = pexpect.spawn(
 pause_test.logfile = log_buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.send('\n')  # test newline does not stop the prompt - waiting for a timeout or ctrl+C
 pause_test.send('\x03')
 pause_test.expect("Press 'C' to continue the play or 'A' to abort")
 pause_test.send('C')
