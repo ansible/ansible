@@ -48,7 +48,6 @@ Release Manager
 Planned work
 ============
 
-* Data Tagging
 * Proxy prompting over queue from forks
 
 Delayed work
@@ -56,4 +55,4 @@ Delayed work
 
 The following work has been delayed and retargeted for a future release:
 
-* N/A
+* Data Tagging
