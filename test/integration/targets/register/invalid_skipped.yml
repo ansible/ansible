@@ -1,0 +1,12 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: test registering bad var when skipped
+      debug: msg='does nothing really but register this'
+      when: false
+      register: 200
+
+    - name: never gets here
+      assert:
+        that:
+          - 200 is not defined
