@@ -1,0 +1,137 @@
+- name: Create deb822 repo
+  deb822_repository:
+    name: focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+  register: deb822_create_1
+
+- name: Check mode
+  stat:
+    path: /etc/apt/sources.list.d/focal-archive.sources
+  register: deb822_create_1_stat_1
+
+- name: Create another deb822 repo
+  deb822_repository:
+    name: focal security
+    uris: http://security.ubuntu.com/ubuntu
+    suites:
+      - focal-security
+    components:
+      - main
+      - restricted
+  register: deb822_create_2
+
+- name: Create deb822 repo idempotency
+  deb822_repository:
+    name: focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+  register: deb822_create_1_idem
+
+- name: Change deb822 repo mode
+  deb822_repository:
+    name: focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+    mode: '0600'
+  register: deb822_create_1_mode
+
+- name: Check mode
+  stat:
+    path: /etc/apt/sources.list.d/focal-archive.sources
+  register: deb822_create_1_stat_2
+
+- assert:
+    that:
+      - deb822_create_1 is changed
+      - deb822_create_1.dest == '/etc/apt/sources.list.d/focal-archive.sources'
+      - deb822_create_1.repo|trim == focal_archive_expected
+
+      - deb822_create_1_idem is not changed
+
+      - deb822_create_1_mode is changed
+      - deb822_create_1_stat_1.stat.mode == '0644'
+      - deb822_create_1_stat_2.stat.mode == '0600'
+  vars:
+    focal_archive_expected: |-
+      X-Repolib-Name: focal archive
+      URIs: http://us.archive.ubuntu.com/ubuntu
+      Suites: focal focal-updates
+      Components: main restricted
+      Types: deb
+
+- name: Add repo with signed_by
+  deb822_repository:
+    name: debian
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by: |-
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+      mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+      CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+      IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+      dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+      3bHcln8DMpIJVXht78sL
+      =IE0r
+      -----END PGP PUBLIC KEY BLOCK-----
+  register: signed_by_inline
+
+- name: Change signed_by to URL
+  deb822_repository:
+    name: debian
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+  register: signed_by_url
+
+- assert:
+    that:
+      - signed_by_inline.key_filename is none
+      - signed_by_inline.repo|trim == signed_by_inline_expected
+      - signed_by_url is changed
+      - signed_by_url.key_filename == '/etc/apt/keyrings/debian.gpg'
+      - >
+        'BEGIN' not in signed_by_url.repo
+  vars:
+    signed_by_inline_expected: |-
+      X-Repolib-Name: debian
+      Types: deb
+      URIs: https://deb.debian.org
+      Suites: stable
+      Components: main contrib non-free
+      Signed-By:
+          -----BEGIN PGP PUBLIC KEY BLOCK-----
+          .
+          mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+          CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+          IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+          dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+          3bHcln8DMpIJVXht78sL
+          =IE0r
+          -----END PGP PUBLIC KEY BLOCK-----
