@@ -282,8 +282,6 @@ def write_signed_by_key(module, v, slug):
         else:
             b_data = r.read()
     elif is_armored(to_bytes(v)):
-    #     b_data = to_bytes(v)
-    # else:
         return changed, None, v
 
     if not b_data:
