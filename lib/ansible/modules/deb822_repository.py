@@ -188,7 +188,38 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+repo:
+  description: A source string for the repository
+  returned: always
+  type: str
+  sample: |
+    X-Repolib-Name: debian
+    Types: deb
+    URIs: https://deb.debian.org
+    Suites: stable
+    Components: main contrib non-free
+    Signed-By:
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+        .
+        mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+        CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+        IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+        dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+        3bHcln8DMpIJVXht78sL
+        =IE0r
+        -----END PGP PUBLIC KEY BLOCK-----
 
+dest:
+  description: Path to the repository file
+  returned: always
+  type: path
+  sample: /etc/apt/sources.list.d/focal-archive.sources
+
+key_filename:
+  description: Path to the signed_by key file
+  returned: always
+  type: path
+  sample: /etc/apt/keyrings/debian.gpg
 '''
 
 import os
