@@ -212,13 +212,13 @@ repo:
 dest:
   description: Path to the repository file
   returned: always
-  type: path
+  type: str
   sample: /etc/apt/sources.list.d/focal-archive.sources
 
 key_filename:
   description: Path to the signed_by key file
   returned: always
-  type: path
+  type: str
   sample: /etc/apt/keyrings/debian.gpg
 '''
 
