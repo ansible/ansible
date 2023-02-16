@@ -6,6 +6,7 @@ charset-normalizer==3.0.1
 docutils==0.18.1
 idna==3.4
 imagesize==1.4.1
+importlib-metadata==6.0.0
 Jinja2==3.1.2
 MarkupSafe==2.1.2
 packaging==23.0
@@ -22,5 +23,6 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
 types-docutils==0.18.3
-typing_extensions==4.4.0
+typing_extensions==4.5.0
 urllib3==1.26.14
+zipp==3.13.0
