@@ -238,8 +238,7 @@ def setup_prompt(stdin_fd, stdout_fd, seconds, echo):
     if os.isatty(stdout_fd):
         setraw(stdout_fd)
 
-    # Only echo input if no timeout is specified
-    if not seconds and echo:
+    if echo:
         new_settings = termios.tcgetattr(stdin_fd)
         new_settings[3] = new_settings[3] | termios.ECHO
         termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)

@@ -130,6 +130,9 @@ class ActionModule(ActionBase):
                 prompt = "(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"
                 default_input_complete = never_complete
 
+        # Only echo input if no timeout is specified
+        echo = seconds is None and echo
+
         user_input = b''
         with contextlib.suppress(AnsibleTimeoutExceeded):
             try:
@@ -146,6 +149,10 @@ class ActionModule(ActionBase):
                     if seconds is None:
                         display.warning("Not waiting for response to prompt as stdin is not interactive")
                     else:
+                        # Give the signal handler enough time to timeout
+                        time.sleep(seconds + 1)
+                else:
+                    if seconds is not None:
                         # Give the signal handler enough time to timeout
                         time.sleep(seconds + 1)
             finally:
