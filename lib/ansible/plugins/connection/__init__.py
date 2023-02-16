@@ -59,7 +59,7 @@ class ConnectionBase(AnsiblePlugin):
 
     default_user = None
 
-    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
+    def __init__(self, play_context, new_stdin=None, shell=None, *args, **kwargs):
 
         super(ConnectionBase, self).__init__()
 
@@ -279,7 +279,7 @@ class NetworkConnectionBase(ConnectionBase):
     # Do not use _remote_is_local in other connections
     _remote_is_local = True
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    def __init__(self, play_context, new_stdin=None, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._messages = []
         self._conn_closed = False
