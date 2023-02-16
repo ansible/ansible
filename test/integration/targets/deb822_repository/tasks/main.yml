@@ -1,3 +1,6 @@
+- meta: end_play
+  when: ansible_os_family != 'Debian'
+
 - block:
     - name: install python3-debian
       apt:
