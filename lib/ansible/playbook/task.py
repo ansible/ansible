@@ -66,7 +66,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # inheritance is only triggered if the 'current value' is Sentinel,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    args = FieldAttribute(isa='dict', default=dict)
+    args = NonInheritableFieldAttribute(isa='dict', default=dict)
     action = FieldAttribute(isa='string')
 
     async_val = FieldAttribute(isa='int', default=0, alias='async')

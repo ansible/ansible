@@ -25,7 +25,7 @@ from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -70,7 +70,7 @@ class Play(Base, Taggable, CollectionSearch):
     vars_prompt = FieldAttribute(isa='list', default=list, always_post_validate=False)
 
     # Role Attributes
-    roles = FieldAttribute(isa='list', default=list, priority=90)
+    roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
 
     # Block (Task) Lists Attributes
     handlers = FieldAttribute(isa='list', default=list, priority=-1)
