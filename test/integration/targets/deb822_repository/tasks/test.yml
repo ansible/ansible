@@ -1,6 +1,6 @@
 - name: Create deb822 repo
   deb822_repository:
-    name: focal archive
+    name: ansible-test focal archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -12,12 +12,12 @@
 
 - name: Check mode
   stat:
-    path: /etc/apt/sources.list.d/focal-archive.sources
+    path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
   register: deb822_create_1_stat_1
 
 - name: Create another deb822 repo
   deb822_repository:
-    name: focal security
+    name: ansible-test focal security
     uris: http://security.ubuntu.com/ubuntu
     suites:
       - focal-security
@@ -28,7 +28,7 @@
 
 - name: Create deb822 repo idempotency
   deb822_repository:
-    name: focal archive
+    name: ansible-test focal archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -40,7 +40,7 @@
 
 - name: Change deb822 repo mode
   deb822_repository:
-    name: focal archive
+    name: ansible-test focal archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -53,13 +53,13 @@
 
 - name: Check mode
   stat:
-    path: /etc/apt/sources.list.d/focal-archive.sources
+    path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
   register: deb822_create_1_stat_2
 
 - assert:
     that:
       - deb822_create_1 is changed
-      - deb822_create_1.dest == '/etc/apt/sources.list.d/focal-archive.sources'
+      - deb822_create_1.dest == '/etc/apt/sources.list.d/ansible-test-focal-archive.sources'
       - deb822_create_1.repo|trim == focal_archive_expected
 
       - deb822_create_1_idem is not changed
@@ -69,15 +69,37 @@
       - deb822_create_1_stat_2.stat.mode == '0600'
   vars:
     focal_archive_expected: |-
-      X-Repolib-Name: focal archive
+      X-Repolib-Name: ansible-test focal archive
       URIs: http://us.archive.ubuntu.com/ubuntu
       Suites: focal focal-updates
       Components: main restricted
       Types: deb
 
+- name: Remove repos
+  deb822_repository:
+    name: '{{ item }}'
+    state: absent
+  register: remove_repos_1
+  loop:
+    - ansible-test focal archive
+    - ansible-test focal security
+
+- name: Check for repo files
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-{{ item }}.sources
+  register: remove_stats
+  loop:
+    - focal-archive
+    - focal-security
+
+- assert:
+    that:
+      - remove_repos_1 is changed
+      - remove_stats.results|map(attribute='stat')|selectattr('exists') == []
+
 - name: Add repo with signed_by
   deb822_repository:
-    name: debian
+    name: ansible-test
     types: deb
     uris: https://deb.debian.org
     suites: stable
@@ -99,7 +121,7 @@
 
 - name: Change signed_by to URL
   deb822_repository:
-    name: debian
+    name: ansible-test
     types: deb
     uris: https://deb.debian.org
     suites: stable
@@ -115,12 +137,12 @@
       - signed_by_inline.key_filename is none
       - signed_by_inline.repo|trim == signed_by_inline_expected
       - signed_by_url is changed
-      - signed_by_url.key_filename == '/etc/apt/keyrings/debian.gpg'
+      - signed_by_url.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
       - >
         'BEGIN' not in signed_by_url.repo
   vars:
     signed_by_inline_expected: |-
-      X-Repolib-Name: debian
+      X-Repolib-Name: ansible-test
       Types: deb
       URIs: https://deb.debian.org
       Suites: stable
@@ -135,3 +157,22 @@
           3bHcln8DMpIJVXht78sL
           =IE0r
           -----END PGP PUBLIC KEY BLOCK-----
+
+- name: remove ansible-test repo
+  deb822_repository:
+    name: ansible-test
+    state: absent
+  register: ansible_test_repo_remove
+
+- name: check for ansible-test repo and key
+  stat:
+    path: '{{ item }}'
+  register: ansible_test_repo_stats
+  loop:
+    - /etc/apt/sources.list.d/ansible-test.sources
+    - /etc/apt/keyrings/ansible-test.gpg
+
+- assert:
+    that:
+      - ansible_test_repo_remove is changed
+      - ansible_test_repo_stats.results|map(attribute='stat')|selectattr('exists') == []

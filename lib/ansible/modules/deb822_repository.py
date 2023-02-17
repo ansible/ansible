@@ -138,6 +138,14 @@ options:
         - The octal mode for newly created files in sources.list.d.
         type: raw
         default: '0644'
+    state:
+        description:
+        - A source string state.
+        type: str
+        choices:
+        - absent
+        - present
+        default: present
 requirements:
     - python3-debian
 version_added: 2.15.0
@@ -270,6 +278,17 @@ def ensure_keyrings_dir(module):
     return changed
 
 
+def make_signed_by_filename(slug, ext):
+    return os.path.join(KEYRINGS_DIR, '%s.%s' % (slug, ext))
+
+
+def make_sources_filename(slug):
+    return os.path.join(
+        '/etc/apt/sources.list.d',
+        '%s.sources' % slug
+    )
+
+
 def format_bool(v):
     return 'yes' if v else 'no'
 
@@ -323,7 +342,7 @@ def write_signed_by_key(module, v, slug):
         f.write(b_data)
 
     ext = 'asc' if is_armored(b_data) else 'gpg'
-    filename = os.path.join('/etc/apt/keyrings', '%s.%s' % (slug, ext))
+    filename = make_signed_by_filename(slug, ext)
 
     src_chksum = module.sha256(tmpfile)
     dest_chksum = module.sha256(filename)
@@ -424,6 +443,14 @@ def main():
                 'type': 'raw',
                 'default': '0644',
             },
+            'state': {
+                'type': 'str',
+                'choices': [
+                    'present',
+                    'absent',
+                ],
+                'default': 'present',
+            }
         }
     )
 
@@ -438,6 +465,7 @@ def main():
 
     # popped non-deb822 args
     mode = params.pop('mode')
+    state = params.pop('state')
 
     name = params['name']
     slug = re.sub(
@@ -449,6 +477,23 @@ def main():
             name.lower(),
         ),
     )
+    sources_filename = make_sources_filename(slug)
+
+    if state == 'absent':
+        if os.path.exists(sources_filename):
+            os.unlink(sources_filename)
+            changed |= True
+        for ext in ('asc', 'gpg'):
+            signed_by_filename = make_signed_by_filename(slug, ext)
+            if os.path.exists(signed_by_filename):
+                os.unlink(signed_by_filename)
+                changed = True
+        module.exit_json(
+            repo=None,
+            changed=changed,
+            dest=sources_filename,
+            key_filename=signed_by_filename,
+        )
 
     deb822 = Deb822()
     signed_by_filename = None
@@ -480,10 +525,7 @@ def main():
     with os.fdopen(tmpfd, 'wb') as f:
         f.write(to_bytes(repo))
 
-    sources_filename = os.path.join(
-        '/etc/apt/sources.list.d',
-        '%s.sources' % slug
-    )
+    sources_filename = make_sources_filename(slug)
 
     src_chksum = module.sha256(tmpfile)
     dest_chksum = module.sha256(sources_filename)
