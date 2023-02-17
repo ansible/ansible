@@ -6,6 +6,8 @@ MarkupSafe==2.1.2
 packaging==23.0
 PyYAML==6.0
 resolvelib==0.9.0
-rstcheck==3.5.0
+rstcheck==5.0.0
 semantic-version==2.10.0
 straight.plugin==1.5.0
+types-docutils==0.18.3
+typing_extensions==4.5.0
