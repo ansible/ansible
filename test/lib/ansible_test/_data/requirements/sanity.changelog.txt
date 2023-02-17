@@ -1,7 +1,9 @@
 # edit "sanity.changelog.in" and generate with: hacking/update-sanity-requirements.py --test changelog
 antsibull-changelog==0.18.0
-docutils==0.17.1
+docutils==0.18.1
 packaging==23.0
 PyYAML==6.0
-rstcheck==3.5.0
+rstcheck==5.0.0
 semantic-version==2.10.0
+types-docutils==0.18.3
+typing_extensions==4.5.0
