@@ -1,0 +1,6 @@
+minor_changes:
+  - include_vars - The top-level variable name which is being merged
+    does not need to already exist. (https://github.com/ansible/ansible/pull/78661)
+  - include_vars - add option recursive_merge, with this new options
+    variables will be correctly merged when using the dirs option to load files.
+    (https://github.com/ansible/ansible/pull/78661)

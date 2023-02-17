@@ -80,6 +80,13 @@ options:
     type: str
     choices: ["replace", "merge"]
     version_added: "2.12"
+  recursive_merge:
+    description:
+      - When using C(dir) and if this option is set to C(yes), the module will recursively merge
+        hash variables defined into multiple files of the defined directory.
+    type: bool
+    default: no
+    version_added: "2.15"
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.

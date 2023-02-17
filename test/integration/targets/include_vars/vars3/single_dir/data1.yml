@@ -1,0 +1,6 @@
+---
+data:
+  key1:
+    value1: some_value_1
+  key2:
+    value2: value2_from_data1

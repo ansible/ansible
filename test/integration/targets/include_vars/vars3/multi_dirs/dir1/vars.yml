@@ -1,0 +1,11 @@
+---
+phase:
+  test:
+    state: active
+  stage:
+    state: inactive
+provider:
+  automation:
+    tool: ansible
+  os:
+    name: fedora

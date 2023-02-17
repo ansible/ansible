@@ -20,7 +20,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions', 'recursive_merge']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name', 'hash_behaviour']
 
@@ -62,12 +62,20 @@ class ActionModule(ActionBase):
         self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+        self.recursive_merge = self._task.args.get('recursive_merge', False)
 
         # convert/validate extensions list
         if isinstance(self.valid_extensions, string_types):
             self.valid_extensions = list(self.valid_extensions)
         if not isinstance(self.valid_extensions, list):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
+
+    def _update_vars(self, results, updated_results, recursive_merge):
+        if recursive_merge:
+            results = combine_vars(results, updated_results, merge=True)
+        else:
+            results.update(updated_results)
+        return results
 
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
@@ -99,6 +107,7 @@ class ActionModule(ActionBase):
         # set internal vars from args
         self._set_args()
 
+        merge_hashes = self.hash_behaviour == 'merge'
         results = dict()
         failed = False
         if self.source_dir:
@@ -111,11 +120,12 @@ class ActionModule(ActionBase):
                 failed = True
                 err_msg = ('{0} is not a directory'.format(to_native(self.source_dir)))
             else:
+                recursive_merge = merge_hashes and self.recursive_merge
                 for root_dir, filenames in self._traverse_dir_depth():
-                    failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
+                    failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames, recursive_merge))
                     if failed:
                         break
-                    results.update(updated_results)
+                    results = self._update_vars(results, updated_results, recursive_merge)
         else:
             try:
                 self.source_file = self._find_needle('vars', self.source_file)
@@ -140,9 +150,8 @@ class ActionModule(ActionBase):
             result['failed'] = failed
             result['message'] = err_msg
         elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-            merge_hashes = self.hash_behaviour == 'merge'
             for key, value in results.items():
-                old_value = task_vars.get(key, None)
+                old_value = task_vars.get(key, {})
                 results[key] = combine_vars(old_value, value, merge=merge_hashes)
 
         result['ansible_included_var_files'] = self.included_files
@@ -250,7 +259,7 @@ class ActionModule(ActionBase):
 
         return failed, err_msg, results
 
-    def _load_files_in_dir(self, root_dir, var_files):
+    def _load_files_in_dir(self, root_dir, var_files, recursive_merge):
         """ Load the found yml files and update/overwrite the dictionary.
         Args:
             root_dir (str): The base directory of the list of files that is being passed.
@@ -280,11 +289,10 @@ class ActionModule(ActionBase):
                     if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
                         failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                         if not failed:
-                            results.update(loaded_data)
+                            results = self._update_vars(results, loaded_data, recursive_merge)
                 else:
                     if path.exists(filepath) and not self._ignore_file(filename):
                         failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                         if not failed:
-                            results.update(loaded_data)
-
+                            results = self._update_vars(results, loaded_data, recursive_merge)
         return failed, err_msg, results

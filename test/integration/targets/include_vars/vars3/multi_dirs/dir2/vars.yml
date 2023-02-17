@@ -1,0 +1,11 @@
+---
+phase:
+  stage:
+    released: true
+  prod:
+    state: terminated
+provider:
+  automation:
+    tool: ansible-navigator
+another_provider:
+  active: true

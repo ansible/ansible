@@ -230,3 +230,46 @@
 - assert:
     that:
       - baz.ansible_facts.foo|type_debug != "AnsibleUnsafeText"
+
+- name: Include a vars dir with hash variables (testing hash merge with multiple file)
+  include_vars:
+    dir: "{{ role_path }}/vars3/single_dir/"
+    hash_behaviour: merge
+    recursive_merge: true
+
+- name: Verify that the hash is merged after vars files are accumulated
+  assert:
+    that:
+      - "{{ data | length }} == 3"
+      - "data.key1.value1 == 'some_value_1'"
+      - "data.key2.value2 == 'value2_from_data2'"
+      - "data.key3.value3 == 'some_value_3'"
+
+- name: Include a vars dir (with subdirs) with hash variables
+  include_vars:
+    dir: "{{ role_path }}/vars3/multi_dirs/"
+    hash_behaviour: merge
+    recursive_merge: true
+
+- name: Verify that the hash is merged after vars files are accumulated
+  assert:
+    that:
+      - phase == expected_phase
+      - provider == expected_provider
+      - another_provider == expected_another_provider
+  vars:
+    expected_phase:
+      test:
+        state: active
+      stage:
+        state: inactive
+        released: true
+      prod:
+        state: terminated
+    expected_provider:
+      automation:
+        tool: ansible-navigator
+      os:
+        name: fedora
+    expected_another_provider:
+      active: true
