@@ -25,7 +25,7 @@ from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
-from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -55,35 +55,35 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-2)
+    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-2)
 
     # Facts
-    gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
+    gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
 
     # defaults to be deprecated, should be 'None' in future
-    gather_subset = FieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = FieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
+    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
+    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     # Variable Attributes
-    vars_files = FieldAttribute(isa='list', default=list, priority=99)
-    vars_prompt = FieldAttribute(isa='list', default=list, always_post_validate=False)
+    vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
+    vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
 
     # Role Attributes
     roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
 
     # Block (Task) Lists Attributes
-    handlers = FieldAttribute(isa='list', default=list, priority=-1)
-    pre_tasks = FieldAttribute(isa='list', default=list, priority=-1)
-    post_tasks = FieldAttribute(isa='list', default=list, priority=-1)
-    tasks = FieldAttribute(isa='list', default=list, priority=-1)
+    handlers = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
+    pre_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
+    post_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
+    tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
 
     # Flag/Setting Attributes
-    force_handlers = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
-    max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
-    strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
-    order = FieldAttribute(isa='string', always_post_validate=True)
+    force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
+    max_fail_percentage = NonInheritableFieldAttribute(isa='percent', always_post_validate=True)
+    serial = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
+    strategy = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
+    order = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
 
     # =================================================================================
 
