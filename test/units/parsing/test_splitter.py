@@ -96,15 +96,15 @@ SPLIT_DATA = (
         {u'_raw_params': u'One\n  Two\n    Three\n'}),
 )
 
-SPLIT_ARGS = ((test[0], test[1]) for test in SPLIT_DATA)
-PARSE_KV = ((test[0], test[2]) for test in SPLIT_DATA)
+SPLIT_ARGS = tuple((test[0], test[1]) for test in SPLIT_DATA)
+PARSE_KV = tuple((test[0], test[2]) for test in SPLIT_DATA)
 
 
-@pytest.mark.parametrize("args, expected", SPLIT_ARGS)
+@pytest.mark.parametrize("args, expected", SPLIT_ARGS, ids=[str(arg[0]) for arg in SPLIT_ARGS])
 def test_split_args(args, expected):
     assert split_args(args) == expected
 
 
-@pytest.mark.parametrize("args, expected", PARSE_KV)
+@pytest.mark.parametrize("args, expected", PARSE_KV, ids=[str(arg[0]) for arg in PARSE_KV])
 def test_parse_kv(args, expected):
     assert parse_kv(args) == expected
