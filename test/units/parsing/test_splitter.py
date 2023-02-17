@@ -26,6 +26,9 @@ from ansible.errors import AnsibleParserError
 import pytest
 
 SPLIT_DATA = (
+    (None,
+        [],
+        {}),
     (u'',
         [],
         {}),
@@ -53,6 +56,12 @@ SPLIT_DATA = (
     (u'a="nest\'ed"',
         [u'a="nest\'ed"'],
         {u'a': u'nest\'ed'}),
+    (u' ',
+        [u' '],
+        {u'_raw_params': u' '}),
+    (u'\\ ',
+        [u' '],
+        {u'_raw_params': u' '}),
     (u'a\\=escaped',
         [u'a\\=escaped'],
         {u'_raw_params': u'a=escaped'}),
@@ -77,6 +86,9 @@ SPLIT_DATA = (
     (u'not jinja}}',
         [u'not', u'jinja}}'],
         {u'_raw_params': u'not jinja}}'}),
+    (u'a={{multiline\njinja}}',
+        [u'a={{multiline\njinja}}'],
+        {u'a': u'{{multiline\njinja}}'}),
     (u'a={{jinja}}',
         [u'a={{jinja}}'],
         {u'a': u'{{jinja}}'}),
@@ -116,6 +128,9 @@ SPLIT_DATA = (
     (u'One\n  Two\n    Three\n',
         [u'One\n ', u'Two\n   ', u'Three\n'],
         {u'_raw_params': u'One\n  Two\n    Three\n'}),
+    (u'\nOne\n  Two\n    Three\n',
+        [u'\n', u'One\n ', u'Two\n   ', u'Three\n'],
+        {u'_raw_params': u'\nOne\n  Two\n    Three\n'}),
 )
 
 PARSE_KV_CHECK_RAW = (
