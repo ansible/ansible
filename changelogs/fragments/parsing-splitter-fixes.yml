@@ -1,4 +1,5 @@
 bugfixes:
   - Fix exceptions caused by various inputs when performing arg splitting or parsing key/value pairs.
     Resolves issue https://github.com/ansible/ansible/issues/46379
+    and issue https://github.com/ansible/ansible/issues/61497
   - Fix incorrect parsing of multi-line Jinja2 blocks when performing arg splitting or parsing key/value pairs.
