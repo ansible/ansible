@@ -21,10 +21,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.parsing.splitter import split_args, parse_kv
+from ansible.errors import AnsibleParserError
 
 import pytest
 
 SPLIT_DATA = (
+    (u'',
+        [],
+        {}),
     (u'a',
         [u'a'],
         {u'_raw_params': u'a'}),
@@ -46,6 +50,12 @@ SPLIT_DATA = (
     (u'a="echo \\"hello world\\"" b=bar',
         [u'a="echo \\"hello world\\""', u'b=bar'],
         {u'a': u'echo "hello world"', u'b': u'bar'}),
+    (u'a="nest\'ed"',
+        [u'a="nest\'ed"'],
+        {u'a': u'nest\'ed'}),
+    (u'a\\=escaped',
+        [u'a\\=escaped'],
+        {u'_raw_params': u'a=escaped'}),
     (u'a="multi\nline"',
         [u'a="multi\nline"'],
         {u'a': u'multi\nline'}),
@@ -61,12 +71,24 @@ SPLIT_DATA = (
     (u'a="multiline\nmessage1\\\n" b="multiline\nmessage2\\\n"',
         [u'a="multiline\nmessage1\\\n"', u'b="multiline\nmessage2\\\n"'],
         {u'a': 'multiline\nmessage1\\\n', u'b': u'multiline\nmessage2\\\n'}),
+    (u'line \\\ncontinuation',
+        [u'line', u'continuation'],
+        {u'_raw_params': u'line continuation'}),
+    (u'not jinja}}',
+        [u'not', u'jinja}}'],
+        {u'_raw_params': u'not jinja}}'}),
     (u'a={{jinja}}',
         [u'a={{jinja}}'],
         {u'a': u'{{jinja}}'}),
     (u'a={{ jinja }}',
         [u'a={{ jinja }}'],
         {u'a': u'{{ jinja }}'}),
+    (u'a={% jinja %}',
+        [u'a={% jinja %}'],
+        {u'a': u'{% jinja %}'}),
+    (u'a={# jinja #}',
+        [u'a={# jinja #}'],
+        {u'a': u'{# jinja #}'}),
     (u'a="{{jinja}}"',
         [u'a="{{jinja}}"'],
         {u'a': u'{{jinja}}'}),
@@ -96,6 +118,19 @@ SPLIT_DATA = (
         {u'_raw_params': u'One\n  Two\n    Three\n'}),
 )
 
+PARSE_KV_CHECK_RAW = (
+    (u'raw=yes', {u'_raw_params': u'raw=yes'}),
+    (u'creates=something', {u'creates': u'something'}),
+)
+
+PARSER_ERROR = (
+    '"',
+    "'",
+    '{{',
+    '{%',
+    '{#',
+)
+
 SPLIT_ARGS = tuple((test[0], test[1]) for test in SPLIT_DATA)
 PARSE_KV = tuple((test[0], test[2]) for test in SPLIT_DATA)
 
@@ -108,3 +143,20 @@ def test_split_args(args, expected):
 @pytest.mark.parametrize("args, expected", PARSE_KV, ids=[str(arg[0]) for arg in PARSE_KV])
 def test_parse_kv(args, expected):
     assert parse_kv(args) == expected
+
+
+@pytest.mark.parametrize("args, expected", PARSE_KV_CHECK_RAW, ids=[str(arg[0]) for arg in PARSE_KV_CHECK_RAW])
+def test_parse_kv_check_raw(args, expected):
+    assert parse_kv(args, check_raw=True) == expected
+
+
+@pytest.mark.parametrize("args", PARSER_ERROR)
+def test_split_args_error(args):
+    with pytest.raises(AnsibleParserError):
+        split_args(args)
+
+
+@pytest.mark.parametrize("args", PARSER_ERROR)
+def test_parse_kv_error(args):
+    with pytest.raises(AnsibleParserError):
+        parse_kv(args)
