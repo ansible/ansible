@@ -274,7 +274,7 @@ def run_pip(
         context = ""
 
     if isinstance(python, VirtualPythonConfig):
-        context += " (venv)"
+        context += " [venv]"
 
     # The interpreter path is not included below.
     # It can be seen by running ansible-test with increased verbosity (showing all commands executed).
