@@ -20,4 +20,4 @@
 #           3366323866663763660a323766383531396433663861656532373663373134376263383263316261
 #           3137
 
-# $ ansible-playbook -i inventory --vault-password-file=vault-secret tasks.yml 
+# $ ansible-playbook -i inventory --vault-password-file=vault-secret tasks.yml
