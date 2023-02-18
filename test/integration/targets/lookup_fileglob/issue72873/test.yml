@@ -5,7 +5,7 @@
      dir: files
   tasks:
   - file: path='{{ dir }}' state=directory
-  
+
   - file: path='setvars.bat' state=touch  # in current directory!
 
   - file: path='{{ dir }}/{{ item }}' state=touch

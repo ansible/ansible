@@ -99,7 +99,7 @@
 # https://github.com/ansible/ansible/issues/78598
 # test removing nonexistent host key when the other keys exist for the host
 - name: remove different key
-  known_hosts: 
+  known_hosts:
     name: example.org
     key: "{{ example_org_ed25519_key }}"
     state: absent
