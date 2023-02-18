@@ -43,15 +43,16 @@ class TestStripComments:
         assert amc._strip_comments(all_comments) == u""
 
     def test_all_whitespace(self):
-        # Note: Do not remove the spaces on the blank lines below.  They're
-        # test data to show that the lines get removed despite having spaces
-        # on them
-        all_whitespace = u"""
-              
+        all_whitespace = (
+            '\n'
+            '              \n'
+            '\n'
+            '                \n'
+            '\t\t\r\n'
+            '\n'
+            '            '
+        )
 
-                
-\t\t\r\n
-            """  # nopep8
         assert amc._strip_comments(all_whitespace) == u""
 
     def test_somewhat_normal(self):
