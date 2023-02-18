@@ -2,10 +2,10 @@
   when: ansible_os_family == 'Debian'
   block:
     - name: install fr language pack
-      apt: 
+      apt:
         name: language-pack-fr
         state: present
-      
+
     - name: create our unarchive destination
       file:
         path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
