@@ -16,11 +16,11 @@
     dest: "{{ tempdir.path }}/somelink"
     state: link
 
-- stat: 
+- stat:
     path: "{{ tempdir.path }}/somelink"
   register: link
 
-- stat: 
+- stat:
     path: "{{ tempdir.path }}/somefile"
   register: file
 
@@ -32,12 +32,12 @@
 - file:
     path: "{{ tempdir.path }}/somelink"
     mode: 0644
-    
-- stat: 
+
+- stat:
     path: "{{ tempdir.path }}/somelink"
   register: link
 
-- stat: 
+- stat:
     path: "{{ tempdir.path }}/somefile"
   register: file
 
