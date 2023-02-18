@@ -22,7 +22,7 @@
   register: response_failed
 
 - name: Parse token from msg.txt
-  set_fact: 
+  set_fact:
     token: "{{ (response_failed['content'] | b64decode | from_json).token }}"
 
 - name: assert Test Bearer authorization is failed with netrc
@@ -48,7 +48,7 @@
   register: response
 
 - name: Parse token from msg.txt
-  set_fact: 
+  set_fact:
     token: "{{ (response['content'] | b64decode | from_json).token }}"
 
 - name: assert Test Bearer authorization is successfull with use_netrc=False

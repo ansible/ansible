@@ -779,7 +779,7 @@
   register: touch_result_in_check_mode_fails_not_existing_group
 
 - assert:
-    that: 
+    that:
     - touch_result_in_check_mode_not_existing.changed
     - touch_result_in_check_mode_preserve_access_time.changed
     - touch_result_in_check_mode_change_only_mode.changed

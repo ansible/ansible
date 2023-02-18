@@ -25,18 +25,18 @@ DOCUMENTATION:
 
     # TODO: find docs for these
     #allow_unicode:
-    #  description: 
+    #  description:
     #  type: bool
     #  default: true
     #default_flow_style
     #default_style
-    #canonical=None, 
-    #width=None, 
-    #line_break=None, 
-    #encoding=None, 
-    #explicit_start=None, 
-    #explicit_end=None, 
-    #version=None, 
+    #canonical=None,
+    #width=None,
+    #line_break=None,
+    #encoding=None,
+    #explicit_start=None,
+    #explicit_end=None,
+    #version=None,
     #tags=None
 
 EXAMPLES: |
