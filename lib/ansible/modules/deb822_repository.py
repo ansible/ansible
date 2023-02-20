@@ -332,7 +332,8 @@ def write_signed_by_key(module, v, slug):
             raise_from(RuntimeError(to_native(exc)), exc)
         else:
             b_data = r.read()
-    elif is_armored(to_bytes(v)):
+    else:
+        # Not a file, nor a URL, just pass it through
         return changed, None, v
 
     if not b_data:
