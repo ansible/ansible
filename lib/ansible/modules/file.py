@@ -519,7 +519,7 @@ def execute_diff_peek(path):
 def ensure_absent(path):
     if path == '/':
         raise AnsibleModuleError(results={'msg': "Refusing to delete /"})
-    
+
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     result = {}
