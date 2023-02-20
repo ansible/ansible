@@ -38,6 +38,8 @@ requirements:
     - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
     - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
     - For SUSE-based systems C(python3-rpm) package must be installed on targeted hosts.
+    - For RPM based systems, rpm python bindings must be installed, this is normally the default. 
+      SUSE stopped doing this so you'll need the C(python3-rpm) package.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
