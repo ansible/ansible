@@ -75,7 +75,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     delegate_to = FieldAttribute(isa='string')
     delegate_facts = FieldAttribute(isa='bool')
     failed_when = NonInheritableFieldAttribute(isa='list', default=list)
-    loop = NonInheritableFieldAttribute()
+    loop = NonInheritableFieldAttribute(isa='list')
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     notify = FieldAttribute(isa='list')
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
