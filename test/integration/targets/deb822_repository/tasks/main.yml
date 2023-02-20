@@ -9,6 +9,8 @@
       register: py3_deb_install
 
     - import_tasks: test.yml
+
+    - import_tasks: install.yml
   always:
     - name: uninstall python3-debian
       apt:
