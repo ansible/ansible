@@ -260,7 +260,8 @@ KEYRINGS_DIR = '/etc/apt/keyrings'
 def ensure_keyrings_dir(module):
     changed = False
     if not os.path.isdir(KEYRINGS_DIR):
-        os.mkdir(KEYRINGS_DIR, 0o755)
+        if not module.check_mode:
+            os.mkdir(KEYRINGS_DIR, 0o755)
         changed |= True
 
     changed |= module.set_fs_attributes_if_different(
@@ -349,7 +350,8 @@ def write_signed_by_key(module, v, slug):
 
     if src_chksum != dest_chksum:
         changed |= ensure_keyrings_dir(module)
-        module.atomic_move(tmpfile, filename)
+        if not module.check_mode:
+            module.atomic_move(tmpfile, filename)
         changed |= True
 
     changed |= module.set_mode_if_different(filename, 0o0644, False)
@@ -450,13 +452,16 @@ def main():
                     'absent',
                 ],
                 'default': 'present',
-            }
-        }
+            },
+        },
+        supports_check_mode=True,
     )
 
     if not HAS_DEBIAN:
         module.fail_json(msg=missing_required_lib("python3-debian"),
                          exception=DEBIAN_IMP_ERR)
+
+    check_mode = module.check_mode
 
     changed = False
 
@@ -481,12 +486,14 @@ def main():
 
     if state == 'absent':
         if os.path.exists(sources_filename):
-            os.unlink(sources_filename)
+            if not check_mode:
+                os.unlink(sources_filename)
             changed |= True
         for ext in ('asc', 'gpg'):
             signed_by_filename = make_signed_by_filename(slug, ext)
             if os.path.exists(signed_by_filename):
-                os.unlink(signed_by_filename)
+                if not check_mode:
+                    os.unlink(signed_by_filename)
                 changed = True
         module.exit_json(
             repo=None,
@@ -531,7 +538,8 @@ def main():
     dest_chksum = module.sha256(sources_filename)
 
     if src_chksum != dest_chksum:
-        module.atomic_move(tmpfile, sources_filename)
+        if not check_mode:
+            module.atomic_move(tmpfile, sources_filename)
         changed |= True
 
     changed |= module.set_mode_if_different(sources_filename, mode, False)

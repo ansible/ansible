@@ -1,3 +1,16 @@
+- name: Create deb822 repo - check_mode
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+  register: deb822_check_mode_1
+  check_mode: yes
+
 - name: Create deb822 repo
   deb822_repository:
     name: ansible-test focal archive
@@ -10,7 +23,7 @@
       - restricted
   register: deb822_create_1
 
-- name: Check mode
+- name: Check file mode
   stat:
     path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
   register: deb822_create_1_stat_1
@@ -38,6 +51,19 @@
       - restricted
   register: deb822_create_1_idem
 
+- name: Create deb822 repo - check_mode
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+  register: deb822_check_mode_2
+  check_mode: yes
+
 - name: Change deb822 repo mode
   deb822_repository:
     name: ansible-test focal archive
@@ -51,13 +77,17 @@
     mode: '0600'
   register: deb822_create_1_mode
 
-- name: Check mode
+- name: Check file mode
   stat:
     path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
   register: deb822_create_1_stat_2
 
 - assert:
     that:
+      - deb822_check_mode_1 is changed
+
+      - deb822_check_mode_2 is not changed
+
       - deb822_create_1 is changed
       - deb822_create_1.dest == '/etc/apt/sources.list.d/ansible-test-focal-archive.sources'
       - deb822_create_1.repo|trim == focal_archive_expected
