@@ -148,7 +148,7 @@ options:
         default: present
 requirements:
     - python3-debian / python-debian
-version_added: 2.15.0
+version_added: '2.15'
 '''
 
 EXAMPLES = '''
