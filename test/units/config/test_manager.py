@@ -65,6 +65,15 @@ ensure_test_data = [
     ('None', 'none', type(None))
 ]
 
+ensure_unquoting_test_data = [
+    ('"value"', '"value"', 'str', 'env'),
+    ('"value"', '"value"', 'str', 'yaml'),
+    ('"value"', 'value', 'str', 'ini'),
+    ('\'value\'', 'value', 'str', 'ini'),
+    ('\'\'value\'\'', '\'value\'', 'str', 'ini'),
+    ('""value""', '"value"', 'str', 'ini')
+]
+
 
 class TestConfigManager:
     @classmethod
@@ -78,6 +87,11 @@ class TestConfigManager:
     @pytest.mark.parametrize("value, expected_type, python_type", ensure_test_data)
     def test_ensure_type(self, value, expected_type, python_type):
         assert isinstance(ensure_type(value, expected_type), python_type)
+
+    @pytest.mark.parametrize("value, expected_value, value_type, origin", ensure_unquoting_test_data)
+    def test_ensure_type_unquoting(self, value, expected_value, value_type, origin):
+        actual_value = ensure_type(value, value_type, origin)
+        assert actual_value == expected_value
 
     def test_resolve_path(self):
         assert os.path.join(curdir, 'test.yml') == resolve_path('./test.yml', cfg_file)
