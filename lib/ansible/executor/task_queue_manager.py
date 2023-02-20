@@ -72,8 +72,8 @@ class PromptSend:
     prompt: str
     private: bool = True
     seconds: int = None
-    interrupt_input: t.Callable[[bytes, bytes], bool] = None
-    complete_input: t.Callable[[bytes, bytes], bool] = None
+    interrupt_input: t.Iterable[bytes] = None
+    complete_input: t.Iterable[bytes] = None
 
     kwargs: t.Mapping = field(init=False, default_factory=dict)
 

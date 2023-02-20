@@ -38,18 +38,6 @@ def timeout_handler(signum, frame):
     raise AnsibleTimeoutExceeded
 
 
-def interrupt_condition(char, previous_chars):
-    return char.lower() == b'a'
-
-
-def continue_condition(char, previous_chars):
-    return char.lower() == b'c'
-
-
-def never_complete(char, previous_chars):
-    return False
-
-
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
@@ -128,7 +116,9 @@ class ActionModule(ActionBase):
             else:
                 # corner case where enter does not continue, wait for timeout/interrupt only
                 prompt = "(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"
-                default_input_complete = never_complete
+
+            # don't complete on LF/CR; we expect a timeout/interrupt and ignore user input when a pause duration is specified
+            default_input_complete = tuple()
 
         # Only echo input if no timeout is specified
         echo = seconds is None and echo
@@ -142,7 +132,7 @@ class ActionModule(ActionBase):
                     signal.alarm(seconds)
 
                 try:
-                    user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
+                    _user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
                 except AnsiblePromptInterrupt:
                     user_input = None
                 except AnsiblePromptNoninteractive:
@@ -152,9 +142,8 @@ class ActionModule(ActionBase):
                         # Give the signal handler enough time to timeout
                         time.sleep(seconds + 1)
                 else:
-                    if seconds is not None:
-                        # Give the signal handler enough time to timeout
-                        time.sleep(seconds + 1)
+                    if seconds is None:
+                        user_input = _user_input
             finally:
                 if seconds is not None:
                     signal.alarm(0)
@@ -162,7 +151,7 @@ class ActionModule(ActionBase):
         if user_input is None:
             prompt = "Press 'C' to continue the play or 'A' to abort \r"
             try:
-                user_input = display.prompt_until(prompt, private=not echo, interrupt_input=interrupt_condition, complete_input=continue_condition)
+                user_input = display.prompt_until(prompt, private=not echo, interrupt_input=(b'a',), complete_input=(b'c',))
             except AnsiblePromptInterrupt:
                 raise AnsibleError('user requested abort!')
 

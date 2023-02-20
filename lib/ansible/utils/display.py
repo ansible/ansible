@@ -244,20 +244,6 @@ def setup_prompt(stdin_fd, stdout_fd, seconds, echo):
         termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
 
 
-def default_input_interrupt(char, previous_chars):
-    # type: (bytes, bytes) -> bool
-    try:
-        intr = termios.tcgetattr(sys.stdin.buffer.fileno())[6][termios.VINTR]
-    except Exception:
-        intr = b'\x03'  # value for Ctrl+C
-    return char == intr
-
-
-def default_input_complete(char, previous_chars):
-    # type: (bytes, bytes) -> bool
-    return char in (b'\r', b'\n')
-
-
 class Display(metaclass=Singleton):
 
     def __init__(self, verbosity=0):
@@ -650,8 +636,8 @@ class Display(metaclass=Singleton):
         self,
         echo=False,  # type: bool
         seconds=None,  # type: int
-        interrupt_input=None,  # type: t.Callable[[bytes, bytes], bool]
-        complete_input=None,  # type: t.Callable[[bytes, bytes], bool]
+        interrupt_input=None,  # type: t.Iterable[bytes]
+        complete_input=None,  # type: t.Iterable[bytes]
     ):  # type: (...) -> bytes
 
         if self._final_q:
@@ -660,9 +646,10 @@ class Display(metaclass=Singleton):
         if seconds is not None:
             start = time.time()
         if interrupt_input is None:
-            interrupt_input = default_input_interrupt
-        if complete_input is None:
-            complete_input = default_input_complete
+            try:
+                interrupt = termios.tcgetattr(sys.stdin.buffer.fileno())[6][termios.VINTR]
+            except Exception:
+                interrupt = b'\x03'  # value for Ctrl+C
 
         try:
             backspace_sequences = [termios.tcgetattr(self._stdin_fd)[6][termios.VERASE]]
@@ -682,10 +669,10 @@ class Display(metaclass=Singleton):
                 if key_pressed is None:
                     key_pressed = b''
 
-            if interrupt_input(key_pressed, result_string):
+            if (interrupt_input is None and key_pressed == interrupt) or (interrupt_input is not None and key_pressed.lower() in interrupt_input):
                 clear_line(self._stdout)
                 raise AnsiblePromptInterrupt('user interrupt')
-            if complete_input(key_pressed, result_string):
+            if (complete_input is None and key_pressed in (b'\r', b'\n')) or (complete_input is not None and key_pressed.lower() in complete_input):
                 clear_line(self._stdout)
                 break
             elif key_pressed in backspace_sequences:
