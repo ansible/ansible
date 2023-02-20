@@ -810,12 +810,12 @@ class Templar:
 
         return now
 
-    def _query_lookup(self, name, *args, **kwargs):
+    def _query_lookup(self, name, /, *args, **kwargs):
         ''' wrapper for lookup, force wantlist true'''
         kwargs['wantlist'] = True
         return self._lookup(name, *args, **kwargs)
 
-    def _lookup(self, name, *args, **kwargs):
+    def _lookup(self, name, /, *args, **kwargs):
         instance = lookup_loader.get(name, loader=self._loader, templar=self)
 
         if instance is None:
