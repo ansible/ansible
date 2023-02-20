@@ -5,6 +5,35 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-02-20
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Make using blocks as handlers a parser error (https://github.com/ansible/ansible/issues/79968)
+- ansible-test - Specify the configuration file location required by test plugins when the config file is not found. This resolves issue: https://github.com/ansible/ansible/issues/79411
+- ansible-test - Update error handling code to use Python 3.x constructs, avoiding direct use of ``errno``.
+- ansible-test acme test container - update version to update used Pebble version, underlying Python and Go base containers, and Python requirements (https://github.com/ansible/ansible/pull/79783).
+
+Bugfixes
+--------
+
+- Ansible.Basic.cs - Ignore compiler warning (reported as an error) when running under PowerShell 7.3.x.
+- Fix conditionally notifying ``include_tasks` handlers when ``force_handlers`` is used (https://github.com/ansible/ansible/issues/79776)
+- TaskExecutor - don't ignore templated _raw_params that k=v parser failed to parse (https://github.com/ansible/ansible/issues/79862)
+- ansible-galaxy - fix installing collections in git repositories/directories which contain a MANIFEST.json file (https://github.com/ansible/ansible/issues/79796).
+- ansible-test - Support Podman 4.4.0+ by adding the ``SYS_CHROOT`` capability when running containers.
+- ansible-test - fix warning message about failing to run an image to include the image name
+- strategy plugins now correctly identify bad registered variables, even on skip.
+
 v2.14.2
 =======
 
