@@ -34,8 +34,8 @@ def collection_pypkgpath(self):
 
 def enable_assertion_rewriting_hook():  # type: () -> None
     """
-    Enable pylint's AssertionRewritingHook on Python 3.x.
-    This is necessary because the Ansible collection loader intercepts imports before the pylint provided loader ever sees them.
+    Enable pytest's AssertionRewritingHook on Python 3.x.
+    This is necessary because the Ansible collection loader intercepts imports before the pytest provided loader ever sees them.
     """
     import sys
 
