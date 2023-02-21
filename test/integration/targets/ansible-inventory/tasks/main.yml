@@ -178,6 +178,6 @@
       - "'hosts' not in inv['parent_1']"
       - "'hosts' not in inv['parent_2']"
       - "'hosts' in inv['parent_3']"
-      - "'test1' in inv['test_group_1']['hosts']"
+      - "'test1' in inv['test_group1']['hosts']"
   vars:
     inv: '{{ limited.stdout|from_json}}'
