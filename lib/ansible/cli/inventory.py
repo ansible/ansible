@@ -307,7 +307,7 @@ class InventoryCLI(CLI):
             results = {}
             results[group.name] = {}
             if group.name != 'all':
-                results[group.name]['hosts'] = [h.name for h in group.hosts if h in available_hosts]
+                results[group.name]['hosts'] = [h.name for h in group.hosts if h.name in available_hosts]
             results[group.name]['children'] = []
             for subgroup in group.child_groups:
                 results[group.name]['children'].append(subgroup.name)
@@ -324,12 +324,11 @@ class InventoryCLI(CLI):
 
             return results
 
-        available_hosts = self.inventory.get_hosts(top.name)
-        results = format_group(top, available_hosts)
+        hosts = self.inventory.get_hosts(top.name)
+        results = format_group(top, [h.name for h in hosts])
 
         # populate meta
         results['_meta'] = {'hostvars': {}}
-        hosts = self.inventory.get_hosts()
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
@@ -353,7 +352,7 @@ class InventoryCLI(CLI):
             for subgroup in group.child_groups:
                 if subgroup.name != 'all':
                     if subgroup.name in seen_groups:
-                        results[group.name]['children'].update({subgroup.name:{}})
+                        results[group.name]['children'].update({subgroup.name: {}})
                     else:
                         results[group.name]['children'].update(format_group(subgroup, available_hosts))
                         seen_groups.add(subgroup.name)
@@ -362,7 +361,7 @@ class InventoryCLI(CLI):
             results[group.name]['hosts'] = {}
             if group.name != 'all':
                 for h in group.hosts:
-                    if h not in available_hosts:
+                    if h.name not in available_hosts:
                         continue  # observe limit
                     myvars = {}
                     if h.name not in seen_hosts:  # avoid defining host vars more than once
@@ -380,13 +379,13 @@ class InventoryCLI(CLI):
             if not results[group.name]:
                 del results[group.name]
 
-
             return results
 
-        available_hosts = self.inventory.get_hosts(top.name)
+        available_hosts = [h.name for h in self.inventory.get_hosts(top.name)]
         return format_group(top, available_hosts)
 
     def toml_inventory(self, top):
+        seen_hosts = set()
         seen_hosts = set()
         has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
 
@@ -404,7 +403,7 @@ class InventoryCLI(CLI):
 
             if group.name != 'all':
                 for host in group.hosts:
-                    if host not in available_hosts:
+                    if host.name not in available_hosts:
                         continue
                     if host.name not in seen_hosts:
                         seen_hosts.add(host.name)
@@ -426,7 +425,7 @@ class InventoryCLI(CLI):
 
             return results
 
-        available_hosts = self.inventory.get_hosts(top.name)
+        available_hosts = [h.name for h in self.inventory.get_hosts(top.name)]
         results = format_group(top, available_hosts)
 
         return results
