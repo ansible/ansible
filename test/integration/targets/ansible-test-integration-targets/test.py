@@ -31,5 +31,17 @@ class OptionsTest(unittest.TestCase):
                     raise Exception(f'{ex}:\n>>> Standard Output:\n{ex.stdout}\n>>> Standard Error:\n{ex.stderr}') from ex
 
 
+class PrefixesTest(unittest.TestCase):
+    def test_prefixes(self):
+        try:
+            command = ['ansible-test', 'integration', '--list-targets']
+
+            something = subprocess.run([*command, 'something/'], text=True, capture_output=True, check=True)
+
+            self.assertEqual(something.stdout.splitlines(), ['one-part_test', 'two_part_test'])
+        except subprocess.CalledProcessError as ex:
+            raise Exception(f'{ex}:\n>>> Standard Output:\n{ex.stdout}\n>>> Standard Error:\n{ex.stderr}') from ex
+
+
 if __name__ == '__main__':
     unittest.main()
