@@ -1,2 +1,2 @@
-pylint == 2.16.0  # currently vetted version
+pylint
 pyyaml  # needed for collection_detail.py
