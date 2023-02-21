@@ -340,6 +340,7 @@ class InventoryCLI(CLI):
     def yaml_inventory(self, top):
 
         seen_hosts = set()
+        seen_groups = set()
 
         def format_group(group, available_hosts):
             results = {}
@@ -351,7 +352,11 @@ class InventoryCLI(CLI):
             results[group.name]['children'] = {}
             for subgroup in group.child_groups:
                 if subgroup.name != 'all':
-                    results[group.name]['children'].update(format_group(subgroup, available_hosts))
+                    if subgroup.name in seen_groups:
+                        results[group.name]['children'].update({subgroup.name:{}})
+                    else:
+                        results[group.name]['children'].update(format_group(subgroup, available_hosts))
+                        seen_groups.add(subgroup.name)
 
             # hosts for group
             results[group.name]['hosts'] = {}
@@ -374,6 +379,7 @@ class InventoryCLI(CLI):
             # remove empty groups
             if not results[group.name]:
                 del results[group.name]
+
 
             return results
 
