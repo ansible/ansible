@@ -8,15 +8,15 @@ options=$("${TEST_DIR}"/../ansible-test/venv-pythons.py --only-versions)
 IFS=', ' read -r -a pythons <<< "${options}"
 
 for python in "${pythons[@]}"; do
-  if ansible-test units --color --truncate 0 --python "${python}" --requirements "${@}" 2>&1 | tee pylint.log; then
+  if ansible-test units --color --truncate 0 --python "${python}" --requirements "${@}" 2>&1 | tee pytest.log; then
     echo "Test did not fail as expected."
     exit 1
   fi
 
   if [ "${python}" = "2.7" ]; then
-    grep "^E  *AssertionError$" pylint.log
+    grep "^E  *AssertionError$" pytest.log
   else
 
-    grep "^E  *AssertionError: assert {'yes': True} == {'no': False}$" pylint.log
+    grep "^E  *AssertionError: assert {'yes': True} == {'no': False}$" pytest.log
   fi
 done
