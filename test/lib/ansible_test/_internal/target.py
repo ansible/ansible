@@ -623,13 +623,9 @@ class IntegrationTarget(CompletionTarget):
         if 'needs/httptester' in groups:
             groups.append('cloud/httptester')  # backwards compatibility for when it was not a cloud plugin
 
-        if '_' in self.name:
-            prefix = self.name[:self.name.find('_')]
-        else:
-            prefix = None
-
-        if prefix in prefixes:
-            group = prefixes[prefix]
+        for prefix, group in prefixes.items():
+            if not self.name.startswith(f'{prefix}_'):
+                continue
 
             if group != prefix:
                 group = '%s/%s' % (group, prefix)
