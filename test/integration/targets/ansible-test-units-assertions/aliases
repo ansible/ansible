@@ -1,0 +1,4 @@
+shippable/generic/group1  # runs in the default test container
+context/controller
+needs/target/collection
+needs/target/ansible-test
