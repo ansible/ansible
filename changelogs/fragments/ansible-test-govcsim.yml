@@ -1,5 +1,5 @@
 breaking_changes:
-  - ansible-test - The ``vcenter`` test plugin now defaults to using a user-provided static configuration instead of the ``govcsim`` simulator.
+  - ansible-test - The ``vcenter`` test plugin now defaults to using a user-provided static configuration instead of the ``govcsim`` simulator for collections.
                    Set the ``ANSIBLE_VCSIM_CONTAINER`` environment variable to ``govcsim`` to use the simulator.
                    Keep in mind that the simulator is deprecated and will be removed in a future release.
 deprecated_features:

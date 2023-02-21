@@ -18,6 +18,10 @@ from ....containers import (
     run_support_container,
 )
 
+from .... data import (
+    data_context,
+)
+
 from . import (
     CloudEnvironment,
     CloudEnvironmentConfig,
@@ -40,11 +44,17 @@ class VcenterProvider(CloudProvider):
             self.image = 'quay.io/ansible/vcenter-test-container:1.7.0'
 
         # VMware tests can be run on govcsim or BYO with a static config file.
-        # The simulator is the default if no config is provided.
-        self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', 'static')
+        # When testing ansible-core, the simulator is the default if no config is provided. This facilitates easier testing of the plugin's container support.
+        # When testing a collection, static config is the default if no config is provided.
+        default_mode = 'govcsim' if data_context().content.is_ansible else 'static'
+
+        self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', default_mode)
 
         if self.vmware_test_platform == 'govcsim':
-            display.warning('The govcsim simulator is deprecated and will be removed in a future version of ansible-test. Use a static configuration instead.')
+            display.warning(
+                'The govcsim simulator is deprecated and will be removed in a future version of ansible-test. Use a static configuration instead.',
+                unique=True,
+            )
 
             self.uses_docker = True
             self.uses_config = False
