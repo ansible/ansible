@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-inventory will no longer duplicate host entries if they were part of a group's childrens tree.
