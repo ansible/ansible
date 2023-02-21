@@ -150,7 +150,7 @@
   command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list
   register: limited
 
-- name: ensure empty host list
+- name: ensure non empty host list
   assert:
     that:
       - "'something' in inv['_meta']['hostvars']"
@@ -165,5 +165,19 @@
   assert:
     that:
       - "'something' not in inv['_meta']['hostvars']"
+  vars:
+    inv: '{{ limited.stdout|from_json}}'
+
+- name: check dupes
+  command: ansible-inventory -i '{{ role_path }}/files/complex.ini' --list
+  register: limited
+
+- name: ensure host only appears on directly assigned
+  assert:
+    that:
+      - "'hosts' not in inv['parent_1']"
+      - "'hosts' not in inv['parent_2']"
+      - "'hosts' in inv['parent_3']"
+      - "'test1' in inv['test_group_1']['hosts']"
   vars:
     inv: '{{ limited.stdout|from_json}}'
