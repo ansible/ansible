@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Always indicate the Python version being used before installing requirements.
+                   Resolves issue https://github.com/ansible/ansible/issues/72855
