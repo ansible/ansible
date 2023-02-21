@@ -301,19 +301,19 @@ class InventoryCLI(CLI):
 
     def json_inventory(self, top):
 
-        seen = set()
+        seen_groups = set()
 
-        def format_group(group):
+        def format_group(group, available_hosts):
             results = {}
             results[group.name] = {}
             if group.name != 'all':
-                results[group.name]['hosts'] = [h.name for h in self.inventory.get_hosts(group.name)]
+                results[group.name]['hosts'] = [h.name for h in group.hosts if h in available_hosts]
             results[group.name]['children'] = []
             for subgroup in group.child_groups:
                 results[group.name]['children'].append(subgroup.name)
-                if subgroup.name not in seen:
-                    results.update(format_group(subgroup))
-                    seen.add(subgroup.name)
+                if subgroup.name not in seen_groups:
+                    results.update(format_group(subgroup, available_hosts))
+                    seen_groups.add(subgroup.name)
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
@@ -324,7 +324,8 @@ class InventoryCLI(CLI):
 
             return results
 
-        results = format_group(top)
+        available_hosts = self.inventory.get_hosts(top.name)
+        results = format_group(top, available_hosts)
 
         # populate meta
         results['_meta'] = {'hostvars': {}}
@@ -338,9 +339,9 @@ class InventoryCLI(CLI):
 
     def yaml_inventory(self, top):
 
-        seen = []
+        seen_hosts = set()
 
-        def format_group(group):
+        def format_group(group, available_hosts):
             results = {}
 
             # initialize group + vars
@@ -350,15 +351,17 @@ class InventoryCLI(CLI):
             results[group.name]['children'] = {}
             for subgroup in group.child_groups:
                 if subgroup.name != 'all':
-                    results[group.name]['children'].update(format_group(subgroup))
+                    results[group.name]['children'].update(format_group(subgroup, available_hosts))
 
             # hosts for group
             results[group.name]['hosts'] = {}
             if group.name != 'all':
-                for h in self.inventory.get_hosts(group.name):
+                for h in group.hosts:
+                    if h not in available_hosts:
+                        continue  # observe limit
                     myvars = {}
-                    if h.name not in seen:  # avoid defining host vars more than once
-                        seen.append(h.name)
+                    if h.name not in seen_hosts:  # avoid defining host vars more than once
+                        seen_hosts.add(h.name)
                         myvars = self._get_host_variables(host=h)
                     results[group.name]['hosts'][h.name] = myvars
 
@@ -374,13 +377,14 @@ class InventoryCLI(CLI):
 
             return results
 
-        return format_group(top)
+        available_hosts = self.inventory.get_hosts(top.name)
+        return format_group(top, available_hosts)
 
     def toml_inventory(self, top):
-        seen = set()
+        seen_hosts = set()
         has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
 
-        def format_group(group):
+        def format_group(group, available_hosts):
             results = {}
             results[group.name] = {}
 
@@ -390,12 +394,14 @@ class InventoryCLI(CLI):
                     continue
                 if group.name != 'all':
                     results[group.name]['children'].append(subgroup.name)
-                results.update(format_group(subgroup))
+                results.update(format_group(subgroup, available_hosts))
 
             if group.name != 'all':
-                for host in self.inventory.get_hosts(group.name):
-                    if host.name not in seen:
-                        seen.add(host.name)
+                for host in group.hosts:
+                    if host not in available_hosts:
+                        continue
+                    if host.name not in seen_hosts:
+                        seen_hosts.add(host.name)
                         host_vars = self._get_host_variables(host=host)
                     else:
                         host_vars = {}
@@ -414,7 +420,8 @@ class InventoryCLI(CLI):
 
             return results
 
-        results = format_group(top)
+        available_hosts = self.inventory.get_hosts(top.name)
+        results = format_group(top, available_hosts)
 
         return results
 
