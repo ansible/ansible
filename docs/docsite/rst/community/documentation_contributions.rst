@@ -105,9 +105,7 @@ The :file:`docs/docsite/requirements.txt` file allows a wide range of versions a
     pip install --user -r requirements.txt
     pip install --user -r test/sanity/code-smell/docs-build.requirements.txt
 
-
-
-You can drop ``--user`` if you have set up a virtual environment (venv/virtenv). 
+You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
 
 .. note::
 
@@ -116,6 +114,7 @@ You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
     - ``libyaml``
     - ``make``
     - ``pyparsing``
+    - ``wheel``
     - ``six``
     On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``.
 
