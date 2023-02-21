@@ -4,7 +4,6 @@ from __future__ import annotations
 import atexit
 import collections.abc as c
 import contextlib
-import enum
 import json
 import random
 import time
@@ -101,14 +100,6 @@ class HostType:
     managed = 'managed'
 
 
-class CleanupMode(enum.Enum):
-    """How container cleanup should be handled."""
-
-    YES = enum.auto()
-    NO = enum.auto()
-    INFO = enum.auto()
-
-
 def run_support_container(
     args: EnvironmentConfig,
     context: str,
@@ -117,8 +108,7 @@ def run_support_container(
     ports: list[int],
     aliases: t.Optional[list[str]] = None,
     start: bool = True,
-    allow_existing: bool = False,
-    cleanup: t.Optional[CleanupMode] = None,
+    cleanup: bool = True,
     cmd: t.Optional[list[str]] = None,
     env: t.Optional[dict[str, str]] = None,
     options: t.Optional[list[str]] = None,
@@ -128,6 +118,8 @@ def run_support_container(
     Start a container used to support tests, but not run them.
     Containers created this way will be accessible from tests.
     """
+    name = f'{name}-{args.session_name}'
+
     if args.prime_containers:
         docker_pull(args, image)
         return None
@@ -165,46 +157,13 @@ def run_support_container(
 
     options.extend(['--ulimit', 'nofile=%s' % max_open_files])
 
-    support_container_id = None
-
-    if allow_existing:
-        try:
-            container = docker_inspect(args, name)
-        except ContainerNotFoundError:
-            container = None
-
-        if container:
-            support_container_id = container.id
-
-            if not container.running:
-                display.info('Ignoring existing "%s" container which is not running.' % name, verbosity=1)
-                support_container_id = None
-            elif not container.image:
-                display.info('Ignoring existing "%s" container which has the wrong image.' % name, verbosity=1)
-                support_container_id = None
-            elif publish_ports and not all(port and len(port) == 1 for port in [container.get_tcp_port(port) for port in ports]):
-                display.info('Ignoring existing "%s" container which does not have the required published ports.' % name, verbosity=1)
-                support_container_id = None
-
-            if not support_container_id:
-                docker_rm(args, name)
-
     if args.dev_systemd_debug:
         options.extend(('--env', 'SYSTEMD_LOG_LEVEL=debug'))
 
-    if support_container_id:
-        display.info('Using existing "%s" container.' % name)
-        running = True
-        existing = True
-    else:
-        display.info('Starting new "%s" container.' % name)
-        docker_pull(args, image)
-        support_container_id = run_container(args, image, name, options, create_only=not start, cmd=cmd)
-        running = start
-        existing = False
-
-    if cleanup is None:
-        cleanup = CleanupMode.INFO if existing else CleanupMode.YES
+    display.info('Starting new "%s" container.' % name)
+    docker_pull(args, image)
+    support_container_id = run_container(args, image, name, options, create_only=not start, cmd=cmd)
+    running = start
 
     descriptor = ContainerDescriptor(
         image,
@@ -215,7 +174,6 @@ def run_support_container(
         aliases,
         publish_ports,
         running,
-        existing,
         cleanup,
         env,
     )
@@ -694,8 +652,7 @@ class ContainerDescriptor:
         aliases: list[str],
         publish_ports: bool,
         running: bool,
-        existing: bool,
-        cleanup: CleanupMode,
+        cleanup: bool,
         env: t.Optional[dict[str, str]],
     ) -> None:
         self.image = image
@@ -706,7 +663,6 @@ class ContainerDescriptor:
         self.aliases = aliases
         self.publish_ports = publish_ports
         self.running = running
-        self.existing = existing
         self.cleanup = cleanup
         self.env = env
         self.details: t.Optional[SupportContainer] = None
@@ -805,10 +761,8 @@ def wait_for_file(
 def cleanup_containers(args: EnvironmentConfig) -> None:
     """Clean up containers."""
     for container in support_containers.values():
-        if container.cleanup == CleanupMode.YES:
-            docker_rm(args, container.container_id)
-        elif container.cleanup == CleanupMode.INFO:
-            display.notice(f'Remember to run `{require_docker().command} rm -f {container.name}` when finished testing.')
+        if container.cleanup:
+            docker_rm(args, container.name)
 
 
 def create_hosts_entries(context: dict[str, ContainerAccess]) -> list[str]:

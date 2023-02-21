@@ -300,7 +300,7 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
     options = ['--volume', '/sys/fs/cgroup:/probe:ro']
     cmd = ['sh', '-c', ' && echo "-" && '.join(multi_line_commands)]
 
-    stdout = run_utility_container(args, f'ansible-test-probe-{args.session_name}', cmd, options)[0]
+    stdout = run_utility_container(args, 'ansible-test-probe', cmd, options)[0]
 
     if args.explain:
         return ContainerHostProperties(
@@ -336,7 +336,7 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         cmd = ['sh', '-c', 'ulimit -Hn']
 
         try:
-            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd, options)[0]
+            stdout = run_utility_container(args, 'ansible-test-ulimit', cmd, options)[0]
         except SubprocessError as ex:
             display.warning(str(ex))
         else:
@@ -410,6 +410,8 @@ def run_utility_container(
     data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
+    name = f'{name}-{args.session_name}'
+
     options = options + [
         '--name', name,
         '--rm',

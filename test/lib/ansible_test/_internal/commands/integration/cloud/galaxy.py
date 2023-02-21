@@ -97,7 +97,6 @@ class GalaxyProvider(CloudProvider):
         super().setup()
 
         galaxy_port = 80
-        pulp_host = 'ansible-ci-pulp'
         pulp_port = 24817
 
         ports = [
@@ -110,32 +109,31 @@ class GalaxyProvider(CloudProvider):
             self.args,
             self.platform,
             self.pulp,
-            pulp_host,
+            'galaxy-pulp',
             ports,
             start=False,
-            allow_existing=True,
         )
 
         if not descriptor:
             return
 
-        if not descriptor.running:
-            pulp_id = descriptor.container_id
+        pulp_id = descriptor.container_id
 
-            injected_files = {
-                '/etc/pulp/settings.py': SETTINGS,
-                '/etc/cont-init.d/111-postgres': SET_ADMIN_PASSWORD,
-                '/etc/cont-init.d/000-ansible-test-overrides': OVERRIDES,
-            }
-            for path, content in injected_files.items():
-                with tempfile.NamedTemporaryFile() as temp_fd:
-                    temp_fd.write(content)
-                    temp_fd.flush()
-                    docker_cp_to(self.args, pulp_id, temp_fd.name, path)
+        injected_files = {
+            '/etc/pulp/settings.py': SETTINGS,
+            '/etc/cont-init.d/111-postgres': SET_ADMIN_PASSWORD,
+            '/etc/cont-init.d/000-ansible-test-overrides': OVERRIDES,
+        }
 
-            descriptor.start(self.args)
+        for path, content in injected_files.items():
+            with tempfile.NamedTemporaryFile() as temp_fd:
+                temp_fd.write(content)
+                temp_fd.flush()
+                docker_cp_to(self.args, pulp_id, temp_fd.name, path)
 
-        self._set_cloud_config('PULP_HOST', pulp_host)
+        descriptor.start(self.args)
+
+        self._set_cloud_config('PULP_HOST', descriptor.name)
         self._set_cloud_config('PULP_PORT', str(pulp_port))
         self._set_cloud_config('GALAXY_PORT', str(galaxy_port))
         self._set_cloud_config('PULP_USER', 'admin')

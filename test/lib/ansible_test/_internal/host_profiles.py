@@ -99,7 +99,6 @@ from .ansible_util import (
 )
 
 from .containers import (
-    CleanupMode,
     HostType,
     get_container_database,
     run_support_container,
@@ -447,7 +446,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     @property
     def label(self) -> str:
         """Label to apply to resources related to this profile."""
-        return f'{"controller" if self.controller else "target"}-{self.args.session_name}'
+        return f'{"controller" if self.controller else "target"}'
 
     def provision(self) -> None:
         """Provision the host before delegation."""
@@ -462,7 +461,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             ports=[22],
             publish_ports=not self.controller,  # connections to the controller over SSH are not required
             options=init_config.options,
-            cleanup=CleanupMode.NO,
+            cleanup=False,
             cmd=self.build_init_command(init_config, init_probe),
         )
 
@@ -838,7 +837,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Check the cgroup v1 systemd hierarchy to verify it is writeable for our container."""
         probe_script = (read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'check_systemd_cgroup_v1.sh'))
                         .replace('@MARKER@', self.MARKER)
-                        .replace('@LABEL@', self.label))
+                        .replace('@LABEL@', f'{self.label}-{self.args.session_name}'))
 
         cmd = ['sh']
 
@@ -853,7 +852,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
     def create_systemd_cgroup_v1(self) -> str:
         """Create a unique ansible-test cgroup in the v1 systemd hierarchy and return its path."""
-        self.cgroup_path = f'/sys/fs/cgroup/systemd/ansible-test-{self.label}'
+        self.cgroup_path = f'/sys/fs/cgroup/systemd/ansible-test-{self.label}-{self.args.session_name}'
 
         # Privileged mode is required to create the cgroup directories on some hosts, such as Fedora 36 and RHEL 9.0.
         # The mkdir command will fail with "Permission denied" otherwise.
