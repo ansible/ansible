@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix an issue where the value of ``become`` was ignored when used on a role used as a dependency in ``main/meta.yml`` (https://github.com/ansible/ansible/issues/79777)"
