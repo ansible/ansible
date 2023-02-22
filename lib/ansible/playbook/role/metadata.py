@@ -24,7 +24,7 @@ import os
 from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_roles
@@ -39,10 +39,10 @@ class RoleMetadata(Base, CollectionSearch):
     within each Role (meta/main.yml).
     '''
 
-    allow_duplicates = FieldAttribute(isa='bool', default=False)
-    dependencies = FieldAttribute(isa='list', default=list)
-    galaxy_info = FieldAttribute(isa='GalaxyInfo')
-    argument_specs = FieldAttribute(isa='dict', default=dict)
+    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=False)
+    dependencies = NonInheritableFieldAttribute(isa='list', default=list)
+    galaxy_info = NonInheritableFieldAttribute(isa='GalaxyInfo')
+    argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
         self._owner = owner
