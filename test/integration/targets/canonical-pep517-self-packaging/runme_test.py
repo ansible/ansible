@@ -22,6 +22,9 @@ GENERATED_MANPAGES_SUBDIR = SRC_ROOT_DIR / 'docs' / 'man' / 'man1'
 LOWEST_SUPPORTED_BUILD_DEPS_FILE = (
     Path(__file__).parent / 'minimum-build-constraints.txt'
 ).resolve().absolute()
+MODERNISH_BUILD_DEPS_FILE = (
+    Path(__file__).parent / 'modernish-build-constraints.txt'
+).resolve().absolute()
 RELEASE_MODULE = SRC_ROOT_DIR / 'lib' / 'ansible' / 'release.py'
 VERSION_LINE_PREFIX = "__version__ = '"
 PKG_DIST_VERSION = next(
@@ -116,7 +119,7 @@ def venv_python_exe(tmp_path: Path) -> t.Iterator[Path]:
 
 def build_dists(
         python_exe: Path, *cli_args: t.Iterable[str],
-        env_vars: t.Dict[str, str] = {},
+        env_vars: t.Dict[str, str],
 ) -> str:
     full_cmd = str(python_exe), '-m', 'build', *cli_args
     return check_output(full_cmd, env=env_vars, stderr=DEVNULL)
@@ -151,6 +154,9 @@ def test_dist_rebuilds_with_manpages_premutations(
         venv_python_exe, '--sdist',
         f'--outdir={tmp_dir_sdist_without_manpages!s}',
         str(SRC_ROOT_DIR),
+        env_vars={
+            'PIP_CONSTRAINT': str(MODERNISH_BUILD_DEPS_FILE),
+        },
     )
     tmp_path_sdist_without_manpages = (
         tmp_dir_sdist_without_manpages / EXPECTED_SDIST_NAME
@@ -193,6 +199,9 @@ def test_dist_rebuilds_with_manpages_premutations(
         '--config-setting=--build-manpages',
         f'--outdir={tmp_dir_rebuilt_sdist!s}',
         str(sdist_without_manpages_path),
+        env_vars={
+            'PIP_CONSTRAINT': str(MODERNISH_BUILD_DEPS_FILE),
+        },
     )
     tmp_path_rebuilt_sdist = tmp_dir_rebuilt_sdist / EXPECTED_SDIST_NAME
     # Checking that the expected sdist got created
