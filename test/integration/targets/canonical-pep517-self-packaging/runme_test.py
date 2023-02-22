@@ -6,7 +6,7 @@ from filecmp import dircmp
 from os import environ
 from pathlib import Path
 from shutil import rmtree
-from subprocess import check_call, check_output, DEVNULL
+from subprocess import check_call, check_output, PIPE
 from sys import executable as current_interpreter
 from tarfile import TarFile
 import typing as t
@@ -112,7 +112,7 @@ def venv_python_exe(tmp_path: Path) -> t.Iterator[Path]:
     mkvenv_cmd = (
         current_interpreter, '-m', 'venv', str(venv_path),
     )
-    check_call(mkvenv_cmd, env={}, stderr=DEVNULL, stdout=DEVNULL)
+    check_call(mkvenv_cmd, env={}, stderr=PIPE, stdout=PIPE)
     yield venv_path / 'bin' / 'python'
     rmtree(venv_path)
 
@@ -122,7 +122,7 @@ def build_dists(
         env_vars: t.Dict[str, str],
 ) -> str:
     full_cmd = str(python_exe), '-m', 'build', *cli_args
-    return check_output(full_cmd, env=env_vars, stderr=DEVNULL)
+    return check_output(full_cmd, env=env_vars, stderr=PIPE)
 
 
 def pip_install(
@@ -130,7 +130,7 @@ def pip_install(
         env_vars: t.Dict[str, str] = {},
 ) -> str:
     full_cmd = str(python_exe), '-m', 'pip', 'install', *cli_args
-    return check_output(full_cmd, env=env_vars, stderr=DEVNULL)
+    return check_output(full_cmd, env=env_vars, stderr=PIPE)
 
 
 def test_dist_rebuilds_with_manpages_premutations(
@@ -247,7 +247,7 @@ def test_pep660_editable_install_smoke(venv_python_exe: Path) -> None:
     )
     installed_ansible_meta = check_output(
         pip_show_cmd,
-        env={}, stderr=DEVNULL, text=True,
+        env={}, stderr=PIPE, text=True,
     ).splitlines()
     assert f'Name: {DIST_FILENAME_BASE}' in installed_ansible_meta
     assert f'Version: {PKG_DIST_VERSION}' in installed_ansible_meta
@@ -258,6 +258,6 @@ def test_pep660_editable_install_smoke(venv_python_exe: Path) -> None:
     )
     runtime_ansible_version = check_output(
         pip_runtime_version_cmd,
-        env={}, stderr=DEVNULL, text=True,
+        env={}, stderr=PIPE, text=True,
     ).strip()
     assert runtime_ansible_version == PKG_DIST_VERSION
