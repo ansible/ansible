@@ -230,7 +230,7 @@ These example produces ``{"a": "b", "c": "d"}``
 
   vars:
       single_list: [ 'a', 'b', 'c', 'd' ]
-      mydict: "{{ dict(single_list | slice(2)) }}"
+      mydict: "{{ dict(single_list[::2] | zip_longest(single_list[1::2])) }}"
 
 
 .. code-block:: YAML+Jinja
@@ -240,7 +240,7 @@ These example produces ``{"a": "b", "c": "d"}``
       list_of_pairs: [ ['a', 'b'], ['c', 'd'] ]
       mydict: "{{ dict(list_of_pairs) }}"
 
-Both end up being the same thing, with ``slice(2)`` transforming ``single_list`` to a ``list_of_pairs`` generator.
+Both end up being the same thing, with ``zip_longest`` transforming ``single_list`` to a ``list_of_pairs`` generator.
 
 
 
