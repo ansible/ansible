@@ -1,0 +1,4 @@
+dependencies:
+  - role: whoami
+    become: true
+    become_user: ansibletest0

@@ -66,22 +66,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # inheritance is only triggered if the 'current value' is Sentinel,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    args = FieldAttribute(isa='dict', default=dict)
-    action = FieldAttribute(isa='string')
+    args = NonInheritableFieldAttribute(isa='dict', default=dict)
+    action = NonInheritableFieldAttribute(isa='string')
 
-    async_val = FieldAttribute(isa='int', default=0, alias='async')
-    changed_when = FieldAttribute(isa='list', default=list)
-    delay = FieldAttribute(isa='int', default=5)
+    async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async')
+    changed_when = NonInheritableFieldAttribute(isa='list', default=list)
+    delay = NonInheritableFieldAttribute(isa='int', default=5)
     delegate_to = FieldAttribute(isa='string')
     delegate_facts = FieldAttribute(isa='bool')
-    failed_when = FieldAttribute(isa='list', default=list)
-    loop = FieldAttribute()
+    failed_when = NonInheritableFieldAttribute(isa='list', default=list)
+    loop = NonInheritableFieldAttribute()
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     notify = FieldAttribute(isa='list')
-    poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
-    register = FieldAttribute(isa='string', static=True)
-    retries = FieldAttribute(isa='int', default=3)
-    until = FieldAttribute(isa='list', default=list)
+    poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
+    register = NonInheritableFieldAttribute(isa='string', static=True)
+    retries = NonInheritableFieldAttribute(isa='int', default=3)
+    until = NonInheritableFieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
     loop_with = NonInheritableFieldAttribute(isa='string', private=True)
