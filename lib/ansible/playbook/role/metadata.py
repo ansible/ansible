@@ -41,7 +41,7 @@ class RoleMetadata(Base, CollectionSearch):
 
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=False)
     dependencies = NonInheritableFieldAttribute(isa='list', default=list)
-    galaxy_info = NonInheritableFieldAttribute(isa='GalaxyInfo')
+    galaxy_info = NonInheritableFieldAttribute(isa='dict')
     argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
