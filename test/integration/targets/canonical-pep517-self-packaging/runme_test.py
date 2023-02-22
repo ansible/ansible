@@ -127,8 +127,10 @@ def build_dists(
 
 def pip_install(
         python_exe: Path, *cli_args: t.Iterable[str],
-        env_vars: t.Dict[str, str] = {},
+        env_vars: t.Dict[str, str] = None,
 ) -> str:
+    if env_vars is None:
+        env_vars = {}
     full_cmd = str(python_exe), '-m', 'pip', 'install', *cli_args
     return check_output(full_cmd, env=env_vars, stderr=PIPE)
 
