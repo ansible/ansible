@@ -110,15 +110,6 @@ class RoleMetadata(Base, CollectionSearch):
         except AssertionError as e:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 
-    def _load_galaxy_info(self, attr, ds):
-        '''
-        This is a helper loading function for the galaxy info entry
-        in the metadata, which returns a GalaxyInfo object rather than
-        a simple dictionary.
-        '''
-
-        return ds
-
     def serialize(self):
         return dict(
             allow_duplicates=self._allow_duplicates,
