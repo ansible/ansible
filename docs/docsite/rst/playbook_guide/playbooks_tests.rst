@@ -461,7 +461,7 @@ When looking to determine types, it may be tempting to use the ``type_debug`` fi
           a_list: ["a", "list"]
         assert:
           that:
-          # Note that a string is classed as also being "iterable", "sequence" and "mapping"
+          # Note that a string is classed as also being "iterable" and "sequence", but not "mapping"
           - a_string is string
 
           # Note that a dictionary is classed as not being a "string", but is "iterable", "sequence" and "mapping"
