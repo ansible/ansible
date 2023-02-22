@@ -22,7 +22,7 @@ from os.path import basename
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.block import Block
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
@@ -52,9 +52,9 @@ class IncludeRole(TaskInclude):
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
-    allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
-    public = FieldAttribute(isa='bool', default=False, private=True)
-    rolespec_validate = FieldAttribute(isa='bool', default=True)
+    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True)
+    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True)
+    rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 

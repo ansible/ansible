@@ -178,7 +178,6 @@ class FieldAttribute(Attribute):
             value = self.default
             if callable(value):
                 value = value()
-                setattr(obj, f'_{self.name}', value)
 
         return value
 
