@@ -1,0 +1,16 @@
+# Lowest supporting Python 3.9 and 3.10:
+setuptools == 57.0.0; python_version == "3.9" or python_version == "3.10"
+
+# Lowest supporting Python 3.11:
+setuptools == 60.0.0; python_version >= "3.11"
+
+
+# An arbitrary old version that was released before Python 3.9.0:
+wheel == 0.33.6
+
+# Conditional dependencies:
+docutils == 0.16
+Jinja2 == 3.0.0
+MarkupSafe == 2.0.0
+PyYAML == 5.3
+straight.plugin == 1.4.2
