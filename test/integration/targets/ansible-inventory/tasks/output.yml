@@ -9,7 +9,7 @@
         - "'something' in inv['_meta']['hostvars']"
 
   - name: check that limit removes host
-    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list
+    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list --{{item}}
     register: limited
 
   - name: ensure empty host list
@@ -18,7 +18,7 @@
         - "'something' not in inv['_meta']['hostvars']"
 
   - name: check dupes
-    command: ansible-inventory -i '{{ role_path }}/files/complex.ini' --list
+    command: ansible-inventory -i '{{ role_path }}/files/complex.ini' --list --{{item}}
     register: limited
 
   - name: ensure host only appears on directly assigned
