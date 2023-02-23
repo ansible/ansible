@@ -1032,6 +1032,9 @@ class StrategyBase:
                 del self._active_connections[target_host]
             else:
                 connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
+                for k in C.config.get_plugin_vars('connection', connection._load_name):
+                    if k in all_vars:
+                        all_vars[k] = templar.template(all_vars[k])
                 connection.set_options(task_keys=task.dump_attrs(), var_options=all_vars)
                 play_context.set_attributes_from_plugin(connection)
 
