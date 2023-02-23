@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - return the correct number of virtual CPUs on Linux systems with one physical core
