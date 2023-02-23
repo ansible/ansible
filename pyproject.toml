@@ -1,3 +1,4 @@
 [build-system]
 requires = ["setuptools >= 39.2.0", "wheel"]
-build-backend = "setuptools.build_meta"
+backend-path = ["packaging"]  # requires 'Pip>=20' or 'pep517>=0.6.0'
+build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
