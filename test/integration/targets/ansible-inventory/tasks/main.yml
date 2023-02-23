@@ -147,7 +147,7 @@
   when: toml_package is not contains 'tomllib' or (toml_package is contains 'tomllib' and ansible_facts.python.version_info >= [3, 11])
 
 
-- include_tasks: {{item}}_output.yml
+- include_tasks: "{{item}}_output.yml"
   loop:
     - json
     - yaml

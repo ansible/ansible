@@ -15,7 +15,7 @@
   - name: ensure empty host list
     assert:
       that:
-        -  not inv
+        - not inv
 
   - name: check dupes
     command: ansible-inventory -i '{{ role_path }}/files/complex.ini' --list --yaml
