@@ -13,4 +13,3 @@ docutils == 0.16
 Jinja2 == 3.0.0
 MarkupSafe == 2.0.0
 PyYAML == 5.3
-straight.plugin == 1.4.2

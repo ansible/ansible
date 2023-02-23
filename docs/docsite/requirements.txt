@@ -15,4 +15,3 @@ sphinx-intl
 sphinx-ansible-theme >= 0.9.1
 sphinx
 resolvelib
-straight.plugin # Needed for hacking/build-ansible.py which is the backend build script

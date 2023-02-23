@@ -44,7 +44,6 @@ sphinxcontrib-jquery==2.0.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
-straight.plugin==1.5.0
 Twiggy==0.5.1
 types-docutils==0.18.3
 typing_extensions==4.5.0

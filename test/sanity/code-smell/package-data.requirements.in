@@ -3,5 +3,4 @@ jinja2
 pyyaml  # ansible-core requirement
 resolvelib < 0.10.0
 rstcheck < 6  # match version used in other sanity tests
-straight.plugin
 antsibull-changelog
