@@ -1061,6 +1061,17 @@ releases:
     - v2.14.2rc1_summary.yaml
     - validate-module-ps-cmdlet.yml
     release_date: '2023-01-23'
+  2.14.3:
+    changes:
+      release_summary: '| Release Date: 2023-02-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - v2.14.3_summary.yaml
+    release_date: '2023-02-27'
   2.14.3rc1:
     changes:
       bugfixes:
