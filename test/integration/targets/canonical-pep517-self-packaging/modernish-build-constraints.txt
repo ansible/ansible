@@ -8,4 +8,3 @@ docutils == 0.19
 Jinja2 == 3.1.2
 MarkupSafe == 2.1.2
 PyYAML == 6.0
-straight.plugin == 1.5.0  # WARNING: v1.5.0 doesn't have a Git tag / src

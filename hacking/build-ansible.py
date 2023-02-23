@@ -10,15 +10,19 @@ __metaclass__ = type
 
 
 import argparse
+import importlib
+import inspect
 import os.path
+import pkgutil
 import sys
-
-from straight.plugin import load
+import typing as t
 
 try:
     import argcomplete
 except ImportError:
     argcomplete = None
+
+C = t.TypeVar('C')
 
 
 def build_lib_path(this_script=__file__):
@@ -55,6 +59,27 @@ def create_arg_parser(program_name):
     return parser
 
 
+def load(package: str, subclasses: t.Type[C]) -> list[t.Type[C]]:
+    """Load modules in the specified package and return concrete types that derive from the specified base class."""
+    for module in pkgutil.iter_modules(importlib.import_module(package).__path__, f'{package}.'):
+        try:
+            importlib.import_module(module.name)
+        except ImportError:
+            pass  # ignore plugins which are missing dependencies
+
+    types: set[t.Type[C]] = set()
+    queue: list[t.Type[C]] = [subclasses]
+
+    while queue:
+        for child in queue.pop().__subclasses__():
+            queue.append(child)
+
+            if not inspect.isabstract(child):
+                types.add(child)
+
+    return sorted(types, key=lambda sc: sc.__name__)
+
+
 def main():
     """
     Start our run.
@@ -69,7 +94,9 @@ def main():
                             help='Show tracebacks and other debugging information')
     subparsers = arg_parser.add_subparsers(title='Subcommands', dest='command',
                                            help='for help use build-ansible.py SUBCOMMANDS -h')
-    subcommands.pipe('init_parser', subparsers.add_parser)
+
+    for subcommand in subcommands:
+        subcommand.init_parser(subparsers.add_parser)
 
     if argcomplete:
         argcomplete.autocomplete(arg_parser)
