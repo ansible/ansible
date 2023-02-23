@@ -27,8 +27,8 @@ Enforcing or preventing check mode on tasks
 
 If you want certain tasks to run in check mode always, or never, regardless of whether you run the playbook with or without ``--check``, you can add the ``check_mode`` option to those tasks:
 
-  - To force a task to run in check mode, even when the playbook is called without ``--check``, set ``check_mode: yes``.
-  - To force a task to run in normal mode and make changes to the system, even when the playbook is called with ``--check``, set ``check_mode: no``.
+  - To force a task to run in check mode, even when the playbook is called without ``--check``, set ``check_mode: true``.
+  - To force a task to run in normal mode and make changes to the system, even when the playbook is called with ``--check``, set ``check_mode: false``.
 
 For example:
 
@@ -47,9 +47,9 @@ For example:
       check_mode: true
       register: changes_to_important_config
 
-Running single tasks with ``check_mode: yes`` can be useful for testing Ansible modules, either to test the module itself or to test the conditions under which a module would make changes. You can register variables (see :ref:`playbooks_conditionals`) on these tasks for even more detail on the potential changes.
+Running single tasks with ``check_mode: true`` can be useful for testing Ansible modules, either to test the module itself or to test the conditions under which a module would make changes. You can register variables (see :ref:`playbooks_conditionals`) on these tasks for even more detail on the potential changes.
 
-.. note:: Prior to version 2.2 only the equivalent of ``check_mode: no`` existed. The notation for that was ``always_run: yes``.
+.. note:: Prior to version 2.2 only the equivalent of ``check_mode: false`` existed. The notation for that was ``always_run: yes``.
 
 Skipping tasks or ignoring errors in check mode
 -----------------------------------------------
