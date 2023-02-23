@@ -24,8 +24,9 @@ import sys
 import traceback
 
 from jinja2.exceptions import TemplateNotFound
+from multiprocessing.queues import Queue
 
-from ansible.errors import AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
@@ -35,6 +36,17 @@ __all__ = ['WorkerProcess']
 
 display = Display()
 
+current_worker = None
+
+
+class WorkerQueue(Queue):
+    """Queue that raises AnsibleError items on get()."""
+    def get(self, *args, **kwargs):
+        result = super(WorkerQueue, self).get(*args, **kwargs)
+        if isinstance(result, AnsibleError):
+            raise result
+        return result
+
 
 class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defined]
     '''
@@ -43,7 +55,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
     for reading later.
     '''
 
-    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj, worker_sync_q, worker_id):
+    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj, worker_id):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
@@ -60,9 +72,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # clear var to ensure we only delete files for this child
         self._loader._tempfiles = set()
 
-        from ansible.executor.process import worker_sync
-        worker_sync.worker_queue = worker_sync_q
-        worker_sync.worker_id = worker_id
+        self.worker_queue = WorkerQueue(ctx=multiprocessing_context)
+        self.worker_id = worker_id
 
     def _save_stdin(self):
         self._new_stdin = None
@@ -158,6 +169,9 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
         # Set the queue on Display so calls to Display.display are proxied over the queue
         display.set_queue(self._final_q)
+
+        global current_worker
+        current_worker = self
 
         try:
             # execute the task and build a TaskResult from the result

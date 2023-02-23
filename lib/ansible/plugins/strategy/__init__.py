@@ -30,7 +30,6 @@ import time
 
 from collections import deque
 from multiprocessing import Lock
-from multiprocessing.queues import Queue
 
 from jinja2.exceptions import UndefinedError
 
@@ -75,15 +74,6 @@ class StrategySentinel:
 
 
 _sentinel = StrategySentinel()
-
-
-class WorkerQueue(Queue):
-    """Queue that raises AnsibleError items on get()."""
-    def get(self, *args, **kwargs):
-        result = super(WorkerQueue, self).get(*args, **kwargs)
-        if isinstance(result, AnsibleError):
-            raise result
-        return result
 
 
 def post_process_whens(result, task, templar, task_vars):
@@ -148,7 +138,7 @@ def results_thread_main(strategy):
                         raise AnsibleError(f"{e}") from e
                     except AnsibleError as e:
                         value = e
-                strategy._worker_queues[result.worker_id].put(value)
+                strategy._workers[result.worker_id].worker_queue.put(value)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
@@ -410,12 +400,9 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    worker_q = WorkerQueue(ctx=multiprocessing_context)
-                    self._worker_queues[self._cur_worker] = worker_q
-
                     # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
                     worker_prc = WorkerProcess(
-                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, worker_q, self._cur_worker
+                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
                     )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)

@@ -588,12 +588,12 @@ class Display(metaclass=Singleton):
 
     def prompt_until(self, msg, private=False, seconds=None, interrupt_input=None, complete_input=None):
         if self._final_q:
-            from ansible.executor.process.worker_sync import worker_id, worker_queue
+            from ansible.executor.process.worker import current_worker
             self._final_q.send_prompt(
-                worker_id=worker_id, prompt=msg, private=private, seconds=seconds,
+                worker_id=current_worker.worker_id, prompt=msg, private=private, seconds=seconds,
                 interrupt_input=interrupt_input, complete_input=complete_input
             )
-            return worker_queue.get()
+            return current_worker.worker_queue.get()
 
         if (
             self._stdin_fd is None
