@@ -106,7 +106,7 @@ We will add the following code to the file.
 .. code-block:: yaml
 
   # https://github.com/ansible-collections/community.postgresql/issues/NUM
-  # We should also run the same tasks with check_mode: yes. We omit it here for simplicity.
+  # We should also run the same tasks with check_mode: true. We omit it here for simplicity.
   - name: Test for new_option, create new user WITHOUT the attribute
     community.postgresql.postgresql_user:
       name: test_user      
@@ -149,7 +149,7 @@ We will add the following code to the file.
 
 Then we :ref:`run the tests<collection_run_integration_tests>` with ``postgresql_user`` passed as a test target.
 
-In reality, we would alternate the tasks above with the same tasks run with the ``check_mode: yes`` option to be sure our option works as expected in check-mode as well. See :ref:`Recommendations on coverage<collection_integration_recommendations>` for details.
+In reality, we would alternate the tasks above with the same tasks run with the ``check_mode: true`` option to be sure our option works as expected in check-mode as well. See :ref:`Recommendations on coverage<collection_integration_recommendations>` for details.
 
 If we expect a task to fail, we use the ``ignore_errors: true`` option and check that the task actually failed and returned the message we expect:
 
