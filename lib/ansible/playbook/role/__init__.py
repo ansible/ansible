@@ -32,6 +32,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
@@ -97,10 +98,7 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Conditional, Taggable, CollectionSearch):
-
-    delegate_to = FieldAttribute(isa='string')
-    delegate_facts = FieldAttribute(isa='bool')
+class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=True):
         self._role_name = None

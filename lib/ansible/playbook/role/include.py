@@ -22,7 +22,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.module_utils._text import to_native
 
@@ -30,15 +30,12 @@ from ansible.module_utils._text import to_native
 __all__ = ['RoleInclude']
 
 
-class RoleInclude(RoleDefinition):
+class RoleInclude(RoleDefinition, Delegatable):
 
     """
     A derivative of RoleDefinition, used by playbook code when a role
     is included for execution in a play.
     """
-
-    delegate_to = FieldAttribute(isa='string')
-    delegate_facts = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
         super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager,
