@@ -3,5 +3,4 @@ jinja2
 pyyaml  # ansible-core requirement
 resolvelib < 0.9.0
 rstcheck
-straight.plugin
 antsibull-changelog
