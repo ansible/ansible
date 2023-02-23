@@ -26,12 +26,14 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
-from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
+from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -43,7 +45,7 @@ __all__ = ['Task']
 display = Display()
 
 
-class Task(Base, Conditional, Taggable, CollectionSearch):
+class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatable):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -72,12 +74,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async')
     changed_when = NonInheritableFieldAttribute(isa='list', default=list)
     delay = NonInheritableFieldAttribute(isa='int', default=5)
-    delegate_to = FieldAttribute(isa='string')
-    delegate_facts = FieldAttribute(isa='bool')
     failed_when = NonInheritableFieldAttribute(isa='list', default=list)
     loop = NonInheritableFieldAttribute()
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
-    notify = FieldAttribute(isa='list')
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = NonInheritableFieldAttribute(isa='string', static=True)
     retries = NonInheritableFieldAttribute(isa='int', default=3)
