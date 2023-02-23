@@ -103,6 +103,5 @@ def get_requires_for_build_sdist(
     ) + [
         'docutils',  # provides `rst2man`
         'jinja2',  # used in `hacking/build-ansible.py generate-man`
-        'straight.plugin',  # used in `hacking/build-ansible.py` for subcommand
         'pyyaml',  # needed for importing in-tree `ansible-core` from `lib/`
     ]
