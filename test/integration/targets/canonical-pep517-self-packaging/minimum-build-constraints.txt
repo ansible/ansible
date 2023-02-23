@@ -1,4 +1,4 @@
-# Lowest supporting Python 3.10:
+# Lowest supporting Python 3.9 and 3.10:
 setuptools == 57.0.0; python_version == "3.9" or python_version == "3.10"
 
 # Lowest supporting Python 3.11:
