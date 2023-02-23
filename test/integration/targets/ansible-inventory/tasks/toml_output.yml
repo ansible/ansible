@@ -1,3 +1,9 @@
+- name: only test if have toml in python
+  command: "{{ansible_playbook_python}} -c 'import toml'"
+  ignore_errors: true
+  delegate_to: localhost
+  register: has_toml
+
 - block:
   - name: check baseline
     command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list --toml
@@ -33,3 +39,5 @@
         - "'test1' in inv['test_group1']['hosts']"
   vars:
     inv: '{{limited.stdout|from_toml}}'
+  when: has_toml is success
+  delegate_to: localhost

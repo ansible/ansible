@@ -31,3 +31,4 @@
         - "'hosts' not in inv['all']['children']['parent_2']['children']['test_group1']"
   vars:
     inv: '{{limited.stdout|from_yaml}}'
+  delegate_to: localhost

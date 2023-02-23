@@ -30,3 +30,4 @@
         - "'test1' in inv['test_group1']['hosts']"
   vars:
     inv: '{{limited.stdout|from_json }}'
+  delegate_to: localhost
