@@ -48,6 +48,14 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     permissions: dict[str, int] = {}
     filters: dict[str, t.Callable[[tarfile.TarInfo], t.Optional[tarfile.TarInfo]]] = {}
 
+    # Exclude vendored files from the payload.
+    # They may not be compatible with the delegated environment.
+    files = [
+        (abs_path, rel_path) for abs_path, rel_path in files
+        if not rel_path.startswith('lib/ansible/_vendor/')
+        or rel_path == 'lib/ansible/_vendor/__init__.py'
+    ]
+
     def apply_permissions(tar_info: tarfile.TarInfo, mode: int) -> t.Optional[tarfile.TarInfo]:
         """
         Apply the specified permissions to the given file.

@@ -23,9 +23,13 @@ import time
 import functools
 import shlex
 import typing as t
+import warnings
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
+
+# CAUTION: Avoid third-party imports in this module whenever possible.
+#          Any third-party imports occurring here will result in an error if they are vendored by ansible-core.
 
 try:
     from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.9
@@ -331,6 +335,17 @@ def get_ansible_version():  # type: () -> str
     from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
 
     return ansible_version
+
+
+def _enable_vendoring() -> None:
+    """Enable support for loading Python packages vendored by ansible-core."""
+    # Load the vendoring code by file path, since ansible may not be in our sys.path.
+    # Convert warnings into errors, to avoid problems from surfacing later.
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('error')
+
+        load_module(os.path.join(ANSIBLE_LIB_ROOT, '_vendor', '__init__.py'), 'ansible_vendor')
 
 
 @cache
@@ -1133,3 +1148,5 @@ def type_guard(sequence: t.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name
+
+_enable_vendoring()
