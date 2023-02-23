@@ -22,7 +22,6 @@ __metaclass__ = type
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
-from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.module_utils._text import to_native
