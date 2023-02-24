@@ -1260,7 +1260,7 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-        if isinstance(docs.get('attributes'), Mapping):
+        if isinstance(docs, Mapping) and isinstance(docs.get('attributes'), Mapping):
             if isinstance(docs['attributes'].get('check_mode'), Mapping):
                 support_value = docs['attributes']['check_mode'].get('support')
                 if not kwargs.get('supports_check_mode', False):
@@ -1268,7 +1268,8 @@ class ModuleValidator(Validator):
                         self.reporter.error(
                             path=self.object_path,
                             code='attributes-check-mode',
-                            msg="The module does not declare support for check mode, but the check_mode attribute's support value is '%s' and not 'none'" % support_value
+                            msg="The module does not declare support for check mode, but the check_mode attribute's"
+                                " support value is '%s' and not 'none'" % support_value
                         )
                 else:
                     if support_value not in ('full', 'partial', 'N/A'):
@@ -1281,7 +1282,7 @@ class ModuleValidator(Validator):
                     self.reporter.error(
                         path=self.object_path,
                         code='attributes-check-mode-details',
-                        msg="The module declares not fully support for check mode, but has no details on what exactly that means" % e
+                        msg="The module declares not fully support for check mode, but has no details on what exactly that means"
                     )
 
     def _validate_list_of_module_args(self, name, terms, spec, context):
