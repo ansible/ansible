@@ -1,10 +1,22 @@
 """Tests for validate-modules regexes."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import mock
+import pathlib
+import sys
 
 import pytest
 
-from validate_modules.main import TYPE_REGEX
+
+@pytest.fixture(autouse=True, scope='session')
+def validate_modules() -> None:
+    """Make validate_modules available on sys.path for unit testing."""
+    sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent / 'lib/ansible_test/_util/controller/sanity/validate-modules'))
+
+    # Mock out voluptuous to facilitate testing without it, since tests aren't covering anything that uses it.
+
+    sys.modules['voluptuous'] = voluptuous = mock.MagicMock()
+    sys.modules['voluptuous.humanize'] = voluptuous.humanize = mock.MagicMock()
 
 
 @pytest.mark.parametrize('cstring,cexpected', [
@@ -36,7 +48,10 @@ from validate_modules.main import TYPE_REGEX
 ])
 def test_type_regex(cstring, cexpected):  # type: (str, str) -> None
     """Check TYPE_REGEX against various examples to verify it correctly matches or does not match."""
+    from validate_modules.main import TYPE_REGEX
+
     match = TYPE_REGEX.match(cstring)
+
     if cexpected and not match:
         assert False, "%s should have matched" % cstring
     elif not cexpected and match:
