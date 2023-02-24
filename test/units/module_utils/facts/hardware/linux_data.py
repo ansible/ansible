@@ -567,6 +567,40 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo')).readlines(),
+        'architecture': 's390x',
+        'nproc_out': 2,
+        'sched_getaffinity': set([0, 1]),
+        'expected_result': {
+            'processor': [
+                'IBM/S390',
+            ],
+            'processor_cores': 2,
+            'processor_count': 1,
+            'processor_nproc': 2,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 2
+        },
+    },
+    {
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo')).readlines(),
+        'architecture': 's390x',
+        'nproc_out': 64,
+        'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                  24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+                                  48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]),
+        'expected_result': {
+            'processor': [
+                'IBM/S390',
+            ],
+            'processor_cores': 32,
+            'processor_count': 1,
+            'processor_nproc': 64,
+            'processor_threads_per_core': 2,
+            'processor_vcpus': 64
+        },
+    },
+    {
         'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/sparc-t5-debian-ldom-24vcpu')).readlines(),
         'architecture': 'sparc64',
         'nproc_out': 24,
