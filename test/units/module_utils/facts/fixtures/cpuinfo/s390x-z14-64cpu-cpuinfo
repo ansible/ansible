@@ -1,0 +1,1037 @@
+vendor_id       : IBM/S390
+# processors    : 64
+bogomips per cpu: 21881.00
+max thread id   : 1
+features	: esan3 zarch stfle msa ldisp eimm dfp edat etf3eh highgprs te vx vxd vxe gs sie
+facilities      : 0 1 2 3 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 30 31 32 33 34 35 36 37 38 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 57 58 59 60 64 65 66 67 68 69 70 71 72 73 75 76 77 78 80 81 82 128 129 130 131 132 133 134 135 138 139 141 142 144 145 146 156
+cache0          : level=1 type=Data scope=Private size=128K line_size=256 associativity=8
+cache1          : level=1 type=Instruction scope=Private size=128K line_size=256 associativity=8
+cache2          : level=2 type=Data scope=Private size=4096K line_size=256 associativity=8
+cache3          : level=2 type=Instruction scope=Private size=2048K line_size=256 associativity=8
+cache4          : level=3 type=Unified scope=Shared size=131072K line_size=256 associativity=32
+cache5          : level=4 type=Unified scope=Shared size=688128K line_size=256 associativity=42
+processor 0: version = 00,  identification = FFFFFF,  machine = 3906
+processor 1: version = 00,  identification = FFFFFF,  machine = 3906
+processor 2: version = 00,  identification = FFFFFF,  machine = 3906
+processor 3: version = 00,  identification = FFFFFF,  machine = 3906
+processor 4: version = 00,  identification = FFFFFF,  machine = 3906
+processor 5: version = 00,  identification = FFFFFF,  machine = 3906
+processor 6: version = 00,  identification = FFFFFF,  machine = 3906
+processor 7: version = 00,  identification = FFFFFF,  machine = 3906
+processor 8: version = 00,  identification = FFFFFF,  machine = 3906
+processor 9: version = 00,  identification = FFFFFF,  machine = 3906
+processor 10: version = 00,  identification = FFFFFF,  machine = 3906
+processor 11: version = 00,  identification = FFFFFF,  machine = 3906
+processor 12: version = 00,  identification = FFFFFF,  machine = 3906
+processor 13: version = 00,  identification = FFFFFF,  machine = 3906
+processor 14: version = 00,  identification = FFFFFF,  machine = 3906
+processor 15: version = 00,  identification = FFFFFF,  machine = 3906
+processor 16: version = 00,  identification = FFFFFF,  machine = 3906
+processor 17: version = 00,  identification = FFFFFF,  machine = 3906
+processor 18: version = 00,  identification = FFFFFF,  machine = 3906
+processor 19: version = 00,  identification = FFFFFF,  machine = 3906
+processor 20: version = 00,  identification = FFFFFF,  machine = 3906
+processor 21: version = 00,  identification = FFFFFF,  machine = 3906
+processor 22: version = 00,  identification = FFFFFF,  machine = 3906
+processor 23: version = 00,  identification = FFFFFF,  machine = 3906
+processor 24: version = 00,  identification = FFFFFF,  machine = 3906
+processor 25: version = 00,  identification = FFFFFF,  machine = 3906
+processor 26: version = 00,  identification = FFFFFF,  machine = 3906
+processor 27: version = 00,  identification = FFFFFF,  machine = 3906
+processor 28: version = 00,  identification = FFFFFF,  machine = 3906
+processor 29: version = 00,  identification = FFFFFF,  machine = 3906
+processor 30: version = 00,  identification = FFFFFF,  machine = 3906
+processor 31: version = 00,  identification = FFFFFF,  machine = 3906
+processor 32: version = 00,  identification = FFFFFF,  machine = 3906
+processor 33: version = 00,  identification = FFFFFF,  machine = 3906
+processor 34: version = 00,  identification = FFFFFF,  machine = 3906
+processor 35: version = 00,  identification = FFFFFF,  machine = 3906
+processor 36: version = 00,  identification = FFFFFF,  machine = 3906
+processor 37: version = 00,  identification = FFFFFF,  machine = 3906
+processor 38: version = 00,  identification = FFFFFF,  machine = 3906
+processor 39: version = 00,  identification = FFFFFF,  machine = 3906
+processor 40: version = 00,  identification = FFFFFF,  machine = 3906
+processor 41: version = 00,  identification = FFFFFF,  machine = 3906
+processor 42: version = 00,  identification = FFFFFF,  machine = 3906
+processor 43: version = 00,  identification = FFFFFF,  machine = 3906
+processor 44: version = 00,  identification = FFFFFF,  machine = 3906
+processor 45: version = 00,  identification = FFFFFF,  machine = 3906
+processor 46: version = 00,  identification = FFFFFF,  machine = 3906
+processor 47: version = 00,  identification = FFFFFF,  machine = 3906
+processor 48: version = 00,  identification = FFFFFF,  machine = 3906
+processor 49: version = 00,  identification = FFFFFF,  machine = 3906
+processor 50: version = 00,  identification = FFFFFF,  machine = 3906
+processor 51: version = 00,  identification = FFFFFF,  machine = 3906
+processor 52: version = 00,  identification = FFFFFF,  machine = 3906
+processor 53: version = 00,  identification = FFFFFF,  machine = 3906
+processor 54: version = 00,  identification = FFFFFF,  machine = 3906
+processor 55: version = 00,  identification = FFFFFF,  machine = 3906
+processor 56: version = 00,  identification = FFFFFF,  machine = 3906
+processor 57: version = 00,  identification = FFFFFF,  machine = 3906
+processor 58: version = 00,  identification = FFFFFF,  machine = 3906
+processor 59: version = 00,  identification = FFFFFF,  machine = 3906
+processor 60: version = 00,  identification = FFFFFF,  machine = 3906
+processor 61: version = 00,  identification = FFFFFF,  machine = 3906
+processor 62: version = 00,  identification = FFFFFF,  machine = 3906
+processor 63: version = 00,  identification = FFFFFF,  machine = 3906
+
+cpu number      : 0
+physical id     : 1
+core id         : 0
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 0
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 1
+physical id     : 1
+core id         : 0
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 1
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 2
+physical id     : 1
+core id         : 1
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 2
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 3
+physical id     : 1
+core id         : 1
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 3
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 4
+physical id     : 1
+core id         : 2
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 4
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 5
+physical id     : 1
+core id         : 2
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 5
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 6
+physical id     : 1
+core id         : 3
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 6
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 7
+physical id     : 1
+core id         : 3
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 7
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 8
+physical id     : 1
+core id         : 4
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 8
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 9
+physical id     : 1
+core id         : 4
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 9
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 10
+physical id     : 1
+core id         : 5
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 10
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 11
+physical id     : 1
+core id         : 5
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 11
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 12
+physical id     : 1
+core id         : 6
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 12
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 13
+physical id     : 1
+core id         : 6
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 13
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 14
+physical id     : 2
+core id         : 7
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 14
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 15
+physical id     : 2
+core id         : 7
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 15
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 16
+physical id     : 2
+core id         : 8
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 16
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 17
+physical id     : 2
+core id         : 8
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 17
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 18
+physical id     : 2
+core id         : 9
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 18
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 19
+physical id     : 2
+core id         : 9
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 19
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 20
+physical id     : 2
+core id         : 10
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 20
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 21
+physical id     : 2
+core id         : 10
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 21
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 22
+physical id     : 2
+core id         : 11
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 22
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 23
+physical id     : 2
+core id         : 11
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 23
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 24
+physical id     : 2
+core id         : 12
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 24
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 25
+physical id     : 2
+core id         : 12
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 25
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 26
+physical id     : 2
+core id         : 13
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 26
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 27
+physical id     : 2
+core id         : 13
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 27
+siblings        : 14
+cpu cores       : 7
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 28
+physical id     : 3
+core id         : 14
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 28
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 29
+physical id     : 3
+core id         : 14
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 29
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 30
+physical id     : 3
+core id         : 15
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 30
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 31
+physical id     : 3
+core id         : 15
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 31
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 32
+physical id     : 3
+core id         : 16
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 32
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 33
+physical id     : 3
+core id         : 16
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 33
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 34
+physical id     : 3
+core id         : 17
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 34
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 35
+physical id     : 3
+core id         : 17
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 35
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 36
+physical id     : 3
+core id         : 18
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 36
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 37
+physical id     : 3
+core id         : 18
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 37
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 38
+physical id     : 3
+core id         : 19
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 38
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 39
+physical id     : 3
+core id         : 19
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 39
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 40
+physical id     : 3
+core id         : 20
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 40
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 41
+physical id     : 3
+core id         : 20
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 41
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 42
+physical id     : 3
+core id         : 21
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 42
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 43
+physical id     : 3
+core id         : 21
+book id         : 1
+drawer id       : 4
+dedicated       : 0
+address         : 43
+siblings        : 16
+cpu cores       : 8
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 44
+physical id     : 1
+core id         : 22
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 44
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 45
+physical id     : 1
+core id         : 22
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 45
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 46
+physical id     : 1
+core id         : 23
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 46
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 47
+physical id     : 1
+core id         : 23
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 47
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 48
+physical id     : 1
+core id         : 24
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 48
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 49
+physical id     : 1
+core id         : 24
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 49
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 50
+physical id     : 1
+core id         : 25
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 50
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 51
+physical id     : 1
+core id         : 25
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 51
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 52
+physical id     : 1
+core id         : 26
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 52
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 53
+physical id     : 1
+core id         : 26
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 53
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 54
+physical id     : 1
+core id         : 27
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 54
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 55
+physical id     : 1
+core id         : 27
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 55
+siblings        : 12
+cpu cores       : 6
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 56
+physical id     : 2
+core id         : 28
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 56
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 57
+physical id     : 2
+core id         : 28
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 57
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 58
+physical id     : 2
+core id         : 29
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 58
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 59
+physical id     : 2
+core id         : 29
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 59
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 60
+physical id     : 2
+core id         : 30
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 60
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 61
+physical id     : 2
+core id         : 30
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 61
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 62
+physical id     : 2
+core id         : 31
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 62
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
+cpu number      : 63
+physical id     : 2
+core id         : 31
+book id         : 2
+drawer id       : 4
+dedicated       : 0
+address         : 63
+siblings        : 8
+cpu cores       : 4
+version         : 00
+identification  : FFFFFF
+machine         : 3906
+cpu MHz dynamic : 5208
+cpu MHz static  : 5208
+
