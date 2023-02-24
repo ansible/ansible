@@ -594,7 +594,7 @@ CPU_INFO_TEST_SCENARIOS = [
                 'IBM/S390',
             ],
             'processor_cores': 32,
-            'processor_count': 1,
+            'processor_count': 5,
             'processor_nproc': 64,
             'processor_threads_per_core': 2,
             'processor_vcpus': 64

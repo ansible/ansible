@@ -172,6 +172,8 @@ class LinuxHardware(Hardware):
         cores = {}
         zp = 0
         zmt = 0
+        bookid = 0
+        drawerid = 0
 
         xen = False
         xen_paravirt = False
@@ -224,11 +226,11 @@ class LinuxHardware(Hardware):
                 i += 1
             elif key == 'physical id':
                 physid = val
-                if physid not in sockets:
+                if zp == 0 and physid not in sockets:
                     sockets[physid] = 1
             elif key == 'core id':
                 coreid = val
-                if coreid not in sockets:
+                if zp == 0 and coreid not in cores:
                     cores[coreid] = 1
             elif key == 'cpu cores':
                 sockets[physid] = int(val)
@@ -239,6 +241,17 @@ class LinuxHardware(Hardware):
                 zp = int(val)
             elif key == 'max thread id':
                 zmt = int(val) + 1
+            # S390x 5.7+ kernel with CONFIG_SCHED_TOPOLOGY
+            elif key == 'book id':
+                bookid = val
+            elif key == 'drawer id':
+                drawerid = val
+                physid = "%s.%s.%s" % (drawerid, bookid, physid)
+                coreid = "%s.%s.%s.%s" % (drawerid, bookid, physid, coreid)
+                if physid not in sockets:
+                    sockets[physid] = 1
+                if coreid not in cores:
+                    cores[coreid] = 1
             # SPARC
             elif key == 'ncpus active':
                 i = int(val)
@@ -256,8 +269,10 @@ class LinuxHardware(Hardware):
             i = processor_occurrence
 
         if collected_facts.get('ansible_architecture') == 's390x':
-            # getting sockets would require 5.7+ with CONFIG_SCHED_TOPOLOGY
-            cpu_facts['processor_count'] = 1
+            if sockets:
+                cpu_facts['processor_count'] = len(sockets)
+            else:
+                cpu_facts['processor_count'] = 1
             cpu_facts['processor_cores'] = zp // zmt
             cpu_facts['processor_threads_per_core'] = zmt
             cpu_facts['processor_vcpus'] = zp
