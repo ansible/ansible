@@ -1282,7 +1282,7 @@ class ModuleValidator(Validator):
                     self.reporter.error(
                         path=self.object_path,
                         code='attributes-check-mode-details',
-                        msg="The module declares not fully support for check mode, but has no details on what exactly that means"
+                        msg="The module declares it does not fully support check mode, but has no details on what exactly that means"
                     )
 
     def _validate_list_of_module_args(self, name, terms, spec, context):
