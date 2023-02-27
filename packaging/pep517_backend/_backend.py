@@ -53,7 +53,10 @@ def _generate_rst_in_templates() -> Path:
     return Path('docs/man/man1/').glob('*.1.rst.in')
 
 
-def _convert_rst_in_template_to_manpage(rst_in, version_number) -> None:
+def _convert_rst_in_template_to_manpage(
+        rst_in: Path,
+        version_number: str,
+) -> None:
     """Render pre-made ``*.1.rst.in`` templates into manpages.
 
     This includes pasting the hardcoded version into the resulting files.
