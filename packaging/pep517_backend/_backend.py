@@ -116,6 +116,8 @@ def get_requires_for_build_sdist(
     build_manpages_requested = BUILD_MANPAGES_CONFIG_SETTING in (
         config_settings or {}
     )
+    build_manpages_requested = True  # FIXME: Once pypa/build#559 is addressed.
+
     manpage_build_deps = [
         'docutils',  # provides `rst2man`
         'jinja2',  # used in `hacking/build-ansible.py generate-man`
