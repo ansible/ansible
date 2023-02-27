@@ -20,19 +20,16 @@ __metaclass__ = type
 
 try:
     import curses
-    import io
-    # Nest the try except since curses.error is not available if curses did not import
-    try:
-        curses.setupterm()
-        HAS_CURSES = True
-    except (curses.error, TypeError, io.UnsupportedOperation):
-        HAS_CURSES = False
 except ImportError:
     HAS_CURSES = False
+else:
+    # this will be set to False if curses.setupterm() fails
+    HAS_CURSES = True
 
 import ctypes.util
 import fcntl
 import getpass
+import io
 import logging
 import os
 import random
@@ -67,10 +64,6 @@ _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
 
 MOVE_TO_BOL = b'\r'
 CLEAR_TO_EOL = b'\x1b[K'
-if HAS_CURSES:
-    # curses.tigetstr() returns None in some circumstances
-    MOVE_TO_BOL = curses.tigetstr('cr') or MOVE_TO_BOL
-    CLEAR_TO_EOL = curses.tigetstr('el') or CLEAR_TO_EOL
 
 
 def get_text_width(text):
@@ -244,6 +237,21 @@ def setup_prompt(stdin_fd, stdout_fd, seconds, echo):
         termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
 
 
+def setupterm():
+    # Nest the try except since curses.error is not available if curses did not import
+    try:
+        curses.setupterm()
+    except (curses.error, TypeError, io.UnsupportedOperation):
+        global HAS_CURSES
+        HAS_CURSES = False
+    else:
+        global MOVE_TO_BOL
+        global CLEAR_TO_EOL
+        # curses.tigetstr() returns None in some circumstances
+        MOVE_TO_BOL = curses.tigetstr('cr') or MOVE_TO_BOL
+        CLEAR_TO_EOL = curses.tigetstr('el') or CLEAR_TO_EOL
+
+
 class Display(metaclass=Singleton):
 
     def __init__(self, verbosity=0):
@@ -288,6 +296,8 @@ class Display(metaclass=Singleton):
             _synchronize_textiowrapper(sys.stderr, self._lock)
         except Exception as ex:
             self.warning(f"failed to patch stdout/stderr for fork-safety: {ex}")
+
+        self.setup_curses = False
 
     def set_queue(self, queue):
         """Set the _final_q on Display, so that we know to proxy display over the queue
@@ -594,6 +604,10 @@ class Display(metaclass=Singleton):
                 interrupt_input=interrupt_input, complete_input=complete_input
             )
             return current_worker.worker_queue.get()
+
+        if HAS_CURSES and not self.setup_curses:
+            setupterm()
+            self.setup_curses = True
 
         if (
             self._stdin_fd is None
