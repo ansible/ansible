@@ -46,7 +46,7 @@ from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 __all__ = ['TaskQueueManager']
 
@@ -74,11 +74,6 @@ class PromptSend:
     seconds: int = None
     interrupt_input: t.Iterable[bytes] = None
     complete_input: t.Iterable[bytes] = None
-
-    kwargs: t.Mapping = field(init=False, default_factory=dict)
-
-    def __post_init__(self):
-        self.kwargs = dict(private=self.private, seconds=self.seconds, interrupt_input=self.interrupt_input, complete_input=self.complete_input)
 
 
 class FinalQueue(multiprocessing.queues.Queue):

@@ -129,7 +129,13 @@ def results_thread_main(strategy):
                     strategy._results.append(result)
             elif isinstance(result, PromptSend):
                 try:
-                    value = display.prompt_until(result.prompt, **result.kwargs)
+                    value = display.prompt_until(
+                        result.prompt,
+                        private=result.private,
+                        seconds=result.seconds,
+                        complete_input=result.complete_input,
+                        interrupt_input=result.interrupt_input,
+                    )
                 except AnsibleError as e:
                     value = e
                 except BaseException as e:
