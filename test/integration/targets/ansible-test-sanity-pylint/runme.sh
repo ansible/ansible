@@ -8,6 +8,8 @@ source ../collection/setup.sh
 # This avoids the need to create ignore entries for the tests.
 
 echo "
+from ansible.utils.display import Display
+
 display = Display()
 display.deprecated('', version='2.0.0', collection_name='ns.col')" >> plugins/lookup/deprecated.py
 
