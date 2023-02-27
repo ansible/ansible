@@ -17,9 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import contextlib
 import datetime
-import signal
 import time
 
 from ansible.errors import AnsibleError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
@@ -28,14 +26,6 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
 display = Display()
-
-
-class AnsibleTimeoutExceeded(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise AnsibleTimeoutExceeded
 
 
 class ActionModule(ActionBase):
@@ -124,29 +114,19 @@ class ActionModule(ActionBase):
         echo = seconds is None and echo
 
         user_input = b''
-        with contextlib.suppress(AnsibleTimeoutExceeded):
-            try:
-                if seconds is not None:
-                    # setup the alarm handler
-                    signal.signal(signal.SIGALRM, timeout_handler)
-                    signal.alarm(seconds)
-
-                try:
-                    _user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
-                except AnsiblePromptInterrupt:
-                    user_input = None
-                except AnsiblePromptNoninteractive:
-                    if seconds is None:
-                        display.warning("Not waiting for response to prompt as stdin is not interactive")
-                    else:
-                        # Give the signal handler enough time to timeout
-                        time.sleep(seconds + 1)
-                else:
-                    if seconds is None:
-                        user_input = _user_input
-            finally:
-                if seconds is not None:
-                    signal.alarm(0)
+        try:
+            _user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
+        except AnsiblePromptInterrupt:
+            user_input = None
+        except AnsiblePromptNoninteractive:
+            if seconds is None:
+                display.warning("Not waiting for response to prompt as stdin is not interactive")
+            else:
+                # wait specified duration
+                time.sleep(seconds)
+        else:
+            if seconds is None:
+                user_input = _user_input
         # user interrupt
         if user_input is None:
             prompt = "Press 'C' to continue the play or 'A' to abort \r"
