@@ -1173,6 +1173,17 @@ releases:
     - file_lookup_errors.yml
     - v2.13.7rc1_summary.yaml
     release_date: '2022-11-28'
+  2.13.8:
+    changes:
+      release_summary: '| Release Date: 2023-02-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - v2.13.8_summary.yaml
+    release_date: '2023-02-27'
   2.13.8rc1:
     changes:
       bugfixes:
