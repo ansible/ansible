@@ -202,7 +202,12 @@ class AnsibleDeprecatedChecker(BaseChecker):
     @property
     def collection_version(self) -> t.Optional[SemanticVersion]:
         """Return the collection version, or None if ansible-core is being tested."""
-        return SemanticVersion(self.config.collection_version) if self.config.collection_version is not None else None
+        if self.config.collection_version is None:
+            return None
+        sem_ver = SemanticVersion(self.config.collection_version)
+        # Ignore pre-release for version comparison to catch issues before the final release is cut.
+        sem_ver.prerelease = ()
+        return sem_ver
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
