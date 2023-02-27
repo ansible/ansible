@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import typing as t
 from configparser import ConfigParser
 from importlib.metadata import import_module
 from pathlib import Path
@@ -42,7 +43,7 @@ def _get_package_distribution_version() -> str:
     return getattr(import_module(version_mod_str), version_var_str)
 
 
-def _generate_rst_in_templates() -> Path:
+def _generate_rst_in_templates() -> t.Iterable[Path]:
     """Create ``*.1.rst.in`` files out of CLI Python modules."""
     generate_man_cmd = (
         sys.executable,
