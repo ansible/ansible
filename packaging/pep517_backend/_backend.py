@@ -20,6 +20,10 @@ __all__ = (  # noqa: WPS317, WPS410
 )
 
 
+BUILD_MANPAGES_CONFIG_SETTING = '--build-manpages'
+"""Config setting name toggle that is used to request manpage in sdists."""
+
+
 def _make_in_tree_ansible_importable() -> None:
     """Add the library directory to module lookup paths."""
     lib_path = str(Path.cwd() / 'lib/')
@@ -82,7 +86,7 @@ def build_sdist(  # noqa: WPS210, WPS430
          sdist_directory: os.PathLike,
          config_settings: dict[str, str] | None = None,
 ) -> str:
-    build_manpages_requested = '--build-manpages' in (
+    build_manpages_requested = BUILD_MANPAGES_CONFIG_SETTING in (
         config_settings or {}
     )
     if build_manpages_requested:
@@ -101,10 +105,15 @@ def build_sdist(  # noqa: WPS210, WPS430
 def get_requires_for_build_sdist(
         config_settings: dict[str, str] | None = None,
 ) -> list[str]:
-    return _setuptools_get_requires_for_build_sdist(
-        config_settings=config_settings,
-    ) + [
+    build_manpages_requested = BUILD_MANPAGES_CONFIG_SETTING in (
+        config_settings or {}
+    )
+    manpage_build_deps = [
         'docutils',  # provides `rst2man`
         'jinja2',  # used in `hacking/build-ansible.py generate-man`
         'pyyaml',  # needed for importing in-tree `ansible-core` from `lib/`
-    ]
+    ] if build_manpages_requested else []
+
+    return _setuptools_get_requires_for_build_sdist(
+        config_settings=config_settings,
+    ) + manpage_build_deps
