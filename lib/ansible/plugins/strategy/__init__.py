@@ -27,6 +27,7 @@ import queue
 import sys
 import threading
 import time
+import traceback
 
 from collections import deque
 from multiprocessing import Lock
@@ -66,6 +67,11 @@ __all__ = ['StrategyBase']
 ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
     'discovered_interpreter_',
 ))
+
+
+class ForkShortCircuit(StopIteration):
+    def __init__(self, task_result):
+        self.task_result = task_result
 
 
 class StrategySentinel:
@@ -326,6 +332,98 @@ class StrategyBase:
         vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
         vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
 
+    def _short_circuit_fork(self, host, task, task_vars, templar):
+        self._short_circuit_fork_conditonal(host, task, task_vars, templar)
+        self._short_circuit_fork_include(host, task, task_vars, templar)
+
+    def _short_circuit_fork_conditonal(self, host, task, task_vars, templar):
+        if not task.loop and not task.loop_with:
+            tr = None
+            try:
+                conditional = task.evaluate_conditional(templar, task_vars)
+            except AnsibleError as e:
+                tr = TaskResult(
+                    host=host,
+                    task=task,
+                    return_data={
+                        'failed': True,
+                        'msg': to_text(e),
+                        'exception': traceback.format_exc(),
+                    },
+                )
+            else:
+                if not conditional:
+                    tr = TaskResult(
+                        host=host,
+                        task=task,
+                        return_data={
+                            'changed': False,
+                            'skipped': True,
+                            'skip_reason': 'Conditional result was False',
+                        },
+                    )
+            if tr:
+                raise ForkShortCircuit(tr)
+
+    def _short_circuit_fork_include(self, host, task, task_vars, templar):
+        if not task.loop and not task.loop_with:
+            tr = None
+            # if this task is a TaskInclude, we just return now with a success code so the
+            # main thread can expand the task list for the given host
+            if task.action in ('include', 'include_tasks'):
+                include_args = task.args.copy()
+                include_file = include_args.pop('_raw_params', None)
+                if not include_file:
+                    raise ForkShortCircuit(
+                        TaskResult(
+                            host=host,
+                            task=task,
+                            return_data={
+                                'failed': True,
+                                'msg': 'No include file was specified to the include',
+                            }
+                        )
+                    )
+
+                vars_copy = task_vars.copy()
+                vars_copy['ansible_search_path'] = task.get_search_path()
+                try:
+                    with templar.set_temporary_context(available_variables=vars_copy):
+                        include_file = templar.template(include_file)
+                except AnsibleError as e:
+                    tr = TaskResult(
+                        host=host,
+                        task=task,
+                        return_data={
+                            'failed': True,
+                            'msg': to_text(e),
+                            'exception': traceback.format_exc(),
+                        }
+                    )
+                else:
+                    tr = TaskResult(
+                        host=host,
+                        task=task,
+                        return_data={
+                            'include': include_file,
+                            'include_args': include_args,
+                        }
+                    )
+
+            # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task
+            elif task.action == 'include_role':
+                include_args = task.args.copy()
+                tr = TaskResult(
+                    host=host,
+                    task=task,
+                    return_data={
+                        'include_args': include_args,
+                    }
+                )
+
+            if tr:
+                raise ForkShortCircuit(tr)
+
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
@@ -384,6 +482,17 @@ class StrategyBase:
                         'task_vars': task_vars,
                         'play_context': play_context
                     }
+
+                    try:
+                        self._short_circuit_fork(host, task, task_vars, templar)
+                    except ForkShortCircuit as short_circuit:
+                        display.debug('not forking worker for %s on %s' % (task, host))
+                        self._tqm.send_callback('v2_runner_on_start', host, task)
+                        queue = self._handler_results if isinstance(task, Handler) else self._results
+                        self._results_lock.acquire()
+                        queue.append(short_circuit.task_result)
+                        self._results_lock.release()
+                        break
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
