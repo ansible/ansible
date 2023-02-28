@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - dnf - Substitute variables in DNF cache path (https://github.com/ansible/ansible/pull/80094).
