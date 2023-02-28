@@ -92,6 +92,35 @@ Networking
 
 No notable changes
 
+Porting Guide for v7.3.0
+========================
+
+Breaking Changes
+----------------
+
+hetzner.hcloud
+~~~~~~~~~~~~~~
+
+- inventory plugin - Python v3.5+ is now required.
+
+Major Changes
+-------------
+
+kubernetes.core
+~~~~~~~~~~~~~~~
+
+- refactor K8sAnsibleMixin into module_utils/k8s/ (https://github.com/ansible-collections/kubernetes.core/pull/481).
+
+Deprecated Features
+-------------------
+
+- Since the google.cloud collection seems to be maintained again, we `cancelled the removal process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__. So contrary to an earlier announcement, this collection is NOT deprecated and will NOT be removed from Ansible 8 (https://github.com/ansible-community/community-topics/issues/105).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- gitlab_runner - the option ``access_level`` will lose its default value in community.general 8.0.0. From that version on, you have set this option to ``ref_protected`` explicitly, if you want to have a protected runner (https://github.com/ansible-collections/community.general/issues/5925).
+
 Porting Guide for v7.2.0
 ========================
 
