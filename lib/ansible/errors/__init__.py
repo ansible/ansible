@@ -211,6 +211,14 @@ class AnsibleError(Exception):
         return error_message
 
 
+class AnsiblePromptInterrupt(AnsibleError):
+    '''User interrupt'''
+
+
+class AnsiblePromptNoninteractive(AnsibleError):
+    '''Unable to get user input'''
+
+
 class AnsibleAssertionError(AnsibleError, AssertionError):
     '''Invalid assertion'''
     pass

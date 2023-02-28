@@ -59,7 +59,7 @@ class ConnectionBase(AnsiblePlugin):
 
     default_user = None
 
-    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
+    def __init__(self, play_context, new_stdin=None, shell=None, *args, **kwargs):
 
         super(ConnectionBase, self).__init__()
 
@@ -67,8 +67,9 @@ class ConnectionBase(AnsiblePlugin):
         if not hasattr(self, '_play_context'):
             # Backwards compat: self._play_context isn't really needed, using set_options/get_option
             self._play_context = play_context
-        if not hasattr(self, '_new_stdin'):
-            self._new_stdin = new_stdin
+        # Delete once the deprecation period is over for WorkerProcess._new_stdin
+        if not hasattr(self, '__new_stdin'):
+            self.__new_stdin = new_stdin
         if not hasattr(self, '_display'):
             # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
@@ -87,6 +88,15 @@ class ConnectionBase(AnsiblePlugin):
             self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
 
         self.become = None
+
+    @property
+    def _new_stdin(self):
+        display.deprecated(
+            "The connection's stdin object is deprecated. "
+            "Call display.prompt_until(msg) instead.",
+            version='2.19',
+        )
+        return self.__new_stdin
 
     def set_become_plugin(self, plugin):
         self.become = plugin
@@ -269,7 +279,7 @@ class NetworkConnectionBase(ConnectionBase):
     # Do not use _remote_is_local in other connections
     _remote_is_local = True
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    def __init__(self, play_context, new_stdin=None, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._messages = []
         self._conn_closed = False
