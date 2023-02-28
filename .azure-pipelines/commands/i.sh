@@ -11,4 +11,4 @@ script="${args[1]}"
 
 IFS='/' test="${args[*]:1}"
 
-"test/utils/shippable/incidental/${script}.sh" "${test}"
+".azure-pipelines/commands/incidental/${script}.sh" "${test}"

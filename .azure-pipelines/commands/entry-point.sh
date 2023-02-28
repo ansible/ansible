@@ -59,4 +59,4 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
-"test/utils/shippable/${script}.sh" "${test}"
+".azure-pipelines/commands/${script}.sh" "${test}"
