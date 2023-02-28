@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import contextlib
 import curses
 import importlib
 import io
@@ -37,11 +36,8 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
     mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.utils.display')
-
-    display = mod.Display()
-    with contextlib.suppress(Exception):
-        # Hack to finalize HAS_CURSES while ignoring any prompt-related issues (like if this is not a TTY)
-        display.prompt_until('noop', seconds=1)
+    if mod.HAS_CURSES:
+        mod.setupterm()
 
     assert mod.HAS_CURSES is True
     assert mod.MOVE_TO_BOL == b'\r'
@@ -62,11 +58,8 @@ def test_pause_missing_curses(mocker, monkeypatch):
     mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.utils.display')
-
-    display = mod.Display()
-    with contextlib.suppress(Exception):
-        # Hack to finalize HAS_CURSES while ignoring any prompt-related issues (like if this is not a TTY)
-        display.prompt_until('noop', seconds=1)
+    if mod.HAS_CURSES:
+        mod.setupterm()
 
     with pytest.raises(AttributeError):
         mod.curses  # pylint: disable=pointless-statement
@@ -94,11 +87,8 @@ def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
     mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.utils.display')
-
-    display = mod.Display()
-    with contextlib.suppress(Exception):
-        # Hack to finalize HAS_CURSES while ignoring any prompt-related issues (like if this is not a TTY)
-        display.prompt_until('noop', seconds=1)
+    if mod.HAS_CURSES:
+        mod.setupterm()
 
     assert mod.HAS_CURSES is False
     assert mod.MOVE_TO_BOL == b'\r'
