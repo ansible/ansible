@@ -55,8 +55,6 @@ options:
           present in a Suite.
         type: list
         elements: str
-        default:
-        - main
     date_max_future:
         description:
         - Controls how far from the future a repository may be.
@@ -388,9 +386,6 @@ def main():
             'components': {
                 'elements': 'str',
                 'type': 'list',
-                'default': [
-                    'main',
-                ],
             },
             'date_max_future': {
                 'type': 'int',
