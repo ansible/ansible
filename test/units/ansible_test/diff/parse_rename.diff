@@ -1,0 +1,8 @@
+diff --git a/packaging/debian/ansible-base.dirs b/packaging/debian/ansible-core.dirs
+similarity index 100%
+rename from packaging/debian/ansible-base.dirs
+rename to packaging/debian/ansible-core.dirs
+diff --git a/packaging/debian/ansible-base.install b/packaging/debian/ansible-core.install
+similarity index 100%
+rename from packaging/debian/ansible-base.install
+rename to packaging/debian/ansible-core.install
