@@ -531,6 +531,14 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   - {key: callback_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.callback.path}
+DEFAULT_TEXT_WRAP:
+  name: Wrap output text based on reported terminal width.
+  default: True
+  type: boolean
+  env: [{name: ANSIBLE_TEXT_WRAP}]
+  ini:
+  - {key: text_wrap, section: defaults}
+  version_added: "2.13.3"
 CALLBACKS_ENABLED:
   name: Enable callback plugins that require it.
   default: []

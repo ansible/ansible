@@ -26,7 +26,6 @@ import os
 import random
 import subprocess
 import sys
-import textwrap
 import threading
 import time
 
@@ -43,6 +42,27 @@ from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 from functools import wraps
 
+if getattr(C, 'DEFAULT_TEXT_WRAP'):
+    from textwrap import wrap
+
+    def wrappy(
+            text: str,
+            width: int = 70,
+            replace_whitespace: bool = True,
+            drop_whitespace: bool = True) -> list[str]:
+        return wrap(
+            text,
+            width=width,
+            replace_whitespace=replace_whitespace,
+            drop_whitespace=drop_whitespace)
+else:
+    def wrappy(
+            text: str,
+            width: int = 70,
+            replace_whitespace: bool = True,
+            drop_whitespace: bool = True) -> list[str]:
+        """Fake wrap that does no wrapping."""
+        return [text]
 
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
@@ -393,7 +413,7 @@ class Display(metaclass=Singleton):
         if removed:
             raise AnsibleError(message_text)
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+        wrapped = wrappy(message_text, self.columns, drop_whitespace=False)
         message_text = "\n".join(wrapped) + "\n"
 
         if message_text not in self._deprecations:
@@ -404,7 +424,7 @@ class Display(metaclass=Singleton):
 
         if not formatted:
             new_msg = "[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrappy(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:
             new_msg = "\n[WARNING]: \n%s" % msg
@@ -460,7 +480,7 @@ class Display(metaclass=Singleton):
     def error(self, msg, wrap_text=True):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrappy(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg

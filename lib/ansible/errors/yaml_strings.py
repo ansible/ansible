@@ -34,15 +34,15 @@ Syntax Error while loading YAML.
   %s"""
 
 YAML_POSITION_DETAILS = """\
-The error appears to be in '%s': line %s, column %s, but may
+The error appears to be in '%s': line %s, column %s, but may \
 be elsewhere in the file depending on the exact syntax problem.
 """
 
 YAML_COMMON_DICT_ERROR = """\
-This one looks easy to fix. YAML thought it was looking for the start of a
-hash/dictionary and was confused to see a second "{". Most likely this was
-meant to be an ansible template evaluation instead, so we have to give the
-parser a small hint that we wanted a string instead. The solution here is to
+This one looks easy to fix. YAML thought it was looking for the start of a \
+hash/dictionary and was confused to see a second "{". Most likely this was \
+meant to be an ansible template evaluation instead, so we have to give the \
+parser a small hint that we wanted a string instead. The solution here is to \
 just quote the entire value.
 
 For instance, if the original line was:
@@ -55,8 +55,8 @@ It should be written as:
 """
 
 YAML_COMMON_UNQUOTED_VARIABLE_ERROR = """\
-We could be wrong, but this one looks like it might be an issue with
-missing quotes. Always quote template expression brackets when they
+We could be wrong, but this one looks like it might be an issue with \
+missing quotes. Always quote template expression brackets when they \
 start a value. For instance:
 
     with_items:
@@ -69,9 +69,9 @@ Should be written as:
 """
 
 YAML_COMMON_UNQUOTED_COLON_ERROR = """\
-This one looks easy to fix. There seems to be an extra unquoted colon in the line
-and this is confusing the parser. It was only expecting to find one free
-colon. The solution is just add some quotes around the colon, or quote the
+This one looks easy to fix. There seems to be an extra unquoted colon in the line \
+and this is confusing the parser. It was only expecting to find one free \
+colon. The solution is just add some quotes around the colon, or quote the \
 entire line after the first colon.
 
 For instance, if the original line was:
@@ -88,8 +88,8 @@ Or:
 """
 
 YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR = """\
-This one looks easy to fix. It seems that there is a value started
-with a quote, and the YAML parser is expecting to see the line ended
+This one looks easy to fix. It seems that there is a value started \
+with a quote, and the YAML parser is expecting to see the line ended \
 with the same kind of quote. For instance:
 
     when: "ok" in result.stdout
@@ -104,9 +104,9 @@ Or equivalently:
 """
 
 YAML_COMMON_UNBALANCED_QUOTES_ERROR = """\
-We could be wrong, but this one looks like it might be an issue with
-unbalanced quotes. If starting a value with a quote, make sure the
-line ends with the same set of quotes. For instance this arbitrary
+We could be wrong, but this one looks like it might be an issue with \
+unbalanced quotes. If starting a value with a quote, make sure the \
+line ends with the same set of quotes. For instance this arbitrary \
 example:
 
     foo: "bad" "wolf"
