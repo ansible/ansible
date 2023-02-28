@@ -20,7 +20,7 @@ if PY2:
 
 
 def test_pause_curses_tigetstr_none(mocker, monkeypatch):
-    monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
+    monkeypatch.delitem(sys.modules, 'ansible.utils.display')
 
     dunder_import = __import__
 
@@ -35,7 +35,9 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
 
     mocker.patch(builtin_import, _import)
 
-    mod = importlib.import_module('ansible.plugins.action.pause')
+    mod = importlib.import_module('ansible.utils.display')
+    if mod.HAS_CURSES:
+        mod.setupterm()
 
     assert mod.HAS_CURSES is True
     assert mod.MOVE_TO_BOL == b'\r'
@@ -43,7 +45,7 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
 
 
 def test_pause_missing_curses(mocker, monkeypatch):
-    monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
+    monkeypatch.delitem(sys.modules, 'ansible.utils.display')
 
     dunder_import = __import__
 
@@ -55,7 +57,9 @@ def test_pause_missing_curses(mocker, monkeypatch):
 
     mocker.patch(builtin_import, _import)
 
-    mod = importlib.import_module('ansible.plugins.action.pause')
+    mod = importlib.import_module('ansible.utils.display')
+    if mod.HAS_CURSES:
+        mod.setupterm()
 
     with pytest.raises(AttributeError):
         mod.curses  # pylint: disable=pointless-statement
@@ -67,7 +71,7 @@ def test_pause_missing_curses(mocker, monkeypatch):
 
 @pytest.mark.parametrize('exc', (curses.error, TypeError, io.UnsupportedOperation))
 def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
-    monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
+    monkeypatch.delitem(sys.modules, 'ansible.utils.display')
 
     dunder_import = __import__
 
@@ -82,7 +86,9 @@ def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
 
     mocker.patch(builtin_import, _import)
 
-    mod = importlib.import_module('ansible.plugins.action.pause')
+    mod = importlib.import_module('ansible.utils.display')
+    if mod.HAS_CURSES:
+        mod.setupterm()
 
     assert mod.HAS_CURSES is False
     assert mod.MOVE_TO_BOL == b'\r'

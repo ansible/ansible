@@ -218,10 +218,8 @@ import socket
 import tempfile
 import traceback
 import fcntl
-import sys
 import re
 
-from termios import tcflush, TCIFLUSH
 from ansible.module_utils.compat.version import LooseVersion
 from binascii import hexlify
 
@@ -260,8 +258,7 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, new_stdin, connection):
-        self._new_stdin = new_stdin
+    def __init__(self, connection):
         self.connection = connection
         self._options = connection._options
 
@@ -277,18 +274,10 @@ class MyAddPolicy(object):
                 # to the question anyway
                 raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
 
-            self.connection.connection_lock()
-
-            old_stdin = sys.stdin
-            sys.stdin = self._new_stdin
-
-            # clear out any premature input on sys.stdin
-            tcflush(sys.stdin, TCIFLUSH)
-
-            inp = input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
-            sys.stdin = old_stdin
-
-            self.connection.connection_unlock()
+            inp = to_text(
+                display.prompt_until(AUTHENTICITY_MSG % (hostname, ktype, fingerprint), private=False),
+                errors='surrogate_or_strict'
+            )
 
             if inp not in ['yes', 'y', '']:
                 raise AnsibleError("host connection rejected by user")
@@ -418,7 +407,7 @@ class Connection(ConnectionBase):
 
         ssh_connect_kwargs = self._parse_proxy_command(port)
 
-        ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
+        ssh.set_missing_host_key_policy(MyAddPolicy(self))
 
         conn_password = self.get_option('password') or self._play_context.password
 
