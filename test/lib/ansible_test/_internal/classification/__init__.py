@@ -661,21 +661,54 @@ class PathMapper:
 
     def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
         """Return the classification for the given path using rules specific to Ansible."""
+        dirname = os.path.dirname(path)
+        filename = os.path.basename(path)
+        name, ext = os.path.splitext(filename)
+
+        minimal: dict[str, str] = {}
+
+        # Early classification that needs to occur before common classification belongs here.
+
         if path.startswith('test/units/compat/'):
             return {
                 'units': 'test/units/',
             }
+
+        if dirname == '.azure-pipelines/commands':
+            test_map = {
+                'cloud.sh': 'integration:cloud/',
+                'linux.sh': 'integration:all',
+                'network.sh': 'network-integration:all',
+                'remote.sh': 'integration:all',
+                'sanity.sh': 'sanity:all',
+                'units.sh': 'units:all',
+                'windows.sh': 'windows-integration:all',
+            }
+
+            test_match = test_map.get(filename)
+
+            if test_match:
+                test_command, test_target = test_match.split(':')
+
+                return {
+                    test_command: test_target,
+                }
+
+            cloud_target = f'cloud/{name}/'
+
+            if cloud_target in self.integration_targets_by_alias:
+                return {
+                    'integration': cloud_target,
+                }
+
+        # Classification common to both ansible and collections.
 
         result = self._classify_common(path)
 
         if result is not None:
             return result
 
-        dirname = os.path.dirname(path)
-        filename = os.path.basename(path)
-        name, ext = os.path.splitext(filename)
-
-        minimal = {}  # type: t.Dict[str, str]
+        # Classification here is specific to ansible, and runs after common classification.
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
@@ -790,39 +823,6 @@ class PathMapper:
 
         if path.startswith('test/support/'):
             return all_tests(self.args)  # test infrastructure, run all tests
-
-        if path.startswith('test/utils/shippable/'):
-            if dirname == 'test/utils/shippable':
-                test_map = {
-                    'cloud.sh': 'integration:cloud/',
-                    'linux.sh': 'integration:all',
-                    'network.sh': 'network-integration:all',
-                    'remote.sh': 'integration:all',
-                    'sanity.sh': 'sanity:all',
-                    'units.sh': 'units:all',
-                    'windows.sh': 'windows-integration:all',
-                }
-
-                test_match = test_map.get(filename)
-
-                if test_match:
-                    test_command, test_target = test_match.split(':')
-
-                    return {
-                        test_command: test_target,
-                    }
-
-                cloud_target = 'cloud/%s/' % name
-
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
-
-            return all_tests(self.args)  # test infrastructure, run all tests
-
-        if path.startswith('test/utils/'):
-            return minimal
 
         if '/' not in path:
             if path in (
