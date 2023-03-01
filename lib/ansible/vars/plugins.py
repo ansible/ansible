@@ -12,7 +12,6 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.loader import vars_loader
-from ansible.plugins.vars.host_group_vars import VarsModule as host_group_vars
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
@@ -27,15 +26,27 @@ def initialize_vars_plugin_caches():
     enabled = []
 
     for auto_run_plugin in vars_loader.all(class_only=True):
-        if getattr(auto_run_plugin, 'REQUIRES_ENABLED', getattr(auto_run_plugin, 'REQUIRES_WHITELIST', False)):
+        needs_enabled = False
+        if hasattr(auto_run_plugin, 'REQUIRES_ENABLED'):
+            needs_enabled = auto_run_plugin.REQUIRES_ENABLED
+        elif hasattr(auto_run_plugin, 'REQUIRES_WHITELIST'):
+            needs_enabled = auto_run_plugin.REQUIRES_WHITELIST
+            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+        if needs_enabled:
             continue
-        auto.append(auto_run_plugin._load_name)
+        # we can use _load_name here since we don't need to distinguish between builtin and legacy
+        # (builtins should have REQUIRES_ENABLED=True)
+        plugin_name = auto_run_plugin._load_name
+        auto.append(plugin_name)
+        if auto_run_plugin.is_stateless:
+            cached_stateless_vars_plugins[plugin_name] = auto_run_plugin
 
     for enabled_plugin in C.VARIABLE_PLUGINS_ENABLED:
         plugin = vars_loader.get(enabled_plugin)
-        if plugin.__class__ is host_group_vars:
-            cached_stateless_vars_plugins[enabled_plugin] = plugin
         enabled.append(enabled_plugin)
+        if plugin.is_stateless:
+            cached_stateless_vars_plugins[enabled_plugin] = plugin
 
     global cached_vars_plugin_order
     cached_vars_plugin_order = auto + enabled
@@ -74,18 +85,7 @@ def get_vars_from_path(loader, path, entities, stage):
         else:
             plugin = vars_loader.get(plugin_name)
 
-        legacy = '.' not in plugin._load_name and plugin_name not in cached_stateless_vars_plugins
-        collection = '.' in plugin._load_name and plugin_name not in cached_stateless_vars_plugins
-
-        needs_enabled = not legacy
-        if hasattr(plugin, 'REQUIRES_ENABLED'):
-            needs_enabled = plugin.REQUIRES_ENABLED
-        elif hasattr(plugin, 'REQUIRES_WHITELIST'):
-            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
-                               "Use 'REQUIRES_ENABLED' instead.", version="2.18")
-            needs_enabled = plugin.REQUIRES_WHITELIST
-
-        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
+        collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
         # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
         if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
             display.warning(

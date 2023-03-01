@@ -55,6 +55,7 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
 
 class Group:
     ''' a group of ansible hosts '''
+    base_type = 'Group'
 
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 

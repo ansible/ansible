@@ -30,13 +30,16 @@ cat << EOF > "test_task_vars.yml"
   - debug:
 EOF
 
-verbose_result="$(ANSIBLE_DEBUG=True ansible-playbook test_task_vars.yml)"
-test "$(grep -c "Loading VarsModule 'host_group_vars'" <<< "$verbose_result")" == 1
-test "$(grep -c "Loading VarsModule 'require_enabled'" <<< "$verbose_result")" -gt 50
-test "$(grep -c "Loading VarsModule 'auto_enabled'" <<< "$verbose_result")" -gt 50
+# hide the debug noise by dumping to a file
+trap 'rm -rf -- "out.txt"' EXIT
+
+ANSIBLE_DEBUG=True ansible-playbook test_task_vars.yml > out.txt
+[ "$(grep -c "Loading VarsModule 'host_group_vars'" out.txt)" == 1 ]
+[ "$(grep -c "Loading VarsModule 'require_enabled'" out.txt)" -gt 50 ]
+[ "$(grep -c "Loading VarsModule 'auto_enabled'" out.txt)" -gt 50 ]
 
 export ANSIBLE_VARS_ENABLED=ansible.builtin.host_group_vars
-verbose_result="$(ANSIBLE_DEBUG=True ansible-playbook test_task_vars.yml)"
-test "$(grep -c "Loading VarsModule 'host_group_vars'" <<< "$verbose_result")" == 1
-test "$(grep -c "Loading VarsModule 'require_enabled'" <<< "$verbose_result")" == 1
-test "$(grep -c "Loading VarsModule 'auto_enabled'" <<< "$verbose_result")" -gt 50
+ANSIBLE_DEBUG=True ansible-playbook test_task_vars.yml > out.txt
+[ "$(grep -c "Loading VarsModule 'host_group_vars'" out.txt)" == 1 ]
+[ "$(grep -c "Loading VarsModule 'require_enabled'" out.txt)" == 1 ]
+[ "$(grep -c "Loading VarsModule 'auto_enabled'" out.txt)" -gt 50 ]

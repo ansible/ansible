@@ -31,6 +31,7 @@ __all__ = ['Host']
 
 class Host:
     ''' a single ansible host '''
+    base_type = 'Host'
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
 
