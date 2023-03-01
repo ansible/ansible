@@ -1022,7 +1022,12 @@ def main():
 
     src = module.params['src']
     dest = module.params['dest']
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    abs_dest = os.path.abspath(dest)
+    b_dest = to_bytes(abs_dest, errors='surrogate_or_strict')
+
+    if not os.path.isabs(dest):
+        module.warn("Relative destination path '{dest}' was resolved to absolute path '{abs_dest}'.".format(dest=dest, abs_dest=abs_dest))
+
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 
