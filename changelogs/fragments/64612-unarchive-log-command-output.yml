@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - log errors from commands to assist in debugging (https://github.com/ansible/ansible/issues/64612)

@@ -337,6 +337,7 @@ class ZipArchive(object):
     def _legacy_file_list(self):
         rc, out, err = self.module.run_command([self.cmd_path, '-v', self.src])
         if rc:
+            self.module.debug(err)
             raise UnarchiveError('Neither python zipfile nor unzip can read %s' % self.src)
 
         for line in out.splitlines()[3:-2]:
@@ -417,6 +418,7 @@ class ZipArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd)
+        self.module.debug(err)
 
         old_out = out
         diff = ''
@@ -745,6 +747,9 @@ class ZipArchive(object):
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True, None
+
+        self.module.debug(err)
+
         return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, err)
 
 
@@ -794,6 +799,7 @@ class TgzArchive(object):
         locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
+            self.module.debug(err)
             raise UnarchiveError('Unable to list files in the archive: %s' % err)
 
         for filename in out.splitlines():
