@@ -86,30 +86,30 @@ EXAMPLES = """
 - name: create a mysql user with a random password
   community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('ansible.builtin.password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
+    password: "{{ lookup('ansible.builtin.password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword', length=15) }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using only ascii letters
   community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile chars=ascii_letters') }}"
+    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile', chars=['ascii_letters']) }}"
     priv: '{{ client }}_{{ tier }}_{{ role }}.*:ALL'
 
 - name: create a mysql user with an 8 character random password using only digits
   community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile length=8 chars=digits') }}"
+    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile', length=8, chars=['digits']) }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using many different char sets
   community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile chars=ascii_letters,digits,punctuation') }}"
+    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile', chars=['ascii_letters', 'digits', 'punctuation']) }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create lowercase 8 character name for Kubernetes pod name
   ansible.builtin.set_fact:
-    random_pod_name: "web-{{ lookup('ansible.builtin.password', '/dev/null chars=ascii_lowercase,digits length=8') }}"
+    random_pod_name: "web-{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_lowercase', 'digits'], length=8) }}"
 
 - name: create random but idempotent password
   ansible.builtin.set_fact:
