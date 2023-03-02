@@ -160,7 +160,7 @@ cisco.nxos
 junipernetworks.junos
 ~~~~~~~~~~~~~~~~~~~~~
 
-- 'router_id' options is deprecated from junos_ospf_interfaces, junos_ospfv2 and junos_ospfv3 resuorce module.
+- 'router_id' options is deprecated from junos_ospf_interfaces, junos_ospfv2 and junos_ospfv3 resource module.
 
 Porting Guide for v4.9.0
 ========================

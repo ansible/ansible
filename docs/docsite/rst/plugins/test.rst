@@ -60,7 +60,7 @@ Tests will always have an ``_input`` and this is normally what is on the left si
 Using test plugins with lists
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As mentioned above, one way to use tests is with the ``select`` familiy of filters (``select``, ``reject``, ``selectattr``, ``rejectattr``).
+As mentioned above, one way to use tests is with the ``select`` family of filters (``select``, ``reject``, ``selectattr``, ``rejectattr``).
 
 .. code-block:: YAML+Jinja
 
