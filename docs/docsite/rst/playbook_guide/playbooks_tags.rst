@@ -257,7 +257,7 @@ If you want tag inheritance, you probably want to use imports. However, using bo
 
 .. code-block:: yaml
 
-   - name: Apply the db tag to the include and to all tasks in db.yaml
+   - name: Apply the db tag to the include and to all tasks in db.yml
      include_tasks:
        file: db.yml
        # adds 'db' tag to tasks within db.yml
