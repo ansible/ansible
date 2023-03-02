@@ -28,13 +28,14 @@
   register: gpg_version
 
 - name: SETUP | set git global user.email if not already set
-  shell: git config --global user.email || git config --global user.email "noreply@example.com"
+  shell: git config --global user.email 'noreply@example.com'
 
 - name: SETUP | set git global user.name if not already set
-  shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
+  shell: git config --global user.name  'Ansible Test Runner'
 
 - name: SETUP | set git global init.defaultBranch
-  shell: git config --global init.defaultBranch '{{ git_default_branch }}'
+  shell: >-
+    git config --global init.defaultBranch '{{ git_default_branch }}'
 
 - name: SETUP | set git global init.templateDir
   # NOTE: This custom Git repository template emulates the `init.defaultBranch`
@@ -45,8 +46,13 @@
   # NOTE: out to have mysterious side effects that break the tests in surprising
   # NOTE: ways.
   shell: |
-    git config --global init.templateDir '~/Templates/git.git'
-    mkdir -pv ~/Templates
+    set -eEu
+
+    git config --global \
+      init.templateDir '{{ remote_tmp_dir }}/git-templates/git.git'
+
+    mkdir -pv '{{ remote_tmp_dir }}/git-templates'
+    set +e
     GIT_TEMPLATES_DIR=$(\
       2>/dev/null \
         ls -1d \
@@ -54,8 +60,12 @@
           '/usr/local/share/git-core/templates' \
           '/usr/share/git-core/templates' \
     )
-    cp -r "${GIT_TEMPLATES_DIR}" ~/Templates/git.git
-    echo 'ref: refs/heads/{{ git_default_branch }}' > ~/Templates/git.git/HEAD
+    set -e
+    >&2 echo "Found Git's default templates directory: ${GIT_TEMPLATES_DIR}"
+    cp -r "${GIT_TEMPLATES_DIR}" '{{ remote_tmp_dir }}/git-templates/git.git'
+
+    echo 'ref: refs/heads/{{ git_default_branch }}' \
+      > '{{ remote_tmp_dir }}/git-templates/git.git/HEAD'
 
 - name: SETUP | create repo_dir
   file:
