@@ -24,6 +24,7 @@ import sys
 
 from collections import defaultdict
 from collections.abc import Mapping, MutableMapping, Sequence
+from dataclasses import dataclass
 from hashlib import sha1
 
 from jinja2.exceptions import UndefinedError
@@ -66,6 +67,12 @@ def preprocess_vars(a):
             raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
 
     return data
+
+
+@dataclass
+class CachedLoopItemContext:
+    item: object
+    delegate_to: str
 
 
 class VariableManager:
@@ -588,7 +595,7 @@ class VariableManager:
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
         cache_items = False
-        for item in items:
+        for i, item in enumerate(items):
             # update the variables with the item value for templating, in case we need it
             if item is not None:
                 vars_copy[item_var] = item
@@ -602,6 +609,8 @@ class VariableManager:
             if not isinstance(delegated_host_name, string_types):
                 raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
                                            " converted to a string type." % type(delegated_host_name), obj=task._ds)
+
+            items[i] = CachedLoopItemContext(item=item, delegate_to=delegated_host_name)
 
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value

@@ -31,6 +31,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.manager import CachedLoopItemContext
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
 
@@ -154,6 +155,20 @@ class TaskExecutor:
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
+                # We aren't in a loop, so to make delegate_to predictable, use ansible_delegated_vars
+                # To shortcut re-templating delegate_to
+                delegated_vars = self._job_vars.get('ansible_delegated_vars', {})
+                try:
+                    if len(delegated_vars) > 1:
+                        raise StopIteration(
+                            'This is unexpected, in a non-loop context this should never have more than a single host'
+                        )
+                    cached_delegate_to = next(iter(delegated_vars))
+                except StopIteration:
+                    pass
+                else:
+                    self._task.delegate_to = cached_delegate_to
+
                 display.debug("calling self._execute()")
                 res = self._execute()
                 display.debug("_execute() done")
@@ -285,6 +300,12 @@ class TaskExecutor:
         items_len = len(items)
         results = []
         for item_index, item in enumerate(items):
+            if isinstance(item, CachedLoopItemContext):
+                cached_delegate_to = item.delegate_to
+                item = item.item
+            else:
+                cached_delegate_to = None
+
             task_vars['ansible_loop_var'] = loop_var
 
             task_vars[loop_var] = item
@@ -327,6 +348,9 @@ class TaskExecutor:
             except AnsibleParserError as e:
                 results.append(dict(failed=True, msg=to_text(e)))
                 continue
+
+            if cached_delegate_to:
+                tmp_task.delegate_to = cached_delegate_to
 
             # now we swap the internal task and play context with their copies,
             # execute, and swap them back so we can do the next iteration cleanly
