@@ -72,7 +72,7 @@ The following table shows:
       <td>✓</td>
       <td>Zuul</td>
       <td>✓</td>
-      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/aws_guidelines.html">AWS guide</a></td>
+      <td><a href="https://docs.ansible.com/ansible/devel/collections/amazon/aws/docsite/dev_guidelines.html">AWS guide</a></td>
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/ansible/netcommon">ansible.netcommon***</a></td>
@@ -247,7 +247,7 @@ The following table shows:
       <td>✓</td>
       <td>Zuul</td>
       <td>✓</td>
-      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/vmware_rest_guidelines.html">VMware REST guide</a></td>
+      <td><a href="https://docs.ansible.com/ansible/devel/collections/vmware/vmware_rest/docsite/dev_guide.html">VMware REST guide</a></td>
     </tr>
 
   </table>
