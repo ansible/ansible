@@ -175,6 +175,10 @@ Ansible always registers something in a registered variable for every host, even
         ansible.builtin.command: /bin/still/something_else
         when: result is skipped
 
+      - name: Run only if the task that registered the "result" variable changed something.
+        ansible.builtin.command: /bin/still/something_else
+        when: result is changed
+        
 .. note:: Older versions of Ansible used ``success`` and ``fail``, but ``succeeded`` and ``failed`` use the correct tense. All of these options are now valid.
 
 
