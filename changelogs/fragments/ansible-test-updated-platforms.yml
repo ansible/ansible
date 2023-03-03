@@ -5,5 +5,6 @@ minor_changes:
   - ansible-test - Add Alpine 3.17 remote.
   - ansible-test - Add Fedora 37 remote.
   - ansible-test - Add Fedora 37 container.
+  - ansible-test - Add macOS 13.2 remote.
   - ansible-test - Update Alpine 3 container to 3.17.
   - ansible-test - Minor cleanup and package updates in distro containers.
