@@ -301,7 +301,7 @@ For example:
 
 .. warning::
    * Fact gathering is tagged with 'always' by default. It is only skipped if
-     you apply a tag and then use a different tag in ``--tags`` or the same
+     you apply a tag to the play and then use a different tag in ``--tags`` or the same
      tag in ``--skip-tags``.
 
 .. warning::
