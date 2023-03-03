@@ -52,7 +52,8 @@
     repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
     single_branch: yes
-    version: master
+    version: >-
+      {{ git_default_branch }}
   register: single_branch_3
 
 - name: SINGLE_BRANCH | Clone example git repo using single_branch with version again
@@ -60,7 +61,8 @@
     repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
     single_branch: yes
-    version: master
+    version: >-
+      {{ git_default_branch }}
   register: single_branch_4
 
 - name: SINGLE_BRANCH | List revisions
