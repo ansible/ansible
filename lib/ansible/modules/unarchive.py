@@ -275,6 +275,7 @@ MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
 # NEWER_DIFF_RE = re.compile(r' is newer or same age.$')
 EMPTY_FILE_RE = re.compile(r': : Warning: Cannot stat: No such file or directory$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
+MISSING_LINK_RE = re.compile(r': Warning: Cannot readlink: No such file or directory$')
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
@@ -870,6 +871,8 @@ class TgzArchive(object):
             if MOD_TIME_DIFF_RE.search(line):
                 out += line + '\n'
             if MISSING_FILE_RE.search(line):
+                out += line + '\n'
+            if MISSING_LINK_RE.search(line):
                 out += line + '\n'
             if INVALID_OWNER_RE.search(line):
                 out += line + '\n'
