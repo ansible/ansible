@@ -42,6 +42,7 @@ class Connection(ConnectionBase):
 
     transport = 'local'
     has_pipelining = True
+    _remote_is_local = True
 
     def __init__(self, *args, **kwargs):
 
