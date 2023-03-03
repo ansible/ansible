@@ -22,7 +22,12 @@
   lineinfile:
     path: '{{ scm_path }}/namespace_2/collection_2/galaxy.yml'
     regexp: '^dependencies'
-    line: "dependencies: {'git+file://{{ scm_path }}/namespace_1/.git#collection_1/': 'master'}"
+    # NOTE: The committish is set to `HEAD` here because Git's default has
+    # NOTE: changed to `main` and it behaves differently in
+    # NOTE: different envs with different Git versions.
+    line: >-
+      dependencies:
+      {'git+file://{{ scm_path }}/namespace_1/.git#collection_1/': 'HEAD'}
 
 - name: Commit the changes
   shell: git add ./; git commit -m 'add collection'
