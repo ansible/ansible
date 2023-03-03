@@ -1074,7 +1074,7 @@ class AnsibleModule(object):
                     raise ValueError("bad symbolic permission for mode: %s" % mode)
 
                 for user in users:
-                    mode_to_apply = cls._get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask)
+                    mode_to_apply = cls._get_octal_mode_from_symbolic_perms(path_stat, new_mode, user, perms, use_umask)
                     new_mode = cls._apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode)
 
         return new_mode
@@ -1099,9 +1099,7 @@ class AnsibleModule(object):
         return new_mode
 
     @staticmethod
-    def _get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask):
-        prev_mode = stat.S_IMODE(path_stat.st_mode)
-
+    def _get_octal_mode_from_symbolic_perms(path_stat, prev_mode, user, perms, use_umask):
         is_directory = stat.S_ISDIR(path_stat.st_mode)
         has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
