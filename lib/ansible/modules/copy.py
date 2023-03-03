@@ -65,7 +65,7 @@ options:
     - The permissions of the destination file or directory.
     - For those used to C(/usr/bin/chmod), remember that modes are actually octal numbers.
       To prevent unexpected results of decimal to octal conversion, you B(must) add a leading zero
-      to the number (B)and wrap the number in quotes (like C('0644') or C('01777')) to pass it to
+      to the number B(and) wrap the number in quotes (like C('0644') or C('01777')) to pass it to
       the YAML parser as a string. This guarantees that Ansible correctly interprets the desired permissions.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
