@@ -162,8 +162,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
     * If ``required`` is false/missing, ``default`` may be specified (assumed 'null' if missing).
     * Ensure that the default value in the docs matches the default value in the code.
     * The default field must not be listed as part of the description, unless it requires additional information or conditions.
-    * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
-      (such as true/false or yes/no).  Choose the one that reads better in the context of the option.
+    * If the option is a boolean value, you can use any of the boolean values recognized by Ansible
+      (such as ``true``/``false`` or ``yes``/``no``).  Document booleans as ``true``/``false`` for consistency and compatibility with ansible-lint.
 
   :choices:
 
