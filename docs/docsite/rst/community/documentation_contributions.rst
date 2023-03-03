@@ -111,7 +111,7 @@ Drop the ``--user`` option in the following commands if you use a virtual enviro
 
    .. code-block:: bash
 
-    pip install --user -r requirements.txt # This file installs unpinned versions that can cause problems with the Ansible docs build.
+    pip install --user -r docs/docsite/requirements.txt # This file installs unpinned versions that can cause problems with the Ansible docs build.
     pip install --user -r test/sanity/code-smell/docs-build.requirements.txt # This file installs tested dependency versions that are used by CI.
 
 .. note::
