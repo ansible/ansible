@@ -128,10 +128,11 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
+
 def process_responses(module, responses, events, raw=False):
     if responses is None:
         return
-    
+
     newline = "" if raw else "\n"
 
     for key, value in responses.items():
@@ -141,6 +142,7 @@ def process_responses(module, responses, events, raw=False):
             response = b'%s%s' % (to_bytes(value).rstrip(b'\n'), to_bytes(newline))
 
         events[to_bytes(key)] = response
+
 
 def response_closure(module, question, responses, newline):
     resp_gen = (b'%s%s' % (to_bytes(r).rstrip(b'\n'), to_bytes(newline)) for r in responses)
