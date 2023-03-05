@@ -35,13 +35,20 @@ options:
     type: path
     description:
       - Change into this directory before running the command.
+  raw_responses:
+    type: dict
+    description:
+      - Mapping of expected string/regex and raw string to respond with. If the
+        response is a list, successive matches return successive
+        responses. In case of raw_responses, no newline will be appended
+        to the response string.
   responses:
     type: dict
     description:
       - Mapping of expected string/regex and string to respond with. If the
         response is a list, successive matches return successive
-        responses. List functionality is new in 2.1.
-    required: true
+        responses. For responses, a newline will be appended to the response string.
+        List functionality is new in 2.1.
   timeout:
     type: int
     description:
@@ -121,9 +128,22 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
+def process_responses(module, responses, events, raw=False):
+    if responses is None:
+        return
+    
+    newline = "" if raw else "\n"
 
-def response_closure(module, question, responses):
-    resp_gen = (b'%s\n' % to_bytes(r).rstrip(b'\n') for r in responses)
+    for key, value in responses.items():
+        if isinstance(value, list):
+            response = response_closure(module, key, value, newline)
+        else:
+            response = b'%s%s' % (to_bytes(value).rstrip(b'\n'), to_bytes(newline))
+
+        events[to_bytes(key)] = response
+
+def response_closure(module, question, responses, newline):
+    resp_gen = (b'%s%s' % (to_bytes(r).rstrip(b'\n'), to_bytes(newline)) for r in responses)
 
     def wrapped(info):
         try:
@@ -144,7 +164,8 @@ def main():
             chdir=dict(type='path'),
             creates=dict(type='path'),
             removes=dict(type='path'),
-            responses=dict(type='dict', required=True),
+            responses=dict(type='dict', required=False),
+            raw_responses=dict(type='dict', required=False),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
         )
@@ -159,17 +180,21 @@ def main():
     creates = module.params['creates']
     removes = module.params['removes']
     responses = module.params['responses']
+    raw_responses = module.params['raw_responses']
     timeout = module.params['timeout']
     echo = module.params['echo']
 
-    events = dict()
-    for key, value in responses.items():
-        if isinstance(value, list):
-            response = response_closure(module, key, value)
-        else:
-            response = b'%s\n' % to_bytes(value).rstrip(b'\n')
+    # one between responses and raw_responses needs to be specified
+    if responses is None and raw_responses is None:
+        module.fail_json(msg="At least one between responses and raw_responses needs to be specified")
 
-        events[to_bytes(key)] = response
+    events = dict()
+
+    # process raw responses, do not add newline
+    process_responses(module, raw_responses, events, raw=True)
+
+    # process standard responses with newline addition
+    process_responses(module, responses, events)
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
