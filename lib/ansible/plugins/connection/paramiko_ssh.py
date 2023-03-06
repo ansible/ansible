@@ -489,7 +489,7 @@ class Connection(ConnectionBase):
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
-        conn_password = self.get_option('password') or self.get_option('password')
+        conn_password = self.get_option('password')
 
         allow_agent = True
 
