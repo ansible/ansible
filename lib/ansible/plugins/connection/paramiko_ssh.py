@@ -256,6 +256,27 @@ DOCUMENTATION = """
             version_added: '2.15'
         cli:
           - name: timeout
+      private_key_file:
+          description:
+              - Path to private key file to use for authentication.
+          ini:
+            - section: defaults
+              key: private_key_file
+            - section: paramiko_connection
+              key: private_key_file
+              version_added: '2.15'
+          env:
+            - name: ANSIBLE_PRIVATE_KEY_FILE
+            - name: ANSIBLE_PARAMIKO_PRIVATE_KEY_FILE
+              version_added: '2.15'
+          vars:
+            - name: ansible_private_key_file
+            - name: ansible_ssh_private_key_file
+            - name: ansible_paramiko_private_key_file
+              version_added: '2.15'
+          cli:
+            - name: private_key_file
+              option: '--private-key'
 """
 
 import os
