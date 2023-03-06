@@ -1,2 +1,2 @@
 bugfixes:
-  - paramiko connection was still using outdata playcontext, this should bring it up to date to use the 'correct' data for each task/loop.
+  - paramiko connection was still using outdated playcontext, this should bring it up to date to use the 'correct' data for each task/loop.
