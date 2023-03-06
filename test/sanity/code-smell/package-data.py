@@ -51,7 +51,6 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/report.py',
         'hacking/return_skeleton_generator.py',
         'hacking/test-module',
-        'test/support/README.md',
         'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
         'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
         '.cherry_picker.toml',
