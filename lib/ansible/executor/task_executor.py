@@ -304,6 +304,8 @@ class TaskExecutor:
                 cached_delegate_to = item.delegate_to
                 item = item.item
             else:
+                # If there was no delegate_to, we won't have pre-calculated and cached
+                # the loop info from VariableManager._get_delegated_vars
                 cached_delegate_to = None
 
             task_vars['ansible_loop_var'] = loop_var
