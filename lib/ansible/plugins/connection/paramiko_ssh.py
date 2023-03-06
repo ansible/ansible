@@ -381,11 +381,7 @@ class Connection(ConnectionBase):
     _log_channel = None
 
     def get_option(self, option, hostvars=None):
-        try:
-            r = super().get_option(option, hostvars=hostvars)
-        except Exception:
-            r = getattr(self._play_context, option)
-        return r
+        return super().get_option(option, hostvars=hostvars)
 
     def _cache_key(self):
         return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
@@ -589,7 +585,7 @@ class Connection(ConnectionBase):
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if b'unknown user' in become_output:
-                            n_become_user = to_native(self.become.get_option('become_user', playcontext=self._play_context))
+                            n_become_user = to_native(self.become.get_option('become_user'))
                             raise AnsibleError('user %s does not exist' % n_become_user)
                         else:
                             break
@@ -608,7 +604,7 @@ class Connection(ConnectionBase):
 
                 if passprompt:
                     if self.become:
-                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
+                        become_pass = self.become.get_option('become_pass')
                         chan.sendall(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
                     else:
                         raise AnsibleError("A password is required but none was supplied")
