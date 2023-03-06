@@ -1,0 +1,2 @@
+minor_changes:
+  - Moved to use shlex quote to each specific argument returned by core become plugins (sudo, su) that do so.
