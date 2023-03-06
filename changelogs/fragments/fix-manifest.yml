@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix ``MANIFEST.in`` to exclude unwanted files in the ``packaging/`` directory.
+  - Fix ``MANIFEST.in`` to include ``*.md`` files in the ``test/support/`` directory.
