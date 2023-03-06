@@ -1,0 +1,2 @@
+bugfixes:
+    - apt_repository will no longer fail to detect key when unrelated errors/warnings are issued by apt-key.
