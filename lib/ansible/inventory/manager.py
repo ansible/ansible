@@ -364,11 +364,9 @@ class InventoryManager(object):
 
         # apply patterns
         results = []
-        print('pattern: ', pattern_str)
         for item in items:
             if pattern.match(item):
                 results.append(item)
-        print('\t matches: ', ', '.join(results))
         return results
 
     def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None):
