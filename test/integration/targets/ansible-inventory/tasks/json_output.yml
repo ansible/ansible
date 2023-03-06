@@ -1,0 +1,33 @@
+- block:
+  - name: check baseline
+    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list
+    register: limited
+
+  - name: ensure non empty host list
+    assert:
+      that:
+        - "'something' in inv['_meta']['hostvars']"
+
+  - name: check that limit removes host
+    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list
+    register: limited
+
+  - name: ensure empty host list
+    assert:
+      that:
+        - "'something' not in inv['_meta']['hostvars']"
+
+  - name: check dupes
+    command: ansible-inventory -i '{{ role_path }}/files/complex.ini' --list
+    register: limited
+
+  - name: ensure host only appears on directly assigned
+    assert:
+      that:
+        - "'hosts' not in inv['parent_1']"
+        - "'hosts' not in inv['parent_2']"
+        - "'hosts' in inv['parent_3']"
+        - "'test1' in inv['test_group1']['hosts']"
+  vars:
+    inv: '{{limited.stdout|from_json }}'
+  delegate_to: localhost
