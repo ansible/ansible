@@ -156,7 +156,7 @@ class TaskExecutor:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
                 # We aren't in a loop, so to make delegate_to predictable, use ansible_delegated_vars
-                # To shortcut re-templating delegate_to
+                # to shortcut re-templating delegate_to
                 delegated_vars = self._job_vars.get('ansible_delegated_vars', {})
                 if self._task.delegate_to and len(delegated_vars) == 1:
                     self._task.delegate_to = next(iter(delegated_vars))
