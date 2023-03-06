@@ -158,16 +158,8 @@ class TaskExecutor:
                 # We aren't in a loop, so to make delegate_to predictable, use ansible_delegated_vars
                 # To shortcut re-templating delegate_to
                 delegated_vars = self._job_vars.get('ansible_delegated_vars', {})
-                try:
-                    if len(delegated_vars) > 1:
-                        raise StopIteration(
-                            'This is unexpected, in a non-loop context this should never have more than a single host'
-                        )
-                    cached_delegate_to = next(iter(delegated_vars))
-                except StopIteration:
-                    pass
-                else:
-                    self._task.delegate_to = cached_delegate_to
+                if self._task.delegate_to and len(delegated_vars) == 1:
+                    self._task.delegate_to = next(iter(delegated_vars))
 
                 display.debug("calling self._execute()")
                 res = self._execute()
