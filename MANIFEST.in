@@ -29,7 +29,7 @@ recursive-include lib/ansible/modules *.yml
 recursive-include lib/ansible/plugins/test *.yml
 recursive-include lib/ansible/plugins/filter *.yml
 recursive-include licenses *.txt
-recursive-include packaging *
+recursive-include packaging Makefile *.py
 recursive-include test/ansible_test *.py Makefile
 recursive-include test/integration *
 recursive-include test/lib/ansible_test/config *.yml *.template
@@ -37,7 +37,7 @@ recursive-include test/lib/ansible_test/_data *.cfg *.in *.ini *.ps1 *.txt *.yml
 recursive-include test/lib/ansible_test/_util *.cfg *.ini *.json *.ps1 *.psd1 *.py *.sh *.txt *.yml
 recursive-include test/lib/ansible_test/_util/controller/sanity/validate-modules validate-modules
 recursive-include test/sanity *.in *.json *.py *.txt
-recursive-include test/support *.py *.ps1 *.psm1 *.cs
+recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
 exclude test/sanity/code-smell/botmeta.*
 exclude test/sanity/code-smell/release-names.*
 exclude test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py
