@@ -380,9 +380,6 @@ class Connection(ConnectionBase):
     transport = 'paramiko'
     _log_channel = None
 
-    def get_option(self, option, hostvars=None):
-        return super().get_option(option, hostvars=hostvars)
-
     def _cache_key(self):
         return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
 
