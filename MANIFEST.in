@@ -21,7 +21,11 @@ recursive-include lib/ansible/modules/windows *.ps1
 recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep
 recursive-include lib/ansible/config *.yml
 recursive-include licenses *.txt
-recursive-include packaging *
+recursive-include packaging Makefile *.py
+recursive-include packaging/arch *
+recursive-include packaging/debian *
+recursive-include packaging/gentoo *
+recursive-include packaging/macports *
 recursive-include test/ansible_test *.py Makefile
 recursive-include test/integration *
 recursive-include test/lib/ansible_test/config *.yml *.template
@@ -29,7 +33,7 @@ recursive-include test/lib/ansible_test/_data *.cfg *.ini *.ps1 *.txt *.yml cove
 recursive-include test/lib/ansible_test/_util *.cfg *.json *.ps1 *.psd1 *.py *.sh *.txt *.yml
 recursive-include test/lib/ansible_test/_util/controller/sanity/validate-modules validate-modules
 recursive-include test/sanity *.json *.py *.txt
-recursive-include test/support *.py *.ps1 *.psm1 *.cs
+recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
 exclude test/sanity/code-smell/botmeta.*
 recursive-include test/units *
 include Makefile
