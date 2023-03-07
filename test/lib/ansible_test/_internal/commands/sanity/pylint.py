@@ -18,6 +18,10 @@ from . import (
     SANITY_ROOT,
 )
 
+from ...io import (
+    make_dirs,
+)
+
 from ...test import (
     TestResult,
 )
@@ -249,7 +253,9 @@ class PylintTest(SanitySingleVersion):
 
         # Set PYLINTHOME to prevent pylint from checking for an obsolete directory, which can result in a test failure due to stderr output.
         # See: https://github.com/PyCQA/pylint/blob/e6c6bf5dfd61511d64779f54264b27a368c43100/pylint/constants.py#L148
-        env.update(PYLINTHOME=os.path.join(ResultType.TMP.path, 'pylint'))
+        pylint_home = os.path.join(ResultType.TMP.path, 'pylint')
+        make_dirs(pylint_home)
+        env.update(PYLINTHOME=pylint_home)
 
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
