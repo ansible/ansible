@@ -1,7 +1,7 @@
 DOCUMENTATION:
   name: subelements
   version_added: "2.7"
-  short_description: retuns a product of a list and it's elements
+  short_description: returns a product of a list and its elements
   positional: _input, _subelement, skip_missing
   description:
     - This produces a product of an object and the subelement values of that object, similar to the subelements lookup. This lets you specify individual subelements to use in a template I(_input).
