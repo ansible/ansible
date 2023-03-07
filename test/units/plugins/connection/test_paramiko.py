@@ -23,7 +23,8 @@ __metaclass__ = type
 from io import StringIO
 import pytest
 
-from ansible.plugins.connection import paramiko_ssh
+from ansible.plugins.connection import paramiko_ssh as paramiko_ssh_module
+from ansible.plugins.loader import connection_loader
 from ansible.playbook.play_context import PlayContext
 
 
@@ -44,13 +45,14 @@ def in_stream():
 
 def test_paramiko_connection_module(play_context, in_stream):
     assert isinstance(
-        paramiko_ssh.Connection(play_context, in_stream),
-        paramiko_ssh.Connection)
+        connection_loader.get('paramiko_ssh', play_context, in_stream),
+        paramiko_ssh_module.Connection)
 
 
 def test_paramiko_connect(play_context, in_stream, mocker):
-    mocker.patch.object(paramiko_ssh.Connection, '_connect_uncached')
-    connection = paramiko_ssh.Connection(play_context, in_stream)._connect()
+    paramiko_ssh = connection_loader.get('paramiko_ssh', play_context, in_stream)
+    mocker.patch.object(paramiko_ssh, '_connect_uncached')
+    connection = paramiko_ssh._connect()
 
-    assert isinstance(connection, paramiko_ssh.Connection)
+    assert isinstance(connection, paramiko_ssh_module.Connection)
     assert connection._connected is True
