@@ -14,7 +14,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.native_jinja import NativeJinjaText
-from ansible.utils.unsafe_proxy import wrap_var
 
 
 _JSON_MAP = {
@@ -60,7 +59,6 @@ def ansible_eval_concat(nodes):
 
     # if this looks like a dictionary, list or bool, convert it to such
     if out.startswith(('{', '[')) or out in ('True', 'False'):
-        unsafe = hasattr(out, '__UNSAFE__')
         try:
             out = ast.literal_eval(
                 ast.fix_missing_locations(
@@ -71,9 +69,6 @@ def ansible_eval_concat(nodes):
             )
         except (ValueError, SyntaxError, MemoryError):
             pass
-        else:
-            if unsafe:
-                out = wrap_var(out)
 
     return out
 
