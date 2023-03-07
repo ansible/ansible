@@ -50,7 +50,7 @@ def test_paramiko_connection_module(play_context, in_stream):
 
 
 def test_paramiko_connect(play_context, in_stream, mocker):
-    paramiko_ssh = connection_loader.get('paramiko_ssh', play_context)
+    paramiko_ssh = connection_loader.get('paramiko_ssh', play_context, in_stream)
     mocker.patch.object(paramiko_ssh, '_connect_uncached')
     connection = paramiko_ssh._connect()
 
