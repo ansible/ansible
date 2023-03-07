@@ -40,6 +40,7 @@ from ...ansible_util import (
     get_collection_detail,
     CollectionDetail,
     CollectionDetailError,
+    ResultType,
 )
 
 from ...config import (
@@ -245,6 +246,10 @@ class PylintTest(SanitySingleVersion):
 
         # expose plugin paths for use in custom plugins
         env.update(dict(('ANSIBLE_TEST_%s_PATH' % k.upper(), os.path.abspath(v) + os.path.sep) for k, v in data_context().content.plugin_paths.items()))
+
+        # Set PYLINTHOME to prevent pylint from checking for an obsolete directory, which can result in a test failure due to stderr output.
+        # See: https://github.com/PyCQA/pylint/blob/e6c6bf5dfd61511d64779f54264b27a368c43100/pylint/constants.py#L148
+        env.update(PYLINTHOME=os.path.join(ResultType.TMP.path, 'pylint'))
 
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
