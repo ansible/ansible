@@ -216,7 +216,6 @@ class TaskExecutor:
             self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
-
         items = None
         if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
