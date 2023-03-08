@@ -16,7 +16,7 @@ import tarfile
 import time
 import threading
 
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 
 from ansible import constants as C
@@ -48,11 +48,22 @@ def cache_lock(func):
     return wrapped
 
 
-def is_rate_limit_exception(exception):
+def should_retry_error(exception):
+    # Handle common URL related OSErrors such as TimeoutError, and BadStatusLine
+    if isinstance(exception, OSError):
+        return True
+
+    # URLError is often a proxy for an underlying error, handle wrapped OSErrors
+    if isinstance(exception, URLError) and isinstance(exception.reason, OSError):
+        return True
+
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
+    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+        return True
+
+    return False
 
 
 def g_connect(versions):
@@ -327,7 +338,7 @@ class GalaxyAPI:
 
     @retry_with_delays_and_condition(
         backoff_iterator=functools.partial(generate_jittered_backoff, retries=6, delay_base=2, delay_threshold=40),
-        should_retry_error=is_rate_limit_exception
+        should_retry_error=should_retry_error
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False, cache_key=None):
@@ -384,6 +395,9 @@ class GalaxyAPI:
                             method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
+        except (URLError, OSError):
+            # Other exceptions we may want to retry, these may be filtered further by should_retry_error
+            raise
         except Exception as e:
             raise AnsibleError("Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)))
 
