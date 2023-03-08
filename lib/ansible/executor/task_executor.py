@@ -216,15 +216,9 @@ class TaskExecutor:
             self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
-        self._task.loop_control.post_validate(templar=templar)
 
         items = None
-        loop_cache = self._job_vars.get('_ansible_loop_cache')
-        if loop_cache is not None:
-            # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
-            # to avoid reprocessing the loop
-            items = loop_cache
-        elif self._task.loop_with:
+        if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
                 if self._task.loop_with == 'first_found':
