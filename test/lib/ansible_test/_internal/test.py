@@ -47,7 +47,7 @@ def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
         return 0
 
     # changes were made to the same file and line
-    if any(r[0] <= line <= r[1] in r for r in ranges):
+    if any(r[0] <= line <= r[1] for r in ranges):
         return 100
 
     # changes were made to the same file and the line number is unknown
