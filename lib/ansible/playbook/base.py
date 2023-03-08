@@ -486,6 +486,8 @@ class FieldAttributeBase:
             if not isinstance(value, attribute.class_type):
                 raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
             value.post_validate(templar=templar)
+        else:
+            raise AnsibleAssertionError(f"Unknown value for attribute.isa: {attribute.isa}")
         return value
 
     def set_to_context(self, name):

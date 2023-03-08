@@ -75,7 +75,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     changed_when = NonInheritableFieldAttribute(isa='list', default=list)
     delay = NonInheritableFieldAttribute(isa='int', default=5)
     failed_when = NonInheritableFieldAttribute(isa='list', default=list)
-    loop = NonInheritableFieldAttribute()
+    loop = NonInheritableFieldAttribute(isa='list')
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = NonInheritableFieldAttribute(isa='string', static=True)
