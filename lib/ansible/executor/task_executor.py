@@ -18,6 +18,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.inventory.host import Host
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_text, to_native
@@ -82,7 +83,7 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, variable_manager):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -92,6 +93,7 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
         self._final_q = final_q
+        self._variable_manager = variable_manager
         self._loop_eval_error = None
 
         self._task.squash()
@@ -214,6 +216,8 @@ class TaskExecutor:
             self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
+        self._task.loop_control.post_validate(templar=templar)
+
         items = None
         loop_cache = self._job_vars.get('_ansible_loop_cache')
         if loop_cache is not None:
@@ -410,6 +414,36 @@ class TaskExecutor:
             variables = self._job_vars
 
         templar = Templar(loader=self._loader, variables=variables)
+
+        if self._task.delegate_to:
+            delegated_host_name = templar.template(self._task.delegate_to, fail_on_undefined=False)
+            delegated_host = self._variable_manager._inventory.get_host(delegated_host_name)
+            if delegated_host is None:
+                for h in self._variable_manager._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+                    # check if the address matches, or if both the delegated_to host
+                    # and the current host are in the list of localhost aliases
+                    if h.address == delegated_host_name:
+                        delegated_host = h
+                        break
+                else:
+                    delegated_host = Host(name=delegated_host_name)
+
+            variables['ansible_delegated_vars'] = {
+                delegated_host_name: self._variable_manager.get_vars(
+                    play=self._task.get_play(),
+                    host=delegated_host,
+                    task=self._task,
+                    include_delegate_to=False,
+                    include_hostvars=True,
+                )
+            }
+            variables['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
+            self._task.delegate_to = delegated_host_name
+
+            try:
+                display.display(f"{variables['ansible_delegated_vars'].keys()=}")
+            except:
+                pass
 
         context_validation_error = None
 

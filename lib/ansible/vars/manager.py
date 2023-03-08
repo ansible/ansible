@@ -139,7 +139,7 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
-    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True,
+    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=False, use_cache=True,
                  _hosts=None, _hosts_all=None, stage='task'):
         '''
         Returns the variables, with optional "context" given via the parameters
@@ -172,7 +172,6 @@ class VariableManager:
             host=host,
             task=task,
             include_hostvars=include_hostvars,
-            include_delegate_to=include_delegate_to,
             _hosts=_hosts,
             _hosts_all=_hosts_all,
         )
@@ -446,7 +445,7 @@ class VariableManager:
         else:
             return all_vars
 
-    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to, _hosts=None, _hosts_all=None):
+    def _get_magic_variables(self, play, host, task, include_hostvars, _hosts=None, _hosts_all=None):
         '''
         Returns a dictionary of so-called "magic" variables in Ansible,
         which are special variables we set internally for use.
@@ -528,6 +527,11 @@ class VariableManager:
         if not hasattr(task, 'loop'):
             # This "task" is not a Task, so we need to skip it
             return {}, None
+
+        display.deprecated(
+            'Getting delegated variables via get_vars is no longer used, and is handled within the TaskExecutor.',
+            version='2.18',
+        )
 
         # we unfortunately need to template the delegate_to field here,
         # as we're fetching vars before post_validate has been called on
