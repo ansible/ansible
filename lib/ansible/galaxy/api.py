@@ -326,7 +326,7 @@ class GalaxyAPI:
         return self._available_api_versions
 
     @retry_with_delays_and_condition(
-        backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
+        backoff_iterator=functools.partial(generate_jittered_backoff, retries=6, delay_base=2, delay_threshold=40),
         should_retry_error=is_rate_limit_exception
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,

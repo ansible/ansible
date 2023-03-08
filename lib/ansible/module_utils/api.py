@@ -152,7 +152,12 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
             """
             call_retryable_function = functools.partial(function, *args, **kwargs)
 
-            for delay in backoff_iterator:
+            if callable(backoff_iterator):
+                iterator = backoff_iterator()
+            else:
+                iterator = backoff_iterator
+
+            for delay in iterator:
                 try:
                     return call_retryable_function()
                 except Exception as e:
