@@ -45,6 +45,37 @@
     - "expect_result.changed == true"
     - "expect_result.stdout_lines|last == 'foobar'"
 
+- name: test expect with raw response
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} raw_foo"
+    raw_responses:
+      raw_foo: y
+  register: expect_raw_responses_result
+
+- name: assert expect with raw responses worked
+  assert:
+    that:
+    - "expect_raw_responses_result.changed == true"
+    - "expect_raw_responses_result.stdout_lines[-2] == 'raw_foo'"
+    - "expect_raw_responses_result.stdout_lines|last == 'y'"
+
+- name: test expect with raw and standard responses
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo raw_foo"
+    raw_responses:
+      raw_foo: y
+    responses:
+      foo: bar
+  register: expect_raw_and_standard_responses_result
+
+- name: assert expect with raw and standard responses worked
+  assert:
+    that:
+    - "expect_raw_and_standard_responses_result.changed == true"
+    - "expect_raw_and_standard_responses_result.stdout_lines[-3] == 'foobar'"
+    - "expect_raw_and_standard_responses_result.stdout_lines[-2] == 'raw_foo'"
+    - "expect_raw_and_standard_responses_result.stdout_lines|last == 'y'"
+
 - name: test creates option
   expect:
     command: "{{ansible_python_interpreter}} {{test_command_file}}"
@@ -164,6 +195,48 @@
     - "list_result.stdout_lines[-2] == 'foobar'"
     - "list_result.stdout_lines[-1] == 'foobaz'"
 
+- name: test raw responses list
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} raw_foo raw_foo"
+    raw_responses:
+      raw_foo:
+      - y
+      - n
+  register: raw_list_result
+
+- name: assert list raw responses works
+  assert:
+    that:
+    - "raw_list_result.stdout_lines|length == 9"
+    - "raw_list_result.stdout_lines[-4] == 'raw_foo'"
+    - "raw_list_result.stdout_lines[-3] == 'y'"
+    - "raw_list_result.stdout_lines[-2] == 'raw_foo'"
+    - "raw_list_result.stdout_lines[-1] == 'n'"
+
+- name: test raw and standard responses lists
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo raw_foo raw_foo"
+    responses:
+      foo: 
+       - bar
+       - baz
+    raw_responses:
+      raw_foo:
+      - y
+      - n
+  register: raw_standard_list_result
+
+- name: assert list raw responses works
+  assert:
+    that:
+    - "raw_standard_list_result.stdout_lines|length == 11"
+    - "raw_standard_list_result.stdout_lines[-6] == 'foobar'"
+    - "raw_standard_list_result.stdout_lines[-5] == 'foobaz'"
+    - "raw_standard_list_result.stdout_lines[-4] == 'raw_foo'"
+    - "raw_standard_list_result.stdout_lines[-3] == 'y'"
+    - "raw_standard_list_result.stdout_lines[-2] == 'raw_foo'"
+    - "raw_standard_list_result.stdout_lines[-1] == 'n'"
+
 - name: test no remaining responses
   expect:
     command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
@@ -193,6 +266,18 @@
     - "no_command_result.failed"
     - "no_command_result.msg == 'no command given'"
     - "no_command_result.rc == 256"
+
+- name: test no responses
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+  register: no_responses
+  ignore_errors: yes
+
+- name: assert no responses
+  assert:
+    that:
+    - "no_responses.failed"
+    - "no_responses.msg == 'responses (or raw_responses) is required'"
 
 - name: test non-zero return code
   expect:

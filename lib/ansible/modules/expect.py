@@ -111,6 +111,29 @@ EXAMPLES = r'''
         - response1
         - response2
         - response3
+
+- name: Generic question with multiple different raw responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    raw_responses:
+      Question:
+        - response1
+        - response2
+        - response3
+
+- name: Generic question with both responses and raw responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    responses:
+      Question:
+        - response1
+        - response2
+        - response3
+    raw_responses:
+      Question2:
+        - response1
+        - response2
+        - response3
 '''
 
 import datetime
@@ -166,8 +189,8 @@ def main():
             chdir=dict(type='path'),
             creates=dict(type='path'),
             removes=dict(type='path'),
-            responses=dict(type='dict', required=False),
-            raw_responses=dict(type='dict', required=False),
+            responses=dict(type='dict'),
+            raw_responses=dict(type='dict'),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
         )
@@ -188,7 +211,7 @@ def main():
 
     # one between responses and raw_responses needs to be specified
     if responses is None and raw_responses is None:
-        module.fail_json(msg="At least one between responses and raw_responses needs to be specified")
+        module.fail_json(msg="responses (or raw_responses) is required")
 
     events = dict()
 
