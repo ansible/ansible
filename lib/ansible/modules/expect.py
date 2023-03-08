@@ -42,6 +42,7 @@ options:
         response is a list, successive matches return successive
         responses. In case of raw_responses, no newline will be appended
         to the response string.
+    version_added: '2.15'
   responses:
     type: dict
     description:
