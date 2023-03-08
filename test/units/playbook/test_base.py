@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from units.compat import unittest
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible.template import Templar
@@ -581,10 +581,11 @@ class TestBaseSubClass(TestBase):
                                bsc.post_validate, templar)
 
     def test_attr_unknown(self):
-        a_list = ['some string']
-        ds = {'test_attr_unknown_isa': a_list}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_unknown_isa, a_list)
+        self.assertRaises(
+            AnsibleAssertionError,
+            self._base_validate,
+            {'test_attr_unknown_isa': True}
+        )
 
     def test_attr_method(self):
         ds = {'test_attr_method': 'value from the ds'}

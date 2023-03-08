@@ -41,7 +41,7 @@ class RoleMetadata(Base, CollectionSearch):
 
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=False)
     dependencies = NonInheritableFieldAttribute(isa='list', default=list)
-    galaxy_info = NonInheritableFieldAttribute(isa='GalaxyInfo')
+    galaxy_info = NonInheritableFieldAttribute(isa='dict')
     argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
@@ -109,15 +109,6 @@ class RoleMetadata(Base, CollectionSearch):
                                       collection_search_list=collection_search_list)
         except AssertionError as e:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
-
-    def _load_galaxy_info(self, attr, ds):
-        '''
-        This is a helper loading function for the galaxy info entry
-        in the metadata, which returns a GalaxyInfo object rather than
-        a simple dictionary.
-        '''
-
-        return ds
 
     def serialize(self):
         return dict(
