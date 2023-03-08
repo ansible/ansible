@@ -403,18 +403,7 @@ class TaskExecutor:
 
         return results
 
-    def _execute(self, variables=None):
-        '''
-        The primary workhorse of the executor system, this runs the task
-        on the specified host (which may be the delegated_to host) and handles
-        the retry/until and block rescue/always execution
-        '''
-
-        if variables is None:
-            variables = self._job_vars
-
-        templar = Templar(loader=self._loader, variables=variables)
-
+    def _get_delegated_vars(self, templar, variables):
         if self._task.delegate_to:
             delegated_host_name = templar.template(self._task.delegate_to, fail_on_undefined=False)
             delegated_host = self._variable_manager._inventory.get_host(delegated_host_name)
@@ -440,10 +429,19 @@ class TaskExecutor:
             variables['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
             self._task.delegate_to = delegated_host_name
 
-            try:
-                display.display(f"{variables['ansible_delegated_vars'].keys()=}")
-            except:
-                pass
+    def _execute(self, variables=None):
+        '''
+        The primary workhorse of the executor system, this runs the task
+        on the specified host (which may be the delegated_to host) and handles
+        the retry/until and block rescue/always execution
+        '''
+
+        if variables is None:
+            variables = self._job_vars
+
+        templar = Templar(loader=self._loader, variables=variables)
+
+        self._get_delegated_vars(templar, variables)
 
         context_validation_error = None
 
