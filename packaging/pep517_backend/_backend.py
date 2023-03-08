@@ -67,7 +67,7 @@ def _get_package_distribution_version() -> str:
     setup_cfg = ConfigParser()
     setup_cfg.read_string(setup_cfg_path.read_text())
     cfg_version = setup_cfg.get('metadata', 'version')
-    importable_version_str = cfg_version.removeprefix('attr: ')
+    importable_version_str = cfg_version[len('attr: '):]
     version_mod_str, version_var_str = importable_version_str.rsplit('.', 1)
     _make_in_tree_ansible_importable()
     return getattr(import_module(version_mod_str), version_var_str)
