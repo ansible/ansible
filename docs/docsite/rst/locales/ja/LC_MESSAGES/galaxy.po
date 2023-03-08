@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/galaxy/dev_guide.rst:5
 msgid "Galaxy Developer Guide"
@@ -30,7 +30,7 @@ msgstr "Galaxy のコレクションの作成"
 
 #: ../../rst/galaxy/dev_guide.rst:19
 msgid "Collections are a distribution format for Ansible content. You can use collections to package and distribute playbooks, roles, modules, and plugins. You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_."
-msgstr "コレクションは、Ansible コンテンツのディストリビューション形式です。コレクションを使用して、Playbook、ロール、モジュール、プラグインをパッケージ化および配布できます。`Ansible Galaxy <https://galaxy.ansible.com>`_ を介してコレクションを公開および使用できます。"
+msgstr "コレクションは、Ansible コンテンツのディストリビューション形式です。コレクションを使用して、Playbook、ロール、モジュール、およびプラグインをパッケージ化および配布できます。`Ansible Galaxy <https://galaxy.ansible.com>`_ を介してコレクションを公開および使用できます。"
 
 #: ../../rst/galaxy/dev_guide.rst:22
 msgid "See :ref:`developing_collections` for details on how to create collections."
@@ -101,154 +101,150 @@ msgid "Authenticate with Galaxy"
 msgstr "Galaxy での認証"
 
 #: ../../rst/galaxy/dev_guide.rst:98
-msgid "Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on the Galaxy website requires authentication, and the ``login`` command can be used to do just that. Before you can use the ``login`` command, you must create an account on the Galaxy website."
-msgstr "Galaxy Web サイトでロールを管理する ``import`` コマンド、``delete`` コマンド、および ``setup`` コマンドを使用するには認証が必要で、``login`` コマンドを使用してこれを行うことができます。``login`` コマンドを使用する前に、Galaxy の Web サイトでアカウントを作成する必要があります。"
+msgid "Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on the Galaxy website requires authentication in the form of an API key, you must create an account on the Galaxy website."
+msgstr "Galaxy Web サイトでロールを管理する ``import`` および ``delete``、``setup`` コマンドを使用するには、API キーの形式での認証が必要です。Galaxy Web サイトでアカウントを作成する必要があります。"
+
+#: ../../rst/galaxy/dev_guide.rst:100
+msgid "Log in to the Galaxy website and open the `Preferences <https://galaxy.ansible.com/me/preferences>`_ view."
+msgstr "Galaxy の Web サイトにログインし、`Preferences <https://galaxy.ansible.com/me/preferences>` _ ビューを開きます。"
 
 #: ../../rst/galaxy/dev_guide.rst:101
-msgid "The ``login`` command requires using your GitHub credentials. You can use your username and password, or you can create a `personal access token <https://help.github.com/articles/creating-an-access-token-for-command-line-use/>`_. If you choose to create a token, grant minimal access to the token, as it is used just to verify identify."
-msgstr "``login`` コマンドには、GitHub 認証情報を使用する必要があります。ユーザー名とパスワードを使用するか、`personal access token <https://help.github.com/articles/creating-an-access-token-for-command-line-use/>`_ を作成することができます。トークンの作成を選択した場合は、識別を確認するためにのみ使用されます。"
+msgid "Select **Show API key** and then copy it."
+msgstr "**Show API key** を選択してコピーします。"
 
 #: ../../rst/galaxy/dev_guide.rst:103
-msgid "The following shows authenticating with the Galaxy website using a GitHub username and password:"
-msgstr "以下は、GitHub のユーザー名とパスワードを使用した Galaxy Web サイトでの認証を示しています。"
+msgid "Save your token in the path set in the :ref:`GALAXY_TOKEN_PATH`."
+msgstr ":ref:`GALAXY_TOKEN_PATH` で設定したパスにトークンを保存します。"
 
-#: ../../rst/galaxy/dev_guide.rst:119
-msgid "When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticates with GitHub and create a personal access token. It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is destroyed."
-msgstr "ユーザー名とパスワードの使用を選択すると、パスワードは Galaxy に送信されません。これは GitHub で認証され、個人アクセストークンを作成するために使用されます。次にトークンを Galaxy に送信し、その ID を検証し、Galaxy アクセストークンを返します。認証が完了すると、GitHub トークンが破棄されます。"
-
-#: ../../rst/galaxy/dev_guide.rst:123
-msgid "If you do not want to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create."
-msgstr "GitHub パスワードを使用しない場合や、GitHub で 2 段階認証を有効にしている場合は、``--github-token`` オプションを使用して、作成する個人用アクセストークンを渡します。"
-
-#: ../../rst/galaxy/dev_guide.rst:127
+#: ../../rst/galaxy/dev_guide.rst:107
 msgid "Import a role"
 msgstr "ロールのインポート"
 
-#: ../../rst/galaxy/dev_guide.rst:129
+#: ../../rst/galaxy/dev_guide.rst:109
 msgid "The ``import`` command requires that you first authenticate using the ``login`` command. Once authenticated you can import any GitHub repository that you own or have been granted access."
 msgstr "``import`` コマンドでは、最初に ``login`` コマンドを使用して認証する必要があります。認証されると、所有またはアクセスが付与された GitHub リポジトリーをすべてインポートできます。"
 
-#: ../../rst/galaxy/dev_guide.rst:131
+#: ../../rst/galaxy/dev_guide.rst:111
 msgid "Use the following to import to role:"
 msgstr "以下を使用してロールにインポートします。"
 
-#: ../../rst/galaxy/dev_guide.rst:137
+#: ../../rst/galaxy/dev_guide.rst:117
 msgid "By default the command will wait for Galaxy to complete the import process, displaying the results as the import progresses:"
 msgstr "デフォルトでは、コマンドは Galaxy がインポートプロセスを完了するまで待機し、インポートが進行するにつれて結果を表示します。"
 
-#: ../../rst/galaxy/dev_guide.rst:155
+#: ../../rst/galaxy/dev_guide.rst:135
 msgid "Branch"
 msgstr "ブランチ"
 
-#: ../../rst/galaxy/dev_guide.rst:157
+#: ../../rst/galaxy/dev_guide.rst:137
 msgid "Use the ``--branch`` option to import a specific branch. If not specified, the default branch for the repo will be used."
 msgstr "特定のブランチをインポートするには、``--branch`` オプションを使用します。指定しない場合は、リポジトリーのデフォルトブランチが使用されます。"
 
-#: ../../rst/galaxy/dev_guide.rst:160
+#: ../../rst/galaxy/dev_guide.rst:140
 msgid "Role name"
 msgstr "ロール名"
 
-#: ../../rst/galaxy/dev_guide.rst:162
+#: ../../rst/galaxy/dev_guide.rst:142
 msgid "By default the name given to the role will be derived from the GitHub repository name. However, you can use the ``--role-name`` option to override this and set the name."
 msgstr "デフォルトでは、ロールに指定された名前は GitHub リポジトリー名から派生しますが、``--role-name`` オプションを使用してこれを上書きして名前を設定できます。"
 
-#: ../../rst/galaxy/dev_guide.rst:165
+#: ../../rst/galaxy/dev_guide.rst:145
 msgid "No wait"
 msgstr "待機なし"
 
-#: ../../rst/galaxy/dev_guide.rst:167
+#: ../../rst/galaxy/dev_guide.rst:147
 msgid "If the ``--no-wait`` option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site by visiting *My Imports*."
 msgstr "``--no-wait`` オプションが存在する場合は、結果を待ちません。すべてのロールに対する最新のインポートの結果は、*My Imports* に移動して Galaxy Web サイトで利用できるようになります。"
 
-#: ../../rst/galaxy/dev_guide.rst:170
+#: ../../rst/galaxy/dev_guide.rst:150
 msgid "Delete a role"
 msgstr "ロールの削除"
 
-#: ../../rst/galaxy/dev_guide.rst:172
+#: ../../rst/galaxy/dev_guide.rst:152
 msgid "The ``delete`` command requires that you first authenticate using the ``login`` command. Once authenticated you can remove a role from the Galaxy web site. You are only allowed to remove roles where you have access to the repository in GitHub."
 msgstr "``delete`` コマンドでは、最初に ``login`` コマンドを使用して認証する必要があります。認証されると、Galaxy Web サイトからロールを削除できます。GitHub のリポジトリーにアクセスできるロールのみを削除することができます。"
 
-#: ../../rst/galaxy/dev_guide.rst:174
+#: ../../rst/galaxy/dev_guide.rst:154
 msgid "Use the following to delete a role:"
 msgstr "ロールを削除するには、以下を使用します。"
 
-#: ../../rst/galaxy/dev_guide.rst:180
+#: ../../rst/galaxy/dev_guide.rst:160
 msgid "This only removes the role from Galaxy. It does not remove or alter the actual GitHub repository."
 msgstr "これにより、Galaxy からロールのみが削除されます。実際の GitHub リポジトリーを削除したり、変更したりしません。"
 
-#: ../../rst/galaxy/dev_guide.rst:184
+#: ../../rst/galaxy/dev_guide.rst:164
 msgid "Travis integrations"
 msgstr "Travis 統合"
 
-#: ../../rst/galaxy/dev_guide.rst:186
+#: ../../rst/galaxy/dev_guide.rst:166
 msgid "You can create an integration or connection between a role in Galaxy and `Travis <https://travis-ci.org>`_. Once the connection is established, a build in Travis will automatically trigger an import in Galaxy, updating the search index with the latest information about the role."
 msgstr "Galaxy と `Travis <https://travis-ci.org>`_ のロール間の統合またはコネクションを作成できます。コネクションが確立されると、Travis のビルドが自動的に Galaxy でインポートを発生させ、ロールに関する最新情報で検索インデックスを更新します。"
 
-#: ../../rst/galaxy/dev_guide.rst:189
+#: ../../rst/galaxy/dev_guide.rst:169
 msgid "You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will also need an account in Travis, and your Travis token. Once you're ready, use the following command to create the integration:"
 msgstr "``setup`` コマンドを使用して統合を作成しますが、統合を作成する前に、最初に ``login`` コマンドを使用して認証する必要があります。Travis および Travis トークンにもアカウントが必要になります。準備が整ったら、以下のコマンドを使用して統合を作成します。"
 
-#: ../../rst/galaxy/dev_guide.rst:196
+#: ../../rst/galaxy/dev_guide.rst:176
 msgid "The setup command requires your Travis token, however the token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_. The hash is stored in Galaxy and used to verify notifications received from Travis."
 msgstr "setup コマンドには Travis トークンが必要ですが、トークンは Galaxy に保存されていません。これは、`the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_ で説明されているように、GitHub ユーザー名およびリポジトリーとともに使用されます。ハッシュは Galaxy に格納され、Travis から受信した通知の検証に使用されます。"
 
-#: ../../rst/galaxy/dev_guide.rst:199
+#: ../../rst/galaxy/dev_guide.rst:179
 msgid "The setup command enables Galaxy to respond to notifications. To configure Travis to run a build on your repository and send a notification, follow the `Travis getting started guide <https://docs.travis-ci.com/user/getting-started/>`_."
 msgstr "setup コマンドを使用すると、Galaxy が通知に応答します。Travis がリポジトリーでビルドを実行し、通知を送信するように設定するには、`Travis getting started guide <https://docs.travis-ci.com/user/getting-started/>`_ に従います。"
 
-#: ../../rst/galaxy/dev_guide.rst:202
+#: ../../rst/galaxy/dev_guide.rst:182
 msgid "To instruct Travis to notify Galaxy when a build completes, add the following to your .travis.yml file:"
 msgstr "ビルドの完了時に Galaxy に通知するように Travis に指示するには、.travis.yml ファイルに以下を追加します。"
 
-#: ../../rst/galaxy/dev_guide.rst:211
+#: ../../rst/galaxy/dev_guide.rst:191
 msgid "List Travis integrations"
 msgstr "Travis 統合の一覧表示"
 
-#: ../../rst/galaxy/dev_guide.rst:213
+#: ../../rst/galaxy/dev_guide.rst:193
 msgid "Use the ``--list`` option to display your Travis integrations:"
 msgstr "``--list`` オプションを使用して、Travis 統合を表示します。"
 
-#: ../../rst/galaxy/dev_guide.rst:227
+#: ../../rst/galaxy/dev_guide.rst:207
 msgid "Remove Travis integrations"
 msgstr "Travis 統合の削除"
 
-#: ../../rst/galaxy/dev_guide.rst:229
+#: ../../rst/galaxy/dev_guide.rst:209
 msgid "Use the ``--remove`` option to disable and remove a Travis integration:"
 msgstr "``--remove`` オプションを使用して、Travis 統合を無効化および削除します。"
 
-#: ../../rst/galaxy/dev_guide.rst:235
+#: ../../rst/galaxy/dev_guide.rst:215
 msgid "Provide the ID of the integration to be disabled. You can find the ID by using the ``--list`` option."
 msgstr "無効にする統合の ID を指定します。``--list`` オプションを使用して ID を検索できます。"
 
-#: ../../rst/galaxy/dev_guide.rst:239 ../../rst/galaxy/user_guide.rst:491
+#: ../../rst/galaxy/dev_guide.rst:219 ../../rst/galaxy/user_guide.rst:491
 msgid ":ref:`collections`"
 msgstr ":ref:`collections`"
 
-#: ../../rst/galaxy/dev_guide.rst:240 ../../rst/galaxy/user_guide.rst:492
+#: ../../rst/galaxy/dev_guide.rst:220 ../../rst/galaxy/user_guide.rst:492
 msgid "Shareable collections of modules, playbooks and roles"
 msgstr "モジュール、Playbook、およびロールの共有可能なコレクション"
 
-#: ../../rst/galaxy/dev_guide.rst:241 ../../rst/galaxy/user_guide.rst:493
+#: ../../rst/galaxy/dev_guide.rst:221 ../../rst/galaxy/user_guide.rst:493
 msgid ":ref:`playbooks_reuse_roles`"
 msgstr ":ref:`playbooks_reuse_roles`"
 
-#: ../../rst/galaxy/dev_guide.rst:242
+#: ../../rst/galaxy/dev_guide.rst:222
 msgid "All about ansible roles"
 msgstr "Ansible ロールに関するすべて"
 
-#: ../../rst/galaxy/dev_guide.rst:243
+#: ../../rst/galaxy/dev_guide.rst:223
 msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 
-#: ../../rst/galaxy/dev_guide.rst:244
+#: ../../rst/galaxy/dev_guide.rst:224
 msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
-#: ../../rst/galaxy/dev_guide.rst:245
+#: ../../rst/galaxy/dev_guide.rst:225
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
-#: ../../rst/galaxy/dev_guide.rst:246
+#: ../../rst/galaxy/dev_guide.rst:226
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
 
@@ -472,15 +468,15 @@ msgstr "``type: git`` でコレクションをインストールする場合、`
 msgid "You can also add roles to a ``requirements.yml`` file, under the ``roles`` key. The values follow the same format as a requirements file used in older Ansible releases."
 msgstr "``roles``キーの下にある``requirements.yml``ファイルにロールを追加することもできます。この値は、古い Ansible リリースで使用される要件ファイルと同じ形式に従います。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:67
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:68
 msgid "To install both roles and collections at the same time with one command, run the following:"
 msgstr "1 つのコマンドで、ロールとコレクションを同時にインストールするには、以下のコマンドを実行します。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:73
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:74
 msgid "Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections, or roles respectively."
 msgstr "``ansible-galaxy collection install -r`` または ``ansible-galaxy role install -r`` を実行すると、それぞれコレクションまたはロールがインストールされます。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:76
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:77
 msgid "Installing both roles and collections from the same requirements file will not work when specifying a custom collection or role install path. In this scenario the collections will be skipped and the command will process each like ``ansible-galaxy role install`` would."
 msgstr "カスタムコレクションまたはロールインストールパスを指定する場合、同じ要件ファイルからロールとコレクションの両方をインストールすることはできません。今回の例では、コレクションは省略され、コマンドは ``ansible-galaxy role install`` のように処理されます。"
 
@@ -1076,5 +1072,17 @@ msgstr "カタログ関連の操作を実行します。"
 
 #~ msgid "Once a collection is found, any of its requirements are only searched within the same Galaxy instance as the parent collection. The install process will not search for a collection requirement in a different Galaxy instance."
 #~ msgstr "コレクションが見つかると、その要件は親コレクションと同じ Galaxy インスタンス内でのみ検索されます。インストールプロセスでは、別の Galaxy インスタンスでコレクション要件を検索しません。"
+
+#~ msgid "The ``login`` command requires using your GitHub credentials. You can use your username and password, or you can create a `personal access token <https://help.github.com/articles/creating-an-access-token-for-command-line-use/>`_. If you choose to create a token, grant minimal access to the token, as it is used just to verify identify."
+#~ msgstr "``login`` コマンドには、GitHub 認証情報を使用する必要があります。ユーザー名とパスワードを使用するか、`personal access token <https://help.github.com/articles/creating-an-access-token-for-command-line-use/>`_ を作成することができます。トークンの作成を選択した場合は、識別を確認するためにのみ使用されます。"
+
+#~ msgid "The following shows authenticating with the Galaxy website using a GitHub username and password:"
+#~ msgstr "以下は、GitHub のユーザー名とパスワードを使用した Galaxy Web サイトでの認証を示しています。"
+
+#~ msgid "When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticates with GitHub and create a personal access token. It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is destroyed."
+#~ msgstr "ユーザー名とパスワードの使用を選択すると、パスワードは Galaxy に送信されません。これは GitHub で認証され、個人アクセストークンを作成するために使用されます。次にトークンを Galaxy に送信し、その ID を検証し、Galaxy アクセストークンを返します。認証が完了すると、GitHub トークンが破棄されます。"
+
+#~ msgid "If you do not want to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create."
+#~ msgstr "GitHub パスワードを使用しない場合や、GitHub で 2 段階認証を有効にしている場合は、``--github-token`` オプションを使用して、作成する個人用アクセストークンを渡します。"
 
 

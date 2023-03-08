@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/os_guide/index.rst:5
 msgid "Using Ansible on Windows and BSD"
@@ -222,17 +222,17 @@ msgstr "ご質問はございますか。サポートが必要ですか。ご提
 
 #: ../../rst/os_guide/intro_bsd.rst:277 ../../rst/os_guide/windows_dsc.rst:507
 #: ../../rst/os_guide/windows_faq.rst:256
-#: ../../rst/os_guide/windows_setup.rst:577
+#: ../../rst/os_guide/windows_setup.rst:498
 #: ../../rst/os_guide/windows_usage.rst:518
-#: ../../rst/os_guide/windows_winrm.rst:1010
+#: ../../rst/os_guide/windows_winrm.rst:1012
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
 #: ../../rst/os_guide/intro_bsd.rst:278 ../../rst/os_guide/windows_dsc.rst:508
 #: ../../rst/os_guide/windows_faq.rst:257
-#: ../../rst/os_guide/windows_setup.rst:578
+#: ../../rst/os_guide/windows_setup.rst:499
 #: ../../rst/os_guide/windows_usage.rst:519
-#: ../../rst/os_guide/windows_winrm.rst:1011
+#: ../../rst/os_guide/windows_winrm.rst:1013
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
 
@@ -370,8 +370,8 @@ msgid "A ``[PSCredential]`` object is used to store credentials in a secure way,
 msgstr "``[PSCredential]`` オブジェクトは認証情報を安全な方法で保存するために使用されますが、Ansible にはこれを JSON でシリアル化する方法がありません。DSC PSCredential プロパティーを設定するには、そのパラメーターの定義に、ユーザ名とパスワードをそれぞれ ``_username`` と ``_password`` をサフィックスにした 2 つのエントリーを追加する必要があります。たとえば、以下のようになります。"
 
 #: ../../rst/os_guide/windows_dsc.rst:190
-msgid "On versions of Ansible older than 2.8, you should set ``no_log: yes`` on the task definition in Ansible to ensure any credentials used are not stored in any log file or console output."
-msgstr "2.8 より古いバージョンの Ansible では、Ansible のタスク定義に ``no_log: yes`` を設定して、使用する認証情報がログファイルまたはコンソールの出力に保存されないようにする必要があります。"
+msgid "On versions of Ansible older than 2.8, you should set ``no_log: true`` on the task definition in Ansible to ensure any credentials used are not stored in any log file or console output."
+msgstr "2.8 より古いバージョンの Ansible では、Ansible のタスク定義に ``no_log: true`` を設定して、使用する認証情報がログファイルまたはコンソールの出力に保存されないようにする必要があります。"
 
 #: ../../rst/os_guide/windows_dsc.rst:194
 msgid "A ``[PSCredential]`` is defined with ``EmbeddedInstance(\"MSFT_Credential\")`` in a DSC resource MOF definition."
@@ -519,61 +519,61 @@ msgstr "IIS Web サイトのセットアップ"
 
 #: ../../rst/os_guide/windows_dsc.rst:499
 #: ../../rst/os_guide/windows_usage.rst:510
-#: ../../rst/os_guide/windows_winrm.rst:1002
+#: ../../rst/os_guide/windows_winrm.rst:1004
 msgid ":ref:`playbooks_intro`"
 msgstr ":ref:`playbooks_intro`"
 
 #: ../../rst/os_guide/windows_dsc.rst:500
 #: ../../rst/os_guide/windows_faq.rst:251
-#: ../../rst/os_guide/windows_setup.rst:570
+#: ../../rst/os_guide/windows_setup.rst:491
 #: ../../rst/os_guide/windows_usage.rst:511
-#: ../../rst/os_guide/windows_winrm.rst:1003
+#: ../../rst/os_guide/windows_winrm.rst:1005
 msgid "An introduction to playbooks"
 msgstr "Playbook の概要"
 
 #: ../../rst/os_guide/windows_dsc.rst:501
 #: ../../rst/os_guide/windows_faq.rst:252
-#: ../../rst/os_guide/windows_setup.rst:571
+#: ../../rst/os_guide/windows_setup.rst:492
 #: ../../rst/os_guide/windows_usage.rst:512
-#: ../../rst/os_guide/windows_winrm.rst:1004
+#: ../../rst/os_guide/windows_winrm.rst:1006
 msgid ":ref:`playbooks_best_practices`"
 msgstr ":ref:`playbooks_best_practices`"
 
 #: ../../rst/os_guide/windows_dsc.rst:502
 #: ../../rst/os_guide/windows_faq.rst:253
-#: ../../rst/os_guide/windows_setup.rst:572
+#: ../../rst/os_guide/windows_setup.rst:493
 #: ../../rst/os_guide/windows_usage.rst:513
-#: ../../rst/os_guide/windows_winrm.rst:1005
+#: ../../rst/os_guide/windows_winrm.rst:1007
 msgid "Tips and tricks for playbooks"
 msgstr "Playbook のヒントと裏技"
 
 #: ../../rst/os_guide/windows_dsc.rst:503
-#: ../../rst/os_guide/windows_setup.rst:573
+#: ../../rst/os_guide/windows_setup.rst:494
 #: ../../rst/os_guide/windows_usage.rst:514
-#: ../../rst/os_guide/windows_winrm.rst:1006
+#: ../../rst/os_guide/windows_winrm.rst:1008
 msgid ":ref:`List of Windows Modules <windows_modules>`"
 msgstr ":ref:`List of Windows Modules <windows_modules>`"
 
 #: ../../rst/os_guide/windows_dsc.rst:504
-#: ../../rst/os_guide/windows_setup.rst:574
+#: ../../rst/os_guide/windows_setup.rst:495
 #: ../../rst/os_guide/windows_usage.rst:515
-#: ../../rst/os_guide/windows_winrm.rst:1007
+#: ../../rst/os_guide/windows_winrm.rst:1009
 msgid "Windows specific module list, all implemented in PowerShell"
 msgstr "Windows 固有のモジュールリスト (すべて PowerShell に実装)"
 
 #: ../../rst/os_guide/windows_dsc.rst:505
 #: ../../rst/os_guide/windows_faq.rst:254
-#: ../../rst/os_guide/windows_setup.rst:575
+#: ../../rst/os_guide/windows_setup.rst:496
 #: ../../rst/os_guide/windows_usage.rst:516
-#: ../../rst/os_guide/windows_winrm.rst:1008
+#: ../../rst/os_guide/windows_winrm.rst:1010
 msgid "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/os_guide/windows_dsc.rst:506
 #: ../../rst/os_guide/windows_faq.rst:255
-#: ../../rst/os_guide/windows_setup.rst:576
+#: ../../rst/os_guide/windows_setup.rst:497
 #: ../../rst/os_guide/windows_usage.rst:517
-#: ../../rst/os_guide/windows_winrm.rst:1009
+#: ../../rst/os_guide/windows_winrm.rst:1011
 msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
@@ -878,8 +878,8 @@ msgid "The value for ``ansible_shell_type`` should either be ``cmd`` or ``powers
 msgstr "``ansible_shell_type`` の値は、``cmd`` または ``powershell`` のいずれかでなければなりません。SSH サービスで ``DefaultShell`` が設定されていない場合は ``cmd`` を使用して、``DefaultShell`` として設定されている場合は ``powershell`` を使用してください。"
 
 #: ../../rst/os_guide/windows_faq.rst:219
-msgid "Why is connecting to a Windows host via SSH failing?"
-msgstr "SSH 経由で Windows ホストに接続できないのはなぜですか"
+msgid "Why is connecting to a Windows host through SSH failing?"
+msgstr "SSH を介した Windows ホストへの接続に失敗するのはなぜですか?"
 
 #: ../../rst/os_guide/windows_faq.rst:220
 msgid "Unless you are using ``Win32-OpenSSH`` as described above, you must connect to Windows hosts using :ref:`windows_winrm`. If your Ansible output indicates that SSH was used, either you did not set the connection vars properly or the host is not inheriting them correctly."
@@ -922,7 +922,7 @@ msgid "The Windows documentation index"
 msgstr "Windows ドキュメントの目次"
 
 #: ../../rst/os_guide/windows_faq.rst:250
-#: ../../rst/os_guide/windows_setup.rst:569
+#: ../../rst/os_guide/windows_setup.rst:490
 msgid ":ref:`about_playbooks`"
 msgstr ":ref:`about_playbooks`"
 
@@ -959,8 +959,8 @@ msgid "Fix high-CPU-on-boot for VMs/cloud instances"
 msgstr "仮想マシン/クラウドインスタンスの、システム起動時の高 CPU を修正"
 
 #: ../../rst/os_guide/windows_performance.rst:50
-msgid "If you are creating golden images to spawn instances from, you can avoid a disruptive high CPU task near startup via `processing the ngen queue <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-image-service>`_ within your golden image creation, if you know the CPU types won't change between golden image build process and runtime."
-msgstr "インスタンスを生成するためにゴールデンイメージを作成している場合は、ゴールデンイメージのビルドプロセスとランタイムの間で CPU タイプが変わらないことがわかっていれば、ゴールデンイメージの作成時に `ngen キューの処理 <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-image-service>`_ を使用することで、起動時に高い CPU タスクが発生するのを防ぐことができます。"
+msgid "If you are creating golden images to spawn instances from, you can avoid a disruptive high CPU task near startup through `processing the ngen queue <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-image-service>`_ within your golden image creation, if you know the CPU types won't change between golden image build process and runtime."
+msgstr "インスタンスを生成するためにゴールデンイメージを作成している場合は、ゴールデンイメージのビルドプロセスとランタイムの間で CPU タイプが変わらないことがわかっていれば、作成したゴールデンイメージ内で `processing the ngen queue <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-image-service>`_ を介して、起動時に破壊的な CPU 使用率の高いタスクを回避することができます。"
 
 #: ../../rst/os_guide/windows_performance.rst:55
 msgid "Place the following near the end of your playbook, bearing in mind the factors that can cause native images to be invalidated (`see MSDN <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-images-and-jit-compilation>`_)."
@@ -975,449 +975,529 @@ msgid "This document discusses the setup that is required before Ansible can com
 msgstr "本書では、Ansible が Microsoft Windows ホストと通信する前に必要なセットアップを説明します。"
 
 #: ../../rst/os_guide/windows_setup.rst:12
-msgid "For Ansible to communicate to a Windows host and use Windows modules, the Windows host must meet these requirements:"
-msgstr "Ansible が Windows ホストと通信し、Windows モジュールを使用するためには、Windows ホストが以下の要件を満たす必要があります。"
+msgid "For Ansible to communicate to a Windows host and use Windows modules, the Windows host must meet these base requirements for connectivity:"
+msgstr "Ansible が Windows ホストと通信し、Windows モジュールを使用するためには、Windows ホストが以下の接続性に関する基本要件を満たす必要があります。"
 
 #: ../../rst/os_guide/windows_setup.rst:15
-msgid "Ansible can generally manage Windows versions under current and extended support from Microsoft. Ansible can manage desktop OSs including Windows 8.1, and 10, and server OSs including Windows Server 2012, 2012 R2, 2016, 2019, and 2022."
-msgstr "Ansible は、Microsoft の現行および拡張サポート下にある Windows バージョンを一般的に管理できます。Ansible は、Windows 8.1および 10 を含むデスクトップ OS、ならびに Windows Server 2012、2012 R2、2016、2019、および 2022 を含むサーバー OS を管理できます。"
+msgid "With Ansible you can generally manage Windows versions under the current and extended support from Microsoft. You can also manage desktop OSs including Windows 8.1, and 10, and server OSs including Windows Server 2012, 2012 R2, 2016, 2019, and 2022."
+msgstr "Ansible は、Microsoft の現行および拡張サポート下にある Windows バージョンを一般的に管理できます。また、Windows 8.1および 10 を含むデスクトップ OS、ならびに Windows Server 2012、2012 R2、2016、2019、および 2022 を含むサーバー OS を管理できます。"
 
-#: ../../rst/os_guide/windows_setup.rst:20
-msgid "Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be installed on the Windows host."
-msgstr "Ansible を利用するには、Windows ホストに PowerShell 3.0 以降と少なくとも .NET 4.0 がインストールされている必要があります。"
+#: ../../rst/os_guide/windows_setup.rst:17
+msgid "You need to install PowerShell 3.0 or newer and at least .NET 4.0 on the Windows host."
+msgstr "Windows ホストに PowerShell 3.0 以降と少なくとも .NET 4.0 がインストールされている必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:23
-msgid "A WinRM listener should be created and activated. More details for this can be found below."
-msgstr "WinRM リスナーを作成し、有効にする必要があります。詳細は以下を参照してください。"
+#: ../../rst/os_guide/windows_setup.rst:19
+msgid "You need to create and activate a WinRM listener. More details, see `WinRM Setup <https://docs.ansible.com/ansible/latest//user_guide/windows_setup.html#winrm-listener>`_."
+msgstr "WinRM リスナーを作成してアクティブにする必要があります。詳細は、`WinRM Setup <https://docs.ansible.com/ansible/latest//user_guide/windows_setup.html#winrm-listener>`_ を参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:26
-msgid "While these are the base requirements for Ansible connectivity, some Ansible modules have additional requirements, such as a newer OS or PowerShell version. Please consult the module's documentation page to determine whether a host meets those requirements."
-msgstr "これらは、Ansible 接続の基本的な要件ですが、Ansible モジュールの中には、新しい OS や PowerShell のバージョンなど、追加の要件があるものもあります。ホストがこれらの要件を満たしているかどうかは、モジュールのドキュメントページを参照してください。"
+#: ../../rst/os_guide/windows_setup.rst:21
+msgid "Some Ansible modules have additional requirements, such as a newer OS or PowerShell version. Consult the module documentation page to determine whether a host meets those requirements."
+msgstr "Ansible モジュールの中には、新しい OS や PowerShell のバージョンなど、追加の要件があるものもあります。ホストがこれらの要件を満たしているかどうかは、モジュールのドキュメントページを参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:32
+#: ../../rst/os_guide/windows_setup.rst:24
 msgid "Upgrading PowerShell and .NET Framework"
 msgstr "PowerShell および .NET Framework のアップグレード"
 
-#: ../../rst/os_guide/windows_setup.rst:33
+#: ../../rst/os_guide/windows_setup.rst:25
 msgid "Ansible requires PowerShell version 3.0 and .NET Framework 4.0 or newer to function on older operating systems like Server 2008 and Windows 7. The base image does not meet this requirement. You can use the `Upgrade-PowerShell.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Upgrade-PowerShell.ps1>`_ script to update these."
 msgstr "Ansible が Server 2008 や Windows 7 などの古いオペレーティングシステムで機能するためには、PowerShell の バージョン3.0 と .NET Framework 4.0 以降が必要です。ベースイメージは、この要件を満たしていません。`Upgrade-PowerShell.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Upgrade-PowerShell.ps1>`_ スクリプトを使用してこれらを更新することができます。"
 
-#: ../../rst/os_guide/windows_setup.rst:36
+#: ../../rst/os_guide/windows_setup.rst:28
 msgid "This is an example of how to run this script from PowerShell:"
 msgstr "このスクリプトを PowerShell から実行する例を以下に示します。"
 
-#: ../../rst/os_guide/windows_setup.rst:52
-msgid "Once completed, you will need to remove auto logon and set the execution policy back to the default (``Restricted `` for Windows clients, or ``RemoteSigned`` for Windows servers). You can do this with the following PowerShell commands:"
-msgstr "完了したら、自動ログオンを解除して、実行ポリシーをデフォルト (Windows クライアントの場合は ``Restricted ``、Windows サーバーの場合は ``RemoteSigned``) に戻す必要があります。これには以下の PowerShell コマンドが必要です。"
+#: ../../rst/os_guide/windows_setup.rst:43
+msgid "In the script, the ``file`` value can be the PowerShell version 3.0, 4.0, or 5.1."
+msgstr "このスクリプトでは、``file`` の値は PowerShell バージョン 3.0、4.0、または 5.1 に指定できます。"
 
-#: ../../rst/os_guide/windows_setup.rst:66
-msgid "The script works by checking to see what programs need to be installed (such as .NET Framework 4.5.2) and what PowerShell version is required. If a reboot is required and the ``username`` and ``password`` parameters are set, the script will automatically reboot and logon when it comes back up from the reboot. The script will continue until no more actions are required and the PowerShell version matches the target version. If the ``username`` and ``password`` parameters are not set, the script will prompt the user to manually reboot and logon when required. When the user is next logged in, the script will continue where it left off and the process continues until no more actions are required."
-msgstr "このスクリプトは、インストールが必要なプログラム (.NET Framework 4.5.2 など) や、必要な PowerShell バージョンを確認して動作します。再起動が必要で、``username`` パラメーターと ``password`` パラメーターが設定されている場合は、スクリプトが自動的に再起動し、再起動から復帰したときにログオンします。スクリプトは、アクションが不要になり、PowerShell バージョンがターゲットのバージョンと一致するまで続行されます。``username`` パラメーターおよび ``password`` パラメーターが設定されていない場合、スクリプトは必要に応じてユーザーに手動で再起動とログオンを促します。ユーザーが次にログインすると、スクリプトは前回の続きを実行し、アクションが必要なくなるまで処理を続けます。"
+#: ../../rst/os_guide/windows_setup.rst:45
+msgid "Once completed, you need to run the following PowerShell commands:"
+msgstr "完了したら、以下の PowerShell コマンドを実行する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:77
-msgid "If running on Server 2008, then SP2 must be installed. If running on Server 2008 R2 or Windows 7, then SP1 must be installed."
-msgstr "Server 2008 で実行する場合は、SP2 がインストールされている必要があります。Server 2008 R2 または Windows 7 で実行している場合は SP1 をインストールする必要があります。"
+#: ../../rst/os_guide/windows_setup.rst:47
+msgid "As an optional but good security practice, you can set the execution policy back to the default."
+msgstr "こちらは任意ですが、実行ポリシーをデフォルトに戻すことがセキュリティープラクティスとして適切です。"
 
-#: ../../rst/os_guide/windows_setup.rst:80
-msgid "Windows Server 2008 can only install PowerShell 3.0; specifying a newer version will result in the script failing."
+#: ../../rst/os_guide/windows_setup.rst:53
+msgid "Use the ``RemoteSigned`` value for Windows servers, or ``Restricted`` for Windows clients."
+msgstr "Windows サーバーには ``RemoteSigned`` の値を使用し、Windows クライアントには ``Restricted`` を使用します。"
+
+#: ../../rst/os_guide/windows_setup.rst:55
+msgid "Remove the auto logon."
+msgstr "自動ログオンを削除します。"
+
+#: ../../rst/os_guide/windows_setup.rst:64
+msgid "The script determines what programs you need to install (such as .NET Framework 4.5.2) and what PowerShell version needs to be present. If a reboot is needed and the ``username`` and ``password`` parameters are set, the script will automatically reboot the machine and then logon. If the ``username`` and ``password`` parameters are not set, the script will prompt the user to manually reboot and logon when required. When the user is next logged in, the script will continue where it left off and the process continues until no more actions are required."
+msgstr "このスクリプトは、インストールが必要なプログラム (.NET Framework 4.5.2 など) や、必要な PowerShell バージョンを確認して動作します。再起動が必要で、``username`` パラメーターと ``password`` パラメーターが設定されている場合は、スクリプトが自動的に再起動し、再起動から復帰したときにログオンします。``username`` パラメーターおよび ``password`` パラメーターが設定されていない場合には、スクリプトは必要に応じてユーザーに手動で再起動とログオンを促します。ユーザーが次にログインすると、スクリプトは前回の続きを実行し、アクションが必要なくなるまで処理を続けます。"
+
+#: ../../rst/os_guide/windows_setup.rst:67
+msgid "If you run the script on Server 2008, then you need to install SP2. For Server 2008 R2 or Windows 7 you need SP1."
+msgstr "Server 2008 でスクリプトを実行する場合は、SP2 をインストールする必要があります。Server 2008 R2 または Windows 7 の場合は SP1 が必要です。"
+
+#: ../../rst/os_guide/windows_setup.rst:69
+msgid "On Windows Server 2008 you can install only PowerShell 3.0. A newer version will result in the script failure."
 msgstr "Windows Server 2008 では PowerShell 3.0 しかインストールできないため、それより新しいバージョンを指定するとスクリプトが失敗します。"
 
-#: ../../rst/os_guide/windows_setup.rst:83
-msgid "The ``username`` and ``password`` parameters are stored in plain text in the registry. Make sure the cleanup commands are run after the script finishes to ensure no credentials are still stored on the host."
+#: ../../rst/os_guide/windows_setup.rst:71
+msgid "The ``username`` and ``password`` parameters are stored in plain text in the registry. Run the cleanup commands after the script finishes to ensure no credentials are stored on the host."
 msgstr "``username`` と ``password`` のパラメーターは、レジストリーに平文で保存されます。スクリプトの終了後にクリーンアップコマンドを実行して、ホスト上に認証情報が保存されていないことを確認してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:88
+#: ../../rst/os_guide/windows_setup.rst:75
 msgid "WinRM Memory Hotfix"
 msgstr "WinRM Memory Hotfix"
 
+#: ../../rst/os_guide/windows_setup.rst:76
+msgid "On PowerShell v3.0, there is a bug that limits the amount of memory available to the WinRM service. Use the `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ script to install a hotfix on affected hosts as part of the system bootstrapping or imaging process. Without this hotfix, Ansible fails to execute certain commands on the Windows host."
+msgstr "PowerShell v3.0 で実行する場合は、WinRM サービスのバグにより、WinRM で使用できるメモリー量が制限されるという問題がありました。`Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ というスクリプトを使用すると、システムのブートストラップまたはイメージプロセスの一部として、影響を受けるホストに hotfix をインストールできます。この hotfix がない場合には、Ansible では Windows ホスト上で特定のコマンドの実行に失敗します。"
+
+#: ../../rst/os_guide/windows_setup.rst:78
+msgid "To install the hotfix:"
+msgstr "ホットフィックスをインストールします。"
+
 #: ../../rst/os_guide/windows_setup.rst:89
-msgid "When running on PowerShell v3.0, there is a bug with the WinRM service that limits the amount of memory available to WinRM. Without this hotfix installed, Ansible will fail to execute certain commands on the Windows host. These hotfixes should be installed as part of the system bootstrapping or imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ can be used to install the hotfix on affected hosts."
-msgstr "PowerShell v3.0 で実行する場合は、WinRM サービスのバグにより、WinRM で使用できるメモリー量が制限されるという問題がありました。この Hotfix をインストールしないと、Windows ホスト上で Ansible による特定のコマンドの実行に失敗します。これらの Hotfix は、システムのブートストラップまたはイメージングプロセスの一部としてインストールする必要があります。`Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ というスクリプトを使用すると、影響を受けるホストに hotfix をインストールできます。"
+msgid "For more details, refer to the `\"Out of memory\" error on a computer that has a customized MaxMemoryPerShellMB quota set and has WMF 3.0 installed <https://support.microsoft.com/en-us/help/2842230/out-of-memory-error-on-a-computer-that-has-a-customized-maxmemorypersh>`_ article."
+msgstr "詳細は、`\"Out of memory\" error on a computer that has a customized MaxMemoryPerShellMB quota set and has WMF 3.0 installed <https://support.microsoft.com/en-us/help/2842230/out-of-memory-error-on-a-computer-that-has-a-customized-maxmemorypersh>`_ アーティクルを参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:95
-msgid "The following PowerShell command will install the hotfix:"
-msgstr "以下の PowerShell コマンドは hotfix をインストールします。"
-
-#: ../../rst/os_guide/windows_setup.rst:106
-msgid "For more details, please refer to the `Hotfix document <https://support.microsoft.com/en-us/help/2842230/out-of-memory-error-on-a-computer-that-has-a-customized-maxmemorypersh>`_ from Microsoft."
-msgstr "詳細は、Microsoft 社の `Hotfix ドキュメント <https://support.microsoft.com/en-us/help/2842230/out-of-memory-error-on-a-computer-that-has-a-customized-maxmemorypersh>`_ を参照してください。"
-
-#: ../../rst/os_guide/windows_setup.rst:109
+#: ../../rst/os_guide/windows_setup.rst:92
 msgid "WinRM Setup"
 msgstr "WinRM の設定"
 
-#: ../../rst/os_guide/windows_setup.rst:110
-msgid "Once Powershell has been upgraded to at least version 3.0, the final step is to configure the WinRM service so that Ansible can connect to it. There are two main components of the WinRM service that governs how Ansible can interface with the Windows host: the ``listener`` and the ``service`` configuration settings."
-msgstr "Powershell をバージョン 3.0 以降にアップグレードしたら、最後のステップとして、WinRM サービスを設定して Ansible が接続できるようにします。WinRM サービスには、Ansible が Windows ホストとどのように連携するかを決定する構成設定 ``listener`` および ``service`` の 2 つの主要コンポーネントがあります。"
+#: ../../rst/os_guide/windows_setup.rst:93
+msgid "You need to configure the WinRM service so that Ansible can connect to it. There are two main components of the WinRM service that governs how Ansible can interface with the Windows host: the ``listener`` and the ``service`` configuration settings."
+msgstr "WinRM サービスを設定して Ansible が接続できるようにします。WinRM サービスには、構成設定 ``listener`` および ``service`` の 2 つの主要コンポーネントがあり、Ansible が Windows ホストとどのように連携するかを決定します。"
 
-#: ../../rst/os_guide/windows_setup.rst:116
+#: ../../rst/os_guide/windows_setup.rst:96
 msgid "WinRM Listener"
 msgstr "WinRM リスナー"
 
-#: ../../rst/os_guide/windows_setup.rst:117
-msgid "The WinRM services listens for requests on one or more ports. Each of these ports must have a listener created and configured."
+#: ../../rst/os_guide/windows_setup.rst:97
+msgid "The WinRM services listen for requests on one or more ports. Each of these ports must have a listener created and configured."
 msgstr "WinRM サービスは、1 つ以上のポートで要求をリッスンします。これらのポートごとにリスナーを作成し、設定する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:120
-msgid "To view the current listeners that are running on the WinRM service, run the following command:"
-msgstr "WinRM サービスで実行している現在のリスナーを表示するには、次のコマンドを実行します。"
+#: ../../rst/os_guide/windows_setup.rst:99
+msgid "To view the current listeners that are running on the WinRM service:"
+msgstr "WinRM サービスで実行している現在のリスナーを表示します。"
 
-#: ../../rst/os_guide/windows_setup.rst:127
-#: ../../rst/os_guide/windows_setup.rst:245
+#: ../../rst/os_guide/windows_setup.rst:105
+#: ../../rst/os_guide/windows_setup.rst:200
 msgid "This will output something like:"
 msgstr "これにより、以下のようなものが出力されます。"
 
-#: ../../rst/os_guide/windows_setup.rst:153
-msgid "In the example above there are two listeners activated; one is listening on port 5985 over HTTP and the other is listening on port 5986 over HTTPS. Some of the key options that are useful to understand are:"
+#: ../../rst/os_guide/windows_setup.rst:131
+msgid "In the example above there are two listeners activated. One is listening on port 5985 over HTTP and the other is listening on port 5986 over HTTPS. Some of the key options that are useful to understand are:"
 msgstr "上の例では、2 つのリスナーが有効になっています。1 つは HTTP でポート 5985 をリッスンしており、もう 1 つは HTTPS でポート 5986 をリッスンしています。理解しておくと便利なオプションをいくつか紹介します。"
 
-#: ../../rst/os_guide/windows_setup.rst:157
-msgid "``Transport``: Whether the listener is run over HTTP or HTTPS, it is recommended to use a listener over HTTPS as the data is encrypted without any further changes required."
+#: ../../rst/os_guide/windows_setup.rst:133
+msgid "``Transport``: Whether the listener is run over HTTP or HTTPS. We recommend you use a listener over HTTPS because the data is encrypted without any further changes required."
 msgstr "``Transport``: リスナーが HTTP または HTTPS のどちらで実行している場合でも、データはさらなる変更なしに暗号化されるため、HTTPS 経由でリスナーを使用することが推奨されます。"
 
-#: ../../rst/os_guide/windows_setup.rst:161
-msgid "``Port``: The port the listener runs on, by default it is ``5985`` for HTTP and ``5986`` for HTTPS. This port can be changed to whatever is required and corresponds to the host var ``ansible_port``."
+#: ../../rst/os_guide/windows_setup.rst:135
+msgid "``Port``: The port the listener runs on. By default it is ``5985`` for HTTP and ``5986`` for HTTPS. This port can be changed to whatever is required and corresponds to the host var ``ansible_port``."
 msgstr "``Port``: リスナーが実行するポート。デフォルトは、HTTP の場合は ``5985``、HTTPS の場合は ``5986`` です。このポートは、必要なものにそれぞれ変更でき、ホスト変数 ``ansible_port`` に対応することができます。"
 
-#: ../../rst/os_guide/windows_setup.rst:165
-msgid "``URLPrefix``: The URL prefix to listen on, by default it is ``wsman``. If this is changed, the host var ``ansible_winrm_path`` must be set to the same value."
-msgstr "``URLPrefix``: リッスンする URL プレフィックス。デフォルトは ``wsman`` です。これが変更された場合、ホスト変数 ``ansible_winrm_path`` は同じ値に設定する必要があります。"
+#: ../../rst/os_guide/windows_setup.rst:137
+msgid "``URLPrefix``: The URL prefix to listen on. By default it is ``wsman``. If you change this option, you need to set the host var ``ansible_winrm_path`` to the same value."
+msgstr "``URLPrefix``: リッスンする URL プレフィックス。デフォルトは ``wsman`` です。このオプションが変更された場合、ホスト変数 ``ansible_winrm_path`` は同じ値に設定する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:169
-msgid "``CertificateThumbprint``: If running over an HTTPS listener, this is the thumbprint of the certificate in the Windows Certificate Store that is used in the connection. To get the details of the certificate itself, run this command with the relevant certificate thumbprint in PowerShell:"
-msgstr "``CertificateThumbprint``: HTTPS リスナーを介して実行する場合、これは接続に使用される Windows 証明書ストアの証明書のサムプリントです。証明書自体の詳細を取得するには、PowerShell で該当する証明書のサムプリントを指定して次のコマンドを実行します。"
+#: ../../rst/os_guide/windows_setup.rst:139
+msgid "``CertificateThumbprint``: If you use an HTTPS listener, this is the thumbprint of the certificate in the Windows Certificate Store that is used in the connection. To get the details of the certificate itself, run this command with the relevant certificate thumbprint in PowerShell:"
+msgstr "``CertificateThumbprint``: HTTPS リスナーを使用する場合、これは接続に使用される Windows 証明書ストアの証明書のサムプリントです。証明書自体の詳細を取得するには、PowerShell で該当する証明書のサムプリントを指定して次のコマンドを実行します。"
 
-#: ../../rst/os_guide/windows_setup.rst:180
+#: ../../rst/os_guide/windows_setup.rst:147
 msgid "Setup WinRM Listener"
 msgstr "WinRM リスナーの設定"
 
-#: ../../rst/os_guide/windows_setup.rst:181
+#: ../../rst/os_guide/windows_setup.rst:148
 msgid "There are three ways to set up a WinRM listener:"
 msgstr "WinRM リスナーを設定するには、3 つの方法があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:183
-msgid "Using ``winrm quickconfig`` for HTTP or ``winrm quickconfig -transport:https`` for HTTPS. This is the easiest option to use when running outside of a domain environment and a simple listener is required. Unlike the other options, this process also has the added benefit of opening up the Firewall for the ports required and starts the WinRM service."
+#: ../../rst/os_guide/windows_setup.rst:150
+msgid "Using ``winrm quickconfig`` for HTTP or ``winrm quickconfig -transport:https`` for HTTPS. This is the easiest option to use when running outside of a domain environment and a simple listener is required. Unlike the other options, this process also has the added benefit of opening up the firewall for the ports required and starts the WinRM service."
 msgstr "HTTP には ``winrm quickconfig`` を、HTTPS には ``winrm quickconfig -transport:https`` を使用します。これは、ドメイン環境外で動作し、シンプルなリスナーが必要な場合に、最も簡単に使用できるオプションです。他のオプションとは異なり、このプロセスには、必要なポートのためにファイアウォールを開き、WinRM サービスを開始するという利点があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:189
-msgid "Using Group Policy Objects. This is the best way to create a listener when the host is a member of a domain because the configuration is done automatically without any user input. For more information on group policy objects, see the `Group Policy Objects documentation <https://msdn.microsoft.com/en-us/library/aa374162(v=vs.85).aspx>`_."
-msgstr "グループポリシーオブジェクトの使用。設定は、ユーザーが入力せずに自動的に行われるため、この方法は、ホストがドメインのメンバーである場合にリスナーを作成するのに最適な方法です。グループポリシーオブジェクトの詳細は、`Group Policy Objects ドキュメント <https://msdn.microsoft.com/en-us/library/aa374162(v=vs.85).aspx>`_ を参照してください。"
+#: ../../rst/os_guide/windows_setup.rst:152
+msgid "Using Group Policy Objects (GPO). This is the best way to create a listener when the host is a member of a domain because the configuration is done automatically without any user input. For more information on group policy objects, see the `Group Policy Objects documentation <https://msdn.microsoft.com/en-us/library/aa374162(v=vs.85).aspx>`_."
+msgstr "グループポリシーオブジェクト (GPO) の使用。設定は、ユーザーが入力せずに自動的に行われるため、この方法は、ホストがドメインのメンバーである場合にリスナーを作成するのに最適な方法です。グループポリシーオブジェクトの詳細は、`Group Policy Objects documentation <https://msdn.microsoft.com/en-us/library/aa374162(v=vs.85).aspx>`_ を参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:194
-msgid "Using PowerShell to create the listener with a specific configuration. This can be done by running the following PowerShell commands:"
+#: ../../rst/os_guide/windows_setup.rst:154
+msgid "Using PowerShell to create a listener with a specific configuration. This can be done by running the following PowerShell commands:"
 msgstr "PowerShell を使用して、特定の設定でリスナーを作成します。これは、以下の PowerShell コマンドを実行することで可能になります。"
 
-#: ../../rst/os_guide/windows_setup.rst:209
-msgid "To see the other options with this PowerShell cmdlet, see `New-WSManInstance <https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1>`_."
-msgstr "この PowerShell コマンドレッドを伴う他のオプションを表示するには、「`New-WSManInstance <https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1>`_」を参照してください。"
+#: ../../rst/os_guide/windows_setup.rst:168
+msgid "To see the other options with this PowerShell command, refer to the `New-WSManInstance <https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1>`_ documentation."
+msgstr "この PowerShell コマンドの他のオプションを確認するには、`New-WSManInstance <https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1>`_ ドキュメントを参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:212
-msgid "When creating an HTTPS listener, an existing certificate needs to be created and stored in the ``LocalMachine\\My`` certificate store. Without a certificate being present in this store, most commands will fail."
-msgstr "HTTPS リスナーを作成する際には、既存の証明書を作成し、``LocalMachine\\My`` の証明書ストアに保存する必要があります。このストアに証明書が存在しないと、ほとんどのコマンドが失敗します。"
+#: ../../rst/os_guide/windows_setup.rst:171
+msgid "When creating an HTTPS listener, you must create and store a certificate in the ``LocalMachine\\My`` certificate store."
+msgstr "HTTPS リスナーを作成するときは、``LocalMachine\\My`` 証明書ストアに証明書を作成して保存する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:217
+#: ../../rst/os_guide/windows_setup.rst:174
 msgid "Delete WinRM Listener"
 msgstr "WinRM リスナーの削除"
 
-#: ../../rst/os_guide/windows_setup.rst:218
-msgid "To remove a WinRM listener:"
+#: ../../rst/os_guide/windows_setup.rst:175
+msgid "To remove all WinRM listeners:"
 msgstr "WinRM リスナーを削除するには、以下を実行します。"
 
-#: ../../rst/os_guide/windows_setup.rst:228
-msgid "The ``Keys`` object is an array of strings, so it can contain different values. By default it contains a key for ``Transport=`` and ``Address=`` which correspond to the values from winrm enumerate winrm/config/Listeners."
-msgstr "``Keys`` オブジェクトは文字列の配列であるため、異なる値を含むことができます。デフォルトでは、winrm enumerate winrm/config/Listeners の値に対応する ``Transport=`` および ``Address=`` のキーを含んでいます。"
+#: ../../rst/os_guide/windows_setup.rst:181
+msgid "To remove only those listeners that run over HTTPS:"
+msgstr "HTTPS で実行されるリスナーのみを削除するには、以下を実行します。"
 
-#: ../../rst/os_guide/windows_setup.rst:233
+#: ../../rst/os_guide/windows_setup.rst:187
+msgid "The ``Keys`` object is an array of strings, so it can contain different values. By default, it contains a key for ``Transport=`` and ``Address=`` which correspond to the values from the ``winrm enumerate winrm/config/Listeners`` command."
+msgstr "``Keys`` オブジェクトは文字列の配列であるため、異なる値を含むことができます。デフォルトでは、 ``winrm enumerate winrm/config/Listeners`` コマンドからのの値に対応する ``Transport=`` および ``Address=`` のキーを含んでいます。"
+
+#: ../../rst/os_guide/windows_setup.rst:190
 msgid "WinRM Service Options"
 msgstr "WinRM サービスオプション"
 
-#: ../../rst/os_guide/windows_setup.rst:234
-msgid "There are a number of options that can be set to control the behavior of the WinRM service component, including authentication options and memory settings."
-msgstr "WinRM サービスコンポーネントの動作を制御するように設定でき、認証オプションやメモリー設定など、複数のオプションを設定できます。"
+#: ../../rst/os_guide/windows_setup.rst:191
+msgid "You can control the behavior of the WinRM service component, including authentication options and memory settings."
+msgstr "認証オプションやメモリー設定など、WinRM サービスコンポーネントの動作を制御できます。"
 
-#: ../../rst/os_guide/windows_setup.rst:237
+#: ../../rst/os_guide/windows_setup.rst:193
 msgid "To get an output of the current service configuration options, run the following command:"
 msgstr "現在のサービス設定オプションの出力を得るには、次のコマンドを実行します。"
 
-#: ../../rst/os_guide/windows_setup.rst:283
-msgid "While many of these options should rarely be changed, a few can easily impact the operations over WinRM and are useful to understand. Some of the important options are:"
-msgstr "これらのオプションの多くはほとんど変更する必要はありませんが、いくつかのオプションは WinRM の操作に簡単に影響を与えるため、理解しておくと便利です。重要なオプションの一部を紹介します。"
+#: ../../rst/os_guide/windows_setup.rst:238
+msgid "You do not need to change the majority of these options. However, some of the important ones to know about are:"
+msgstr "これらのオプションの大部分を変更する必要はありませんが、知っておくべき重要なオプションは次のとおりです。"
 
-#: ../../rst/os_guide/windows_setup.rst:287
-msgid "``Service\\AllowUnencrypted``: This option defines whether WinRM will allow traffic that is run over HTTP without message encryption. Message level encryption is only possible when ``ansible_winrm_transport`` is ``ntlm``, ``kerberos`` or ``credssp``. By default this is ``false`` and should only be set to ``true`` when debugging WinRM messages."
-msgstr "``Service\\AllowUnencrypted``: このオプションは、メッセージを暗号化せずに HTTP で実行するトラフィックを WinRM で許可するかどうかを定義します。メッセージレベルの暗号化は、``ansible_winrm_transport`` が ``ntlm``、``kerberos``、または ``credssp`` の場合にのみ可能です。デフォルトでは、これは ``false`` であり、WinRM メッセージをデバッグする場合に限り ``true`` に設定する必要があります。"
+#: ../../rst/os_guide/windows_setup.rst:240
+msgid "``Service\\AllowUnencrypted`` - specifies whether WinRM will allow HTTP traffic without message encryption. Message level encryption is only possible when the ``ansible_winrm_transport`` variable is ``ntlm``, ``kerberos`` or ``credssp``. By default, this is ``false`` and you should only set it to ``true`` when debugging WinRM messages."
+msgstr "``Service\\AllowUnencrypted``: メッセージを暗号化せずに HTTP トラフィックを WinRM で許可するかどうかを定義します。メッセージレベルの暗号化は、``ansible_winrm_transport`` 変数が ``ntlm``、``kerberos``、または ``credssp`` の場合にのみ可能です。デフォルトでは、これは ``false`` であり、WinRM メッセージをデバッグする場合に限り ``true`` に設定する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:293
-msgid "``Service\\Auth\\*``: These flags define what authentication options are allowed with the WinRM service. By default, ``Negotiate (NTLM)`` and ``Kerberos`` are enabled."
-msgstr "``Service\\Auth\\*``: これらのフラグは、WinRM サービスで許可される認証オプションを定義します。デフォルトでは、``Negotiate (NTLM)`` および ``Kerberos`` が有効になります。"
+#: ../../rst/os_guide/windows_setup.rst:242
+msgid "``Service\\Auth\\*`` - defines what authentication options you can use with the WinRM service. By default, ``Negotiate (NTLM)`` and ``Kerberos`` are enabled."
+msgstr "``Service\\Auth\\*``: WinRM サービスで使用可能な認証オプションを定義します。デフォルトでは、``Negotiate (NTLM)`` および ``Kerberos`` が有効になります。"
 
-#: ../../rst/os_guide/windows_setup.rst:297
-msgid "``Service\\Auth\\CbtHardeningLevel``: Specifies whether channel binding tokens are not verified (None), verified but not required (Relaxed), or verified and required (Strict). CBT is only used when connecting with NTLM or Kerberos over HTTPS."
-msgstr "``Service\\Auth\\CbtHardeningLevel``: チャンネルバインディングトークンを検証しない (None)、検証済みだが必要ない (Relaxed)、検証済みで必要 (Strict) のいずれかを指定します。CBT は、HTTPS の NTLM または Kerberos での接続時にのみ使用されます。"
+#: ../../rst/os_guide/windows_setup.rst:244
+msgid "``Service\\Auth\\CbtHardeningLevel`` - specifies whether channel binding tokens are not verified (None), verified but not required (Relaxed), or verified and required (Strict). CBT is only used when connecting with NT LAN Manager (NTLM) or Kerberos over HTTPS."
+msgstr "``Service\\Auth\\CbtHardeningLevel``: チャンネルバインディングトークンを検証しない (None)、検証済みだが必要ない (Relaxed)、検証済みで必要 (Strict) のいずれかを指定します。CBT は、HTTPS の NT LAN Manager (NTLM) または Kerberos での接続時にのみ使用されます。"
 
-#: ../../rst/os_guide/windows_setup.rst:302
-msgid "``Service\\CertificateThumbprint``: This is the thumbprint of the certificate used to encrypt the TLS channel used with CredSSP authentication. By default this is empty; a self-signed certificate is generated when the WinRM service starts and is used in the TLS process."
-msgstr "``Service\\CertificateThumbprint``: これは、CredSSP 認証で使用される TLS チャンネルの暗号化に使用される証明書のサムプリントです。デフォルトでは、これは空です。自己署名証明書は、WinRM サービスの起動時に生成され、TLS プロセスで使用されます。"
+#: ../../rst/os_guide/windows_setup.rst:246
+msgid "``Service\\CertificateThumbprint`` - thumbprint of the certificate for encrypting the TLS channel used with CredSSP authentication. By default, this is empty. A self-signed certificate is generated when the WinRM service starts and is used in the TLS process."
+msgstr "``Service\\CertificateThumbprint``: CredSSP 認証で使用される TLS チャンネルの暗号化に使用される証明書のサムプリントです。デフォルトでは、これは空です。自己署名証明書は、WinRM サービスの起動時に生成され、TLS プロセスで使用されます。"
 
-#: ../../rst/os_guide/windows_setup.rst:307
-msgid "``Winrs\\MaxShellRunTime``: This is the maximum time, in milliseconds, that a remote command is allowed to execute."
+#: ../../rst/os_guide/windows_setup.rst:248
+msgid "``Winrs\\MaxShellRunTime`` - maximum time, in milliseconds, that a remote command is allowed to execute."
 msgstr "``Winrs\\MaxShellRunTime``: リモートコマンドの実行を許可する最大時間をミリ秒単位で指定します。"
 
-#: ../../rst/os_guide/windows_setup.rst:310
-msgid "``Winrs\\MaxMemoryPerShellMB``: This is the maximum amount of memory allocated per shell, including the shell's child processes."
-msgstr "``Winrs\\MaxMemoryPerShellMB``: シェルの子プロセスを含め、シェルごとに割り当てられるメモリーの最大量です。"
+#: ../../rst/os_guide/windows_setup.rst:250
+msgid "``Winrs\\MaxMemoryPerShellMB`` - maximum amount of memory allocated per shell, including its child processes."
+msgstr "``Winrs\\MaxMemoryPerShellMB``: シェルの子プロセスなど、シェルごとに割り当てられるメモリーの最大量です。"
 
-#: ../../rst/os_guide/windows_setup.rst:313
-msgid "To modify a setting under the ``Service`` key in PowerShell:"
-msgstr "PowerShell の ``Service`` キーで設定を変更するには、以下を実行します。"
+#: ../../rst/os_guide/windows_setup.rst:252
+msgid "To modify a setting under the ``Service`` key in PowerShell, you need to provide a path to the option after ``winrm/config/Service``:"
+msgstr "PowerShell の ``Service`` キーで設定を変更するには、``winrm/config/Service`` の後に オプションへのパスを指定する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:323
-msgid "To modify a setting under the ``Winrs`` key in PowerShell:"
-msgstr "PowerShell の ``Winrs`` キーで設定を変更するには、以下を実行します。"
+#: ../../rst/os_guide/windows_setup.rst:258
+msgid "For example, to change ``Service\\Auth\\CbtHardeningLevel``:"
+msgstr "たとえば、``Service\\Auth\\CbtHardeningLevel`` を変更するには以下を行います。"
 
-#: ../../rst/os_guide/windows_setup.rst:333
-msgid "If running in a domain environment, some of these options are set by GPO and cannot be changed on the host itself. When a key has been configured with GPO, it contains the text ``[Source=\"GPO\"]`` next to the value."
-msgstr "ドメイン環境で動作している場合、これらのオプションの一部は GPO によって設定され、ホスト自体では変更できません。GPO で設定されたキーには、値の横に ``[Source=\"GPO\"]`` というテキストが表示されます。"
+#: ../../rst/os_guide/windows_setup.rst:264
+msgid "To modify a setting under the ``Winrs`` key in PowerShell, you need to provide a path to the option after ``winrm/config/Winrs``:"
+msgstr "PowerShell の ``Winrs`` キーで設定を変更するには、``winrm/config/Winrs`` の後に オプションへのパスを指定する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:338
+#: ../../rst/os_guide/windows_setup.rst:270
+msgid "For example, to change ``Winrs\\MaxShellRunTime``:"
+msgstr "たとえば、``Winrs\\MaxShellRunTime`` を変更するには、以下を行います。"
+
+#: ../../rst/os_guide/windows_setup.rst:276
+msgid "If you run the command in a domain environment, some of these options are set by GPO and cannot be changed on the host itself. When you configured a key with GPO, it contains the text ``[Source=\"GPO\"]`` next to the value."
+msgstr "ドメイン環境で動作している場合には、これらのオプションの一部は GPO によって設定され、ホスト自体では変更できません。GPO で設定されたキーには、値の横に ``[Source=\"GPO\"]`` というテキストが表示されます。"
+
+#: ../../rst/os_guide/windows_setup.rst:280
 msgid "Common WinRM Issues"
 msgstr "一般的な WinRM の問題"
 
-#: ../../rst/os_guide/windows_setup.rst:339
-msgid "Because WinRM has a wide range of configuration options, it can be difficult to setup and configure. Because of this complexity, issues that are shown by Ansible could in fact be issues with the host setup instead."
-msgstr "WinRM にはさまざまな設定オプションがあるため、セットアップや設定が難しい場合があります。そのため、Ansible で表示される問題が、実際にはホストの設定の問題である可能性もあります。"
+#: ../../rst/os_guide/windows_setup.rst:281
+msgid "WinRM has a wide range of configuration options, which makes its configuration complex. As a result, errors that Ansible displays could in fact be problems with the host setup instead."
+msgstr "WinRM にはさまざまな設定オプションがあり、その設定が複雑になるので、Ansible が表示するエラーは、実際にはホストの設定に問題がある可能性があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:343
-msgid "One easy way to determine whether a problem is a host issue is to run the following command from another Windows host to connect to the target Windows host:"
+#: ../../rst/os_guide/windows_setup.rst:283
+msgid "To identify a host issue, run the following command from another Windows host to connect to the target Windows host."
 msgstr "問題がホストの問題であるかどうかを判断する簡単な方法として、別の Windows ホストから次のコマンドを実行して、対象の Windows ホストに接続する方法があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:363
-msgid "If this fails, the issue is probably related to the WinRM setup. If it works, the issue may not be related to the WinRM setup; please continue reading for more troubleshooting suggestions."
-msgstr "失敗した場合は、WinRM の設定に問題があると思われます。成功した場合は、問題が WinRM の設定に関連していない可能性があるため、さらに詳しいトラブルシューティングの方法をご確認ください。"
+#: ../../rst/os_guide/windows_setup.rst:285
+msgid "To test HTTP:"
+msgstr "HTTP をテストするには、以下を実行します。"
 
-#: ../../rst/os_guide/windows_setup.rst:366
+#: ../../rst/os_guide/windows_setup.rst:291
+msgid "To test HTTPS:"
+msgstr "HTTPS をテストするには、以下を実行します。"
+
+#: ../../rst/os_guide/windows_setup.rst:297
+msgid "The command will fail if the certificate is not verifiable."
+msgstr "証明書が検証できない場合、コマンドは失敗します。"
+
+#: ../../rst/os_guide/windows_setup.rst:299
+msgid "To test HTTPS ignoring certificate verification:"
+msgstr "証明書の検証を無視する HTTPS をテストするには、以下を実行します。"
+
+#: ../../rst/os_guide/windows_setup.rst:310
+msgid "If any of the above commands fail, the issue is probably related to the WinRM setup."
+msgstr "上記のコマンドのいずれかが失敗した場合には、問題は WinRM 設定に関連している可能性があります。"
+
+#: ../../rst/os_guide/windows_setup.rst:313
 msgid "HTTP 401/Credentials Rejected"
 msgstr "HTTP 401/認証情報の拒否"
 
-#: ../../rst/os_guide/windows_setup.rst:367
-msgid "A HTTP 401 error indicates the authentication process failed during the initial connection. Some things to check for this are:"
-msgstr "HTTP 401 エラーは、最初の接続時に認証プロセスが失敗したことを示します。これを確認するためのいくつかの項目があります。"
+#: ../../rst/os_guide/windows_setup.rst:314
+msgid "An HTTP 401 error indicates the authentication process failed during the initial connection. You can check the following to troubleshoot:"
+msgstr "HTTP 401 エラーは、最初の接続時に認証プロセスが失敗したことを示します。以下の項目を確認して、トラブルシューティングできます。"
 
-#: ../../rst/os_guide/windows_setup.rst:370
-msgid "Verify that the credentials are correct and set properly in your inventory with ``ansible_user`` and ``ansible_password``"
-msgstr "``ansible_user`` および ``ansible_password`` を使用して、認証情報が正しく、インベントリーに適切に設定されていることを確認します。"
+#: ../../rst/os_guide/windows_setup.rst:317
+msgid "The credentials are correct and set properly in your inventory with the ``ansible_user`` and ``ansible_password`` variables."
+msgstr "``ansible_user`` および ``ansible_password`` 変数を使用して、認証情報が正しく、インベントリーに適切に設定されている。"
 
-#: ../../rst/os_guide/windows_setup.rst:373
-msgid "Ensure that the user is a member of the local Administrators group or has been explicitly granted access (a connection test with the ``winrs`` command can be used to rule this out)."
-msgstr "ユーザーがローカルの Administrators グループのメンバーであるか、明示的にアクセスを許可されていることを確認してください (``winrs`` コマンドによる接続テストで除外できます)。"
+#: ../../rst/os_guide/windows_setup.rst:319
+msgid "The user is a member of the local Administrators group, or has been explicitly granted access. You can perform a connection test with the ``winrs`` command to rule this out."
+msgstr "ユーザーがローカルの Administrators グループのメンバーであるか、明示的にアクセスを許可されている。これは、``winrs`` コマンドによる接続テストで除外できます。"
 
-#: ../../rst/os_guide/windows_setup.rst:377
-msgid "Make sure that the authentication option set by ``ansible_winrm_transport`` is enabled under ``Service\\Auth\\*``"
-msgstr "``ansible_winrm_transport`` で設定した認証オプションが、``Service\\Auth\\*`` で有効になっていることを確認してください。"
+#: ../../rst/os_guide/windows_setup.rst:321
+msgid "The authentication option set by the ``ansible_winrm_transport`` variable is enabled under ``Service\\Auth\\*``."
+msgstr "``ansible_winrm_transport`` で設定した認証オプションが、``Service\\Auth\\*`` で有効になっている。"
 
-#: ../../rst/os_guide/windows_setup.rst:380
-msgid "If running over HTTP and not HTTPS, use ``ntlm``, ``kerberos`` or ``credssp`` with ``ansible_winrm_message_encryption: auto`` to enable message encryption. If using another authentication option or if the installed pywinrm version cannot be upgraded, the ``Service\\AllowUnencrypted`` can be set to ``true`` but this is only recommended for troubleshooting"
-msgstr "HTTPS ではなく HTTP で実行する場合は、``ntlm``、``kerberos``、または ``credssp`` と ``ansible_winrm_message_encryption: auto`` を使用してメッセージの暗号化を有効にしてください。他の認証オプションを使用している場合や、インストールされている pywinrm のバージョンをアップグレードできない場合は、``Service\\AllowUnencrypted`` を``true`` に設定できますが、これはトラブルシューティングのためにのみ推奨されます。"
+#: ../../rst/os_guide/windows_setup.rst:323
+msgid "If running over HTTP and not HTTPS, use ``ntlm``, ``kerberos`` or ``credssp`` with the ``ansible_winrm_message_encryption: auto`` custom inventory variable to enable message encryption. If you use another authentication option, or if it is not possible to upgrade the installed ``pywinrm`` package, you can set ``Service\\AllowUnencrypted`` to ``true``. This is recommended only for troubleshooting."
+msgstr "HTTPS ではなく HTTP で実行する場合は、``ntlm``、``kerberos``、または ``credssp`` を使用してメッセージの暗号化を有効にします。別の認証オプションを使用する場合、またはインストールされた ``pywinrm`` パッケージをアップグレードできない場合には、``Service\\AllowUnencrypted`` を ``true`` に設定できます。これは、トラブルシューティングの目的でのみ推奨されます。"
 
-#: ../../rst/os_guide/windows_setup.rst:386
-msgid "Ensure the downstream packages ``pywinrm``, ``requests-ntlm``, ``requests-kerberos``, and/or ``requests-credssp`` are up to date using ``pip``."
-msgstr "ダウンストリームパッケージである ``pywinrm``、``requests-ntlm``、``requests-kerberos``、または ``requests-credssp``、もしくはその組み合わせが ``pip`` を使用して最新の状態になっていることを確認します。"
+#: ../../rst/os_guide/windows_setup.rst:325
+msgid "The downstream packages ``pywinrm``, ``requests-ntlm``, ``requests-kerberos``, and/or ``requests-credssp`` are up to date using ``pip``."
+msgstr "ダウンストリームパッケージである ``pywinrm``、``requests-ntlm``、``requests-kerberos``、または ``requests-credssp``、もしくはその組み合わせが ``pip`` を使用して最新の状態になっている。"
 
-#: ../../rst/os_guide/windows_setup.rst:389
-msgid "If using Kerberos authentication, ensure that ``Service\\Auth\\CbtHardeningLevel`` is not set to ``Strict``."
+#: ../../rst/os_guide/windows_setup.rst:327
+msgid "For Kerberos authentication, ensure that ``Service\\Auth\\CbtHardeningLevel`` is not set to ``Strict``."
 msgstr "Kerberos 認証を使用する場合は、``Service\\Auth\\CbtHardeningLevel`` が ``Strict`` に設定されていないことを確認してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:392
-msgid "When using Basic or Certificate authentication, make sure that the user is a local account and not a domain account. Domain accounts do not work with Basic and Certificate authentication."
-msgstr "Basic 認証や Certificate 認証を使用する際は、ユーザーがドメインアカウントではなく、ローカルアカウントであることを確認してください。ドメインアカウントは、Basic 認証や Certificate 認証では機能しません。"
+#: ../../rst/os_guide/windows_setup.rst:329
+msgid "For Basic or Certificate authentication, make sure that the user is a local account. Domain accounts do not work with Basic and Certificate authentication."
+msgstr "Basic 認証や Certificate 認証を使用する場合は、ローカルアカウントであることを確認してください。ドメインアカウントは、Basic 認証や Certificate 認証では機能しません。"
 
-#: ../../rst/os_guide/windows_setup.rst:397
+#: ../../rst/os_guide/windows_setup.rst:332
 msgid "HTTP 500 Error"
 msgstr "HTTP 500 Error"
 
-#: ../../rst/os_guide/windows_setup.rst:398
-msgid "These indicate an error has occurred with the WinRM service. Some things to check for include:"
-msgstr "これらは、WinRM サービスでエラーが発生したことを示しています。確認すべき点は以下の通りです。"
+#: ../../rst/os_guide/windows_setup.rst:333
+msgid "An HTTP 500 error indicates a problem with the WinRM service. You can check the following to troubleshoot:"
+msgstr "HTTP 500 エラーは、WinRM サービスに問題があることを示します。以下を確認してトラブルシューティングを行うことができます。"
 
-#: ../../rst/os_guide/windows_setup.rst:401
-msgid "Verify that the number of current open shells has not exceeded either ``WinRsMaxShellsPerUser`` or any of the other Winrs quotas haven't been exceeded."
-msgstr "現在のオープンシェルの数が ``WinRsMaxShellsPerUser`` のどちらかを超えていないか、または他の Winrs のクォータを超えていないかを確認してください。"
+#: ../../rst/os_guide/windows_setup.rst:335
+msgid "The number of your currently open shells has not exceeded either ``WinRsMaxShellsPerUser``. Alternatively, you did not exceed any of the other Winrs quotas."
+msgstr "現在開いているシェルの数が ``WinRsMaxShellsPerUser`` を超えていないか、他の Winrs クォータを超えていません。"
 
-#: ../../rst/os_guide/windows_setup.rst:406
+#: ../../rst/os_guide/windows_setup.rst:338
 msgid "Timeout Errors"
 msgstr "タイムアウトエラー"
 
-#: ../../rst/os_guide/windows_setup.rst:407
-msgid "These usually indicate an error with the network connection where Ansible is unable to reach the host. Some things to check for include:"
-msgstr "これらは通常、Ansible がホストに到達できないネットワーク接続のエラーを示しています。チェック項目には以下が含まれます。"
+#: ../../rst/os_guide/windows_setup.rst:339
+msgid "Sometimes Ansible is unable to reach the host. These instances usually indicate a problem with the network connection. You can check the following to troubleshoot:"
+msgstr "Ansible がホストに到達できないことがあります。これらのインスタンスは通常、ネットワーク接続に問題があることを示します。以下を確認してトラブルシューティングを行うことができます。"
 
-#: ../../rst/os_guide/windows_setup.rst:410
-msgid "Make sure the firewall is not set to block the configured WinRM listener ports"
-msgstr "ファイアウォールが、設定された WinRM リスナーポートをブロックするように設定されていないことを確認します。"
+#: ../../rst/os_guide/windows_setup.rst:341
+msgid "The firewall is not set to block the configured WinRM listener ports."
+msgstr "ファイアウォールが、設定された WinRM リスナーポートをブロックするように設定されていない。"
 
-#: ../../rst/os_guide/windows_setup.rst:411
-msgid "Ensure that a WinRM listener is enabled on the port and path set by the host vars"
-msgstr "WinRM リスナーが、ホスト変数によって設定されたポートおよびパスで有効になっていることを確認します。"
+#: ../../rst/os_guide/windows_setup.rst:342
+msgid "A WinRM listener is enabled on the port and path set by the host vars."
+msgstr "WinRM リスナーが、ホスト変数によって設定されたポートおよびパスで有効になっている。"
 
-#: ../../rst/os_guide/windows_setup.rst:412
-msgid "Ensure that the ``winrm`` service is running on the Windows host and configured for automatic start"
-msgstr "Windows ホスト上で ``winrm`` サービスが稼動しており、自動起動するように設定されていることを確認します。"
+#: ../../rst/os_guide/windows_setup.rst:343
+msgid "The ``winrm`` service is running on the Windows host and is configured for the automatic start."
+msgstr "Windows ホスト上で ``winrm`` サービスが稼動しており、自動起動するように設定されている。"
 
-#: ../../rst/os_guide/windows_setup.rst:416
+#: ../../rst/os_guide/windows_setup.rst:346
 msgid "Connection Refused Errors"
 msgstr "接続拒否エラー"
 
-#: ../../rst/os_guide/windows_setup.rst:417
-msgid "These usually indicate an error when trying to communicate with the WinRM service on the host. Some things to check for:"
-msgstr "これらは通常、ホスト上の WinRM サービスと通信しようとする際にエラーを示します。いくつかのチェック項目があります。"
+#: ../../rst/os_guide/windows_setup.rst:347
+msgid "When you communicate with the WinRM service on the host you can encounter some problems. Check the following to help the troubleshooting:"
+msgstr "ホストの WinRM サービスと通信すると、いくつかの問題が発生する可能性があります。トラブルシューティングを行うには、以下を確認してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:420
-msgid "Ensure that the WinRM service is up and running on the host. Use ``(Get-Service -Name winrm).Status`` to get the status of the service."
-msgstr "ホスト上で WinRM サービスが稼働していることを確認します。``(Get-Service -Name winrm).Status`` を使用して、サービスのステータスを取得します。"
+#: ../../rst/os_guide/windows_setup.rst:349
+msgid "The WinRM service is up and running on the host. Use the ``(Get-Service -Name winrm).Status`` command to get the status of the service."
+msgstr "ホスト上で WinRM サービスが稼働している。``(Get-Service -Name winrm).Status`` コマンドを使用して、サービスのステータスを取得します。"
 
-#: ../../rst/os_guide/windows_setup.rst:422
-msgid "Check that the host firewall is allowing traffic over the WinRM port. By default this is ``5985`` for HTTP and ``5986`` for HTTPS."
-msgstr "ホスト側のファイアウォールが、WinRM ポートへのトラフィックを許可していることを確認します。デフォルトでは、HTTP では ``5985``、HTTPS では ``5986`` となっています。"
+#: ../../rst/os_guide/windows_setup.rst:350
+msgid "The host firewall is allowing traffic over the WinRM port. By default this is ``5985`` for HTTP and ``5986`` for HTTPS."
+msgstr "ホスト側のファイアウォールが、WinRM ポートへのトラフィックを許可している。デフォルトでは、HTTP では ``5985``、HTTPS では ``5986`` となっています。"
 
-#: ../../rst/os_guide/windows_setup.rst:425
-msgid "Sometimes an installer may restart the WinRM or HTTP service and cause this error. The best way to deal with this is to use ``win_psexec`` from another Windows host."
-msgstr "インストーラーが WinRM や HTTP サービスを再起動してしまい、このエラーが発生することがあります。これに対処する最良の方法は、別の Windows ホストから ``win_psexec`` を使用します。"
+#: ../../rst/os_guide/windows_setup.rst:352
+msgid "Sometimes an installer may restart the WinRM or HTTP service and cause this error. The best way to deal with this is to use the ``win_psexec`` module from another Windows host."
+msgstr "インストーラーが WinRM や HTTP サービスを再起動してしまい、このエラーが発生することがあります。これに対処する最良の方法は、別の Windows ホストから ``win_psexec`` モジュールを使用します。"
 
-#: ../../rst/os_guide/windows_setup.rst:430
+#: ../../rst/os_guide/windows_setup.rst:355
 msgid "Failure to Load Builtin Modules"
 msgstr "組み込みモジュールの読み込みに失敗"
 
-#: ../../rst/os_guide/windows_setup.rst:431
-msgid "If powershell fails with an error message similar to ``The 'Out-String' command was found in the module 'Microsoft.PowerShell.Utility', but the module could not be loaded.`` then there could be a problem trying to access all the paths specified by the ``PSModulePath`` environment variable. A common cause of this issue is that the ``PSModulePath`` environment variable contains a UNC path to a file share and because of the double hop/credential delegation issue the Ansible process cannot access these folders. The way around this problems is to either:"
-msgstr "``The 'Out-String' command was found in the module 'Microsoft.PowerShell.Utility', but the module could not be loaded.`` のようなエラーメッセージで powershell が失敗する場合は、``PSModulePath`` 環境変数で指定されたすべてのパスにアクセスしようとすると問題が発生する可能性があります。この問題の一般的な原因は、``PSModulePath`` 環境変数にファイル共有への UNC パスが含まれており、ダブルホップ/認証情報の委譲問題のために Ansible プロセスがこれらのディレクトリーにアクセスできないことです。この問題を回避するには、以下の方法があります。"
+#: ../../rst/os_guide/windows_setup.rst:356
+msgid "Sometimes PowerShell fails with an error message similar to:"
+msgstr "PowerShell が以下のようなエラーメッセージで失敗することがあります。"
 
-#: ../../rst/os_guide/windows_setup.rst:437
-msgid "Remove the UNC path from the ``PSModulePath`` environment variable, or"
-msgstr "``PSModulePath`` 環境変数から UNC パスを削除します。"
+#: ../../rst/os_guide/windows_setup.rst:362
+msgid "In that case, there could be a problem when trying to access all the paths specified by the ``PSModulePath`` environment variable."
+msgstr "この場合、``PSModulePath`` 環境変数が指定したすべてのパスにアクセスしようとすると問題が生じる可能性があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:438
-msgid "Use an authentication option that supports credential delegation like ``credssp`` or ``kerberos`` with credential delegation enabled"
-msgstr "認証情報の委譲を有効にした ``credssp`` や ``kerberos`` のような、認証情報の委譲をサポートする認証オプションを使用します。"
+#: ../../rst/os_guide/windows_setup.rst:364
+msgid "A common cause of this issue is that ``PSModulePath`` contains a Universal Naming Convention (UNC) path to a file share. Additionally, the double hop/credential delegation issue causes that the Ansible process cannot access these folders. To work around this problem is to either:"
+msgstr "この問題の一般的な原因は、``PSModulePath``ファイル共有への汎用命名規則 (UNC) パスが含まれています。さらに、ダブルホップ/認証情報の委任の問題により、Ansible プロセスがこれらのフォルダーにアクセスできなくなります。この問題を回避するには、次のいずれかを行います。"
 
-#: ../../rst/os_guide/windows_setup.rst:440
+#: ../../rst/os_guide/windows_setup.rst:366
+msgid "Remove the UNC path from ``PSModulePath``."
+msgstr "``PSModulePath`` から UNC パスを削除します。"
+
+#: ../../rst/os_guide/windows_setup.rst:368
+msgid "or"
+msgstr "または"
+
+#: ../../rst/os_guide/windows_setup.rst:370
+msgid "Use an authentication option that supports credential delegation like ``credssp`` or ``kerberos``. You need to have the credential delegation enabled."
+msgstr "``credssp`` や ``kerberos`` のような、認証情報の委譲をサポートする認証オプションを使用します。認証情報の委譲を有効にする必要があります。"
+
+#: ../../rst/os_guide/windows_setup.rst:372
 msgid "See `KB4076842 <https://support.microsoft.com/en-us/help/4076842>`_ for more information on this problem."
 msgstr "この問題の詳細は、「`KB4076842 <https://support.microsoft.com/en-us/help/4076842>`_」を参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:443
+#: ../../rst/os_guide/windows_setup.rst:375
 msgid "Windows SSH Setup"
 msgstr "Windows SSH の設定"
 
-#: ../../rst/os_guide/windows_setup.rst:444
+#: ../../rst/os_guide/windows_setup.rst:376
 msgid "Ansible 2.8 has added an experimental SSH connection for Windows managed nodes."
 msgstr "Ansible 2.8 では、Windows 管理ノードの実験的な SSH 接続が追加されました。"
 
-#: ../../rst/os_guide/windows_setup.rst:447
-msgid "Use this feature at your own risk! Using SSH with Windows is experimental, the implementation may make backwards incompatible changes in feature releases. The server side components can be unreliable depending on the version that is installed."
+#: ../../rst/os_guide/windows_setup.rst:379
+msgid "Use this feature at your own risk! Using SSH with Windows is experimental. This implementation may make backwards incompatible changes in future releases. The server-side components can be unreliable depending on your installed version."
 msgstr "この機能はご自身の責任でお使いください。Windows での SSH の使用は実験的なものであり、実装は機能リリースにおいて後方互換性のない変更を行う可能性があります。また、サーバー側のコンポーネントは、インストールされているバージョンによっては信頼性に欠けることがあります。"
 
-#: ../../rst/os_guide/windows_setup.rst:453
+#: ../../rst/os_guide/windows_setup.rst:383
 msgid "Installing OpenSSH using Windows Settings"
 msgstr "Windows 設定を使用した OpenSSH のインストール"
 
-#: ../../rst/os_guide/windows_setup.rst:454
-msgid "OpenSSH can be used to connect Window 10 clients to Windows Server 2019. OpenSSH Client is available to install on Windows 10 build 1809 and later, while OpenSSH Server is available to install on Windows Server 2019 and later."
+#: ../../rst/os_guide/windows_setup.rst:384
+msgid "You can use OpenSSH to connect Window 10 clients to Windows Server 2019. OpenSSH Client is available to install on Windows 10 build 1809 and later. OpenSSH Server is available to install on Windows Server 2019 and later."
 msgstr "OpenSSH は、WinkW 10 クライアントを Windows Server 2019 に接続するために使用できます。OpenSSH クライアントは Windows 10 ビルド 1809 以降にインストールできますが、OpenSSH Server は Windows Server 2019 以降に利用できます。"
 
-#: ../../rst/os_guide/windows_setup.rst:457
-msgid "Please refer `this guide <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>`_."
-msgstr "`this guide <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>`_ を参照してください。"
+#: ../../rst/os_guide/windows_setup.rst:386
+msgid "For more information, refer to `Get started with OpenSSH for Windows <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>`_."
+msgstr "詳細は、`Get started with OpenSSH for Windows <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>` を参照してください。"
 
-#: ../../rst/os_guide/windows_setup.rst:460
+#: ../../rst/os_guide/windows_setup.rst:389
 msgid "Installing Win32-OpenSSH"
 msgstr "Win32-OpenSSH のインストール"
 
-#: ../../rst/os_guide/windows_setup.rst:461
-msgid "The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_ service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows capability but currently the version that is installed through this process is too old to work with Ansible. To install ``Win32-OpenSSH`` for use with Ansible, select one of these installation options:"
-msgstr "Windows で SSH を利用するための最初のステップは、Windows ホストに `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_ サービスをインストールすることです。Microsoft 社では、Windows の機能を利用して ``Win32-OpenSSH`` をインストールする方法を提供していますが、現在、この方法でインストールされるバージョンは、Ansible で動作させるには古すぎます。Ansible で使用するために ``Win32-OpenSSH`` をインストールするには、以下のインストールオプションのいずれかを選択します。"
+#: ../../rst/os_guide/windows_setup.rst:390
+msgid "To install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_ service for use with Ansible, select one of these installation options:"
+msgstr "Ansible で使用する `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_ サービスをインストールするには、以下のいずれかのインストールオプションを選択します。"
 
-#: ../../rst/os_guide/windows_setup.rst:467
-msgid "Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_ from Microsoft."
-msgstr "Microsoft 社が提供する `インストール手順 <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_ に従って、サービスを手動でインストールしてください。"
+#: ../../rst/os_guide/windows_setup.rst:393
+msgid "Manually install ``Win32-OpenSSH``, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_ from Microsoft."
+msgstr "Microsoft 社が提供する `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_ に従って、``Win32-OpenSSH`` を手動でインストールしてください。"
 
-#: ../../rst/os_guide/windows_setup.rst:470
-msgid "Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey:"
-msgstr "Chocolatey を使用して `openssh <https://chocolatey.org/packages/openssh>`_ パッケージをインストールします。"
+#: ../../rst/os_guide/windows_setup.rst:395
+msgid "Use Chocolatey:"
+msgstr "Chocolatey を使用します。"
 
-#: ../../rst/os_guide/windows_setup.rst:476
-msgid "Use ``win_chocolatey`` to install the service"
-msgstr "``win_chocolatey`` を使用してサービスをインストールします。"
+#: ../../rst/os_guide/windows_setup.rst:401
+msgid "Use the ``win_chocolatey`` Ansible module:"
+msgstr "Ansibleモジュール ``win_chocolatey`` を使用します。"
 
-#: ../../rst/os_guide/windows_setup.rst:486
-msgid "Use an existing Ansible Galaxy role like `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_:"
-msgstr "`jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_ などの既存の Ansible Galaxy ロールを使用します。"
+#: ../../rst/os_guide/windows_setup.rst:411
+msgid "Install an Ansible Galaxy role for example `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_:"
+msgstr "`jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_ などの Ansible Galaxy ロールをインストールします。"
 
-#: ../../rst/os_guide/windows_setup.rst:503
-msgid "``Win32-OpenSSH`` is still a beta product and is constantly being updated to include new features and bugfixes. If you are using SSH as a connection option for Windows, it is highly recommend you install the latest release from one of the 3 methods above."
-msgstr "``Win32-OpenSSH`` は未だベータ版の製品であり、新機能やバグ修正を含めて常に更新されています。Windows で SSH 接続をご利用の方は、上記 3 つの方法から最新版をインストールすることが強く推奨されます。"
+#: ../../rst/os_guide/windows_setup.rst:417
+msgid "Use the role in your playbook:"
+msgstr "playbook のロールを使用します。"
 
-#: ../../rst/os_guide/windows_setup.rst:509
+#: ../../rst/os_guide/windows_setup.rst:428
+msgid "``Win32-OpenSSH`` is still a beta product and is constantly being updated to include new features and bugfixes. If you use SSH as a connection option for Windows, we highly recommend you install the latest version."
+msgstr "``Win32-OpenSSH`` は未だベータ版の製品であり、新機能やバグ修正を含めて常に更新されています。Windows で SSH 接続をご利用の方は、上記 3 つの方法から最新版をインストールすることを強く推奨します。"
+
+#: ../../rst/os_guide/windows_setup.rst:431
 msgid "Configuring the Win32-OpenSSH shell"
 msgstr "Win32-OpenSSH シェルの設定"
 
-#: ../../rst/os_guide/windows_setup.rst:511
-msgid "By default ``Win32-OpenSSH`` will use ``cmd.exe`` as a shell. To configure a different shell, use an Ansible task to define the registry setting:"
-msgstr "デフォルトでは、``Win32-OpenSSH`` は ``cmd.exe`` をシェルとして使用します。別のシェルを設定するには、Ansible タスクを使用して、レジストリー設定を定義します。"
+#: ../../rst/os_guide/windows_setup.rst:433
+msgid "By default ``Win32-OpenSSH`` uses ``cmd.exe`` as a shell."
+msgstr "デフォルトでは、``Win32-OpenSSH`` はシェルとして ``cmd.exe`` を使用します。"
 
-#: ../../rst/os_guide/windows_setup.rst:532
+#: ../../rst/os_guide/windows_setup.rst:435
+msgid "To configure a different shell, use an Ansible playbook with a task to define the registry setting:"
+msgstr "別のシェルを設定するには、Ansible Playbook を使用して、レジストリー設定を定義します。"
+
+#: ../../rst/os_guide/windows_setup.rst:447
+msgid "To revert the settings back to the default shell:"
+msgstr "設定をデフォルトのシェルに戻すには、以下を実行します。"
+
+#: ../../rst/os_guide/windows_setup.rst:458
 msgid "Win32-OpenSSH Authentication"
 msgstr "Win32-OpenSSH 認証"
 
-#: ../../rst/os_guide/windows_setup.rst:533
-msgid "Win32-OpenSSH authentication with Windows is similar to SSH authentication on Unix/Linux hosts. You can use a plaintext password or SSH public key authentication, add public keys to an ``authorized_key`` file in the ``.ssh`` folder of the user's profile directory, and configure the service using the ``sshd_config`` file used by the SSH service as you would on a Unix/Linux host."
-msgstr "Windows での Win32-OpenSSH 認証は、Unix/Linux ホストでの SSH 認証に似ています。平文のパスワードまたは SSH 公開鍵認証を使用し、公開鍵をユーザーのプロファイルディレクトリーの ``.ssh`` ディレクトリーにある ``authorized_key`` ファイルに追加し、Unix/Linux ホストと同様に SSH サービスで使用される ``sshd_config`` ファイルを使用してサービスを設定することができます。"
+#: ../../rst/os_guide/windows_setup.rst:459
+msgid "Win32-OpenSSH authentication with Windows is similar to SSH authentication on Unix/Linux hosts. You can use a plaintext password or SSH public key authentication."
+msgstr "Windows での Win32-OpenSSH 認証は、Unix/Linux ホストの SSH 認証に似ています。プレーンテキストのパスワードまたは SSH 公開鍵認証を使用できます。"
 
-#: ../../rst/os_guide/windows_setup.rst:540
-msgid "When using SSH key authentication with Ansible, the remote session won't have access to the user's credentials and will fail when attempting to access a network resource. This is also known as the double-hop or credential delegation issue. There are two ways to work around this issue:"
-msgstr "Ansible で SSH キー認証を使用する場合は、リモートセッションがユーザーの認証情報にアクセスできず、ネットワークリソースにアクセスしようとすると失敗することがあります。これは、ダブルホップや認証情報の委譲の問題としても知られています。この問題を回避するには 2 つの方法があります。"
+#: ../../rst/os_guide/windows_setup.rst:461
+msgid "For the key-based authentication:"
+msgstr "鍵ベース認証の使用"
 
-#: ../../rst/os_guide/windows_setup.rst:545
-msgid "Use plaintext password auth by setting ``ansible_password``"
-msgstr "``ansible_password`` を設定して平文テキストのパスワード認証を使用する"
+#: ../../rst/os_guide/windows_setup.rst:463
+msgid "Add your public keys to an ``authorized_key`` file in the ``.ssh`` folder of the user's profile directory."
+msgstr "ユーザーのプロファイルディレクトリーの ``.ssh`` フォルダーにある ``authorized_key`` ファイルに公開鍵を追加します。"
 
-#: ../../rst/os_guide/windows_setup.rst:546
-msgid "Use ``become`` on the task with the credentials of the user that needs access to the remote resource"
-msgstr "リモートリソースへのアクセスを必要とするユーザーの認証情報を使用して、タスクで ``become`` を使用する"
+#: ../../rst/os_guide/windows_setup.rst:465
+msgid "Configure the SSH service using the ``sshd_config`` file."
+msgstr "``sshd_config`` ファイルを使用して SSH サービスを設定します。"
 
-#: ../../rst/os_guide/windows_setup.rst:549
+#: ../../rst/os_guide/windows_setup.rst:467
+msgid "When using SSH key authentication with Ansible, the remote session will not have access to user credentials and will fail when attempting to access a network resource. This is also known as the double-hop or credential delegation issue. To work around this problem:"
+msgstr "Ansible で SSH キー認証を使用する場合は、リモートセッションがユーザーの認証情報にアクセスできず、ネットワークリソースにアクセスしようとすると失敗することがあります。これは、ダブルホップや認証情報の委譲の問題としても知られています。この問題を回避するには以下を行います。"
+
+#: ../../rst/os_guide/windows_setup.rst:469
+msgid "Use plaintext password authentication by setting the ``ansible_password`` variable."
+msgstr "``ansible_password`` 変数を設定して、プレーンテキストのパスワード認証を使用する。"
+
+#: ../../rst/os_guide/windows_setup.rst:470
+msgid "Use the ``become`` directive on the task with the credentials of the user that needs access to the remote resource."
+msgstr "リモートリソースへのアクセスを必要とするユーザーの認証情報を使用して、タスクで ``become`` ディレクティブを使用する。"
+
+#: ../../rst/os_guide/windows_setup.rst:473
 msgid "Configuring Ansible for SSH on Windows"
 msgstr "Windows で SSH 用に Ansible の設定"
 
-#: ../../rst/os_guide/windows_setup.rst:550
+#: ../../rst/os_guide/windows_setup.rst:474
 msgid "To configure Ansible to use SSH for Windows hosts, you must set two connection variables:"
 msgstr "Ansible が Windows ホストに SSH を使用するように設定するには、接続変数を 2 つ設定する必要があります。"
 
-#: ../../rst/os_guide/windows_setup.rst:552
+#: ../../rst/os_guide/windows_setup.rst:476
 msgid "set ``ansible_connection`` to ``ssh``"
 msgstr "``ansible_connection`` を ``ssh`` に設定します。"
 
-#: ../../rst/os_guide/windows_setup.rst:553
+#: ../../rst/os_guide/windows_setup.rst:477
 msgid "set ``ansible_shell_type`` to ``cmd`` or ``powershell``"
 msgstr "``ansible_shell_type`` を ``cmd`` または ``powershell`` に設定する"
 
-#: ../../rst/os_guide/windows_setup.rst:555
-msgid "The ``ansible_shell_type`` variable should reflect the ``DefaultShell`` configured on the Windows host. Set to ``cmd`` for the default shell or set to ``powershell`` if the ``DefaultShell`` has been changed to PowerShell."
-msgstr "``ansible_shell_type`` 変数には、Windows ホストで設定されている``DefaultShell`` を反映させる必要があります。デフォルトシェルの場合は ``cmd`` に、``DefaultShell`` が PowerShell に変更している場合は ``powershell`` に設定します。"
+#: ../../rst/os_guide/windows_setup.rst:479
+msgid "The ``ansible_shell_type`` variable should reflect the ``DefaultShell`` configured on the Windows host. Set ``ansible_shell_type`` to ``cmd`` for the default shell. Alternatively, set ``ansible_shell_type`` to ``powershell`` if you changed ``DefaultShell`` to PowerShell."
+msgstr "``ansible_shell_type`` 変数には、Windows ホストで設定されている``DefaultShell`` を反映させる必要があります。デフォルトシェルの場合は ``ansible_shell_type`` は ``cmd`` に設定します。または、``DefaultShell`` を PowerShell に変更した場合には ``ansible_shell_type`` を ``powershell`` に設定します。"
 
-#: ../../rst/os_guide/windows_setup.rst:560
+#: ../../rst/os_guide/windows_setup.rst:482
 msgid "Known issues with SSH on Windows"
 msgstr "Windows での SSH に関する既知の問題"
 
-#: ../../rst/os_guide/windows_setup.rst:561
-msgid "Using SSH with Windows is experimental, and we expect to uncover more issues. Here are the known ones:"
-msgstr "Windows での SSH の使用は実験的なものであり、より多くの問題が明らかになることを期待しています。ここでは、既知のものを紹介します。"
+#: ../../rst/os_guide/windows_setup.rst:483
+msgid "Using SSH with Windows is experimental. Currently existing issues are:"
+msgstr "Windows での SSH の使用は実験的なものです。現在、既存の問題は次のとおりです。"
 
-#: ../../rst/os_guide/windows_setup.rst:564
-msgid "Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type"
+#: ../../rst/os_guide/windows_setup.rst:485
+msgid "Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type."
 msgstr "``powershell`` がシェルタイプの場合は、``v7.9.0.0p1-Beta`` よりも古い Win32-OpenSSH バージョンは機能しません。"
 
-#: ../../rst/os_guide/windows_setup.rst:565
-msgid "While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file"
-msgstr "SCP も有効ですが、SFTP は、ファイルのコピーまたは取得時に使用する、推奨される SSH ファイル転送メカニズムです。"
+#: ../../rst/os_guide/windows_setup.rst:486
+msgid "While Secure Copy Protocol (SCP) should work, SSH File Transfer Protocol (SFTP) is the recommended mechanism to use when copying or fetching a file."
+msgstr "Secure Copy Protocol (SCP) も有効ですが、SSH File Transfer Protocol (SFTP) は、ファイルのコピーまたは取得時に使用する、推奨のメカニズムです。"
 
 #: ../../rst/os_guide/windows_usage.rst:4
 msgid "Using Ansible and Windows"
@@ -1842,17 +1922,17 @@ msgid "Certificate"
 msgstr "証明書"
 
 #: ../../rst/os_guide/windows_winrm.rst:59
-#: ../../rst/os_guide/windows_winrm.rst:300
+#: ../../rst/os_guide/windows_winrm.rst:302
 msgid "Kerberos"
 msgstr "Kerberos"
 
 #: ../../rst/os_guide/windows_winrm.rst:61
-#: ../../rst/os_guide/windows_winrm.rst:270
+#: ../../rst/os_guide/windows_winrm.rst:272
 msgid "NTLM"
 msgstr "NTLM"
 
 #: ../../rst/os_guide/windows_winrm.rst:63
-#: ../../rst/os_guide/windows_winrm.rst:515
+#: ../../rst/os_guide/windows_winrm.rst:517
 msgid "CredSSP"
 msgstr "CredSSP"
 
@@ -1885,559 +1965,635 @@ msgid "Encrypted private keys cannot be used as the urllib3 library that is used
 msgstr "WinRM 向けに Ansible が使用する urllib3 ライブラリーがこの機能をサポートしていないため、暗号化された秘密鍵は使用できません。"
 
 #: ../../rst/os_guide/windows_winrm.rst:120
+msgid "Certificate authentication does not work with a TLS 1.3 connection."
+msgstr "証明書認証は、TLS 1.3 接続では機能しません。"
+
+#: ../../rst/os_guide/windows_winrm.rst:122
 msgid ".._winrm_certificate_generate:"
 msgstr ".._winrm_certificate_generate:"
 
-#: ../../rst/os_guide/windows_winrm.rst:123
+#: ../../rst/os_guide/windows_winrm.rst:125
 msgid "Generate a Certificate"
 msgstr "証明書の生成"
 
-#: ../../rst/os_guide/windows_winrm.rst:125
+#: ../../rst/os_guide/windows_winrm.rst:127
 msgid "A certificate must be generated before it can be mapped to a local user. This can be done using one of the following methods:"
 msgstr "証明書をローカルユーザーにマッピングする前に、証明書を生成する必要があります。これは、以下のいずれかの方法で行うことができます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:128
+#: ../../rst/os_guide/windows_winrm.rst:130
 msgid "OpenSSL"
 msgstr "OpenSSL"
 
-#: ../../rst/os_guide/windows_winrm.rst:129
+#: ../../rst/os_guide/windows_winrm.rst:131
 msgid "PowerShell, using the ``New-SelfSignedCertificate`` cmdlet"
 msgstr "``New-SelfSignedCertificate`` コマンドレットを使用した PowerShell"
 
-#: ../../rst/os_guide/windows_winrm.rst:130
+#: ../../rst/os_guide/windows_winrm.rst:132
 msgid "Active Directory Certificate Services"
 msgstr "Active Directory 証明書サービス"
 
-#: ../../rst/os_guide/windows_winrm.rst:132
+#: ../../rst/os_guide/windows_winrm.rst:134
 msgid "Active Directory Certificate Services is beyond of scope in this documentation but may be the best option to use when running in a domain environment. For more information, see the `Active Directory Certificate Services documentation <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc732625(v=ws.11)>`_."
 msgstr "Active Directory Certificate Services は、このドキュメントでは対象外になりますが、ドメイン環境で実行する場合には、最適なオプションになるかもしれません。詳細は、`Active Directory Certificate Services のドキュメント <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc732625(v=ws.11)>`_ を参照してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:136
+#: ../../rst/os_guide/windows_winrm.rst:138
 msgid "Using the PowerShell cmdlet ``New-SelfSignedCertificate`` to generate a certificate for authentication only works when being generated from a Windows 10 or Windows Server 2012 R2 host or later. OpenSSL is still required to extract the private key from the PFX certificate to a PEM file for Ansible to use."
 msgstr "PowerShell コマンドレット (``New-SelfSignedCertificate``) を使用して認証用の証明書を生成する場合は、Windows 10 または Windows Server 2012 R2 ホスト以降から生成された場合にのみ機能します。PFX 証明書から Ansible が使用する PEM ファイルに秘密鍵を抽出するには、OpenSSL が引き続き必要となります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:142
+#: ../../rst/os_guide/windows_winrm.rst:144
 msgid "To generate a certificate with ``OpenSSL``:"
 msgstr "``OpenSSL`` で証明書を生成するには、以下を実行します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:162
+#: ../../rst/os_guide/windows_winrm.rst:164
 msgid "To generate a certificate with ``New-SelfSignedCertificate``:"
 msgstr "``New-SelfSignedCertificate`` で証明書を生成するには、以下を実行します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:190
+#: ../../rst/os_guide/windows_winrm.rst:192
 msgid "To convert the PFX file to a private key that pywinrm can use, run the following command with OpenSSL ``openssl pkcs12 -in cert.pfx -nocerts -nodes -out cert_key.pem -passin pass: -passout pass:``"
 msgstr "PFX ファイルを pywinrm が使用できる秘密鍵に変換するには、OpenSSL で ``openssl pkcs12 -in cert.pfx -nocerts -nodes -out cert_key.pem -passin pass: -passout pass:`` コマンドを実行します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:197
+#: ../../rst/os_guide/windows_winrm.rst:199
 msgid "Import a Certificate to the Certificate Store"
 msgstr "証明書ストアへの証明書のインポート"
 
-#: ../../rst/os_guide/windows_winrm.rst:199
+#: ../../rst/os_guide/windows_winrm.rst:201
 msgid "Once a certificate has been generated, the issuing certificate needs to be imported into the ``Trusted Root Certificate Authorities`` of the ``LocalMachine`` store, and the client certificate public key must be present in the ``Trusted People`` folder of the ``LocalMachine`` store. For this example, both the issuing certificate and public key are the same."
 msgstr "証明書が生成されたら、発行した証明書を ``LocalMachine`` ストアの ``Trusted Root Certificate Authorities`` にインポートし、クライアント証明書の公開鍵を ``LocalMachine`` ストアの ``Trusted People`` ディレクトリーに存在させる必要があります。この例では、発行した証明書と公開鍵の両方が同じものです。"
 
-#: ../../rst/os_guide/windows_winrm.rst:205
+#: ../../rst/os_guide/windows_winrm.rst:207
 msgid "Following example shows how to import the issuing certificate:"
 msgstr "以下の例では、発行した証明書をインポートする方法を示します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:219
+#: ../../rst/os_guide/windows_winrm.rst:221
 msgid "If using ADCS to generate the certificate, then the issuing certificate will already be imported and this step can be skipped."
 msgstr "ADCS を使用して証明書を生成する場合は、発行する証明書がすでにインポートされているため、この手順は省略できます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:222
+#: ../../rst/os_guide/windows_winrm.rst:224
 msgid "The code to import the client certificate public key is:"
 msgstr "クライアント証明書の公開鍵をインポートするコードは以下のとおりです。"
 
-#: ../../rst/os_guide/windows_winrm.rst:239
+#: ../../rst/os_guide/windows_winrm.rst:241
 msgid "Mapping a Certificate to an Account"
 msgstr "証明書のアカウントへのマッピング"
 
-#: ../../rst/os_guide/windows_winrm.rst:241
+#: ../../rst/os_guide/windows_winrm.rst:243
 msgid "Once the certificate has been imported, map it to the local user account:"
 msgstr "証明書をインポートしたら、これをローカルユーザーアカウントにマッピングします。"
 
-#: ../../rst/os_guide/windows_winrm.rst:262
+#: ../../rst/os_guide/windows_winrm.rst:264
 msgid "Once this is complete, the hostvar ``ansible_winrm_cert_pem`` should be set to the path of the public key and the ``ansible_winrm_cert_key_pem`` variable should be set to the path of the private key."
 msgstr "これが完了したら、ホスト変数 ``ansible_winrm_cert_pem`` に公開鍵のパスを設定し、変数``ansible_winrm_cert_key_pem`` に秘密鍵のパスを設定してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:272
+#: ../../rst/os_guide/windows_winrm.rst:274
 msgid "NTLM is an older authentication mechanism used by Microsoft that can support both local and domain accounts. NTLM is enabled by default on the WinRM service, so no setup is required before using it."
 msgstr "NTLM は、Microsoft が使用している古い認証メカニズムで、ローカルアカウントとドメインアカウントの両方をサポートしています。NTLM は、WinRM サービスでデフォルトで有効になっているため、使用する前に設定する必要はありません。"
 
-#: ../../rst/os_guide/windows_winrm.rst:276
+#: ../../rst/os_guide/windows_winrm.rst:278
 msgid "NTLM is the easiest authentication protocol to use and is more secure than ``Basic`` authentication. If running in a domain environment, ``Kerberos`` should be used instead of NTLM."
 msgstr "NTLM は最も簡単に使用できる認証プロトコルであり、``Basic`` 認証よりも安全です。ドメイン環境で稼働している場合は、NTLM の代わりに ``Kerberos`` を使用する必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:280
+#: ../../rst/os_guide/windows_winrm.rst:282
 msgid "Kerberos has several advantages over using NTLM:"
 msgstr "Kerberos は NTLM の使用と比較して、以下のような利点があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:282
+#: ../../rst/os_guide/windows_winrm.rst:284
 msgid "NTLM is an older protocol and does not support newer encryption protocols."
 msgstr "NTLM は古いプロトコルであり、新しい暗号化プロトコルをサポートしません。"
 
-#: ../../rst/os_guide/windows_winrm.rst:284
+#: ../../rst/os_guide/windows_winrm.rst:286
 msgid "NTLM is slower to authenticate because it requires more round trips to the host in the authentication stage."
 msgstr "NTLM は、認証の段階でホストへのラウンドトリップが多くなるため、認証に時間がかかります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:286
+#: ../../rst/os_guide/windows_winrm.rst:288
 msgid "Unlike Kerberos, NTLM does not allow credential delegation."
 msgstr "Kerberos とは異なり、NTLM は認証情報の委譲を許可していません。"
 
-#: ../../rst/os_guide/windows_winrm.rst:288
+#: ../../rst/os_guide/windows_winrm.rst:290
 msgid "This example shows host variables configured to use NTLM authentication:"
 msgstr "以下の例では、NTLM 認証を使用するように設定されているホスト変数を示しています。"
 
-#: ../../rst/os_guide/windows_winrm.rst:302
+#: ../../rst/os_guide/windows_winrm.rst:304
 msgid "Kerberos is the recommended authentication option to use when running in a domain environment. Kerberos supports features like credential delegation and message encryption over HTTP and is one of the more secure options that is available through WinRM."
 msgstr "Kerberos は、ドメイン環境で実行する場合に使用する推奨の認証オプションです。Kerberos は、認証情報の委譲や HTTP でのメッセージ暗号化などの機能をサポートしており、WinRM で利用できるより安全なオプションの 1 つです。"
 
-#: ../../rst/os_guide/windows_winrm.rst:307
+#: ../../rst/os_guide/windows_winrm.rst:309
 msgid "Kerberos requires some additional setup work on the Ansible host before it can be used properly."
 msgstr "Kerberos を正しく使用するには、Ansible ホスト上でいくつかの追加設定作業が必要です。"
 
-#: ../../rst/os_guide/windows_winrm.rst:310
+#: ../../rst/os_guide/windows_winrm.rst:312
 msgid "The following example shows host vars configured for Kerberos authentication:"
 msgstr "以下の例は、Kerberos 認証に設定されたホスト変数を示しています。"
 
-#: ../../rst/os_guide/windows_winrm.rst:320
+#: ../../rst/os_guide/windows_winrm.rst:322
 msgid "As of Ansible version 2.3, the Kerberos ticket will be created based on ``ansible_user`` and ``ansible_password``. If running on an older version of Ansible or when ``ansible_winrm_kinit_mode`` is ``manual``, a Kerberos ticket must already be obtained. See below for more details."
 msgstr "Ansible バージョン 2.3 以降では、``ansible_user`` と ``ansible_password`` に基づいて Kerberos チケットが作成されます。古いバージョンの Ansible で実行している場合や、``ansible_winrm_kinit_mode`` が ``manual`` の場合は、すでに Kerberos チケットを取得している必要があります。詳細は以下を参照してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:325
+#: ../../rst/os_guide/windows_winrm.rst:327
 msgid "There are some extra host variables that can be set:"
 msgstr "設定可能な追加のホスト変数があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:338
+#: ../../rst/os_guide/windows_winrm.rst:340
 msgid "Installing the Kerberos Library"
 msgstr "Kerberos ライブラリーのインストール"
 
-#: ../../rst/os_guide/windows_winrm.rst:340
+#: ../../rst/os_guide/windows_winrm.rst:342
 msgid "Some system dependencies that must be installed prior to using Kerberos. The script below lists the dependencies based on the distro:"
 msgstr "Kerberos を使用する前にインストールする必要があるシステム依存関係があります。以下のスクリプトは、ディストリビューションに基づく依存関係を一覧表示します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:369
+#: ../../rst/os_guide/windows_winrm.rst:371
 msgid "Once the dependencies have been installed, the ``python-kerberos`` wrapper can be install using ``pip``:"
 msgstr "依存関係がインストールされたら、``pip`` を使用して ``python-kerberos`` ラッパーをインストールできます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:378
+#: ../../rst/os_guide/windows_winrm.rst:380
 msgid "While Ansible has supported Kerberos auth through ``pywinrm`` for some time, optional features or more secure options may only be available in newer versions of the ``pywinrm`` and/or ``pykerberos`` libraries. It is recommended you upgrade each version to the latest available to resolve any warnings or errors. This can be done through tools like ``pip`` or a system package manager like ``dnf``, ``yum``, ``apt`` but the package names and versions available may differ between tools."
 msgstr "Ansible はこれまで、``pywinrm`` を通じて Kerberos 認証をサポートしてきましたが、オプション機能やより安全なオプションは、``pywinrm`` ライブラリーまたは ``pykerberos`` ライブラリーの新しいバージョンでのみ利用できる場合があります。警告やエラーが発生した場合は、各バージョンを最新のものにアップグレードすることが推奨されます。この作業は、``pip`` のようなツールや、``dnf``、``yum``、``apt`` のようなシステムパッケージマネージャーで行うことができますが、パッケージ名や利用可能なバージョンはツールによって異なる場合があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:390
+#: ../../rst/os_guide/windows_winrm.rst:392
 msgid "Configuring Host Kerberos"
 msgstr "ホスト Kerberos の設定"
 
-#: ../../rst/os_guide/windows_winrm.rst:392
+#: ../../rst/os_guide/windows_winrm.rst:394
 msgid "Once the dependencies have been installed, Kerberos needs to be configured so that it can communicate with a domain. This configuration is done through the ``/etc/krb5.conf`` file, which is installed with the packages in the script above."
 msgstr "依存関係がインストールされたら、Kerberos がドメインと通信できるように設定する必要があります。この設定は、上のスクリプトでパッケージと一緒にインストールされた ``/etc/krb5.conf`` ファイルを通じて行われます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:396
+#: ../../rst/os_guide/windows_winrm.rst:398
 msgid "To configure Kerberos, in the section that starts with:"
 msgstr "Kerberos を設定するには、以下で始まるセクションで行います。"
 
-#: ../../rst/os_guide/windows_winrm.rst:402
+#: ../../rst/os_guide/windows_winrm.rst:404
 msgid "Add the full domain name and the fully qualified domain names of the primary and secondary Active Directory domain controllers. It should look something like this:"
 msgstr "プライマリーおよびセカンダリーの Active Directory ドメインコントローラーの完全ドメイン名および完全修飾ドメイン名を追加します。以下のようになるはずです。"
 
-#: ../../rst/os_guide/windows_winrm.rst:414
+#: ../../rst/os_guide/windows_winrm.rst:416
 msgid "In the section that starts with:"
 msgstr "以下で始まるセクションで、"
 
-#: ../../rst/os_guide/windows_winrm.rst:420
+#: ../../rst/os_guide/windows_winrm.rst:422
 msgid "Add a line like the following for each domain that Ansible needs access for:"
 msgstr "Ansible がアクセスする必要のある各ドメインに以下のような行を追加します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:427
+#: ../../rst/os_guide/windows_winrm.rst:429
 msgid "You can configure other settings in this file such as the default domain. See `krb5.conf <https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html>`_ for more details."
 msgstr "このファイルでは、デフォルトのドメインなど、その他の設定を行うことができます。詳細は `krb5.conf <https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html>`_ を参照してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:434
+#: ../../rst/os_guide/windows_winrm.rst:436
 msgid "Automatic Kerberos Ticket Management"
 msgstr "Kerberos チケットの自動管理"
 
-#: ../../rst/os_guide/windows_winrm.rst:436
+#: ../../rst/os_guide/windows_winrm.rst:438
 msgid "Ansible version 2.3 and later defaults to automatically managing Kerberos tickets when both ``ansible_user`` and ``ansible_password`` are specified for a host. In this process, a new ticket is created in a temporary credential cache for each host. This is done before each task executes to minimize the chance of ticket expiration. The temporary credential caches are deleted after each task completes and will not interfere with the default credential cache."
 msgstr "Ansible バージョン 2.3 以降では、ホストに ``ansible_user`` および ``ansible_password`` の両方が指定された場合は、デフォルトで Kerberos チケットを自動的に管理します。このプロセスでは、各ホストの一時的な認証情報キャッシュに新しいチケットが作成されます。これは、チケットが失効する可能性を最小限にするために、各タスクが実行される前に行われます。一時的な認証情報キャッシュは、各タスクが完了すると削除され、デフォルトの認証情報キャッシュに干渉することはありません。"
 
-#: ../../rst/os_guide/windows_winrm.rst:443
-msgid "To disable automatic ticket management, set ``ansible_winrm_kinit_mode=manual`` via the inventory."
+#: ../../rst/os_guide/windows_winrm.rst:445
+msgid "To disable automatic ticket management, set ``ansible_winrm_kinit_mode=manual`` through the inventory."
 msgstr "チケットの自動管理を無効にするには、インベントリーから ``ansible_winrm_kinit_mode=manual`` を設定してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:446
+#: ../../rst/os_guide/windows_winrm.rst:448
 msgid "Automatic ticket management requires a standard ``kinit`` binary on the control host system path. To specify a different location or binary name, set the ``ansible_winrm_kinit_cmd`` hostvar to the fully qualified path to a MIT krbv5 ``kinit``-compatible binary."
 msgstr "自動チケット管理には、制御ホストシステムのパスに標準の ``kinit`` バイナリーが必要です。別の場所やバイナリー名を指定するには、ホスト変数 ``ansible_winrm_kinit_cmd`` に MIT krbv5 ``kinit`` 互換バイナリーへの完全修飾パスを設定します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:454
+#: ../../rst/os_guide/windows_winrm.rst:456
 msgid "Manual Kerberos Ticket Management"
 msgstr "Kerberos チケットの手動管理"
 
-#: ../../rst/os_guide/windows_winrm.rst:456
+#: ../../rst/os_guide/windows_winrm.rst:458
 msgid "To manually manage Kerberos tickets, the ``kinit`` binary is used. To obtain a new ticket the following command is used:"
 msgstr "Kerberos チケットを手動で管理するには、``kinit`` バイナリーを使用します。新しいチケットを取得するには、以下のコマンドを使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:463
+#: ../../rst/os_guide/windows_winrm.rst:465
 msgid "The domain must match the configured Kerberos realm exactly, and must be in upper case."
 msgstr "ドメインは設定された Kerberos レルムに完全に一致し、大文字である必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:465
+#: ../../rst/os_guide/windows_winrm.rst:467
 msgid "To see what tickets (if any) have been acquired, use the following command:"
 msgstr "取得したチケット (存在する場合) を確認するには、以下のコマンドを使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:471
+#: ../../rst/os_guide/windows_winrm.rst:473
 msgid "To destroy all the tickets that have been acquired, use the following command:"
 msgstr "取得したすべてのチケットを破棄するには、以下のコマンドを使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:480
+#: ../../rst/os_guide/windows_winrm.rst:482
 msgid "Troubleshooting Kerberos"
 msgstr "Kerberos のトラブルシューティング"
 
-#: ../../rst/os_guide/windows_winrm.rst:482
+#: ../../rst/os_guide/windows_winrm.rst:484
 msgid "Kerberos is reliant on a properly-configured environment to work. To troubleshoot Kerberos issues, ensure that:"
 msgstr "Kerberos は、適切に構成された環境でなければ動作しません。Kerberos の問題をトラブルシューティングするには、以下を確認してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:485
+#: ../../rst/os_guide/windows_winrm.rst:487
 msgid "The hostname set for the Windows host is the FQDN and not an IP address. * If you connect using an IP address you will get the error message `Server not found in Kerberos database`. * To determine if you are connecting using an IP address or an FQDN run your playbook (or call the ``win_ping`` module) using the `-vvv` flag."
 msgstr "Windows ホストに設定されたホスト名は FQDN であり、IP アドレスではありません。* IP アドレスを使用して接続する場合は、エラーメッセージ `Server not found in Kerberos database` が表示されます。* IP アドレスまたは FQDN を使用して接続している場合は、`-vvv` フラグを使用して Playbook を実行するか、``win_ping`` モジュールを呼び出します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:489
+#: ../../rst/os_guide/windows_winrm.rst:491
 msgid "The forward and reverse DNS lookups are working properly in the domain. To test this, ping the windows host by name and then use the ip address returned with ``nslookup``. The same name should be returned when using ``nslookup`` on the IP address."
 msgstr "このドメインでは、DNS の正引きと逆引きが正常に動作しています。これをテストするには、Windows ホストに名前で ping を打ち、``nslookup`` で返された IP アドレスを使用します。IP アドレスに ``nslookup`` を使用すると、同じ名前が返されるはずです。"
 
-#: ../../rst/os_guide/windows_winrm.rst:494
+#: ../../rst/os_guide/windows_winrm.rst:496
 msgid "The Ansible host's clock is synchronized with the domain controller. Kerberos is time sensitive, and a little clock drift can cause the ticket generation process to fail."
 msgstr "Ansible ホストの時計はドメインコントローラーと同期します。Kerberos は時間に敏感で、わずかな時計のずれにより、チケット生成プロセスが失敗する可能性があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:498
+#: ../../rst/os_guide/windows_winrm.rst:500
 msgid "Ensure that the fully qualified domain name for the domain is configured in the ``krb5.conf`` file. To check this, run:"
 msgstr "ドメインの完全修飾ドメイン名が、``krb5.conf`` ファイルに設定されていることを確認してください。これを確認するには、次を実行します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:506
+#: ../../rst/os_guide/windows_winrm.rst:508
 msgid "If the domain name returned by ``klist`` is different from the one requested, an alias is being used. The ``krb5.conf`` file needs to be updated so that the fully qualified domain name is used and not an alias."
 msgstr "``klist`` で返されたドメイン名が要求されたものと異なる場合は、エイリアスが使用されています。``krb5.conf`` ファイルを更新して、エイリアスではなく完全修飾ドメイン名を使用する必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:510
+#: ../../rst/os_guide/windows_winrm.rst:512
 msgid "If the default kerberos tooling has been replaced or modified (some IdM solutions may do this), this may cause issues when installing or upgrading the Python Kerberos library. As of the time of this writing, this library is called ``pykerberos`` and is known to work with both MIT and Heimdal Kerberos libraries. To resolve ``pykerberos`` installation issues, ensure the system dependencies for Kerberos have been met (see: `Installing the Kerberos Library`_), remove any custom Kerberos tooling paths from the PATH environment variable, and retry the installation of Python Kerberos library package."
 msgstr "デフォルトの kerberos ツールが置き換えられたり変更したりした場合 (いくつかの IdM ソリューションではそうなっているかもしれません)、Python Kerberos ライブラリーをインストールしたりアップグレードしたりする際に問題が発生する可能性があります。本ガイドの作成時点で、このライブラリーは ``pykerberos`` と呼ばれ、MIT と Heimdal Kerberos ライブラリーの両方で動作することが知られています。``pykerberos`` のインストール問題を解決するには、Kerberos のシステム依存性が満たされていることを確認し (参照: `Installing the Kerberos Library`_)、PATH 環境変数からカスタムの Kerberos ツールパスを削除し、Python Kerberos ライブラリーパッケージのインストールを再試行してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:517
+#: ../../rst/os_guide/windows_winrm.rst:519
 msgid "CredSSP authentication is a newer authentication protocol that allows credential delegation. This is achieved by encrypting the username and password after authentication has succeeded and sending that to the server using the CredSSP protocol."
 msgstr "CredSSP 認証は、認証情報の委譲を可能にする新しい認証プロトコルになります。これは、認証が成功した後のユーザー名とパスワードを暗号化し、それを CredSSP プロトコルを使用してサーバーに送信することで実現しています。"
 
-#: ../../rst/os_guide/windows_winrm.rst:522
+#: ../../rst/os_guide/windows_winrm.rst:524
 msgid "Because the username and password are sent to the server to be used for double hop authentication, ensure that the hosts that the Windows host communicates with are not compromised and are trusted."
 msgstr "ユーザー名とパスワードをサーバーに送信してダブルホップ認証に使用するため、Windows ホストが通信するホストが漏洩しておらず、信頼できることを確認してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:526
+#: ../../rst/os_guide/windows_winrm.rst:528
 msgid "CredSSP can be used for both local and domain accounts and also supports message encryption over HTTP."
 msgstr "CredSSP は、ローカルアカウントとドメインアカウントの両方に使用でき、HTTPでのメッセージ暗号化にも対応しています。"
 
-#: ../../rst/os_guide/windows_winrm.rst:529
+#: ../../rst/os_guide/windows_winrm.rst:531
 msgid "To use CredSSP authentication, the host vars are configured like so:"
 msgstr "CredSSP 認証を使用するには、以下のようにホスト変数を設定します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:538
+#: ../../rst/os_guide/windows_winrm.rst:540
 msgid "There are some extra host variables that can be set as shown below:"
 msgstr "以下のように設定できる追加のホスト変数があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:544
+#: ../../rst/os_guide/windows_winrm.rst:546
 msgid "CredSSP authentication is not enabled by default on a Windows host, but can be enabled by running the following in PowerShell:"
 msgstr "CredSSP 認証は、Windows ホストではデフォルトでは有効になっていませんが、PowerShell で以下を実行することで有効にすることができます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:554
+#: ../../rst/os_guide/windows_winrm.rst:556
 msgid "Installing CredSSP Library"
 msgstr "CredSSP ライブラリーのインストール"
 
-#: ../../rst/os_guide/windows_winrm.rst:556
+#: ../../rst/os_guide/windows_winrm.rst:558
 msgid "The ``requests-credssp`` wrapper can be installed using ``pip``:"
 msgstr "``requests-credssp`` ラッパーは、``pip`` を使用してインストールできます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:565
+#: ../../rst/os_guide/windows_winrm.rst:567
 msgid "CredSSP and TLS 1.2"
 msgstr "CredSSP および TLS 1.2"
 
-#: ../../rst/os_guide/windows_winrm.rst:567
+#: ../../rst/os_guide/windows_winrm.rst:569
 msgid "By default the ``requests-credssp`` library is configured to authenticate over the TLS 1.2 protocol. TLS 1.2 is installed and enabled by default for Windows Server 2012 and Windows 8 and more recent releases."
 msgstr "デフォルトでは、``requests-credssp`` ライブラリーは、TLS 1.2 プロトコルで認証するように設定されています。TLS 1.2 は、Windows Server 2012 および Windows 8 と、それ以降のリリースでは、デフォルトでインストールされ、有効になっています。"
 
-#: ../../rst/os_guide/windows_winrm.rst:571
+#: ../../rst/os_guide/windows_winrm.rst:573
 msgid "There are two ways that older hosts can be used with CredSSP:"
 msgstr "古いホストを CredSSP で使用できる方法は 2 つあります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:573
+#: ../../rst/os_guide/windows_winrm.rst:575
 msgid "Install and enable a hotfix to enable TLS 1.2 support (recommended for Server 2008 R2 and Windows 7)."
 msgstr "TLS 1.2 のサポートを有効にする Hotfix をインストールして有効にしてください (Server 2008 R2 および Windows 7 で推奨)。"
 
-#: ../../rst/os_guide/windows_winrm.rst:576
+#: ../../rst/os_guide/windows_winrm.rst:578
 msgid "Set ``ansible_winrm_credssp_disable_tlsv1_2=True`` in the inventory to run over TLS 1.0. This is the only option when connecting to Windows Server 2008, which has no way of supporting TLS 1.2"
 msgstr "インベントリーに ``ansible_winrm_credssp_disable_tlsv1_2=True`` を設定して、TLS 1.0 で実行するように設定します。これは、TLS 1.2 に対応していない Windows Server 2008 に接続する際の唯一の選択肢です。"
 
-#: ../../rst/os_guide/windows_winrm.rst:580
+#: ../../rst/os_guide/windows_winrm.rst:582
 msgid "See :ref:`winrm_tls12` for more information on how to enable TLS 1.2 on the Windows host."
 msgstr "Windows ホストで TLS 1.2 を有効にする方法は、「:ref:`winrm_tls12`」を参照してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:586
+#: ../../rst/os_guide/windows_winrm.rst:588
 msgid "Set CredSSP Certificate"
 msgstr "CredSSP 証明書の設定"
 
-#: ../../rst/os_guide/windows_winrm.rst:588
+#: ../../rst/os_guide/windows_winrm.rst:590
 msgid "CredSSP works by encrypting the credentials through the TLS protocol and uses a self-signed certificate by default. The ``CertificateThumbprint`` option under the WinRM service configuration can be used to specify the thumbprint of another certificate."
 msgstr "CredSSP は、TLS プロトコルで認証情報を暗号化して動作し、デフォルトでは自己署名証明書を使用します。WinRM サービス構成の ``CertificateThumbprint`` オプションを使用して、別の証明書のサムプリントを指定することができます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:591
+#: ../../rst/os_guide/windows_winrm.rst:593
 msgid "This certificate configuration is independent of the WinRM listener certificate. With CredSSP, message transport still occurs over the WinRM listener, but the TLS-encrypted messages inside the channel use the service-level certificate."
 msgstr "この証明書構成は、WinRM リスナーの証明書とは独立しています。CredSSP では、メッセージトランスポートは引き続き WinRM リスナーを介して行われますが、チャンネル内の TLS 暗号化メッセージにはサービスレベル証明書が使用されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:595
+#: ../../rst/os_guide/windows_winrm.rst:597
 msgid "To explicitly set the certificate to use for CredSSP:"
 msgstr "CredSSP に使用する証明書を明示的に設定するには、以下を実行します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:609
+#: ../../rst/os_guide/windows_winrm.rst:611
 msgid "Non-Administrator Accounts"
 msgstr "管理者以外のアカウント"
 
-#: ../../rst/os_guide/windows_winrm.rst:611
+#: ../../rst/os_guide/windows_winrm.rst:613
 msgid "WinRM is configured by default to only allow connections from accounts in the local ``Administrators`` group. This can be changed by running:"
 msgstr "WinRM は、デフォルトで、ローカルの ``Administrators`` グループのアカウントからの接続のみを許可するように設定されています。これは、以下を実行して変更できます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:618
+#: ../../rst/os_guide/windows_winrm.rst:620
 msgid "This will display an ACL editor, where new users or groups may be added. To run commands over WinRM, users and groups must have at least the ``Read`` and ``Execute`` permissions enabled."
 msgstr "これにより、ACL エディターが表示され、新しいユーザーまたはグループを追加できます。WinRM でコマンドを実行するには、ユーザーおよびグループに少なくとも ``Read`` および ``Execute`` パーミッションが有効になっている必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:622
+#: ../../rst/os_guide/windows_winrm.rst:624
 msgid "While non-administrative accounts can be used with WinRM, most typical server administration tasks require some level of administrative access, so the utility is usually limited."
 msgstr "WinRM では、管理者以外のアカウントを使用することもできますが、一般的なサーバー管理作業では、ある程度の管理者権限が必要となるため、実用性は限られてしまいます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:628
+#: ../../rst/os_guide/windows_winrm.rst:630
 msgid "WinRM Encryption"
 msgstr "WinRM 暗号化"
 
-#: ../../rst/os_guide/windows_winrm.rst:630
+#: ../../rst/os_guide/windows_winrm.rst:632
 msgid "By default WinRM will fail to work when running over an unencrypted channel. The WinRM protocol considers the channel to be encrypted if using TLS over HTTP (HTTPS) or using message level encryption. Using WinRM with TLS is the recommended option as it works with all authentication options, but requires a certificate to be created and used on the WinRM listener."
 msgstr "デフォルトでは、WinRM は、暗号化されていないチャンネル上で実行すると、動作に失敗します。WinRM プロトコルは、TLS over HTTP (HTTPS) を使用している場合や、メッセージレベルの暗号化を使用している場合は、チャンネルが暗号化されているとみなします。WinRM を TLS で使用することは、すべての認証オプションで動作するため、推奨されるオプションですが、WinRM リスナーで証明書を作成して使用する必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:636
+#: ../../rst/os_guide/windows_winrm.rst:638
 msgid "If in a domain environment, ADCS can create a certificate for the host that is issued by the domain itself."
 msgstr "ドメイン環境の場合、ADCS はドメイン自体が発行するホストの証明書を作成できます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:639
+#: ../../rst/os_guide/windows_winrm.rst:641
 msgid "If using HTTPS is not an option, then HTTP can be used when the authentication option is ``NTLM``, ``Kerberos`` or ``CredSSP``. These protocols will encrypt the WinRM payload with their own encryption method before sending it to the server. The message-level encryption is not used when running over HTTPS because the encryption uses the more secure TLS protocol instead. If both transport and message encryption is required, set ``ansible_winrm_message_encryption=always`` in the host vars."
 msgstr "HTTPS を使用することができない場合は、認証オプションが ``NTLM``、``Kerberos``、または ``CredSSP`` であれば、HTTP を使用することができます。これらのプロトコルは、WinRM ペイロードを独自の暗号化方式で暗号化してからサーバーに送信します。暗号化は、より安全な TLS プロトコルを代わりに使用するため、HTTPS で実行する場合に、メッセージレベルの暗号化は使用されません。トランスポートとメッセージの両方の暗号化が必要な場合は、ホスト変数に ``ansible_winrm_message_encryption=always`` を設定してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:647
+#: ../../rst/os_guide/windows_winrm.rst:649
 msgid "Message encryption over HTTP requires pywinrm>=0.3.0."
 msgstr "HTTPでのメッセージ暗号化には 0.3.0 以上の pywinrm が必要です。"
 
-#: ../../rst/os_guide/windows_winrm.rst:649
+#: ../../rst/os_guide/windows_winrm.rst:651
 msgid "A last resort is to disable the encryption requirement on the Windows host. This should only be used for development and debugging purposes, as anything sent from Ansible can be viewed, manipulated and also the remote session can completely be taken over by anyone on the same network. To disable the encryption requirement:"
 msgstr "最後の手段として、Windows ホストの暗号化要件を無効にすることができます。これは、Ansible から送信されたものはすべて閲覧、操作でき、また同じネットワーク上の誰もがリモートセッションを完全に乗っ取ることができるため、開発やデバッグの目的でのみ使用してください。暗号化を無効にするには、以下の手順に従います。"
 
-#: ../../rst/os_guide/windows_winrm.rst:659
+#: ../../rst/os_guide/windows_winrm.rst:661
 msgid "Do not disable the encryption check unless it is absolutely required. Doing so could allow sensitive information like credentials and files to be intercepted by others on the network."
 msgstr "どうしても必要な場合を除き、暗号化チェックを無効にしないでください。暗号化チェックを無効にすると、認証情報やファイルなどの機密情報がネットワーク上の他の人に傍受される可能性があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:666
+#: ../../rst/os_guide/windows_winrm.rst:668
 msgid "Inventory Options"
 msgstr "インベントリーオプション"
 
-#: ../../rst/os_guide/windows_winrm.rst:668
+#: ../../rst/os_guide/windows_winrm.rst:670
 msgid "Ansible's Windows support relies on a few standard variables to indicate the username, password, and connection type of the remote hosts. These variables are most easily set up in the inventory, but can be set on the ``host_vars``/ ``group_vars`` level."
 msgstr "Ansible の Windows サポートは、リモートホストのユーザー名、パスワード、接続タイプを示すいくつかの標準変数に依存しています。これらの変数はインベントリーで最も簡単に設定できますが、``host_vars``/``group_vars`` レベルで設定することもできます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:673
+#: ../../rst/os_guide/windows_winrm.rst:675
 msgid "When setting up the inventory, the following variables are required:"
 msgstr "インベントリーを設定する際に、以下の変数が必要になります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:688
+#: ../../rst/os_guide/windows_winrm.rst:690
 msgid "Using the variables above, Ansible will connect to the Windows host with Basic authentication through HTTPS. If ``ansible_user`` has a UPN value like ``username@MY.DOMAIN.COM`` then the authentication option will automatically attempt to use Kerberos unless ``ansible_winrm_transport`` has been set to something other than ``kerberos``."
 msgstr "上記の変数を使用すると、Ansible は HTTPS を通じて Basic 認証で Windows ホストに接続します。``ansible_user`` に ``username@MY.DOMAIN.COM`` のような UPN 値がある場合は、``ansible_winrm_transport`` が ``kerberos`` 以外に設定されていない限り、認証オプションは自動的に Kerberos の使用を試みます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:694
+#: ../../rst/os_guide/windows_winrm.rst:696
 msgid "The following custom inventory variables are also supported for additional configuration of WinRM connections:"
 msgstr "以下のカスタムインベントリー変数も、WinRM 接続の追加設定のためにサポートされています。"
 
-#: ../../rst/os_guide/windows_winrm.rst:697
+#: ../../rst/os_guide/windows_winrm.rst:699
 msgid "``ansible_port``: The port WinRM will run over, HTTPS is ``5986`` which is the default while HTTP is ``5985``"
 msgstr "``ansible_port``: WinRM が実行するポートです。HTTPS のデフォルトは ``5986`` で、HTTP のデフォルトは ``5985`` です。"
 
-#: ../../rst/os_guide/windows_winrm.rst:700
+#: ../../rst/os_guide/windows_winrm.rst:702
 msgid "``ansible_winrm_scheme``: Specify the connection scheme (``http`` or ``https``) to use for the WinRM connection. Ansible uses ``https`` by default unless ``ansible_port`` is ``5985``"
 msgstr "``ansible_winrm_scheme``: WinRM 接続に使用する接続スキーム (``http`` または ``https``) を指定します。Ansible は、``ansible_port`` が ``5985`` に指定されていない限り、デフォルトで ``https`` を使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:704
+#: ../../rst/os_guide/windows_winrm.rst:706
 msgid "``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint, Ansible uses ``/wsman`` by default"
 msgstr "``ansible_winrm_path``: WinRMエンドポイントへの別のパスを指定します。Ansible はデフォルトで ``/wsman`` を使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:707
+#: ../../rst/os_guide/windows_winrm.rst:709
 msgid "``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication. If ``ansible_user`` contains ``@``, Ansible will use the part of the username after ``@`` by default"
 msgstr "``ansible_winrm_realm``: Kerberos 認証に使用するレルムを指定します。``ansible_user`` に ``@`` が含まれる場合、Ansible はデフォルトで ``@`` の後にユーザー名の一部を使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:711
+#: ../../rst/os_guide/windows_winrm.rst:713
 msgid "``ansible_winrm_transport``: Specify one or more authentication transport options as a comma-separated list. By default, Ansible will use ``kerberos, basic`` if the ``kerberos`` module is installed and a realm is defined, otherwise it will be ``plaintext``"
 msgstr "``ansible_winrm_transport``: 1 つ以上の認証トランスポートオプションをコンマ区切りのリストで指定します。デフォルトでは、``kerberos`` モジュールがインストールされていてレルムが定義されている場合、Ansible は ``kerberos, basic`` を使用し、それ以外の場合は ``plaintext`` になります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:716
+#: ../../rst/os_guide/windows_winrm.rst:718
 msgid "``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``"
 msgstr "``ansible_winrm_server_cert_validation``: サーバー証明書の検証モード (``ignore`` または``validate``) を指定します。Ansible のデフォルトは、Python 2.7.9 以降では ``validate`` で、これは Windows の自己署名証明書に対して証明書の検証エラーが発生します。WinRM リスナーで検証可能な証明書が設定されていない場合は、この設定を ``ignore`` に設定する必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:723
+#: ../../rst/os_guide/windows_winrm.rst:725
 msgid "``ansible_winrm_operation_timeout_sec``: Increase the default timeout for WinRM operations, Ansible uses ``20`` by default"
 msgstr "``ansible_winrm_operation_timeout_sec``: WinRM 操作のデフォルトタイムアウトを増やすと、Ansible はデフォルトで ``20`` を使用します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:726
+#: ../../rst/os_guide/windows_winrm.rst:728
 msgid "``ansible_winrm_read_timeout_sec``: Increase the WinRM read timeout, Ansible uses ``30`` by default. Useful if there are intermittent network issues and read timeout errors keep occurring"
 msgstr "``ansible_winrm_read_timeout_sec``: WinRM の読み取りタイムアウトを増やします。Ansible はデフォルトで ``30`` を使用します。ネットワークの問題が断続的に発生し、読み取りタイムアウトのエラーが発生し続ける場合に有効です。"
 
-#: ../../rst/os_guide/windows_winrm.rst:730
+#: ../../rst/os_guide/windows_winrm.rst:732
 msgid "``ansible_winrm_message_encryption``: Specify the message encryption operation (``auto``, ``always``, ``never``) to use, Ansible uses ``auto`` by default. ``auto`` means message encryption is only used when ``ansible_winrm_scheme`` is ``http`` and ``ansible_winrm_transport`` supports message encryption. ``always`` means message encryption will always be used and ``never`` means message encryption will never be used"
 msgstr "``ansible_winrm_message_encryption``: 使用するメッセージ暗号化操作 (``auto``、``always``、``never``) を指定します。Ansible はデフォルトで ``auto`` を使用します。``auto`` は、``ansible_winrm_scheme`` が ``http`` で、``ansible_winrm_transport`` がメッセージ暗号化をサポートしている場合に限り、メッセージ暗号化が使用されることを意味します。``always`` は、メッセージ暗号化が常に使用されることを意味し、``never`` は、メッセージ暗号化が決して使用されないことを意味します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:737
+#: ../../rst/os_guide/windows_winrm.rst:739
 msgid "``ansible_winrm_ca_trust_path``: Used to specify a different cacert container than the one used in the ``certifi`` module. See the HTTPS Certificate Validation section for more details."
 msgstr "``ansible_winrm_ca_trust_path``: ``certifi`` モジュールで使用されているものとは異なる cacert コンテナーを指定するために使用します。詳細は、「HTTPS 証明書の検証」セクションを参照してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:741
+#: ../../rst/os_guide/windows_winrm.rst:743
 msgid "``ansible_winrm_send_cbt``: When using ``ntlm`` or ``kerberos`` over HTTPS, the authentication library will try to send channel binding tokens to mitigate against man in the middle attacks. This flag controls whether these bindings will be sent or not (default: ``yes``)."
 msgstr "``ansible_winrm_send_cbt``: ``ntlm`` または ``kerberos`` を HTTPS で使用する場合、認証ライブラリーは、中間者攻撃を緩和するためにチャンネルバインディングトークンの送信を試みます。このフラグは、これらのバインディングを送信するかどうかを制御します (デフォルト: ``yes``)。"
 
-#: ../../rst/os_guide/windows_winrm.rst:746
+#: ../../rst/os_guide/windows_winrm.rst:748
 msgid "``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided in place of ``*``"
 msgstr "``ansible_winrm_*``: ``winrm.Protocol`` でサポートされている任意の追加キーワード引数は、代わりに ``*`` で指定できます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:749
+#: ../../rst/os_guide/windows_winrm.rst:751
 msgid "In addition, there are also specific variables that need to be set for each authentication option. See the section on authentication above for more information."
 msgstr "さらに、各認証オプションで設定する必要がある特定の変数もあります。詳細は、上記の認証に関するセクションを参照してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:752
+#: ../../rst/os_guide/windows_winrm.rst:754
 msgid "Ansible 2.0 has deprecated the \"ssh\" from ``ansible_ssh_user``, ``ansible_ssh_pass``, ``ansible_ssh_host``, and ``ansible_ssh_port`` to become ``ansible_user``, ``ansible_password``, ``ansible_host``, and ``ansible_port``. If using a version of Ansible prior to 2.0, the older style (``ansible_ssh_*``) should be used instead. The shorter variables are ignored, without warning, in older versions of Ansible."
 msgstr "Ansible 2.0 では、``ansible_ssh_user``、``ansible_ssh_pass``、``ansible_ssh_host``、および ``ansible_ssh_port`` の「ssh」が非推奨となり、``ansible_user``、``ansible_password``、``ansible_host``、および ``ansible_port`` となりました。Ansible 2.0 より前のバージョンを使用している場合は、代わりに古いスタイル (``ansible_ssh_*``) を使用する必要があります。短い方の変数は、古いバージョンの Ansible では警告なしに無視されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:759
+#: ../../rst/os_guide/windows_winrm.rst:761
 msgid "``ansible_winrm_message_encryption`` is different from transport encryption done over TLS. The WinRM payload is still encrypted with TLS when run over HTTPS, even if ``ansible_winrm_message_encryption=never``."
 msgstr "``ansible_winrm_message_encryption`` は、TLS 上で行われるトランスポート暗号化とは異なります。WinRM ペイロードは、``ansible_winrm_message_encryption=never`` であっても、HTTPS で実行された場合でも TLS で暗号化されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:766
+#: ../../rst/os_guide/windows_winrm.rst:768
 msgid "IPv6 Addresses"
 msgstr "IPv6 アドレス"
 
-#: ../../rst/os_guide/windows_winrm.rst:768
+#: ../../rst/os_guide/windows_winrm.rst:770
 msgid "IPv6 addresses can be used instead of IPv4 addresses or hostnames. This option is normally set in an inventory. Ansible will attempt to parse the address using the `ipaddress <https://docs.python.org/3/library/ipaddress.html>`_ package and pass to pywinrm correctly."
 msgstr "IPv4 アドレスやホスト名の代わりに、IPv6 アドレスを使用することができます。このオプションは通常、インベントリーで設定します。Ansible は、`ipaddress <https://docs.python.org/3/library/ipaddress.html>`_ パッケージを使用してアドレスの解析を試み、pywinrm に正しく渡します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:773
+#: ../../rst/os_guide/windows_winrm.rst:775
 msgid "When defining a host using an IPv6 address, just add the IPv6 address as you would an IPv4 address or hostname:"
 msgstr "IPv6 アドレスを使用してホストを定義する場合は、IPv4 アドレスやホスト名と同じように IPv6 アドレスを追加するだけです。"
 
-#: ../../rst/os_guide/windows_winrm.rst:787
+#: ../../rst/os_guide/windows_winrm.rst:789
 msgid "The ipaddress library is only included by default in Python 3.x. To use IPv6 addresses in Python 2.7, make sure to run ``pip install ipaddress`` which installs a backported package."
 msgstr "ipaddress ライブラリーは Python 3.x にのみデフォルトで含まれています。Python 2.7 で IPv6 アドレスを使用するには、バックポートされたパッケージをインストールする ``pip install ipaddress`` を必ず実行してください。"
 
-#: ../../rst/os_guide/windows_winrm.rst:794
+#: ../../rst/os_guide/windows_winrm.rst:796
 msgid "HTTPS Certificate Validation"
 msgstr "HTTPS 証明書の検証"
 
-#: ../../rst/os_guide/windows_winrm.rst:796
+#: ../../rst/os_guide/windows_winrm.rst:798
 msgid "As part of the TLS protocol, the certificate is validated to ensure the host matches the subject and the client trusts the issuer of the server certificate. When using a self-signed certificate or setting ``ansible_winrm_server_cert_validation: ignore`` these security mechanisms are bypassed. While self signed certificates will always need the ``ignore`` flag, certificates that have been issued from a certificate authority can still be validated."
 msgstr "TLS プロトコルの一環として、証明書が検証され、ホストがサブジェクトと一致し、クライアントがサーバー証明書の発行者を信頼していることが確認されます。自己署名証明書を使用したり、``ansible_winrm_server_cert_validation: ignore`` を設定したりすると、これらのセキュリティーメカニズムが回避されます。自己署名証明書には常に ``ignore`` フラグが必要ですが、認証局から発行された証明書は検証されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:804
+#: ../../rst/os_guide/windows_winrm.rst:806
 msgid "One of the more common ways of setting up a HTTPS listener in a domain environment is to use Active Directory Certificate Service (AD CS). AD CS is used to generate signed certificates from a Certificate Signing Request (CSR). If the WinRM HTTPS listener is using a certificate that has been signed by another authority, like AD CS, then Ansible can be set up to trust that issuer as part of the TLS handshake."
 msgstr "ドメイン環境で HTTPS リスナーをセットアップする一般的な方法の 1 つに、Active Directory Certificate Service (AD CS) を使用する方法があります。AD CS は、CSR (Certificate Signing Request) から署名付き証明書を生成するために使用されます。WinRM HTTPS リスナーが AD CS のような別の機関によって署名された証明書を使用している場合、Ansible は TLS ハンドシェイクの一部としてその発行者を信頼するように設定することができます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:811
+#: ../../rst/os_guide/windows_winrm.rst:813
 msgid "To get Ansible to trust a Certificate Authority (CA) like AD CS, the issuer certificate of the CA can be exported as a PEM encoded certificate. This certificate can then be copied locally to the Ansible controller and used as a source of certificate validation, otherwise known as a CA chain."
 msgstr "AD CS のような認証局 (CA) を Ansible に信頼させるには、CA の発行者証明書を PEM エンコード証明書としてエクスポートします。この証明書は、Ansible コントローラーのローカルにコピーして、証明書検証のソースとして使用することができます (CA チェーンとも呼ばれます)。"
 
-#: ../../rst/os_guide/windows_winrm.rst:816
+#: ../../rst/os_guide/windows_winrm.rst:818
 msgid "The CA chain can contain a single or multiple issuer certificates and each entry is contained on a new line. To then use the custom CA chain as part of the validation process, set ``ansible_winrm_ca_trust_path`` to the path of the file. If this variable is not set, the default CA chain is used instead which is located in the install path of the Python package `certifi <https://github.com/certifi/python-certifi>`_."
 msgstr "CA チェーンには、単一または複数の発行者証明書を含めることができ、各エントリーは新しい行に含まれます。認証プロセスの一部としてカスタム CA チェーンを使用するには、``ansible_winrm_ca_trust_path`` にファイルのパスを設定します。この変数が設定されていない場合は、Python パッケージ `certifi <https://github.com/certifi/python-certifi>`_ のインストールパスにあるデフォルトの CAチ ェーンが使用されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:823
+#: ../../rst/os_guide/windows_winrm.rst:825
 msgid "Each HTTP call is done by the Python requests library which does not use the systems built-in certificate store as a trust authority. Certificate validation will fail if the server's certificate issuer is only added to the system's truststore."
 msgstr "HTTP 呼び出しはそれぞれ、システムに組み込まれた証明書ストアを信頼機関として使用しない Python リクエストライブラリーによって行われます。サーバーの証明書発行者がシステムのトラストストアに追加されていない場合、証明書の検証は失敗します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:831
+#: ../../rst/os_guide/windows_winrm.rst:833
 msgid "TLS 1.2 Support"
 msgstr "TLS 1.2 のサポート"
 
-#: ../../rst/os_guide/windows_winrm.rst:833
+#: ../../rst/os_guide/windows_winrm.rst:835
 msgid "As WinRM runs over the HTTP protocol, using HTTPS means that the TLS protocol is used to encrypt the WinRM messages. TLS will automatically attempt to negotiate the best protocol and cipher suite that is available to both the client and the server. If a match cannot be found then Ansible will error out with a message similar to:"
 msgstr "WinRM は HTTP プロトコル上で動作するため、HTTPS を使用するということは、WinRM メッセージの暗号化に TLS プロトコルが使用されることを意味します。TLS は、クライアントとサーバーの両方で利用可能な、最適なプロトコルと暗号スイートを自動的に取り決めようとします。一致するものが見つからない場合、Ansible は次のようなメッセージでエラーになります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:843
+#: ../../rst/os_guide/windows_winrm.rst:845
 msgid "Commonly this is when the Windows host has not been configured to support TLS v1.2 but it could also mean the Ansible controller has an older OpenSSL version installed."
 msgstr "これは、Windows ホストが TLS v1.2 をサポートするように設定されていない場合ですが、Ansible コントローラーに古い OpenSSL バージョンがインストールされていることも意味します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:847
+#: ../../rst/os_guide/windows_winrm.rst:849
 msgid "Windows 8 and Windows Server 2012 come with TLS v1.2 installed and enabled by default but older hosts, like Server 2008 R2 and Windows 7, have to be enabled manually."
 msgstr "Windows 8 および Windows Server 2012 には、デフォルトで TLS v1.2 がインストールされ、有効になっていますが、Server 2008 R2 や Windows 7 などの古いホストは手動で有効にする必要があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:851
+#: ../../rst/os_guide/windows_winrm.rst:853
 msgid "There is a bug with the TLS 1.2 patch for Server 2008 which will stop Ansible from connecting to the Windows host. This means that Server 2008 cannot be configured to use TLS 1.2. Server 2008 R2 and Windows 7 are not affected by this issue and can use TLS 1.2."
 msgstr "Server 2008 の TLS 1.2 パッチにはバグがあり、Ansible の Windows ホストへの接続が停止してしまいます。これは、Server 2008 が TLS 1.2 を使用するように設定できないことを意味します。Server 2008 R2 とWindows 7 はこの問題の影響を受けず、TLS 1.2 を使用できます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:856
+#: ../../rst/os_guide/windows_winrm.rst:858
 msgid "To verify what protocol the Windows host supports, you can run the following command on the Ansible controller:"
 msgstr "Windows ホストが対応しているプロトコルを確認するには、Ansible コントローラーで以下のコマンドを実行します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:863
+#: ../../rst/os_guide/windows_winrm.rst:865
 msgid "The output will contain information about the TLS session and the ``Protocol`` line will display the version that was negotiated:"
 msgstr "出力には TLS セッションに関する情報が含まれ、``Protocol`` 行にはネゴシエートされたバージョンが表示されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:901
+#: ../../rst/os_guide/windows_winrm.rst:903
 msgid "If the host is returning ``TLSv1`` then it should be configured so that TLS v1.2 is enable. You can do this by running the following PowerShell script:"
 msgstr "ホストが ``TLSv1`` を返す場合は、TLS v1.2 が有効になるように設定する必要があります。これは、次の PowerShell スクリプトを実行することで行うことができます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:926
+#: ../../rst/os_guide/windows_winrm.rst:928
 msgid "The below Ansible tasks can also be used to enable TLS v1.2:"
 msgstr "以下の Ansible タスクを使用して TLS v1.2 を有効にすることもできます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:956
+#: ../../rst/os_guide/windows_winrm.rst:958
 msgid "There are other ways to configure the TLS protocols as well as the cipher suites that are offered by the Windows host. One tool that can give you a GUI to manage these settings is `IIS Crypto <https://www.nartac.com/Products/IISCrypto/>`_ from Nartac Software."
 msgstr "TLS プロトコルや、Windows ホストが提供する暗号スイートを設定する方法は他にもあります。これらの設定を管理するための GUI を提供するツールとして、Nartac Software 社の `IIS Crypto <https://www.nartac.com/Products/IISCrypto/>`_ があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:964
+#: ../../rst/os_guide/windows_winrm.rst:966
 msgid "WinRM limitations"
 msgstr "WinRM の制限"
 
-#: ../../rst/os_guide/windows_winrm.rst:965
+#: ../../rst/os_guide/windows_winrm.rst:967
 msgid "Due to the design of the WinRM protocol , there are a few limitations when using WinRM that can cause issues when creating playbooks for Ansible. These include:"
 msgstr "WinRM プロトコルの設計上、WinRM を使用する際にはいくつかの制限があり、Ansible の Playbook を作成する際に問題となることがあります。これには次のようなものがあります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:969
+#: ../../rst/os_guide/windows_winrm.rst:971
 msgid "Credentials are not delegated for most authentication types, which causes authentication errors when accessing network resources or installing certain programs."
 msgstr "ほとんどの認証タイプで認証情報が委譲されていないため、ネットワークリソースへのアクセスや特定のプログラムのインストール時に認証エラーが発生することがありました。"
 
-#: ../../rst/os_guide/windows_winrm.rst:973
+#: ../../rst/os_guide/windows_winrm.rst:975
 msgid "Many calls to the Windows Update API are blocked when running over WinRM."
 msgstr "WinRM 経由で実行すると、Windows Update API への多くの呼び出しがブロックされます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:975
+#: ../../rst/os_guide/windows_winrm.rst:977
 msgid "Some programs fail to install with WinRM due to no credential delegation or because they access forbidden Windows API like WUA over WinRM."
 msgstr "認証情報の委譲や、WUA over WinRM などの禁止されている Windows API へのアクセスにより、一部のプログラムは WinRM でインストールできない場合があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:978
+#: ../../rst/os_guide/windows_winrm.rst:980
 msgid "Commands under WinRM are done under a non-interactive session, which can prevent certain commands or executables from running."
 msgstr "WinRM のコマンドは非対話型セッションで実行されるため、特定のコマンドや実行ファイルが実行できない場合があります。"
 
-#: ../../rst/os_guide/windows_winrm.rst:981
+#: ../../rst/os_guide/windows_winrm.rst:983
 msgid "You cannot run a process that interacts with ``DPAPI``, which is used by some installers (like Microsoft SQL Server)."
 msgstr "一部のインストーラー (Microsoft SQL Server など) が使用する ``DPAPI`` と対話するプロセスを実行することはできません。"
 
-#: ../../rst/os_guide/windows_winrm.rst:984
+#: ../../rst/os_guide/windows_winrm.rst:986
 msgid "Some of these limitations can be mitigated by doing one of the following:"
 msgstr "この制限の一部は、以下のいずれかを実行して軽減できます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:986
+#: ../../rst/os_guide/windows_winrm.rst:988
 msgid "Set ``ansible_winrm_transport`` to ``credssp`` or ``kerberos`` (with ``ansible_winrm_kerberos_delegation=true``) to bypass the double hop issue and access network resources"
 msgstr "ダブルホップ問題を回避してネットワークリソースにアクセスするために、``ansible_winrm_transport`` を ``credssp`` または ``kerberos`` (``ansible_winrm_kerberos_delegation=true`` を使用) に設定します。"
 
-#: ../../rst/os_guide/windows_winrm.rst:990
+#: ../../rst/os_guide/windows_winrm.rst:992
 msgid "Use ``become`` to bypass all WinRM restrictions and run a command as it would locally. Unlike using an authentication transport like ``credssp``, this will also remove the non-interactive restriction and API restrictions like WUA and DPAPI"
 msgstr "``become`` を使用すると、すべての WinRM 制限を回避して、ローカルと同様にコマンドを実行できます。``credssp`` のような認証トランスポートを使用する場合とは異なり、非対話型の制限や、WUA や DPAPI などの API の制限も解除されます。"
 
-#: ../../rst/os_guide/windows_winrm.rst:995
+#: ../../rst/os_guide/windows_winrm.rst:997
 msgid "Use a scheduled task to run a command which can be created with the ``win_scheduled_task`` module. Like ``become``, this bypasses all WinRM restrictions but can only run a command and not modules."
 msgstr "``win_scheduled_task`` モジュールで作成されるコマンドを実行するために、スケジュールされたタスクを使用します。``become`` と同様に、WinRM の制限をすべて回避しますが、実行できるのはコマンドのみで、モジュールは実行できません。"
+
+#~ msgid "A WinRM listener should be created and activated. More details for this can be found below."
+#~ msgstr "WinRM リスナーを作成し、有効にする必要があります。詳細は以下を参照してください。"
+
+#~ msgid "Once completed, you will need to remove auto logon and set the execution policy back to the default (``Restricted `` for Windows clients, or ``RemoteSigned`` for Windows servers). You can do this with the following PowerShell commands:"
+#~ msgstr "完了したら、自動ログオンを解除して、実行ポリシーをデフォルト (Windows クライアントの場合は ``Restricted ``、Windows サーバーの場合は ``RemoteSigned``) に戻す必要があります。これには以下の PowerShell コマンドが必要です。"
+
+#~ msgid "The script works by checking to see what programs need to be installed (such as .NET Framework 4.5.2) and what PowerShell version is required. If a reboot is required and the ``username`` and ``password`` parameters are set, the script will automatically reboot and logon when it comes back up from the reboot. The script will continue until no more actions are required and the PowerShell version matches the target version. If the ``username`` and ``password`` parameters are not set, the script will prompt the user to manually reboot and logon when required. When the user is next logged in, the script will continue where it left off and the process continues until no more actions are required."
+#~ msgstr "このスクリプトは、インストールが必要なプログラム (.NET Framework 4.5.2 など) や、必要な PowerShell バージョンを確認して動作します。再起動が必要で、``username`` パラメーターと ``password`` パラメーターが設定されている場合は、スクリプトが自動的に再起動し、再起動から復帰したときにログオンします。スクリプトは、アクションが不要になり、PowerShell バージョンがターゲットのバージョンと一致するまで続行されます。``username`` パラメーターおよび ``password`` パラメーターが設定されていない場合、スクリプトは必要に応じてユーザーに手動で再起動とログオンを促します。ユーザーが次にログインすると、スクリプトは前回の続きを実行し、アクションが必要なくなるまで処理を続けます。"
+
+#~ msgid "If running on Server 2008, then SP2 must be installed. If running on Server 2008 R2 or Windows 7, then SP1 must be installed."
+#~ msgstr "Server 2008 で実行する場合は、SP2 がインストールされている必要があります。Server 2008 R2 または Windows 7 で実行している場合は SP1 をインストールする必要があります。"
+
+#~ msgid "When running on PowerShell v3.0, there is a bug with the WinRM service that limits the amount of memory available to WinRM. Without this hotfix installed, Ansible will fail to execute certain commands on the Windows host. These hotfixes should be installed as part of the system bootstrapping or imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ can be used to install the hotfix on affected hosts."
+#~ msgstr "PowerShell v3.0 で実行する場合は、WinRM サービスのバグにより、WinRM で使用できるメモリー量が制限されるという問題がありました。この Hotfix をインストールしないと、Windows ホスト上で Ansible による特定のコマンドの実行に失敗します。これらの Hotfix は、システムのブートストラップまたはイメージングプロセスの一部としてインストールする必要があります。`Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ というスクリプトを使用すると、影響を受けるホストに hotfix をインストールできます。"
+
+#~ msgid "The following PowerShell command will install the hotfix:"
+#~ msgstr "以下の PowerShell コマンドは hotfix をインストールします。"
+
+#~ msgid "``CertificateThumbprint``: If running over an HTTPS listener, this is the thumbprint of the certificate in the Windows Certificate Store that is used in the connection. To get the details of the certificate itself, run this command with the relevant certificate thumbprint in PowerShell:"
+#~ msgstr "``CertificateThumbprint``: HTTPS リスナーを介して実行する場合、これは接続に使用される Windows 証明書ストアの証明書のサムプリントです。証明書自体の詳細を取得するには、PowerShell で該当する証明書のサムプリントを指定して次のコマンドを実行します。"
+
+#~ msgid "When creating an HTTPS listener, an existing certificate needs to be created and stored in the ``LocalMachine\\My`` certificate store. Without a certificate being present in this store, most commands will fail."
+#~ msgstr "HTTPS リスナーを作成する際には、既存の証明書を作成し、``LocalMachine\\My`` の証明書ストアに保存する必要があります。このストアに証明書が存在しないと、ほとんどのコマンドが失敗します。"
+
+#~ msgid "While many of these options should rarely be changed, a few can easily impact the operations over WinRM and are useful to understand. Some of the important options are:"
+#~ msgstr "これらのオプションの多くはほとんど変更する必要はありませんが、いくつかのオプションは WinRM の操作に簡単に影響を与えるため、理解しておくと便利です。重要なオプションの一部を紹介します。"
+
+#~ msgid "``Service\\AllowUnencrypted``: This option defines whether WinRM will allow traffic that is run over HTTP without message encryption. Message level encryption is only possible when ``ansible_winrm_transport`` is ``ntlm``, ``kerberos`` or ``credssp``. By default this is ``false`` and should only be set to ``true`` when debugging WinRM messages."
+#~ msgstr "``Service\\AllowUnencrypted``: このオプションは、メッセージを暗号化せずに HTTP で実行するトラフィックを WinRM で許可するかどうかを定義します。メッセージレベルの暗号化は、``ansible_winrm_transport`` が ``ntlm``、``kerberos``、または ``credssp`` の場合にのみ可能です。デフォルトでは、これは ``false`` であり、WinRM メッセージをデバッグする場合に限り ``true`` に設定する必要があります。"
+
+#~ msgid "To modify a setting under the ``Service`` key in PowerShell:"
+#~ msgstr "PowerShell の ``Service`` キーで設定を変更するには、以下を実行します。"
+
+#~ msgid "To modify a setting under the ``Winrs`` key in PowerShell:"
+#~ msgstr "PowerShell の ``Winrs`` キーで設定を変更するには、以下を実行します。"
+
+#~ msgid "If this fails, the issue is probably related to the WinRM setup. If it works, the issue may not be related to the WinRM setup; please continue reading for more troubleshooting suggestions."
+#~ msgstr "失敗した場合は、WinRM の設定に問題があると思われます。成功した場合は、問題が WinRM の設定に関連していない可能性があるため、さらに詳しいトラブルシューティングの方法をご確認ください。"
+
+#~ msgid "If running over HTTP and not HTTPS, use ``ntlm``, ``kerberos`` or ``credssp`` with ``ansible_winrm_message_encryption: auto`` to enable message encryption. If using another authentication option or if the installed pywinrm version cannot be upgraded, the ``Service\\AllowUnencrypted`` can be set to ``true`` but this is only recommended for troubleshooting"
+#~ msgstr "HTTPS ではなく HTTP で実行する場合は、``ntlm``、``kerberos``、または ``credssp`` と ``ansible_winrm_message_encryption: auto`` を使用してメッセージの暗号化を有効にしてください。他の認証オプションを使用している場合や、インストールされている pywinrm のバージョンをアップグレードできない場合は、``Service\\AllowUnencrypted`` を``true`` に設定できますが、これはトラブルシューティングのためにのみ推奨されます。"
+
+#~ msgid "These indicate an error has occurred with the WinRM service. Some things to check for include:"
+#~ msgstr "これらは、WinRM サービスでエラーが発生したことを示しています。確認すべき点は以下の通りです。"
+
+#~ msgid "These usually indicate an error with the network connection where Ansible is unable to reach the host. Some things to check for include:"
+#~ msgstr "これらは通常、Ansible がホストに到達できないネットワーク接続のエラーを示しています。チェック項目には以下が含まれます。"
+
+#~ msgid "These usually indicate an error when trying to communicate with the WinRM service on the host. Some things to check for:"
+#~ msgstr "これらは通常、ホスト上の WinRM サービスと通信しようとする際にエラーを示します。いくつかのチェック項目があります。"
+
+#~ msgid "If powershell fails with an error message similar to ``The 'Out-String' command was found in the module 'Microsoft.PowerShell.Utility', but the module could not be loaded.`` then there could be a problem trying to access all the paths specified by the ``PSModulePath`` environment variable. A common cause of this issue is that the ``PSModulePath`` environment variable contains a UNC path to a file share and because of the double hop/credential delegation issue the Ansible process cannot access these folders. The way around this problems is to either:"
+#~ msgstr "``The 'Out-String' command was found in the module 'Microsoft.PowerShell.Utility', but the module could not be loaded.`` のようなエラーメッセージで powershell が失敗する場合は、``PSModulePath`` 環境変数で指定されたすべてのパスにアクセスしようとすると問題が発生する可能性があります。この問題の一般的な原因は、``PSModulePath`` 環境変数にファイル共有への UNC パスが含まれており、ダブルホップ/認証情報の委譲問題のために Ansible プロセスがこれらのディレクトリーにアクセスできないことです。この問題を回避するには、以下の方法があります。"
+
+#~ msgid "Remove the UNC path from the ``PSModulePath`` environment variable, or"
+#~ msgstr "``PSModulePath`` 環境変数から UNC パスを削除します。"
+
+#~ msgid "The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_ service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows capability but currently the version that is installed through this process is too old to work with Ansible. To install ``Win32-OpenSSH`` for use with Ansible, select one of these installation options:"
+#~ msgstr "Windows で SSH を利用するための最初のステップは、Windows ホストに `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_ サービスをインストールすることです。Microsoft 社では、Windows の機能を利用して ``Win32-OpenSSH`` をインストールする方法を提供していますが、現在、この方法でインストールされるバージョンは、Ansible で動作させるには古すぎます。Ansible で使用するために ``Win32-OpenSSH`` をインストールするには、以下のインストールオプションのいずれかを選択します。"
+
+#~ msgid "Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey:"
+#~ msgstr "Chocolatey を使用して `openssh <https://chocolatey.org/packages/openssh>`_ パッケージをインストールします。"
+
+#~ msgid "Use ``win_chocolatey`` to install the service"
+#~ msgstr "``win_chocolatey`` を使用してサービスをインストールします。"
+
+#~ msgid "Win32-OpenSSH authentication with Windows is similar to SSH authentication on Unix/Linux hosts. You can use a plaintext password or SSH public key authentication, add public keys to an ``authorized_key`` file in the ``.ssh`` folder of the user's profile directory, and configure the service using the ``sshd_config`` file used by the SSH service as you would on a Unix/Linux host."
+#~ msgstr "Windows での Win32-OpenSSH 認証は、Unix/Linux ホストでの SSH 認証に似ています。平文のパスワードまたは SSH 公開鍵認証を使用し、公開鍵をユーザーのプロファイルディレクトリーの ``.ssh`` ディレクトリーにある ``authorized_key`` ファイルに追加し、Unix/Linux ホストと同様に SSH サービスで使用される ``sshd_config`` ファイルを使用してサービスを設定することができます。"
+
+#~ msgid "The ``ansible_shell_type`` variable should reflect the ``DefaultShell`` configured on the Windows host. Set to ``cmd`` for the default shell or set to ``powershell`` if the ``DefaultShell`` has been changed to PowerShell."
+#~ msgstr "``ansible_shell_type`` 変数には、Windows ホストで設定されている``DefaultShell`` を反映させる必要があります。デフォルトシェルの場合は ``cmd`` に、``DefaultShell`` が PowerShell に変更している場合は ``powershell`` に設定します。"
 
 

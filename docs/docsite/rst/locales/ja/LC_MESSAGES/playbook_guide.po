@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/playbook_guide/complex_data_manipulation.rst:4
 msgid "Manipulating data"
@@ -221,11 +221,11 @@ msgid "An example on how to use facts to find a host's data that meets condition
 msgstr "ファクトを使用して、条件 X を満たすホストのデータを検索する例:"
 
 #: ../../rst/playbook_guide/complex_data_manipulation.rst:298
-msgid "An example to show a host uptime in days/hours/minutes/seconds (assumes facts where gathered)."
+msgid "An example to show a host uptime in days/hours/minutes/seconds (assumes facts were gathered)."
 msgstr "ホストのアップタイムを日数/時間/分/秒で表示する例（収集されるファクトを想定）"
 
 #: ../../rst/playbook_guide/complex_data_manipulation.rst:309
-#: ../../rst/playbook_guide/playbooks_variables.rst:519
+#: ../../rst/playbook_guide/playbooks_variables.rst:521
 msgid ":ref:`playbooks_filters`"
 msgstr ":ref:`playbooks_filters`"
 
@@ -473,7 +473,7 @@ msgstr "ここで説明した lamp_haproxy の例です。"
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:540
 #: ../../rst/playbook_guide/playbooks_lookups.rst:28
 #: ../../rst/playbook_guide/playbooks_reuse.rst:211
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:594
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:596
 #: ../../rst/playbook_guide/playbooks_roles.rst:15
 msgid ":ref:`working_with_playbooks`"
 msgstr ":ref:`working_with_playbooks`"
@@ -486,7 +486,7 @@ msgstr ":ref:`working_with_playbooks`"
 #: ../../rst/playbook_guide/playbooks_delegation.rst:166
 #: ../../rst/playbook_guide/playbooks_environment.rst:149
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:269
-#: ../../rst/playbook_guide/playbooks_filters.rst:2185
+#: ../../rst/playbook_guide/playbooks_filters.rst:2189
 #: ../../rst/playbook_guide/playbooks_lookups.rst:29
 #: ../../rst/playbook_guide/playbooks_loops.rst:487
 #: ../../rst/playbook_guide/playbooks_prompts.rst:116
@@ -495,19 +495,19 @@ msgstr ":ref:`working_with_playbooks`"
 #: ../../rst/playbook_guide/playbooks_tags.rst:426
 #: ../../rst/playbook_guide/playbooks_templating.rst:26
 #: ../../rst/playbook_guide/playbooks_tests.rst:528
-#: ../../rst/playbook_guide/playbooks_variables.rst:516
+#: ../../rst/playbook_guide/playbooks_variables.rst:518
 msgid "An introduction to playbooks"
 msgstr "Playbook の概要"
 
 #: ../../rst/playbook_guide/guide_rolling_upgrade.rst:319
 #: ../../rst/playbook_guide/playbooks_blocks.rst:188
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:542
-#: ../../rst/playbook_guide/playbooks_filters.rst:2192
+#: ../../rst/playbook_guide/playbooks_filters.rst:2196
 #: ../../rst/playbook_guide/playbooks_loops.rst:488
 #: ../../rst/playbook_guide/playbooks_strategies.rst:249
 #: ../../rst/playbook_guide/playbooks_tags.rst:427
 #: ../../rst/playbook_guide/playbooks_tests.rst:535
-#: ../../rst/playbook_guide/playbooks_variables.rst:523
+#: ../../rst/playbook_guide/playbooks_variables.rst:525
 msgid ":ref:`playbooks_reuse_roles`"
 msgstr ":ref:`playbooks_reuse_roles`"
 
@@ -519,12 +519,12 @@ msgstr "Playbook のロールの概要"
 #: ../../rst/playbook_guide/playbooks_advanced_syntax.rst:115
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:546
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:274
-#: ../../rst/playbook_guide/playbooks_filters.rst:2188
+#: ../../rst/playbook_guide/playbooks_filters.rst:2192
 #: ../../rst/playbook_guide/playbooks_lookups.rst:32
 #: ../../rst/playbook_guide/playbooks_loops.rst:494
 #: ../../rst/playbook_guide/playbooks_prompts.rst:119
 #: ../../rst/playbook_guide/playbooks_reuse.rst:213
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:598
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:600
 #: ../../rst/playbook_guide/playbooks_tests.rst:531
 msgid ":ref:`playbooks_variables`"
 msgstr ":ref:`playbooks_variables`"
@@ -597,59 +597,59 @@ msgstr "設定パス"
 msgid "By default these should be relative to the config file, some are specifically relative to the current working directory or the playbook and should have this noted in their description. Things like ssh keys are left to use the current working directory because it mirrors how the underlying tools would use it."
 msgstr "デフォルトでは、これらは設定ファイルからの相対的なものですが、中には特に現在の作業ディレクトリーや Playbook からの相対的なものもあるため、説明にその旨を記載してください。ssh キーのようなものは、基本的なツールが使用する方法を反映するため、現在の作業ディレクトリーを使用するようになっています。"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:19
+#: ../../rst/playbook_guide/playbook_pathing.rst:20
 msgid "Task paths"
 msgstr "タスクパス"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:21
+#: ../../rst/playbook_guide/playbook_pathing.rst:22
 msgid "Relative paths used in a task typically refer to remote files and directories on the managed nodes. However, paths passed to lookup plugins and some paths used in action plugins such as the \"src\" path for the :ref:`template <ansible_collections.ansible.builtin.template_module>` and :ref:`copy <ansible_collections.ansible.builtin.copy_module>` modules refer to local files and directories on the control node."
 msgstr "タスクで使用される相対パスは通常、管理ノードのリモートファイルおよびディレクトリーを参照します。ただし、lookup プラグインに渡されるパスや、:ref:`template <ansible_collections.ansible.builtin.template_module>` モジュールおよび :ref:`copy <ansible_collections.ansible.builtin.copy_module>` モジュールの「src」パス等のアクションプラグインで使用される一部のパスは、コントロールノードのローカルファイルおよびディレクトリーを参照します。"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:24
+#: ../../rst/playbook_guide/playbook_pathing.rst:25
 msgid "Resolving local relative paths"
 msgstr "ローカル相対パスの解決"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:26
+#: ../../rst/playbook_guide/playbook_pathing.rst:27
 msgid "When you specify a relative path for a local file, Ansible will try to find that file first in the current task's role, then in other roles that included or depend on the current role, then relative to the file in which the task is defined, and finally relative to the current play. It will take the first matching file that it finds. This way, if multiple files with the same filename exist, Ansible will find the file that is closest to the current task and that is most likely to be file you wanted."
 msgstr "ローカルファイルの相対パスを指定する場合、Ansible は現在のタスクのロールでまずそのファイルを見つけようとします。次に、現在のロールに含まれる、または依存する他のロールで、次にタスクが定義されているファイルに相対的に、最後に現在のプレイに相対的に見つけようとします。これにより、最初に見つかったマッチするファイルが使用されます。したがって、同じファイル名を持つ複数のファイルが存在する場合、Ansible は現在のタスクにもっとも近く、希望のファイルである可能性が高いファイルを検索します。"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:28
+#: ../../rst/playbook_guide/playbook_pathing.rst:29
 msgid "Specifically, Ansible tries to find the file"
 msgstr "具体的には、Ansible は以下のようにファイルを検索しようとします"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:30
+#: ../../rst/playbook_guide/playbook_pathing.rst:31
 msgid "In the current role."
 msgstr "現在のロールで"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:32
+#: ../../rst/playbook_guide/playbook_pathing.rst:33
 msgid "In its appropriate subdirectory—\"files\", \"vars\", \"templates\" or \"tasks\", depending on the kind of file Ansible is searching for."
 msgstr "Ansible が検索するファイルの種類に応じて、適切なサブディレクトリー(「files」、「vars」、「templates」、または「tasks」)で"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:33
+#: ../../rst/playbook_guide/playbook_pathing.rst:34
 msgid "Directly in its directory."
 msgstr "そのディレクトリーに直接"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:35
+#: ../../rst/playbook_guide/playbook_pathing.rst:36
 msgid "Like 1, in the parent role that called into this current role with `include_role`, `import_role`, or with a role dependency. If the parent role has its own parent role, Ansible will repeat this step with that role."
 msgstr "1 と同様に、`include_role`、`import_role` またはロールの依存関係でこの現在のロールに呼び出される親ロールで。親ロールに独自の親ロールがある場合は、Ansible はそのロールでこの手順を繰り返します。"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:36
+#: ../../rst/playbook_guide/playbook_pathing.rst:37
 msgid "Like 1, in the current task file's directory."
 msgstr "1 と同様に、現在のタスクファイルのディレクトリーで"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:37
+#: ../../rst/playbook_guide/playbook_pathing.rst:38
 msgid "Like 1, in the current play file's directory."
 msgstr "1 と同様に、現在の play ファイルのディレクトリーで"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:39
+#: ../../rst/playbook_guide/playbook_pathing.rst:40
 msgid "Ansible does not search the current working directory. (The directory you're in when you execute Ansible.) Also, Ansible will only search within a role if you actually included it with an `include_role` or `import_role` task or a dependency. If you instead use `include`, `include_task` or `import_task` to include just the tasks from a specific file but not the full role, Ansible will not search that role in steps 1 and 2."
 msgstr "Ansible は、現在の作業ディレクトリー(Ansibleを実行する時のディレクトリー)を検索しません。また、`include_role` または `import_role` タスクまたは依存関係で実際に含めた場合、Ansible はロール内のみ検索します。代わりに、`include`、`include_task`、または `import_task` を使用して、完全なロールではなく特定のファイルからのタスクだけを含める場合、Ansible はステップ1および2でそのロールを検索しません。"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:41
+#: ../../rst/playbook_guide/playbook_pathing.rst:42
 msgid "When you execute Ansible, the variable `ansible_search_path` will contain the paths searched, in the order they were searched in but without listing their subdirectories. If you run Ansible in verbosity level 5 by passing the `-vvvvv` argument, Ansible will report each directory as it searches, except when it searches for a tasks file."
 msgstr "Ansible を実行すると、変数 `ansible_search_path` には、検索されたパスが検索された順に含まれますが、そのサブディレクトリーは一覧表示されません。`-vvvvv` 引数を渡して詳細レベル5でAnsible を実行すると、タスクファイルを検索した場合を除き、Ansible は検索した順に各ディレクトリーを報告します。"
 
-#: ../../rst/playbook_guide/playbook_pathing.rst:44
+#: ../../rst/playbook_guide/playbook_pathing.rst:45
 msgid "The current working directory might vary depending on the connection plugin and if the action is local or remote. For the remote it is normally the directory on which the login shell puts the user. For local it is either the directory you executed ansible from or in some cases the playbook directory."
 msgstr "現在の作業ディレクトリは、接続プラグインと、アクションがローカルかリモートかによって異なる場合があります。リモートの場合、通常、ログインシェルがユーザーを配置するディレクトリになります。ローカルの場合は、ansibleを実行したディレクトリか、場合によってはPlaybokディレクトリになります。"
 
@@ -737,7 +737,7 @@ msgstr "``version`` の値を ``&my_version`` というアンカーで固定し�
 #: ../../rst/playbook_guide/playbooks_advanced_syntax.rst:116
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:547
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:275
-#: ../../rst/playbook_guide/playbooks_filters.rst:2189
+#: ../../rst/playbook_guide/playbooks_filters.rst:2193
 #: ../../rst/playbook_guide/playbooks_lookups.rst:33
 #: ../../rst/playbook_guide/playbooks_loops.rst:495
 #: ../../rst/playbook_guide/playbooks_prompts.rst:120
@@ -755,7 +755,7 @@ msgstr "Ansible での複雑なデータ操作の実行"
 
 #: ../../rst/playbook_guide/playbooks_advanced_syntax.rst:119
 msgid "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
-msgstr "`メーリングリストの使用 <https://groups.google.com/group/ansible-project>`_"
+msgstr "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/playbook_guide/playbooks_advanced_syntax.rst:120
 #: ../../rst/playbook_guide/playbooks_async.rst:187
@@ -765,7 +765,7 @@ msgstr "`メーリングリストの使用 <https://groups.google.com/group/ansi
 #: ../../rst/playbook_guide/playbooks_delegation.rst:172
 #: ../../rst/playbook_guide/playbooks_environment.rst:151
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:277
-#: ../../rst/playbook_guide/playbooks_filters.rst:2197
+#: ../../rst/playbook_guide/playbooks_filters.rst:2201
 #: ../../rst/playbook_guide/playbooks_lookups.rst:37
 #: ../../rst/playbook_guide/playbooks_loops.rst:497
 #: ../../rst/playbook_guide/playbooks_prompts.rst:122
@@ -773,7 +773,7 @@ msgstr "`メーリングリストの使用 <https://groups.google.com/group/ansi
 #: ../../rst/playbook_guide/playbooks_tags.rst:430
 #: ../../rst/playbook_guide/playbooks_templating.rst:32
 #: ../../rst/playbook_guide/playbooks_tests.rst:540
-#: ../../rst/playbook_guide/playbooks_variables.rst:530
+#: ../../rst/playbook_guide/playbooks_variables.rst:532
 msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
@@ -785,7 +785,7 @@ msgstr "ご質問はございますか。Google Group をご覧ください。"
 #: ../../rst/playbook_guide/playbooks_delegation.rst:173
 #: ../../rst/playbook_guide/playbooks_environment.rst:152
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:278
-#: ../../rst/playbook_guide/playbooks_filters.rst:2198
+#: ../../rst/playbook_guide/playbooks_filters.rst:2202
 #: ../../rst/playbook_guide/playbooks_lookups.rst:38
 #: ../../rst/playbook_guide/playbooks_loops.rst:498
 #: ../../rst/playbook_guide/playbooks_privilege_escalation.rst:775
@@ -794,7 +794,7 @@ msgstr "ご質問はございますか。Google Group をご覧ください。"
 #: ../../rst/playbook_guide/playbooks_tags.rst:431
 #: ../../rst/playbook_guide/playbooks_templating.rst:33
 #: ../../rst/playbook_guide/playbooks_tests.rst:541
-#: ../../rst/playbook_guide/playbooks_variables.rst:531
+#: ../../rst/playbook_guide/playbooks_variables.rst:533
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
@@ -806,7 +806,7 @@ msgstr ":ref:`communication_irc`"
 #: ../../rst/playbook_guide/playbooks_delegation.rst:174
 #: ../../rst/playbook_guide/playbooks_environment.rst:153
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:279
-#: ../../rst/playbook_guide/playbooks_filters.rst:2199
+#: ../../rst/playbook_guide/playbooks_filters.rst:2203
 #: ../../rst/playbook_guide/playbooks_lookups.rst:39
 #: ../../rst/playbook_guide/playbooks_loops.rst:499
 #: ../../rst/playbook_guide/playbooks_privilege_escalation.rst:776
@@ -815,7 +815,7 @@ msgstr ":ref:`communication_irc`"
 #: ../../rst/playbook_guide/playbooks_tags.rst:432
 #: ../../rst/playbook_guide/playbooks_templating.rst:34
 #: ../../rst/playbook_guide/playbooks_tests.rst:542
-#: ../../rst/playbook_guide/playbooks_variables.rst:532
+#: ../../rst/playbook_guide/playbooks_variables.rst:534
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
 
@@ -953,7 +953,7 @@ msgstr ":ref:`playbooks_intro`"
 #: ../../rst/playbook_guide/playbooks_delegation.rst:171
 #: ../../rst/playbook_guide/playbooks_environment.rst:150
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:276
-#: ../../rst/playbook_guide/playbooks_filters.rst:2196
+#: ../../rst/playbook_guide/playbooks_filters.rst:2200
 #: ../../rst/playbook_guide/playbooks_lookups.rst:36
 #: ../../rst/playbook_guide/playbooks_loops.rst:496
 #: ../../rst/playbook_guide/playbooks_prompts.rst:121
@@ -961,7 +961,7 @@ msgstr ":ref:`playbooks_intro`"
 #: ../../rst/playbook_guide/playbooks_tags.rst:429
 #: ../../rst/playbook_guide/playbooks_templating.rst:31
 #: ../../rst/playbook_guide/playbooks_tests.rst:539
-#: ../../rst/playbook_guide/playbooks_variables.rst:529
+#: ../../rst/playbook_guide/playbooks_variables.rst:531
 msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 msgstr "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 
@@ -986,8 +986,8 @@ msgid "Block example with named tasks inside the block"
 msgstr "内部に名前付きタスクを含むブロックの例"
 
 #: ../../rst/playbook_guide/playbooks_blocks.rst:46
-msgid "In the example above, the 'when' condition will be evaluated before Ansible runs each of the three tasks in the block. All three tasks also inherit the privilege escalation directives, running as the root user. Finally, ``ignore_errors: yes`` ensures that Ansible continues to execute the playbook even if some of the tasks fail."
-msgstr "上の例では、Ansible がブロック内の 3 つのタスクをそれぞれ実行する前に、「when」条件が評価されます。また、3 つのタスクはすべて、特権昇格ディレクティブを継承し、root ユーザーとして実行します。最後に、``ignore_errors: yes`` は、一部のタスクが失敗しても、Ansible が Playbook の実行を継続することを保証します。"
+msgid "In the example above, the 'when' condition will be evaluated before Ansible runs each of the three tasks in the block. All three tasks also inherit the privilege escalation directives, running as the root user. Finally, ``ignore_errors: true`` ensures that Ansible continues to execute the playbook even if some of the tasks fail."
+msgstr "上の例では、Ansible がブロック内の 3 つのタスクをそれぞれ実行する前に、「when」条件が評価されます。また、3 つのタスクはすべて、特権昇格ディレクティブを継承し、root ユーザーとして実行します。最後に、``ignore_errors: true`` は、一部のタスクが失敗しても、Ansible が Playbook の実行を継続することを保証します。"
 
 #: ../../rst/playbook_guide/playbooks_blocks.rst:48
 msgid "Names for blocks have been available since Ansible 2.3. We recommend using names in all tasks, within blocks or elsewhere, for better visibility into the tasks being executed when you run the playbook."
@@ -1067,12 +1067,12 @@ msgstr "``ansible-core`` 2.14 以降では、両方の変数が内部ブロッ�
 
 #: ../../rst/playbook_guide/playbooks_blocks.rst:189
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:543
-#: ../../rst/playbook_guide/playbooks_filters.rst:2193
+#: ../../rst/playbook_guide/playbooks_filters.rst:2197
 #: ../../rst/playbook_guide/playbooks_loops.rst:489
 #: ../../rst/playbook_guide/playbooks_strategies.rst:250
 #: ../../rst/playbook_guide/playbooks_tags.rst:428
 #: ../../rst/playbook_guide/playbooks_tests.rst:536
-#: ../../rst/playbook_guide/playbooks_variables.rst:524
+#: ../../rst/playbook_guide/playbooks_variables.rst:526
 msgid "Playbook organization by roles"
 msgstr "ロール別の Playbook の組織"
 
@@ -1322,7 +1322,7 @@ msgstr "``x`` が最初に定義されている場合、両方のタスクが意
 
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:321
 msgid "If this is not the behavior you want, use an ``include_*`` statement to apply a condition only to that statement itself."
-msgstr "このような動作を望まない場合は、 文を使用して、その文自体にのみ条件を適用します。"
+msgstr "このような動作を望まない場合は、``include_*`` 文を使用して、その文自体にのみ条件を適用します。"
 
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:332
 msgid "Now if ``x`` is initially undefined, the debug task will not be skipped because the conditional is evaluated at the time of the include and does not apply to the individual tasks."
@@ -1447,25 +1447,25 @@ msgstr "ansible_facts['os_family']"
 
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:544
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:270
-#: ../../rst/playbook_guide/playbooks_filters.rst:2194
+#: ../../rst/playbook_guide/playbooks_filters.rst:2198
 #: ../../rst/playbook_guide/playbooks_intro.rst:148
 #: ../../rst/playbook_guide/playbooks_loops.rst:490
 #: ../../rst/playbook_guide/playbooks_reuse.rst:219
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:596
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:598
 #: ../../rst/playbook_guide/playbooks_tests.rst:537
-#: ../../rst/playbook_guide/playbooks_variables.rst:525
+#: ../../rst/playbook_guide/playbooks_variables.rst:527
 msgid ":ref:`tips_and_tricks`"
 msgstr ":ref:`tips_and_tricks`"
 
 #: ../../rst/playbook_guide/playbooks_conditionals.rst:545
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:271
-#: ../../rst/playbook_guide/playbooks_filters.rst:2195
+#: ../../rst/playbook_guide/playbooks_filters.rst:2199
 #: ../../rst/playbook_guide/playbooks_loops.rst:491
 #: ../../rst/playbook_guide/playbooks_reuse.rst:220
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:597
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:599
 #: ../../rst/playbook_guide/playbooks_templating.rst:28
 #: ../../rst/playbook_guide/playbooks_tests.rst:538
-#: ../../rst/playbook_guide/playbooks_variables.rst:526
+#: ../../rst/playbook_guide/playbooks_variables.rst:528
 msgid "Tips and tricks for playbooks"
 msgstr "Playbook のヒントと裏技"
 
@@ -2148,24 +2148,24 @@ msgid "You can also use blocks to define responses to task errors. This approach
 msgstr "ブロックを使用してタスクエラーへの応答を定義することもできます。この方法は、多くのプログラミング言語での例外処理に似ています。詳細と例は、「:ref:`block_error_handling`」を参照してください。"
 
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:272
-#: ../../rst/playbook_guide/playbooks_filters.rst:2186
+#: ../../rst/playbook_guide/playbooks_filters.rst:2190
 #: ../../rst/playbook_guide/playbooks_lookups.rst:30
 #: ../../rst/playbook_guide/playbooks_loops.rst:492
 #: ../../rst/playbook_guide/playbooks_prompts.rst:117
 #: ../../rst/playbook_guide/playbooks_reuse.rst:215
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:600
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:602
 #: ../../rst/playbook_guide/playbooks_tests.rst:529
-#: ../../rst/playbook_guide/playbooks_variables.rst:517
+#: ../../rst/playbook_guide/playbooks_variables.rst:519
 msgid ":ref:`playbooks_conditionals`"
 msgstr ":ref:`playbooks_conditionals`"
 
 #: ../../rst/playbook_guide/playbooks_error_handling.rst:273
-#: ../../rst/playbook_guide/playbooks_filters.rst:2187
+#: ../../rst/playbook_guide/playbooks_filters.rst:2191
 #: ../../rst/playbook_guide/playbooks_lookups.rst:31
 #: ../../rst/playbook_guide/playbooks_loops.rst:493
 #: ../../rst/playbook_guide/playbooks_prompts.rst:118
 #: ../../rst/playbook_guide/playbooks_tests.rst:530
-#: ../../rst/playbook_guide/playbooks_variables.rst:518
+#: ../../rst/playbook_guide/playbooks_variables.rst:520
 msgid "Conditional statements in playbooks"
 msgstr "Playbook の条件分岐文"
 
@@ -3267,82 +3267,86 @@ msgstr "バージョン 2.6 以降では、使用するエンコーディング�
 msgid "The ``string`` filter is only required for Python 2 and ensures that text to encode is a unicode string. Without that filter before b64encode the wrong value will be encoded."
 msgstr "``string`` フィルターは Python 2 でのみ必要です。エンコードするテキストがユニコード文字列であることを確認します。b64encode より前のフィルターを使用しないと、誤った値がエンコードされます。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2067
+#: ../../rst/playbook_guide/playbooks_filters.rst:2064
+msgid "The return value of b64decode is a string.  If you decrypt a binary blob using b64decode and then try to use it (for example by using :ref:`copy <copy_module>` to write it to a file) you will mostly likely find that your binary has been corrupted.  If you need to take a base64 encoded binary and write it to disk, it is best to use the system ``base64`` command with the :ref:`shell module <shell_module>`, piping in the encoded data using the ``stdin`` parameter. For example: ``shell: cmd=\"base64 --decode > myfile.bin\" stdin=\"{{ encoded }}\"``"
+msgstr "b64decode の戻り値は文字列です。b64decode を使用してバイナリー BLOB を復号化して使用しようとすると (:ref:`copy <copy_module>` を使用してファイルに書き込むなど)、ほとんどの場合、バイナリーが破損していることがわかります。base64 でエンコードされたバイナリーを取得してディスクに書き込む必要がある場合は、:ref:`shell module <shell_module>` でシステムの ``base64`` コマンドを使用し、``stdin`` を使用してエンコードされたデータでのパイプ指定を行うのが最適です (例: ``shell: cmd=\"base64 --decode > myfile.bin\" stdin=\"{{ encoded }}\"``)。"
+
+#: ../../rst/playbook_guide/playbooks_filters.rst:2069
 msgid "Managing UUIDs"
 msgstr "UUID の管理"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2069
+#: ../../rst/playbook_guide/playbooks_filters.rst:2071
 msgid "To create a namespaced UUIDv5:"
 msgstr "namespace を使用した UUIDv5 を作成するには、以下を実行します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2077
+#: ../../rst/playbook_guide/playbooks_filters.rst:2079
 msgid "To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC-444A-9079-341386DA8E2E':"
 msgstr "デフォルトの Ansible 名前空間「361E6D51-FAEC-444A-9079-341386DA8E2E2E」を使用して名前空間を指定した UUIDv5 を作成するには、以下を実行します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2085
+#: ../../rst/playbook_guide/playbooks_filters.rst:2087
 msgid "To make use of one attribute from each item in a list of complex variables, use the :func:`Jinja2 map filter <jinja2:jinja-filters.map>`:"
 msgstr "複雑な変数のリストで、各項目から 1 つの属性を使用するには、:func:`Jinja2 map filter <jinja2:jinja-filters.map>` を使用します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2093
+#: ../../rst/playbook_guide/playbooks_filters.rst:2095
 msgid "Handling dates and times"
 msgstr "日付と時刻の処理"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2095
+#: ../../rst/playbook_guide/playbooks_filters.rst:2097
 msgid "To get a date object from a string use the `to_datetime` filter:"
 msgstr "文字列から日付オブジェクトを取得するには、`to_datetime` フィルターを使用します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2109
-msgid "For a full list of format codes for working with python date format strings, see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior."
-msgstr "Python 日付形式の文字列を使用する形式コードの全一覧は、https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior を参照してください。"
+#: ../../rst/playbook_guide/playbooks_filters.rst:2111
+msgid "For a full list of format codes for working with python date format strings, see the `python datetime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_."
+msgstr "Python 日付形式の文字列を使用する形式コードの全一覧は、`python datetime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2113
+#: ../../rst/playbook_guide/playbooks_filters.rst:2115
 msgid "To format a date using a string (like with the shell date command), use the \"strftime\" filter:"
 msgstr "文字列 (shell date コマンドの場合のように) を使用して日付をフォーマットするには、「strftime」フィルターを使用します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2135
-msgid "strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone::"
+#: ../../rst/playbook_guide/playbooks_filters.rst:2137
+msgid "strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone:"
 msgstr "strftime はオプションの utc 引数を取ります。デフォルトは False で、ローカルタイムゾーンの時間を使用します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2140
+#: ../../rst/playbook_guide/playbooks_filters.rst:2144
 msgid "To get all string possibilities, check https://docs.python.org/3/library/time.html#time.strftime"
 msgstr "すべての文字列の可能性を取得するには、https://docs.python.org/3/library/time.html#time.strftime を確認します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2143
+#: ../../rst/playbook_guide/playbooks_filters.rst:2147
 msgid "Getting Kubernetes resource names"
 msgstr "Kubernetes リソース名の取得"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2147
+#: ../../rst/playbook_guide/playbooks_filters.rst:2151
 msgid "These filters have migrated to the `kubernetes.core <https://galaxy.ansible.com/kubernetes/core>`_ collection. Follow the installation instructions to install that collection."
 msgstr "これらのフィルターは `kubernetes.core <https://galaxy.ansible.com/kubernetes/core>`_ コレクションに移行しました。インストール手順に従ってそのコレクションをインストールします。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2149
+#: ../../rst/playbook_guide/playbooks_filters.rst:2153
 msgid "Use the \"k8s_config_resource_name\" filter to obtain the name of a Kubernetes ConfigMap or Secret, including its hash:"
 msgstr "「k8s_config_resource_name」フィルターを使用して、Kubernetes ConfigMap または Secret の名前を、そのハッシュを含めて取得します。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2156
+#: ../../rst/playbook_guide/playbooks_filters.rst:2160
 msgid "This can then be used to reference hashes in Pod specifications:"
 msgstr "これは、Pod 仕様のハッシュを参照するために使用できます。"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2184
+#: ../../rst/playbook_guide/playbooks_filters.rst:2188
 #: ../../rst/playbook_guide/playbooks_loops.rst:486
 #: ../../rst/playbook_guide/playbooks_strategies.rst:245
-#: ../../rst/playbook_guide/playbooks_variables.rst:515
+#: ../../rst/playbook_guide/playbooks_variables.rst:517
 msgid ":ref:`about_playbooks`"
 msgstr ":ref:`about_playbooks`"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2190
+#: ../../rst/playbook_guide/playbooks_filters.rst:2194
 #: ../../rst/playbook_guide/playbooks_lookups.rst:34
 #: ../../rst/playbook_guide/playbooks_reuse.rst:217
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:602
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:604
 #: ../../rst/playbook_guide/playbooks_tests.rst:533
-#: ../../rst/playbook_guide/playbooks_variables.rst:521
+#: ../../rst/playbook_guide/playbooks_variables.rst:523
 msgid ":ref:`playbooks_loops`"
 msgstr ":ref:`playbooks_loops`"
 
-#: ../../rst/playbook_guide/playbooks_filters.rst:2191
+#: ../../rst/playbook_guide/playbooks_filters.rst:2195
 #: ../../rst/playbook_guide/playbooks_lookups.rst:35
 #: ../../rst/playbook_guide/playbooks_tests.rst:534
-#: ../../rst/playbook_guide/playbooks_variables.rst:522
+#: ../../rst/playbook_guide/playbooks_variables.rst:524
 msgid "Looping in playbooks"
 msgstr "Playbook でのループ"
 
@@ -3604,8 +3608,8 @@ msgid "Run ``ansible-pull --help`` for details."
 msgstr "詳細は、「``ansible-pull --help``」を参照してください。"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:119
-msgid "There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ``ansible-pull`` via a crontab from push mode."
-msgstr "また、プッシュモードからの crontab で ``ansible-pull`` を設定する際に利用可能な `優れた Playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ もあります。"
+msgid "There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ``ansible-pull`` through a crontab from push mode."
+msgstr "また、プッシュモードからの crontab で ``ansible-pull`` を設定する際に利用可能な `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ もあります。"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:122
 msgid "Verifying playbooks"
@@ -3636,12 +3640,12 @@ msgid "Learn how to test Ansible Playbooks syntax"
 msgstr "Ansible Playbook 構文のテスト方法について"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:146
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:592
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:594
 msgid ":ref:`yaml_syntax`"
 msgstr ":ref:`yaml_syntax`"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:147
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:593
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:595
 msgid "Learn about YAML syntax"
 msgstr "YAML 構文について"
 
@@ -3650,17 +3654,17 @@ msgid "Tips for managing playbooks in the real world"
 msgstr "実際の Playbook の管理に関するさまざまなヒント"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:150
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:606
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:608
 msgid ":ref:`list_of_collections`"
 msgstr ":ref:`list_of_collections`"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:151
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:607
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:609
 msgid "Browse existing collections, modules, and plugins"
 msgstr "既存のコレクション、モジュール、およびプラグインの閲覧"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:152
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:608
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:610
 msgid ":ref:`developing_modules`"
 msgstr ":ref:`developing_modules`"
 
@@ -3686,14 +3690,14 @@ msgstr "完全なエンドツーエンド Playbook の例"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:158
 #: ../../rst/playbook_guide/playbooks_reuse.rst:225
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:612
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:614
 msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/playbook_guide/playbooks_intro.rst:159
 #: ../../rst/playbook_guide/playbooks_privilege_escalation.rst:774
 #: ../../rst/playbook_guide/playbooks_reuse.rst:226
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:613
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:615
 msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
@@ -4083,7 +4087,7 @@ msgid "As of Ansible 2.8 you can get the name of the value provided to ``loop_co
 msgstr "Ansible 2.8 では、``ansible_loop_var`` 変数を使用して ``loop_control.loop_var`` に提供された値の名前を取得できます。"
 
 #: ../../rst/playbook_guide/playbooks_loops.rst:471
-msgid "For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value via the following"
+msgid "For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value through the following"
 msgstr "ロールの作成者は、必要な ``loop_var`` 値を指定する代わりに、ループを許可するロールを作成することで、次の方法で値を収集できます。"
 
 #: ../../rst/playbook_guide/playbooks_loops.rst:480
@@ -4158,27 +4162,31 @@ msgstr "with_sequence"
 msgid "``with_sequence`` is replaced by ``loop`` and the ``range`` function, and potentially the ``format`` filter."
 msgstr "``with_sequence`` は、``loop`` 関数と ``range`` の関数、そして潜在的には ``format`` フィルターに置き換えられました。"
 
-#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:153
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:151
+msgid "The range of the loop is exclusive of the end point."
+msgstr "ループの範囲はエンドポイントを除きます。"
+
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:154
 msgid "with_subelements"
 msgstr "with_subelements"
 
-#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:155
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:156
 msgid "``with_subelements`` is replaced by ``loop`` and the ``subelements`` filter."
 msgstr "``with_subelements`` は、``loop`` フィルターおよび ``subelements`` フィルターに置き換えられました。"
 
-#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:172
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:173
 msgid "with_nested/with_cartesian"
 msgstr "with_nested/with_cartesian"
 
-#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:174
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:175
 msgid "``with_nested`` and ``with_cartesian`` are replaced by loop and the ``product`` filter."
 msgstr "``with_nested`` と``with_cartesian`` は、ループと ``product`` のフィルターに置き換えられました。"
 
-#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:191
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:192
 msgid "with_random_choice"
 msgstr "with_random_choice"
 
-#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:193
+#: ../../rst/playbook_guide/shared_snippets/with2loop.txt:194
 msgid "``with_random_choice`` is replaced by just use of the ``random`` filter, without need of ``loop``."
 msgstr "``with_random_choice`` は、``random`` フィルターを使用するだけで、``loop`` を必要とせずに置き換えることができます。"
 
@@ -5109,8 +5117,8 @@ msgid "Dictionary views"
 msgstr "ディクショナリービュー"
 
 #: ../../rst/playbook_guide/playbooks_python_version.rst:18
-msgid "In Python2, the :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` methods return a list.  Jinja2 returns that to Ansible via a string representation that Ansible can turn back into a list."
-msgstr "Python2 では、:meth:`dict.keys`、:meth:`dict.values`、および :meth:`dict.items` メソッドはリストを返します。Jinja2 は、Ansible がリストに戻ってきた文字列表現で Ansible に返します。"
+msgid "In Python2, the :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` methods return a list.  Jinja2 returns that to Ansible using a string representation that Ansible can turn back into a list."
+msgstr "Python2 では、:meth:`dict.keys`、:meth:`dict.values`、および :meth:`dict.items` メソッドはリストを返します。Jinja2 はこれを、Ansible がリストに戻すことができる文字列表現で Ansible に返します。"
 
 #: ../../rst/playbook_guide/playbooks_python_version.rst:22
 msgid "In Python3, those methods return a :ref:`dictionary view <python3:dict-views>` object. The string representation that Jinja2 returns for dictionary views cannot be parsed back into a list by Ansible.  It is, however, easy to make this portable by using the :func:`list <jinja2:jinja-filters.list>` filter whenever using :meth:`dict.keys`, :meth:`dict.values`, or :meth:`dict.items`."
@@ -5161,7 +5169,7 @@ msgid "A playbook contains at least one play, and may contain variables, tasks, 
 msgstr "Playbook には、少なくとも 1 つのプレイが含まれており、変数、タスク、その他のコンテンツを含むことができます。厳密に焦点を絞った Playbook は再利用できますが、動的にではなく静的にしか再利用できません。"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:20
-msgid "A role contains a set of related tasks, variables, defaults, handlers, and even modules or other plugins in a defined file-tree. Unlike variables files, task files, or playbooks, roles can be easily uploaded and shared via Ansible Galaxy. See :ref:`playbooks_reuse_roles` for details about creating and using roles."
+msgid "A role contains a set of related tasks, variables, defaults, handlers, and even modules or other plugins in a defined file-tree. Unlike variables files, task files, or playbooks, roles can be easily uploaded and shared through Ansible Galaxy. See :ref:`playbooks_reuse_roles` for details about creating and using roles."
 msgstr "ロールには、関連するタスク、変数、デフォルト、ハンドラー、さらにはモジュールや他のプラグインのセットが、定義されたファイルツリーに格納されています。変数ファイル、タスクファイル、Playbook とは異なり、ロールは Ansible Galaxy で簡単にアップロードして共有することができます。ロールの作成と使用の詳細については、「:ref:`playbooks_reuse_roles`」を参照してください。"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:25
@@ -5473,7 +5481,7 @@ msgid "Documentation of the ``include*`` and ``import*`` modules discussed here.
 msgstr "ここで説明する ``include*`` モジュールおよび ``import*`` モジュールに関するドキュメント"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:212
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:595
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:597
 #: ../../rst/playbook_guide/playbooks_roles.rst:16
 msgid "Review the basic Playbook language features"
 msgstr "基本的な Playbook 言語機能の確認"
@@ -5483,17 +5491,17 @@ msgid "All about variables in playbooks"
 msgstr "Playbook の変数の詳細のすべて"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:216
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:601
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:603
 msgid "Conditionals in playbooks"
 msgstr "Playbook の条件"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:218
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:603
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:605
 msgid "Loops in playbooks"
 msgstr "Playbook のループ"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:221
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:590
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:592
 #: ../../rst/playbook_guide/playbooks_roles.rst:13
 msgid ":ref:`ansible_galaxy`"
 msgstr ":ref:`ansible_galaxy`"
@@ -5504,12 +5512,12 @@ msgid "How to share roles on galaxy, role management"
 msgstr "Galaxy (ロール管理) におけるロールの共有方法"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:223
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:610
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:612
 msgid "`GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_"
-msgstr "`GitHub Ansible の例 <https://github.com/ansible/ansible-examples>`_"
+msgstr "`GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_"
 
 #: ../../rst/playbook_guide/playbooks_reuse.rst:224
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:611
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:613
 msgid "Complete playbook files from the GitHub project source"
 msgstr "Github プロジェクトソースの完全な Playbook ファイル"
 
@@ -5847,7 +5855,7 @@ msgstr "このオプションの機能の詳細な説明。これは、完全な
 
 #: ../../rst/playbook_guide/playbooks_reuse_roles.rst
 msgid "type"
-msgstr "type"
+msgstr "タイプ"
 
 #: ../../rst/playbook_guide/playbooks_reuse_roles.rst:313
 msgid "The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``. Default is ``str``."
@@ -5886,18 +5894,18 @@ msgid "The default field must not be listed as part of the description, unless i
 msgstr "追加の情報や条件が必要な場合を除き、デフォルトのフィールドは、説明の一部として記載しないでください。"
 
 #: ../../rst/playbook_guide/playbooks_reuse_roles.rst:327
-msgid "If the option is a boolean value, you can use any of the boolean values recognized by Ansible: (such as true/false or yes/no).  Choose the one that reads better in the context of the option."
-msgstr "オプションがブール値の場合は、Ansible が認識する任意のブール値 (true/false、yes/no など) を使用できます。オプションのコンテキストで読み取りが適切であればこれを選択します。"
+msgid "If the option is a boolean value, you should use `true/false` if you want to be compatible with `ansible-lint`."
+msgstr "オプションがブール値である場合、`ansible-lint` と互換性を持たせたい場合は、`true/false` を使用する必要があります。"
 
 #: ../../rst/playbook_guide/playbooks_reuse_roles.rst
 msgid "choices"
 msgstr "choices"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:332
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:331
 msgid "List of option values."
 msgstr "オプション値のリスト。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:333
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:332
 msgid "Should be absent if empty."
 msgstr "空欄の場合は指定なしになります。"
 
@@ -5905,187 +5913,191 @@ msgstr "空欄の場合は指定なしになります。"
 msgid "elements"
 msgstr "elements"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:337
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:336
 msgid "Specifies the data type for list elements when type is ``list``."
 msgstr "タイプが ``list`` の場合に、リスト要素のデータ型を指定します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:341
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:340
 msgid "If this option takes a dict or list of dicts, you can define the structure here."
 msgstr "このオプションがディクショナリーまたはディクショナリーのリストを取る場合は、ここで構造を定義できます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:344
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:343
 msgid "Sample specification"
 msgstr "サンプル仕様"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:379
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:378
 msgid "Running a role multiple times in one play"
 msgstr "1 つのプレイでロールを複数回実行する"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:381
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:380
 msgid "Ansible only executes each role once in a play, even if you define it multiple times, unless the parameters defined on the role are different for each definition. For example, Ansible only runs the role ``foo`` once in a play like this:"
 msgstr "Ansible は、ロールに定義されているパラメーターが定義ごとに異なる場合を除き、各ロールを複数回定義してもプレイでは 1 回しか実行しません。たとえば、Ansible は次のようなプレイで ``foo`` というロールを 1 回だけ実行します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:392
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:391
 msgid "You have two options to force Ansible to run a role more than once."
 msgstr "Ansible が複数のロールを強制的に実行するオプションは 2 つあります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:395
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:394
 msgid "Passing different parameters"
 msgstr "異なるパラメーターを渡す"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:397
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:396
 msgid "If you pass different parameters in each role definition, Ansible runs the role more than once. Providing different variable values is not the same as passing different role parameters. You must use the ``roles`` keyword for this behavior, since ``import_role`` and ``include_role`` do not accept role parameters."
 msgstr "各ロール定義で異なるパラメーターを渡すと、Ansible はそのロールを複数回実行します。異なる変数値を提供することは、異なるロールパラメーターを渡すこととは異なります。``import_role`` および ``include_role`` はロールパラメーターを受け入れないため、この動作には ``roles`` キーワードを使用する必要があります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:399
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:398
 msgid "This play runs the ``foo`` role twice:"
 msgstr "このプレイでは、``foo`` ロールが 2 回実行されます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:409
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:408
 msgid "This syntax also runs the ``foo`` role twice;"
 msgstr "この構文は、``foo`` ロールを 2 回実行します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:421
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:420
 msgid "In these examples, Ansible runs ``foo`` twice because each role definition has different parameters."
 msgstr "これらの例では、各ロール定義のパラメーターが異なるため、Ansible は ``foo`` を 2 回実行します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:424
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:423
 msgid "Using ``allow_duplicates: true``"
 msgstr "``allow_duplicates: true`` の使用"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:426
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:425
 msgid "Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role:"
 msgstr "ロールの ``meta/main.yml`` ファイルに ``allow_duplicates: true`` を追加します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:441
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:440
 msgid "In this example, Ansible runs ``foo`` twice because we have explicitly enabled it to do so."
 msgstr "この例では、Ansible が ``foo`` を2回実行していますが、これは明示的に実行できるようにしたためです。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:446
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:445
 msgid "Using role dependencies"
 msgstr "ロール依存関係の使用"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:448
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:447
 msgid "Role dependencies let you automatically pull in other roles when using a role."
 msgstr "ロールの依存関係により、ロールを使用する際に他のロールを自動的にプルできます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:450
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:449
 msgid "Role dependencies are prerequisites, not true dependencies. The roles do not have a parent/child relationship. Ansible loads all listed roles, runs the roles listed under ``dependencies`` first, then runs the role that lists them. The play object is the parent of all roles, including roles called by a ``dependencies`` list."
 msgstr "ロールの依存関係は前提条件であり、真の依存関係ではありません。また、ロールは親子関係を持ちません。Ansible はリストアップされたすべてのロールを読み込み、``dependencies`` にリストアップされたロールを最初に実行し、次にそれらをリストアップしたロールを実行します。play オブジェクトは、``dependencies`` のリストで呼び出されるロールを含め、すべてのロールの親です。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:452
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:451
 msgid "Role dependencies are stored in the ``meta/main.yml`` file within the role directory. This file should contain a list of roles and parameters to insert before the specified role. For example:"
 msgstr "ロールの依存関係は、ロールディレクトリー内の ``meta/main.yml`` ファイルに保存されます。このファイルには、指定されたロールの前に挿入するロールとパラメーターの一覧を含める必要があります。以下に例を示します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:470
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:469
 msgid "Ansible always executes roles listed in ``dependencies`` before the role that lists them. Ansible executes this pattern recursively when you use the ``roles`` keyword. For example, if you list role ``foo`` under ``roles:``, role ``foo`` lists role ``bar`` under ``dependencies`` in its meta/main.yml file, and role ``bar`` lists role ``baz`` under ``dependencies`` in its meta/main.yml, Ansible executes ``baz``, then ``bar``, then ``foo``."
 msgstr "Ansible は、``dependencies`` に記載されているロールを、それを記載しているロールの前に常に実行します。``roles`` キーワードを使用すると、Ansible はこのパターンを再帰的に実行します。たとえば、ロール ``foo`` を ``roles:`` の下にリストし、ロール ``foo`` が meta/main.yml ファイルの ``dependencies`` の下にロール ``bar`` をリストし、ロール ``bar`` が meta/main.yml の ``dependencies`` の下にロール ``baz`` をリストしている場合、Ansibleは ``baz``、``bar``、``foo`` の順に実行します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:473
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:472
 msgid "Running role dependencies multiple times in one play"
 msgstr "1 つのプレイでロールの依存関係を複数回実行する"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:475
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:474
 msgid "Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a play both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the role you want to run multiple times. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details."
 msgstr "Ansible は、``roles:`` に記載されている重複したロールのように、重複したロールの依存関係を扱います。Ansible は、ロールに定義されたパラメーター、タグ、または when 句が定義ごとに異なる場合を除き、複数回定義されていてもロールの依存関係を 1 回のみ実行します。プレイ内の 2 つのロールが両方とも依存関係として 3 番目のロールをリストしている場合、Ansible は、複数回実行するロールで異なるパラメーター、タグ、when 句を渡すか、``allow_duplicates: true`` を使用しない限り、そのロールの依存関係を 1 回のみ実行します。詳細は、「:ref:`Galaxy role dependencies <galaxy_dependencies>`」を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:479
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:478
 msgid "Role deduplication does not consult the invocation signature of parent roles. Additionally, when using ``vars:`` instead of role params, there is a side effect of changing variable scoping. Using ``vars:`` results in those variables being scoped at the play level. In the below example, using ``vars:`` would cause ``n`` to be defined as ``4`` through the entire play, including roles called before it."
 msgstr "ロールの重複排除は、親ロールの呼び出し署名を参照しません。さらに、ロールパラメーターの代わりに ``vars:`` を使用する場合は、変数のスコープを変更するという副作用があります。``vars:`` を使用すると、それらの変数がプレイレベルで対象となります。以下の例では、``vars:`` を使用すると、それ以前に呼び出されたロールを含め、プレー全体を通して ``n`` が ``4`` として定義されることになります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:481
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:480
 msgid "In addition to the above, users should be aware that role de-duplication occurs before variable evaluation. This means that :term:`Lazy Evaluation` may make seemingly different role invocations equivalently the same, preventing the role from running more than once."
 msgstr "上記に加えて、ユーザーは変数評価の前にロールの重複排除が行われることに注意する必要があります。つまり、:term:`Lazy Evaluation` は、一見異なるロールの呼び出しを等価にして、ロールが複数回実行されるのを防ぐことができます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:484
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:483
 msgid "For example, a role named ``car`` depends on a role named ``wheel`` as follows:"
 msgstr "たとえば、``car`` という名前のロールは、以下のように ``wheel`` という名前のロールに依存します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:499
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:498
 msgid "And the ``wheel`` role depends on two roles: ``tire`` and ``brake``. The ``meta/main.yml`` for wheel would then contain the following:"
 msgstr "そして、``wheel`` のロールは、``tire`` と ``brake`` の 2 つのロールに依存します。このため、wheel 用の ``meta/main.yml`` は以下のようになります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:508
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:507
 msgid "And the ``meta/main.yml`` for ``tire`` and ``brake`` would contain the following:"
 msgstr "そして、「``tire``」および「``brake``」の「``meta/main.yml``」には、次のような内容が含まれています。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:515
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:514
 msgid "The resulting order of execution would be as follows:"
 msgstr "その結果作成される実行順序は以下のようになります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:528
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:527
 msgid "To use ``allow_duplicates: true`` with role dependencies, you must specify it for the role listed under ``dependencies``, not for the role that lists it. In the example above, ``allow_duplicates: true`` appears in the ``meta/main.yml`` of the ``tire`` and ``brake`` roles. The ``wheel`` role does not require ``allow_duplicates: true``, because each instance defined by ``car`` uses different parameter values."
 msgstr "``allow_duplicates: true`` をロール依存で使用するには、それをリストしているロールではなく、``dependencies`` の下にリストされているロールに対して指定する必要があります。上記の例では、``allow_duplicates: true`` は、``tire`` ロールおよび ``brake`` ロールの ``meta/main.yml`` に表示されます。``wheel`` ロールは、``car`` で定義された各インスタンスが異なるパラメーター値を使用するため、``allow_duplicates: true`` を必要としません。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:531
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:530
 msgid "See :ref:`playbooks_variables` for details on how Ansible chooses among variable values defined in different places (variable inheritance and scope). Also deduplication happens ONLY at the play level, so multiple plays in the same playbook may rerun the roles."
 msgstr "Ansible が、さまざまな場所（変数継承および範囲）で定義される変数の値から選択する方法は、「:ref:`playbooks_variables`」を参照してください。また、重複排除はプレイレベルでのみ行われるため、同じ Playbook の複数のプレイがロールを再実行する可能性があります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:537
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:536
 msgid "Embedding modules and plugins in roles"
 msgstr "ロールでのモジュールおよびプラグインの埋め込み"
 
 #: ../../rst/playbook_guide/playbooks_reuse_roles.rst:539
+msgid "This applies only to standalone roles. Roles in collections do not support plugin embedding; they must use the collection's ``plugins`` structure to distribute plugins."
+msgstr "これはスタンドアロンのロールにのみ適用されます。コレクション内のロールはプラグインの埋め込みをサポートしていません。プラグインを配布するには、コレクションの ``plugins`` 構造を使用する必要があります。"
+
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:541
 msgid "If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you might wish to distribute it as part of a role. For example, if you write a module that helps configure your company's internal software, and you want other people in your organization to use this module, but you do not want to tell everyone how to configure their Ansible library path, you can include the module in your internal_config role."
 msgstr "カスタムモジュール (「:ref:`developing_modules`」を参照) やプラグイン (「:ref:`developing_plugins`」を参照) を作成した場合は、ロールの一部として配布したい場合があります。たとえば、社内のソフトウェアを設定するためのモジュールを作成し、組織内の他の人にもこのモジュールを使用してほしいにも関わらず、Ansible のライブラリーパスを設定する方法を全員に開示したくない場合は、internal_config ロールにモジュールを含めることができます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:541
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:543
 msgid "To add a module or a plugin to a role: Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library' and then include the module directly inside the 'library' directory."
 msgstr "モジュールやプラグインをロールに追加するには、ロールの「tasks」および「handlers」構造の横に、「library」という名前のディレクトリーを追加し、その「library」ディレクトリー内にモジュールを直接インクルードします。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:544
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:546
 msgid "Assuming you had this:"
 msgstr "以下があるとします。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:554
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:556
 msgid "The module will be usable in the role itself, as well as any roles that are called *after* this role, as follows:"
 msgstr "モジュールは、次のように、ロール自体、およびこのロールの *後に* 呼び出されるすべてのロールで使用できます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:565
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:567
 msgid "If necessary, you can also embed a module in a role to modify a module in Ansible's core distribution. For example, you can use the development version of a particular module before it is released in production releases by copying the module and embedding the copy in a role. Use this approach with caution, as API signatures may change in core components, and this workaround is not guaranteed to work."
 msgstr "必要に応じて、ロールにモジュールを埋め込み、Ansible のコアディストリビューションのモジュールを変更することもできます。たとえば、モジュールをコピーし、そのコピーをロールに埋め込むことで、特定のモジュールの開発バージョンを実稼働リリースの前に使用することができます。コアコンポーネントでは API シグネチャーが変更する可能性があり、この回避策は動作が保証されていないため、この方法は慎重に使用してください。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:567
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:569
 msgid "The same mechanism can be used to embed and distribute plugins in a role, using the same schema. For example, for a filter plugin:"
 msgstr "同じスキーマを使用して、ロールにプラグインを埋め込んだり配布したりすることもできます。たとえば、フィルタープラグインの場合は、以下のようになります。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:577
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:579
 msgid "These filters can then be used in a Jinja template in any role called after 'my_custom_filter'."
 msgstr "これらのフィルターは、Jinja のテンプレートで、「my_custom_filter」の後に呼ばれる任意のロールで使用することができます。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:580
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:582
 msgid "Sharing roles: Ansible Galaxy"
 msgstr "ロールの共有: Ansible Galaxy"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:582
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:584
 msgid "`Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community-developed Ansible roles and can be a great way to get a jumpstart on your automation projects."
 msgstr "`Ansible Galaxy <https://galaxy.ansible.com>`_ は、コミュニティーで開発されたあらゆる種類の Ansible ロールを検索、ダウンロード、評価、およびレビューする無料サイトで、ここで自動化プロジェクトをすぐに開始するための優れた方法です。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:584
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:586
 msgid "The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy and provides an excellent default framework for creating your own roles."
 msgstr "クライアント ``ansible-galaxy`` は、Ansible に含まれています。Galaxy クライアントを使用すると、Ansible Galaxy からロールをダウンロードでき、独自のロールを作成する優れたデフォルトのフレームワークも提供します。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:586
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:588
 msgid "Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information. A page that refers back to this one frequently is the Galaxy Roles document which explains the required metadata your role needs for use in Galaxy <https://galaxy.ansible.com/docs/contributing/creating_role.html>."
 msgstr "詳細は、`Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ ページを参照してください。これを頻繁に参照するページは、Galaxy Role のドキュメントで、Galaxy <https://galaxy.ansible.com/docs/contributing/creating_role.html> で使用するためにロールが必要とするメタデータについて説明しています。"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:591
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:593
 msgid "How to create new roles, share roles on Galaxy, role management"
 msgstr "新規ロールの作成、Galaxy でのロールの共有、およびロールの管理の方法"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:599
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:601
 msgid "Variables in playbooks"
 msgstr "Playbook の変数"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:604
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:606
 msgid ":ref:`tags`"
 msgstr ":ref:`tags`"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:605
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:607
 msgid "Using tags to select or skip roles/tasks in long playbooks"
 msgstr "タグを使用した長い Playbook でロール/タスクの選択またはスキップ"
 
-#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:609
+#: ../../rst/playbook_guide/playbooks_reuse_roles.rst:611
 msgid "Extending Ansible by writing your own modules"
 msgstr "独自のモジュールを作成して Ansible を拡張"
 
@@ -6657,7 +6669,7 @@ msgstr "utc"
 msgid "Specify ``True`` to get the current time in UTC. Defaults to ``False``."
 msgstr "UTC で現在の時間を取得するには、``True`` を指定します。デフォルトは ``False`` です。"
 
-#: ../../<generated>:1
+#: ../../rst/playbook_guide/playbooks_templating_now.rst:17
 msgid "fmt"
 msgstr "fmt"
 
@@ -7041,7 +7053,7 @@ msgstr "Ansible では、ブール変数 ``true/false``、``1/0``、``yes/no``�
 
 #: ../../rst/playbook_guide/playbooks_variables.rst:110
 msgid "Valid values"
-msgstr "有効な値"
+msgstr "有効な値は以下のとおりです。"
 
 #: ../../rst/playbook_guide/playbooks_variables.rst:112
 msgid "``True`` , ``'true'`` , ``'t'`` , ``'yes'`` , ``'y'`` , ``'on'`` , ``'1'`` , ``1`` , ``1.0``"
@@ -7235,255 +7247,255 @@ msgstr "JSON 文字列の形式"
 msgid "When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (for example, JSON), and for your shell:"
 msgstr "``--extra-vars`` で変数を渡す場合には、マークアップ (JSON など) とシェルの両方で、引用符やその他の特殊文字を適切にエスケープする必要があります。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:334
-msgid "If you have a lot of special characters, use a JSON or YAML file containing the variable definitions."
-msgstr "特殊文字が多数ある場合は、変数定義を含む JSON ファイルまたは YAML ファイルを使用します。"
-
-#: ../../rst/playbook_guide/playbooks_variables.rst:337
+#: ../../rst/playbook_guide/playbooks_variables.rst:336
 msgid "vars from a JSON or YAML file"
 msgstr "JSON ファイルまたは YAML ファイルの変数"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:347
+#: ../../rst/playbook_guide/playbooks_variables.rst:338
+msgid "If you have a lot of special characters, use a JSON or YAML file containing the variable definitions. Prepend both JSON and YAML filenames with `@`."
+msgstr "特殊文字が多数ある場合は、変数定義を含む JSON ファイルまたは YAML ファイルを使用します。JSON および YAML ファイル名に `@` の接頭辞を付けます。"
+
+#: ../../rst/playbook_guide/playbooks_variables.rst:349
 msgid "Variable precedence: Where should I put a variable?"
 msgstr "変数の優先順位: 変数をどこに置くべきか"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:349
+#: ../../rst/playbook_guide/playbooks_variables.rst:351
 msgid "You can set multiple variables with the same name in many different places. When you do this, Ansible loads every possible variable it finds, then chooses the variable to apply based on variable precedence. In other words, the different variables will override each other in a certain order."
 msgstr "同じ名前の複数の変数をさまざまな場所に設定することができます。これを行うと、Ansible は検出可能なすべての変数を読み込み、次に変数の優先順位に基づいて適用する変数を選択します。つまり、異なる変数が一定の順序で互いに上書きされます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:351
+#: ../../rst/playbook_guide/playbooks_variables.rst:353
 msgid "Teams and projects that agree on guidelines for defining variables (where to define certain types of variables) usually avoid variable precedence concerns. We suggest that you define each variable in one place: figure out where to define a variable, and keep it simple. For examples, see :ref:`variable_examples`."
 msgstr "変数の定義に関するガイドライン (特定のタイプの変数をどこで定義するか) に合意したチームやプロジェクトは、通常、変数の優先順位に関する懸念を回避することができます。各変数は、一箇所で定義することが推奨されます。どこで変数を定義するかを把握し、簡潔さを保ってください。例については、「:ref:`variable_examples`」を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:353
+#: ../../rst/playbook_guide/playbooks_variables.rst:355
 msgid "Some behavioral parameters that you can set in variables you can also set in Ansible configuration, as command-line options, and using playbook keywords. For example, you can define the user Ansible uses to connect to remote devices as a variable with ``ansible_user``, in a configuration file with ``DEFAULT_REMOTE_USER``, as a command-line option with ``-u``, and with the playbook keyword ``remote_user``. If you define the same parameter in a variable and by another method, the variable overrides the other setting. This approach allows host-specific settings to override more general settings. For examples and more details on the precedence of these various settings, see :ref:`general_precedence_rules`."
 msgstr "変数で設定できる動作パラメーターの中には、Ansible の構成、コマンドラインオプション、および Playbook キーワードで設定できるものがあります。たとえば、Ansible がリモートデバイスへの接続に使用するユーザーは、変数では ``ansible_user``、構成ファイルでは ``DEFAULT_REMOTE_USER``、コマンドラインオプションでは ``-u`` 、Playbook キーワードでは ``remote_user`` で定義できます。変数と別の方法で同じパラメーターを定義した場合は、変数が別の設定を上書きします。この方法では、ホスト固有の設定がより一般的な設定を上書きします。これらのさまざまな設定の優先順位の例や詳細は、「:ref:`general_precedence_rules`」を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:356
+#: ../../rst/playbook_guide/playbooks_variables.rst:358
 msgid "Understanding variable precedence"
 msgstr "変数の優先順位について"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:358
+#: ../../rst/playbook_guide/playbooks_variables.rst:360
 msgid "Ansible does apply variable precedence, and you might have a use for it. Here is the order of precedence from least to greatest (the last listed variables override all other variables):"
 msgstr "Ansible では変数の優先順位を適用しており、それを利用できる場合があります。ここでは、優先順位の低いものから高いものまでを紹介します (最後に挙げた変数が他のすべての変数を上書きします)。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:360
+#: ../../rst/playbook_guide/playbooks_variables.rst:362
 msgid "command line values (for example, ``-u my_user``, these are not variables)"
 msgstr "コマンドラインの値 (例: ``-u my_user`` (これらは変数ではありません))"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:361
+#: ../../rst/playbook_guide/playbooks_variables.rst:363
 msgid "role defaults (defined in role/defaults/main.yml) [1]_"
 msgstr "ロールのデフォルト(role/defaults/main.yml で定義) [1]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:362
+#: ../../rst/playbook_guide/playbooks_variables.rst:364
 msgid "inventory file or script group vars [2]_"
 msgstr "インベントリーファイルまたはスクリプトのグループ変数 [2]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:363
+#: ../../rst/playbook_guide/playbooks_variables.rst:365
 msgid "inventory group_vars/all [3]_"
 msgstr "インベントリー group_vars/all [3]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:364
+#: ../../rst/playbook_guide/playbooks_variables.rst:366
 msgid "playbook group_vars/all [3]_"
 msgstr "playbook group_vars/all [3]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:365
+#: ../../rst/playbook_guide/playbooks_variables.rst:367
 msgid "inventory group_vars/* [3]_"
 msgstr "インベントリー group_vars/* [3]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:366
+#: ../../rst/playbook_guide/playbooks_variables.rst:368
 msgid "playbook group_vars/* [3]_"
 msgstr "playbook group_vars/* [3]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:367
+#: ../../rst/playbook_guide/playbooks_variables.rst:369
 msgid "inventory file or script host vars [2]_"
 msgstr "インベントリーファイルまたはスクリプトホスト変数 [2]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:368
+#: ../../rst/playbook_guide/playbooks_variables.rst:370
 msgid "inventory host_vars/* [3]_"
 msgstr "インベントリー host_vars/* [3]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:369
+#: ../../rst/playbook_guide/playbooks_variables.rst:371
 msgid "playbook host_vars/* [3]_"
 msgstr "playbook host_vars/* [3]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:370
+#: ../../rst/playbook_guide/playbooks_variables.rst:372
 msgid "host facts / cached set_facts [4]_"
 msgstr "ホストファクト / キャッシュ済み set_facts [4]_"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:371
+#: ../../rst/playbook_guide/playbooks_variables.rst:373
 msgid "play vars"
 msgstr "プレイ変数"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:372
+#: ../../rst/playbook_guide/playbooks_variables.rst:374
 msgid "play vars_prompt"
 msgstr "play vars_prompt"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:373
+#: ../../rst/playbook_guide/playbooks_variables.rst:375
 msgid "play vars_files"
 msgstr "play vars_files"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:374
+#: ../../rst/playbook_guide/playbooks_variables.rst:376
 msgid "role vars (defined in role/vars/main.yml)"
 msgstr "role 変数 (role/vars/main.yml で定義)"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:375
+#: ../../rst/playbook_guide/playbooks_variables.rst:377
 msgid "block vars (only for tasks in block)"
 msgstr "ブロック変数 (ブロックのタスクにのみ適用)"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:376
+#: ../../rst/playbook_guide/playbooks_variables.rst:378
 msgid "task vars (only for the task)"
 msgstr "タスク変数 (タスク専用)"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:377
+#: ../../rst/playbook_guide/playbooks_variables.rst:379
 msgid "include_vars"
 msgstr "include_vars"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:378
+#: ../../rst/playbook_guide/playbooks_variables.rst:380
 msgid "set_facts / registered vars"
 msgstr "set_facts / 登録変数"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:379
+#: ../../rst/playbook_guide/playbooks_variables.rst:381
 msgid "role (and include_role) params"
 msgstr "role (および include_role) パラメーター"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:380
+#: ../../rst/playbook_guide/playbooks_variables.rst:382
 msgid "include params"
 msgstr "include パラメーター"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:381
+#: ../../rst/playbook_guide/playbooks_variables.rst:383
 msgid "extra vars (for example, ``-e \"user=my_user\"``)(always win precedence)"
 msgstr "追加の変数 (例: ``-e \"user=my_user\"``)(常に優先されます)"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:383
+#: ../../rst/playbook_guide/playbooks_variables.rst:385
 msgid "In general, Ansible gives precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but explicit includes such as the vars directory or an ``include_vars`` task override inventory variables."
 msgstr "一般的に、Ansible は、より新しく、より積極的に、より明確なスコープで定義された変数を優先します。ロール内の defaults フォルダーにある変数は簡単に上書きされます。ロールの vars ディレクトリーにあるものは、名前空間内のその変数の以前のバージョンを上書きします。ホストおよび/またはインベントリー変数はロールのデフォルトを上書きしますが、vars ディレクトリーや ``include_vars`` タスクなどの明示的なインクルードはインベントリー変数を上書きします。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:385
+#: ../../rst/playbook_guide/playbooks_variables.rst:387
 msgid "Ansible merges different variables set in inventory so that more specific settings override more generic settings. For example, ``ansible_ssh_user`` specified as a group_var is overridden by ``ansible_user`` specified as a host_var. For details about the precedence of variables set in inventory, see :ref:`how_we_merge`."
 msgstr "Ansible は、インベントリーに設定した異なる変数をマージして、より特定の設定がより一般的な設定を上書きするようにします。たとえば、group_var として指定した ``ansible_ssh_user`` は、host_var として指定した ``ansible_user`` により上書きされます。インベントリーで設定された変数の優先順位の詳細については、「:ref:`how_we_merge`」を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:388
+#: ../../rst/playbook_guide/playbooks_variables.rst:390
 msgid "Footnotes"
 msgstr "注記"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:389
+#: ../../rst/playbook_guide/playbooks_variables.rst:391
 msgid "Tasks in each role see their own role's defaults. Tasks defined outside of a role see the last role's defaults."
 msgstr "各ロールのタスクには、それぞれのロールのデフォルト値が表示されます。ロールの外で定義されたタスクには、最後のロールのデフォルトが表示されます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:390
+#: ../../rst/playbook_guide/playbooks_variables.rst:392
 msgid "Variables defined in inventory file or provided by dynamic inventory."
 msgstr "インベントリーファイルで定義される変数、または動的インベントリーで指定される変数。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:391
+#: ../../rst/playbook_guide/playbooks_variables.rst:393
 msgid "Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible."
 msgstr "「vars プラグイン」と、Ansible に同梱されるデフォルトの vars プラグインにより追加される host_vars および group_vars が含まれるインクルード変数。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:392
+#: ../../rst/playbook_guide/playbooks_variables.rst:394
 msgid "When created with set_facts's cacheable option, variables have the high precedence in the play, but are the same as a host facts precedence when they come from the cache."
 msgstr "set_facts のキャッシュ可能なオプションを使用して作成すると、変数がプレイに優先されますが、キャッシュからのホストのファクトと同様に優先されます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:395
+#: ../../rst/playbook_guide/playbooks_variables.rst:397
 msgid "Within any section, redefining a var overrides the previous instance. If multiple groups have the same variable, the last one loaded wins. If you define a variable twice in a play's ``vars:`` section, the second one wins."
 msgstr "どのセクションでも、変数を再定義すると前のインスタンスが上書きされます。複数のグループが同じ変数を持っている場合は、最後に読み込まれたものが優先されます。プレイ中の ``vars:`` のセクションで変数を 2 回定義した場合は、2 回目の変数が優先されます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:398
+#: ../../rst/playbook_guide/playbooks_variables.rst:400
 msgid "The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite."
 msgstr "以前は、デフォルトの設定 ``hash_behaviour=replace`` を説明し、``merge`` に切り替えてを部分的に上書きします。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:403
+#: ../../rst/playbook_guide/playbooks_variables.rst:405
 msgid "Scoping variables"
 msgstr "変数のスコープ設定"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:405
+#: ../../rst/playbook_guide/playbooks_variables.rst:407
 msgid "You can decide where to set a variable based on the scope you want that value to have. Ansible has three main scopes:"
 msgstr "変数をどこに設定するかは、その値が持つべきスコープに基づいて決めることができます。Ansible には大きく分けて 3 つのスコープがあります。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:407
+#: ../../rst/playbook_guide/playbooks_variables.rst:409
 msgid "Global: this is set by config, environment variables and the command line"
 msgstr "グローバル: これは、設定、環境変数、およびコマンドラインで設定されます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:408
+#: ../../rst/playbook_guide/playbooks_variables.rst:410
 msgid "Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars."
 msgstr "プレイ: 各プレイおよび含まれる構造、変数エントリー (vars、vars_files、vars_prompt)、ロールのデフォルト、および変数"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:409
+#: ../../rst/playbook_guide/playbooks_variables.rst:411
 msgid "Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs"
 msgstr "ホスト: インベントリー、include_vars、ファクト、または登録されたタスクの出力などのホストに直接関連付けられる変数"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:411
+#: ../../rst/playbook_guide/playbooks_variables.rst:413
 msgid "Inside a template, you automatically have access to all variables that are in scope for a host, plus any registered variables, facts, and magic variables."
 msgstr "テンプレート内では、ホストのスコープ内にあるすべての変数と、登録済みの変数、ファクト、およびマジック変数に自動的にアクセスできます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:416
+#: ../../rst/playbook_guide/playbooks_variables.rst:418
 msgid "Tips on where to set variables"
 msgstr "変数を設定する場所に関するヒント"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:418
+#: ../../rst/playbook_guide/playbooks_variables.rst:420
 msgid "You should choose where to define a variable based on the kind of control you might want over values."
 msgstr "変数を定義する場所は、値をどのように制御するかによって選択する必要があります。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:420
+#: ../../rst/playbook_guide/playbooks_variables.rst:422
 msgid "Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember: child groups override parent groups, and host variables override group variables. See :ref:`define_variables_in_inventory` for details on setting host and group variables."
 msgstr "地理や動作を扱うインベントリーに変数を設定します。グループは、ホストにロールをマッピングするエンティティーであることが多いため、ロールに変数を定義する代わりに、グループに変数を設定することができます。子グループが親グループを上書きし、ホスト変数がグループ変数を上書きすることを忘れないでください。ホスト変数とグループ変数の設定の詳細は、「:ref:`define_variables_in_inventory`」を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:422
+#: ../../rst/playbook_guide/playbooks_variables.rst:424
 msgid "Set common defaults in a ``group_vars/all`` file. See :ref:`splitting_out_vars` for details on how to organize host and group variables in your inventory. Group variables are generally placed alongside your inventory file, but they can also be returned by dynamic inventory (see :ref:`intro_dynamic_inventory`) or defined in AWX or on :ref:`ansible_platform` from the UI or API:"
 msgstr "``group_vars/all`` ファイルで共通のデフォルトを設定します。インベントリーでホスト変数とグループ変数を整理する方法の詳細については、「:ref:`splitting_out_vars`」を参照してください。グループ変数は通常、インベントリーファイルと一緒に置かれますが、動的インベントリー (:ref:`intro_dynamic_inventory` を参照) で返されたり、AWX、または UI や API から :ref:`ansible_platform` で定義することもできます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:431
+#: ../../rst/playbook_guide/playbooks_variables.rst:433
 msgid "Set location-specific variables in ``group_vars/my_location`` files. All groups are children of the ``all`` group, so variables set here override those set in ``group_vars/all``:"
 msgstr "``group_vars/my_location`` ファイルにロケーション固有の変数を設定します。すべてのグループは ``all`` グループの子であるため、ここに設定される変数は ``group_vars/all`` で設定した変数を上書きします。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:439
+#: ../../rst/playbook_guide/playbooks_variables.rst:441
 msgid "If one host used a different NTP server, you could set that in a host_vars file, which would override the group variable:"
 msgstr "1 つのホストが別の NTP サーバーを使用している場合は、host_vars ファイルにそのホストを設定できます。これにより、グループ変数が上書きされます。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:447
+#: ../../rst/playbook_guide/playbooks_variables.rst:449
 msgid "Set defaults in roles to avoid undefined-variable errors. If you share your roles, other users can rely on the reasonable defaults you added in the ``roles/x/defaults/main.yml`` file, or they can easily override those values in inventory or at the command line. See :ref:`playbooks_reuse_roles` for more info. For example:"
 msgstr "未定義な変数エラーを防ぐために、ロールにデフォルト値を設定します。ロールを共有している場合、他のユーザーは、``roles/x/defaults/main.yml`` ファイルで追加した妥当なデフォルト値を信頼するか、インベントリーやコマンドラインで簡単にその値を上書きすることができます。詳細は、「:ref:`playbooks_reuse_roles`」を参照してください。以下に例を示します。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:456
+#: ../../rst/playbook_guide/playbooks_variables.rst:458
 msgid "Set variables in roles to ensure a value is used in that role, and is not overridden by inventory variables. If you are not sharing your role with others, you can define app-specific behaviors like ports this way, in ``roles/x/vars/main.yml``. If you are sharing roles with others, putting variables here makes them harder to override, although they still can by passing a parameter to the role or setting a variable with ``-e``:"
 msgstr "ロールに変数を設定することで、値がそのロールで使用され、インベントリー変数で上書きされないようにします。ロールを他の人と共有していない場合は、ポートなどのアプリ固有の動作を、このように ``roles/x/vars/main.yml`` で定義できます。他の人とロールを共有している場合は、ここに変数を置くことで上書きされにくくなります。ただし、ロールにパラメーターを渡したり、``-e`` で変数を設定したりすれば、上書きされる可能性はあります。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:465
+#: ../../rst/playbook_guide/playbooks_variables.rst:467
 msgid "Pass variables as parameters when you call roles for maximum clarity, flexibility, and visibility. This approach overrides any defaults that exist for a role. For example:"
 msgstr "明確さ、柔軟性、および可視性を最大化するためにロールを呼び出す場合は、パラメーターとして変数を渡します。この方法では、ロールに存在するデフォルトを上書きします。以下に例を示します。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:474
+#: ../../rst/playbook_guide/playbooks_variables.rst:476
 msgid "When you read this playbook it is clear that you have chosen to set a variable or override a default. You can also pass multiple values, which allows you to run the same role multiple times. See :ref:`run_role_twice` for more details. For example:"
 msgstr "この Playbook を読むと、変数の設定やデフォルトの上書きを選択したことがわかります。また、複数の値を渡すことができるため、同じロールを複数回実行することができます。詳細は「:ref:`run_role_twice`」を参照してください。以下に例を示します。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:492
+#: ../../rst/playbook_guide/playbooks_variables.rst:494
 msgid "Variables set in one role are available to later roles. You can set variables in a ``roles/common_settings/vars/main.yml`` file and use them in other roles and elsewhere in your playbook:"
 msgstr "1 つのロールに設定された変数は、後のロールで使用できます。変数は、``roles/common_settings/vars/main.yml`` ファイルに設定して、他のロールや Playbook の他の場所で使用します。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:503
+#: ../../rst/playbook_guide/playbooks_variables.rst:505
 msgid "There are some protections in place to avoid the need to namespace variables. In this example, variables defined in 'common_settings' are available to 'something' and 'something_else' tasks, but tasks in 'something' have foo set at 12, even if 'common_settings' sets foo to 20."
 msgstr "変数の名前空間化の必要性を回避するために、いくつかの保護機能があります。この例では、「common_settings」で定義された変数は「something」と「something_else」のタスクで使用できますが、「common_settings」で foo が 20 に設定されていても、「something」のタスクでは foo が 12 に設定されています。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:506
+#: ../../rst/playbook_guide/playbooks_variables.rst:508
 msgid "Instead of worrying about variable precedence, we encourage you to think about how easily or how often you want to override a variable when deciding where to set it. If you are not sure what other variables are defined, and you need a particular value, use ``--extra-vars`` (``-e``) to override all other variables."
 msgstr "変数の優先順位を気にするのではなく、変数をどこに設定するかを決める際には、どれだけ簡単に、あるいはどれだけ頻繁に変数を上書きしたいかを考えることが推奨されます。他の変数がどのように定義されているかわからず、特定の値が必要な場合は、``--extra-vars`` (``-e``) を使用して、他のすべての変数を上書きします。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:509
+#: ../../rst/playbook_guide/playbooks_variables.rst:511
 msgid "Using advanced variable syntax"
 msgstr "高度な変数構文の使用"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:511
+#: ../../rst/playbook_guide/playbooks_variables.rst:513
 msgid "For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :ref:`playbooks_advanced_syntax`."
 msgstr "変数を宣言するのに使用される高度な YAML 構文、および Ansible により使用される YAML ファイルにあるデータに対する制御の詳細は、「:ref:`playbooks_advanced_syntax`」を参照してください。"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:520
+#: ../../rst/playbook_guide/playbooks_variables.rst:522
 msgid "Jinja2 filters and their uses"
 msgstr "Jinja2 フィルターおよびその使用"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:527
+#: ../../rst/playbook_guide/playbooks_variables.rst:529
 msgid ":ref:`special_variables`"
 msgstr ":ref:`special_variables`"
 
-#: ../../rst/playbook_guide/playbooks_variables.rst:528
+#: ../../rst/playbook_guide/playbooks_variables.rst:530
 msgid "List of special variables"
 msgstr "特殊な変数のリスト"
 
@@ -7718,7 +7730,7 @@ msgstr "``ansible_check_mode`` が ``--check`` で Ansible を実行する場合
 
 #: ../../rst/playbook_guide/playbooks_vars_facts.rst:698
 msgid "Ansible version"
-msgstr "Ansible version"
+msgstr "Ansible のバージョン"
 
 #: ../../rst/playbook_guide/playbooks_vars_facts.rst:702
 msgid "To adapt playbook behavior to different versions of Ansible, you can use the variable ``ansible_version``, which has the following structure:"
@@ -7731,5 +7743,8 @@ msgstr "Playbook での Vault の使用"
 #: ../../rst/playbook_guide/playbooks_vault.rst:6
 msgid "The documentation regarding Ansible Vault has moved. The new location is here: :ref:`vault`. Please update any links you may have made directly to this page."
 msgstr "Ansible Vault に関するドキュメントが移動しました。新しい場所は「:ref:`vault`」です。このページに直接作成した可能性のあるリンクを更新してください。"
+
+#~ msgid "If the option is a boolean value, you can use any of the boolean values recognized by Ansible: (such as true/false or yes/no).  Choose the one that reads better in the context of the option."
+#~ msgstr "オプションがブール値の場合は、Ansible が認識する任意のブール値 (true/false、yes/no など) を使用できます。オプションのコンテキストで読み取りが適切であればこれを選択します。"
 
 
