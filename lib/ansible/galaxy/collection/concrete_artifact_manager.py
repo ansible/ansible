@@ -6,6 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import functools
 import json
 import os
 import tarfile
@@ -27,9 +28,12 @@ if t.TYPE_CHECKING:
 
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
+from ansible.galaxy.api import should_retry_error
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.api import retry_with_delays_and_condition
+from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.urls import open_url
@@ -440,6 +444,10 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
 
 # FIXME: use random subdirs while preserving the file names
+@retry_with_delays_and_condition(
+    backoff_iterator=functools.partial(generate_jittered_backoff, retries=6, delay_base=2, delay_threshold=40),
+    should_retry_error=should_retry_error
+)
 def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
     # type: (str, bytes, t.Optional[str], bool, GalaxyToken, int) -> bytes
     # ^ NOTE: used in download and verify_collections ^
