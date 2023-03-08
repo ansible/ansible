@@ -14,6 +14,9 @@ lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
 lib/ansible/galaxy/collection/__init__.py mypy-3.9:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.10:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.11:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/gpg.py mypy-3.9:arg-type
+lib/ansible/galaxy/collection/gpg.py mypy-3.10:arg-type
+lib/ansible/galaxy/collection/gpg.py mypy-3.11:arg-type
 lib/ansible/parsing/yaml/constructor.py mypy-3.9:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
