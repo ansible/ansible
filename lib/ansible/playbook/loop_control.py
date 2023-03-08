@@ -25,9 +25,9 @@ from ansible.playbook.base import FieldAttributeBase
 
 class LoopControl(FieldAttributeBase):
 
-    loop_var = NonInheritableFieldAttribute(isa='str', default='item', always_post_validate=True)
-    index_var = NonInheritableFieldAttribute(isa='str', always_post_validate=True)
-    label = NonInheritableFieldAttribute(isa='str')
+    loop_var = NonInheritableFieldAttribute(isa='string', default='item', always_post_validate=True)
+    index_var = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
+    label = NonInheritableFieldAttribute(isa='string')
     pause = NonInheritableFieldAttribute(isa='float', default=0, always_post_validate=True)
     extended = NonInheritableFieldAttribute(isa='bool', always_post_validate=True)
     extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True)

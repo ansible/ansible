@@ -1,0 +1,2 @@
+minor_changes:
+  - Raise an error when an incorrect ``isa`` type is passed to ``FieldAttribute``.
