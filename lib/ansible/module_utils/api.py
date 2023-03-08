@@ -138,7 +138,7 @@ def retry_never(exception_or_result):
 def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
     """Generic retry decorator.
 
-    :param backoff_iterator: An iterable of delays in seconds.
+    :param backoff_iterator: An iterable of delays in seconds, or a callable that accepts no arguments and returns in iterable.
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
     """
     if should_retry_error is None:
