@@ -16,6 +16,7 @@ import tarfile
 import time
 import threading
 
+from http.client import BadStatusLine
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 
@@ -50,12 +51,12 @@ def cache_lock(func):
 
 def should_retry_error(exception):
     if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
-        # URLError is often a proxy for an underlying error, handle wrapped OSErrors
-        if isinstance(orig_exc, URLError) and isinstance(orig_exc.reason, OSError):
-            return True
+        # URLError is often a proxy for an underlying error, handle wrapped exceptions
+        if isinstance(orig_exc, URLError):
+            orig_exc = orig_exc.reason
 
-        # Handle common URL related OSErrors such as TimeoutError, and BadStatusLine
-        elif isinstance(orig_exc, OSError):
+        # Handle common URL related errors such as TimeoutError, and BadStatusLine
+        if isinstance(orig_exc, (TimeoutError, BadStatusLine)):
             return True
 
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
