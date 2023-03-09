@@ -49,13 +49,14 @@ def cache_lock(func):
 
 
 def should_retry_error(exception):
-    # Handle common URL related OSErrors such as TimeoutError, and BadStatusLine
-    if isinstance(exception, OSError):
-        return True
+    if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
+        # URLError is often a proxy for an underlying error, handle wrapped OSErrors
+        if isinstance(orig_exc, URLError) and isinstance(orig_exc.reason, OSError):
+            return True
 
-    # URLError is often a proxy for an underlying error, handle wrapped OSErrors
-    if isinstance(exception, URLError) and isinstance(exception.reason, OSError):
-        return True
+        # Handle common URL related OSErrors such as TimeoutError, and BadStatusLine
+        elif isinstance(orig_exc, OSError):
+            return True
 
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
@@ -395,11 +396,11 @@ class GalaxyAPI:
                             method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
-        except (URLError, OSError):
-            # Other exceptions we may want to retry, these may be filtered further by should_retry_error
-            raise
         except Exception as e:
-            raise AnsibleError("Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)))
+            raise AnsibleError(
+                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
+                orig_exc=e
+            )
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
