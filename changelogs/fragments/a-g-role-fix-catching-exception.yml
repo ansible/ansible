@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy role info - fix unhandled AttributeError by catching the correct exception.
