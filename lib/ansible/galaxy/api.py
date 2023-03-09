@@ -11,6 +11,7 @@ import functools
 import hashlib
 import json
 import os
+import socket
 import stat
 import tarfile
 import time
@@ -56,7 +57,8 @@ def should_retry_error(exception):
             orig_exc = orig_exc.reason
 
         # Handle common URL related errors such as TimeoutError, and BadStatusLine
-        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
+        # Note: socket.timeout is only required for Py3.9
+        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead, socket.timeout)):
             return True
 
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
