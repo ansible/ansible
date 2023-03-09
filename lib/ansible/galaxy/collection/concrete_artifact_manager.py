@@ -158,7 +158,7 @@ class ConcreteArtifactsManager:
                 validate_certs=self._validate_certs,
                 token=token,
             )  # type: bytes
-        except URLError as err:
+        except Exception as err:
             raise AnsibleError(
                 'Failed to download collection tar '
                 "from '{coll_src!s}': {download_err!s}".
@@ -466,13 +466,16 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     display.display("Downloading %s to %s" % (url, to_text(b_tarball_dir)))
     # NOTE: Galaxy redirects downloads to S3 which rejects the request
     # NOTE: if an Authorization header is attached so don't redirect it
-    resp = open_url(
-        to_native(url, errors='surrogate_or_strict'),
-        validate_certs=validate_certs,
-        headers=None if token is None else token.headers(),
-        unredirected_headers=['Authorization'], http_agent=user_agent(),
-        timeout=timeout
-    )
+    try:
+        resp = open_url(
+            to_native(url, errors='surrogate_or_strict'),
+            validate_certs=validate_certs,
+            headers=None if token is None else token.headers(),
+            unredirected_headers=['Authorization'], http_agent=user_agent(),
+            timeout=timeout
+        )
+    except Exception as err:
+        raise AnsibleError(to_native(err), orig_exc=err)
 
     with open(b_file_path, 'wb') as download_file:  # type: t.BinaryIO
         actual_hash = _consume_file(resp, write_to=download_file)
