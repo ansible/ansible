@@ -39,13 +39,13 @@ def initialize_vars_plugin_caches():
         # (builtins should have REQUIRES_ENABLED=True)
         plugin_name = auto_run_plugin._load_name
         auto.append(plugin_name)
-        if auto_run_plugin.is_stateless:
+        if auto_run_plugin.cache_instance:
             cached_stateless_vars_plugins[plugin_name] = auto_run_plugin
 
     for enabled_plugin in C.VARIABLE_PLUGINS_ENABLED:
         plugin = vars_loader.get(enabled_plugin)
         enabled.append(enabled_plugin)
-        if plugin.is_stateless:
+        if plugin.cache_instance:
             cached_stateless_vars_plugins[enabled_plugin] = plugin
 
     global cached_vars_plugin_order

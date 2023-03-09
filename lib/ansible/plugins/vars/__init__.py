@@ -30,7 +30,7 @@ class BaseVarsPlugin(AnsiblePlugin):
     """
     Loads variables for groups and/or hosts
     """
-    is_stateless = False
+    cache_instance = False
 
     def __init__(self):
         """ constructor """
