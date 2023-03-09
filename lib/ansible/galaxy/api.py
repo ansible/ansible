@@ -16,7 +16,7 @@ import tarfile
 import time
 import threading
 
-from http.client import BadStatusLine
+from http.client import BadStatusLine, IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 
@@ -56,7 +56,7 @@ def should_retry_error(exception):
             orig_exc = orig_exc.reason
 
         # Handle common URL related errors such as TimeoutError, and BadStatusLine
-        if isinstance(orig_exc, (TimeoutError, BadStatusLine)):
+        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
             return True
 
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
