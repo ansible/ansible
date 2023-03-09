@@ -374,9 +374,10 @@ class GalaxyAPI:
                         res['results'].append(result)
 
                 else:
-                    res = path_cache['results']
+                    res = path_cache.get('results')
 
-                return res
+                if res is not None:
+                    return res
 
             elif not is_paginated_url:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
