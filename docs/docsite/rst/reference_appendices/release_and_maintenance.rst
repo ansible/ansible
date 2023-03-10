@@ -41,8 +41,8 @@ The two community releases are related - the release cycle follows this pattern:
    * Work on new features continues in Collections
    * Individual Collections can make multiple minor and major releases
 
-#. Minor releases of three maintained ansible-core versions every three weeks (2.11.1)
-#. Minor releases of the single maintained Ansible community package version every three weeks (4.1.0)
+#. Minor releases of three maintained ansible-core versions every four weeks (2.11.1)
+#. Minor releases of the single maintained Ansible community package version every four weeks (4.1.0)
 #. Feature freeze on ansible-core
 #. Release candidate for ansible-core, testing, additional release candidates as necessary
 #. Release of the next ansible-core major version, cycle begins again
@@ -50,7 +50,7 @@ The two community releases are related - the release cycle follows this pattern:
 Ansible community package release cycle
 ---------------------------------------
 
-The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes.
+The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every four weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes.
 
 Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired.
 
@@ -331,7 +331,7 @@ The Ansible community develops and maintains the features and functionality incl
 
  * Developers add new features and bug fixes to the individual Collections, following each Collection's rules on contributing.
  * Each new feature and each bug fix includes a changelog fragment describing the work.
- * Release engineers create a minor release for the current version every three weeks to ensure that the latest bug fixes are available to users.
+ * Release engineers create a minor release for the current version every four weeks to ensure that the latest bug fixes are available to users.
  * At the end of the development period, the release engineers announce which Collections, and which major version of each included Collection,  will be included in the next release of the Ansible community package. New Collections and new major versions may not be added after this, and the work of creating a new release begins.
 
 We generally do not provide fixes for unmaintained releases of the Ansible community package, however, there can sometimes be exceptions for critical issues.
@@ -346,7 +346,7 @@ The Ansible community develops and maintains ``ansible-core`` on GitHub_, with a
  * Developers add new features and bug fixes to the ``devel`` branch.
  * Each new feature and each bug fix includes a changelog fragment describing the work.
  * The development team backports bug fixes to one, two, or three stable branches, depending on the severity of the bug. They do not backport new features.
- * Release engineers create a minor release for each maintained version every three weeks to ensure that the latest bug fixes are available to users.
+ * Release engineers create a minor release for each maintained version every four weeks to ensure that the latest bug fixes are available to users.
  * At the end of the development period, the release engineers impose a feature freeze and the work of creating a new release begins.
 
 We generally do not provide fixes for unmaintained releases of ``ansible-core``, however, there can sometimes be exceptions for critical issues.
