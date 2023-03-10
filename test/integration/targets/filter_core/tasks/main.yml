@@ -710,7 +710,7 @@
       - dict2product_fail_key1 is failed
       - dict2product_fail_key2 is failed
       - '{"foo": "bar"} | dict2product("foo", "bar", skip_missing=True) == []'
-      - '{"foo": "bar", "buz": ["one", "two"]} | dict2product("foo", "buz") == [["bar", "one"], ["bar", "two"]]'
+      - '{"foo": "bar", "buz": ["one", "two"]} | dict2product("foo", "buz") == [("bar", "one"), ("bar", "two")]'
 
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:

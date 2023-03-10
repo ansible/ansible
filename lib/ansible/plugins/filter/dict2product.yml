@@ -39,7 +39,7 @@ EXAMPLES: |
 
   # Note: Keys that are not list, are made into list before processing,
   #       like "ip" in that example.
-  # dns => [["1.2.3.4", "example1.domain.tld"], ["1.2.3.4", "example2.domain.tld"]]
+  # dns => [("1.2.3.4", "example1.domain.tld"), ("1.2.3.4", "example2.domain.tld")]
   vars:
     network:
       ip: 1.2.3.4
