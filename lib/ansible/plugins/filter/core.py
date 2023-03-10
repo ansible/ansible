@@ -571,6 +571,33 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         raise AnsibleFilterTypeError("items2dict requires a list of dictionaries, got %s instead." % mylist)
 
 
+def dict_to_product(mydict, key1, key2, skip_missing=False):
+    ''' takes a dict make a product of two list of subelements, equivalent to
+        product(mydict[key1], mydict[key2]) '''
+
+    try:
+        if isinstance(mydict[key1], list):
+            list1 = mydict[key1]
+        else:
+            list1 = [mydict[key1]]
+
+        if isinstance(mydict[key2], list):
+            list2 = mydict[key2]
+        else:
+            list2 = [mydict[key2]]
+
+        return [(x, y) for x in list1 for y in list2]
+
+    except KeyError as e:
+        if skip_missing:
+            return []
+
+        raise AnsibleFilterTypeError(
+            "dict2product requires dictionary to contain the keys '%s' and '%s', but %s is missing."
+            % (key1, key2, e)
+        )
+
+
 def path_join(paths):
     ''' takes a sequence or a string, and return a concatenation
         of the different members '''
@@ -687,6 +714,7 @@ class FilterModule(object):
             'flatten': flatten,
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
+            'dict2product': dict_to_product,
             'subelements': subelements,
             'split': partial(unicode_wrap, text_type.split),
         }

@@ -1,0 +1,69 @@
+DOCUMENTATION:
+  name: dict2product
+  author: Aurélien Rouëné
+  version_added: "2.15"
+  short_description: Convert a dictionary into a product of two if it's key's values.
+  positional: _input, key1_name, key2_name
+  description:
+    - Takes a dictionary and returns a list of the products of two lists found at the keys
+      C(key1) and C(key2) of the dictionary.
+  options:
+    _input:
+      description:
+        - The dictionary to transform
+      type: dict
+      required: true
+    key1_name:
+      description: The name of the first key to get the list from.
+      type: str
+      default: key
+      version_added: "2.15"
+    key2_name:
+      description: The name of the second key to get the list from.
+      type: str
+      default: value
+      version_added: "2.15"
+    skip_missing:
+      description: If True, does not raise an error when one of the keys is missing in the dictionary.
+      type: bool
+      default: False
+      version_added: "2.15"
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.dict2items
+
+EXAMPLES: |
+
+  # items => [[1, 3], [1, 4], [2, 3], [2, 4]]
+  items: "{{ {'a': [1, 2], 'b': [3, 4]} | dict2product('a', 'b') }}"
+
+  # Note: Keys that are not list, are made into list before processing,
+  #       like "ip" in that example.
+  # dns => [["1.2.3.4", "example1.domain.tld"], ["1.2.3.4", "example2.domain.tld"]]
+  vars:
+    network:
+      ip: 1.2.3.4
+      names:
+        - example1.domain.tld
+        - example2.domain.tld
+    dns: "{{ network | dict2product('ip', 'names') }}"
+
+  # dns => [[["1.2.3.4", "example1"], ["1.2.3.4", "example2"]],
+  #        [["4.3.2.1", "example3"], ["4.3.2.1", "example4"]]]
+  vars:
+    networks:
+      - ip: 1.2.3.4
+        names:
+          - example1
+          - example2
+      - ip: 4.3.2.1
+        names:
+          - example3
+          - example4
+    dns: "{{ networks | map('dict2product', 'ip', 'names') }}"
+
+RETURN:
+  _value:
+    description: A list of list.
+    type: list
+    elements: dict

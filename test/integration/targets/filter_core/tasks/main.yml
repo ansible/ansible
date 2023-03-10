@@ -609,7 +609,6 @@
       - 'subelements_demo|subelements("groups") == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
       - 'subelements_demo|subelements(["groups"]) == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
 
-
 - name: Verify dict2items throws on non-Mapping
   set_fact:
     foo: '{{True|dict2items}}'
@@ -679,6 +678,39 @@
       - error in items2dict_fail.msg
   vars:
     error: "items2dict requires each dictionary in the list to contain the keys 'key' and 'value'"
+
+- name: Verify dict2product throws on non dict
+  set_fact:
+    foo: '{{ True | dict2product }}'
+  ignore_errors: yes
+  register: dict2product_fail
+
+- name: Verify dict2product throws on key1 absent
+  set_fact:
+    foo: '{{ foo_dict | dict2product("foo", "bar") }}'
+  vars:
+    foo_dict:
+      bar: "foo"
+  ignore_errors: yes
+  register: dict2product_fail_key1
+
+- name: Verify dict2product throws on key2 absent
+  set_fact:
+    foo: '{{ foo_dict | dict2product("bar", "foo") }}'
+  vars:
+    foo_dict:
+      bar: "foo"
+  ignore_errors: yes
+  register: dict2product_fail_key2
+
+- name: Verify dict2product
+  assert:
+    that:
+      - dict2product_fail is failed
+      - dict2product_fail_key1 is failed
+      - dict2product_fail_key2 is failed
+      - '{"foo": "bar"} | dict2product("foo", "bar", skip_missing=True) == []'
+      - '{"foo": "bar", "buz": ["one", "two"]} | dict2product("foo", "buz") == [["bar", "one"], ["bar", "two"]]'
 
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:
