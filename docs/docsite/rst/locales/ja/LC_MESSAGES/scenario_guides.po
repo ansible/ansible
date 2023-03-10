@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/scenario_guides/cloud_guides.rst:5
 #: ../../rst/scenario_guides/guides.rst:17
@@ -166,8 +166,8 @@ msgid "Gathering facts"
 msgstr "ファクトの収集"
 
 #: ../../rst/scenario_guides/guide_aci.rst:114
-msgid "Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play."
-msgstr "Ansible コントローラーでモジュールを実行するため、ファクトの収集は機能しません。そのため、これらの ACI モジュールを使用する場合はファクトの収集を無効にする必要があります。これは、``ansible.cfg`` でグローバルに行うか、すべてのプレイに ``gather_facts: no`` を追加して行うことができます。"
+msgid "Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: false`` to every play."
+msgstr "Ansible コントローラーでモジュールを実行するため、ファクトの収集は機能しません。そのため、これらの ACI モジュールを使用する場合はファクトの収集を無効にする必要があります。これは、``ansible.cfg`` でグローバルに行うか、すべてのプレイに ``gather_facts: false`` を追加して行うことができます。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:128
 msgid "Delegating to localhost"
@@ -319,8 +319,8 @@ msgid "HTTP redirects can redirect from HTTP to HTTPS so ensure that the proxy e
 msgstr "HTTP リダイレクトは HTTP から HTTPS へリダイレクトできるため、両方のプロトコルのプロキシー環境が正しく設定されていることを確認します。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:238
-msgid "If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: no`` to avoid accidental system proxy usage."
-msgstr "プロキシーサポートが必要なくても、システムがそれを設定する可能性がある場合は、``use_proxy: no`` パラメーターを使用して、誤ったシステムプロキシーの使用を回避します。"
+msgid "If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: false`` to avoid accidental system proxy usage."
+msgstr "プロキシーサポートが必要なくても、システムがそれを設定する可能性がある場合は、``use_proxy: false`` パラメーターを使用して、誤ったシステムプロキシーの使用を回避します。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:240
 msgid "Selective proxy support using the ``no_proxy`` environment variable is also supported."
@@ -822,7 +822,7 @@ msgstr "Ansible Network コミュニティーページ。連絡先情報およ�
 
 #: ../../rst/scenario_guides/guide_aci.rst:658
 msgid "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
-msgstr "`メーリングリストの使用 <https://groups.google.com/group/ansible-project>`_"
+msgstr "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/scenario_guides/guide_aci.rst:659
 msgid "Have a question?  Stop by the google group!"
@@ -865,52 +865,52 @@ msgid "Cloud modules, including Alicloud modules, execute on your local machine 
 msgstr "Alicloud モジュールを含むクラウドモジュールは、ホストに定義されたリモートマシンではなく、ローカルマシン (コントロールマシン) で ``connection: local`` を使用して実行します。"
 
 #: ../../rst/scenario_guides/guide_alicloud.rst:16
-msgid "Normally, you'll use the following pattern for plays that provision Alicloud resources::"
+msgid "Normally, you'll use the following pattern for plays that provision Alicloud resources:"
 msgstr "通常、Alicloud リソースをプロビジョニングするプレイには次のパターンを使用します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:28
+#: ../../rst/scenario_guides/guide_alicloud.rst:30
 #: ../../rst/scenario_guides/guide_vultr.rst:45
 msgid "Authentication"
 msgstr "認証"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:30
+#: ../../rst/scenario_guides/guide_alicloud.rst:32
 msgid "You can specify your Alicloud authentication credentials (access key and secret key) by passing them as environment variables or by storing them in a vars file."
 msgstr "Alicloud の認証情報 (アクセスキーおよびシークレットキー) を指定するには、その認証情報を環境変数として渡すか、vars ファイルに保存します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:33
-msgid "To pass authentication credentials as environment variables::"
+#: ../../rst/scenario_guides/guide_alicloud.rst:35
+msgid "To pass authentication credentials as environment variables:"
 msgstr "環境変数として認証情報を渡すには、以下を実行します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:38
-msgid "To store authentication credentials in a vars_file, encrypt them with :ref:`Ansible Vault<vault>` to keep them secure, then list them::"
+#: ../../rst/scenario_guides/guide_alicloud.rst:42
+msgid "To store authentication credentials in a vars_files, encrypt them with :ref:`Ansible Vault<vault>` to keep them secure, then list them:"
 msgstr "認証情報を vars_file に保存するには、:ref:`Ansible Vault<vault>` で認証情報を暗号化してセキュアに維持してから、その認証情報の一覧を表示します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:44
-msgid "Note that if you store your credentials in a vars_file, you need to refer to them in each Alicloud module. For example::"
+#: ../../rst/scenario_guides/guide_alicloud.rst:50
+msgid "Note that if you store your credentials in a vars_files, you need to refer to them in each Alicloud module. For example:"
 msgstr "認証情報を vars_file に保存する場合は、各 Alicloud モジュールで認証情報を参照する必要があることに注意してください。以下に例を示します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:54
+#: ../../rst/scenario_guides/guide_alicloud.rst:62
 #: ../../rst/scenario_guides/guide_rax.rst:86
 msgid "Provisioning"
 msgstr "プロビジョニング"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:56
+#: ../../rst/scenario_guides/guide_alicloud.rst:64
 msgid "Alicloud modules create Alicloud ECS instances, disks, virtual private clouds, virtual switches, security groups and other resources."
 msgstr "Alicloud モジュールは、Alicloud ECS インスタンス、ディスク、仮想プライベートクラウド、仮想スイッチ、セキュリティーグループ、およびその他のリソースを作成します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:58
+#: ../../rst/scenario_guides/guide_alicloud.rst:66
 msgid "You can use the ``count`` parameter to control the number of resources you create or terminate. For example, if you want exactly 5 instances tagged ``NewECS``, set the ``count`` of instances to 5 and the ``count_tag`` to ``NewECS``, as shown in the last task of the example playbook below. If there are no instances with the tag ``NewECS``, the task creates 5 new instances. If there are 2 instances with that tag, the task creates 3 more. If there are 8 instances with that tag, the task terminates 3 of those instances."
 msgstr "``count`` パラメーターを使用して、作成または終了するリソースの数を制御することができます。たとえば、``NewECS`` とタグが付いたインスタンスが 5 つ必要な場合は、以下の Playbook の例の最後のタスクのように、インスタンスの ``count`` を 5 に、``count_tag`` を ``NewECS`` に、それぞれ設定します。タグが ``NewECS`` のインスタンスがない場合、タスクは 5 つの新規インスタンスを作成します。そのタグを持つインスタンスが 2 つある場合、このタスクはさらに 3 つのインスタンスを作成します。そのタグを持つ 8 つのインスタンスがある場合、タスクはそのインスタンスのうち 3 つを終了します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:63
+#: ../../rst/scenario_guides/guide_alicloud.rst:71
 msgid "If you do not specify a ``count_tag``, the task creates the number of instances you specify in ``count`` with the ``instance_name`` you provide."
 msgstr "``count_tag`` を指定しないと、タスクは、指定した ``instance_name`` で ``count`` に指定したインスタンスの数を作成します。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:121
+#: ../../rst/scenario_guides/guide_alicloud.rst:129
 msgid "In the example playbook above, data about the vpc, vswitch, group, and instances created by this playbook are saved in the variables defined by the \"register\" keyword in each task."
 msgstr "上記のサンプル Playbook では、この Playbook で作成される vpc、vswitch、group、およびインスタンスに関するデータが、各タスクの「register」キーワードで定義される変数に保存されます。"
 
-#: ../../rst/scenario_guides/guide_alicloud.rst:124
+#: ../../rst/scenario_guides/guide_alicloud.rst:132
 msgid "Each Alicloud module offers a variety of parameter options. Not all options are demonstrated in the above example. See each individual module for further details and examples."
 msgstr "各 Alicloud モジュールは、さまざまなパラメーターオプションを提供します。上記の例で、すべてのオプションが示されているわけではありません。詳細およびサンプルは、各モジュールを参照してください。"
 
@@ -1044,7 +1044,7 @@ msgid "Using Environment Variables"
 msgstr "追加の環境変数"
 
 #: ../../rst/scenario_guides/guide_azure.rst:80
-msgid "To pass service principal credentials via the environment, define the following variables:"
+msgid "To pass service principal credentials through the environment, define the following variables:"
 msgstr "環境経由でサービスプリンシパルの認証情報を渡すには、以下の変数を定義します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:82
@@ -1067,7 +1067,7 @@ msgid "AZURE_TENANT"
 msgstr "AZURE_TENANT"
 
 #: ../../rst/scenario_guides/guide_azure.rst:87
-msgid "To pass Active Directory username/password via the environment, define the following variables:"
+msgid "To pass Active Directory username/password through the environment, define the following variables:"
 msgstr "環境経由で Active Directory のユーザー名/パスワードを渡すには、以下の変数を定義します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:89
@@ -1081,8 +1081,8 @@ msgid "AZURE_PASSWORD"
 msgstr "AZURE_PASSWORD"
 
 #: ../../rst/scenario_guides/guide_azure.rst:93
-msgid "To pass Active Directory username/password in ADFS via the environment, define the following variables:"
-msgstr "環境経由で Active Directory のユーザー名/パスワードを渡すには、以下の変数を定義します。"
+msgid "To pass Active Directory username/password in ADFS through the environment, define the following variables:"
+msgstr "環境経由で ADFS に Active Directory のユーザー名/パスワードを渡すには、以下の変数を定義します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:99
 msgid "AZURE_ADFS_AUTHORITY_URL"
@@ -1380,7 +1380,7 @@ msgid "Disabling certificate validation on Azure endpoints"
 msgstr "Azure エンドポイントでの証明書検証の無効化"
 
 #: ../../rst/scenario_guides/guide_azure.rst:478
-msgid "When an HTTPS proxy is present, or when using Azure Stack, it may be necessary to disable certificate validation for Azure endpoints in the Azure modules. This is not a recommended security practice, but may be necessary when the system CA store cannot be altered to include the necessary CA certificate. Certificate validation can be controlled by setting the \"cert_validation_mode\" value in a credential profile, via the \"AZURE_CERT_VALIDATION_MODE\" environment variable, or by passing the \"cert_validation_mode\" argument to any Azure module. The default value is \"validate\"; setting the value to \"ignore\" will prevent all certificate validation. The module argument takes precedence over a credential profile value, which takes precedence over the environment value."
+msgid "When an HTTPS proxy is present, or when using Azure Stack, it may be necessary to disable certificate validation for Azure endpoints in the Azure modules. This is not a recommended security practice, but may be necessary when the system CA store cannot be altered to include the necessary CA certificate. Certificate validation can be controlled by setting the \"cert_validation_mode\" value in a credential profile, through the \"AZURE_CERT_VALIDATION_MODE\" environment variable, or by passing the \"cert_validation_mode\" argument to any Azure module. The default value is \"validate\"; setting the value to \"ignore\" will prevent all certificate validation. The module argument takes precedence over a credential profile value, which takes precedence over the environment value."
 msgstr "HTTPS プロキシーが存在する場合、または Azure Stack を使用している場合は、Azure モジュールで Azure エンドポイントの証明書検証を無効にしなければならない場合があります。これは推奨されるセキュリティー対策ではありませんが、システム CA ストアを変更して必要な CA 証明書を含めることができない場合に必要になることがあります。証明書の検証は、認証情報プロファイルで「cert_validation_mode」値を設定するか、環境変数「AZURE_CERT_VALIDATION_MODE」を経由するか、「cert_validation_mode」引数を任意の Azure モジュールに渡すことで制御できます。デフォルト値は「validate」で、「ignore」に設定すると証明書の検証は行われません。モジュールの引数は、環境の値よりも優先される認証情報プロファイルの値よりも優先されます。"
 
 #: ../../rst/scenario_guides/guide_cloudstack.rst:2
@@ -1925,7 +1925,7 @@ msgstr "project"
 
 #: ../../rst/scenario_guides/guide_gce.rst:274
 msgid "name"
-msgstr "name"
+msgstr "名前"
 
 #: ../../rst/scenario_guides/guide_gce.rst:274
 msgid "This field does not accept an array of names. Use a loop to create multiple instances."
@@ -2210,7 +2210,7 @@ msgstr "また、インベントリーディレクトリー (``etc/ansible/hosts
 
 #: ../../rst/scenario_guides/guide_infoblox.rst:283
 msgid "`Infoblox website <https://www.infoblox.com//>`_"
-msgstr "`Infoblox Web サイト <https://www.infoblox.com//>`_"
+msgstr "`Infoblox website <https://www.infoblox.com//>`_"
 
 #: ../../rst/scenario_guides/guide_infoblox.rst:284
 msgid "The Infoblox website"
@@ -2536,7 +2536,7 @@ msgstr "Ansible を root でインストールする場合は、以下を実行�
 #: ../../rst/scenario_guides/guide_oracle.rst:66
 #: ../../rst/scenario_guides/guide_vultr.rst:16
 msgid "Configuration"
-msgstr "設定"
+msgstr "Configuration (構成)"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:68
 msgid "When creating and configuring Oracle Cloud Infrastructure resources, Ansible modules use the authentication information outlined `here <https://docs.cloud.oracle.com/iaas/Content/API/Concepts/sdkconfig.htm>`_. ."
@@ -2623,7 +2623,7 @@ msgid "Packet.net Guide"
 msgstr "Packet.net ガイド"
 
 #: ../../rst/scenario_guides/guide_packet.rst:8
-msgid "`Packet.net <https://packet.net>`_ is a bare metal infrastructure host that's supported by Ansible (>=2.3) via a dynamic inventory script and two cloud modules. The two modules are:"
+msgid "`Packet.net <https://packet.net>`_ is a bare metal infrastructure host that's supported by Ansible (>=2.3) through a dynamic inventory script and two cloud modules. The two modules are:"
 msgstr "`Packet.net <https://packet.net>`_ は、動的インベントリースクリプトと 2 つのクラウドモジュールを介して Ansible (2.3 以降) で対応しているベアメタルインフラストラクチャーホストです。この 2 つのモジュールは次のとおりです。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:10
@@ -2636,27 +2636,27 @@ msgstr "packet_device: パケット上のサーバーを管理します。この
 
 #: ../../rst/scenario_guides/guide_packet.rst:13
 msgid "Note, this guide assumes you are familiar with Ansible and how it works. If you're not, have a look at their :ref:`docs <ansible_documentation>` before getting started."
-msgstr "本ガイドでは、Ansible に精通していることを前提としています。Ansible にあまり精通していない場合は、開始する前に「:ref:`docs <ansible_documentation>`」をお読みください。"
+msgstr "注記: 本ガイドでは、Ansible に精通していることを前提としています。Ansible にあまり精通していない場合は、開始する前に「:ref:`docs <ansible_documentation>`」をお読みください。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:18
 msgid "The Packet modules and inventory script connect to the Packet API using the packet-python package. You can install it with pip:"
 msgstr "Packet モジュールとインベントリースクリプトは、packets-python パッケージを使用して Packet API に接続します。これは、pip でインストールできます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:24
-msgid "In order to check the state of devices created by Ansible on Packet, it's a good idea to install one of the `Packet CLI clients <https://www.packet.net/developers/integrations/>`_. Otherwise you can check them via the `Packet portal <https://app.packet.net/portal>`_."
+msgid "In order to check the state of devices created by Ansible on Packet, it's a good idea to install one of the `Packet CLI clients <https://www.packet.net/developers/integrations/>`_. Otherwise you can check them through the `Packet portal <https://app.packet.net/portal>`_."
 msgstr "パケット上で Ansible が作成したデバイスの状態をチェックするには、`Packet CLI clients <https://www.packet.net/developers/integrations/>`_ のいずれかをインストールすることが推奨されます。そうでない場合は、`Packet portal <https://app.packet.net/portal>`_ で確認することができます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:26
-msgid "To use the modules and inventory script you'll need a Packet API token. You can generate an API token via the Packet portal `here <https://app.packet.net/portal#/api-keys>`__. The simplest way to authenticate yourself is to set the Packet API token in an environment variable:"
-msgstr "モジュールおよびインベントリースクリプトを使用するには、パケット API トークンが必要です。パケットポータル (`こちら <https://app.packet.net/portal#/api-keys>`__) を使用して API トークンを生成することができます。認証する最も簡単な方法は、環境変数で Packet API トークンを設定することです。"
+msgid "To use the modules and inventory script you'll need a Packet API token. You can generate an API token through the Packet portal `here <https://app.packet.net/portal#/api-keys>`__. The simplest way to authenticate yourself is to set the Packet API token in an environment variable:"
+msgstr "モジュールおよびインベントリースクリプトを使用するには、パケット API トークンが必要です。パケットポータル (`here <https://app.packet.net/portal#/api-keys>`__) を使用して API トークンを生成することができます。認証する最も簡単な方法は、環境変数で Packet API トークンを設定することです。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:32
 msgid "If you're not comfortable exporting your API token, you can pass it as a parameter to the modules."
 msgstr "API トークンのエクスポートが不明な場合は、これをパラメーターとしてモジュールに渡すことができます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:34
-msgid "On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.com/developers/api/#projects>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_."
-msgstr "パケットでは、デバイスと予約済みの IP アドレスは、`プロジェクト <https://www.packet.com/developers/api/#projects>`_ に属します。packet_device モジュールを使用するには、デバイスの作成または管理を行うプロジェクトの UUID を指定する必要があります。プロジェクトの UUID は、パケットポータル (`こちら <https://app.packet.net/portal#/projects/list/table/>`_ (プロジェクトテーブルのすぐ下にあります)) または利用可能な `CLI <https://www.packet.net/developers/integrations/>`_ のいずれかを介して見つけることができます。"
+msgid "On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.com/developers/api/#projects>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or through one of the available `CLIs <https://www.packet.net/developers/integrations/>`_."
+msgstr "パケットでは、デバイスと予約済みの IP アドレスは、`projects <https://www.packet.com/developers/api/#projects>`_ に属します。packet_device モジュールを使用するには、デバイスの作成または管理を行うプロジェクトの UUID を指定する必要があります。プロジェクトの UUID は、パケットポータル (`here <https://app.packet.net/portal#/projects/list/table/>`_ (プロジェクトテーブルのすぐ下にあります)) または利用可能な `CLIs <https://www.packet.net/developers/integrations/>`_ のいずれかを介して見つけることができます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:37
 #: ../../rst/scenario_guides/guide_scaleway.rst:39
@@ -2673,12 +2673,12 @@ msgid "Device Creation"
 msgstr "デバイスの作成"
 
 #: ../../rst/scenario_guides/guide_packet.rst:49
-msgid "The following code block is a simple playbook that creates one `Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_."
-msgstr "以下のコードブロックは、`Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ サーバー (「plan」パラメーター) を作成する簡単な Playbook です。「plan」および「operating_system」を定義する必要があります。「location」は、「ewr1」(Parsippany、NJ) に設定されます。`CLI クライアント <https://www.packet.net/developers/integrations/>`_ を介して、パラメーターで可能な値をすべて確認できます。"
+msgid "The following code block is a simple playbook that creates one `Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters through a `CLI client <https://www.packet.net/developers/integrations/>`_."
+msgstr "以下のコードブロックは、`Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ サーバー (「plan」パラメーター) を作成する簡単な Playbook です。「plan」および「operating_system」を定義する必要があります。「location」は、「ewr1」(Parsippany、NJ) に設定されます。`CLI client <https://www.packet.net/developers/integrations/>`_ を介して、パラメーターで可能な値をすべて確認できます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:70
-msgid "After running ``ansible-playbook playbook_create.yml``, you should have a server provisioned on Packet. You can verify via a CLI or in the `Packet portal <https://app.packet.net/portal#/projects/list/table>`__."
-msgstr "``ansible-playbook playbook_create.yml`` の実行後に、パケット上にサーバーをプロビジョニングする必要があります。CLI または `パケットポータル <https://app.packet.net/portal#/projects/list/table>`__ で確認することができます。"
+msgid "After running ``ansible-playbook playbook_create.yml``, you should have a server provisioned on Packet. You can verify through a CLI or in the `Packet portal <https://app.packet.net/portal#/projects/list/table>`__."
+msgstr "``ansible-playbook playbook_create.yml`` の実行後に、パケット上にサーバーをプロビジョニングする必要があります。CLI または `Packet portal <https://app.packet.net/portal#/projects/list/table>`__ で確認することができます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:72
 msgid "If you get an error with the message \"failed to set machine state present, error: Error 404: Not Found\", please verify your project UUID."
@@ -2746,7 +2746,7 @@ msgid "As with most Ansible modules, the default states of the Packet modules ar
 msgstr "ほとんどの Ansible モジュールと同様に、Packet モジュールのデフォルト状態は冪等です。つまり、Playbook を再実行した後もプロジェクトのリソースは同じままになります。したがって、Playbook で ``packet_sshkey`` モジュールの呼び出しを維持できます。パブリックキーがすでにパケットアカウントにある場合は、呼び出しても効果がありません。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:186
-msgid "The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter."
+msgid "The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified by the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter."
 msgstr "2 つ目のモジュール呼び出しは、「project_id」パラメーターで識別されるプロジェクトの 3 Packet タイプ 0 (「plan」パラメーターで指定) サーバーをプロビジョニングします。サーバーはすべて CoreOS ベータでプロビジョニングされ (「operating_system」パラメーター)、「user_data」パラメーターに渡される cloud-config ユーザーデータでカスタマイズされます。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:188
@@ -2758,7 +2758,7 @@ msgid "Run the playbook:"
 msgstr "Playbook を実行します。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:196
-msgid "Once the playbook quits, your new devices should be reachable via SSH. Try to connect to one and check if etcd has started properly:"
+msgid "Once the playbook quits, your new devices should be reachable through SSH. Try to connect to one and check if etcd has started properly:"
 msgstr "Playbook が終了すると、SSH を介して新規デバイスにアクセスできるはずです。1 つのデバイスに接続して、etcd が正常に起動したかどうかを確認します。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:203
@@ -2834,7 +2834,7 @@ msgid "Prerequisites for using the rax modules are minimal.  In addition to ansi
 msgstr "rax モジュール使用の前提条件は最小限です。Ansible 自体の他に、すべてのモジュールが必要で、pyrax 1.5 以降に対してテストされています。実行ホストに、この Python モジュールをインストールする必要があります。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:20
-msgid "``pyrax`` is not currently available in many operating system package repositories, so you will likely need to install it via pip:"
+msgid "``pyrax`` is not currently available in many operating system package repositories, so you will likely need to install it through pip:"
 msgstr "``pyrax`` は、現在多くのオペレーティングシステムパッケージリポジトリーでは利用できないため、pip を使用してインストールしなければならない場合があります。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:27
@@ -2870,7 +2870,7 @@ msgid "Most users will not be using virtualenv, but some users, particularly Pyt
 msgstr "ほとんどのユーザーは virtualenv を使用しませんが、一部のユーザー、特に Python の開発者はそれを使用する場合があります。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:72
-msgid "There are special considerations when Ansible is installed to a Python virtualenv, rather than the default of installing at a global scope. Ansible assumes, unless otherwise instructed, that the python binary will live at /usr/bin/python.  This is done via the interpreter line in modules, however when instructed by setting the inventory variable 'ansible_python_interpreter', Ansible will use this specified path instead to find Python.  This can be a cause of confusion as one may assume that modules running on 'localhost', or perhaps running via 'local_action', are using the virtualenv Python interpreter.  By setting this line in the inventory, the modules will execute in the virtualenv interpreter and have available the virtualenv packages, specifically pyrax. If using virtualenv, you may wish to modify your localhost inventory definition to find this location as follows:"
+msgid "There are special considerations when Ansible is installed to a Python virtualenv, rather than the default of installing at a global scope. Ansible assumes, unless otherwise instructed, that the python binary will live at /usr/bin/python.  This is done through the interpreter line in modules, however when instructed by setting the inventory variable 'ansible_python_interpreter', Ansible will use this specified path instead to find Python.  This can be a cause of confusion as one may assume that modules running on 'localhost', or perhaps running through 'local_action', are using the virtualenv Python interpreter.  By setting this line in the inventory, the modules will execute in the virtualenv interpreter and have available the virtualenv packages, specifically pyrax. If using virtualenv, you may wish to modify your localhost inventory definition to find this location as follows:"
 msgstr "Ansible が Python virtualenv にインストールされる場合には、デフォルトのグローバルスコープでのインストールではなく、特別な考慮事項があります。Ansible は、特に指示がない限り、Python のバイナリーを /usr/bin/python に置くことを前提としています。これは、モジュールのインタープリターの行から行われますが、インベントリー変数「ansible_python_interpreter」を設定して指示すると、Ansible は Python の検索の代わりに、この指定されたパスを使用します。これは、「localhost」で実行しているモジュール、または「local_action」で実行されるモジュールが virtualenv Python インタープリターを使用していると思い込んでしまうため、混乱が生じる可能性があります。この行をインベントリーに設定すると、モジュールは virtualenv インタープリターで実行し、virtualenv パッケージ (具体的には pyrax) が利用できるようになります。virtualenv を使用している場合は、以下のように、localhost インベントリー定義を変更してこの場所が検出されるようにします。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:81
@@ -2926,7 +2926,7 @@ msgid "Host Inventory"
 msgstr "ホストインベントリー"
 
 #: ../../rst/scenario_guides/guide_rax.rst:157
-msgid "Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the \"rax\" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up cloud instances via other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, and so on.  Utilizing metadata is highly recommended in \"rax\" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended."
+msgid "Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the \"rax\" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up cloud instances through other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, and so on.  Utilizing metadata is highly recommended in \"rax\" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended."
 msgstr "ノードが起動したら、再びノードとやり取りしたくなるでしょう。これを処理する最善の方法は、「rax」インベントリープラグインを使用することです。これは、Rackspace Cloud に動的にクエリーを実行し、管理する必要があるノードを Ansible に通知します。Rackspace Cloud ユーザーインターフェースなど、他のツールでクラウドインスタンスを起動している場合でも、このプラグインを使用することができます。インベントリープラグインは、メタデータ、リージョン、OS などでリソースをグループ化するために使用できます。メタデータの使用は「rax」で強く推奨され、ホストグループとロールとの間で簡単に並べ替えることができます。``rax.py`` ダイナミックインベントリースクリプトを使用したくない場合は、INI インベントリーファイルを手動で管理することもできますが、これはあまりお勧めできません。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:159
@@ -3090,7 +3090,7 @@ msgid "Scaleway Guide"
 msgstr "Scaleway ガイド"
 
 #: ../../rst/scenario_guides/guide_scaleway.rst:12
-msgid "`Scaleway <https://scaleway.com>`_ is a cloud provider supported by Ansible, version 2.6 or higher via a dynamic inventory plugin and modules. Those modules are:"
+msgid "`Scaleway <https://scaleway.com>`_ is a cloud provider supported by Ansible, version 2.6 or higher through a dynamic inventory plugin and modules. Those modules are:"
 msgstr "`Scaleway <https://scaleway.com>`_ は、動的インベントリープラグインおよびモジュールを介して Ansible (バージョン 2.6 以降) が対応するクラウドプロバイダーです。このモジュールは以下のようになります。"
 
 #: ../../rst/scenario_guides/guide_scaleway.rst:15
@@ -3110,8 +3110,8 @@ msgid "This guide assumes you are familiar with Ansible and how it works. If you
 msgstr "本ガイドでは、Ansible に精通していることを前提としています。Ansible にあまり精通していない場合は、開始する前に「:ref:`ansible_documentation`」をお読みください。"
 
 #: ../../rst/scenario_guides/guide_scaleway.rst:28
-msgid "The Scaleway modules and inventory script connect to the Scaleway API using `Scaleway REST API <https://developer.scaleway.com>`_. To use the modules and inventory script you'll need a Scaleway API token. You can generate an API token via the Scaleway console `here <https://cloud.scaleway.com/#/credentials>`__. The simplest way to authenticate yourself is to set the Scaleway API token in an environment variable:"
-msgstr "Scaleway モジュールとインベントリースクリプトは、`Scaleway REST API <https://developer.scaleway.com>`_ を使用して Scaleway API に接続します。モジュールとインベントリースクリプトを使用するには、Scaleway API トークンが必要です。API トークンは、Scaleway コンソール (`こちら <https://cloud.scaleway.com/#/credentials>`__) で生成できます。自身を認証する最も簡単な方法は、環境変数に Scaleway API トークンを設定することです。"
+msgid "The Scaleway modules and inventory script connect to the Scaleway API using `Scaleway REST API <https://developer.scaleway.com>`_. To use the modules and inventory script you'll need a Scaleway API token. You can generate an API token through the Scaleway console `here <https://cloud.scaleway.com/#/credentials>`__. The simplest way to authenticate yourself is to set the Scaleway API token in an environment variable:"
+msgstr "Scaleway モジュールとインベントリースクリプトは、`Scaleway REST API <https://developer.scaleway.com>`_ を使用して Scaleway API に接続します。モジュールとインベントリースクリプトを使用するには、Scaleway API トークンが必要です。API トークンは、Scaleway コンソール (`here <https://cloud.scaleway.com/#/credentials>`__) で生成できます。自身を認証する最も簡単な方法は、環境変数に Scaleway API トークンを設定することです。"
 
 #: ../../rst/scenario_guides/guide_scaleway.rst:37
 msgid "If you're not comfortable exporting your API token, you can pass it as a parameter to the modules using the ``api_token`` argument."
@@ -3295,7 +3295,7 @@ msgstr "ローカルの ``ansible.cfg`` 設定ファイルを統合する方法"
 
 #: ../../rst/scenario_guides/guide_vagrant.rst:127
 msgid "`Vagrant Home <https://www.vagrantup.com/>`_"
-msgstr "`Vagrant ホーム <https://www.vagrantup.com/>`_"
+msgstr "`Vagrant Home <https://www.vagrantup.com/>`_"
 
 #: ../../rst/scenario_guides/guide_vagrant.rst:128
 msgid "The Vagrant homepage with downloads"
@@ -3303,7 +3303,7 @@ msgstr "ダウンロードを含む Vagrant ホームページ"
 
 #: ../../rst/scenario_guides/guide_vagrant.rst:129
 msgid "`Vagrant Documentation <https://www.vagrantup.com/docs/>`_"
-msgstr "`Vagrant ドキュメント <https://www.vagrantup.com/docs/>`_"
+msgstr "`Vagrant Documentation <https://www.vagrantup.com/docs/>`_"
 
 #: ../../rst/scenario_guides/guide_vagrant.rst:130
 msgid "Vagrant Documentation"
@@ -3604,8 +3604,8 @@ msgid "All the vcenter_rest modules accept the following arguments:"
 msgstr "すべての vcenter_rest モジュールは、以下の引数を受け入れます。"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:36
-msgid "``vcenter_host``"
-msgstr "``vcenter_host``"
+msgid "``vcenter_hostname``"
+msgstr "``vcenter_hostname``"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:37
 msgid "``vcenter_username``"
@@ -3683,7 +3683,7 @@ msgstr "情報の収集方法"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/collect_information.rst:35
 msgid "In these examples, we use the ``vcenter_*_info`` module to collect information about the associated resources."
-msgstr "この例では、``vcenter_*_info`` モジュールを使用して、関連付けられたリソースに関する情報を収集します。"
+msgstr "これらの例では、``vcenter_*_info`` モジュールを使用して、関連付けられたリソースに関する情報を収集します。"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/collect_information.rst:37
 msgid "All these modules return a ``value`` key. Depending on the context, this ``value`` key will be either a list or a dictionary."
@@ -3741,7 +3741,7 @@ msgstr "想定どおりに、出力の ``value`` キーはリストになりま�
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/collect_information.rst:54
 msgid "Cluster"
-msgstr "クラスター"
+msgstr "Cluster"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/collect_information.rst:56
 msgid "Here we do the same with ``vcenter_cluster_info``:"
@@ -7202,5 +7202,8 @@ msgstr "仮想マシンのルートテーブルを確認するには、``vcenter
 
 #~ msgid "Wait for ``netplan`` support in ``open-vm-tools``"
 #~ msgstr "``open-vm-tools`` で ``netplan`` がサポートされるのを待ちます。"
+
+#~ msgid "To pass Active Directory username/password in ADFS via the environment, define the following variables:"
+#~ msgstr "環境経由で Active Directory のユーザー名/パスワードを渡すには、以下の変数を定義します。"
 
 

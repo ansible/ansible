@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/inventory_guide/connection_details.rst:5
 msgid "Connection methods and details"
@@ -331,8 +331,8 @@ msgid "Other inventory scripts"
 msgstr "その他のインベントリースクリプト"
 
 #: ../../rst/inventory_guide/intro_dynamic_inventory.rst:211
-msgid "In Ansible 2.10 and later, inventory scripts moved to their associated collections. Many are now in the `community.general scripts/inventory directory <https://github.com/ansible-collections/community.general/tree/main/scripts/inventory>`_. We recommend you use :ref:`inventory_plugins` instead."
-msgstr "Ansible 2.10 以降では、インベントリースクリプトは関連するコレクションに移動しました。現在、多くのスクリプトは `community.general scripts/inventory directory <https://github.com/ansible-collections/community.general/tree/main/scripts/inventory>`_ にあります。代わりに :ref:`inventory_plugins` を使用することが推奨されます。"
+msgid "In Ansible 2.10 and later, inventory scripts moved to their associated collections. Many are now in the `ansible-community/contrib-scripts repository <https://github.com/ansible-community/contrib-scripts/tree/main/inventory>`_. We recommend you use :ref:`inventory_plugins` instead."
+msgstr "Ansible 2.10 以降では、インベントリースクリプトは関連するコレクションに移動しました。現在、多くのスクリプトは `ansible-community/contrib-scripts repository <https://github.com/ansible-community/contrib-scripts/tree/main/inventory>`_ にあります。代わりに :ref:`inventory_plugins` を使用することが推奨されます。"
 
 #: ../../rst/inventory_guide/intro_dynamic_inventory.rst:216
 msgid "Using inventory directories and multiple inventory sources"
@@ -371,25 +371,25 @@ msgid "All about static inventory files"
 msgstr "静的インベントリーファイルの詳細"
 
 #: ../../rst/inventory_guide/intro_dynamic_inventory.rst:257
-#: ../../rst/inventory_guide/intro_inventory.rst:832
+#: ../../rst/inventory_guide/intro_inventory.rst:838
 #: ../../rst/inventory_guide/intro_patterns.rst:250
 msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/inventory_guide/intro_dynamic_inventory.rst:258
-#: ../../rst/inventory_guide/intro_inventory.rst:833
+#: ../../rst/inventory_guide/intro_inventory.rst:839
 #: ../../rst/inventory_guide/intro_patterns.rst:251
 msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
 #: ../../rst/inventory_guide/intro_dynamic_inventory.rst:259
-#: ../../rst/inventory_guide/intro_inventory.rst:834
+#: ../../rst/inventory_guide/intro_inventory.rst:840
 #: ../../rst/inventory_guide/intro_patterns.rst:252
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
 #: ../../rst/inventory_guide/intro_dynamic_inventory.rst:260
-#: ../../rst/inventory_guide/intro_inventory.rst:835
+#: ../../rst/inventory_guide/intro_inventory.rst:841
 #: ../../rst/inventory_guide/intro_patterns.rst:253
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
@@ -471,652 +471,670 @@ msgid "You can create parent/child relationships among groups. Parent groups are
 msgstr "グループ間で親/子関係を作成できます。親グループは、ネストされたグループまたはグループのグループとも呼ばれます。たとえば、すべての実稼働ホストが ``atlanta_prod`` や ``denver_prod`` などのグループにすでにある場合は、これらの小規模なグループを含む ``production`` グループを作成できます。この方法では、子グループを編集して親グループからホストを追加または削除できるため、メンテナンスが軽減されます。"
 
 #: ../../rst/inventory_guide/intro_inventory.rst:130
-msgid "To create parent/child relationships for groups: * in INI format, use the ``:children`` suffix * in YAML format, use the ``children:`` entry"
-msgstr "グループの親/子の関係を作成するには、 * INI 形式の場合には ``:children`` の接尾辞を、 * YAML 形式の場合は ``children:`` エントリーを使用します。"
+msgid "To create parent/child relationships for groups:"
+msgstr "グループの親子関係を作成するには以下を実行します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:134
+#: ../../rst/inventory_guide/intro_inventory.rst:132
+msgid "in INI format, use the ``:children`` suffix"
+msgstr "INI 形式の場合は、``:children`` 接尾辞を使用します。"
+
+#: ../../rst/inventory_guide/intro_inventory.rst:133
+msgid "in YAML format, use the ``children:`` entry"
+msgstr "YAML 形式の場合は、``children:``エントリーを使用します。"
+
+#: ../../rst/inventory_guide/intro_inventory.rst:135
 msgid "Here is the same inventory as shown above, simplified with parent groups for the ``prod`` and ``test`` groups. The two inventory files give you the same results:"
 msgstr "``prod`` および ``test`` グループの親グループを使用して簡素化された上記と同じインベントリーを示します。2 つのインベントリーファイルでは、同じ結果が得られます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:167
+#: ../../rst/inventory_guide/intro_inventory.rst:168
 msgid "Child groups have a couple of properties to note:"
 msgstr "子グループには、注意すべき以下のプロパティーがあります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:169
+#: ../../rst/inventory_guide/intro_inventory.rst:170
 msgid "Any host that is member of a child group is automatically a member of the parent group."
 msgstr "子グループのメンバーであるホストは、自動的に親グループのメンバーになります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:170
+#: ../../rst/inventory_guide/intro_inventory.rst:171
 msgid "Groups can have multiple parents and children, but not circular relationships."
 msgstr "グループに複数の親と子を追加することはできますが、循環関係は設定できません。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:171
+#: ../../rst/inventory_guide/intro_inventory.rst:172
 msgid "Hosts can also be in multiple groups, but there will only be **one** instance of a host at runtime. Ansible merges the data from the multiple groups."
 msgstr "ホストは複数のグループに属することもできますが、ホストのインスタンスは **1 つ** だけであり、Ansible は複数のグループからのデータをマージします。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:174
+#: ../../rst/inventory_guide/intro_inventory.rst:175
 msgid "Adding ranges of hosts"
 msgstr "ホスト範囲の追加"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:176
+#: ../../rst/inventory_guide/intro_inventory.rst:177
 msgid "If you have a lot of hosts with a similar pattern, you can add them as a range rather than listing each hostname separately:"
 msgstr "同様のパターンを持つホストが多数ある場合は、各ホスト名を個別に表示するのではなく、ホストを範囲として追加できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:178
-#: ../../rst/inventory_guide/intro_inventory.rst:196
-#: ../../rst/inventory_guide/intro_inventory.rst:341
-#: ../../rst/inventory_guide/intro_inventory.rst:412
+#: ../../rst/inventory_guide/intro_inventory.rst:179
+#: ../../rst/inventory_guide/intro_inventory.rst:197
+#: ../../rst/inventory_guide/intro_inventory.rst:298
+#: ../../rst/inventory_guide/intro_inventory.rst:344
+#: ../../rst/inventory_guide/intro_inventory.rst:384
+#: ../../rst/inventory_guide/intro_inventory.rst:417
 msgid "In INI:"
 msgstr "INI の場合は、以下のようになります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:185
-#: ../../rst/inventory_guide/intro_inventory.rst:203
-#: ../../rst/inventory_guide/intro_inventory.rst:303
-#: ../../rst/inventory_guide/intro_inventory.rst:347
-#: ../../rst/inventory_guide/intro_inventory.rst:391
-#: ../../rst/inventory_guide/intro_inventory.rst:440
+#: ../../rst/inventory_guide/intro_inventory.rst:186
+#: ../../rst/inventory_guide/intro_inventory.rst:204
+#: ../../rst/inventory_guide/intro_inventory.rst:306
+#: ../../rst/inventory_guide/intro_inventory.rst:350
+#: ../../rst/inventory_guide/intro_inventory.rst:396
+#: ../../rst/inventory_guide/intro_inventory.rst:445
 msgid "In YAML:"
 msgstr "YAML の場合は、以下のようになります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:194
+#: ../../rst/inventory_guide/intro_inventory.rst:195
 msgid "You can specify a stride (increments between sequence numbers) when defining a numeric range of hosts:"
 msgstr "ホストの数値範囲を定義する際に、stride (シーケンス番号間の増分) を指定することができます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:212
+#: ../../rst/inventory_guide/intro_inventory.rst:213
 msgid "The example above would make the subdomains www01, www03, www05, ..., www49 match, but not www00, www02, www50 and so on, because the stride (increment) is 2 units each step."
 msgstr "上記の例では、stride (増分) はステップごとに 2 ユニットであるため、サブドメイン www01、www03、www05、..、www49 は一致しますが、www00、www02、www50 などは一致しません。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:214
+#: ../../rst/inventory_guide/intro_inventory.rst:215
 msgid "For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive. You can also define alphabetic ranges:"
 msgstr "数値のパターンでは、必要に応じて先頭にゼロを含めるか、または削除できます。範囲は包含的範囲も定義できます。また、アルファベットの範囲も定義できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:224
+#: ../../rst/inventory_guide/intro_inventory.rst:225
 msgid "Passing multiple inventory sources"
 msgstr "複数のインベントリーソースの指定"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:226
+#: ../../rst/inventory_guide/intro_inventory.rst:227
 msgid "You can target multiple inventory sources (directories, dynamic inventory scripts or files supported by inventory plugins) at the same time by giving multiple inventory parameters from the command line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally separate environments, like staging and production, at the same time for a specific action."
 msgstr "コマンドラインから複数のインベントリーパラメーターを指定するか、:envvar:`ANSIBLE_INVENTORY` を設定することで、複数のインベントリーリソース (ディレクトリー、動的インベントリースクリプト、またはインベントリープラグインによりサポートされるファイル) を同時に対象に指定できます。これは、ステージ環境や実稼働環境など、通常は異なる環境を同時に対象に指定にして特定のアクションを実行したい場合に便利です。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:231
+#: ../../rst/inventory_guide/intro_inventory.rst:232
 msgid "To target two inventory sources from the command line:"
 msgstr "コマンドラインから 2 つのソイベントリーソースを対象とするには以下を実行します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:240
+#: ../../rst/inventory_guide/intro_inventory.rst:241
 msgid "Organizing inventory in a directory"
 msgstr "ディレクトリー内のインベントリーの整理"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:242
+#: ../../rst/inventory_guide/intro_inventory.rst:243
 msgid "You can consolidate multiple inventory sources in a single directory. The simplest version of this is a directory with multiple files instead of a single inventory file. A single file gets difficult to maintain when it gets too long. If you have multiple teams and multiple automation projects, having one inventory file per team or project lets everyone easily find the hosts and groups that matter to them."
 msgstr "複数のインベントリーソースを 1 つのディレクトリーに統合できます。これの最も単純なバージョンは、単一のインベントリーファイルではなく、複数のファイルを含むディレクトリーです。1 つのファイルが長くなりすぎると、管理が難しくなります。複数のチームと複数の自動化プロジェクトがある場合、チームまたはプロジェクトごとに 1 つのインベントリーファイルを使用すると、誰でも重要なホストとグループを簡単に見つけることができます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:244
+#: ../../rst/inventory_guide/intro_inventory.rst:245
 msgid "You can also combine multiple inventory source types in an inventory directory. This can be useful for combining static and dynamic hosts and managing them as one inventory. The following inventory directory combines an inventory plugin source, a dynamic inventory script, and a file with static hosts:"
 msgstr "また、複数のインベントリーソースやソースタイプを 1 つのディレクトリー下にインベントリーを統合できます。これは、静的ホストと動的ホストを組み合わせて、1 つのインベントリーとして管理するのに便利です。次のインベントリーディレクトリーは、インベントリープラグインソース、動的インベントリースクリプト、および静的ホストのファイルを組み合わせたものです。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:256
+#: ../../rst/inventory_guide/intro_inventory.rst:257
 msgid "You can target this inventory directory as follows:"
 msgstr "このインベントリーディレクトリーは、次のように簡単に対象に設定できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:262
+#: ../../rst/inventory_guide/intro_inventory.rst:263
 msgid "You can also configure the inventory directory in your ``ansible.cfg`` file. See :ref:`intro_configuration` for more details."
 msgstr "``ansible.cfg`` ファイルで inventory ディレクトリーを設定することもできます。詳細は、:ref:`intro_configuration` を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:265
+#: ../../rst/inventory_guide/intro_inventory.rst:266
 msgid "Managing inventory load order"
 msgstr "インベントリーの読み込み順序の管理"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:267
+#: ../../rst/inventory_guide/intro_inventory.rst:268
 msgid "Ansible loads inventory sources in ASCII order according to the filenames. If you define parent groups in one file or directory and child groups in other files or directories, the files that define the child groups must be loaded first. If the parent groups are loaded first, you will see the error ``Unable to parse /path/to/source_of_parent_groups as an inventory source``."
 msgstr "Ansible は、ファイル名に従って、インベントリーソースを ASCII 順に読み込みます。親グループを他のファイルまたはディレクトリーの 1 つまたはディレクトリーで定義し、子グループを定義するファイルを先に読み込む必要があります。親グループが最初に読み込まれると、``Unable to parse /path/to/source_of_parent_groups as an inventory source`` というエラーが表示されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:269
+#: ../../rst/inventory_guide/intro_inventory.rst:270
 msgid "For example, if you have a file called ``groups-of-groups`` that defines a ``production`` group with child groups defined in a file called ``on-prem``, Ansible cannot parse the ``production`` group. To avoid this problem, you can control the load order by adding prefixes to the files:"
 msgstr "たとえば、``on-prem`` というファイルで定義された子グループを持つ ``production`` グループを定義する ``groups-of-groups`` というファイルがある場合、Ansible は ``production`` グループを解析できません。この問題を回避するには、ファイルに接頭辞を追加して、読み込み順序を制御できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:279
+#: ../../rst/inventory_guide/intro_inventory.rst:280
 msgid "You can find examples of how to organize your inventories and group your hosts in :ref:`inventory_setup_examples`."
 msgstr "インベントリーを整理し、ホストをグループ化する方法は、:ref:`inventory_setup_examples` を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:284
+#: ../../rst/inventory_guide/intro_inventory.rst:285
 msgid "Adding variables to inventory"
 msgstr "インベントリーへの変数の追加"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:286
+#: ../../rst/inventory_guide/intro_inventory.rst:287
 msgid "You can store variable values that relate to a specific host or group in inventory. To start with, you may add variables directly to the hosts and groups in your main inventory file."
 msgstr "インベントリーの特定のホストまたはグループに関連する変数値を保存することができます。まずは、メインのインベントリーファイルのホストおよびグループに変数を直接追加できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:288
+#: ../../rst/inventory_guide/intro_inventory.rst:289
 msgid "We document adding variables in the main inventory file for simplicity. However, storing variables in separate host and group variable files is a more robust approach to describing your system policy. Setting variables in the main inventory file is only a shorthand. See :ref:`splitting_out_vars` for guidelines on storing variable values in individual files in the 'host_vars' directory. See :ref:`splitting_out_vars` for details."
 msgstr "簡略化の目的で、メインのインベントリーファイルに変数を追加する方法について説明します。ただし、変数を別々のホスト変数ファイルとグループ変数ファイルに格納する方が、より確実にシステムポリシーを記述できます。メインのインベントリーファイルに変数を設定することは、省略形に過ぎません。'host_vars' ディレクトリーの個別ファイルに変数を保存するガイドラインは、:ref:`splitting_out_vars` を参照してください。詳細は、:ref:`splitting_out_vars` を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:293
+#: ../../rst/inventory_guide/intro_inventory.rst:294
 msgid "Assigning a variable to one machine: host variables"
 msgstr "あるマシンへの変数の割り当て: ホスト変数"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:295
-msgid "You can easily assign a variable to a single host, then use it later in playbooks. You can do this directly in your inventory file. In INI:"
-msgstr "1 台のホストに変数を簡単に割り当てると、後で Playbook で使用できます。インベントリーファイルで直接これを実行できます。INI では、以下のようになります。"
+#: ../../rst/inventory_guide/intro_inventory.rst:296
+msgid "You can easily assign a variable to a single host, then use it later in playbooks. You can do this directly in your inventory file."
+msgstr "1 台のホストに変数を簡単に割り当てると、後で Playbook で使用できます。インベントリーファイルで直接これを実行できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:316
+#: ../../rst/inventory_guide/intro_inventory.rst:319
 msgid "Unique values like non-standard SSH ports work well as host variables. You can add them to your Ansible inventory by adding the port number after the hostname with a colon:"
 msgstr "非標準の SSH ポートのような一意な値は、ホスト変数としてうまく機能します。ホスト名の後にコロンを付けてポート番号を追加することで、Ansible インベントリーに追加することができます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:322
+#: ../../rst/inventory_guide/intro_inventory.rst:325
 msgid "Connection variables also work well as host variables:"
 msgstr "接続変数もホスト変数として機能します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:332
+#: ../../rst/inventory_guide/intro_inventory.rst:335
 msgid "If you list non-standard SSH ports in your SSH config file, the ``openssh`` connection will find and use them, but the ``paramiko`` connection will not."
 msgstr "SSH 設定ファイル内に非標準の SSH ポートの一覧を表示した場合、``openssh`` 接続はそのポートを見つけて使用しますが、``paramiko`` 接続は行われません。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:337
+#: ../../rst/inventory_guide/intro_inventory.rst:340
 msgid "Inventory aliases"
 msgstr "インベントリーエイリアス"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:339
+#: ../../rst/inventory_guide/intro_inventory.rst:342
 msgid "You can also define aliases in your inventory using host variables:"
 msgstr "ホスト変数を使用してインベントリーでエイリアスを定義することもできます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:357
+#: ../../rst/inventory_guide/intro_inventory.rst:360
 msgid "In this example, running Ansible against the host alias \"jumper\" will connect to 192.0.2.50 on port 5555. See :ref:`behavioral inventory parameters <behavioral_parameters>` to further customize the connection to hosts."
 msgstr "この例では、ホストの別名「jumper」に対して Ansible を実行すると、ポート 5555 の 192.0.2.50 に接続されます。ホストへの接続をさらにカスタマイズするには、「:ref:`behavioral inventory parameters <behavioral_parameters>`」を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:360
+#: ../../rst/inventory_guide/intro_inventory.rst:363
 msgid "Defining variables in INI format"
 msgstr "INI 形式での変数の定義"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:362
+#: ../../rst/inventory_guide/intro_inventory.rst:365
 msgid "Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared:"
 msgstr "``key=value`` 構文を使用して INI 形式で渡される値が解釈される方法は、宣言される場所に応じて異なります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:364
+#: ../../rst/inventory_guide/intro_inventory.rst:367
 msgid "When declared inline with the host, INI values are interpreted as Python literal structures           (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator. Values that contain whitespace can be quoted (single or double). See the `Python shlex parsing rules`_ for details."
 msgstr "ホストのインラインで宣言すると、INI 値は Pythonの リテラル構造 (文字列、数値、タプル、リスト、ディクショナリー、ブール値、なし) として解釈されます。ホストの行は、1 行につき複数の ``key=value`` パラメーターを受け付けます。そのため、スペースが区切り文字ではなく値の一部であることを示す方法が必要です。スペースが含まれる値を引用符(一重または二重)で囲むことができます。詳細は、 `Python shlex 解析ルール`_を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:366
+#: ../../rst/inventory_guide/intro_inventory.rst:369
 msgid "When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry."
 msgstr "``:vars`` セクションで宣言すると、INI の値は文字列として解釈されます。たとえば、``var=FALSE`` は FALSE と等しい文字列を作成します。ホスト行とは異なり、``:vars`` セクションは行ごとに 1 つのエントリーのみを許可するため、``=`` の後に続くすべてのものがエントリーの値である必要があります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:368
+#: ../../rst/inventory_guide/intro_inventory.rst:371
 msgid "If a variable value set in an INI inventory must be a certain type (for example, a string or a boolean value), always specify the type with a filter in your task. Do not rely on types set in INI inventories when consuming variables."
 msgstr "INI インベントリーに設定されている変数の値が特定の型 (文字列やブール値など) でなければならない場合は、必ずタスクのフィルターで型を指定してください。変数を使用する際に、INI インベントリーに設定されている型に頼らないでください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:370
+#: ../../rst/inventory_guide/intro_inventory.rst:373
 msgid "Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly."
 msgstr "変数の実際のタイプに関する混乱を回避するために、インベントリーソースに YAML 形式を使用することを検討してください。YAML インベントリープラグインは変数の値を一貫して、正しく処理します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:377
+#: ../../rst/inventory_guide/intro_inventory.rst:380
 msgid "Assigning a variable to many machines: group variables"
 msgstr "多くのマシンへの変数の割り当て: グループ変数"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:379
-msgid "If all hosts in a group share a variable value, you can apply that variable to an entire group at once. In INI:"
-msgstr "グループ内のすべてのホストが変数の値を共有している場合は、その変数をグループ全体に一度に適用することができます。INI の場合は以下のようになります。"
+#: ../../rst/inventory_guide/intro_inventory.rst:382
+msgid "If all hosts in a group share a variable value, you can apply that variable to an entire group at once."
+msgstr "グループ内のすべてのホストが変数の値を共有している場合は、その変数をグループ全体に一度に適用することができます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:403
+#: ../../rst/inventory_guide/intro_inventory.rst:408
 msgid "Group variables are a convenient way to apply variables to multiple hosts at once. Before executing, however, Ansible always flattens variables, including inventory variables, to the host level. If a host is a member of multiple groups, Ansible reads variable values from all of those groups. If you assign different values to the same variable in different groups, Ansible chooses which value to use based on internal :ref:`rules for merging <how_we_merge>`."
 msgstr "グループ変数は、複数のホストに一度に変数を適用する便利な方法です。しかし、Ansible は実行前に、インベントリー変数を含む変数を常にホストレベルにフラット化します。ホストが複数のグループに属している場合、Ansible はそれらのグループのすべてから変数の値を読み取ります。異なるグループで同じ変数に異なる値を割り当てた場合、Ansible は内部 :ref:`マージのルール <how_we_merge>` に基づいてどの値を使用するかを選択します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:408
+#: ../../rst/inventory_guide/intro_inventory.rst:413
 msgid "Inheriting variable values: group variables for groups of groups"
 msgstr "変数値の継承: グループのグループ用グループ変数"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:410
+#: ../../rst/inventory_guide/intro_inventory.rst:415
 msgid "You can apply variables to parent groups (nested groups or groups of groups) as well as to child groups. The syntax is the same: ``:vars`` for INI format and ``vars:`` for YAML format:"
 msgstr "子グループだけでなく、親グループ (ネストされたグループまたはグループのグループ) にも変数を適用できます。構文は同じです (INI 形式は ``:vars``、YAML 形式は ``vars:``)。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:467
+#: ../../rst/inventory_guide/intro_inventory.rst:472
 msgid "A child group's variables will have higher precedence (override) a parent group's variables."
 msgstr "子グループの変数は、親グループの変数よりも優先度が高くなります (オーバライド)。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:472
+#: ../../rst/inventory_guide/intro_inventory.rst:477
 msgid "Organizing host and group variables"
 msgstr "ホスト変数とグループ変数の整理"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:474
+#: ../../rst/inventory_guide/intro_inventory.rst:479
 msgid "Although you can store variables in the main inventory file, storing separate host and group variables files may help you organize your variable values more easily. You can also use lists and hash data in host and group variables files, which you cannot do in your main inventory file."
 msgstr "変数はメインインベントリーファイルに保存できますが、ホスト変数ファイルとグループ変数ファイルを別々に保存すると、変数値をより簡単に整理できる場合があります。ホスト変数ファイルとグループ変数ファイルでリストとハッシュデータを使用することもできますが、これはメインのインベントリーファイルでは使用できません。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:476
+#: ../../rst/inventory_guide/intro_inventory.rst:481
 msgid "Host and group variable files must use YAML syntax. Valid file extensions include '.yml', '.yaml', '.json', or no file extension. See :ref:`yaml_syntax` if you are new to YAML."
 msgstr "ホストおよびグループ変数ファイルは、YAML 構文を使用する必要があります。有効なファイル拡張子には、.yml、.yaml、.json が含まれるか、ファイル拡張子がありません。YAML を使用したことがない場合には、:ref:`yaml_syntax` を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:478
+#: ../../rst/inventory_guide/intro_inventory.rst:483
 msgid "Ansible loads host and group variable files by searching paths relative to the inventory file or the playbook file. If your inventory file at ``/etc/ansible/hosts`` contains a host named 'foosball' that belongs to two groups, 'raleigh' and 'webservers', that host will use variables in YAML files at the following locations:"
 msgstr "Ansible は、インベントリーファイルまたは Playbook ファイルからの相対パスを検索して、ホストおよびグループ変数ファイルを読み込みます。``/etc/ansible/hosts`` のインベントリーファイルに「foosball」という名前のホストがあり、それが「raleigh」と「webservers」という 2 つのグループに所属している場合、そのホストは以下の場所にある YAML ファイルの変数を使用します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:486
+#: ../../rst/inventory_guide/intro_inventory.rst:491
 msgid "For example, if you group hosts in your inventory by datacenter, and each datacenter uses its own NTP server and database server, you can create a file called ``/etc/ansible/group_vars/raleigh`` to store the variables for the ``raleigh`` group:"
 msgstr "たとえば、インベントリー内のホストをデータセンターごとにまとめ、各データセンターが独自の NTP サーバーおよびデータベースサーバーを使用する場合は、``/etc/ansible/group_vars/raleigh`` という名前のファイルを作成して、``raleigh`` グループの変数を保存できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:494
+#: ../../rst/inventory_guide/intro_inventory.rst:499
 msgid "You can also create *directories* named after your groups or hosts. Ansible will read all the files in these directories in lexicographical order. An example with the 'raleigh' group:"
 msgstr "また、グループまたはホストの名前が付けられた *ディレクトリー* も作成できます。Ansible は、これらのディレクトリーに含まれるすべてのファイルをディクショナリーの順に読み込みます。例では、「raleigh」グループを使用しています。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:501
+#: ../../rst/inventory_guide/intro_inventory.rst:506
 msgid "All hosts in the 'raleigh' group will have the variables defined in these files available to them. This can be very useful to keep your variables organized when a single file gets too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on some group variables."
 msgstr "「raleigh」グループのすべてのホストは、これらのファイルで定義された変数を利用できるようになります。これは、1 つのファイルが大きくなりすぎたときに、変数を整理しておくのに非常に便利です。また、いくつかのグループ変数に :ref:`Ansible Vault<playbooks_vault>` を使用したい場合にも便利です。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:505
+#: ../../rst/inventory_guide/intro_inventory.rst:510
 msgid "For ``ansible-playbook`` you can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. Other Ansible commands (for example, ``ansible``, ``ansible-console``, and so on) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line. If you load inventory files from both the playbook directory and the inventory directory, variables in the playbook directory will override variables set in the inventory directory."
 msgstr "``ansible-playbook`` に関して、ディレクトリー ``group_vars/``および ``host_vars/`` を Playbook ディレクトリーに追加することもできます。他の Ansible コマンド (たとえば、``ansible``、``ansible-console`` など) は、インベントリーディレクトリー内の ``group_vars/`` と ``host_vars/`` のみを探します。他のコマンドで Playbook ディレクトリーからグループ変数やホスト変数を読み込む場合は、コマンドラインで ``--playbook-dir`` オプションを指定する必要があります。Playbook ディレクトリーと inventory ディレクトリーの両方からインベントリーファイルを読み込んだ場合、Playbook ディレクトリーの変数はインベントリーディレクトリーで設定された変数よりも優先されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:508
+#: ../../rst/inventory_guide/intro_inventory.rst:513
 msgid "Keeping your inventory file and variables in a git repo (or other version control) is an excellent way to track changes to your inventory and host variables."
 msgstr "git リポジトリー (または他のバージョン管理) でインベントリーファイルおよび変数を維持することは、インベントリーおよびホスト変数への変更を追跡する優れた方法です。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:514
+#: ../../rst/inventory_guide/intro_inventory.rst:519
 msgid "How variables are merged"
 msgstr "変数をマージする方法"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:516
+#: ../../rst/inventory_guide/intro_inventory.rst:521
 msgid "By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see :ref:`DEFAULT_HASH_BEHAVIOUR<DEFAULT_HASH_BEHAVIOUR>`). The order/precedence is (from lowest to highest):"
 msgstr "デフォルトでは、プレイが実行される前に、変数が特定のホストにマージ/フラット化されます。これにより、Ansible はホストとタスクに焦点を当てているため、グループはインベントリーとホストの一致以外では実際には存続しません。デフォルトでは、Ansible はグループやホストに定義されたものを含む変数を上書きします (「:ref:`DEFAULT_HASH_BEHAVIOUR<DEFAULT_HASH_BEHAVIOUR>`」を参照)。その順序/優先順位は (低いものから高いものへ) となっています。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:518
+#: ../../rst/inventory_guide/intro_inventory.rst:523
 msgid "all group (because it is the 'parent' of all other groups)"
 msgstr "すべてのグループ (他のすべてのグループの「親」であるため)"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:519
+#: ../../rst/inventory_guide/intro_inventory.rst:524
 msgid "parent group"
 msgstr "親グループ"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:520
+#: ../../rst/inventory_guide/intro_inventory.rst:525
 msgid "child group"
 msgstr "子グループ"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:521
+#: ../../rst/inventory_guide/intro_inventory.rst:526
 msgid "host"
 msgstr "host"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:523
+#: ../../rst/inventory_guide/intro_inventory.rst:528
 msgid "By default Ansible merges groups at the same parent/child level in ASCII order, and variables from the last group loaded overwrite variables from the previous groups. For example, an a_group will be merged with b_group and b_group vars that match will overwrite the ones in a_group."
 msgstr "デフォルトでは、Ansible は同じ親子レベルのグループを ASCII 順にマージし、最後に読み込まれたグループの変数がそれ以前のグループからの変数を上書きします。たとえば、a_group は b_group にマージされ、一致する b_group の変数が a_group の変数を上書きします。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:525
+#: ../../rst/inventory_guide/intro_inventory.rst:530
 msgid "You can change this behavior by setting the group variable ``ansible_group_priority`` to change the merge order for groups of the same level (after the parent/child order is resolved). The larger the number, the later it will be merged, giving it higher priority. This variable defaults to ``1`` if not set. For example:"
 msgstr "この動作を変更するには、グループ変数 ``ansible_group_priority`` を設定して、同じレベルのグループのマージ順序を変更することができます (親子の順序が解決された後)。数字が大きいほど後にマージされ、優先順位が高くなります。この変数が設定されていない場合のデフォルトは ``1`` です。たとえば、以下のようになります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:537
+#: ../../rst/inventory_guide/intro_inventory.rst:542
 msgid "In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``."
 msgstr "この例では、両方のグループの優先順位が同じ場合、結果は通常 ``testvar == b`` になりますが、``a_group`` の優先度が高いため、結果は ``testvar == a`` になります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:539
+#: ../../rst/inventory_guide/intro_inventory.rst:544
 msgid "``ansible_group_priority`` can only be set in the inventory source and not in group_vars/, as the variable is used in the loading of group_vars."
 msgstr "``ansible_group_priority`` は、group_vars の読み込みでこの変数が使用されるため、インベントリーソースでのみ設定でき、group_vars/ では設定できません。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:542
+#: ../../rst/inventory_guide/intro_inventory.rst:547
 msgid "Managing inventory variable load order"
 msgstr "インベントリー変数の読み込み順序の管理"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:544
+#: ../../rst/inventory_guide/intro_inventory.rst:549
 msgid "When using multiple inventory sources, keep in mind that any variable conflicts are resolved according to the rules described in :ref:`how_we_merge` and :ref:`ansible_variable_precedence`. You can control the merging order of variables in inventory sources to get the variable value you need."
 msgstr "複数のインベントリーソースを使用する場合は、variable および :ref:`how_we_merge` と :ref:`ansible_variable_precedence` で説明されているルールに従って変数の競合が解決されることに注意してください。インベントリーソースで変数のマージ順序を制御し、必要な変数の値を取得できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:547
-msgid "When you pass multiple inventory sources at the command line, Ansible merges variables in the order you pass those parameters. If ``[all:vars]`` in staging inventory defines ``myvar = 1`` and production inventory defines ``myvar = 2``, then: * Pass  ``-i staging -i production`` to run the playbook with ``myvar = 2``. * Pass ``-i production -i staging`` to run the playbook with ``myvar = 1``."
-msgstr "コマンドラインで複数のインベントリーソースを渡すと、Ansible はそれらのパラメーターを渡す順序で変数をマージします。ステージングインベントリーの ``[all:vars]`` が ``myvar = 1`` を定義し、実稼働インベントリーが ``myvar = 2`` を定義している場合には、*  ``-i staging -i production`` を指定して ``myvar = 2`` で Playbook を実行します。*  ``-i production -i staging`` を指定して ``myvar = 1`` で Playbook を実行します。"
+#: ../../rst/inventory_guide/intro_inventory.rst:552
+msgid "When you pass multiple inventory sources at the command line, Ansible merges variables in the order you pass those parameters. If ``[all:vars]`` in staging inventory defines ``myvar = 1`` and production inventory defines ``myvar = 2``, then:"
+msgstr "コマンドラインで複数のインベントリーソースを渡すと、Ansible はそれらのパラメーターを渡す順序で変数をマージします。ステージングインベントリーの ``[all:vars]`` が ``myvar = 1`` を定義し、実稼働インベントリーが ``myvar = 2`` を定義している場合には、"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:551
+#: ../../rst/inventory_guide/intro_inventory.rst:554
+msgid "Pass  ``-i staging -i production`` to run the playbook with ``myvar = 2``."
+msgstr "* ``-i staging -i production`` を渡して ``myvar = 2`` を指定して Playbook を実行します。"
+
+#: ../../rst/inventory_guide/intro_inventory.rst:555
+msgid "Pass ``-i production -i staging`` to run the playbook with ``myvar = 1``."
+msgstr "* ``-i production -i staging`` を渡して ``myvar = 1`` を指定して Playbook を実行します。"
+
+#: ../../rst/inventory_guide/intro_inventory.rst:557
 msgid "When you put multiple inventory sources in a directory, Ansible merges them in ASCII order according to the filenames. You can control the load order by adding prefixes to the files:"
 msgstr "ディレクトリーに複数のインベントリーソースを配置すると、Ansible はファイル名に従って ASCII 順でマージします。ファイルに接頭辞を追加することで、読み込み順序を制御できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:562
+#: ../../rst/inventory_guide/intro_inventory.rst:568
 msgid "If ``01-openstack.yml`` defines ``myvar = 1`` for the group ``all``, ``02-dynamic-inventory.py`` defines ``myvar = 2``, and ``03-static-inventory`` defines ``myvar = 3``, the playbook will be run with ``myvar = 3``."
 msgstr "``01-openstack.yml`` がグループ ``all`` に対して ``myvar = 1`` を定義し、``02-dynamic-inventory.py`` が ``myvar = 2`` を定義し、``03-static-inventory`` が ``myvar = 3`` を定義した場合は、Playbook が ``myvar = 3`` で実行します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:565
+#: ../../rst/inventory_guide/intro_inventory.rst:571
 msgid "For more details on inventory plugins and dynamic inventory scripts see :ref:`inventory_plugins` and :ref:`intro_dynamic_inventory`."
 msgstr "インベントリープラグインおよび動的インベントリースクリプトの詳細は、「:ref:`inventory_plugins`」および「:ref:`intro_dynamic_inventory`」を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:570
+#: ../../rst/inventory_guide/intro_inventory.rst:576
 msgid "Connecting to hosts: behavioral inventory parameters"
 msgstr "ホストへの接続: 動作用インベントリーパラメーター"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:572
+#: ../../rst/inventory_guide/intro_inventory.rst:578
 msgid "As described above, setting the following variables control how Ansible interacts with remote hosts."
 msgstr "上記のように、以下の変数を設定して、Ansible がリモートホストと対話する方法を制御します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:574
+#: ../../rst/inventory_guide/intro_inventory.rst:580
 msgid "Host connection:"
 msgstr "ホスト接続:"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:579
+#: ../../rst/inventory_guide/intro_inventory.rst:585
 msgid "ansible_connection"
 msgstr "ansible_connection"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:579
+#: ../../rst/inventory_guide/intro_inventory.rst:585
 msgid "Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section."
 msgstr "ホストへの接続タイプ。これは、Ansible の connection プラグインの名前です。SSH プロトコルタイプは ``smart``、``ssh``、または ``paramiko`` です。デフォルトは smart です。SSH ベース以外のタイプは次のセクションで説明します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:581
+#: ../../rst/inventory_guide/intro_inventory.rst:587
 msgid "General for all connections:"
 msgstr "すべての接続に対する一般的な設定:"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:583
-#: ../../rst/inventory_guide/intro_inventory.rst:686
+#: ../../rst/inventory_guide/intro_inventory.rst:589
+#: ../../rst/inventory_guide/intro_inventory.rst:692
 msgid "ansible_host"
 msgstr "ansible_host"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:584
+#: ../../rst/inventory_guide/intro_inventory.rst:590
 msgid "The name of the host to connect to, if different from the alias you wish to give to it."
 msgstr "接続するホストの名前 (割り当てたいエイリアスと異なる場合)。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:585
+#: ../../rst/inventory_guide/intro_inventory.rst:591
 msgid "ansible_port"
 msgstr "ansible_port"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:586
+#: ../../rst/inventory_guide/intro_inventory.rst:592
 msgid "The connection port number, if not the default (22 for ssh)"
 msgstr "デフォルトではない場合 (ssh の場合は 22) は、接続ポート番号。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:587
-#: ../../rst/inventory_guide/intro_inventory.rst:688
+#: ../../rst/inventory_guide/intro_inventory.rst:593
+#: ../../rst/inventory_guide/intro_inventory.rst:694
 msgid "ansible_user"
 msgstr "ansible_user"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:588
+#: ../../rst/inventory_guide/intro_inventory.rst:594
 msgid "The user name to use when connecting to the host"
 msgstr "ホストに接続する際に使用するユーザー名。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:591
+#: ../../rst/inventory_guide/intro_inventory.rst:597
 msgid "ansible_password"
 msgstr "ansible_password"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:590
+#: ../../rst/inventory_guide/intro_inventory.rst:596
 msgid "The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`tip_for_variables_and_vaults`)"
 msgstr "ホストへの認証に使用するパスワード (この変数を平文で保存しないでください。常に Valut を使用してください。「:ref:`tip_for_variables_and_vaults`」を参照)。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:593
+#: ../../rst/inventory_guide/intro_inventory.rst:599
 msgid "Specific to the SSH connection:"
 msgstr "SSH 接続に固有:"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:595
+#: ../../rst/inventory_guide/intro_inventory.rst:601
 msgid "ansible_ssh_private_key_file"
 msgstr "ansible_ssh_private_key_file"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:596
+#: ../../rst/inventory_guide/intro_inventory.rst:602
 msgid "Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent."
 msgstr "ssh が使用する秘密鍵ファイル。複数の鍵を使用し、SSH エージェントを使用したくない場合に便利です。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:599
+#: ../../rst/inventory_guide/intro_inventory.rst:605
 msgid "ansible_ssh_common_args"
 msgstr "ansible_ssh_common_args"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:598
+#: ../../rst/inventory_guide/intro_inventory.rst:604
 msgid "This setting is always appended to the default command line for :command:`sftp`, :command:`scp`, and :command:`ssh`. Useful to configure a ``ProxyCommand`` for a certain host (or group)."
 msgstr "この設定は、常に :command:`sftp`、:command:`scp`、および :command:`ssh` のデフォルトのコマンドラインに追加されます。特定のホスト (またはグループ) に ``ProxyCommand`` を設定してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:601
+#: ../../rst/inventory_guide/intro_inventory.rst:607
 msgid "ansible_sftp_extra_args"
 msgstr "ansible_sftp_extra_args"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:602
+#: ../../rst/inventory_guide/intro_inventory.rst:608
 msgid "This setting is always appended to the default :command:`sftp` command line."
 msgstr "この設定は、デフォルトの :command:`sftp` コマンドラインに常に付加されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:603
+#: ../../rst/inventory_guide/intro_inventory.rst:609
 msgid "ansible_scp_extra_args"
 msgstr "ansible_scp_extra_args"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:604
+#: ../../rst/inventory_guide/intro_inventory.rst:610
 msgid "This setting is always appended to the default :command:`scp` command line."
 msgstr "この設定は、デフォルトの :command:`scp` コマンドラインに常に付加されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:605
+#: ../../rst/inventory_guide/intro_inventory.rst:611
 msgid "ansible_ssh_extra_args"
 msgstr "ansible_ssh_extra_args"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:606
+#: ../../rst/inventory_guide/intro_inventory.rst:612
 msgid "This setting is always appended to the default :command:`ssh` command line."
 msgstr "この設定は、デフォルトの :command:`ssh` コマンドラインに常に付加されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:607
+#: ../../rst/inventory_guide/intro_inventory.rst:613
 msgid "ansible_ssh_pipelining"
 msgstr "ansible_ssh_pipelining"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:608
+#: ../../rst/inventory_guide/intro_inventory.rst:614
 msgid "Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in :file:`ansible.cfg`."
 msgstr "SSH パイプラインを使用するかどうかを決定します。これは :file:`ansible.cfg` の ``pipelining`` の設定を上書きすることができます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:611
+#: ../../rst/inventory_guide/intro_inventory.rst:617
 msgid "ansible_ssh_executable (added in version 2.2)"
 msgstr "ansible_ssh_executable (バージョン 2.2 で追加)"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:610
+#: ../../rst/inventory_guide/intro_inventory.rst:616
 msgid "This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`."
 msgstr "この設定により、システムの :command:`ssh` を使用するようにデフォルトの動作が上書きされます。これにより、:file:`ansible.cfg` の ``ssh_executable`` 設定を上書きできます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:613
+#: ../../rst/inventory_guide/intro_inventory.rst:619
 msgid "Privilege escalation (see :ref:`Ansible Privilege Escalation<become>` for further details):"
 msgstr "権限の昇格 (詳細は「:ref:`Ansible 権限昇格<become>`」を参照):"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:615
-#: ../../rst/inventory_guide/intro_inventory.rst:690
+#: ../../rst/inventory_guide/intro_inventory.rst:621
+#: ../../rst/inventory_guide/intro_inventory.rst:696
 msgid "ansible_become"
 msgstr "ansible_become"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:616
+#: ../../rst/inventory_guide/intro_inventory.rst:622
 msgid "Equivalent to ``ansible_sudo`` or ``ansible_su``, allows to force privilege escalation"
 msgstr "``ansible_sudo`` または ``ansible_su`` と同等です。これにより、権限昇格を強制できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:617
+#: ../../rst/inventory_guide/intro_inventory.rst:623
 msgid "ansible_become_method"
 msgstr "ansible_become_method"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:618
+#: ../../rst/inventory_guide/intro_inventory.rst:624
 msgid "Allows to set privilege escalation method"
 msgstr "権限昇格メソッドの設定を許可します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:619
+#: ../../rst/inventory_guide/intro_inventory.rst:625
 msgid "ansible_become_user"
 msgstr "ansible_become_user"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:620
+#: ../../rst/inventory_guide/intro_inventory.rst:626
 msgid "Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation"
 msgstr "``ansible_sudo_user`` または ``ansible_su_user`` と同等で、権限昇格により become を行うユーザーを設定できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:621
+#: ../../rst/inventory_guide/intro_inventory.rst:627
 msgid "ansible_become_password"
 msgstr "ansible_become_password"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:622
+#: ../../rst/inventory_guide/intro_inventory.rst:628
 msgid "Equivalent to ``ansible_sudo_password`` or ``ansible_su_password``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`tip_for_variables_and_vaults`)"
 msgstr "``ansible_sudo_password`` または ``ansible_su_password`` と同等で、特権昇格パスワードを設定できます (この変数を平文で保存せず、常に vault を使用してください。「:ref:`tip_for_variables_and_vaults`」を参照してください)。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:623
+#: ../../rst/inventory_guide/intro_inventory.rst:629
 msgid "ansible_become_exe"
 msgstr "ansible_become_exe"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:624
+#: ../../rst/inventory_guide/intro_inventory.rst:630
 msgid "Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected"
 msgstr "``ansible_sudo_exe`` または ``ansible_su_exe`` と同等で、選択した昇格メソッドの実行ファイルを設定できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:626
+#: ../../rst/inventory_guide/intro_inventory.rst:632
 msgid "ansible_become_flags"
 msgstr "ansible_become_flags"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:626
+#: ../../rst/inventory_guide/intro_inventory.rst:632
 msgid "Equivalent to ``ansible_sudo_flags`` or ``ansible_su_flags``, allows you to set the flags passed to the selected escalation method. This can be also set globally in :file:`ansible.cfg` in the ``sudo_flags`` option"
 msgstr "``ansible_sudo_flags`` または ``ansible_su_flags`` と同等で、選択された昇格方法に渡されるフラグを設定することができます。これは ``sudo_flags`` オプションの :file:`ansible.cfg` でもグローバルに設定できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:628
+#: ../../rst/inventory_guide/intro_inventory.rst:634
 msgid "Remote host environment parameters:"
 msgstr "リモートホスト環境パラメーター:"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:636
+#: ../../rst/inventory_guide/intro_inventory.rst:642
 msgid "ansible_shell_type"
 msgstr "ansible_shell_type"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:633
+#: ../../rst/inventory_guide/intro_inventory.rst:639
 msgid "The shell type of the target system. You should not use this setting unless you have set the :ref:`ansible_shell_executable<ansible_shell_executable>` to a non-Bourne (sh) compatible shell.  By default commands are formatted using ``sh``-style syntax.  Setting this to ``csh`` or ``fish`` will cause commands executed on target systems to follow those shell's syntax instead."
 msgstr "ターゲットシステムのシェルタイプ。:ref:`ansible_shell_executable<ansible_shell_executable>` を Bourne (sh) 以外の互換シェルに設定しない限り、この設定は使用しないでください。デフォルトでは、コマンドは ``sh`` スタイルの構文を使用してフォーマットされます。これを ``csh`` または ``fish`` に設定すると、ターゲットシステムで実行するコマンドがシェルの構文に従います。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:645
+#: ../../rst/inventory_guide/intro_inventory.rst:651
 msgid "ansible_python_interpreter"
 msgstr "ansible_python_interpreter"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:641
+#: ../../rst/inventory_guide/intro_inventory.rst:647
 msgid "The target host python path. This is useful for systems with more than one Python or not located at :command:`/usr/bin/python` such as \\*BSD, or where :command:`/usr/bin/python` is not a 2.X series Python.  We do not use the :command:`/usr/bin/env` mechanism as that requires the remote user's path to be set right and also assumes the :program:`python` executable is named python, where the executable might be named something like :program:`python2.6`."
 msgstr "ターゲットホストの Python パス。これは、複数の Python があるシステム、\\*BSD などの :command:`/usr/bin/python` にないシステム、:command:`/usr/bin/python` が 2.X シリーズの Python 以外のシステムに役立ちます。リモートユーザーのパスを正しく設定する必要があり、:program:`python` 実行ファイルの名前が python であると想定するため、:command:`/usr/bin/env` メカニズムは使用しません。実行ファイルの名前は :program:`python2.6` のようになります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:649
+#: ../../rst/inventory_guide/intro_inventory.rst:655
 msgid "ansible_*_interpreter"
 msgstr "ansible_*_interpreter"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:648
+#: ../../rst/inventory_guide/intro_inventory.rst:654
 msgid "Works for anything such as ruby or perl and works just like :ref:`ansible_python_interpreter<ansible_python_interpreter>`. This replaces shebang of modules which will run on that host."
 msgstr "ruby や perl などのあらゆるもので動作し、:ref:`ansible_python_interpreter<ansible_python_interpreter>` のように機能します。これは、そのホストで実行されるモジュールのシバンに代わるものです。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:660
+#: ../../rst/inventory_guide/intro_inventory.rst:666
 msgid "ansible_shell_executable"
 msgstr "ansible_shell_executable"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:656
+#: ../../rst/inventory_guide/intro_inventory.rst:662
 msgid "This sets the shell the ansible controller will use on the target machine, overrides ``executable`` in :file:`ansible.cfg` which defaults to :command:`/bin/sh`.  You should really only change it if is not possible to use :command:`/bin/sh` (in other words, if :command:`/bin/sh` is not installed on the target machine or cannot be run from sudo.)."
 msgstr "これにより、Ansible コントローラーがターゲットマシンで使用するシェルを設定し、:file:`ansible.cfg` の ``executable`` を上書きします。デフォルトは :command:`/bin/sh` です。:command:`/bin/sh` を使用できない場合にのみ変更する必要があります (つまり、:command:`/bin/sh` がターゲットマシンにインストールされていない場合、または sudo から実行できない場合)。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:662
+#: ../../rst/inventory_guide/intro_inventory.rst:668
 msgid "Examples from an Ansible-INI host file:"
 msgstr "Ansible-INI ホストファイルの例:"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:672
+#: ../../rst/inventory_guide/intro_inventory.rst:678
 msgid "Non-SSH connection types"
 msgstr "SSH 以外の接続タイプ"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:674
+#: ../../rst/inventory_guide/intro_inventory.rst:680
 msgid "As stated in the previous section, Ansible executes playbooks over SSH but it is not limited to this connection type. With the host specific parameter ``ansible_connection=<connector>``, the connection type can be changed. The following non-SSH based connectors are available:"
 msgstr "前のセクションで説明したように、Ansible は SSH で Playbook を実行しますが、この接続タイプは制限されていません。ホスト固有のパラメーター ``ansible_connection=<connector>`` では、接続タイプを変更できます。次の SSH 以外のコネクターを利用できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:678
+#: ../../rst/inventory_guide/intro_inventory.rst:684
 msgid "**local**"
 msgstr "**local**"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:680
+#: ../../rst/inventory_guide/intro_inventory.rst:686
 msgid "This connector can be used to deploy the playbook to the control machine itself."
 msgstr "このコネクターは、Playbook をコントロールマシン自体にデプロイするために使用できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:682
+#: ../../rst/inventory_guide/intro_inventory.rst:688
 msgid "**docker**"
 msgstr "**docker**"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:684
+#: ../../rst/inventory_guide/intro_inventory.rst:690
 msgid "This connector deploys the playbook directly into Docker containers using the local Docker client. The following parameters are processed by this connector:"
 msgstr "このコネクターは、ローカルの Docker クライアントを使用して Playbook を直接 Docker コンテナーにデプロイします。以下のパラメーターはこのコネクターによって処理されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:687
+#: ../../rst/inventory_guide/intro_inventory.rst:693
 msgid "The name of the Docker container to connect to."
 msgstr "接続先の Docker コンテナーの名前。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:689
+#: ../../rst/inventory_guide/intro_inventory.rst:695
 msgid "The user name to operate within the container. The user must exist inside the container."
 msgstr "コンテナー内で操作するためのユーザ名。ユーザーはコンテナー内に存在している必要があります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:691
+#: ../../rst/inventory_guide/intro_inventory.rst:697
 msgid "If set to ``true`` the ``become_user`` will be used to operate within the container."
 msgstr "``true`` に設定すると、``become_user`` はコンテナー内で動作するために使用されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:693
+#: ../../rst/inventory_guide/intro_inventory.rst:699
 msgid "ansible_docker_extra_args"
 msgstr "ansible_docker_extra_args"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:693
+#: ../../rst/inventory_guide/intro_inventory.rst:699
 msgid "Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use."
 msgstr "Docker が認識する追加の引数を持つ文字列を指定できますが、これはコマンド固有ではありません。このパラメーターは主に、使用するリモート Docker デーモンを設定するために使用されます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:695
+#: ../../rst/inventory_guide/intro_inventory.rst:701
 msgid "Here is an example of how to instantly deploy to created containers:"
 msgstr "以下は、作成されたコンテナーに即時にデプロイする例を示しています。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:719
+#: ../../rst/inventory_guide/intro_inventory.rst:725
 msgid "For a full list with available plugins and examples, see :ref:`connection_plugin_list`."
 msgstr "利用可能なプラグインとサンプルの一覧は、「:ref:`connection_plugin_list`」を参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:721
+#: ../../rst/inventory_guide/intro_inventory.rst:727
 msgid "If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file. Playbooks will be covered in great detail later in the docs."
 msgstr "ドキュメントを最初から読んでいる場合、これは Ansible Playbook を初めて確認した例です。これはインベントリーファイルではありません。Playbook は、ドキュメントで後ほど詳細に説明しています。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:727
+#: ../../rst/inventory_guide/intro_inventory.rst:733
 msgid "Inventory setup examples"
 msgstr "インベントリーの設定例"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:729
+#: ../../rst/inventory_guide/intro_inventory.rst:735
 msgid "See also :ref:`sample_setup`, which shows inventory along with playbooks and other Ansible artifacts."
 msgstr "Playbook およびその他の Ansible アーティファクトとともにインベントリーを表示する「:ref:`sample_setup`」も参照してください。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:734
+#: ../../rst/inventory_guide/intro_inventory.rst:740
 msgid "Example: One inventory per environment"
 msgstr "例: 各環境に 1 つのインベントリー"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:736
+#: ../../rst/inventory_guide/intro_inventory.rst:742
 msgid "If you need to manage multiple environments it's sometimes prudent to have only hosts of a single environment defined per inventory. This way, it is harder to, for instance, accidentally change the state of nodes inside the \"test\" environment when you actually wanted to update some \"staging\" servers."
 msgstr "複数の環境を管理する必要がある場合、インベントリーごとに 1 つの環境のホストのみを定義することが賢明な場合があります。こうすることで、たとえば、実際には「ステージング」サーバーを更新したいのに、誤って「テスト」環境内のノードの状態を変更してしまうことが起こりにくくなります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:742
+#: ../../rst/inventory_guide/intro_inventory.rst:748
 msgid "For the example mentioned above you could have an :file:`inventory_test` file:"
 msgstr "前述の例では、:file:`inventory_test` というファイルがあります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:756
+#: ../../rst/inventory_guide/intro_inventory.rst:762
 msgid "That file only includes hosts that are part of the \"test\" environment. Define the \"staging\" machines in another file called :file:`inventory_staging`:"
 msgstr "このファイルには、「テスト」環境に含まれるホストのみが含まれます。:file:`inventory_staging` と呼ばれる別のファイルの「ステージング」マシンを定義します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:771
+#: ../../rst/inventory_guide/intro_inventory.rst:777
 msgid "To apply a playbook called :file:`site.yml` to all the app servers in the test environment, use the following command:"
 msgstr "`site.yml` という名前の Playbook をテスト環境のすべてのアプリケーションサーバーに適用するには、次のコマンドを使用します。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:782
+#: ../../rst/inventory_guide/intro_inventory.rst:788
 msgid "Example: Group by function"
 msgstr "例: 機能別にグループ化"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:784
+#: ../../rst/inventory_guide/intro_inventory.rst:790
 msgid "In the previous section you already saw an example for using groups in order to cluster hosts that have the same function. This allows you, for instance, to define firewall rules inside a playbook or role affecting only database servers:"
 msgstr "前セクションでは、同じ機能を持つホストをクラスター化するために、グループを使用する例をすでに提示しています。これにより、データベースサーバーだけに影響する Playbook またはロール内でファイアウォールルールを定義できます。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:802
+#: ../../rst/inventory_guide/intro_inventory.rst:808
 msgid "Example: Group by location"
 msgstr "例: 場所別にグループ化"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:804
+#: ../../rst/inventory_guide/intro_inventory.rst:810
 msgid "Other tasks might be focused on where a certain host is located. Let's say that ``db01.test.example.com`` and ``app01.test.example.com`` are located in DC1 while ``db02.test.example.com`` is in DC2:"
 msgstr "また、特定のホストがどこにあるかに焦点を当てたタスクもあります。たとえば、``db01.test.example.com`` と ``app01.test.example.com`` が DC1 にあり、``db02.test.example.com`` が DC2 にあるとします。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:817
+#: ../../rst/inventory_guide/intro_inventory.rst:823
 msgid "In practice, you might even end up mixing all these setups as you might need to, on one day, update all nodes in a specific data center while, on another day, update all the application servers no matter their location."
 msgstr "実際には、たとえば特定のデータセンター内のすべてのノードを更新する日と、置かれている場所に関係なくすべてのアプリケーションサーバーを更新する日が必要になるため、これらすべての設定を組み合わせて使用することがあります。"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:824
+#: ../../rst/inventory_guide/intro_inventory.rst:830
 msgid ":ref:`inventory_plugins`"
 msgstr ":ref:`inventory_plugins`"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:825
+#: ../../rst/inventory_guide/intro_inventory.rst:831
 msgid "Pulling inventory from dynamic or static sources"
 msgstr "動的ソースまたは静的ソースからのインベントリーのプル"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:826
+#: ../../rst/inventory_guide/intro_inventory.rst:832
 msgid ":ref:`intro_dynamic_inventory`"
 msgstr ":ref:`intro_dynamic_inventory`"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:827
+#: ../../rst/inventory_guide/intro_inventory.rst:833
 msgid "Pulling inventory from dynamic sources, such as cloud providers"
 msgstr "クラウドプロバイダーなどの動的ソースからのインベントリーのプル"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:828
+#: ../../rst/inventory_guide/intro_inventory.rst:834
 #: ../../rst/inventory_guide/intro_patterns.rst:246
 msgid ":ref:`intro_adhoc`"
 msgstr ":ref:`intro_adhoc`"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:829
+#: ../../rst/inventory_guide/intro_inventory.rst:835
 #: ../../rst/inventory_guide/intro_patterns.rst:247
 msgid "Examples of basic commands"
 msgstr "基本コマンドの例"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:830
+#: ../../rst/inventory_guide/intro_inventory.rst:836
 #: ../../rst/inventory_guide/intro_patterns.rst:248
 msgid ":ref:`working_with_playbooks`"
 msgstr ":ref:`working_with_playbooks`"
 
-#: ../../rst/inventory_guide/intro_inventory.rst:831
+#: ../../rst/inventory_guide/intro_inventory.rst:837
 msgid "Learning Ansible's configuration, deployment, and orchestration language."
 msgstr "Ansible の設定、デプロイメント、およびオーケストレーション言語について"
 
@@ -1396,5 +1414,11 @@ msgstr "Ansible コマンドおよび Playbook でパターンに関する知識
 #: ../../rst/inventory_guide/intro_patterns.rst:249
 msgid "Learning the Ansible configuration management language"
 msgstr "Ansible の設定管理言語について"
+
+#~ msgid "In Ansible 2.10 and later, inventory scripts moved to their associated collections. Many are now in the `community.general scripts/inventory directory <https://github.com/ansible-collections/community.general/tree/main/scripts/inventory>`_. We recommend you use :ref:`inventory_plugins` instead."
+#~ msgstr "Ansible 2.10 以降では、インベントリースクリプトは関連するコレクションに移動しました。現在、多くのスクリプトは `community.general scripts/inventory directory <https://github.com/ansible-collections/community.general/tree/main/scripts/inventory>`_ にあります。代わりに :ref:`inventory_plugins` を使用することが推奨されます。"
+
+#~ msgid "To create parent/child relationships for groups: * in INI format, use the ``:children`` suffix * in YAML format, use the ``children:`` entry"
+#~ msgstr "グループの親/子の関係を作成するには、 * INI 形式の場合には ``:children`` の接尾辞を、 * YAML 形式の場合は ``children:`` エントリーを使用します。"
 
 

@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/command_guide/cheatsheet.rst:5
 msgid "Ansible CLI cheatsheet"
@@ -79,6 +79,10 @@ msgstr "コマンドラインツールの使用"
 #: ../../rst/command_guide/command_line_tools.rst:6
 msgid "Most users are familiar with `ansible` and `ansible-playbook`, but those are not the only utilities Ansible provides. Below is a complete list of Ansible utilities. Each page contains a description of the utility and a listing of supported parameters."
 msgstr "ほとんどのユーザーは、`ansible` および `ansible-playbook` に精通していますが、これらは、Ansible が提供する唯一のユーティリティーではありません。以下は、Ansible ユーティリティーの完全なリストです。各ページには、ユーティリティーの説明と、サポートされるパラメーター一覧が含まれています。"
+
+#: ../../rst/command_guide/command_line_tools.rst:10
+msgid "You should not run most Ansible CLI tools in parallel against the same targets."
+msgstr "ほとんどの Ansible CLI ツールを同じターゲットに対して並行して実行しないでください。"
 
 #: ../../rst/command_guide/index.rst:5
 msgid "Using Ansible command line tools"

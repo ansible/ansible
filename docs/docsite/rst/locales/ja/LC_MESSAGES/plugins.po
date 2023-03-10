@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/plugins/action.rst:4 ../../rst/plugins/cache.rst:123
-#: ../../rst/plugins/callback.rst:81
+#: ../../rst/plugins/callback.rst:100
 msgid "Action plugins"
 msgstr "action プラグイン"
 
@@ -46,9 +46,9 @@ msgid "Action plugin are executed by default when an associated module is used; 
 msgstr "action プラグインは、関連のモジュールを使用する場合にはデフォルトで実行するため、特に作業は必要ありません。"
 
 #: ../../rst/plugins/action.rst:29 ../../rst/plugins/cache.rst:115
-#: ../../rst/plugins/callback.rst:73 ../../rst/plugins/connection.rst:55
+#: ../../rst/plugins/callback.rst:92 ../../rst/plugins/connection.rst:55
 #: ../../rst/plugins/filter.rst:43 ../../rst/plugins/inventory.rst:159
-#: ../../rst/plugins/lookup.rst:137 ../../rst/plugins/strategy.rst:55
+#: ../../rst/plugins/lookup.rst:147 ../../rst/plugins/strategy.rst:57
 #: ../../rst/plugins/test.rst:78 ../../rst/plugins/vars.rst:53
 msgid "Plugin list"
 msgstr "プラグイン一覧"
@@ -61,21 +61,21 @@ msgstr "直接 action プラグインの一覧を表示することはできま�
 msgid "Use ``ansible-doc -l`` to see the list of available modules. Use ``ansible-doc <name>`` to see specific documentation and examples, this should note if the module has a corresponding action plugin."
 msgstr "``ansible-doc -l`` を使用して、利用可能なモジュールの一覧を表示します。特定のドキュメントおよび例を参照するには ``ansible-doc <name>`` を使用してください。モジュールに対応の action プラグインがある場合には、この点に注意してください。"
 
-#: ../../rst/plugins/action.rst:38 ../../rst/plugins/callback.rst:82
+#: ../../rst/plugins/action.rst:38 ../../rst/plugins/callback.rst:101
 #: ../../rst/plugins/vars.rst:60
 msgid ":ref:`cache_plugins`"
 msgstr ":ref:`cache_plugins`"
 
 #: ../../rst/plugins/action.rst:39 ../../rst/plugins/cache.rst:4
-#: ../../rst/plugins/callback.rst:83 ../../rst/plugins/vars.rst:61
+#: ../../rst/plugins/callback.rst:102 ../../rst/plugins/vars.rst:61
 msgid "Cache plugins"
 msgstr "Cache プラグイン"
 
 #: ../../rst/plugins/action.rst:40 ../../rst/plugins/become.rst:56
 #: ../../rst/plugins/cache.rst:124 ../../rst/plugins/connection.rst:65
 #: ../../rst/plugins/filter.rst:54 ../../rst/plugins/inventory.rst:168
-#: ../../rst/plugins/lookup.rst:148 ../../rst/plugins/shell.rst:42
-#: ../../rst/plugins/strategy.rst:67
+#: ../../rst/plugins/lookup.rst:158 ../../rst/plugins/shell.rst:42
+#: ../../rst/plugins/strategy.rst:69
 msgid ":ref:`callback_plugins`"
 msgstr ":ref:`callback_plugins`"
 
@@ -83,64 +83,64 @@ msgstr ":ref:`callback_plugins`"
 #: ../../rst/plugins/cache.rst:125 ../../rst/plugins/callback.rst:4
 #: ../../rst/plugins/connection.rst:66 ../../rst/plugins/filter.rst:55
 #: ../../rst/plugins/inventory.rst:169 ../../rst/plugins/shell.rst:43
-#: ../../rst/plugins/strategy.rst:68
+#: ../../rst/plugins/strategy.rst:70
 msgid "Callback plugins"
 msgstr "callback プラグイン"
 
 #: ../../rst/plugins/action.rst:42 ../../rst/plugins/cache.rst:126
-#: ../../rst/plugins/callback.rst:84 ../../rst/plugins/inventory.rst:170
+#: ../../rst/plugins/callback.rst:103 ../../rst/plugins/inventory.rst:170
 #: ../../rst/plugins/terminal.rst:44
 msgid ":ref:`connection_plugins`"
 msgstr ":ref:`connection_plugins`"
 
 #: ../../rst/plugins/action.rst:43 ../../rst/plugins/cache.rst:127
-#: ../../rst/plugins/callback.rst:85 ../../rst/plugins/connection.rst:4
+#: ../../rst/plugins/callback.rst:104 ../../rst/plugins/connection.rst:4
 #: ../../rst/plugins/inventory.rst:171 ../../rst/plugins/terminal.rst:45
 msgid "Connection plugins"
 msgstr "connection プラグイン"
 
 #: ../../rst/plugins/action.rst:44 ../../rst/plugins/become.rst:54
-#: ../../rst/plugins/cache.rst:128 ../../rst/plugins/callback.rst:86
-#: ../../rst/plugins/filter.rst:52 ../../rst/plugins/lookup.rst:146
-#: ../../rst/plugins/shell.rst:40 ../../rst/plugins/strategy.rst:65
+#: ../../rst/plugins/cache.rst:128 ../../rst/plugins/callback.rst:105
+#: ../../rst/plugins/filter.rst:52 ../../rst/plugins/lookup.rst:156
+#: ../../rst/plugins/shell.rst:40 ../../rst/plugins/strategy.rst:67
 msgid ":ref:`inventory_plugins`"
 msgstr ":ref:`inventory_plugins`"
 
 #: ../../rst/plugins/action.rst:45 ../../rst/plugins/become.rst:55
-#: ../../rst/plugins/cache.rst:129 ../../rst/plugins/callback.rst:87
+#: ../../rst/plugins/cache.rst:129 ../../rst/plugins/callback.rst:106
 #: ../../rst/plugins/filter.rst:53 ../../rst/plugins/inventory.rst:4
-#: ../../rst/plugins/shell.rst:41 ../../rst/plugins/strategy.rst:66
+#: ../../rst/plugins/shell.rst:41 ../../rst/plugins/strategy.rst:68
 msgid "Inventory plugins"
 msgstr "inventory プラグイン"
 
 #: ../../rst/plugins/action.rst:46 ../../rst/plugins/cache.rst:130
-#: ../../rst/plugins/callback.rst:88
+#: ../../rst/plugins/callback.rst:107
 msgid ":ref:`shell_plugins`"
 msgstr ":ref:`shell_plugins`"
 
 #: ../../rst/plugins/action.rst:47 ../../rst/plugins/cache.rst:131
-#: ../../rst/plugins/callback.rst:89 ../../rst/plugins/shell.rst:4
+#: ../../rst/plugins/callback.rst:108 ../../rst/plugins/shell.rst:4
 msgid "Shell plugins"
 msgstr "shell プラグイン"
 
 #: ../../rst/plugins/action.rst:48 ../../rst/plugins/cache.rst:132
-#: ../../rst/plugins/callback.rst:90
+#: ../../rst/plugins/callback.rst:109
 msgid ":ref:`strategy_plugins`"
 msgstr ":ref:`strategy_plugins`"
 
 #: ../../rst/plugins/action.rst:49 ../../rst/plugins/cache.rst:133
-#: ../../rst/plugins/callback.rst:91 ../../rst/plugins/strategy.rst:4
+#: ../../rst/plugins/callback.rst:110 ../../rst/plugins/strategy.rst:4
 msgid "Strategy plugins"
 msgstr "strategy プラグイン"
 
 #: ../../rst/plugins/action.rst:50 ../../rst/plugins/cache.rst:134
-#: ../../rst/plugins/callback.rst:92 ../../rst/plugins/connection.rst:73
+#: ../../rst/plugins/callback.rst:111 ../../rst/plugins/connection.rst:73
 #: ../../rst/plugins/inventory.rst:178
 msgid ":ref:`vars_plugins`"
 msgstr ":ref:`vars_plugins`"
 
 #: ../../rst/plugins/action.rst:51 ../../rst/plugins/cache.rst:135
-#: ../../rst/plugins/callback.rst:93 ../../rst/plugins/connection.rst:74
+#: ../../rst/plugins/callback.rst:112 ../../rst/plugins/connection.rst:74
 #: ../../rst/plugins/inventory.rst:179 ../../rst/plugins/vars.rst:4
 msgid "Vars plugins"
 msgstr "vars プラグイン"
@@ -149,43 +149,43 @@ msgstr "vars プラグイン"
 #: ../../rst/plugins/cliconf.rst:44 ../../rst/plugins/connection.rst:75
 #: ../../rst/plugins/docs_fragment.rst:32 ../../rst/plugins/filter.rst:60
 #: ../../rst/plugins/httpapi.rst:69 ../../rst/plugins/inventory.rst:180
-#: ../../rst/plugins/lookup.rst:154 ../../rst/plugins/module.rst:40
+#: ../../rst/plugins/lookup.rst:164 ../../rst/plugins/module.rst:40
 #: ../../rst/plugins/module_util.rst:32 ../../rst/plugins/netconf.rst:44
 #: ../../rst/plugins/plugins.rst:45 ../../rst/plugins/shell.rst:50
-#: ../../rst/plugins/strategy.rst:75 ../../rst/plugins/terminal.rst:46
+#: ../../rst/plugins/strategy.rst:77 ../../rst/plugins/terminal.rst:46
 #: ../../rst/plugins/test.rst:98 ../../rst/plugins/vars.rst:64
 msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 msgstr "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 
 #: ../../rst/plugins/action.rst:53 ../../rst/plugins/become.rst:65
-#: ../../rst/plugins/cache.rst:137 ../../rst/plugins/callback.rst:95
+#: ../../rst/plugins/cache.rst:137 ../../rst/plugins/callback.rst:114
 #: ../../rst/plugins/cliconf.rst:45 ../../rst/plugins/connection.rst:76
 #: ../../rst/plugins/docs_fragment.rst:33 ../../rst/plugins/filter.rst:61
 #: ../../rst/plugins/httpapi.rst:70 ../../rst/plugins/inventory.rst:181
-#: ../../rst/plugins/lookup.rst:155 ../../rst/plugins/module.rst:41
+#: ../../rst/plugins/lookup.rst:165 ../../rst/plugins/module.rst:41
 #: ../../rst/plugins/module_util.rst:33 ../../rst/plugins/netconf.rst:45
 #: ../../rst/plugins/plugins.rst:46 ../../rst/plugins/shell.rst:51
-#: ../../rst/plugins/strategy.rst:76 ../../rst/plugins/terminal.rst:47
+#: ../../rst/plugins/strategy.rst:78 ../../rst/plugins/terminal.rst:47
 #: ../../rst/plugins/test.rst:99 ../../rst/plugins/vars.rst:65
 msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
 #: ../../rst/plugins/action.rst:54 ../../rst/plugins/become.rst:66
-#: ../../rst/plugins/cache.rst:138 ../../rst/plugins/callback.rst:96
+#: ../../rst/plugins/cache.rst:138 ../../rst/plugins/callback.rst:115
 #: ../../rst/plugins/connection.rst:77 ../../rst/plugins/docs_fragment.rst:34
 #: ../../rst/plugins/filter.rst:62 ../../rst/plugins/inventory.rst:182
-#: ../../rst/plugins/lookup.rst:156 ../../rst/plugins/plugins.rst:47
-#: ../../rst/plugins/shell.rst:52 ../../rst/plugins/strategy.rst:77
+#: ../../rst/plugins/lookup.rst:166 ../../rst/plugins/plugins.rst:47
+#: ../../rst/plugins/shell.rst:52 ../../rst/plugins/strategy.rst:79
 #: ../../rst/plugins/test.rst:100 ../../rst/plugins/vars.rst:66
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
 #: ../../rst/plugins/action.rst:55 ../../rst/plugins/become.rst:67
-#: ../../rst/plugins/cache.rst:139 ../../rst/plugins/callback.rst:97
+#: ../../rst/plugins/cache.rst:139 ../../rst/plugins/callback.rst:116
 #: ../../rst/plugins/connection.rst:78 ../../rst/plugins/docs_fragment.rst:35
 #: ../../rst/plugins/filter.rst:63 ../../rst/plugins/inventory.rst:183
-#: ../../rst/plugins/lookup.rst:157 ../../rst/plugins/plugins.rst:48
-#: ../../rst/plugins/shell.rst:53 ../../rst/plugins/strategy.rst:78
+#: ../../rst/plugins/lookup.rst:167 ../../rst/plugins/plugins.rst:48
+#: ../../rst/plugins/shell.rst:53 ../../rst/plugins/strategy.rst:80
 #: ../../rst/plugins/test.rst:101 ../../rst/plugins/vars.rst:67
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
@@ -231,59 +231,59 @@ msgid "You can use ``ansible-doc -t become -l`` to see the list of available plu
 msgstr "``ansible-doc -t become -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t become <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
 #: ../../rst/plugins/become.rst:52 ../../rst/plugins/filter.rst:50
-#: ../../rst/plugins/inventory.rst:166 ../../rst/plugins/lookup.rst:144
+#: ../../rst/plugins/inventory.rst:166 ../../rst/plugins/lookup.rst:154
 #: ../../rst/plugins/module.rst:34 ../../rst/plugins/shell.rst:38
-#: ../../rst/plugins/strategy.rst:63 ../../rst/plugins/test.rst:86
+#: ../../rst/plugins/strategy.rst:65 ../../rst/plugins/test.rst:86
 msgid ":ref:`about_playbooks`"
 msgstr ":ref:`about_playbooks`"
 
 #: ../../rst/plugins/become.rst:53 ../../rst/plugins/connection.rst:64
 #: ../../rst/plugins/filter.rst:51 ../../rst/plugins/inventory.rst:167
-#: ../../rst/plugins/lookup.rst:145 ../../rst/plugins/module.rst:35
-#: ../../rst/plugins/shell.rst:39 ../../rst/plugins/strategy.rst:64
+#: ../../rst/plugins/lookup.rst:155 ../../rst/plugins/module.rst:35
+#: ../../rst/plugins/shell.rst:39 ../../rst/plugins/strategy.rst:66
 #: ../../rst/plugins/test.rst:87
 msgid "An introduction to playbooks"
 msgstr "Playbook の概要"
 
 #: ../../rst/plugins/become.rst:58 ../../rst/plugins/connection.rst:67
-#: ../../rst/plugins/inventory.rst:172 ../../rst/plugins/lookup.rst:150
-#: ../../rst/plugins/shell.rst:44 ../../rst/plugins/strategy.rst:69
+#: ../../rst/plugins/inventory.rst:172 ../../rst/plugins/lookup.rst:160
+#: ../../rst/plugins/shell.rst:44 ../../rst/plugins/strategy.rst:71
 #: ../../rst/plugins/test.rst:92
 msgid ":ref:`filter_plugins`"
-msgstr ":ref:`vars_plugins`"
+msgstr ":ref:`filter_plugins`"
 
 #: ../../rst/plugins/become.rst:59 ../../rst/plugins/connection.rst:68
 #: ../../rst/plugins/filter.rst:4 ../../rst/plugins/inventory.rst:173
-#: ../../rst/plugins/shell.rst:45 ../../rst/plugins/strategy.rst:70
+#: ../../rst/plugins/shell.rst:45 ../../rst/plugins/strategy.rst:72
 #: ../../rst/plugins/test.rst:93
 msgid "Filter plugins"
 msgstr "filter プラグイン"
 
 #: ../../rst/plugins/become.rst:60 ../../rst/plugins/connection.rst:69
 #: ../../rst/plugins/filter.rst:56 ../../rst/plugins/inventory.rst:174
-#: ../../rst/plugins/lookup.rst:152 ../../rst/plugins/shell.rst:46
-#: ../../rst/plugins/strategy.rst:71
+#: ../../rst/plugins/lookup.rst:162 ../../rst/plugins/shell.rst:46
+#: ../../rst/plugins/strategy.rst:73
 msgid ":ref:`test_plugins`"
-msgstr ":ref:`vars_plugins`"
+msgstr ":ref:`test_plugins`"
 
 #: ../../rst/plugins/become.rst:61 ../../rst/plugins/connection.rst:70
 #: ../../rst/plugins/filter.rst:57 ../../rst/plugins/inventory.rst:175
-#: ../../rst/plugins/shell.rst:47 ../../rst/plugins/strategy.rst:72
+#: ../../rst/plugins/shell.rst:47 ../../rst/plugins/strategy.rst:74
 #: ../../rst/plugins/test.rst:4
 msgid "Test plugins"
 msgstr "test プラグイン"
 
 #: ../../rst/plugins/become.rst:62 ../../rst/plugins/connection.rst:71
 #: ../../rst/plugins/filter.rst:58 ../../rst/plugins/inventory.rst:176
-#: ../../rst/plugins/shell.rst:48 ../../rst/plugins/strategy.rst:73
+#: ../../rst/plugins/shell.rst:48 ../../rst/plugins/strategy.rst:75
 #: ../../rst/plugins/test.rst:96 ../../rst/plugins/vars.rst:62
 msgid ":ref:`lookup_plugins`"
-msgstr ":ref:`shell_plugins`"
+msgstr ":ref:`lookup_plugins`"
 
 #: ../../rst/plugins/become.rst:63 ../../rst/plugins/connection.rst:72
 #: ../../rst/plugins/filter.rst:59 ../../rst/plugins/inventory.rst:177
 #: ../../rst/plugins/lookup.rst:4 ../../rst/plugins/shell.rst:49
-#: ../../rst/plugins/strategy.rst:74 ../../rst/plugins/test.rst:97
+#: ../../rst/plugins/strategy.rst:76 ../../rst/plugins/test.rst:97
 #: ../../rst/plugins/vars.rst:63
 msgid "Lookup plugins"
 msgstr "lookup プラグイン"
@@ -368,11 +368,11 @@ msgstr "cache プラグインは、有効になると自動的に使用されま
 msgid "You can use ``ansible-doc -t cache -l`` to see the list of available plugins. Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples."
 msgstr "``ansible-doc -t cache -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t cache <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/cache.rst:122 ../../rst/plugins/callback.rst:80
+#: ../../rst/plugins/cache.rst:122 ../../rst/plugins/callback.rst:99
 msgid ":ref:`action_plugins`"
 msgstr ":ref:`action_plugins`"
 
-#: ../../rst/plugins/cache.rst:136 ../../rst/plugins/callback.rst:94
+#: ../../rst/plugins/cache.rst:136 ../../rst/plugins/callback.rst:113
 msgid "`User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_"
 msgstr "`User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_"
 
@@ -413,8 +413,8 @@ msgid "Setting a callback plugin for ``ansible-playbook``"
 msgstr "``ansible-playbook`` の callback プラグインの設定"
 
 #: ../../rst/plugins/callback.rst:39
-msgid "You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:"
-msgstr "コンソール出力のメインマネージャーは、1 つのプラグインのみにすることができます。デフォルトを置き換える場合は、サブクラスに CALLBACK_TYPE = stdout を定義して、:ref:`ansible.cfg <ansible_configuration_settings>` に stdout プラグインを設定する必要があります。以下に例を示します。"
+msgid "You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define ``CALLBACK_TYPE = stdout`` in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:"
+msgstr "コンソール出力のメインマネージャーは、1 つのプラグインのみにすることができます。デフォルトを置き換える場合は、サブクラスに ``CALLBACK_TYPE = stdout`` を定義して、:ref:`ansible.cfg <ansible_configuration_settings>` に stdout プラグインを設定する必要があります。以下に例を示します。"
 
 #: ../../rst/plugins/callback.rst:45
 msgid "or for my custom callback:"
@@ -436,7 +436,39 @@ msgstr ":ref:`ansible` アドホックコマンドは、特に stdout には別�
 msgid "You can also set this as an environment variable:"
 msgstr "これを環境変数として設定することもできます。"
 
+#: ../../rst/plugins/callback.rst:73
+msgid "Types of callback plugins"
+msgstr "callback プラグインのタイプ"
+
 #: ../../rst/plugins/callback.rst:75
+msgid "There are three types of callback plugins:"
+msgstr "callback プラグインには 3 種類あります。"
+
+#: ../../rst/plugins/callback.rst
+msgid "stdout callback plugins"
+msgstr "stdout callback プラグイン"
+
+#: ../../rst/plugins/callback.rst:79
+msgid "These plugins handle the main console output. Only one of these can be active."
+msgstr "これらのプラグインは、メインコンソール出力を処理します。これらのうち、アクティブにできるのは 1 つだけです。"
+
+#: ../../rst/plugins/callback.rst
+msgid "aggregate callback plugins"
+msgstr "aggregate callback プラグイン"
+
+#: ../../rst/plugins/callback.rst:83
+msgid "Aggregate callbacks can add additional console output next to a stdout callback. This can be aggregate information at the end of a playbook run, additional per-task output, or anything else."
+msgstr "aggregate callback は、stdout callback の隣に追加のコンソール出力を追加できます。これは、Playbook 実行の終了時の集計情報、追加のタスクごとの出力などの可能性があります。"
+
+#: ../../rst/plugins/callback.rst
+msgid "notification callback plugins"
+msgstr "notification callback プラグイン"
+
+#: ../../rst/plugins/callback.rst:87
+msgid "Notification callbacks inform other applications, services, or systems. This can be anything from logging to databases, informing on errors in Instant Messaging applications, or sending emails when a server is unreachable."
+msgstr "notification callback は、他のアプリケーション、サービス、またはシステムに通知します。これには、データベースへのログ記録、インスタントメッセージングアプリケーションでのエラーの通知、サーバーに到達できない場合のメールの送信などがあります。"
+
+#: ../../rst/plugins/callback.rst:94
 msgid "You can use ``ansible-doc -t callback -l`` to see the list of available plugins. Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples."
 msgstr "``ansible-doc -t callback -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t callback <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
@@ -835,70 +867,70 @@ msgid "You can use lookup plugins anywhere you can use templating in Ansible: in
 msgstr "lookup プラグインは、Ansible でテンプレートを使用できる場所で使用できます。これはプレイ、変数ファイル、または :ref:`template <template_module>` モジュールの Jinja2 テンプレートで使用できます。lookup プラグインの使用の詳細は、:ref:`playbooks_lookups` を参照してください。"
 
 #: ../../rst/plugins/lookup.rst:42
-msgid "Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, lookups are expected to output lists; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::"
-msgstr "lookups はループには欠かせない要素です。``with_`` と表示される場合は、アンダースコアの後の部分がルックアップの名前になります。このような理由から、ほとんどのルックアップはリストを出力することが想定されます。たとえば、``with_items`` は :ref:`items <items_lookup>` lookup を使用します::"
+msgid "Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, lookups are expected to output lists; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup:"
+msgstr "lookup はループには欠かせない要素です。``with_`` と表示される場合は、アンダースコアの後の部分が lookup の名前になります。このような理由から、lookup はリストを出力することが想定されます。たとえば、``with_items`` は :ref:`items <items_lookup>` lookup を使用します。"
 
-#: ../../rst/plugins/lookup.rst:49
-msgid "You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <playbooks_tests>` and even each other to do some complex data generation and manipulation. For example::"
+#: ../../rst/plugins/lookup.rst:51
+msgid "You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <playbooks_tests>` and even each other to do some complex data generation and manipulation. For example:"
 msgstr "lookup と :ref:`filters <playbooks_filters>`、:ref:`tests <playbooks_tests>`、またはそれぞれを組み合わせて複雑なデータ生成やデータ操作が可能です。以下に例を示します。"
 
-#: ../../rst/plugins/lookup.rst:61
+#: ../../rst/plugins/lookup.rst:65
 msgid "You can control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail if the lookup returns an error. For example:"
 msgstr "``errors`` を ``ignore``、``warn``、または ``strict`` に設定して、すべての lookup プラグインでエラーの動作を制御できます。デフォルト設定は ``strict`` で、lookup がエラーを返すとタスクは失敗します。以下に例を示します。"
 
-#: ../../rst/plugins/lookup.rst:63
-msgid "To ignore lookup errors::"
-msgstr "ルックアップエラーを無視するには、以下を行います。"
+#: ../../rst/plugins/lookup.rst:67
+msgid "To ignore lookup errors:"
+msgstr "lookup エラーを無視するには、以下を行います。"
 
-#: ../../rst/plugins/lookup.rst:77
-msgid "To get a warning instead of a failure::"
+#: ../../rst/plugins/lookup.rst:83
+msgid "To get a warning instead of a failure:"
 msgstr "失敗させるのではなく警告を出すには、以下を使用します。"
 
-#: ../../rst/plugins/lookup.rst:93
-msgid "To get a fatal error (the default)::"
+#: ../../rst/plugins/lookup.rst:101
+msgid "To get a fatal error (the default):"
 msgstr "致命的なエラーを取得する (デフォルト) には、以下を行います::"
 
-#: ../../rst/plugins/lookup.rst:108
+#: ../../rst/plugins/lookup.rst:118
 msgid "Forcing lookups to return lists: ``query`` and ``wantlist=True``"
 msgstr "ルックアップが強制的にリストを返すようにする： ``query`` および ``wantlist=True``"
 
-#: ../../rst/plugins/lookup.rst:112
+#: ../../rst/plugins/lookup.rst:122
 msgid "In Ansible 2.5, a new Jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list. The default behavior of ``lookup`` is to return a string of comma separated values. ``lookup`` can be explicitly configured to return a list using ``wantlist=True``."
 msgstr "Ansible 2.5 では、lookup プラグインを呼び出すために ``query`` と呼ばれる新しい Jinja2 関数が追加されました。``lookup`` と ``query`` の相違点は、``query`` が常にリストを返すことです。``lookup`` のデフォルト動作は、コンマ区切りの値の文字列を返すことです。``lookup`` は、``wantlist=True`` を使用してリストを返すように明示的に設定できます。"
 
-#: ../../rst/plugins/lookup.rst:115
+#: ../../rst/plugins/lookup.rst:125
 msgid "This feature provides an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibility with other uses of ``lookup``."
 msgstr "この機能により、新しい ``loop`` キーワードを操作するための、より簡単で一貫性のあるインターフェースが提供され、同時に ``lookup`` の他の使い方との後方互換性も維持されます。"
 
-#: ../../rst/plugins/lookup.rst:117
+#: ../../rst/plugins/lookup.rst:127
 msgid "The following examples are equivalent:"
 msgstr "以下の例はどちらも同等の操作ができます。"
 
-#: ../../rst/plugins/lookup.rst:125
+#: ../../rst/plugins/lookup.rst:135
 msgid "As demonstrated above, the behavior of ``wantlist=True`` is implicit when using ``query``."
 msgstr "上記の例のように、``query`` を使用する場合、``wantlist=True`` の動作は暗黙的になります。"
 
-#: ../../rst/plugins/lookup.rst:127
+#: ../../rst/plugins/lookup.rst:137
 msgid "Additionally, ``q`` was introduced as a shortform of ``query``:"
 msgstr "また、``query`` の短縮形となる ``q`` が導入されました。"
 
-#: ../../rst/plugins/lookup.rst:139
+#: ../../rst/plugins/lookup.rst:149
 msgid "You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. Use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples."
 msgstr "``ansible-doc -t lookup -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t lookup <plugin name>`` を使用して、特定のドキュメントと例を参照してください。"
 
-#: ../../rst/plugins/lookup.rst:147
+#: ../../rst/plugins/lookup.rst:157
 msgid "Ansible inventory plugins"
 msgstr "Ansible inventory プラグインの使用"
 
-#: ../../rst/plugins/lookup.rst:149
+#: ../../rst/plugins/lookup.rst:159
 msgid "Ansible callback plugins"
 msgstr "Ansible callback プラグイン"
 
-#: ../../rst/plugins/lookup.rst:151
+#: ../../rst/plugins/lookup.rst:161
 msgid "Jinja2 filter plugins"
 msgstr "Jinja2 filter プラグイン"
 
-#: ../../rst/plugins/lookup.rst:153
+#: ../../rst/plugins/lookup.rst:163
 msgid "Jinja2 test plugins"
 msgstr "Jinja2 test プラグイン"
 
@@ -1099,10 +1131,10 @@ msgid "or in the `ansible.cfg` file:"
 msgstr "または `ansible.cfg` ファイルで、以下を行います。"
 
 #: ../../rst/plugins/strategy.rst:38
-msgid "You can also specify the strategy plugin in the play via the :ref:`strategy keyword <playbook_keywords>` in a play::"
-msgstr "プレイの :ref:`strategy キーワード <playbook_keywords>` を使用して、プレイの strategy プラグインを指定できます。"
+msgid "You can also specify the strategy plugin in the play via the :ref:`strategy keyword <playbook_keywords>` in a play:"
+msgstr "プレイの :ref:`strategy keyword <playbook_keywords>` を使用して、プレイの strategy プラグインを指定することもできます。"
 
-#: ../../rst/plugins/strategy.rst:57
+#: ../../rst/plugins/strategy.rst:59
 msgid "You can use ``ansible-doc -t strategy -l`` to see the list of available plugins. Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific documentation and examples."
 msgstr "``ansible-doc -t strategy -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t strategy <plugin name>`` を使用して、プラグイン固有のドキュメントと例を参照してください。"
 
@@ -1128,7 +1160,7 @@ msgstr "``terminal_plugins`` ディレクトリーにカスタムのプラグイ
 
 #: ../../rst/plugins/terminal.rst:24
 msgid "Using terminal plugins"
-msgstr "terminal プラグイン"
+msgstr "terminal プラグインの使用"
 
 #: ../../rst/plugins/terminal.rst:26
 msgid "Ansible determines which terminal plugin to use automatically from the ``ansible_network_os`` variable. There should be no reason to override this functionality."

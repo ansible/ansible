@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"POT-Creation-Date: 2023-03-01 20:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.1\n"
+"Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/collections_guide/collections_downloading.rst:4
 msgid "Downloading collections"
@@ -296,15 +296,15 @@ msgstr "``type: git`` でコレクションをインストールする場合、`
 msgid "You can also add roles to a ``requirements.yml`` file, under the ``roles`` key. The values follow the same format as a requirements file used in older Ansible releases."
 msgstr "``roles``キーの下にある``requirements.yml``ファイルにロールを追加することもできます。この値は、古い Ansible リリースで使用される要件ファイルと同じ形式に従います。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:67
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:68
 msgid "To install both roles and collections at the same time with one command, run the following:"
 msgstr "1 つのコマンドで、ロールとコレクションを同時にインストールするには、以下のコマンドを実行します。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:73
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:74
 msgid "Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections, or roles respectively."
 msgstr "``ansible-galaxy collection install -r`` または ``ansible-galaxy role install -r`` を実行すると、それぞれコレクションまたはロールがインストールされます。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:76
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:77
 msgid "Installing both roles and collections from the same requirements file will not work when specifying a custom collection or role install path. In this scenario the collections will be skipped and the command will process each like ``ansible-galaxy role install`` would."
 msgstr "カスタムコレクションまたはロールインストールパスを指定する場合、同じ要件ファイルからロールとコレクションの両方をインストールすることはできません。今回の例では、コレクションは省略され、コマンドは ``ansible-galaxy role install`` のように処理されます。"
 
@@ -627,6 +627,10 @@ msgstr "これは、ロールと同様に、``my_namespace.my_collection`` の `
 #: ../../rst/collections_guide/collections_using_playbooks.rst:115
 msgid "Playbook names, like other collection resources, have a restricted set of valid characters. Names can contain only lowercase alphanumeric characters, plus _ and must start with an alpha character. The dash ``-`` character is not valid for playbook names in collections. Playbooks whose names contain invalid characters are not addressable: this is a limitation of the Python importer that is used to load collection resources."
 msgstr "他のコレクションリソースなどの Playbook 名では、有効な文字のセットが制限されています。名前には、小文字の英数字と _ のみを含めることができ、アルファベット記号で開始する必要があります。ダッシュ ``-`` は、コレクション内の Playbook 名には有効ではありません。名前に無効な文字が含まれるPlaybookにアドレスを指定することはできません。これは、コレクションリソースの読み込みに使用される Python インポーターの制限です。"
+
+#: ../../rst/collections_guide/collections_using_playbooks.rst:119
+msgid "Playbooks in collections do not support 'adjacent' plugins, all plugins must be in the collection specific directories."
+msgstr "コレクション内の Playbook は「隣接する」プラグインをサポートしません。すべてのプラグインはコレクション固有のディレクトリーにある必要があります。"
 
 #: ../../rst/collections_guide/collections_verifying.rst:4
 msgid "Verifying collections"
