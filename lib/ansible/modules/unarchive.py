@@ -253,7 +253,7 @@ import stat
 import time
 import traceback
 from functools import partial
-from zipfile import ZipFile, BadZipFile
+from zipfile import ZipFile
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -265,6 +265,11 @@ try:  # python 3.3+
     from shlex import quote  # type: ignore[attr-defined]
 except ImportError:  # older python
     from pipes import quote
+
+try:  # python 3.2+
+    from zipfile import BadZipFile  # type: ignore[attr-defined]
+except ImportError:  # older python
+    from zipfile import BadZipfile as BadZipFile
 
 # String from tar that shows the tar contents are different from the
 # filesystem
