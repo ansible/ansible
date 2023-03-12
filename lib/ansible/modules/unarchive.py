@@ -253,7 +253,7 @@ import stat
 import time
 import traceback
 from functools import partial
-from zipfile import ZipFile, BadZipfile
+from zipfile import ZipFile, BadZipFile
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -351,7 +351,7 @@ class ZipArchive(object):
 
         try:
             archive = ZipFile(self.src)
-        except BadZipfile as e:
+        except BadZipFile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -376,7 +376,7 @@ class ZipArchive(object):
         self._files_in_archive = []
         try:
             archive = ZipFile(self.src)
-        except BadZipfile as e:
+        except BadZipFile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
