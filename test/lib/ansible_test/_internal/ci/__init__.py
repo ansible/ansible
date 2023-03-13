@@ -62,8 +62,8 @@ class CIProvider(metaclass=abc.ABCMeta):
         """Return a resource prefix specific to this CI provider."""
 
     @abc.abstractmethod
-    def get_base_branch(self) -> str:
-        """Return the base branch or an empty string."""
+    def get_base_commit(self, args: CommonConfig) -> str:
+        """Return the base commit or an empty string."""
 
     @abc.abstractmethod
     def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:

@@ -75,13 +75,14 @@ class DataContext:
         self.payload_callbacks: list[c.Callable[[PayloadConfig], None]] = []
 
         if content_path:
-            content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
+            content, source_provider = self.__create_content_layout(layout_providers, source_providers, content_path, False)
         elif ANSIBLE_SOURCE_ROOT and is_subdir(current_path, ANSIBLE_SOURCE_ROOT):
-            content = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_SOURCE_ROOT, False)
+            content, source_provider = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_SOURCE_ROOT, False)
         else:
-            content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
+            content, source_provider = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
         self.content: ContentLayout = content
+        self.source_provider = source_provider
 
     def create_collection_layouts(self) -> list[ContentLayout]:
         """
@@ -109,7 +110,7 @@ class DataContext:
                 if collection_path == os.path.join(collection.root, collection.directory):
                     collection_layout = layout
                 else:
-                    collection_layout = self.__create_content_layout(self.__layout_providers, self.__source_providers, collection_path, False)
+                    collection_layout = self.__create_content_layout(self.__layout_providers, self.__source_providers, collection_path, False)[0]
 
                 file_count = len(collection_layout.all_files())
 
@@ -127,7 +128,7 @@ class DataContext:
         source_providers: list[t.Type[SourceProvider]],
         root: str,
         walk: bool,
-    ) -> ContentLayout:
+    ) -> t.Tuple[ContentLayout, SourceProvider]:
         """Create a content layout using the given providers and root path."""
         try:
             layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
@@ -148,7 +149,7 @@ class DataContext:
 
         layout = layout_provider.create(layout_provider.root, source_provider.get_paths(layout_provider.root))
 
-        return layout
+        return layout, source_provider
 
     def __create_ansible_source(self):
         """Return a tuple of Ansible source files with both absolute and relative paths."""

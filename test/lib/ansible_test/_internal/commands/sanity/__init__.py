@@ -164,6 +164,10 @@ def command_sanity(args: SanityConfig) -> None:
     if args.skip_test:
         tests = [target for target in tests if target.name not in args.skip_test]
 
+    if not args.host_path:
+        for test in tests:
+            test.origin_hook(args)
+
     targets_use_pypi = any(isinstance(test, SanityMultipleVersion) and test.needs_pypi for test in tests) and not args.list_tests
     host_state = prepare_profiles(args, targets_use_pypi=targets_use_pypi)  # sanity
 
@@ -768,6 +772,9 @@ class SanityTest(metaclass=abc.ABCMeta):
     def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return CONTROLLER_PYTHON_VERSIONS
+
+    def origin_hook(self, args: SanityConfig) -> None:
+        """This method is called on the origin, before the test runs or delegation occurs."""
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:  # pylint: disable=unused-argument
         """Return the given list of test targets, filtered to include only those relevant for the test."""
