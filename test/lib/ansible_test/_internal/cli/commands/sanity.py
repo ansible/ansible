@@ -16,10 +16,6 @@ from ...target import (
     walk_sanity_targets,
 )
 
-from ...data import (
-    data_context,
-)
-
 from ..environments import (
     CompositeActionCompletionFinder,
     ControllerMode,
@@ -81,17 +77,6 @@ def do_sanity(
         action='store_true',
         help='enable optional errors',
     )
-
-    if data_context().content.is_ansible:
-        sanity.add_argument(
-            '--keep-git',
-            action='store_true',
-            help='transfer git related files to the remote host/container',
-        )
-    else:
-        sanity.set_defaults(
-            keep_git=False,
-        )
 
     sanity.add_argument(
         '--lint',
