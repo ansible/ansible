@@ -62,8 +62,8 @@ class Local(CIProvider):
 
         return prefix
 
-    def get_base_branch(self):  # type: () -> str
-        """Return the base branch or an empty string."""
+    def get_base_commit(self, args: CommonConfig) -> str:
+        """Return the base commit or an empty string."""
         return ''
 
     def detect_changes(self, args):  # type: (TestConfig) -> t.Optional[t.List[str]]

@@ -262,21 +262,9 @@ class SanityConfig(TestConfig):
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
         self.enable_optional_errors = args.enable_optional_errors  # type: bool
-        self.keep_git = args.keep_git  # type: bool
         self.prime_venvs = args.prime_venvs  # type: bool
 
         self.display_stderr = self.lint or self.list_tests
-
-        if self.keep_git:
-            def git_callback(payload_config: PayloadConfig) -> None:
-                """Add files from the content root .git directory to the payload file list."""
-                files = payload_config.files
-
-                for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
-                    paths = [os.path.join(dirpath, filename) for filename in filenames]
-                    files.extend((path, os.path.relpath(path, data_context().content.root)) for path in paths)
-
-            data_context().register_payload_callback(git_callback)
 
 
 class IntegrationConfig(TestConfig):
