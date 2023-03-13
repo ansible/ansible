@@ -22,10 +22,6 @@ How to run
    To run sanity tests using docker, always use the default docker image
    by passing the ``--docker`` or ``--docker default`` argument.
 
-.. note::
-   When using docker and the ``--base-branch`` argument,
-   also use the ``--keep-git`` argument to avoid git related errors.
-
 .. code:: shell
 
    source hacking/env-setup
