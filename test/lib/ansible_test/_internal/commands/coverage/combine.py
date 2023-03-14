@@ -33,6 +33,7 @@ from ...executor import (
 
 from ...data import (
     data_context,
+    PayloadConfig,
 )
 
 from ...host_configs import (
@@ -79,9 +80,10 @@ def combine_coverage_files(args, host_state):  # type: (CoverageCombineConfig, H
 
             pairs = [(path, os.path.relpath(path, data_context().content.root)) for path in exported_paths]
 
-            def coverage_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            def coverage_callback(payload_config: PayloadConfig) -> None:
                 """Add the coverage files to the payload file list."""
                 display.info('Including %d exported coverage file(s) in payload.' % len(pairs), verbosity=1)
+                files = payload_config.files
                 files.extend(pairs)
 
             data_context().register_payload_callback(coverage_callback)

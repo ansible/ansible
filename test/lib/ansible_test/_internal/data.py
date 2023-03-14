@@ -1,6 +1,7 @@
 """Context information for the current invocation of ansible-test."""
 from __future__ import annotations
 
+import collections.abc as c
 import dataclasses
 import os
 import typing as t
@@ -49,6 +50,13 @@ from .provider.layout.unsupported import (
 )
 
 
+@dataclasses.dataclass(frozen=True)
+class PayloadConfig:
+    """Configuration required to build a source tree payload for delegation."""
+    files: list[tuple[str, str]]
+    permissions: dict[str, int]
+
+
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
     def __init__(self):
@@ -62,7 +70,7 @@ class DataContext:
         self.__source_providers = source_providers
         self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
 
-        self.payload_callbacks = []  # type: t.List[t.Callable[[t.List[t.Tuple[str, str]]], None]]
+        self.payload_callbacks: list[c.Callable[[PayloadConfig], None]] = []
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
@@ -172,7 +180,7 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback):  # type: (t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None
+    def register_payload_callback(self, callback: c.Callable[[PayloadConfig], None]) -> None:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
