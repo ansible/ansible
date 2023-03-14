@@ -53,7 +53,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 '''
 
-RETURN = '''
+RETURN = r'''
 z_last:
     description: A last result.
     type: str

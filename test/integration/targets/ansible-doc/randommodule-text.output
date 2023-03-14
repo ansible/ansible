@@ -77,7 +77,7 @@ EXAMPLES:
 
 RETURN VALUES:
 - a_first
-        A first result. Use `a_first=foo(barbaz)bam'.
+        A first result. Use `a_first=foo(bar\baz)bam'.
         returned: success
         type: str
 

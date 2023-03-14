@@ -78,7 +78,7 @@
         "metadata": null,
         "return": {
             "a_first": {
-                "description": "A first result. Use RV(a_first=foo\\(bar\\baz\\)bam).",
+                "description": "A first result. Use RV(a_first=foo\\(bar\\\\baz\\)bam).",
                 "returned": "success",
                 "type": "str"
             },
