@@ -21,6 +21,7 @@ from . import (
 
 class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
+
     DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
     def __init__(self, args: IntegrationConfig) -> None:
@@ -68,6 +69,7 @@ class ACMEProvider(CloudProvider):
 
 class ACMEEnvironment(CloudEnvironment):
     """ACME environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(

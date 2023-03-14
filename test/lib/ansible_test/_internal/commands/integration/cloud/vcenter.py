@@ -27,6 +27,7 @@ from . import (
 
 class VcenterProvider(CloudProvider):
     """VMware vcenter/esx plugin. Sets up cloud resources for tests."""
+
     DOCKER_SIMULATOR_NAME = 'vcenter-simulator'
 
     def __init__(self, args: IntegrationConfig) -> None:
@@ -92,6 +93,7 @@ class VcenterProvider(CloudProvider):
 
 class VcenterEnvironment(CloudEnvironment):
     """VMware vcenter/esx environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         try:

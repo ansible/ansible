@@ -325,6 +325,7 @@ def collect_code_smell_tests() -> tuple[SanityTest, ...]:
 
 class SanityIgnoreParser:
     """Parser for the consolidated sanity test ignore file."""
+
     NO_CODE = '_'
 
     def __init__(self, args: SanityConfig) -> None:
@@ -526,11 +527,13 @@ class SanityIgnoreParser:
 
 class SanityIgnoreProcessor:
     """Processor for sanity test ignores for a single run of one sanity test."""
-    def __init__(self,
-                 args: SanityConfig,
-                 test: SanityTest,
-                 python_version: t.Optional[str],
-                 ) -> None:
+
+    def __init__(
+        self,
+        args: SanityConfig,
+        test: SanityTest,
+        python_version: t.Optional[str],
+    ) -> None:
         name = test.name
         code = test.error_code
 
@@ -618,18 +621,21 @@ class SanityIgnoreProcessor:
 
 class SanitySuccess(TestSuccess):
     """Sanity test success."""
+
     def __init__(self, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(COMMAND, test, python_version)
 
 
 class SanitySkipped(TestSkipped):
     """Sanity test skipped."""
+
     def __init__(self, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(COMMAND, test, python_version)
 
 
 class SanityFailure(TestFailure):
     """Sanity test failure."""
+
     def __init__(
         self,
         test: str,
@@ -646,6 +652,7 @@ class SanityMessage(TestMessage):
 
 class SanityTargets:
     """Sanity test target information."""
+
     def __init__(self, targets: tuple[TestTarget, ...], include: tuple[TestTarget, ...]) -> None:
         self.targets = targets
         self.include = include
@@ -695,6 +702,7 @@ class SanityTargets:
 
 class SanityTest(metaclass=abc.ABCMeta):
     """Sanity test base class."""
+
     ansible_only = False
 
     def __init__(self, name: t.Optional[str] = None) -> None:
@@ -811,6 +819,7 @@ class SanityTest(metaclass=abc.ABCMeta):
 
 class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which should run on a single python version."""
+
     @property
     def require_libyaml(self) -> bool:
         """True if the test requires PyYAML to have libyaml support."""
@@ -827,6 +836,7 @@ class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
 
 class SanityCodeSmellTest(SanitySingleVersion):
     """Sanity test script."""
+
     def __init__(self, path) -> None:
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
@@ -1030,6 +1040,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which are idependent of the python version being used."""
+
     @abc.abstractmethod
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         """Run the sanity test and return the result."""
@@ -1046,6 +1057,7 @@ class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
 
 class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which should run on multiple python versions."""
+
     @abc.abstractmethod
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         """Run the sanity test and return the result."""

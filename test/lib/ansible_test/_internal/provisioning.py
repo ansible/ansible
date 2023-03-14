@@ -55,6 +55,7 @@ class PrimeContainers(ApplicationError):
 @dataclasses.dataclass(frozen=True)
 class HostState:
     """State of hosts and profiles to be passed to ansible-test during delegation."""
+
     controller_profile: ControllerHostProfile
     target_profiles: list[HostProfile]
 
