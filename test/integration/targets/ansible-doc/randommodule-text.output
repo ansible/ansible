@@ -14,7 +14,8 @@ DEPRECATED:
 OPTIONS (= is mandatory):
 
 - sub
-        Suboptions.
+        Suboptions. Contains `sub.subtest', which can be set to `123'.
+        You can use `TEST_ENV' to set this.
         set_via:
           env:
           - deprecated:
@@ -29,7 +30,8 @@ OPTIONS (= is mandatory):
         OPTIONS:
 
         - subtest2
-            Another suboption.
+            Another suboption. Useful when [ansible.builtin.shuffle]
+            is used with value `[a,b,),d\]'.
             default: null
             type: float
             added in: version 1.1.0
@@ -39,14 +41,15 @@ OPTIONS (= is mandatory):
         SUBOPTIONS:
 
         - subtest
-            A suboption.
+            A suboption. Not compatible to `path=c:\foo(1).txt' (of
+            module ansible.builtin.copy).
             default: null
             type: int
             added in: version 1.1.0 of testns.testcol
 
 
 - test
-        Some text.
+        Some text. Consider not using `foo=bar'.
         default: null
         type: str
         added in: version 1.2.0 of testns.testcol
@@ -74,13 +77,15 @@ EXAMPLES:
 
 RETURN VALUES:
 - a_first
-        A first result.
+        A first result. Use `a_first=foo(barbaz)bam'.
         returned: success
         type: str
 
 - m_middle
         This should be in the middle.
-        Has some more data
+        Has some more data.
+        Check out `m_middle.suboption' and compare it to `a_first=foo'
+        and `value' (of lookup community.general.foo).
         returned: success and 1st of month
         type: dict
 
