@@ -208,13 +208,13 @@ Contributor Workflow
 Changelogs
 ----------
 
-Collections are required to include a changelog.  To give a consistent feel for changelogs across collections and ensure changelogs exist for collections included in the ``ansible`` package we suggest you use `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ to maintain and generate this but other options exist.  Preferred (in descending order):
+Collections are required to include a changelog. To give a consistent feel for changelogs across collections and ensure changelogs exist for collections included in the ``ansible`` package we suggest you use `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ to maintain and generate this but other options exist. Preferred (in descending order):
 
 #. Use antsibull-changelog (preferred).
 #. Provide ``changelogs/changelog.yaml`` in the `correct format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_. (You can use ``antsibull-lint changelog-yaml /path/to/changelog.yaml`` to validate the format.)
 #. Provide a link to the changelog file (self-hosted) (not recommended).
 
-Please note that the porting guide is compiled from ``changelogs/changelog.yaml`` (sections ``breaking_changes``, ``major_changes``, ``deprecated_features``, ``removed_features``). So if you use option 3, you will not be able to add something to the porting guide.
+Note that the porting guide is compiled from ``changelogs/changelog.yaml`` (sections ``breaking_changes``, ``major_changes``, ``deprecated_features``, ``removed_features``). So if you use option 3, you will not be able to add something to the porting guide.
 
 .. _coll_versioning_req:
 
@@ -223,15 +223,15 @@ Versioning and deprecation
 
 * Collections MUST adhere to `semantic versioning <https://semver.org/>`_.
 * To preserve backward compatibility for users, every Ansible minor version series (x.Y.z) will keep the major version of a collection constant. If ansible 3.0.0 includes ``community.general`` 2.2.0, then each 3.Y.z (3.1.z, 3.2.z, and so on) release will include the latest ``community.general`` 2.y.z release available at build time. Ansible 3.y.z will **never** include a ``community.general`` 3.y.z release, even if it is available. Major collection version changes will be included in the next Ansible major release (4.0.0 in this example).
-* Therefore, please make sure that the current major release of your collection included in 3.0.0 receives at least bugfixes as long as new 3.Y.Z releases are produced.
+* Therefore, ensure that the current major release of your collection included in 3.0.0 receives at least bugfixes as long as new 3.Y.Z releases are produced.
 * Since new minor releases are included, you can include new features, modules and plugins. You must make sure that you do not break backwards compatibility! (See `semantic versioning <https://semver.org/>`_.) This means in particular:
 
   * You can fix bugs in patch releases, but not add new features or deprecate things.
   * You can add new features and deprecate things in minor releases, but not remove things or change behavior of existing features.
   * You can only remove things or make breaking changes in major releases.
-* We recommend to make sure that if a deprecation is added in a collection version that is included in Ansible 3.y.z, the removal itself will only happen in a collection version included in Ansible 5.0.0 or later, but not in a collection version included in Ansible 4.0.0.
-* Content moved from ansible/ansible that was scheduled for removal in 2.11 or later MUST NOT be removed in the current major release  available when ansible 2.10.0 is released. Otherwise it would already be removed in 2.10, unexpectedly for users! Deprecation cycles can be shortened (since they are now uncoupled from ansible or ansible-base versions), but existing ones must not be unexpectedly terminated.
-* We recommend to announce your policy of releasing, versioning and deprecation to contributors and users in some way. For an example of how to do this, see `the announcement in community.general <https://github.com/ansible-collections/community.general/issues/582>`_. You could also do this in the README.
+* We recommend that you ensure that if a deprecation is added in a collection version that is included in Ansible 3.y.z, the removal itself will only happen in a collection version included in Ansible 5.0.0 or later, but not in a collection version included in Ansible 4.0.0.
+* Content moved from ansible/ansible that was scheduled for removal in 2.11 or later MUST NOT be removed in the current major release available when ansible 2.10.0 is released. Otherwise it would already be removed in 2.10, unexpectedly for users! Deprecation cycles can be shortened (since they are now uncoupled from ansible or ansible-base versions), but existing ones must not be unexpectedly terminated.
+* We recommend you announce your policy of releasing, versioning and deprecation to contributors and users in some way. For an example of how to do this, see `the announcement in community.general <https://github.com/ansible-collections/community.general/issues/582>`_. You could also do this in the README.
 
 .. _ coll_naming_req:
 
@@ -243,7 +243,7 @@ Collection naming
 
 For collections under ansible-collections the repository SHOULD be named ``NAMESPACE.COLLECTION``.
 
-To create a new collection and corresponding repository, first, a new namespace in Galaxy has to be created via submitting `Request a namespace <https://github.com/ansible/galaxy/issues/new/choose>`_.
+To create a new collection and corresponding repository, first, a new namespace in Galaxy has to be created by submitting `Request a namespace <https://github.com/ansible/galaxy/issues/new/choose>`_.
 
 `Namespace limitations <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespace-limitations>`_  lists requirements for namespaces in Galaxy.
 
@@ -253,17 +253,17 @@ For corporate maintained collections, the repository can be named ``COMPANY_NAME
 
 We should avoid FQCN / repository names:
 
-* which are unnecessary long: try to make it compact but clear
-* contain the same words / collocations in ``NAMESPACE`` and ``COLLECTION`` parts, for example ``my_system.my_system``
+* which are unnecessary long: try to make it compact but clear.
+* contain the same words / collocations in ``NAMESPACE`` and ``COLLECTION`` parts, for example ``my_system.my_system``.
 
-If your collection is planned to be certified on **Automation Hub**, please consult with Red Hat Partner Engineering through ``ansiblepartners@redhat.com`` to ensure collection naming compatibility between the community collection on **Galaxy**.
+If your collection is planned to be certified on **Red Hat Automation Hub**, please consult with Red Hat Partner Engineering through ``ansiblepartners@redhat.com`` to ensure collection naming compatibility between the community collection on **Galaxy**.
 
 .. _coll_module_name_req:
 Module naming
 -------------
 
 Modules that only gather information MUST be named ``<something>_info``. Modules that return ``ansible_facts`` are named ``<something>_facts`` and do not return non-facts.
-For more information, refer to the `Developing modules guidelines <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general.html#creating-an-info-or-a-facts-module>`_.
+For more information, refer to the :ref:`Developing modules guidelines <creating-an-info-or-a-facts-module>`.
 
 .. _coll_licensing_req:
 
@@ -352,8 +352,8 @@ CI Testing
 * You MUST run the ``ansible-test sanity`` command from the `latest stable ansible-base/ansible-core branch <https://github.com/ansible/ansible/branches/all?query=stable->`_.
 
   * Collections MUST run an equivalent of the ``ansible-test sanity --docker`` command.
-  * If they do not use ``--docker``, they must make sure that all tests run, in particular the compile and import tests (which should run for all `supported Python versions <https://docs.ansible.com/ansible/latest/dev_guide/developing_python_3.html#ansible-and-python-3>`_).
-  * Collections can choose to skip certain Python versions that they explicitly do not support; this needs to be documented in ``README.md`` and in every module and plugin (hint: use a docs fragment). However we strongly recommend you follow the `Ansible Python Compatibility <https://docs.ansible.com/ansible/latest/dev_guide/developing_python_3.html#ansible-and-python-3>`_ section for more details.
+  * If they do not use ``--docker``, they must make sure that all tests run, in particular the compile and import tests (which should run for all :ref:`supported Python versions <ansible-and-python-3>`).
+  * Collections can choose to skip certain Python versions that they explicitly do not support; this needs to be documented in ``README.md`` and in every module and plugin (hint: use a docs fragment). However we strongly recommend you follow the :ref:`Ansible Python Compatibility <ansible-and-python-3>` section for more details.
 
 * You SHOULD suggest to *additionally* run ``ansible-test sanity`` from the ansible/ansible ``devel`` branch so that you find out about new linting requirements earlier.
 * The sanity tests MUST pass.
@@ -387,8 +387,8 @@ All of the above can be achieved by using the `GitHub Action template <https://g
 
 To learn how to add tests to your collection, see:
 
-* `Quick-start integration testing guide <https://github.com/ansible/community-docs/blob/main/integration_tests_quick_start_guide.rst>`_
-* `Quick-start unit testing guide <https://github.com/ansible/community-docs/blob/main/unit_tests_quick_start_guide.rst>`_
+* :ref:`collection_integration_tests`
+* :ref:`collection_unit_tests`
 
 
 .. _coll_wg_reqs:
@@ -418,19 +418,19 @@ Also:
 * Move all related issues, pull requests, and wiki pages.
 * Look through ``docs/docsite`` directory of `ansible-base GitHub repository <https://github.com/ansible/ansible>`_ (for example, using the ``grep`` command-line utility) to check if there are examples using the moved modules and plugins to update their FQCNs.
 
-See `Migrating content to a different collection <https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html#migrating-ansible-content-to-a-different-collection>`_ for complete details.
+See :ref:`Migrating content to a different collection <migrating-ansible-content-to-a-different-collection>` for complete details.
 
 .. _coll_development_conventions:
 
 Development conventions
 =======================
 
-Besides all the requirements listed in the `Development conventions <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html>`_, be sure:
+Besides all the requirements listed in the :ref:`module_dev_conventions`, be sure:
 
-* Your modules satisfy the concept of `idempotency <https://docs.ansible.com/ansible/latest/reference_appendices/glossary.html#term-Idempotency>`_: if a module repeatedly runs with the same set of inputs, it will not make any changes on the system.
+* Your modules satisfy the concept of :ref:`idempotency <term-Idempotency>`: if a module repeatedly runs with the same set of inputs, it will not make any changes on the system.
 * Your modules do not query information using special ``state`` option values like ``get``, ``list``, ``query``, or ``info`` -
-  create new ``_info`` or ``_facts`` modules instead (for more information, refer to the `Developing modules guidelines <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general.html#creating-an-info-or-a-facts-module>`_).
-* ``check_mode`` is supported in all ``*_info`` and ``*_facts`` modules (for more information, refer to the `Development conventions <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html#following-ansible-conventions>`_).
+  create new ``_info`` or ``_facts`` modules instead (for more information, refer to the :ref:`Developing modules guidelines <creating-an-info-or-a-facts-module>`).
+* ``check_mode`` is supported in all ``*_info`` and ``*_facts`` modules (for more information, refer to the :ref:`Development conventions <#following-ansible-conventions>`).
 
 .. _coll_dependencies:
 
@@ -481,16 +481,16 @@ Requirements for collections to be included in the Ansible Package
 
 To be included in the `ansible` package, collections must meet the following criteria:
 
-* `Development conventions <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html>`_.
+* :ref:`Development conventions <module_dev_conventions>`.
 * `Collection requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_ (this document).
 
   * The `Collection Inclusion Criteria Checklist <https://github.com/ansible-collections/overview/blob/main/collection_checklist.md>`_ covers most of the criteria from this document.
-* `Ansible documentation format <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html>`_ and the `style guide <https://docs.ansible.com/ansible/devel/dev_guide/style_guide/index.html#style-guide>`_.
-* To pass the Ansible `sanity tests <https://docs.ansible.com/ansible/devel/dev_guide/testing_sanity.html#testing-sanity>`_.
-* To have `unit <https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html#unit-tests>`_ and / or `integration tests <https://docs.ansible.com/ansible/devel/dev_guide/testing_integration.html#integration-tests>`_ according to the corresponding sections of this document.
+* :ref:`Ansible documentation format <module_documenting>` and the :ref:`style guide <style-guide>`.
+* To pass the Ansible :ref:`sanity tests <testing-sanity>`.
+* To have :ref:`unit <unit-tests>`_and / or :ref:`integration tests <integration-tests>` according to the corresponding sections of this document.
 
 
-Other things
-============
+Other requirements
+===================
 
 * After content is moved out of another currently included collection such as ``community.general`` or ``community.network`` OR a new collection satisfies all the requirements, add the collection to the ``ansible.in`` file in a corresponding directory of the `ansible-build-data repository <https://github.com/ansible-community/ansible-build-data/>`_.
