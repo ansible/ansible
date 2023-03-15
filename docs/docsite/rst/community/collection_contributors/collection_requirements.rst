@@ -24,7 +24,7 @@ Feedback and communications
 
 As with any project it is very important that we get feedback from users, contributors, and maintainers. You can get feedback and help as follows:
 
-* Discussing in the `#community:ansible.com Matrix room <https://matrix.to/#/#community:ansible.com>`_, which is bridged with the ``#ansible-community`` channel on Libera.Chat IRC. See the :ref:`Ansible Communication Guide <communication_irc>`for details.
+* Discussing in the `#community:ansible.com Matrix room <https://matrix.to/#/#community:ansible.com>`_, which is bridged with the ``#ansible-community`` channel on Libera.Chat IRC. See the :ref:`Ansible Communication Guide <communication_irc>` for details.
 * Discussing in the `Community Working Group meeting <https://github.com/ansible/community/blob/main/meetings/README.md#wednesdays>`_.
 * Creating `GitHub Issues <https://github.com/ansible-collections/overview/issues>`_ in the ``ansible-collections`` repository.
 
@@ -184,8 +184,8 @@ All modules and plugins MUST:
 
 * Include a :ref:`DOCUMENTATION <documentation-block>` block.
 * Include an :ref:`EXAMPLES <examples-block>` block (except where not relevant for the plugin type).
-* Use FQCNs when referring to modules, plugins and documentation fragments inside and outside the collection (including ``ansible.builtin.`` for the listed entities from ansible-core ``builtin `` collection.
-* 
+* Use FQCNs when referring to modules, plugins and documentation fragments inside and outside the collection (including ``ansible.builtin`` for the listed entities from ansible-core.
+  
 When using ``version_added`` in the documentation:
 
 * Declare the version of the collection in which the options were added -- NOT the version of Ansible.
@@ -259,6 +259,7 @@ We should avoid FQCN / repository names:
 If your collection is planned to be certified on **Red Hat Automation Hub**, please consult with Red Hat Partner Engineering through ``ansiblepartners@redhat.com`` to ensure collection naming compatibility between the community collection on **Galaxy**.
 
 .. _coll_module_name_req:
+
 Module naming
 -------------
 
