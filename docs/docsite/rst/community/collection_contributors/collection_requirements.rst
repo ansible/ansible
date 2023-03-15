@@ -72,21 +72,21 @@ The collection should adhere to the tips at :ref:`ansible-and-python-3`.
 Python Requirements
 -------------------
 
-Python requirements for a collection vary between **controller-environment** and **other-environment**. On the controller-environment, the Python versions required may be higher than what is required on the other-environment. While developing a collection, you need to understand the definitions of both the controller-environment and other-environment to help you choose Python versions accordingly:
+Python requirements for a collection vary between **controller environment** and **other environment**. On the controller-environment, the Python versions required may be higher than what is required on the other-environment. While developing a collection, you need to understand the definitions of both the controller-environment and other-environment to help you choose Python versions accordingly:
 
-* controller-environment: The plugins/modules always run in the same environment (Python interpreter, venv, host, and so on) as ansible-core itself.
-* other-environment: It is possible, even if uncommon in practice, for the plugins/modules to run in a different environment than ansible-core itself.
+* controller environment: The plugins/modules always run in the same environment (Python interpreter, venv, host, and so on) as ansible-core itself.
+* other environment: It is possible, even if uncommon in practice, for the plugins/modules to run in a different environment than ansible-core itself.
 
 One example scenario where the "even if" clause comes into play is when using cloud modules. These modules mostly run on the controller node but in some environments, the controller might run on one machine inside a demilitarized zone which cannot directly access the cloud machines. The user has to have the cloud modules run on a bastion host/jump server which has access to the cloud machines.
 
 .. _coll_controller_req:
 
-Controller-environment
+Controller environment
 ~~~~~~~~~~~~~~~~~~~~~~
 
 In the controller environment, collections MUST support Python 2 (version 2.7) and Python 3 (Version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v3.5 if all required libraries support this version.
 
-Other-environment
+Other environment
 ~~~~~~~~~~~~~~~~~
 
 In the other environment, collections MUST support Python 2 (version 2.7) and Python 3 (Version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v2.6 and v3.5 if all required libraries support this version.
@@ -127,14 +127,14 @@ Standards for developing module and plugin utilities
 
 .. _coll_repo_structure:
 
-Repo structure
-===============
+Repository structure requirements
+==================================
 
 galaxy.yml
 ----------
 
 * The ``tags`` field MUST be set.
-* Collection dependencies must meet a set of rules. See the section on `Collection Dependencies <collection_dependencies_>`_ for this.
+* Collection dependencies must meet a set of rules. See the section on `Collection Dependencies <collection_dependencies_>` for details.
 * The ``ansible`` package MUST NOT depend on collections not shipped in the package.
 * If you plan to split up your collection, the new collection MUST be approved for inclusion before the smaller collections replace the larger in Ansible.
 * If you plan to add other collections as dependencies, they MUST run through the formal application process.
@@ -144,16 +144,16 @@ galaxy.yml
 README.md
 ---------
 
-MUST have a ``README.md`` in the root of the collection, see `collection_template/README.md <https://github.com/ansible-collections/collection_template/blob/main/README.md>`_ for an example.
+Your collection repository MUST have a ``README.md`` in the root of the collection, see `collection_template/README.md <https://github.com/ansible-collections/collection_template/blob/main/README.md>`_ for an example.
 
 meta/runtime.yml
 ----------------
 Example: `meta/runtime.yml <https://github.com/ansible-collections/collection_template/blob/main/meta/runtime.yml>`_
 
-* MUST define the minimum version of Ansible which this collection works with
+* The ``meta/runtime.yml`` MUST define the minimum version of Ansible which this collection works with.
 
   * If the collection works with Ansible 2.9, then this should be set to `>=2.9.10`
-  * It's usually better to avoid adding `<2.11` as a restriction, since this for example makes it impossible to use the collection with the current ansible-base devel branch (which has version 2.11.0.dev0)
+  * It is usually better to avoid adding `<2.11` as a restriction, since this for example makes it impossible to use the collection with the current ansible-base devel branch (which has version 2.11.0.dev0)
 
 Modules & Plugins
 ------------------
@@ -161,29 +161,31 @@ Modules & Plugins
 * Collections MUST only use the directories specified below in the ``plugins/`` directory and
   only for the purposes listed:
 
-  :Those recognized by ansible-core: ``doc_fragments``, ``modules``, ``module_utils``, ``terminal``, and those listed on https://docs.ansible.com/ansible/devel/plugins/plugins.html  This list can be verified by looking at the last element of the package argument of each ``*_loader`` in https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/loader.py#L1126
+  :Those recognized by ansible-core: ``doc_fragments``, ``modules``, ``module_utils``, ``terminal``, and those listed in :ref:`working_with_plugins`. This list can be verified by looking at the last element of the package argument of each ``*_loader`` in https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/loader.py#L1126
   :plugin_utils: For shared code which is only used controller-side, not in modules.
   :sub_plugins: For other plugins which are managed by plugins inside of collections instead of ansible-core.  We use a subfolder so there aren't conflicts when ansible-core adds new plugin types.
 
   The core team (which maintains ansible-core) has committed not to use these directories for
-  anything which would conflict with the uses we've specified.
+  anything which would conflict with the uses specified here.
 
 Other directories
 -----------------
 
-Collections MUST not use files outside ``meta/``, ``plugins/``, ``roles/`` and ``playbooks/`` in any plugin, role, or playbook that can be called by FQCN, used from other collections, or used from user playbooks and roles.  A collection must work if every file or directory is deleted from the installed collection except those four directories and their contents.
+Collections MUST not use files outside ``meta/``, ``plugins/``, ``roles/`` and ``playbooks/`` in any plugin, role, or playbook that can be called by FQCN, used from other collections, or used from user playbooks and roles. A collection must work if every file or directory is deleted from the installed collection except those four directories and their contents.
 
 Internal plugins, roles and playbooks (artifacts used only in testing, or only to release the collection, or only for some other internal purpose and not used externally) are exempt from this rule and may rely on files in other directories.
 
-Documentation
-~~~~~~~~~~~~~~
+.. _coll_docs_structure_reqs:
+
+Documentation requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All modules and plugins MUST:
 
-* Include a `DOCUMENTATION <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#documentation-block>`_ block.
-* Include an `EXAMPLES <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#examples-block>`_ block (except where not relevant for the plugin type).
-* Use FQCNs when referring to modules, plugins and documentation fragments inside and outside the collection (including ``ansible.builtin.`` for the listed entities from `Ansible-core <https://docs.ansible.com/ansible/devel/collections/ansible/builtin/>`_).
-
+* Include a :ref:`DOCUMENTATION <documentation-block>` block.
+* Include an :ref:`EXAMPLES <examples-block>` block (except where not relevant for the plugin type).
+* Use FQCNs when referring to modules, plugins and documentation fragments inside and outside the collection (including ``ansible.builtin.`` for the listed entities from ansible-core ``builtin `` collection.
+* 
 When using ``version_added`` in the documentation:
 
 * Declare the version of the collection in which the options were added -- NOT the version of Ansible.
@@ -193,8 +195,8 @@ When using ``version_added`` in the documentation:
 Other items:
 
 * The ``CONTRIBUTING.md`` (or ``README.md``) file MUST state what types of contributions (pull requests, feature requests, and so on) are accepted and any relevant contributor guidance. Issues (bugs and feature request) reports must always be accepted.
-* Collections are encouraged to use `links and formatting macros <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#linking-and-other-format-macros-within-module-documentation>`_
-* Including a `RETURN <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#return-block>`_ block for modules is strongly encouraged but not required.
+* Collections are encouraged to use z:ref:`links and formatting macros <linking-and-other-format-macros-within-module-documentation>`
+* Including a :ref:`RETURN <return-block>` block for modules is strongly encouraged but not required.
 
 .. _coll_workflow:
 
