@@ -464,6 +464,44 @@ For example, you can template out a configuration file that is very different be
           -  default.conf
         mypaths: ['search_location_one/somedir/', '/opt/other_location/somedir/']
 
+.. _debugging_conditionals:
+
+Debugging conditionals
+======================
+
+If your conditional ``when`` statement is not behaving as you intended, you can add a ``debug`` statement to determine if the condition evaluates to ``true`` or ``false``. A common cause of unexpected behavior in conditionals is testing an integer as a string or a string as an integer. To debug a conditional statement, add the entire statement as the ``var:`` value in a ``debug`` task. Ansible then shows the test and how the statement evaluates. For example, here is a set of tasks and sample output: 
+
+.. code-block:: yaml
+
+   - name: check value of return code
+     ansible.builtin.debug:
+       var: bar_status.rc
+       
+   - name: check test for rc value as string
+     ansible.builtin.debug:
+       var: bar_status.rc == "127"
+
+   - name: check test for rc value as integer
+     ansible.builtin.debug:
+       var: bar_status.rc == 127
+
+.. code-block:: ansible-output
+
+   TASK [check value of return code] *********************************************************************************
+   ok: [foo-1] => {
+       "bar_status.rc": "127"
+   }
+
+   TASK [check test for rc value as string] **************************************************************************
+   ok: [foo-1] => {
+       "bar_status.rc == \"127\"": false
+   }
+
+   TASK [check test for rc value as integer] *************************************************************************
+   ok: [foo-1] => {
+       "bar_status.rc == 127": true
+   }
+
 .. _commonly_used_facts:
 
 Commonly-used facts
