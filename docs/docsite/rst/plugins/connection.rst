@@ -9,7 +9,7 @@ Connection plugins
 
 Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 
-By default, Ansible ships with several connection plugins. The most commonly used are the :ref:`paramiko SSH<paramiko_ssh_connection>`, native ssh (just called :ref:`ssh<ssh_connection>`), and :ref:`local<local_connection>` connection types.  All of these can be used in playbooks and with :command:`/usr/bin/ansible` to decide how you want to talk to remote machines. If necessary, you can :ref:`create custom connection plugins <developing_connection_plugins>`.
+By default, Ansible ships with several connection plugins. The most commonly used are the :ref:`paramiko SSH<paramiko_connection>`, native ssh (just called :ref:`ssh<ssh_connection>`), and :ref:`local<local_connection>` connection types.  All of these can be used in playbooks and with :command:`/usr/bin/ansible` to decide how you want to talk to remote machines. If necessary, you can :ref:`create custom connection plugins <developing_connection_plugins>`.
 
 The basics of these connection types are covered in the :ref:`getting started<intro_getting_started>` section.
 
@@ -43,7 +43,7 @@ Plugins are self-documenting. Each plugin should document its configuration opti
 :ref:`ansible_host<magic_variables_and_hostvars>`
     The name of the host to connect to, if different from the :ref:`inventory <intro_inventory>` hostname.
 :ref:`ansible_port<faq_setting_users_and_ports>`
-    The ssh port number, for :ref:`ssh <ssh_connection>` and :ref:`paramiko_ssh <paramiko_ssh_connection>` it defaults to 22.
+    The ssh port number, for :ref:`ssh <ssh_connection>` and :ref:`paramiko_ssh <paramiko_connection>` it defaults to 22.
 :ref:`ansible_user<faq_setting_users_and_ports>`
     The default user name to use for log in. Most plugins default to the 'current user running Ansible'.
 
