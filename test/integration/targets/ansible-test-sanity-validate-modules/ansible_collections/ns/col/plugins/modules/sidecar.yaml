@@ -17,6 +17,9 @@ DOCUMENTATION:
       default: foo
   author:
   - Ansible Core Team
+  seealso:
+  - plugin: ns.col.import_order_lookup
+    plugin_type: looup
 
 EXAMPLES: |
   - name: example for sidecar
