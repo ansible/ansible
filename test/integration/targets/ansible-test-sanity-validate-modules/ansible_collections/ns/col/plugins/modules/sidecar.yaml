@@ -19,7 +19,7 @@ DOCUMENTATION:
   - Ansible Core Team
   seealso:
   - plugin: ns.col.import_order_lookup
-    plugin_type: looup
+    plugin_type: lookup
 
 EXAMPLES: |
   - name: example for sidecar
