@@ -73,7 +73,7 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
         tokens = tokenize.generate_tokens(f.readline)
         for token in tokens:
 
-            # found lable that looks like variable
+            # found label that looks like variable
             if token.type == tokenize.NAME:
 
                 # label is expected value, in correct place and has not been seen before
