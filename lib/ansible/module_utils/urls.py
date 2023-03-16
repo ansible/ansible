@@ -1309,7 +1309,7 @@ class Request:
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
                  ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
         """This class works somewhat similarly to the ``Session`` class of from requests
-        by defining a cookiejar that an be used across requests as well as cascaded defaults that
+        by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
 
         For documentation of params, see ``Request.open``
