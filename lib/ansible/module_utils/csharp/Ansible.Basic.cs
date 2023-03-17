@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Threading;
 #if CORECLR
 using Newtonsoft.Json;
 #else
@@ -1445,11 +1446,47 @@ namespace Ansible.Basic
             foreach (string path in cleanupFiles)
             {
                 if (File.Exists(path))
-                    File.Delete(path);
+                    FileDeleteWithBackoff(path);
                 else if (Directory.Exists(path))
                     Directory.Delete(path, true);
             }
             cleanupFiles = new List<string>();
+        }
+
+        static bool FileDeleteWithBackoff(string path, int maxdelay_ms = 500)
+        {
+            int delay_ms = 5;
+            int backoff_factor = 2;
+
+            while (delay_ms < maxdelay_ms)
+            {
+                try
+                {
+                    File.Delete(path);
+                    return true;
+                }
+                catch (IOException ex)
+                {
+                    if (IsFileInUse(ex))
+                    {
+                        // Wait an exponential bit longer to try again
+                        Thread.Sleep(delay_ms);
+                        delay_ms *= backoff_factor;
+                    }
+                    else
+                        throw ex;
+                }
+            }
+            return false;
+        }
+
+        static bool IsFileInUse(IOException ex)
+        {
+            const int ERROR_SHARING_VIOLATION = 0x20;
+            const int ERROR_LOCK_VIOLATION = 0x21;
+            int errorCode = ex.HResult & 0x0000FFFF;
+
+            return errorCode == ERROR_SHARING_VIOLATION || errorCode == ERROR_LOCK_VIOLATION;
         }
 
         private string FormatOptionsContext(string msg, string prefix = " ")
