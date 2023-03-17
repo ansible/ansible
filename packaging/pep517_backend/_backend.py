@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import typing as t
@@ -130,6 +131,19 @@ def build_sdist(  # noqa: WPS210, WPS430
                     version_number=version_number,
                 )
                 rst_in.unlink()
+
+        Path('pyproject.toml').write_text(
+            re.sub(
+                r"""(?x)
+                backend-path\s=\s\[  # value is a list of double-quoted strings
+                    [^]]+
+                ].*\n
+                build-backend\s=\s"[^"]+".*\n  # value is double-quoted
+                """,
+                'build-backend = "setuptools.build_meta"\n',
+                Path('pyproject.toml').read_text(),
+            )
+        )
 
         built_sdist_basename = _setuptools_build_sdist(
             sdist_directory=sdist_directory,
