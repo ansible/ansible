@@ -94,9 +94,16 @@ options:
   force_basic_auth:
     description:
       - Force the sending of the Basic authentication header upon initial request.
-      - The library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail.
+      - When this setting is C(false), this module will first try an unauthenticated request, and when the server replies
+        with an C(HTTP 401) error, it will submit the Basic authentication header.
+      - When this setting is C(true), this module will immediately send a Basic authentication header on the first
+        request.
+      - "Use this setting in any of the following scenarios:"
+      - You know the webservice endpoint always requires HTTP Basic authentication, and you want to speed up your
+        requests by eliminating the first roundtrip.
+      - The web service does not properly send an HTTP 401 error to your client, so Ansible's HTTP library will not
+        properly respond with HTTP credentials, and logins will fail.
+      - The webservice bans or rate-limits clients that cause any HTTP 401 errors.
     type: bool
     default: no
   follow_redirects:
