@@ -448,7 +448,7 @@ import shutil
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule, sanitize_keys
+from ansible.module_utils.basic import AnsibleModule, sanitize_keys, env_fallback
 from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
@@ -613,7 +613,7 @@ def main():
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', elements='int', default=[200]),
-        timeout=dict(type='int', default=30),
+        timeout=dict(type='int', default=30, fallback=(env_fallback, ["URI_TIMEOUT"])),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
