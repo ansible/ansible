@@ -93,21 +93,26 @@ To work with documentation on your local machine, you need to have python-3.9 or
 .. _Ansible dependencies: https://github.com/ansible/ansible/blob/devel/requirements.txt
 .. _documentation dependencies: https://github.com/ansible/ansible/blob/devel/docs/docsite/requirements.txt
 
-.. code-block:: bash
+Drop the ``--user`` option in the following commands if you use a virtual environment (venv/virtenv).
 
-    pip install --user -r requirements.txt
-    pip install --user -r docs/docsite/requirements.txt
+#. Upgrade pip before installing dependencies (recommended).
 
-The :file:`docs/docsite/requirements.txt` file allows a wide range of versions and may install new releases of required packages. New releases of these packages may cause problems with the Ansible docs build. If you want to install tested versions of these dependencies, use :file:`test/sanity/code-smell/docs-build.requirements.txt` instead, which matches the dependencies used by CI:
+   .. code-block:: bash
 
-.. code-block:: bash
+      pip install --user --upgrade pip
 
-    pip install --user -r requirements.txt
-    pip install --user -r test/sanity/code-smell/docs-build.requirements.txt
+#. Install Ansible dependencies.
 
+   .. code-block:: bash
 
+      pip install --user -r requirements.txt
 
-You can drop ``--user`` if you have set up a virtual environment (venv/virtenv). 
+#. Install either the unpinned or tested documentation dependencies.
+
+   .. code-block:: bash
+
+    pip install --user -r docs/docsite/requirements.txt # This file installs unpinned versions that can cause problems with the Ansible docs build.
+    pip install --user -r test/sanity/code-smell/docs-build.requirements.txt # This file installs tested dependency versions that are used by CI.
 
 .. note::
 

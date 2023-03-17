@@ -28,7 +28,7 @@ EXAMPLES: |
   - name: save templated unvaulted data
     template: src=dump_template_data.j2 dest=/some/key/clear.txt
     vars:
-      template_data: '{{ secretdata|uvault(vaultsecret) }}'
+      template_data: '{{ secretdata|unvault(vaultsecret) }}'
 
 RETURN:
   _value:
