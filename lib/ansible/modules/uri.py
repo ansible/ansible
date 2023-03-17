@@ -613,7 +613,7 @@ def main():
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', elements='int', default=[200]),
-        timeout=dict(type='int', default=30, fallback=(env_fallback, ["URI_TIMEOUT"])),
+        timeout=dict(type='int', default=30, fallback=(env_fallback, ['URI_TIMEOUT'])),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
