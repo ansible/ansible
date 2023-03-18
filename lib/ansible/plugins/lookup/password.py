@@ -200,7 +200,7 @@ def _parse_content(content):
     ident = None
 
     salt_slug = u' salt='
-    ident_slug= u' ident='
+    ident_slug = u' ident='
     rem = u''
     try:
         sep = content.rindex(salt_slug)
@@ -358,6 +358,8 @@ class LookupModule(LookupBase):
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
             ident = None
+            first_process = None
+            lockfile = None
 
             try:
                 # make sure only one process finishes all the job first
