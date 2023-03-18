@@ -45,12 +45,6 @@
       - result is not failed
       - '"FOOBAR-CHAIN" in result.stdout'
 
-- name: flush the foobar chain
-  become: true
-  iptables:
-    chain: FOOBAR-CHAIN
-    flush: true
-
 - name: delete the foobar chain
   become: true
   iptables:
