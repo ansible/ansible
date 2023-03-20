@@ -297,7 +297,7 @@ Also note that there are strict rules for how ``O()`` and ``RV()`` can and must 
 
 Option names can refer to suboptions by listing the path to the option separated by dots. For example, if you have an option ``foo`` with suboption ``bar``, then you must use ``O(foo.bar)`` to reference that suboption. You can add array indications like ``O(foo[].bar)`` or even ``O(foo[-1].bar)`` to indicate specific list elements. Trailing ``[]`` to option name parts will be removed including all text inbetween them to determine the real name of the option.
 
-The same syntaxes can be used for ``RV()``, except that these will refer to return value names instead of option names. So for example ``RV(ansible.builtin.service_facts#module:ansible_facts.services)`` refers to the ``ansible_facts.services`` fact returned by the ``ansible.builtin.service_facts`` module.
+The same syntaxes can be used for ``RV()``, except that these will refer to return value names instead of option names. So for example ``RV(ansible.builtin.service_facts#module:ansible_facts.services)`` refers to the :ref:`ansible_facts.services fact <ansible_collections.ansible.builtin.service_facts_module__return-ansible_facts/services>` returned by the :ref:`ansible.builtin.service_facts module <ansible_collections.ansible.builtin.service_facts_module>`.
 
 Format macros within module documentation
 -----------------------------------------
