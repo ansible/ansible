@@ -27,7 +27,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
-from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.api import GalaxyAPI, GalaxyError
 from ansible.galaxy.collection import (
     build_collection,
     download_collections,
@@ -1214,7 +1214,7 @@ class GalaxyCLI(CLI):
                 remote_data = None
                 try:
                     remote_data = self.api.lookup_role_by_name(role, False)
-                except AnsibleError as e:
+                except GalaxyError as e:
                     if e.http_code == 400 and 'Bad Request' in e.message:
                         # Role does not exist in Ansible Galaxy
                         data = u"- the role %s was not found" % role
