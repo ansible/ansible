@@ -204,6 +204,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   * A list of references to other modules, documentation or Internet resources
   * In Ansible 2.10 and later, references to modules must use  the FQCN or ``ansible.builtin`` for modules in ``ansible-core``.
+  * Plugin references are supported since ansible-core 2.15.
   * A reference can be one of the following formats:
 
 
@@ -217,6 +218,15 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         # Reference by module name, including description
         - module: cisco.aci.aci_tenant
           description: ACI module to create tenants on a Cisco ACI fabric.
+
+        # Reference by plugin name
+        - plugin: ansible.builtin.file
+          plugin_type: lookup
+
+        # Reference by plugin name, including description
+        - plugin: ansible.builtin.file
+          plugin_type: lookup
+          description: You can use the ansible.builtin.file lookup to read files on the controller.
 
         # Reference by rST documentation anchor
         - ref: aci_guide
@@ -251,7 +261,8 @@ You can link from your module documentation to other module docs, other resource
 * ``L()`` for links with a heading. For example: ``See L(Ansible Automation Platform,https://www.ansible.com/products/automation-platform).`` As of Ansible 2.10, do not use ``L()`` for relative links between Ansible documentation and collection documentation.
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/automation-platform) for an overview.``
 * ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
-* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``.
+* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``. A FQCN **must** be used, short names will create broken links; use ``ansible.builtin`` for modules in ansible-core.
+* ``P()`` for plugin names. For example: ``See also M(ansible.builtin.file#lookup) or M(community.general.json_query#filter)``. This is supported since ansible-core 2.15. FQCNs must be used; use ``ansible.builtin`` for plugins in ansible-core.
 
 .. note::
 
@@ -274,7 +285,19 @@ You can use semantic markup to highlight option names, option values, and enviro
 
 * ``O()`` for option names, whether mentioned alone or with values. For example: ``Required if O(state=present).`` and ``Use with O(force) to require secure access.``
 * ``V()`` for option values when mentioned alone. For example: ``Possible values include V(monospace) and V(pretty).``
+* ``RV()`` for return value names, whether mentioned alone or with values. For example: ``The module returns RV(changed=true) in case of changes.`` and ``Use the RV(stdout) return value for standard output.``
 * ``E()`` for environment variables. For example: ``If not set, the environment variable E(ACME_PASSWORD) will be used.``
+
+The parameters for these formatting functions can use quoting with backslashes: ``V(foo(bar="a\\b"\), baz)`` results in the formatted value ``foo(bar="a\b"), baz)``.
+
+Also note that there are strict rules for how ``O()`` and ``RV()`` can and must be used. This allows documentation renderers to create hyperlinks to the documentation for the options resp. return values. The allowed syntaxes are as following:
+- To reference an option for the current plugin/module, use ``O(option)`` and ``O(option=name)``.
+- To reference an option for *another* plugin/module, use ``O(plugin.fqcn.name#type:option)`` and ``O(plugin.fqcn.name#type:option=name)``. For modules, use ``type=module``. The FQCN and plugin type can be ignored by the documentation renderer, turned into a link to that plugin, or even directly to that plugin's option.
+- To reference options that do not exist (for example, options that were removed in an earlier version), use ``O(ignore:option)`` and ``O(ignore:option=name)``. The ``ignore:`` part will not be shown to the user by documentation rendering.
+
+Option names can refer to suboptions by listing the path to the option separated by dots. For example, if you have an option ``foo`` with suboption ``bar``, then you must use ``O(foo.bar)`` to reference that suboption. You can add array indications like ``O(foo[].bar)`` or even ``O(foo[-1].bar)`` to indicate specific list elements. Trailing ``[]`` to option name parts will be removed including all text inbetween them to determine the real name of the option.
+
+The same syntaxes can be used for ``RV()``, except that these will refer to return value names instead of option names. So for example ``RV(ansible.builtin.service_facts#module:ansible_facts.services)`` refers to the ``ansible_facts.services`` fact returned by the ``ansible.builtin.service_facts`` module.
 
 Format macros within module documentation
 -----------------------------------------
@@ -285,6 +308,8 @@ You can also use standard Python formatting to control the look of other terms i
 * ``B()`` for bold text.
 * ``I()`` for italic text.
 * ``HORIZONTALLINE`` for a horizontal rule (the ``<hr>`` html tag) to separate long descriptions.
+
+Note that ``C()``, ``B()``, and ``I()`` do **not allow quoting**, and thus cannot contain the value ``)`` as it always ends the formatting sequence. If you need to use ``)`` inside ``C()``, we recommend to use ``V()`` instead; see the above section on semantic markup.
 
 .. _module_docs_fragments:
 
