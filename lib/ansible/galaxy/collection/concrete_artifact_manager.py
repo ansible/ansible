@@ -6,7 +6,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import functools
 import json
 import os
 import tarfile
@@ -444,7 +443,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
 # FIXME: use random subdirs while preserving the file names
 @retry_with_delays_and_condition(
-    backoff_iterator=functools.partial(generate_jittered_backoff, retries=6, delay_base=2, delay_threshold=40),
+    backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
     should_retry_error=should_retry_error
 )
 def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
