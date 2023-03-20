@@ -52,6 +52,12 @@ def cache_lock(func):
 
 
 def should_retry_error(exception):
+    # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
+    # Since 403 could reflect the actual problem (such as an expired token), we should
+    # not retry by default.
+    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+        return True
+
     if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
         # URLError is often a proxy for an underlying error, handle wrapped exceptions
         if isinstance(orig_exc, URLError):
@@ -61,12 +67,6 @@ def should_retry_error(exception):
         # Note: socket.timeout is only required for Py3.9
         if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead, socket.timeout)):
             return True
-
-    # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
-    # Since 403 could reflect the actual problem (such as an expired token), we should
-    # not retry by default.
-    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
-        return True
 
     return False
 
