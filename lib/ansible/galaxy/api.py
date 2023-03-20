@@ -36,10 +36,11 @@ from ansible.utils.path import makedirs_safe
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
-RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
+RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
     429,  # Too Many Requests
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
-]
+    502,  # Common error from galaxy that may represent any number of transient backend issues
+}
 
 
 def cache_lock(func):
