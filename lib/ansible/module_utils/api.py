@@ -145,7 +145,7 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
     :param backoff_iterator: An iterable of delays in seconds.
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
     """
-    def _emit_isolated_iterator_copies(original_iterator):  # type: (t.Iterable[t.Any]) -> t.NoReturn
+    def _emit_isolated_iterator_copies(original_iterator):  # type: (t.Iterable[t.Any]) -> t.Generator
         # Ref: https://stackoverflow.com/a/30232619/595220
         _copiable_iterator, _first_iterator_copy = itertools.tee(original_iterator)
         yield _first_iterator_copy
