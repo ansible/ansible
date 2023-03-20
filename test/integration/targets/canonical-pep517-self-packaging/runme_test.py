@@ -218,10 +218,6 @@ def test_installing_sdist_build_with_modern_deps_to_old_env(
                 venv_python_exe, 'setup.py', 'sdist',
                 env_vars={'PATH': environ['PATH']},
             )
-            run_with_venv_python(
-                venv_python_exe, 'setup.py', 'install',
-                env_vars={'PATH': environ['PATH']},
-            )
     else:
         pip_install(
             venv_python_exe, str(tmp_path_sdist_w_modern_tools), '--no-deps',
