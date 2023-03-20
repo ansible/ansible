@@ -207,6 +207,12 @@ def test_installing_sdist_build_with_modern_deps_to_old_env(
         with TarFile.gzopen(tmp_path_sdist_w_modern_tools) as sdist_fd:
             sdist_fd.extractall(path=tmp_dir_unpacked_sdist_root)
 
+        pip_install(
+            venv_python_exe, 'setuptools',
+            env_vars={
+                'PIP_CONSTRAINT': str(LOWEST_SUPPORTED_BUILD_DEPS_FILE),
+            },
+        )
         with _chdir_cm(tmp_dir_unpacked_sdist_path):
             run_with_venv_python(
                 venv_python_exe, 'setup.py', 'sdist',
@@ -219,6 +225,9 @@ def test_installing_sdist_build_with_modern_deps_to_old_env(
     else:
         pip_install(
             venv_python_exe, str(tmp_path_sdist_w_modern_tools), '--no-deps',
+            env_vars={
+                'PIP_CONSTRAINT': str(LOWEST_SUPPORTED_BUILD_DEPS_FILE),
+            },
         )
 
     # Smoke test — installing an sdist with pip that does not support invoking
