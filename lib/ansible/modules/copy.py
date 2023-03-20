@@ -616,6 +616,8 @@ def main():
                 e.result['msg'] += ' Could not copy to {0}'.format(dest)
                 module.fail_json(**e.results)
 
+            if module.check_mode:
+                module.exit_json(msg='dest directory %s would be created' % dirname, changed=True, src=src)
             os.makedirs(b_dirname)
             directory_args = module.load_file_common_arguments(module.params)
             directory_mode = module.params["directory_mode"]
@@ -814,9 +816,8 @@ def main():
     if backup_file:
         res_args['backup_file'] = backup_file
 
-    if not module.check_mode:
-        file_args = module.load_file_common_arguments(module.params, path=dest)
-        res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+    file_args = module.load_file_common_arguments(module.params, path=dest)
+    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
 
