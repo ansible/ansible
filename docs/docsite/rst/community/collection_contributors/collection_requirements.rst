@@ -155,6 +155,8 @@ Example: `meta/runtime.yml <https://github.com/ansible-collections/collection_te
   * If the collection works with Ansible 2.9, then this should be set to `>=2.9.10`
   * It is usually better to avoid adding `<2.11` as a restriction, since this for example makes it impossible to use the collection with the current ansible-base devel branch (which has version 2.11.0.dev0)
 
+.. _coll_module-reqs:
+
 Modules & Plugins
 ------------------
 
@@ -268,8 +270,8 @@ For more information, refer to the :ref:`Developing modules guidelines <creating
 
 .. _coll_licensing_req:
 
-Licensing
-=========
+Collection licensing requirements
+===================================
 
 .. note::
 
