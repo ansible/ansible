@@ -104,6 +104,7 @@ exclude_patterns = [
     'community/collection_contributors/collection_integration_tests.rst',
     'community/collection_contributors/collection_integration_running.rst',
     'community/collection_contributors/collection_reviewing.rst',
+    'community/collection_contributors/collection_requirements.rst',
     'community/collection_contributors/collection_unit_tests.rst',
     'community/maintainers.rst',
     'community/contributions_collections.rst',

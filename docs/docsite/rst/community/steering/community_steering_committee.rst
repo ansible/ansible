@@ -92,7 +92,7 @@ To submit new collections for inclusion into the Ansible package:
 Depending on a topic you want to discuss with the Community and the Committee, as you prepare your proposal, please consider the requirements established by:
 
 * :ref:`code_of_conduct`.
-* `Ansible Collection Requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
+* :ref:`collections_requirements`.
 * `Ansible Collection Inclusion Checklist <https://github.com/ansible-collections/overview/blob/main/collection_checklist.md>`_.
 
 Community topics workflow
@@ -131,7 +131,7 @@ A person starting the triage:
 Collection inclusion requests workflow
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When reviewing community collection `inclusion requests <https://github.com/ansible-collections/ansible-inclusion/discussions>`_, the Committee members check if a collection adheres to the `Community collection requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
+When reviewing community collection `inclusion requests <https://github.com/ansible-collections/ansible-inclusion/discussions>`_, the Committee members check if a collection adheres to the :ref:`collections_requirements`.
 
 #. A Committee member who conducts the inclusion review copies the `Ansible community collection checklist <https://github.com/ansible-collections/overview/blob/main/collection_checklist.md>`_ into a corresponding `discussion <https://github.com/ansible-collections/ansible-inclusion/discussions>`_.
 
