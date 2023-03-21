@@ -171,6 +171,7 @@ If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\lo
     Write-Verbose "Enabling PS Remoting without checking Network profile."
     Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop
     Write-ProgressLog "Enabled PS Remoting without checking Network profile."
+}
 Else {
     Write-Verbose "PS Remoting is already enabled."
 }
