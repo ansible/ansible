@@ -13,16 +13,13 @@
 ################################################################################
 
 [CmdletBinding()]
-
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
     [int]$CertValidityDays = 3650,
-    [switch]$SkipNetworkProfileCheck = $true,
-    $CreateSelfSignedCert = $true,
-    [switch]$ForceNewSSLCert,
-    [switch]$DisableBasicAuth = $true,
-    [switch]$EnableCredSSP = $true
+    [switch]$ForceNewSSLCert = $true
 )
+
+################################################################################
 
 Function Write-ProgressLog {
     $Message = $args[0]
@@ -115,7 +112,9 @@ Function New-LegacySelfSignedCert {
     return $parsed_cert.Thumbprint
 }
 
-# Setup error handling.
+################################################################################
+
+# Setup error handling
 Trap {
     $_
     Exit 1
@@ -169,17 +168,9 @@ ElseIf ((Get-Service "WinRM").Status -ne "Running") {
 
 # WinRM should be running; check that we have a PS session config.
 If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\localhost\Listener))) {
-    If ($SkipNetworkProfileCheck) {
-        Write-Verbose "Enabling PS Remoting without checking Network profile."
-        Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop
-        Write-ProgressLog "Enabled PS Remoting without checking Network profile."
-    }
-    Else {
-        Write-Verbose "Enabling PS Remoting."
-        Enable-PSRemoting -Force -ErrorAction Stop
-        Write-ProgressLog "Enabled PS Remoting."
-    }
-}
+    Write-Verbose "Enabling PS Remoting without checking Network profile."
+    Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop
+    Write-ProgressLog "Enabled PS Remoting without checking Network profile."
 Else {
     Write-Verbose "PS Remoting is already enabled."
 }
@@ -198,7 +189,7 @@ if ($token_value -ne 1) {
     New-ItemProperty -Path $token_path -Name $token_prop_name -Value 1 -PropertyType DWORD > $null
 }
 
-# Make sure there is a SSL listener.
+# Make sure there is a SSL listener
 $listeners = Get-ChildItem WSMan:\localhost\Listener
 If (!($listeners | Where-Object { $_.Keys -like "TRANSPORT=HTTPS" })) {
     # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
@@ -247,36 +238,92 @@ Else {
     }
 }
 
+# Remove listeners that run over HTTP
+Get-ChildItem -Path WSMan:\localhost\Listener | Where-Object { $_.Keys -contains "Transport=HTTP" } | Remove-Item -Recurse -Force
+
+# Disable basic auth
 $basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Basic" }
-If ($DisableBasicAuth) {
-    If (($basicAuthSetting.Value) -eq $true) {
-        Write-Verbose "Disabling basic auth support."
-        Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
-        Write-ProgressLog "Disabled basic auth support."
-    }
-    Else {
-        Write-Verbose "Basic auth is already disabled."
-    }
+If (($basicAuthSetting.Value) -eq $true) {
+    Write-Verbose "Disabling basic auth support."
+    Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
+    Write-ProgressLog "Disabled basic auth support."
 }
 Else {
-    If (($basicAuthSetting.Value) -eq $false) {
-        Write-Verbose "Enabling basic auth support."
-        Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
-        Write-ProgressLog "Enabled basic auth support."
-    }
-    Else {
-        Write-Verbose "Basic auth is already enabled."
-    }
+    Write-Verbose "Basic auth is already disabled."
 }
 
-If ($EnableCredSSP) {
-    # Check for CredSSP authentication
-    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "CredSSP" }
-    If (($credsspAuthSetting.Value) -eq $false) {
-        Write-Verbose "Enabling CredSSP auth support."
-        Enable-WSManCredSSP -role server -Force
-        Write-ProgressLog "Enabled CredSSP auth support."
-    }
+# Disable Kerberos auth
+$kerberosAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Kerberos" }
+If (($kerberosAuthSetting.Value) -eq $true) {
+    Write-Verbose "Disabling Kerberos auth support."
+    Set-Item -Path "WSMan:\localhost\Service\Auth\Kerberos" -Value $false
+    Write-ProgressLog "Disabled Kerberos auth support."
+}
+Else {
+    Write-Verbose "Kerberos auth is already disabled."
+}
+
+# Disable Negotiate auth
+$negotiateAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Negotiate" }
+If (($negotiateAuthSetting.Value) -eq $true) {
+    Write-Verbose "Disabling Negotiate auth support."
+    Set-Item -Path "WSMan:\localhost\Service\Auth\Negotiate" -Value $false
+    Write-ProgressLog "Disabled Negotiate auth support."
+}
+Else {
+    Write-Verbose "Negotiate auth is already disabled."
+}
+
+# Disable Certificate auth
+$certificateAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Certificate" }
+If (($certificateAuthSetting.Value) -eq $true) {
+    Write-Verbose "Disabling Certificate auth support."
+    Set-Item -Path "WSMan:\localhost\Service\Auth\Certificate" -Value $false
+    Write-ProgressLog "Disabled Certificate auth support."
+}
+Else {
+    Write-Verbose "Certificate auth is already disabled."
+}
+
+# Disable AllowUnencrypted
+$allowUnencryptedSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "AllowUnencrypted" }
+If (($allowUnencryptedSetting.Value) -eq $true) {
+    Write-Verbose "Disabling AllowUnencrypted support."
+    Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
+    Write-ProgressLog "Disabled AllowUnencrypted support."
+}
+Else {
+    Write-Verbose "AllowUnencrypted is already disabled."
+}
+
+# Disable EnableCompatibilityHttpListener
+$enableCompatibilityHttpListenerSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "EnableCompatibilityHttpListener" }
+If (($enableCompatibilityHttpListenerSetting.Value) -eq $true) {
+    Write-Verbose "Disabling EnableCompatibilityHttpListener support."
+    Set-Item -Path "WSMan:\localhost\Service\EnableCompatibilityHttpListener" -Value $false
+    Write-ProgressLog "Disabled EnableCompatibilityHttpListener support."
+}
+Else {
+    Write-Verbose "EnableCompatibilityHttpListener is already disabled."
+}
+
+# Disable EnableCompatibilityHttpsListener
+$enableCompatibilityHttpsListenerSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "EnableCompatibilityHttpsListener" }
+If (($enableCompatibilityHttpsListenerSetting.Value) -eq $true) {
+    Write-Verbose "Disabling EnableCompatibilityHttpsListener support."
+    Set-Item -Path "WSMan:\localhost\Service\EnableCompatibilityHttpsListener" -Value $false
+    Write-ProgressLog "Disabled EnableCompatibilityHttpsListener support."
+}
+Else {
+    Write-Verbose "EnableCompatibilityHttpsListener is already disabled."
+}
+
+# Enable CredSSP auth
+$credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "CredSSP" }
+If (($credsspAuthSetting.Value) -eq $false) {
+    Write-Verbose "Enabling CredSSP auth support."
+    Enable-WSManCredSSP -role server -Force
+    Write-ProgressLog "Enabled CredSSP auth support."
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
@@ -296,7 +343,10 @@ Else {
     Write-Verbose "Firewall rule already exists to allow WinRM HTTPS."
 }
 
-# Test a remoting connection to localhost, which should work.
+################################################################################
+# Test a remoting connection to localhost, which should work
+################################################################################
+
 $httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock { $using:env:COMPUTERNAME } -ErrorVariable httpError -ErrorAction SilentlyContinue
 $httpsOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
 
