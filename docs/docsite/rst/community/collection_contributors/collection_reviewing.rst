@@ -39,10 +39,10 @@ Other standards to check for in a PR include:
   * For jinja2 filter and test plugins, check out the `special syntax for changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_.
   * The changelog content contains useful information for end users of the collection.
   
-*  If new files are added with the pull request, they follow the `licensing rules <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#licensing>`_.
+*  If new files are added with the pull request, they follow the :ref:`coll_licensing_req`.
 *  The changes follow the :ref:`Ansible documentation standards <developing_modules_documenting>` and the :ref:`style_guide`.
 *  The changes follow the :ref:`Development conventions <developing_modules_best_practices>`.
-*  If a new plugin is added, it is one of the `allowed plugin types <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules-plugins>`_.
+*  If a new plugin is added, it is one of the :ref:`allowed plugin types <coll_module-reqs>`.
 *  Documentation, examples, and return sections use FQCNs for the ``M(..)`` :ref:`format macros <module_documents_linking>` when referring to modules.
 *  Modules and plugins from ansible-core use ``ansible.builtin.`` as an FQCN prefix when mentioned.
 *  When a new option, module, plugin, or return value is added, the corresponding documentation or return sections use ``version_added:`` containing the *collection* version in which they will be first released.

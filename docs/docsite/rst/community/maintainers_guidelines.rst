@@ -21,7 +21,7 @@ In general, collection maintainers:
 - :ref:`Backport <Backporting>` changes to stable branches.
 - Address or assign issues to appropriate contributors.
 - :ref:`Release collections <Releasing>`.
-- Ensure that collections adhere to the `Collection Requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_,
+- Ensure that collections adhere to the :ref:`collections_requirements`.
 - Track changes announced in `News for collection contributors and maintainers <https://github.com/ansible-collections/news-for-maintainers>`_ and update a collection in accordance with these changes.
 - Subscribe and submit news to the  `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
 - :ref:`Build a healthy community <expanding_community>` to increase the number of active contributors and maintainers around collections.

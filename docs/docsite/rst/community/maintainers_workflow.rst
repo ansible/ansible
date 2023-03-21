@@ -76,7 +76,7 @@ For convenience, backporting can be implemented automatically using GitHub bots 
 Including a collection in Ansible
 -----------------------------------
 
-If a collection is not included in Ansible (not shipped with Ansible package), maintainers can submit the collection for inclusion by creating a discussion under the `ansible-collections/ansible-inclusion repository <https://github.com/ansible-collections/ansible-inclusion>`_. For more information, see the `repository's README <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_, and the `Ansible community package collections requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`.
+If a collection is not included in Ansible (not shipped with Ansible package), maintainers can submit the collection for inclusion by creating a discussion under the `ansible-collections/ansible-inclusion repository <https://github.com/ansible-collections/ansible-inclusion>`_. For more information, see the `repository's README <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_, and the :ref:`Ansible community package collections requirements <collections_requirements>`.
 
 Stepping down as a collection maintainer
 ===========================================
