@@ -1404,7 +1404,9 @@ def release_announcement(repository: str, version: str | None = None, mailto: bo
         webbrowser.open(url)
     else:
         print(f"TO: {recipients}")
-        print(f"SUBJECT: {message.subject}\n{message.body}")
+        print(f"SUBJECT: {message.subject}")
+        print()
+        print(message.body)
 
 
 # endregion
