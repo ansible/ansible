@@ -3,13 +3,27 @@
 from __future__ import annotations
 
 from filecmp import dircmp
-from os import environ
+from os import chdir, environ, PathLike
 from pathlib import Path
 from shutil import rmtree
 from subprocess import check_call, check_output, PIPE
-from sys import executable as current_interpreter
+from sys import executable as current_interpreter, version_info
 from tarfile import TarFile
 import typing as t
+
+try:
+    from contextlib import chdir as _chdir_cm
+except ImportError:
+    from contextlib import contextmanager as _contextmanager
+
+    @_contextmanager
+    def _chdir_cm(path: PathLike) -> t.Iterator[None]:
+        original_wd = Path.cwd()
+        chdir(path)
+        try:
+            yield
+        finally:
+            chdir(original_wd)
 
 import pytest
 
@@ -35,6 +49,8 @@ PKG_DIST_VERSION = next(
 EXPECTED_SDIST_NAME_BASE = f'{DIST_FILENAME_BASE}-{PKG_DIST_VERSION}'
 EXPECTED_SDIST_NAME = f'{EXPECTED_SDIST_NAME_BASE}.tar.gz'
 EXPECTED_WHEEL_NAME = f'{DIST_NAME}-{PKG_DIST_VERSION}-py3-none-any.whl'
+
+IS_PYTHON310_PLUS = version_info[:2] >= (3, 10)
 
 
 def wipe_generated_manpages() -> None:
@@ -117,22 +133,114 @@ def venv_python_exe(tmp_path: Path) -> t.Iterator[Path]:
     rmtree(venv_path)
 
 
+def run_with_venv_python(
+        python_exe: Path, *cli_args: t.Iterable[str],
+        env_vars: t.Dict[str, str] = None,
+) -> str:
+    if env_vars is None:
+        env_vars = {}
+    full_cmd = str(python_exe), *cli_args
+    return check_output(full_cmd, env=env_vars, stderr=PIPE)
+
+
 def build_dists(
         python_exe: Path, *cli_args: t.Iterable[str],
         env_vars: t.Dict[str, str],
 ) -> str:
-    full_cmd = str(python_exe), '-m', 'build', *cli_args
-    return check_output(full_cmd, env=env_vars, stderr=PIPE)
+    return run_with_venv_python(
+        python_exe, '-m', 'build',
+        *cli_args, env_vars=env_vars,
+    )
 
 
 def pip_install(
         python_exe: Path, *cli_args: t.Iterable[str],
         env_vars: t.Dict[str, str] = None,
 ) -> str:
-    if env_vars is None:
-        env_vars = {}
-    full_cmd = str(python_exe), '-m', 'pip', 'install', *cli_args
-    return check_output(full_cmd, env=env_vars, stderr=PIPE)
+    return run_with_venv_python(
+        python_exe, '-m', 'pip', 'install',
+        *cli_args, env_vars=env_vars,
+    )
+
+
+def test_installing_sdist_build_with_modern_deps_to_old_env(
+        venv_python_exe: Path, tmp_path: Path,
+) -> None:
+    pip_install(venv_python_exe, 'build ~= 0.10.0')
+    tmp_dir_sdist_w_modern_tools = tmp_path / 'sdist-w-modern-tools'
+    build_dists(
+        venv_python_exe, '--sdist',
+        '--config-setting=--build-manpages',
+        f'--outdir={tmp_dir_sdist_w_modern_tools!s}',
+        str(SRC_ROOT_DIR),
+        env_vars={
+            'PIP_CONSTRAINT': str(MODERNISH_BUILD_DEPS_FILE),
+        },
+    )
+    tmp_path_sdist_w_modern_tools = (
+        tmp_dir_sdist_w_modern_tools / EXPECTED_SDIST_NAME
+    )
+
+    # Downgrading pip, because v20+ supports in-tree build backends
+    pip_install(venv_python_exe, 'pip ~= 19.3.1')
+
+    # Smoke test — installing an sdist with pip that does not support
+    # in-tree build backends.
+    pip_install(
+        venv_python_exe, str(tmp_path_sdist_w_modern_tools), '--no-deps',
+    )
+
+    # Downgrading pip, because versions that support PEP 517 don't allow
+    # disabling it with `--no-use-pep517` when `build-backend` is set in
+    # the `[build-system]` section of `pyproject.toml`, considering this
+    # an explicit opt-in.
+    if not IS_PYTHON310_PLUS:
+        pip_install(venv_python_exe, 'pip == 18.0')
+
+    # Smoke test — installing an sdist with pip that does not support invoking
+    # PEP 517 interface at all.
+    # In this scenario, pip will run `setup.py install` since `wheel` is not in
+    # the environment.
+    if IS_PYTHON310_PLUS:
+        tmp_dir_unpacked_sdist_root = tmp_path / 'unpacked-sdist'
+        tmp_dir_unpacked_sdist_path = tmp_dir_unpacked_sdist_root / EXPECTED_SDIST_NAME_BASE
+        with TarFile.gzopen(tmp_path_sdist_w_modern_tools) as sdist_fd:
+            sdist_fd.extractall(path=tmp_dir_unpacked_sdist_root)
+
+        pip_install(
+            venv_python_exe, 'setuptools',
+            env_vars={
+                'PIP_CONSTRAINT': str(LOWEST_SUPPORTED_BUILD_DEPS_FILE),
+            },
+        )
+        with _chdir_cm(tmp_dir_unpacked_sdist_path):
+            run_with_venv_python(
+                venv_python_exe, 'setup.py', 'sdist',
+                env_vars={'PATH': environ['PATH']},
+            )
+    else:
+        pip_install(
+            venv_python_exe, str(tmp_path_sdist_w_modern_tools), '--no-deps',
+            env_vars={
+                'PIP_CONSTRAINT': str(LOWEST_SUPPORTED_BUILD_DEPS_FILE),
+            },
+        )
+
+    # Smoke test — installing an sdist with pip that does not support invoking
+    # PEP 517 interface at all.
+    # With `wheel` present, pip will run `setup.py bdist_wheel` and then,
+    # unpack the result.
+    pip_install(venv_python_exe, 'wheel')
+    if IS_PYTHON310_PLUS:
+        with _chdir_cm(tmp_dir_unpacked_sdist_path):
+            run_with_venv_python(
+                venv_python_exe, 'setup.py', 'bdist_wheel',
+                env_vars={'PATH': environ['PATH']},
+            )
+    else:
+        pip_install(
+            venv_python_exe, str(tmp_path_sdist_w_modern_tools), '--no-deps',
+        )
 
 
 def test_dist_rebuilds_with_manpages_premutations(
@@ -209,7 +317,19 @@ def test_dist_rebuilds_with_manpages_premutations(
     # Checking that the expected sdist got created
     # from the previous unpacked sdist...
     assert tmp_path_rebuilt_sdist.exists()
-    assert contains_man1_pages(tmp_path_rebuilt_sdist)
+    # NOTE: The following assertion is disabled due to the fact that, when
+    # NOTE: building an sdist from the original source checkout, the build
+    # NOTE: backend replaces itself with pure setuptools in the resulting
+    # NOTE: sdist, and the following rebuilds from that sdist are no longer
+    # NOTE: able to process the custom config settings that are implemented in
+    # NOTE: the in-tree build backend. It is expected that said
+    # NOTE: `pyproject.toml` mutation change will be reverted once all of the
+    # NOTE: supported `ansible-core` versions ship wheels, meaning that the
+    # NOTE: end-users won't be building the distribution from sdist on install.
+    # NOTE: Another case, when it can be reverted is declaring pip below v20
+    # NOTE: unsupported — it is the first version to support in-tree build
+    # NOTE: backends natively.
+    # assert contains_man1_pages(tmp_path_rebuilt_sdist)  # FIXME: See #80255
     rebuilt_sdist_path = unpack_sdist(
         tmp_path_rebuilt_sdist,
         tmp_dir_rebuilt_sdist / 'src',
