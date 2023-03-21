@@ -17,6 +17,7 @@ import tarfile
 import time
 import threading
 
+from http import HTTPStatus
 from http.client import BadStatusLine, IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
@@ -37,9 +38,9 @@ display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
 RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
-    429,  # Too Many Requests
+    HTTPStatus.TOO_MANY_REQUESTS,
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
-    502,  # Common error from galaxy that may represent any number of transient backend issues
+    HTTPStatus.BAD_GATEWAY,  # Common error from galaxy that may represent any number of transient backend issues
 }
 
 
