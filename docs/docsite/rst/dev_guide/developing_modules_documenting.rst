@@ -281,7 +281,9 @@ You can link from your module documentation to other module docs, other resource
 Semantic markup within module documentation
 -------------------------------------------
 
-You can use semantic markup to highlight option names, option values, and environment variables. The publication process formats these terms in a uniform way. With semantic markup, we can change the look of the output without changing the underlying code. The correct formats for semantic markup are:
+You can use semantic markup to highlight option names, option values, and environment variables. The markup processor formats these highlighted terms in a uniform way. With semantic markup, we can modify how the output looks without changing underlying code.
+
+The correct formats for semantic markup are as follows:
 
 * ``O()`` for option names, whether mentioned alone or with values. For example: ``Required if O(state=present).`` and ``Use with O(force) to require secure access.``
 * ``V()`` for option values when mentioned alone. For example: ``Possible values include V(monospace) and V(pretty).``
