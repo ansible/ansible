@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: randommodule
 short_description: A random module
@@ -18,22 +18,22 @@ deprecated:
     removed_in: '3.0.0'
 options:
     test:
-        description: Some text.
+        description: Some text. Consider not using O(ignore:foo=bar).
         type: str
         version_added: 1.2.0
     sub:
-        description: Suboptions.
+        description: Suboptions. Contains O(sub.subtest), which can be set to V(123). You can use E(TEST_ENV) to set this.
         type: dict
         suboptions:
             subtest:
-                description: A suboption.
+                description: A suboption. Not compatible to O(ansible.builtin.copy#module:path=c:\\foo\(1\).txt).
                 type: int
                 version_added: 1.1.0
         # The following is the wrong syntax, and should not get processed
         # by add_collection_to_versions_and_dates()
         options:
             subtest2:
-                description: Another suboption.
+                description: Another suboption. Useful when P(ansible.builtin.shuffle#filter) is used with value V([a,b,\),d\\]).
                 type: float
                 version_added: 1.1.0
         # The following is not supported in modules, and should not get processed
@@ -53,7 +53,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 '''
 
-RETURN = '''
+RETURN = r'''
 z_last:
     description: A last result.
     type: str
@@ -63,7 +63,8 @@ z_last:
 m_middle:
     description:
         - This should be in the middle.
-        - Has some more data
+        - Has some more data.
+        - Check out RV(m_middle.suboption) and compare it to RV(a_first=foo) and RV(community.general.foo#lookup:value).
     type: dict
     returned: success and 1st of month
     contains:
@@ -74,7 +75,7 @@ m_middle:
             version_added: 1.4.0
 
 a_first:
-    description: A first result.
+    description: A first result. Use RV(a_first=foo\(bar\\baz\)bam).
     type: str
     returned: success
 '''
