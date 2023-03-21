@@ -12,6 +12,7 @@ Ansible Collections Contributor Guide
    create_pr_quick_start
    collection_contributors/test_index
    collection_contributors/collection_reviewing
+   collection_contributors/collection_requirements
    maintainers
    contributing_maintained_collections
    steering/steering_index
