@@ -304,7 +304,7 @@ The same syntaxes can be used for ``RV()``, except that these will refer to retu
 Format macros within module documentation
 -----------------------------------------
 
-While it is possible to use standard Python formatting macros to control the look of other terms in module documentation, you should do so sparingly.
+While it is possible to use standard Ansible formatting macros to control the look of other terms in module documentation, you should do so sparingly.
 
 Possible macros include the following:
 
