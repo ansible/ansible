@@ -946,11 +946,15 @@ def create_release_announcement(upstream: Remote, repository: str, version: Vers
 # region Templates
 
 
-RELEASE_ANNOUNCEMENT_RECIPIENTS = (
+FINAL_RELEASE_ANNOUNCEMENT_RECIPIENTS = [
     "ansible-announce@googlegroups.com",
     "ansible-project@googlegroups.com",
     "ansible-devel@googlegroups.com",
-)
+]
+
+PRE_RELEASE_ANNOUNCEMENT_RECIPIENTS = [
+    "ansible-devel@googlegroups.com",
+]
 
 GITHUB_RELEASE_NOTES_TEMPLATE = """
 # Changelog
@@ -1382,7 +1386,8 @@ def release_announcement(repository: str, version: str | None = None, mailto: bo
     parsed_version = get_ansible_version(version, mode=VersionMode.STRIP_POST)
     upstream = get_remotes().upstream
     message = create_release_announcement(upstream, repository, parsed_version, validate)
-    recipients = ", ".join(RELEASE_ANNOUNCEMENT_RECIPIENTS)
+    recipient_list = PRE_RELEASE_ANNOUNCEMENT_RECIPIENTS if parsed_version.is_prerelease else FINAL_RELEASE_ANNOUNCEMENT_RECIPIENTS
+    recipients = ", ".join(recipient_list)
 
     if mailto:
         to = urllib.parse.quote(recipients)
