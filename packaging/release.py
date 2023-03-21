@@ -239,20 +239,16 @@ class CommandFramework:
         func_args.update({name: value for name, value in kwargs.items() if name in signature.parameters})
         printable_args = ", ".join(f"{name}={repr(value)}" for name, value in func_args.items())
         label = f"{self._format_command_name(func)}({printable_args})"
-        failed = False
 
         display.show(f"==> {label}", color=Display.BLUE)
 
         try:
             func(**func_args)
         except BaseException:
-            failed = True
+            display.show(f"!!! {label}", color=Display.RED)
             raise
-        finally:
-            if failed:
-                display.show(f"!!! {label}", color=Display.RED)
-            else:
-                display.show(f"<== {label}", color=Display.BLUE)
+
+        display.show(f"<== {label}", color=Display.BLUE)
 
     @staticmethod
     def _format_command_name(func: C) -> str:
