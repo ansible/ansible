@@ -290,19 +290,23 @@ You can use semantic markup to highlight option names, option values, and enviro
 
 The parameters for these formatting functions can use quoting with backslashes: ``V(foo(bar="a\\b"\), baz)`` results in the formatted value ``foo(bar="a\b"), baz)``.
 
-Also note that there are strict rules for how ``O()`` and ``RV()`` can and must be used. This allows documentation renderers to create hyperlinks to the documentation for the options resp. return values. The allowed syntaxes are as following:
+Rules for using ``O()`` and ``RV()`` are very strict. You must follow syntax rules so that documentation renderers can create hyperlinks for the options resp. return values.
+
+The allowed syntaxes are as follows:
 - To reference an option for the current plugin/module, use ``O(option)`` and ``O(option=name)``.
 - To reference an option for *another* plugin/module, use ``O(plugin.fqcn.name#type:option)`` and ``O(plugin.fqcn.name#type:option=name)``. For modules, use ``type=module``. The FQCN and plugin type can be ignored by the documentation renderer, turned into a link to that plugin, or even directly to that plugin's option.
 - To reference options that do not exist (for example, options that were removed in an earlier version), use ``O(ignore:option)`` and ``O(ignore:option=name)``. The ``ignore:`` part will not be shown to the user by documentation rendering.
 
 Option names can refer to suboptions by listing the path to the option separated by dots. For example, if you have an option ``foo`` with suboption ``bar``, then you must use ``O(foo.bar)`` to reference that suboption. You can add array indications like ``O(foo[].bar)`` or even ``O(foo[-1].bar)`` to indicate specific list elements. Trailing ``[]`` to option name parts will be removed including all text inbetween them to determine the real name of the option.
 
-The same syntaxes can be used for ``RV()``, except that these will refer to return value names instead of option names. So for example ``RV(ansible.builtin.service_facts#module:ansible_facts.services)`` refers to the :ref:`ansible_facts.services fact <ansible_collections.ansible.builtin.service_facts_module__return-ansible_facts/services>` returned by the :ref:`ansible.builtin.service_facts module <ansible_collections.ansible.builtin.service_facts_module>`.
+The same syntaxes can be used for ``RV()``, except that these will refer to return value names instead of option names; for example ``RV(ansible.builtin.service_facts#module:ansible_facts.services)`` refers to the :ref:`ansible_facts.services fact <ansible_collections.ansible.builtin.service_facts_module__return-ansible_facts/services>` returned by the :ref:`ansible.builtin.service_facts module <ansible_collections.ansible.builtin.service_facts_module>`.
 
 Format macros within module documentation
 -----------------------------------------
 
-You can also use standard Python formatting to control the look of other terms in module documentation. Use these macros sparingly. The available macros include:
+While it is possible to use standard Python formatting macros to control the look of other terms in module documentation, you should do so sparingly.
+
+Possible macros include the following:
 
 * ``C()`` for ``monospace`` (code) text. For example: ``This module functions like the unix command C(foo).``
 * ``B()`` for bold text.
