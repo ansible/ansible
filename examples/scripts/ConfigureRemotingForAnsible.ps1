@@ -264,15 +264,15 @@ Else {
     Write-Verbose "Kerberos auth is already disabled."
 }
 
-# Disable Negotiate auth
+# Enable Negotiate auth
 $negotiateAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Negotiate" }
-If (($negotiateAuthSetting.Value) -eq $true) {
-    Write-Verbose "Disabling Negotiate auth support."
+If (($negotiateAuthSetting.Value) -eq $false) {
+    Write-Verbose "Enabling Negotiate auth support."
     Set-Item -Path "WSMan:\localhost\Service\Auth\Negotiate" -Value $false
-    Write-ProgressLog "Disabled Negotiate auth support."
+    Write-ProgressLog "Enabled Negotiate auth support."
 }
 Else {
-    Write-Verbose "Negotiate auth is already disabled."
+    Write-Verbose "Negotiate auth is already enabled."
 }
 
 # Disable Certificate auth
