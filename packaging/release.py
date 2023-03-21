@@ -655,7 +655,7 @@ twine
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)  # avoid interference from ansible being injected into the environment
     env.update(
-        PATH=f"{venv_bin_dir}:{env['PATH']}",
+        PATH=os.pathsep.join((str(venv_bin_dir), env["PATH"])),
     )
 
     if not venv_marker_file.exists():
@@ -777,7 +777,7 @@ def test_built_artifact(path: pathlib.Path) -> None:
         env = os.environ.copy()
         env.pop("PYTHONPATH", None)  # avoid interference from ansible being injected into the environment
         env.update(
-            PATH=f"{venv_bin_dir}:{env['PATH']}",
+            PATH=os.pathsep.join((str(venv_bin_dir), env["PATH"])),
         )
 
         run("pip", "install", path, *PIP_OPTIONS, env=env, cwd=CHECKOUT_DIR)
@@ -1158,7 +1158,7 @@ def generate_changelog() -> None:
     """Generate the changelog and validate the results."""
     env = ensure_venv()
     env.update(
-        PATH=f"{ANSIBLE_BIN_DIR}:{env['PATH']}",
+        PATH=os.pathsep.join((str(ANSIBLE_BIN_DIR), env["PATH"])),
         PYTHONPATH=ANSIBLE_LIB_DIR,
     )
 
