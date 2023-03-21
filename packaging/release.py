@@ -586,6 +586,9 @@ def get_remotes() -> Remotes:
 
     display.show(f"Detected '{upstream_remote_name}' as the remote from which '{fork_remote_name}' was forked from.")
 
+    if fork_remote_name == upstream_remote_name:
+        raise ApplicationError("The remote for your fork of Ansible cannot be the same as the remote from which it was forked.")
+
     remotes = Remotes(
         fork=get_remote(fork_remote_name, push=True),
         upstream=get_remote(upstream_remote_name, push=False),
