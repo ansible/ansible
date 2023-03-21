@@ -1029,8 +1029,7 @@ Subject to the need for additional beta releases, the first release candidate is
 {% elif alpha %}
 Subject to the need for additional alpha releases, the first release beta is scheduled for X.
 {% else %}
-The next release candidate is planned to be released on {{ next_rc.strftime('%-d %B %Y') }}.
-The next general availability release will be one week after.
+The next release candidate is planned to be released on {{ next_rc.strftime('%-d %B %Y') }}. The next general availability release will be one week after.
 {% endif %}
 
 Porting help
