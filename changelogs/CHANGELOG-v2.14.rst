@@ -5,6 +5,46 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-03-21
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Moved git handling out of the validate-modules sanity test and into ansible-test.
+- ansible-test - Removed the ``--keep-git`` sanity test option, which was limited to testing ansible-core itself.
+- ansible-test - Updated the Azure Pipelines CI plugin to work with newer versions of git.
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- ansible-test - Integration tests which depend on specific file permissions when running in an ansible-test managed host environment may require changes. Tests that require permissions other than ``755`` or ``644`` may need to be updated to set the necessary permissions as part of the test run.
+
+Bugfixes
+--------
+
+- Fix ``MANIFEST.in`` to exclude unwanted files in the ``packaging/`` directory.
+- Fix ``MANIFEST.in`` to include ``*.md`` files in the ``test/support/`` directory.
+- Fix an issue where the value of ``become`` was ignored when used on a role used as a dependency in ``main/meta.yml`` (https://github.com/ansible/ansible/issues/79777)
+- ``ansible_eval_concat`` - avoid redundant unsafe wrapping of templated strings converted to Python types
+- ansible-galaxy role info - fix unhandled AttributeError by catching the correct exception.
+- ansible-test - Always indicate the Python version being used before installing requirements. Resolves issue https://github.com/ansible/ansible/issues/72855
+- ansible-test - Exclude ansible-core vendored Python packages from ansible-test payloads.
+- ansible-test - Integration test target prefixes defined in a ``tests/integration/target-prefixes.{group}`` file can now contain an underscore (``_``) character. Resolves issue https://github.com/ansible/ansible/issues/79225
+- ansible-test - Removed pointless comparison in diff evaluation logic.
+- ansible-test - Set ``PYLINTHOME`` for the ``pylint`` sanity test to prevent failures due to ``pylint`` checking for the existence of an obsolete home directory.
+- ansible-test - Support loading of vendored Python packages from ansible-core.
+- ansible-test - Use consistent file permissions when delegating tests to a container or remote host. Files with any execute bit set will use permissions ``755``. All other files will use permissions ``644``. (Resolves issue https://github.com/ansible/ansible/issues/75079)
+- copy - fix creating the dest directory in check mode with remote_src=True (https://github.com/ansible/ansible/issues/78611).
+- copy - fix reporting changes to file attributes in check mode with remote_src=True (https://github.com/ansible/ansible/issues/77957).
+
 v2.14.3
 =======
 
