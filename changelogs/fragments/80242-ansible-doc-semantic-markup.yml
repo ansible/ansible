@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-doc - support semantic markup in text output (https://github.com/ansible/ansible/pull/80242)."
