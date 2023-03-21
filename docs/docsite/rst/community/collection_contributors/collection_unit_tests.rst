@@ -26,7 +26,7 @@ Ansible uses `pytest <https://docs.pytest.org/en/latest/>`_ as a testing framewo
 
 See :ref:`testing_units_modules` for complete details.
 
-Inclusion in the Ansible package `requires integration and/or unit tests <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#requirements-for-collections-to-be-included-in-the-ansible-package>`_  You should have tests for your collection as well as for individual modules and plugins to make your code more reliable To learn how to get started with integration tests, see :ref:`collection_integration_tests`.
+Inclusion in the Ansible package :ref:`requires integration and/or unit tests <coll_ci_tests>`  You should have tests for your collection as well as for individual modules and plugins to make your code more reliable To learn how to get started with integration tests, see :ref:`collection_integration_tests`.
 
 
 See :ref:`collection_prepare_local` to prepare your environment.
