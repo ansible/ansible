@@ -1,84 +1,27 @@
 #Requires -Version 3.0
-
-# Configure a Windows host for remote management with Ansible
-# -----------------------------------------------------------
-#
-# This script checks the current WinRM (PS Remoting) configuration and makes
-# the necessary changes to allow Ansible to connect, authenticate and
-# execute PowerShell commands.
-#
-# IMPORTANT: This script uses self-signed certificates and authentication mechanisms
-# that are intended for development environments and evaluation purposes only.
-# Production environments and deployments that are exposed on the network should
-# use CA-signed certificates and secure authentication mechanisms such as Kerberos.
-#
+################################################################################
+# Configure a Windows host for remote management with Ansible ##################
+################################################################################
 # To run this script in Powershell:
 #
 # [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-# $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+# $url  = "https://raw.githubusercontent.com/oneclick-ag/ansible/oc_dev/examples/scripts/ConfigureRemotingForAnsible.ps1"
 # $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
-#
 # (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
-#
 # powershell.exe -ExecutionPolicy ByPass -File $file
 #
-# All events are logged to the Windows EventLog, useful for unattended runs.
-#
-# Use option -Verbose in order to see the verbose output messages.
-#
-# Use option -CertValidityDays to specify how long this certificate is valid
-# starting from today. So you would specify -CertValidityDays 3650 to get
-# a 10-year valid certificate.
-#
-# Use option -ForceNewSSLCert if the system has been SysPreped and a new
-# SSL Certificate must be forced on the WinRM Listener when re-running this
-# script. This is necessary when a new SID and CN name is created.
-#
-# Use option -EnableCredSSP to enable CredSSP as an authentication option.
-#
-# Use option -DisableBasicAuth to disable basic authentication.
-#
-# Use option -SkipNetworkProfileCheck to skip the network profile check.
-# Without specifying this the script will only run if the device's interfaces
-# are in DOMAIN or PRIVATE zones.  Provide this switch if you want to enable
-# WinRM on a device with an interface in PUBLIC zone.
-#
-# Use option -SubjectName to specify the CN name of the certificate. This
-# defaults to the system's hostname and generally should not be specified.
+################################################################################
 
-# Written by Trond Hindenes <trond@hindenes.com>
-# Updated by Chris Church <cchurch@ansible.com>
-# Updated by Michael Crilly <mike@autologic.cm>
-# Updated by Anton Ouzounov <Anton.Ouzounov@careerbuilder.com>
-# Updated by Nicolas Simond <contact@nicolas-simond.com>
-# Updated by Dag Wieërs <dag@wieers.com>
-# Updated by Jordan Borean <jborean93@gmail.com>
-# Updated by Erwan Quélin <erwan.quelin@gmail.com>
-# Updated by David Norman <david@dkn.email>
-#
-# Version 1.0 - 2014-07-06
-# Version 1.1 - 2014-11-11
-# Version 1.2 - 2015-05-15
-# Version 1.3 - 2016-04-04
-# Version 1.4 - 2017-01-05
-# Version 1.5 - 2017-02-09
-# Version 1.6 - 2017-04-18
-# Version 1.7 - 2017-11-23
-# Version 1.8 - 2018-02-23
-# Version 1.9 - 2018-09-21
-
-# Support -Verbose option
 [CmdletBinding()]
 
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
-    [int]$CertValidityDays = 1095,
-    [switch]$SkipNetworkProfileCheck,
+    [int]$CertValidityDays = 3650,
+    [switch]$SkipNetworkProfileCheck = $true,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
-    [switch]$GlobalHttpFirewallAccess,
-    [switch]$DisableBasicAuth = $false,
-    [switch]$EnableCredSSP
+    [switch]$DisableBasicAuth = $true,
+    [switch]$EnableCredSSP = $true
 )
 
 Function Write-ProgressLog {
@@ -101,7 +44,7 @@ Function Write-HostLog {
 Function New-LegacySelfSignedCert {
     Param (
         [string]$SubjectName,
-        [int]$ValidDays = 1095
+        [int]$ValidDays = 3650
     )
 
     $hostnonFQDN = $env:computerName
@@ -170,59 +113,6 @@ Function New-LegacySelfSignedCert {
     $parsed_cert.Import([System.Text.Encoding]::UTF8.GetBytes($certdata))
 
     return $parsed_cert.Thumbprint
-}
-
-Function Enable-GlobalHttpFirewallAccess {
-    Write-Verbose "Forcing global HTTP firewall access"
-    # this is a fairly naive implementation; could be more sophisticated about rule matching/collapsing
-    $fw = New-Object -ComObject HNetCfg.FWPolicy2
-
-    # try to find/enable the default rule first
-    $add_rule = $false
-    $matching_rules = $fw.Rules | Where-Object { $_.Name -eq "Windows Remote Management (HTTP-In)" }
-    $rule = $null
-    If ($matching_rules) {
-        If ($matching_rules -isnot [Array]) {
-            Write-Verbose "Editing existing single HTTP firewall rule"
-            $rule = $matching_rules
-        }
-        Else {
-            # try to find one with the All or Public profile first
-            Write-Verbose "Found multiple existing HTTP firewall rules..."
-            $rule = $matching_rules | ForEach-Object { $_.Profiles -band 4 }[0]
-
-            If (-not $rule -or $rule -is [Array]) {
-                Write-Verbose "Editing an arbitrary single HTTP firewall rule (multiple existed)"
-                # oh well, just pick the first one
-                $rule = $matching_rules[0]
-            }
-        }
-    }
-
-    If (-not $rule) {
-        Write-Verbose "Creating a new HTTP firewall rule"
-        $rule = New-Object -ComObject HNetCfg.FWRule
-        $rule.Name = "Windows Remote Management (HTTP-In)"
-        $rule.Description = "Inbound rule for Windows Remote Management via WS-Management. [TCP 5985]"
-        $add_rule = $true
-    }
-
-    $rule.Profiles = 0x7FFFFFFF
-    $rule.Protocol = 6
-    $rule.LocalPorts = 5985
-    $rule.RemotePorts = "*"
-    $rule.LocalAddresses = "*"
-    $rule.RemoteAddresses = "*"
-    $rule.Enabled = $true
-    $rule.Direction = 1
-    $rule.Action = 1
-    $rule.Grouping = "Windows Remote Management"
-
-    If ($add_rule) {
-        $fw.Rules.Add($rule)
-    }
-
-    Write-Verbose "HTTP firewall rule $($rule.Name) updated"
 }
 
 # Setup error handling.
@@ -357,9 +247,7 @@ Else {
     }
 }
 
-# Check for basic authentication.
 $basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Basic" }
-
 If ($DisableBasicAuth) {
     If (($basicAuthSetting.Value) -eq $true) {
         Write-Verbose "Disabling basic auth support."
@@ -381,7 +269,6 @@ Else {
     }
 }
 
-# If EnableCredSSP if set to true
 If ($EnableCredSSP) {
     # Check for CredSSP authentication
     $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "CredSSP" }
@@ -390,10 +277,6 @@ If ($EnableCredSSP) {
         Enable-WSManCredSSP -role server -Force
         Write-ProgressLog "Enabled CredSSP auth support."
     }
-}
-
-If ($GlobalHttpFirewallAccess) {
-    Enable-GlobalHttpFirewallAccess
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
