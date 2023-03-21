@@ -366,9 +366,9 @@ PYPI_ENDPOINTS = dict(
     testpypi="https://test.pypi.org/pypi",
 )
 
-PIP_OPTIONS = (
-    "--require-virtualenv",
-    "--disable-pip-version-check",
+PIP_ENV = dict(
+    PIP_REQUIRE_VIRTUALENV="yes",
+    PIP_DISABLE_PIP_VERSION_CHECK="yes",
 )
 
 
@@ -668,7 +668,7 @@ twine
 
         venv_requirements_file.write_text(requirements_content)
 
-        run("pip", "install", "-r", venv_requirements_file, *PIP_OPTIONS, env=env, cwd=CHECKOUT_DIR)
+        run("pip", "install", "-r", venv_requirements_file, env=env | PIP_ENV, cwd=CHECKOUT_DIR)
 
         venv_marker_file.touch()
 
@@ -780,7 +780,7 @@ def test_built_artifact(path: pathlib.Path) -> None:
             PATH=os.pathsep.join((str(venv_bin_dir), env["PATH"])),
         )
 
-        run("pip", "install", path, *PIP_OPTIONS, env=env, cwd=CHECKOUT_DIR)
+        run("pip", "install", path, env=env | PIP_ENV, cwd=CHECKOUT_DIR)
 
         run("ansible", "--version", env=env, cwd=CHECKOUT_DIR)
         run("ansible-test", "--version", env=env, cwd=CHECKOUT_DIR)
