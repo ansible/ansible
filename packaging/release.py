@@ -193,7 +193,7 @@ class CommandFramework:
 
             for name in signature.parameters:
                 if name not in self.arguments:
-                    raise Exception(f"The '{name}' argument, used by '{func.__name__}', has not been defined.")
+                    raise RuntimeError(f"The '{name}' argument, used by '{func.__name__}', has not been defined.")
 
                 if (arguments := self.arguments.get(name)) is None:
                     continue  # internal use
@@ -546,7 +546,7 @@ def get_remote(name: str, push: bool) -> Remote:
     remote_match = re.search(r"[@/]github[.]com[:/](?P<user>[^/]+)/(?P<repo>[^.]+)(?:[.]git)?$", remote_url)
 
     if not remote_match:
-        raise Exception(f"Unable to identify the user and repo in the '{name}' remote: {remote_url}")
+        raise RuntimeError(f"Unable to identify the user and repo in the '{name}' remote: {remote_url}")
 
     remote = Remote(
         name=name,
@@ -689,7 +689,7 @@ def get_ansible_version(version: str | None = None, /, commit: str | None = None
             current = ANSIBLE_RELEASE_FILE.read_text()
 
         if not (match := ANSIBLE_VERSION_PATTERN.search(current)):
-            raise Exception("Failed to get the ansible-core version.")
+            raise RuntimeError("Failed to get the ansible-core version.")
 
         version = match.group("version")
         source = f" in '{ANSIBLE_RELEASE_FILE}'"
@@ -759,7 +759,7 @@ def set_ansible_version(current_version: Version, requested_version: Version) ->
     updated = ANSIBLE_VERSION_PATTERN.sub(ANSIBLE_VERSION_FORMAT.format(version=requested_version), current)
 
     if current == updated:
-        raise Exception("Failed to set the ansible-core version.")
+        raise RuntimeError("Failed to set the ansible-core version.")
 
     ANSIBLE_RELEASE_FILE.write_text(updated)
 
@@ -818,7 +818,7 @@ def get_release_artifact_details(repository: str, version: Version, validate: bo
         if ex.status == http.HTTPStatus.NOT_FOUND:
             raise ApplicationError(f"Version {version} not found on PyPI.") from None
 
-        raise Exception(f"Failed to get {version} from PyPI: {ex}") from ex
+        raise RuntimeError(f"Failed to get {version} from PyPI: {ex}") from ex
 
     artifacts = [describe_release_artifact(version, item, validate) for item in data["urls"]]
 
