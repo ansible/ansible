@@ -1117,3 +1117,65 @@ releases:
     - strategy_badid_fix.yml
     - v2.14.3rc1_summary.yaml
     release_date: '2023-02-20'
+  2.14.4rc1:
+    changes:
+      breaking_changes:
+      - ansible-test - Integration tests which depend on specific file permissions
+        when running in an ansible-test managed host environment may require changes.
+        Tests that require permissions other than ``755`` or ``644`` may need to be
+        updated to set the necessary permissions as part of the test run.
+      bugfixes:
+      - Fix ``MANIFEST.in`` to exclude unwanted files in the ``packaging/`` directory.
+      - Fix ``MANIFEST.in`` to include ``*.md`` files in the ``test/support/`` directory.
+      - Fix an issue where the value of ``become`` was ignored when used on a role
+        used as a dependency in ``main/meta.yml`` (https://github.com/ansible/ansible/issues/79777)
+      - '``ansible_eval_concat`` - avoid redundant unsafe wrapping of templated strings
+        converted to Python types'
+      - ansible-galaxy role info - fix unhandled AttributeError by catching the correct
+        exception.
+      - ansible-test - Always indicate the Python version being used before installing
+        requirements. Resolves issue https://github.com/ansible/ansible/issues/72855
+      - ansible-test - Exclude ansible-core vendored Python packages from ansible-test
+        payloads.
+      - ansible-test - Integration test target prefixes defined in a ``tests/integration/target-prefixes.{group}``
+        file can now contain an underscore (``_``) character. Resolves issue https://github.com/ansible/ansible/issues/79225
+      - ansible-test - Removed pointless comparison in diff evaluation logic.
+      - ansible-test - Set ``PYLINTHOME`` for the ``pylint`` sanity test to prevent
+        failures due to ``pylint`` checking for the existence of an obsolete home
+        directory.
+      - ansible-test - Support loading of vendored Python packages from ansible-core.
+      - ansible-test - Use consistent file permissions when delegating tests to a
+        container or remote host. Files with any execute bit set will use permissions
+        ``755``. All other files will use permissions ``644``. (Resolves issue https://github.com/ansible/ansible/issues/75079)
+      - copy - fix creating the dest directory in check mode with remote_src=True
+        (https://github.com/ansible/ansible/issues/78611).
+      - copy - fix reporting changes to file attributes in check mode with remote_src=True
+        (https://github.com/ansible/ansible/issues/77957).
+      minor_changes:
+      - ansible-test - Moved git handling out of the validate-modules sanity test
+        and into ansible-test.
+      - ansible-test - Removed the ``--keep-git`` sanity test option, which was limited
+        to testing ansible-core itself.
+      - ansible-test - Updated the Azure Pipelines CI plugin to work with newer versions
+        of git.
+      release_summary: '| Release Date: 2023-03-21
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.4rc1_summary.yaml
+    - 78624-copy-remote-src-check-mode.yml
+    - 79777-fix-inheritance-roles-meta.yml
+    - a-g-role-fix-catching-exception.yml
+    - ansible-test-fix-pointless-comparison.yml
+    - ansible-test-git-handling.yml
+    - ansible-test-integration-target-prefixes.yml
+    - ansible-test-payload-file-permissions.yml
+    - ansible-test-pylint-home.yml
+    - ansible-test-requirements-message.yml
+    - ansible-test-vendoring-support.yml
+    - ansible_eval_concat-remove-redundant-unsafe-wrap.yml
+    - fix-manifest.yml
+    release_date: '2023-03-21'
