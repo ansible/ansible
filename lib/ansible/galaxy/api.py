@@ -11,12 +11,15 @@ import functools
 import hashlib
 import json
 import os
+import socket
 import stat
 import tarfile
 import time
 import threading
 
-from urllib.error import HTTPError
+from http import HTTPStatus
+from http.client import BadStatusLine, IncompleteRead
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 
 from ansible import constants as C
@@ -34,10 +37,11 @@ from ansible.utils.path import makedirs_safe
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
-RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
-    429,  # Too Many Requests
+RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
+    HTTPStatus.TOO_MANY_REQUESTS,
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
-]
+    HTTPStatus.BAD_GATEWAY,  # Common error from galaxy that may represent any number of transient backend issues
+}
 
 
 def cache_lock(func):
@@ -48,11 +52,24 @@ def cache_lock(func):
     return wrapped
 
 
-def is_rate_limit_exception(exception):
+def should_retry_error(exception):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
+    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+        return True
+
+    if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
+        # URLError is often a proxy for an underlying error, handle wrapped exceptions
+        if isinstance(orig_exc, URLError):
+            orig_exc = orig_exc.reason
+
+        # Handle common URL related errors such as TimeoutError, and BadStatusLine
+        # Note: socket.timeout is only required for Py3.9
+        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead, socket.timeout)):
+            return True
+
+    return False
 
 
 def g_connect(versions):
@@ -326,7 +343,7 @@ class GalaxyAPI:
 
     @retry_with_delays_and_condition(
         backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
-        should_retry_error=is_rate_limit_exception
+        should_retry_error=should_retry_error
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False, cache_key=None):
@@ -384,7 +401,10 @@ class GalaxyAPI:
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
-            raise AnsibleError("Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)))
+            raise AnsibleError(
+                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
+                orig_exc=e
+            )
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
