@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-galaxy - Improve retries for collection installs, to properly retry, and extend retry logic to common URL related connection errors
+  (https://github.com/ansible/ansible/issues/80170 https://github.com/ansible/ansible/issues/80174)
