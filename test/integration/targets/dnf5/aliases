@@ -1,0 +1,8 @@
+destructive
+shippable/posix/group1
+skip/power/centos
+skip/freebsd
+skip/osx
+skip/macos
+context/target
+needs/target/dnf

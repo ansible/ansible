@@ -15,5 +15,5 @@
     that:
       - sos_rm is successful
       - sos_rm is changed
-      - "'Removed: sos-{{ sos_version }}-{{ sos_release }}' in sos_rm.results[0]"
-      - sos_rm.results|length == 1
+      - sos_rm.results|select("contains", "Removed: sos-{{ sos_version }}-{{ sos_release }}")|length > 0
+      - sos_rm.results|length > 0

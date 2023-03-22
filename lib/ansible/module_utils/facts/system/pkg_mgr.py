@@ -77,7 +77,9 @@ class PkgMgrFactCollector(BaseFactCollector):
                 if int(collected_facts['ansible_distribution_major_version']) < 23:
                     if self._pkg_mgr_exists('yum'):
                         pkg_mgr_name = 'yum'
-
+                elif int(collected_facts['ansible_distribution_major_version']) >= 39:
+                    if self._pkg_mgr_exists('dnf5'):
+                        pkg_mgr_name = 'dnf5'
                 else:
                     if self._pkg_mgr_exists('dnf'):
                         pkg_mgr_name = 'dnf'

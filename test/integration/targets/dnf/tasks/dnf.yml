@@ -224,7 +224,7 @@
 - assert:
     that:
       - dnf_result is success
-      - dnf_result.results|length == 2
+      - dnf_result.results|length >= 2
       - "dnf_result.results[0].startswith('Removed: ')"
       - "dnf_result.results[1].startswith('Removed: ')"
 
@@ -442,6 +442,7 @@
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
+  when: not dnf5|default('false')
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
 - shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
@@ -522,6 +523,7 @@
     - dnf_result is changed
     - "'results' in dnf_result"
     - landsidescalping_result.rc == 0
+  when: not dnf5|default('false')
 
 # Fedora 28 (DNF 2) does not support this, just remove the package itself
 - name: remove landsidescalping package on Fedora 28

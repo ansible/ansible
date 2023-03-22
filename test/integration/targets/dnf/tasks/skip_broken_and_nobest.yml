@@ -251,6 +251,7 @@
           - res is not changed
           - res.rc == 0
           - res.msg == "Nothing to do"
+      when: not dnf5|default('false')
 
     # skip_broken doesn't apply to case 5 or 6 (older version installed).
     # base.upgrade doesn't allow a strict= kwarg. However, nobest works here.
