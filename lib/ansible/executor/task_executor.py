@@ -396,7 +396,7 @@ class TaskExecutor:
 
         return results
 
-    def _get_delegated_vars(self, templar, variables):
+    def _calculate_delegate_to(self, templar, variables):
         if self._task.delegate_to:
             delegated_host_name = templar.template(self._task.delegate_to, fail_on_undefined=False)
             delegated_host = self._variable_manager._inventory.get_host(delegated_host_name)
@@ -435,7 +435,7 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, variables=variables)
 
-        self._get_delegated_vars(templar, variables)
+        self._calculate_delegate_to(templar, variables)
 
         context_validation_error = None
 
