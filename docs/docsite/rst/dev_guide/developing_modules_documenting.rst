@@ -278,6 +278,8 @@ You can link from your module documentation to other module docs, other resource
 
    Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description.
 
+.. _semantic_markup:
+
 Semantic markup within module documentation
 -------------------------------------------
 
