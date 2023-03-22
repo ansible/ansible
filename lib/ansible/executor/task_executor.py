@@ -420,7 +420,8 @@ class TaskExecutor:
                 )
             }
             variables['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
-            # At the point this is executed, `self._task` is a copy referred to by `tmp_task` in `_execute`
+            # At the point this is executed it is safe to mutate self._task,
+            # since `self._task` is a copy referred to by `tmp_task` in `_execute`
             self._task.delegate_to = delegated_host_name
 
     def _execute(self, variables=None):
