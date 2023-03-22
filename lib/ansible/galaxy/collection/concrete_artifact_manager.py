@@ -156,10 +156,20 @@ class ConcreteArtifactsManager:
                 validate_certs=self._validate_certs,
                 token=token,
             )  # type: bytes
-        except Exception as err:
+        except URLError as err:
             raise AnsibleError(
                 'Failed to download collection tar '
                 "from '{coll_src!s}': {download_err!s}".
+                format(
+                    coll_src=to_native(collection.src),
+                    download_err=to_native(err),
+                ),
+            ) from err
+        except Exception as err:
+            raise AnsibleError(
+                'Failed to download collection tar '
+                "from '{coll_src!s}' due to the following unforeseen error: "
+                '{download_err!s}'.
                 format(
                     coll_src=to_native(collection.src),
                     download_err=to_native(err),
