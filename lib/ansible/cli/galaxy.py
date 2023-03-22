@@ -242,7 +242,7 @@ class GalaxyCLI(CLI):
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
-        common.add_argument('--timeout', dest='timeout', type=int,
+        common.add_argument('--timeout', dest='timeout', type=int, default=60,
                             help="The time to wait for operations against the galaxy server, defaults to 60s.")
 
         opt_help.add_verbosity_options(common)
