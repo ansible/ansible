@@ -1142,11 +1142,12 @@ def generate_summary() -> None:
     version = get_ansible_version()
     release_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     summary_path = CHANGELOGS_FRAGMENTS_DIR / f"{version}_summary.yaml"
+    major_minor = f"{version.major}.{version.minor}"
 
     content = f"""
 release_summary: |
    | Release Date: {release_date}
-   | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+   | `Porting Guide <https://docs.ansible.com/ansible-core/{major_minor}/porting_guides/porting_guide_core_{major_minor}.html>`__
 """
 
     summary_path.write_text(content.lstrip())
