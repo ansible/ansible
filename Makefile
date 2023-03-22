@@ -5,7 +5,6 @@
 # useful targets:
 #   make clean ---------------- clean up
 #   make sdist ---------------- produce a tarball
-#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 
 ########################################################
 # variable section
@@ -35,34 +34,10 @@ ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
 endif
 
-# ansible-test parameters
-ANSIBLE_TEST ?= bin/ansible-test
-TEST_FLAGS ?=
-
-# ansible-test units parameters (make test / make test-py3)
-PYTHON_VERSION ?= $(shell python2 -c 'import sys; print("%s.%s" % sys.version_info[:2])')
-PYTHON3_VERSION ?= $(shell python3 -c 'import sys; print("%s.%s" % sys.version_info[:2])')
-
-# ansible-test integration parameters (make integration)
-IMAGE ?= centos7
-TARGET ?=
-
 ########################################################
 
 .PHONY: all
 all: clean python
-
-.PHONY: tests
-tests:
-	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)
-
-.PHONY: tests-py3
-tests-py3:
-	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
-
-.PHONY: integration
-integration:
-	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
 
 # Regenerate %.1.rst if %.1.rst.in has been modified more
 # recently than %.1.rst.
