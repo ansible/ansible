@@ -14,6 +14,7 @@ import typing as t
 
 from contextlib import contextmanager
 from hashlib import sha256
+from urllib.error import URLError
 from urllib.parse import urldefrag
 from shutil import rmtree
 from tempfile import mkdtemp
