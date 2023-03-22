@@ -68,7 +68,7 @@ def run(
         # improve type hinting and include stdout/stderr (if any) in the message
         raise CalledProcessError(
             message=str(ex),
-            args=str_args,
+            cmd=str_args,
             status=ex.returncode,
             stdout=ex.stdout,
             stderr=ex.stderr,
@@ -101,7 +101,7 @@ class ApplicationError(Exception):
 class CalledProcessError(Exception):
     """Results from a failed process."""
 
-    def __init__(self, message: str, args: tuple[str, ...], status: int, stdout: str | None, stderr: str | None) -> None:
+    def __init__(self, message: str, cmd: tuple[str, ...], status: int, stdout: str | None, stderr: str | None) -> None:
         if stdout and (stdout := stdout.strip()):
             message += f"\n>>> Standard Output\n{stdout}"
 
@@ -110,7 +110,7 @@ class CalledProcessError(Exception):
 
         super().__init__(message)
 
-        self.args = args
+        self.cmd = cmd
         self.status = status
         self.stdout = stdout
         self.stderr = stderr
