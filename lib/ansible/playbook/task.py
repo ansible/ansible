@@ -508,3 +508,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 return self._parent
             return self._parent.get_first_parent_include()
         return None
+
+    def get_play(self):
+        parent = self._parent
+        while not isinstance(parent, Block):
+            parent = parent._parent
+        return parent._play
