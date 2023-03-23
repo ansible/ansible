@@ -18,7 +18,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
-from ansible.inventory.host import Host
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_text, to_native
