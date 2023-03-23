@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        name: 'host{{ item }}'
+        groups:
+          - test
+      loop: '{{ range(10) }}'
+
+    - set_fact:
+        dv: '{{ ansible_delegated_vars[ansible_host]["ansible_host"] }}'
+      delegate_to: '{{ groups.test|random }}'
+      delegate_facts: true

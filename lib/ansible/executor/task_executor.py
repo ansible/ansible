@@ -82,7 +82,7 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, variable_manager):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -92,6 +92,7 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
         self._final_q = final_q
+        self._variable_manager = variable_manager
         self._loop_eval_error = None
 
         self._task.squash()
@@ -215,12 +216,7 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
         items = None
-        loop_cache = self._job_vars.get('_ansible_loop_cache')
-        if loop_cache is not None:
-            # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
-            # to avoid reprocessing the loop
-            items = loop_cache
-        elif self._task.loop_with:
+        if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
                 if self._task.loop_with == 'first_found':
@@ -399,6 +395,22 @@ class TaskExecutor:
 
         return results
 
+    def _calculate_delegate_to(self, templar, variables):
+        """This method is responsible for effectively pre-validating Task.delegate_to and will
+        happen before Task.post_validate is executed
+        """
+        delegated_vars, delegated_host_name = self._variable_manager.get_delegated_vars_and_hostname(
+            templar,
+            self._task,
+            variables
+        )
+        # At the point this is executed it is safe to mutate self._task,
+        # since `self._task` is either a copy referred to by `tmp_task` in `_run_loop`
+        # or just a singular non-looped task
+        if delegated_host_name:
+            self._task.delegate_to = delegated_host_name
+            variables.update(delegated_vars)
+
     def _execute(self, variables=None):
         '''
         The primary workhorse of the executor system, this runs the task
@@ -410,6 +422,8 @@ class TaskExecutor:
             variables = self._job_vars
 
         templar = Templar(loader=self._loader, variables=variables)
+
+        self._calculate_delegate_to(templar, variables)
 
         context_validation_error = None
 

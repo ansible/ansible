@@ -76,3 +76,7 @@ ansible-playbook test_delegate_to_lookup_context.yml -i inventory -v "$@"
 ansible-playbook delegate_local_from_root.yml -i inventory -v "$@" -e 'ansible_user=root'
 ansible-playbook delegate_with_fact_from_delegate_host.yml "$@"
 ansible-playbook delegate_facts_loop.yml -i inventory -v "$@"
+ansible-playbook test_random_delegate_to_with_loop.yml -i inventory -v "$@"
+
+# Run playbook multiple times to ensure there are no false-negatives
+for i in $(seq 0 10); do ansible-playbook test_random_delegate_to_without_loop.yml -i inventory -v "$@"; done;
