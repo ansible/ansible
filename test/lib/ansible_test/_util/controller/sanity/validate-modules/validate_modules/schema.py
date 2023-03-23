@@ -12,6 +12,7 @@ from functools import partial
 from urllib.parse import urlparse
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid, Exclusive
+from ansible.constants import DOCUMENTABLE_PLUGINS
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -170,6 +171,11 @@ seealso_schema = Schema(
         Any(
             {
                 Required('module'): Any(*string_types),
+                'description': doc_string,
+            },
+            {
+                Required('plugin'): Any(*string_types),
+                Required('plugin_type'): Any(*DOCUMENTABLE_PLUGINS),
                 'description': doc_string,
             },
             {
