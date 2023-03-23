@@ -1318,13 +1318,13 @@ def main():
     allow_unauthenticated = p['allow_unauthenticated']
     allow_downgrade = p['allow_downgrade']
     allow_change_held_packages = p['allow_change_held_packages']
-    dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
 
     # max times we'll retry
     deadline = time.time() + p['lock_timeout']
+    dpkg_options = '%s -o DPkg::Lock::Timeout=%s' % (expand_dpkg_options(p['dpkg_options']), p['lock_timeout'])
 
     # keep running on lock issues unless timeout or resolution is hit.
     while True:
