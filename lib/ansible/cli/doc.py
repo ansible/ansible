@@ -1286,8 +1286,12 @@ class DocCLI(CLI, RoleMixin):
                 if 'module' in item:
                     text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    description = item.get('description', 'The official documentation on the %s module.' % item['module'])
-                    text.append(textwrap.fill(DocCLI.tty_ify(description), limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    description = item.get('description')
+                    if description is None and item['module'].startswith('ansible.builtin.'):
+                        description = 'The official documentation on the %s module.' % item['module']
+                    if description is not None:
+                        text.append(textwrap.fill(DocCLI.tty_ify(description),
+                                    limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                     if item['module'].startswith('ansible.builtin.'):
                         relative_url = 'collections/%s_module.html' % item['module'].replace('.', '/', 2)
                         text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
