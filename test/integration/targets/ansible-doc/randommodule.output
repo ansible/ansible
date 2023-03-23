@@ -70,6 +70,31 @@
                     "type": "str"
                 }
             },
+            "seealso": [
+                {
+                    "module": "ansible.builtin.ping"
+                },
+                {
+                    "description": "Use this to fetch an URI",
+                    "module": "ansible.builtin.uri"
+                },
+                {
+                    "module": "testns.testcol.test"
+                },
+                {
+                    "description": "A fake module",
+                    "module": "testns.testcol.fakemodule"
+                },
+                {
+                    "description": "See also the Ansible docsite.",
+                    "link": "https://docs.ansible.com",
+                    "name": "Ansible docsite"
+                },
+                {
+                    "description": "Some foo bar.",
+                    "ref": "foo_bar"
+                }
+            ],
             "short_description": "A random module",
             "version_added": "1.0.0",
             "version_added_collection": "testns.testcol"
