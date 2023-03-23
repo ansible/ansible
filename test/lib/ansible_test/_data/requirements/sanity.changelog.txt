@@ -1,5 +1,5 @@
 # edit "sanity.changelog.in" and generate with: hacking/update-sanity-requirements.py --test changelog
-antsibull-changelog==0.18.0
+antsibull-changelog==0.19.0
 docutils==0.18.1
 packaging==23.0
 PyYAML==6.0
