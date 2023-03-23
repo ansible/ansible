@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from filecmp import dircmp
+from difflib import unified_diff
+from filecmp import dircmp, DEFAULT_IGNORES as _DIR_CMP_DEFAULT_IGNORES
 from os import chdir, environ, PathLike
 from pathlib import Path
 from shutil import rmtree
@@ -50,6 +51,7 @@ EXPECTED_SDIST_NAME_BASE = f'{DIST_FILENAME_BASE}-{PKG_DIST_VERSION}'
 EXPECTED_SDIST_NAME = f'{EXPECTED_SDIST_NAME_BASE}.tar.gz'
 EXPECTED_WHEEL_NAME = f'{DIST_NAME}-{PKG_DIST_VERSION}-py3-none-any.whl'
 
+IS_PYTHON39_PLUS = version_info[:2] >= (3, 9)
 IS_PYTHON310_PLUS = version_info[:2] >= (3, 10)
 
 
@@ -89,10 +91,26 @@ def unpack_sdist(sdist_tarball: Path, target_directory: Path) -> Path:
 
 
 def assert_dirs_equal(*dir_paths: t.List[Path]) -> None:
-    dir_comparison = dircmp(*dir_paths)
+    dir_comparison = dircmp(
+        *dir_paths,
+        ignore=None if IS_PYTHON39_PLUS
+        else ['PKG-INFO'] + _DIR_CMP_DEFAULT_IGNORES,
+    )
     assert not dir_comparison.left_only
     assert not dir_comparison.right_only
-    assert not dir_comparison.diff_files
+    diff_txt = ''
+    for filename in dir_comparison.diff_files:
+        file_l = dir_paths[0] / filename
+        file_r = dir_paths[1] / filename
+        diff_txt += ''.join(
+            unified_diff(
+                file_l.read_text().splitlines(keepends=True),
+                file_r.read_text().splitlines(keepends=True),
+                fromfile=str(file_l),
+                tofile=str(file_r),
+            )
+        )
+    assert not dir_comparison.diff_files, diff_txt
     assert not dir_comparison.funny_files
 
 
