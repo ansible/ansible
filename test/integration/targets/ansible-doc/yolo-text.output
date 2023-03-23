@@ -13,8 +13,7 @@ SEE ALSO:
       * Module ansible.builtin.test
            The official documentation on the
            ansible.builtin.test module.
-           https://docs.ansible.com/ansible-core/devel/collectio
-        ns/ansible/builtin/test_module.html
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/test_module.html
       * Module testns.testcol.fakemodule
            A fake module
       * Lookup plugin testns.testcol.noop
@@ -23,19 +22,16 @@ SEE ALSO:
       * Filter plugin ansible.builtin.combine
            The official documentation on the
            ansible.builtin.combine filter plugin.
-           https://docs.ansible.com/ansible-core/devel/collectio
-        ns/ansible/builtin/combine_filter.html
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/combine_filter.html
       * Lookup plugin ansible.builtin.file
            Read a file on the controller.
-           https://docs.ansible.com/ansible-core/devel/collectio
-        ns/ansible/builtin/file_lookup.html
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_lookup.html
       * Ansible docsite
            See also the Ansible docsite.
            https://docs.ansible.com
       * Ansible documentation [foo_bar]
            Some foo bar.
-           https://docs.ansible.com/ansible-
-           core/devel/#stq=foo_bar&stp=1
+           https://docs.ansible.com/ansible-core/devel/#stq=foo_bar&stp=1
 
 
 NAME: yolo
