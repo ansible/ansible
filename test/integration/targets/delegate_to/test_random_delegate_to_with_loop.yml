@@ -1,0 +1,26 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        name: 'host{{ item }}'
+        groups:
+          - test
+      loop: '{{ range(10) }}'
+
+    # This task may fail, if it does, it means the same thing as if the assert below fails
+    - set_fact:
+        dv: '{{ ansible_delegated_vars[ansible_host]["ansible_host"] }}'
+      delegate_to: '{{ groups.test|random }}'
+      delegate_facts: true
+      # Purposefully smaller loop than group count
+      loop: '{{ range(5) }}'
+
+- hosts: test
+  gather_facts: false
+  tasks:
+    - assert:
+        that:
+          - dv == inventory_hostname
+      # The small loop above means we won't set this var for every host
+      # and a smaller loop is faster, and may catch the error in the above task
+      when: dv is defined
