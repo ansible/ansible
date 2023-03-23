@@ -1629,9 +1629,8 @@ class GalaxyCLI(CLI):
             collection_path = pathlib.Path(to_text(collection.src)).parent.parent.as_posix()
 
             if output_format in {'yaml', 'json'}:
-                collections_in_paths[collection_path] = {
-                    collection.fqcn: {'version': collection.ver} for collection in collections
-                }
+                collections_in_paths.setdefault(collection_path, {})
+                collections_in_paths[collection_path][collection.fqcn] = {'version': collection.ver}
             else:
                 if collection_path not in seen:
                     _display_header(

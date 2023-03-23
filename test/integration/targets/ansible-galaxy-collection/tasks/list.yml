@@ -1,4 +1,4 @@
-- name: initialize collection structure
+- name: initialize dev collection structure
   command: ansible-galaxy collection init {{ item }} --init-path "{{ galaxy_dir }}/dev/ansible_collections" {{ galaxy_verbosity }}
   loop:
     - 'dev.collection1'
@@ -7,6 +7,13 @@
     - 'dev.collection4'
     - 'dev.collection5'
     - 'dev.collection6'
+
+- name: initialize prod collection structure
+  command: ansible-galaxy collection init {{ item }} --init-path "{{ galaxy_dir }}/prod/ansible_collections" {{ galaxy_verbosity }}
+  loop:
+    - 'prod.collection1'
+    - 'prod.collection2'
+    - 'prod.collection3'
 
 - name: replace the default version of the collections
   lineinfile:
@@ -53,13 +60,13 @@
 
 - assert:
     that:
-      - "'dev.collection1 *' in list_result.stdout"
+      - "'dev.collection1  *' in list_result.stdout"
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
-      - "'dev.collection2 placeholder' in list_result.stdout"
-      - "'dev.collection3 *' in list_result.stdout"
-      - "'dev.collection4 *' in list_result.stdout"
-      - "'dev.collection5 *' in list_result.stdout"
-      - "'dev.collection6 *' in list_result.stdout"
+      - "'dev.collection2  placeholder' in list_result.stdout"
+      - "'dev.collection3  *' in list_result.stdout"
+      - "'dev.collection4  *' in list_result.stdout"
+      - "'dev.collection5  *' in list_result.stdout"
+      - "'dev.collection6  *' in list_result.stdout"
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
@@ -69,18 +76,24 @@
 
 - assert:
     that:
-      - "'dev.collection1 *' in list_result_human.stdout"
+      - "'dev.collection1  *' in list_result_human.stdout"
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
-      - "'dev.collection2 placeholder' in list_result_human.stdout"
-      - "'dev.collection3 *' in list_result_human.stdout"
-      - "'dev.collection5 *' in list_result.stdout"
-      - "'dev.collection6 *' in list_result.stdout"
+      - "'dev.collection2  placeholder' in list_result_human.stdout"
+      - "'dev.collection3  *' in list_result_human.stdout"
+      - "'dev.collection5  *' in list_result.stdout"
+      - "'dev.collection6  *' in list_result.stdout"
 
 - name: list collections in yaml format
   command: ansible-galaxy collection list --format yaml
   register: list_result_yaml
   environment:
     ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+
+- assert:
+    that:
+      - yaml_result[galaxy_dir ~ '/dev/ansible_collections'] != yaml_result[galaxy_dir ~ '/prod/ansible_collections']
+  vars:
+    yaml_result: '{{ list_result_yaml.stdout | from_yaml }}'
 
 - assert:
     that:
@@ -91,6 +104,7 @@
       - "item.value['dev.collection5'].version == '*'"
       - "item.value['dev.collection6'].version == '*'"
   with_dict: "{{ list_result_yaml.stdout | from_yaml }}"
+  when: "'dev' in item.key"
 
 - name: list collections in json format
   command: ansible-galaxy collection list --format json
@@ -107,6 +121,7 @@
       - "item.value['dev.collection5'].version == '*'"
       - "item.value['dev.collection6'].version == '*'"
   with_dict: "{{ list_result_json.stdout | from_json }}"
+  when: "'dev' in item.key"
 
 - name: list single collection in json format
   command: "ansible-galaxy collection list {{ item.key }} --format json"
