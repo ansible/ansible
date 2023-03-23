@@ -397,32 +397,20 @@ class TaskExecutor:
         return results
 
     def _calculate_delegate_to(self, templar, variables):
-        if self._task.delegate_to:
-            delegated_host_name = templar.template(self._task.delegate_to, fail_on_undefined=False)
-            delegated_host = self._variable_manager._inventory.get_host(delegated_host_name)
-            if delegated_host is None:
-                for h in self._variable_manager._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
-                    # check if the address matches, or if both the delegated_to host
-                    # and the current host are in the list of localhost aliases
-                    if h.address == delegated_host_name:
-                        delegated_host = h
-                        break
-                else:
-                    delegated_host = Host(name=delegated_host_name)
-
-            variables['ansible_delegated_vars'] = {
-                delegated_host_name: self._variable_manager.get_vars(
-                    play=self._task.get_play(),
-                    host=delegated_host,
-                    task=self._task,
-                    include_delegate_to=False,
-                    include_hostvars=True,
-                )
-            }
-            variables['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
-            # At the point this is executed it is safe to mutate self._task,
-            # since `self._task` is a copy referred to by `tmp_task` in `_run_loop`
+        """This method is responsible for effectively pre-validating Task.delegate_to and will
+        happen before Task.post_validate is executed
+        """
+        delegated_vars, delegated_host_name = self._variable_manager.get_delegated_vars_and_hostname(
+            templar,
+            self._task,
+            variables
+        )
+        # At the point this is executed it is safe to mutate self._task,
+        # since `self._task` is either a copy referred to by `tmp_task` in `_run_loop`
+        # or just a singular non-looped task
+        if delegated_host_name:
             self._task.delegate_to = delegated_host_name
+            variables.update(delegated_vars)
 
     def _execute(self, variables=None):
         '''
