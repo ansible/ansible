@@ -1,0 +1,2 @@
+minor_changes:
+  - "validate-modules sanity test - if the ``check_mode`` attribute is present, check that it coincides with the ``support_check_mode`` parameter of ``AnsibleModule`` (https://github.com/ansible/ansible/pull/80090)."
