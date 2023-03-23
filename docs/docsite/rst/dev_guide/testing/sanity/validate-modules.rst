@@ -56,6 +56,8 @@ Codes
   documentation-syntax-error                                   Documentation        Error                  Invalid ``DOCUMENTATION`` schema
   import-before-documentation                                  Imports              Error                  Import found before documentation variables. All imports must appear below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
   import-error                                                 Documentation        Error                  ``Exception`` attempting to import module for ``argument_spec`` introspection
+  attributes-check-mode                                        Documentation        Error                  If a module documents the ``check_mode`` attribute, its ``support`` value must be compatible with the ``supports_check_mode`` parameter of ``AnsibleModule``
+  attributes-check-mode-details                                Documentation        Error                  If a module documents the ``check_mode`` attribute with support values ``partial`` or ``N/A``, it must provide ``details``
   import-placement                                             Locations            Warning                Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
   imports-improper-location                                    Imports              Error                  Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
   incompatible-choices                                         Documentation        Error                  Choices value from the argument_spec is not compatible with type defined in the argument_spec
