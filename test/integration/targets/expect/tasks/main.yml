@@ -277,7 +277,7 @@
   assert:
     that:
     - "no_responses.failed"
-    - "no_responses.msg == 'responses (or raw_responses) is required'"
+    - "no_responses.msg == 'one of the following is required: responses, raw_responses'"
 
 - name: test non-zero return code
   expect:

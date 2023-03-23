@@ -194,7 +194,8 @@ def main():
             raw_responses=dict(type='dict'),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
-        )
+        ),
+        required_one_of=[['responses', 'raw_responses']],
     )
 
     if not HAS_PEXPECT:
@@ -209,10 +210,6 @@ def main():
     raw_responses = module.params['raw_responses']
     timeout = module.params['timeout']
     echo = module.params['echo']
-
-    # one between responses and raw_responses needs to be specified
-    if responses is None and raw_responses is None:
-        module.fail_json(msg="responses (or raw_responses) is required")
 
     events = dict()
 
