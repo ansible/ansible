@@ -397,7 +397,7 @@ class Dnf5Module(YumDnf):
         settings = libdnf5.base.ResolveSpecSettings()
         query = libdnf5.rpm.PackageQuery(base)
         query.filter_installed()
-        match, _ = query.resolve_pkg_spec(spec, settings, True)
+        match, nevra = query.resolve_pkg_spec(spec, settings, True)
         return match
 
     def _package_dict(self, package):
@@ -411,6 +411,13 @@ class Dnf5Module(YumDnf):
         }
 
         return result
+
+    def get_unneeded_pkgs(self, base):
+        query = libdnf5.rpm.PackageQuery(base)
+        query.filter_installed()
+        query.filter_unneeded()
+        for pkg in query:
+            yield pkg
 
     def run(self):
         if not self.list and not self.download_only and os.geteuid() != 0:
@@ -449,6 +456,7 @@ class Dnf5Module(YumDnf):
         conf.gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
+        conf.clean_requirements_on_remove = self.autoremove
 
         conf.installroot = self.installroot
         conf.use_host_config = True
@@ -534,6 +542,12 @@ class Dnf5Module(YumDnf):
                     goal.add_remove(spec, settings)
                 # else:
                 #     results.append(f"{spec} is not installed")
+            if self.autoremove:
+                for pkg in self.get_unneeded_pkgs(base):
+                    goal.add_rpm_remove(pkg, settings)
+        elif self.autoremove:
+            for pkg in self.get_unneeded_pkgs(base):
+                goal.add_rpm_remove(pkg, settings)
 
         goal.set_allow_erasing(self.allowerasing)
         try:
