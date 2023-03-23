@@ -48,6 +48,18 @@ options:
                 version: '2.0.0'
 extends_documentation_fragment:
     - testns.testcol2.module
+seealso:
+    - module: ansible.builtin.ping
+    - module: ansible.builtin.uri
+      description: Use this to fetch an URI
+    - module: testns.testcol.test
+    - module: testns.testcol.fakemodule
+      description: A fake module
+    - link: https://docs.ansible.com
+      name: Ansible docsite
+      description: See also the Ansible docsite.
+    - ref: foo_bar
+      description: Some foo bar.
 '''
 
 EXAMPLES = '''
