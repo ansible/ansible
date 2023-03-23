@@ -1,2 +1,2 @@
 minor_changes:
-  - ansible-test - Update the CloudStack test plugin to use a newer test container with CloudStack 4.17.2.
+  - ansible-test - Update the CloudStack test plugin to use a newer test container with CloudStack 4.18.0.
