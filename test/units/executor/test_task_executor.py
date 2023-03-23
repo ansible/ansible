@@ -352,6 +352,9 @@ class TestTaskExecutor(unittest.TestCase):
         mock_action = MagicMock()
         mock_queue = MagicMock()
 
+        mock_vm = MagicMock()
+        mock_vm.get_delegated_vars_and_hostname.return_value = {}, None
+
         shared_loader = MagicMock()
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
@@ -365,7 +368,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
-            variable_manager=MagicMock(),
+            variable_manager=mock_vm,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
