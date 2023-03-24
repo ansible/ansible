@@ -461,6 +461,8 @@ class Dnf5Module(YumDnf):
         conf.installroot = self.installroot
         conf.use_host_config = True
 
+        conf.cacheonly = self.cacheonly
+
         base.setup()
 
         log_router = base.get_logger()
