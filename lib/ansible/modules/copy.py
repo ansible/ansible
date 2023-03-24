@@ -565,6 +565,9 @@ def main():
     remote_src = module.params['remote_src']
     checksum = module.params['checksum']
 
+    # used after the final file is written, but also for tempfile access to the resolved synthetic `secontext` arg
+    file_args = module.load_file_common_arguments(module.params, path=dest)
+
     if not os.path.exists(b_src):
         module.fail_json(msg="Source %s not found" % (src))
     if not os.access(b_src, os.R_OK):
@@ -680,6 +683,11 @@ def main():
                         module.set_owner_if_different(src, owner, False)
                     if group is not None:
                         module.set_group_if_different(src, group, False)
+
+                    secontext = file_args['secontext']
+
+                    if secontext and any(secontext):  # only bother if any of the context attributes were specified
+                        module.set_context_if_different(src, secontext, False)
                     if "%s" not in validate:
                         module.fail_json(msg="validate must contain %%s: %s" % (validate))
                     (rc, out, err) = module.run_command(validate % src)
@@ -814,7 +822,6 @@ def main():
     if backup_file:
         res_args['backup_file'] = backup_file
 
-    file_args = module.load_file_common_arguments(module.params, path=dest)
     res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
