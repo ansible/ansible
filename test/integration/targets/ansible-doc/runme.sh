@@ -48,6 +48,12 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.randommodule | sed '
 expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' randommodule-text.output)"
 test "$current_out" == "$expected_out"
 
+echo "test yolo filter docs from collection"
+# we use sed to strip the plugin path from the first line
+current_out="$(ansible-doc --playbook-dir ./ testns.testcol.yolo --type test | sed '1 s/\(^> TESTNS\.TESTCOL\.YOLO\).*(.*)$/\1/' | sed 's/https:\/\/docs.ansible.com\/ansible-core\/[^\/]+\//https:\/\/docs.ansible.com\/ansible-core\/devel\//g')"
+expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.YOLO\).*(.*)$/\1/' yolo-text.output)"
+test "$current_out" == "$expected_out"
+
 echo "ensure we do work with valid collection name for list"
 ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep $GREP_OPTS -v "Invalid collection name"
 
@@ -133,6 +139,11 @@ test "$current_role_out" == "$expected_role_out"
 echo "testing json output"
 current_out="$(ansible-doc --json --playbook-dir ./ testns.testcol.randommodule | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
 expected_out="$(sed 's/ *"filename": "[^"]*",$//' randommodule.output)"
+test "$current_out" == "$expected_out"
+
+echo "testing json output 2"
+current_out="$(ansible-doc --json --playbook-dir ./ testns.testcol.yolo --type test | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
+expected_out="$(sed 's/ *"filename": "[^"]*",$//' yolo.output)"
 test "$current_out" == "$expected_out"
 
 current_out="$(ansible-doc --json --playbook-dir ./ -t cache testns.testcol.notjsonfile | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
