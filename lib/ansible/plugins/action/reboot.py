@@ -218,6 +218,9 @@ class ActionModule(ActionBase):
             except TypeError as e:
                 raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
 
+        key = 'boot_time_command='
+        boot_time_command = f'echo {key}$({boot_time_command})'
+
         display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
 
@@ -230,7 +233,7 @@ class ActionModule(ActionBase):
                                out=to_native(stdout),
                                err=to_native(stderr)))
         display.debug("{action}: last boot time: {boot}".format(action=self._task.action, boot=command_result['stdout'].strip()))
-        return command_result['stdout'].strip()
+        return [c.split(key)[1] for c in command_result['stdout'].splitlines() if key in c][0]
 
     def check_boot_time(self, distribution, previous_boot_time):
         display.vvv("{action}: attempting to get system boot time".format(action=self._task.action))
