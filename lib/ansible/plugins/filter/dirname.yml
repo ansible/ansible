@@ -6,7 +6,7 @@ DOCUMENTATION:
   description:
     - Returns the 'head' component of a path, basically everything that is not the 'basename'.
   notes:
-    - The result of this filter is different from the Unix dirname program; where dirname for '/foo/bar/' returns '/foo', the dirname filter returns the full path ('/foo/bar/').
+    - The result of this filter is different from the Unix dirname program; where dirname for C(/foo/bar/) returns C(/foo), the dirname filter returns the full path (C(/foo/bar/)).
   options:
     _input:
       description: A path.

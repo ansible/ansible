@@ -6,7 +6,7 @@ DOCUMENTATION:
   description:
     - Returns the last name component of a path, what is left in the string that is not 'dirname'.
   notes:
-    - The result of this filter is different from the Unix basename program; where basename for '/foo/bar/' returns 'bar', the basename filter returns an empty string ('').
+    - The result of this filter is different from the Unix basename program; where basename for C(/foo/bar/) returns C(bar), the basename filter returns an empty string (C('')).
   options:
     _input:
       description: A path.
