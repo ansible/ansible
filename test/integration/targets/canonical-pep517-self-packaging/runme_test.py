@@ -300,6 +300,25 @@ def test_dist_rebuilds_with_manpages_premutations(
     # and lowest supported build deps
     wipe_generated_manpages()
     tmp_dir_sdist_with_manpages = tmp_path / 'sdist-with-manpages'
+    if not IS_PYTHON310_PLUS:
+        pip_install(venv_python_exe, 'wheel')
+        with _chdir_cm(tmp_path):
+            run_with_venv_python(
+                venv_python_exe, '-m',
+                'pip', 'wheel', '--no-deps', 'MarkupSafe == 2.0.0',
+            )
+            run_with_venv_python(
+                venv_python_exe, '-m',
+                'pip', 'wheel', '--no-deps', 'straight.plugin == 1.4.2',
+            )
+            run_with_venv_python(
+                venv_python_exe, '-m',
+                'pip', 'wheel', '--no-deps', 'straight.plugin == 1.5.0',
+            )
+        run_with_venv_python(
+            venv_python_exe, '-m',
+            'pip', 'uninstall', 'wheel', '-y',
+        )
     build_dists(
         venv_python_exe, '--sdist',
         '--config-setting=--build-manpages',

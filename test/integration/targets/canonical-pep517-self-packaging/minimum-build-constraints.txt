@@ -15,5 +15,6 @@ wheel == 0.33.6
 docutils == 0.16
 Jinja2 == 3.0.0
 MarkupSafe == 2.0.0
-PyYAML == 5.3
+PyYAML == 5.3; python_version >= "3.9"
+PyYAML == 5.4; python_version < "3.9"
 straight.plugin == 1.4.2
