@@ -398,6 +398,8 @@ def test_pep660_editable_install_smoke(venv_python_exe: Path) -> None:
     This verifies that the in-tree build backend wrapper
     does not break any required interfaces.
     """
+    pip_install(venv_python_exe, 'pip >= 20')
+
     pip_install(venv_python_exe, '-e', str(SRC_ROOT_DIR))
 
     pip_show_cmd = (
