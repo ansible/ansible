@@ -1697,6 +1697,8 @@ namespace Ansible.Basic
                         }
                     }
 
+                    // FileDispositionInformation takes in a struct with only a BOOLEAN value.
+                    // Using an int will also do the same thing to set that flag to true.
                     SetInformationFile(fileHandle, FileDispositionInformation, Int32.MaxValue);
                 }
             }
