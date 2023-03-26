@@ -1,6 +1,8 @@
 > TESTNS.TESTCOL.RANDOMMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py)
 
-        A random module.
+        A random module. See `foo=bar' (of role foo.bar.baz, main
+        entrypoint) for how this is used in the [foo.bar.baz]'s `main'
+        entrypoint.
 
 ADDED IN: version 1.0.0 of testns.testcol
 
@@ -107,7 +109,7 @@ RETURN VALUES:
         This should be in the middle.
         Has some more data.
         Check out `m_middle.suboption' and compare it to `a_first=foo'
-        and `value' (of lookup community.general.foo).
+        and `value' (of lookup plugin community.general.foo).
         returned: success and 1st of month
         type: dict
 
