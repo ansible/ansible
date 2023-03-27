@@ -65,7 +65,16 @@ class PlaybookCLI(CLI):
         self.parser.add_argument('args', help='Playbook(s)', metavar='playbook', nargs='+')
 
     def post_process_args(self, options):
+
+        # for listing we need to know originals, not defaults
+        havetags = bool(options.tags or options.skip_tags)
+
         options = super(PlaybookCLI, self).post_process_args(options)
+
+        if options.listtags:
+            # default to all tags (including never), when listing tags
+            if not havetags:
+                options.tags = ['never','all']
 
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, fork_opts=True)
