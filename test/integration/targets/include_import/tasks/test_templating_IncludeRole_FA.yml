@@ -1,0 +1,28 @@
+---
+- name: test templating allow_duplicates, public, and rolespec_validate
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: prevent duplicate roles with a templated value
+      block:
+        - import_role:
+            name: dup_allowed_role
+            allow_duplicates: "{{ False | bool }}"
+        - import_role:
+            name: dup_allowed_role
+            allow_duplicates: "{{ False | bool }}"
+
+    - name: prevent leaky vars with a templated value
+      include_role:
+        name: role1
+        public: "{{ False | bool }}"
+    - assert:
+        that:
+          - where_am_i_defined is undefined
+
+    - name: skip role argspec validation with a templated value
+      include_role:
+        name: role_with_argspec
+        rolespec_validate: "{{ False | bool }}"
+      vars:
+        optional_int: wrong_type
