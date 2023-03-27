@@ -70,12 +70,10 @@ SEE ALSO:
       * Module ansible.builtin.ping
            The official documentation on the
            ansible.builtin.ping module.
-           https://docs.ansible.com/ansible-core/devel/collectio
-        ns/ansible/builtin/ping_module.html
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/ping_module.html
       * Module ansible.builtin.uri
            Use this to fetch an URI
-           https://docs.ansible.com/ansible-core/devel/collectio
-        ns/ansible/builtin/uri_module.html
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/uri_module.html
       * Module testns.testcol.test
       * Module testns.testcol.fakemodule
            A fake module
@@ -84,8 +82,7 @@ SEE ALSO:
            https://docs.ansible.com
       * Ansible documentation [foo_bar]
            Some foo bar.
-           https://docs.ansible.com/ansible-
-           core/devel/#stq=foo_bar&stp=1
+           https://docs.ansible.com/ansible-core/devel/#stq=foo_bar&stp=1
 
 
 AUTHOR: Ansible Core Team
