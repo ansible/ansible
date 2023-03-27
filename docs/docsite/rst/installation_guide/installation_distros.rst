@@ -28,6 +28,12 @@ On CentOS:
 
 RPMs for currently supported versions of CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
+Installing Ansible on OpenSUSE Tumbleweed/Leap
+----------------------------------------------
+
+.. code-block:: bash
+
+    $ sudo zypper install ansible
 
 .. _from_apt:
 
