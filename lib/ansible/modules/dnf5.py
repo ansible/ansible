@@ -324,6 +324,9 @@ EXAMPLES = """
     state: present
 """
 
+RETURN = r""""""
+
+
 import os
 import sys
 
@@ -502,7 +505,7 @@ class Dnf5Module(YumDnf):
 
             if command in {"installed", "upgrades", "available"}:
                 query = libdnf5.rpm.PackageQuery(base)
-                getattr(query, f"filter_{command}")()
+                getattr(query, "filter_{}".format(command))()
                 results = [self._package_dict(package) for package in query]
             elif command in {"repos", "repositories"}:
                 query = libdnf5.repo.RepoQuery(base)
@@ -568,7 +571,7 @@ class Dnf5Module(YumDnf):
             failures = []
             for log in transaction.get_resolve_logs_as_strings():
                 if log.startswith("No match for argument") and self.state in {"install", "present", "latest"}:
-                    failures.append(f"No package {log.rsplit(' ', 1)[-1]} available.")
+                    failures.append("No package {} available.".format(log.rsplit(' ', 1)[-1]))
                 else:
                     failures.append(log)
 
@@ -596,7 +599,7 @@ class Dnf5Module(YumDnf):
                 action = "Downloaded"
             else:
                 action = libdnf5.base.transaction.transaction_item_action_to_string(pkg.get_action())
-            results.append(f"{actions_compat_map.get(action, action)}: {pkg.get_package().get_nevra()}")
+            results.append("{}: {}".format(actions_compat_map.get(action, action), pkg.get_package().get_nevra()))
 
         result_to_str = {
             libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_SIGNED: "package is not signed",
@@ -613,7 +616,7 @@ class Dnf5Module(YumDnf):
                         result = libdnf5.rpm.RpmSignature(base).check_package_signature(pkg.get_package())
                         if result == libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_SIGNED:
                             self.module.fail_json(
-                                msg=f"Failed to validate GPG signature for {pkg.get_package().get_nevra()}: {result_to_str.get(result, result)}",
+                                msg="Failed to validate GPG signature for {}: {}".format(pkg.get_package().get_nevra(), result_to_str.get(result, result)),
                                 rc=1,
                             )
                         if result in {
@@ -629,7 +632,7 @@ class Dnf5Module(YumDnf):
                 if result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
-                        failures=[f"{transaction.transaction_result_to_string(result)}: {log}" for log in transaction.get_transaction_problems()],
+                        failures=["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()],
                         rc=1,
                     )
 
