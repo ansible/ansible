@@ -1117,6 +1117,17 @@ releases:
     - strategy_badid_fix.yml
     - v2.14.3rc1_summary.yaml
     release_date: '2023-02-20'
+  2.14.4:
+    changes:
+      release_summary: '| Release Date: 2023-03-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.4_summary.yaml
+    release_date: '2023-03-27'
   2.14.4rc1:
     changes:
       breaking_changes:
