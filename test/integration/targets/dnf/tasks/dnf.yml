@@ -427,6 +427,10 @@
 - shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
   register: shell_dnf_result
 
+- dnf:
+    name: "@Custom Group"
+    state: absent
+
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
 # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
@@ -442,10 +446,13 @@
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
-  when: not dnf5|default('false')
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
 - shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
+
+- dnf:
+    name: "@Custom Group"
+    state: absent
 
 - name: try to install non existing group
   dnf:

@@ -430,16 +430,16 @@ class Dnf5Module(YumDnf):
         conf = base.get_config()
 
         if self.conf_file:
-            if not os.access(self.conf_file, os.R_OK):
-                self.module.fail_json(
-                    msg="cannot read configuration file",
-                    conf_file=self.conf_file,
-                    results=[],
-                )
-            else:
-                conf.config_file_path = self.conf_file
+            conf.config_file_path = self.conf_file
 
-        base.load_config_from_file()
+        try:
+            base.load_config_from_file()
+        except RuntimeError as e:
+            self.module.fail_json(
+                msg=str(e),
+                conf_file=self.conf_file,
+                results=[],
+            )
 
         if self.exclude:
             conf.excludepkgs = self.exclude
@@ -536,10 +536,7 @@ class Dnf5Module(YumDnf):
             goal.add_rpm_upgrade(settings)
         elif self.state in {"install", "present"}:
             for spec in self.names:
-                if self._is_spec_installed(base, spec):
-                    # results.append(f"Package already installed: {spec}")
-                    pass
-                else:
+                if not self._is_spec_installed(base, spec):
                     goal.add_install(spec, settings)
         elif self.state == "latest":
             for spec in self.names:
@@ -549,10 +546,11 @@ class Dnf5Module(YumDnf):
                     goal.add_install(spec, settings)
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
-                if self._is_spec_installed(base, spec):
+                try:
                     goal.add_remove(spec, settings)
-                # else:
-                #     results.append(f"{spec} is not installed")
+                except RuntimeError as e:
+                    # TODO failures
+                    self.module.fail_json(msg=str(e))
             if self.autoremove:
                 for pkg in self.get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
