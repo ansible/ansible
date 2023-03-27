@@ -43,14 +43,14 @@ expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.FAKEMODULE\).*(.*)$/\1/' fakemodu
 test "$current_out" == "$expected_out"
 
 echo "test randommodule docs from collection"
-# we use sed to strip the plugin path from the first line, and remove versions from URLs when this is run from stable-X branches
-current_out="$(ansible-doc --playbook-dir ./ testns.testcol.randommodule | sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' | sed 's/https:\/\/docs.ansible.com\/ansible-core\/[^\/]+\//https:\/\/docs.ansible.com\/ansible-core\/devel\//g')"
+# we use sed to strip the plugin path from the first line, and fix-urls.py to unbreak and replace URLs from stable-X branches
+current_out="$(ansible-doc --playbook-dir ./ testns.testcol.randommodule | sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' | python fix-urls.py)"
 expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' randommodule-text.output)"
 test "$current_out" == "$expected_out"
 
 echo "test yolo filter docs from collection"
-# we use sed to strip the plugin path from the first line
-current_out="$(ansible-doc --playbook-dir ./ testns.testcol.yolo --type test | sed '1 s/\(^> TESTNS\.TESTCOL\.YOLO\).*(.*)$/\1/' | sed 's/https:\/\/docs.ansible.com\/ansible-core\/[^\/]+\//https:\/\/docs.ansible.com\/ansible-core\/devel\//g')"
+# we use sed to strip the plugin path from the first line, and fix-urls.py to unbreak and replace URLs from stable-X branches
+current_out="$(ansible-doc --playbook-dir ./ testns.testcol.yolo --type test | sed '1 s/\(^> TESTNS\.TESTCOL\.YOLO\).*(.*)$/\1/' | python fix-urls.py)"
 expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.YOLO\).*(.*)$/\1/' yolo-text.output)"
 test "$current_out" == "$expected_out"
 
