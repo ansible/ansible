@@ -7,7 +7,6 @@ import re
 import subprocess
 import sys
 import typing as t
-from configparser import ConfigParser
 from contextlib import contextmanager, suppress
 from importlib.metadata import import_module
 from io import StringIO
@@ -63,11 +62,7 @@ def _make_in_tree_ansible_importable() -> None:
 
 def _get_package_distribution_version() -> str:
     """Retrieve the current version number from setuptools config."""
-    setup_cfg_path = Path.cwd() / 'setup.cfg'
-    setup_cfg = ConfigParser()
-    setup_cfg.read_string(setup_cfg_path.read_text())
-    cfg_version = setup_cfg.get('metadata', 'version')
-    importable_version_str = cfg_version[len('attr: '):]
+    importable_version_str = 'ansible.release.__version__'
     version_mod_str, version_var_str = importable_version_str.rsplit('.', 1)
     _make_in_tree_ansible_importable()
     return getattr(import_module(version_mod_str), version_var_str)
