@@ -85,16 +85,15 @@ class IncludeRole(TaskInclude):
             available_variables = {}
         templar = Templar(loader=loader, variables=available_variables)
         from_files = templar.template(self._from_files)
-
-        for attr in (self.OTHER_ARGS - {'apply'}):
-            setattr(self, attr, templar.template(getattr(self, attr)))
+        public = templar.template(getattr(self, 'public'))
+        rolespec_validate = templar.template(getattr(self, 'rolespec_validate'))
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
-                                from_include=True, validate=self.rolespec_validate, public=self.public)
-        actual_role._metadata.allow_duplicates = self.allow_duplicates
+                                from_include=True, validate=rolespec_validate, public=public)
+        actual_role._metadata.allow_duplicates = templar.template(getattr(self, 'allow_duplicates'))
 
-        if self.statically_loaded or self.public:
+        if self.statically_loaded or public:
             myplay.roles.append(actual_role)
 
         # save this for later use
