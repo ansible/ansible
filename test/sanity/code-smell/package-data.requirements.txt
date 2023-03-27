@@ -10,7 +10,7 @@ packaging==21.2
 pyproject_hooks==1.0.0
 pyparsing==2.4.7
 PyYAML==6.0
-resolvelib==0.9.0
-rstcheck==3.5.0
+resolvelib==1.0.1
+rstcheck==5.0.0
 semantic-version==2.10.0
 straight.plugin==1.5.0
