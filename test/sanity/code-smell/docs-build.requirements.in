@@ -5,4 +5,4 @@ sphinx == 5.3.0
 sphinx-notfound-page
 sphinx-ansible-theme
 rstcheck < 6  # rstcheck 6.x has problem with rstcheck.core triggered by include files w/ sphinx directives https://github.com/rstcheck/rstcheck-core/issues/3
-antsibull-docs == 1.10.0  # currently approved version
+antsibull-docs == 1.11.0  # currently approved version
