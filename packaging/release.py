@@ -339,7 +339,7 @@ class ReleaseAnnouncement:
 # region Utilities
 
 
-SCRIPT_DIR = pathlib.Path(__file__).parent
+SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 CHECKOUT_DIR = SCRIPT_DIR.parent
 
 ANSIBLE_LIB_DIR = CHECKOUT_DIR / "lib"
