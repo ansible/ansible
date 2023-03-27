@@ -321,6 +321,7 @@ class ReleaseArtifact:
     """Information about a release artifact on PyPI."""
 
     package_type: str
+    package_label: str
     url: str
     size: int
     digest: str
@@ -838,8 +839,10 @@ def describe_release_artifact(version: Version, item: dict[str, t.Any], validate
 
     if package_type == "bdist_wheel":
         local_artifact_file = get_wheel_path(version)
+        package_label = "Built Distribution"
     elif package_type == "sdist":
         local_artifact_file = get_sdist_path(version)
+        package_label = "Source Distribution"
     else:
         raise NotImplementedError(f"Package type '{package_type}' is not supported.")
 
@@ -858,6 +861,7 @@ def describe_release_artifact(version: Version, item: dict[str, t.Any], validate
 
     return ReleaseArtifact(
         package_type=package_type,
+        package_label=package_label,
         url=url,
         size=pypi_size,
         digest=pypi_digest,
@@ -964,7 +968,7 @@ See the [full changelog]({{ changelog }}) for the changes included in this relea
 # Release Artifacts
 
 {%- for release in releases %}
-* {{ 'Wheel: ' if release.package_type == 'bdist_wheel' else 'Source:' }} [{{ release.url|basename }}]({{ release.url }}) - {{ release.size }} bytes
+* {{ release.package_label }}: [{{ release.url|basename }}]({{ release.url }}) - {{ release.size }} bytes
   * {{ release.digest }} ({{ release.digest_algorithm }})
 {%- endfor %}
 """
@@ -1001,7 +1005,7 @@ $ python3 -m pip install --user {{ info.name }}=={{ version }}
 
 The release artifacts can be found here:
 {% for release in info.releases %}
-# {{ ' Wheel' if release.package_type == 'bdist_wheel' else 'Source' }}: {{ release.size }} bytes
+# {{ release.package_label }}: {{ release.size }} bytes
 # {{ release.digest_algorithm }}: {{ release.digest }}
 {{ release.url }}
 {%- endfor %}
