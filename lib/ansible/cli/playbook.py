@@ -76,7 +76,7 @@ class PlaybookCLI(CLI):
             # default to all tags (including never), when listing tags
             # unless user specified tags
             if not havetags:
-                options.tags = ['never','all']
+                options.tags = ['never', 'all']
 
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, fork_opts=True)
