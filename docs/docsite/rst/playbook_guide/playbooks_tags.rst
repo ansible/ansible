@@ -351,6 +351,12 @@ To run all tasks except those tagged ``packages``:
 
    ansible-playbook example.yml --skip-tags "packages"
 
+To run all tasks, even those excluded because are tagged ``never``:
+
+.. code-block:: bash
+
+   ansible-playbook example.yml --skip-tags "all,never"
+
 Previewing the results of using tags
 ------------------------------------
 
