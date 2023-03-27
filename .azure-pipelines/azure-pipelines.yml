@@ -32,11 +32,8 @@ variables:
     value: test/utils/shippable/shippable.sh
   - name: fetchDepth
     value: 500
-
-resources:
-  containers:
-    - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:1.9.0
+  - name: defaultContainer
+    value: quay.io/ansible/azure-pipelines-test-container:1.9.0
 
 pool: Legacy
 
