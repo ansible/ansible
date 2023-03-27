@@ -66,13 +66,15 @@ class PlaybookCLI(CLI):
 
     def post_process_args(self, options):
 
-        # for listing we need to know originals, not defaults
+        # for listing, we need to know if user had tag input
+        # capture here as parent function sets defaults for tags
         havetags = bool(options.tags or options.skip_tags)
 
         options = super(PlaybookCLI, self).post_process_args(options)
 
         if options.listtags:
             # default to all tags (including never), when listing tags
+            # unless user specified tags
             if not havetags:
                 options.tags = ['never','all']
 
