@@ -324,7 +324,7 @@ EXAMPLES = """
     state: present
 """
 
-RETURN = r""""""
+RETURN = r"""#"""
 
 
 import os
@@ -625,7 +625,7 @@ class Dnf5Module(YumDnf):
                             libdnf5.rpm.RpmSignature.CheckResult_FAILED
                         }:
                             # TODO recover
-                            ...
+                            pass
 
                 transaction.set_description("ansible dnf5 module")
                 result = transaction.run()

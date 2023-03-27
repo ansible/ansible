@@ -560,30 +560,35 @@
         - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
-- name: use latest to install httpd
+- name: ensure sos isn't installed
   dnf:
-    name: httpd
+    name: sos
+    state: absent
+
+- name: use latest to install sos
+  dnf:
+    name: sos
     state: latest
   register: dnf_result
 
-- name: verify httpd was installed
+- name: verify sos was installed
   assert:
     that:
-      - "'changed' in dnf_result"
+      - dnf_result is changed
 
-- name: uninstall httpd
+- name: uninstall sos
   dnf:
-    name: httpd
+    name: sos
     state: removed
 
-- name: update httpd only if it exists
+- name: update sos only if it exists
   dnf:
-    name: httpd
+    name: sos
     state: latest
     update_only: yes
   register: dnf_result
 
-- name: verify httpd not installed
+- name: verify sos not installed
   assert:
     that:
       - "not dnf_result is changed"
