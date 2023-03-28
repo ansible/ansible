@@ -404,16 +404,17 @@ class Dnf5Module(YumDnf):
         return match
 
     def _package_dict(self, package):
-        result = {
+        return {
+            "nevra": package.get_nevra(),
+            "envra": package.get_nevra(),  # dnf module compat
             "name": package.get_name(),
             "arch": package.get_arch(),
             "epoch": str(package.get_epoch()),
             "release": package.get_release(),
             "version": package.get_version(),
             "repo": package.get_repo_id(),
+            "yumstate": "installed" if package.is_installed() else "available",
         }
-
-        return result
 
     def get_unneeded_pkgs(self, base):
         query = libdnf5.rpm.PackageQuery(base)
@@ -513,11 +514,9 @@ class Dnf5Module(YumDnf):
                 results = [{"repoid": repo.get_id(), "state": "enabled"} for repo in query]
             else:
                 resolve_spec_settings = libdnf5.base.ResolveSpecSettings()
-                results = []
-                for spec in command:
-                    query = libdnf5.rpm.PackageQuery(base)
-                    query.resolve_pkg_spec(spec, resolve_spec_settings, True)
-                    results.extend([self._package_dict(package) for package in query])
+                query = libdnf5.rpm.PackageQuery(base)
+                query.resolve_pkg_spec(command, resolve_spec_settings, True)
+                results = [self._package_dict(package) for package in query]
 
             self.module.exit_json(msg="", results=results)
 
