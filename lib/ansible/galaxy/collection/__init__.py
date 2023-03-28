@@ -743,7 +743,8 @@ def install_collections(
 
     keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
-        for fqcn, concrete_coll_pin in dependency_map.items():
+        for fqcn in dependency_map.keys():
+            concrete_coll_pin = dependency_map[fqcn]
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
                     "'{coll!s}' is virtual, skipping.".
@@ -767,6 +768,19 @@ def install_collections(
                     "Configure a keyring for ansible-galaxy to use "
                     "or disable signature verification. "
                     "Skipping signature verification."
+                )
+
+            if concrete_coll_pin.type == 'galaxy':
+                signatures = concrete_coll_pin.src.get_collection_signatures(
+                    concrete_coll_pin.namespace, concrete_coll_pin.name, concrete_coll_pin.ver
+                )
+
+                concrete_coll_pin = Candidate(
+                    concrete_coll_pin.fqcn,
+                    concrete_coll_pin.ver,
+                    concrete_coll_pin.src,
+                    concrete_coll_pin.type,
+                    frozenset([*concrete_coll_pin.signatures, *signatures])
                 )
 
             try:

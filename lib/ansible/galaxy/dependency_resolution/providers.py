@@ -392,7 +392,6 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
             if not unsatisfied:
                 if self._include_signatures:
-                    signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
                     for extra_source in extra_signature_sources:
                         signatures.append(get_signature_from_source(extra_source))
                 latest_matches.append(
