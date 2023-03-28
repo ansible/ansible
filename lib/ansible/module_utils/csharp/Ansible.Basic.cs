@@ -178,7 +178,7 @@ namespace Ansible.Basic
                     }
 
                     string dateTime = DateTime.Now.ToFileTime().ToString();
-                    string dirName = String.Format("ansible-moduletmp-{0}-{1}-{2}", dateTime, Process.GetCurrentProcess().Id,
+                    string dirName = String.Format("ansible-moduletmp-{0}-{1}-{2}", dateTime, System.Diagnostics.Process.GetCurrentProcess().Id,
                         new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
 #if CORECLR
