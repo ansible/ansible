@@ -1,0 +1,2 @@
+minor_changes:
+ - dnf5 - Add new module for managing packages and other artifacts via the next version of DNF (https://github.com/ansible/ansible/issues/78898)
