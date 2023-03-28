@@ -1,0 +1,19 @@
+- meta: end_play
+  when: ansible_os_family != 'Debian'
+
+- block:
+    - name: install python3-debian
+      apt:
+        name: python3-debian
+        state: present
+      register: py3_deb_install
+
+    - import_tasks: test.yml
+
+    - import_tasks: install.yml
+  always:
+    - name: uninstall python3-debian
+      apt:
+        name: python3-debian
+        state: absent
+      when: py3_deb_install is changed
