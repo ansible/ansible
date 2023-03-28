@@ -326,6 +326,9 @@ class Display(metaclass=Singleton):
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
 
+        if not isinstance(msg, str):
+            raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
+
         if self._final_q:
             # If _final_q is set, that means we are in a WorkerProcess
             # and instead of displaying messages directly from the fork
