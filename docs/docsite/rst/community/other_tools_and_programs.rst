@@ -79,6 +79,8 @@ An open-source Community edition and closed-source Enterprise edition, integrate
 
 * `Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - Ansible Vault Editor with auto encryption/decryption.
 
+* `Ansible Lint <https://plugins.jetbrains.com/plugin/20905-ansible-lint>`__ - Ansible Lint integration with automatic/continuous annotation of errors, warnings, and info while editing.
+
 *****************
 Development tools
 *****************
