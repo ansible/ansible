@@ -338,12 +338,43 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 libdnf5 = None
 
 
+def is_spec_installed(base, spec):
+    settings = libdnf5.base.ResolveSpecSettings()
+    query = libdnf5.rpm.PackageQuery(base)
+    query.filter_installed()
+    match, nevra = query.resolve_pkg_spec(spec, settings, True)
+    return match
+
+
+def package_to_dict(package):
+    return {
+        "nevra": package.get_nevra(),
+        "envra": package.get_nevra(),  # dnf module compat
+        "name": package.get_name(),
+        "arch": package.get_arch(),
+        "epoch": str(package.get_epoch()),
+        "release": package.get_release(),
+        "version": package.get_version(),
+        "repo": package.get_repo_id(),
+        "yumstate": "installed" if package.is_installed() else "available",
+    }
+
+
+def get_unneeded_pkgs(base):
+    query = libdnf5.rpm.PackageQuery(base)
+    query.filter_installed()
+    query.filter_unneeded()
+    for pkg in query:
+        yield pkg
+
+
 class Dnf5Module(YumDnf):
     def __init__(self, module):
-        super().__init__(module)
+        super(Dnf5Module, self).__init__(module)
         self._ensure_dnf()
 
-        self.lockfile = "/var/cache/dnf/*_lock.pid"
+        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
+        self.lockfile = ""
         self.pkg_mgr_name = "dnf5"
 
         # DNF specific args that are not part of YumDnf
@@ -356,13 +387,13 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
+        has_dnf = True
         try:
-            import libdnf5
-            HAS_DNF = True
+            import libdnf5  # type: ignore[import]
         except ImportError:
-            HAS_DNF = False
+            has_dnf = False
 
-        if HAS_DNF:
+        if has_dnf:
             return
 
         system_interpreters = [
@@ -392,38 +423,15 @@ class Dnf5Module(YumDnf):
         )
 
     def is_lockfile_pid_valid(self):
-        # FIXME? it looks like DNF takes care of invalid lock files itself?
-        # https://github.com/ansible/ansible/issues/57189
+        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
         return True
 
-    def _is_spec_installed(self, base, spec):
-        settings = libdnf5.base.ResolveSpecSettings()
-        query = libdnf5.rpm.PackageQuery(base)
-        query.filter_installed()
-        match, nevra = query.resolve_pkg_spec(spec, settings, True)
-        return match
-
-    def _package_dict(self, package):
-        return {
-            "nevra": package.get_nevra(),
-            "envra": package.get_nevra(),  # dnf module compat
-            "name": package.get_name(),
-            "arch": package.get_arch(),
-            "epoch": str(package.get_epoch()),
-            "release": package.get_release(),
-            "version": package.get_version(),
-            "repo": package.get_repo_id(),
-            "yumstate": "installed" if package.is_installed() else "available",
-        }
-
-    def get_unneeded_pkgs(self, base):
-        query = libdnf5.rpm.PackageQuery(base)
-        query.filter_installed()
-        query.filter_unneeded()
-        for pkg in query:
-            yield pkg
-
     def run(self):
+        if sys.version_info.major < 3:
+            self.module.fail_json(
+                msg="The dnf5 module requires Python 3.",
+                results=[],
+            )
         if not self.list and not self.download_only and os.geteuid() != 0:
             self.module.fail_json(
                 msg="This command has to be run under the root user.",
@@ -445,15 +453,15 @@ class Dnf5Module(YumDnf):
                 results=[],
             )
 
+        if self.releasever is not None:
+            variables = base.get_vars()
+            variables.set("releasever", self.releasever)
         if self.exclude:
             conf.excludepkgs = self.exclude
         if self.disable_excludes:
             if self.disable_excludes == "all":
                 self.disable_excludes = "*"
             conf.disable_excludes = self.disable_excludes
-        if self.releasever is not None:
-            variables = base.get_vars()
-            variables.set("releasever", self.releasever)
         conf.skip_broken = self.skip_broken
         conf.best = not self.nobest
         conf.install_weak_deps = self.install_weak_deps
@@ -461,10 +469,8 @@ class Dnf5Module(YumDnf):
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
         conf.clean_requirements_on_remove = self.autoremove
-
         conf.installroot = self.installroot
-        conf.use_host_config = True
-
+        conf.use_host_config = True  # needed for installroot
         conf.cacheonly = self.cacheonly
 
         base.setup()
@@ -507,7 +513,7 @@ class Dnf5Module(YumDnf):
             if command in {"installed", "upgrades", "available"}:
                 query = libdnf5.rpm.PackageQuery(base)
                 getattr(query, "filter_{}".format(command))()
-                results = [self._package_dict(package) for package in query]
+                results = [package_to_dict(package) for package in query]
             elif command in {"repos", "repositories"}:
                 query = libdnf5.repo.RepoQuery(base)
                 query.filter_enabled(True)
@@ -516,7 +522,7 @@ class Dnf5Module(YumDnf):
                 resolve_spec_settings = libdnf5.base.ResolveSpecSettings()
                 query = libdnf5.rpm.PackageQuery(base)
                 query.resolve_pkg_spec(command, resolve_spec_settings, True)
-                results = [self._package_dict(package) for package in query]
+                results = [package_to_dict(package) for package in query]
 
             self.module.exit_json(msg="", results=results)
 
@@ -532,17 +538,16 @@ class Dnf5Module(YumDnf):
             advisory_query.filter_type(types)
             settings.set_advisory_filter(advisory_query)
 
-        results = []
         goal = libdnf5.base.Goal(base)
         if self.names == ["*"] and self.state == "latest":
             goal.add_rpm_upgrade(settings)
         elif self.state in {"install", "present"}:
             for spec in self.names:
-                if not self._is_spec_installed(base, spec):
+                if not is_spec_installed(base, spec):
                     goal.add_install(spec, settings)
         elif self.state == "latest":
             for spec in self.names:
-                if self._is_spec_installed(base, spec):
+                if is_spec_installed(base, spec):
                     goal.add_upgrade(spec, settings)
                 elif not self.update_only:
                     goal.add_install(spec, settings)
@@ -551,13 +556,12 @@ class Dnf5Module(YumDnf):
                 try:
                     goal.add_remove(spec, settings)
                 except RuntimeError as e:
-                    # TODO failures
                     self.module.fail_json(msg=str(e))
             if self.autoremove:
-                for pkg in self.get_unneeded_pkgs(base):
+                for pkg in get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
         elif self.autoremove:
-            for pkg in self.get_unneeded_pkgs(base):
+            for pkg in get_unneeded_pkgs(base):
                 goal.add_rpm_remove(pkg, settings)
 
         goal.set_allow_erasing(self.allowerasing)
@@ -584,7 +588,7 @@ class Dnf5Module(YumDnf):
                 rc=1,
             )
 
-        # FIXME dnf4 module compat
+        # NOTE dnf module compat
         actions_compat_map = {
             "Install": "Installed",
             "Remove": "Removed",
@@ -593,6 +597,7 @@ class Dnf5Module(YumDnf):
             "Replaced": "Removed",
         }
         changed = bool(transaction.get_transaction_packages())
+        results = []
         for pkg in transaction.get_transaction_packages():
             if self.download_only:
                 action = "Downloaded"
@@ -623,7 +628,7 @@ class Dnf5Module(YumDnf):
                             libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_TRUSTED,
                             libdnf5.rpm.RpmSignature.CheckResult_FAILED
                         }:
-                            # TODO recover
+                            # FIXME https://github.com/rpm-software-management/dnf5/issues/386
                             pass
 
                 transaction.set_description("ansible dnf5 module")
