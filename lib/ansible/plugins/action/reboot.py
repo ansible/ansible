@@ -219,7 +219,7 @@ class ActionModule(ActionBase):
                 raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
 
         key = 'boot_time_command='
-        boot_time_command = f'echo {key}$({boot_time_command})'
+        boot_time_command = '%s %s%s%s%s' % (self._connection._shell.ECHO, key, self._connection._shell._SHELL_SUB_LEFT, boot_time_command, self._connection._shell._SHELL_SUB_RIGHT)
 
         display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
