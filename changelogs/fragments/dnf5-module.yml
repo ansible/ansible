@@ -1,2 +1,4 @@
 minor_changes:
  - dnf5 - Add new module for managing packages and other artifacts via the next version of DNF (https://github.com/ansible/ansible/issues/78898)
+known_issues:
+  - dnf5 - The DNF5 package manager currently does not provide all functionality to ensure feature parity between the existing ``dnf`` and the new ``dnf5`` module. As a result the following ``dnf5`` options are effectively a no-op: ``cacheonly``, ``enable_plugin``, ``disable_plugin`` and ``lock_timeout``. In addition the ``allow_downgrade`` option is ``on`` by default which is a change in behavior, and cannot be turned off.

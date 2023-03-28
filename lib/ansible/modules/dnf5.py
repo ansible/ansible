@@ -10,7 +10,9 @@ DOCUMENTATION = """
 module: dnf5
 author: Ansible Core Team
 description:
-     - Installs, upgrade, removes, and lists packages and groups with the I(dnf) package manager.
+  - Installs, upgrade, removes, and lists packages and groups with the I(dnf5) package manager.
+  - WARNING: The I(dnf5) package manager is still under development and not all features that existing I(dnf) module
+    provides are implemented in I(dnf5), please consult specific options for more information.
 short_description: Manages packages with the I(dnf) package manager
 options:
   name:
@@ -126,6 +128,7 @@ options:
     type: bool
   enable_plugin:
     description:
+      - This is currently a no-op as dnf5 itself does not implement this feature.
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
     type: list
@@ -133,6 +136,7 @@ options:
     default: []
   disable_plugin:
     description:
+      - This is currently a no-op as dnf5 itself does not implement this feature.
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     type: list
@@ -147,8 +151,8 @@ options:
     type: str
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(false), the SSL certificates will not be validated.
-      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - This is effectively a no-op in the dnf5 module as dnf5 itself handles downloading a https url as the source of the rpm,
+        but is an accepted parameter for feature parity/compatibility with the I(yum) module.
     type: bool
     default: "yes"
   sslverify:
@@ -159,6 +163,8 @@ options:
     default: "yes"
   allow_downgrade:
     description:
+      - This is currently on by default. dnf5 does not currently provide an option to turn this off.
+        Note that this is a change in behavior from the existing dnf module.
       - Specify if the named package and version is allowed to downgrade
         a maybe already installed higher version of that package.
         Note that setting allow_downgrade=True can make this module
@@ -168,7 +174,7 @@ options:
         package and others can cause changes to the packages which were
         in the earlier transaction).
     type: bool
-    default: "no"
+    default: "yes"
   install_repoquery:
     description:
       - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
@@ -182,6 +188,7 @@ options:
     type: bool
   lock_timeout:
     description:
+      - This is currently a no-op as dnf5 does not provide an option to configure it.
       - Amount of time to wait for the dnf lockfile to be freed.
     required: false
     default: 30
@@ -210,6 +217,7 @@ options:
     default: "no"
   cacheonly:
     description:
+      - This is currently no-op as dnf5 does not implement the feature.
       - Tells dnf to run entirely from system cache; does not download or update metadata.
     type: bool
     default: "no"
@@ -238,40 +246,40 @@ version_added: 2.15
 
 EXAMPLES = """
 - name: Install the latest version of Apache
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: httpd
     state: latest
 
 - name: Install Apache >= 2.4
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: httpd >= 2.4
     state: present
 
 - name: Install the latest version of Apache and MariaDB
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name:
       - httpd
       - mariadb-server
     state: latest
 
 - name: Remove the Apache package
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: httpd
     state: absent
 
 - name: Install the latest version of Apache from the testing repo
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: httpd
     enablerepo: testing
     state: present
 
 - name: Upgrade all packages
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: "*"
     state: latest
 
 - name: Update the webserver, depending on which is installed on the system. Do not install the other one
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name:
       - httpd
       - nginx
@@ -279,49 +287,34 @@ EXAMPLES = """
     update_only: yes
 
 - name: Install the nginx rpm from a remote repo
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: 'http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm'
     state: present
 
 - name: Install nginx rpm from a local file
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: /usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
 - name: Install Package based upon the file it provides
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: /usr/bin/cowsay
     state: present
 
 - name: Install the 'Development tools' package group
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: '@Development tools'
     state: present
 
 - name: Autoremove unneeded packages installed as dependencies
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     autoremove: yes
 
 - name: Uninstall httpd but keep its dependencies
-  ansible.builtin.dnf:
+  ansible.builtin.dnf5:
     name: httpd
     state: absent
     autoremove: no
-
-- name: Install a modularity appstream with defined stream and profile
-  ansible.builtin.dnf:
-    name: '@postgresql:9.6/client'
-    state: present
-
-- name: Install a modularity appstream with defined stream
-  ansible.builtin.dnf:
-    name: '@postgresql:9.6'
-    state: present
-
-- name: Install a modularity appstream with defined profile
-  ansible.builtin.dnf:
-    name: '@postgresql/client'
-    state: present
 """
 
 RETURN = """
