@@ -7,7 +7,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-VALID_BACKENDS = frozenset(("dnf", "dnf4", "dnf5"))
+VALID_BACKENDS = frozenset(("dnf4", "dnf5"))
 
 
 # FIXME mostly duplicate of the yum action plugin
