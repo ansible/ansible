@@ -297,7 +297,7 @@ The parameters for these formatting functions can use quoting with backslashes: 
 Rules for using ``O()`` and ``RV()`` are very strict. You must follow syntax rules so that documentation renderers can create hyperlinks for the options resp. return values.
 
 The allowed syntaxes are as follows:
-- To reference an option for the current plugin/module, or the entrypoint of the current role (inside a role entrypoint documentation), use ``O(option)`` and ``O(option=name)``.
+- To reference an option for the current plugin/module, or the entrypoint of the current role (inside role entrypoint documentation), use ``O(option)`` and ``O(option=name)``.
 - To reference an option for another entrypoint ``entrypoint`` from inside role documentation, use ``O(entrypoint:option)`` and ``O(entrypoint:option=name)``. The entrypoint information can be ignored by the documentation renderer, turned into a link to that entrypoint, or even directly to the option of that entrypoint.
 - To reference an option for *another* plugin/module ``plugin.fqcn.name`` of type ``type``, use ``O(plugin.fqcn.name#type:option)`` and ``O(plugin.fqcn.name#type:option=name)``. For modules, use ``type=module``. The FQCN and plugin type can be ignored by the documentation renderer, turned into a link to that plugin, or even directly to the option of that plugin.
 - To reference an option for entrypoint ``entrypoint`` of *another* role ``role.fqcn.name``, use ``O(role.fqcn.name#role:entrypoint:option)`` and ``O(role.fqcn.name#role:entrypoint:option=name)``. The FQCN and entrypoint information can be ignored by the documentation renderer, turned into a link to that entrypoint, or even directly to the option of that entrypoint.
