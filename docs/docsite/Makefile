@@ -46,12 +46,12 @@ DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup
 
 PYTHON ?= python
 # fetch version from project release.py as single source-of-truth
-VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --raw || echo error)
+VERSION := $(shell $(PYTHON) ./version_helper.py --raw || echo error)
 ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
 endif
 
-MAJOR_VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --majorversion || echo error)
+MAJOR_VERSION := $(shell $(PYTHON) ./version_helper.py --majorversion || echo error)
 ifeq ($(findstring error,$(MAJOR_VERSION)), error)
 $(error "version_helper failed to determine major version")
 endif
