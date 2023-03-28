@@ -727,7 +727,7 @@
     req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
     cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
-    ignore_errors: "--ignore-signature-status-code BADSIG FAILURE"
+    ignore_errors: "--ignore-signature-status-codes BADSIG FAILURE"
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
