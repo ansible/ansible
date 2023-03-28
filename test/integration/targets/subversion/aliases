@@ -1,7 +1,5 @@
 setup/always/setup_passlib
 shippable/posix/group2
-skip/osx
 skip/macos
-skip/rhel/9.0b  # svn checkout hangs
 destructive
 needs/root
