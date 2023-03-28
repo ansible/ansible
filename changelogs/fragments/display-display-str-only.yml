@@ -1,0 +1,2 @@
+bugfixes:
+- Perform type check on data passed to Display.display to enforce the requirement of being given a python3 unicode string
