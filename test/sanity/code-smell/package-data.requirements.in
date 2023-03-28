@@ -1,3 +1,4 @@
+build
 docutils < 0.18  # match version required by sphinx in the docs-build sanity test
 jinja2
 pyyaml  # ansible-core requirement
