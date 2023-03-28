@@ -11,8 +11,8 @@ module: dnf5
 author: Ansible Core Team
 description:
   - Installs, upgrade, removes, and lists packages and groups with the I(dnf5) package manager.
-  - WARNING: The I(dnf5) package manager is still under development and not all features that existing I(dnf) module
-    provides are implemented in I(dnf5), please consult specific options for more information.
+  - "WARNING: The I(dnf5) package manager is still under development and not all features that existing I(dnf) module
+    provides are implemented in I(dnf5), please consult specific options for more information."
 short_description: Manages packages with the I(dnf) package manager
 options:
   name:
