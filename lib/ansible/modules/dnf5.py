@@ -505,6 +505,14 @@ class Dnf5Module(YumDnf):
 
         sack.update_and_load_enabled_repos(True)
 
+        if self.update_cache and not self.names and not self.list:
+            self.module.exit_json(
+                msg="Cache updated",
+                changed=False,
+                results=[],
+                rc=0
+            )
+
         if self.list:
             command = self.list
             if command == "updates":
@@ -539,18 +547,24 @@ class Dnf5Module(YumDnf):
             settings.set_advisory_filter(advisory_query)
 
         goal = libdnf5.base.Goal(base)
+        results = []
         if self.names == ["*"] and self.state == "latest":
             goal.add_rpm_upgrade(settings)
         elif self.state in {"install", "present"}:
             for spec in self.names:
                 if not is_spec_installed(base, spec):
-                    goal.add_install(spec, settings)
+                    if self.update_only:
+                        results.append("Packages providing {} not installed due to update_only specified".format(spec))
+                    else:
+                        goal.add_install(spec, settings)
         elif self.state == "latest":
             for spec in self.names:
                 if is_spec_installed(base, spec):
                     goal.add_upgrade(spec, settings)
                 elif not self.update_only:
                     goal.add_install(spec, settings)
+                else:
+                    results.append("Packages providing {} not installed due to update_only specified".format(spec))
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
                 try:
@@ -560,9 +574,6 @@ class Dnf5Module(YumDnf):
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
-        elif self.autoremove:
-            for pkg in get_unneeded_pkgs(base):
-                goal.add_rpm_remove(pkg, settings)
 
         goal.set_allow_erasing(self.allowerasing)
         try:
@@ -579,7 +590,7 @@ class Dnf5Module(YumDnf):
                     failures.append(log)
 
             if transaction.get_problems() == libdnf5.base.GoalProblem_SOLVER_ERROR:
-                msg = "Depsolve Error"
+                msg = "Depsolve Error occurred"
             else:
                 msg = "Failed to install some of the specified packages"
             self.module.fail_json(
@@ -597,7 +608,6 @@ class Dnf5Module(YumDnf):
             "Replaced": "Removed",
         }
         changed = bool(transaction.get_transaction_packages())
-        results = []
         for pkg in transaction.get_transaction_packages():
             if self.download_only:
                 action = "Downloaded"
