@@ -367,28 +367,12 @@ class LookupModule(LookupBase):
 
                 content = _read_password_file(b_path)
 
-            if content is None or b_path == to_bytes('/dev/null'):
-                plaintext_password = random_password(params['length'], chars, params['seed'])
-                salt = None
-                changed = True
-            else:
-                plaintext_password, salt, ident = _parse_content(content)
-
-            encrypt = params['encrypt']
-            if encrypt and not salt:
-                changed = True
-                try:
-                    salt = random_salt(BaseHash.algorithms[encrypt].salt_size)
-                except KeyError:
-                    salt = random_salt()
-
-            ident = params['ident']
-            if encrypt and not ident:
-                changed = True
-                try:
-                    ident = BaseHash.algorithms[encrypt].implicit_ident
-                except KeyError:
-                    ident = None
+                if content is None or b_path == to_bytes('/dev/null'):
+                    plaintext_password = random_password(params['length'], chars, params['seed'])
+                    salt = None
+                    changed = True
+                else:
+                    plaintext_password, salt, ident = _parse_content(content)
 
                 encrypt = params['encrypt']
                 if encrypt and not salt:
@@ -398,22 +382,38 @@ class LookupModule(LookupBase):
                     except KeyError:
                         salt = random_salt()
 
-                if not ident:
-                    ident = params['ident']
-                elif params['ident'] and ident != params['ident']:
-                    raise AnsibleError('The ident parameter provided (%s) does not match the stored one (%s).' % (ident, params['ident']))
-
+                ident = params['ident']
                 if encrypt and not ident:
+                    changed = True
                     try:
                         ident = BaseHash.algorithms[encrypt].implicit_ident
                     except KeyError:
                         ident = None
-                    if ident:
-                        changed = True
 
-                if changed and b_path != to_bytes('/dev/null'):
-                    content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
-                    _write_password_file(b_path, content)
+                    encrypt = params['encrypt']
+                    if encrypt and not salt:
+                        changed = True
+                        try:
+                            salt = random_salt(BaseHash.algorithms[encrypt].salt_size)
+                        except KeyError:
+                            salt = random_salt()
+
+                    if not ident:
+                        ident = params['ident']
+                    elif params['ident'] and ident != params['ident']:
+                        raise AnsibleError('The ident parameter provided (%s) does not match the stored one (%s).' % (ident, params['ident']))
+
+                    if encrypt and not ident:
+                        try:
+                            ident = BaseHash.algorithms[encrypt].implicit_ident
+                        except KeyError:
+                            ident = None
+                        if ident:
+                            changed = True
+
+                    if changed and b_path != to_bytes('/dev/null'):
+                        content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
+                        _write_password_file(b_path, content)
 
             finally:
                 if first_process:
