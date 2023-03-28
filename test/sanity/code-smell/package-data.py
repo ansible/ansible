@@ -4,12 +4,17 @@ import contextlib
 import fnmatch
 import glob
 import os
+import pathlib
 import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+
+import packaging.version
+
+from ansible.release import __version__
 
 
 def assemble_files_to_ship(complete_file_list):
@@ -169,8 +174,13 @@ def clean_repository(file_list):
 
 def create_sdist(tmp_dir):
     """Create an sdist in the repository"""
+    # Make sure a changelog exists for this version when testing from devel.
+    # When testing from a stable branch the changelog will already exist.
+    version = packaging.version.Version(__version__)
+    pathlib.Path(f'changelogs/CHANGELOG-v{version.major}.{version.minor}.rst').touch()
+
     create = subprocess.run(
-        ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
+        [sys.executable, '-m', 'build', '--sdist', '--config-setting=--build-manpages', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
