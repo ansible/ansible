@@ -324,8 +324,28 @@ EXAMPLES = """
     state: present
 """
 
-RETURN = r"""#"""
-
+RETURN = """
+msg:
+  description: Additional information about the result
+  returned: always
+  type: str
+  sample: "Nothing to do"
+results:
+  description: A list of the dnf transaction results
+  returned: success
+  type: list
+  sample: ["Installed: lsof-4.94.0-4.fc37.x86_64"]
+failures:
+  description: A list of the dnf transaction failures
+  returned: failure
+  type: list
+  sample: ["Argument 'lsof' matches only excluded packages."]
+rc:
+  description: For compatibility, 0 for success, 1 for failure
+  returned: always
+  type: int
+  sample: 0
+"""
 
 import os
 import sys
@@ -419,7 +439,7 @@ class Dnf5Module(YumDnf):
             "correct ansible_python_interpreter. (attempted {2})".format(
                 sys.executable, sys.version.replace("\n", ""), system_interpreters
             ),
-            results=[],
+            failures=[],
         )
 
     def is_lockfile_pid_valid(self):
@@ -430,12 +450,14 @@ class Dnf5Module(YumDnf):
         if sys.version_info.major < 3:
             self.module.fail_json(
                 msg="The dnf5 module requires Python 3.",
-                results=[],
+                failures=[],
+                rc=1,
             )
         if not self.list and not self.download_only and os.geteuid() != 0:
             self.module.fail_json(
                 msg="This command has to be run under the root user.",
-                results=[],
+                failures=[],
+                rc=1,
             )
 
         base = libdnf5.base.Base()
@@ -450,7 +472,8 @@ class Dnf5Module(YumDnf):
             self.module.fail_json(
                 msg=str(e),
                 conf_file=self.conf_file,
-                results=[],
+                failures=[],
+                rc=1,
             )
 
         if self.releasever is not None:
@@ -532,7 +555,7 @@ class Dnf5Module(YumDnf):
                 query.resolve_pkg_spec(command, resolve_spec_settings, True)
                 results = [package_to_dict(package) for package in query]
 
-            self.module.exit_json(msg="", results=results)
+            self.module.exit_json(msg="", results=results, rc=0)
 
         settings = libdnf5.base.GoalJobSettings()
         settings.group_with_name = True
@@ -570,7 +593,7 @@ class Dnf5Module(YumDnf):
                 try:
                     goal.add_remove(spec, settings)
                 except RuntimeError as e:
-                    self.module.fail_json(msg=str(e))
+                    self.module.fail_json(msg=str(e), failures=[], rc=1)
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
@@ -579,7 +602,7 @@ class Dnf5Module(YumDnf):
         try:
             transaction = goal.resolve()
         except RuntimeError as e:
-            self.module.fail_json(msg=str(e), rc=1)
+            self.module.fail_json(msg=str(e), failures=[], rc=1)
 
         if transaction.get_problems():
             failures = []
@@ -631,6 +654,7 @@ class Dnf5Module(YumDnf):
                         if result == libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_SIGNED:
                             self.module.fail_json(
                                 msg="Failed to validate GPG signature for {}: {}".format(pkg.get_package().get_nevra(), result_to_str.get(result, result)),
+                                failures=[],
                                 rc=1,
                             )
                         if result in {
