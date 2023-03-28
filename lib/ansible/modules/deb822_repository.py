@@ -240,7 +240,6 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
-from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import generic_urlparse
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.urls import urlparse
