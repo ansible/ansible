@@ -21,6 +21,7 @@
     components:
       - main
       - restricted
+    date_max_future: 10
   register: deb822_create_1
 
 - name: Check file mode
@@ -49,6 +50,7 @@
     components:
       - main
       - restricted
+    date_max_future: 10
   register: deb822_create_1_idem
 
 - name: Create deb822 repo - check_mode
@@ -61,6 +63,7 @@
     components:
       - main
       - restricted
+    date_max_future: 10
   register: deb822_check_mode_2
   check_mode: yes
 
@@ -74,6 +77,7 @@
     components:
       - main
       - restricted
+    date_max_future: 10
     mode: '0600'
   register: deb822_create_1_mode
 
@@ -103,6 +107,7 @@
       URIs: http://us.archive.ubuntu.com/ubuntu
       Suites: focal focal-updates
       Components: main restricted
+      Date-Max-Future: 10
       Types: deb
 
 - name: Remove repos
