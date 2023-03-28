@@ -59,6 +59,7 @@
     loop:
       - stable
       - testing
+    when: install_repo|default(True)|bool is true
 
   # Need to uncomment the deb-src for the universe component for build-dep state
   - name: Ensure deb-src for the universe component
