@@ -743,8 +743,7 @@ def install_collections(
 
     keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
-        for fqcn in dependency_map.keys():
-            concrete_coll_pin = dependency_map[fqcn]
+        for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
                     "'{coll!s}' is virtual, skipping.".
