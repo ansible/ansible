@@ -1,0 +1,2 @@
+bugfixes:
+- Windows - Ensure the module temp directory contains more unique values to avoid conflicts with concurrent runs - https://github.com/ansible/ansible/issues/80294
