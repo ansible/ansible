@@ -683,6 +683,8 @@ def main():
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec["argument_spec"]["allowerasing"] = dict(default=False, type="bool")
     yumdnf_argument_spec["argument_spec"]["nobest"] = dict(default=False, type="bool")
+    # FIXME https://github.com/rpm-software-management/dnf5/issues/388
+    yumdnf_argument_spec["argument_spec"]["allow_downgrade"] = dict(type='bool', default=True)
     Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
 
 
