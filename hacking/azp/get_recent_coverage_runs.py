@@ -48,6 +48,14 @@ def get_coverage_runs():
     coverage_runs = []
     for run_summary in runs["value"][0:1000]:
         run_response = requests.get(run_summary['url'])
+
+        if run_response.status_code == 500 and 'Cannot serialize type Microsoft.Azure.Pipelines.WebApi.ContainerResource' in run_response.json()['message']:
+            # This run used a container resource, which AZP can no longer serialize for anonymous requests.
+            # Assume all older requests have this issue as well and stop further processing of runs.
+            # The issue was reported here: https://developercommunity.visualstudio.com/t/Pipelines-API-serialization-error-for-an/10294532
+            # A work-around for this issue was applied in: https://github.com/ansible/ansible/pull/80299
+            break
+
         run_response.raise_for_status()
         run = run_response.json()
 
