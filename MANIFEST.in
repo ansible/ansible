@@ -28,7 +28,7 @@ recursive-include lib/ansible/modules *.yml
 recursive-include lib/ansible/plugins/test *.yml
 recursive-include lib/ansible/plugins/filter *.yml
 recursive-include licenses *.txt
-recursive-include packaging Makefile *.py
+recursive-include packaging *.py
 recursive-include test/integration *
 recursive-include test/lib/ansible_test/config *.yml *.template
 recursive-include test/lib/ansible_test/_data *.cfg *.in *.ini *.ps1 *.txt *.yml coveragerc
@@ -41,7 +41,6 @@ exclude test/sanity/code-smell/release-names.*
 exclude test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py
 exclude test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py
 recursive-include test/units *
-include Makefile
 include MANIFEST.in
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
