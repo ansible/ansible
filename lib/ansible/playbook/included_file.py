@@ -187,6 +187,7 @@ class IncludedFile:
                             role_name = templar.template(role_name)
 
                         new_task = original_task.copy()
+                        new_task.post_validate(templar=templar)
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:

@@ -51,9 +51,9 @@ class IncludeRole(TaskInclude):
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
-    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True)
-    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True)
-    rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True)
+    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
+    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True, always_post_validate=True)
+    rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -85,15 +85,13 @@ class IncludeRole(TaskInclude):
             available_variables = {}
         templar = Templar(loader=loader, variables=available_variables)
         from_files = templar.template(self._from_files)
-        public = templar.template(getattr(self, 'public'))
-        rolespec_validate = templar.template(getattr(self, 'rolespec_validate'))
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
-                                from_include=True, validate=rolespec_validate, public=public)
-        actual_role._metadata.allow_duplicates = templar.template(getattr(self, 'allow_duplicates'))
+                                from_include=True, validate=self.rolespec_validate, public=self.public)
+        actual_role._metadata.allow_duplicates = self.allow_duplicates
 
-        if self.statically_loaded or public:
+        if self.statically_loaded or self.public:
             myplay.roles.append(actual_role)
 
         # save this for later use
