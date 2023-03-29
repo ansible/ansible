@@ -35,6 +35,7 @@ for python_version in "${python_versions[@]}"; do
     # shellcheck disable=SC2086
     ansible-test network-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         --platform "${platform}/${version}" \
+        --continue-on-error \
         --docker default --python "${python_version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
