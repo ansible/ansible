@@ -116,6 +116,8 @@ Other tools
 - `Ansible Shell <https://github.com/dominis/ansible-shell>`_ - an interactive shell for Ansible with built-in tab completion for all the modules.
 - `Ansible Silo <https://github.com/groupon/ansible-silo>`_ - a self-contained Ansible environment by Docker.
 - `Ansigenome <https://github.com/nickjj/ansigenome>`_ - a command line tool designed to help you manage your Ansible roles.
+- `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ - a changelog generator for Ansible collections.
+- `antsibull-docs <https://github.com/ansible-community/antsibull-docs>`_ - generates docsites for collections and can validate collection documentation.
 - `ARA <https://github.com/ansible-community/ara>`_ - ARA Records Ansible playbooks and makes them easier to understand and troubleshoot with a reporting API, UI and CLI.
 - `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ - a collaboratively curated list of awesome Ansible resources.
 - `AWX <https://github.com/ansible/awx>`_ - provides a web-based user interface, REST API, and task engine built on top of Ansible. Red Hat Ansible Automation Platform includes code from AWX.
