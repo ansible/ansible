@@ -266,11 +266,13 @@ In general the recommended workaround is to set the following environment variab
 Running on macOS as a target
 ----------------------------
 
-When executing Ansible against a system with macOS Monteray 12, macOS Ventura
-13 or above, as a target machine, one might encounter the following error:
+When managing a system with macOS Monterey 12, macOS Ventura
+13 or above over SSH, one might encounter the following error:
 
   .. error::
         "eDSPermissionError" DS Error: -14120 (eDSPermissionError)
+
+This is a good indication that *Allow full disk access for remote users* has not been enabled.
 
 .. seealso::
 
