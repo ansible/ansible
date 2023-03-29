@@ -32,6 +32,15 @@ EXAMPLES: |
   # drinkat => 'BAR'
   drinkat: "{{ 'foo\nBAR' | regex_search('^bar', multiline=True, ignorecase=True) }}"
 
+  # Extracts server and database id from a string
+  {{ 'server1/database42' | regex_search('server([0-9]+)/database([0-9]+)', '\\1', '\\2') }}
+  # => ['1', '42']
+
+  # Extracts dividend and divisor from a division
+  {{ '21/42' | regex_search('(?P<dividend>[0-9]+)/(?P<divisor>[0-9]+)', '\\g<dividend>', '\\g<divisor>') }}
+  # => ['21', '42']
+
+
 RETURN:
   _value:
     description: Matched string or empty string if no match.
