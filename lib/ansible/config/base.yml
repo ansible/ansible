@@ -1752,6 +1752,17 @@ MODULE_IGNORE_EXTS:
   ini:
   - {key: module_ignore_exts, section: defaults}
   type: list
+MODULE_STRICT_UTF8_RESPONSE:
+  name: Module strict UTF-8 response
+  description:
+    - Enables whether module responses are evaluated for containing non UTF-8 data
+    - Disabling this may result in unexpected behavior
+    - Only ansible-core should evaluate this configuration
+  env: [{name: ANSIBLE_MODULE_STRICT_UTF8_RESPONSE}]
+  ini:
+    - {key: module_strict_utf8_response, section: defaults}
+  type: bool
+  default: True
 OLD_PLUGIN_CACHE_CLEARING:
   description: Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in previous plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
   env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
