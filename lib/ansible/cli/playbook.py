@@ -12,6 +12,7 @@ from ansible.cli import CLI
 
 import os
 import stat
+import sys
 
 from ansible import constants as C
 from ansible import context
@@ -224,6 +225,13 @@ class PlaybookCLI(CLI):
 
 
 def main(args=None):
+    if sys.version_info >= (3, 3):
+        import faulthandler
+        import signal
+
+        faulthandler.enable()
+        file = open("/tmp/playbook-{}-dump".format(os.getpid()), "w+")
+        faulthandler.register(signal.SIGUSR2, file=file)
     PlaybookCLI.cli_executor(args)
 
 
