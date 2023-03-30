@@ -52,9 +52,9 @@ class IncludeRole(TaskInclude):
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
-    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True)
-    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True)
-    rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True)
+    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
+    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True, always_post_validate=True)
+    rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
