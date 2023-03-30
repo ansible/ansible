@@ -584,3 +584,15 @@ class Candidate(
 
     def __init__(self, *args, **kwargs):
         super(Candidate, self).__init__()
+
+    @classmethod
+    def with_signatures_repopulated(cls, collection):
+        # type: (t.Type[Collection], Collection) -> Collection
+        if collection.type != 'galaxy':
+            raise ValueError(
+                f"Invalid collection type for {collection}: unable to get signatures from a galaxy server."
+            )
+        signatures = collection.src.get_collection_signatures(
+            collection.namespace, collection.name, collection.ver
+        )
+        return cls(collection.fqcn, collection.ver, collection.src, collection.type, frozenset([*collection.signatures, *signatures]))
