@@ -44,12 +44,10 @@ __all__ = (  # noqa: WPS317, WPS410
 )
 
 
-BUILD_MANPAGES_CONFIG_SETTING = '--build-manpages'
-"""Config setting name toggle that is used to request manpage in sdists."""
-
-BUILD_MANPAGES_CONFIG_ENVVAR = (
-    os.environ.get("ANSIBLE_PEP517_BUILD_MANPAGES", "0").lower() in ("1", "true")
+BUILD_MANPAGES = (
+    os.environ.get('ANSIBLE_PEP517_BUILD_MANPAGES', '0').lower() in ('1', 'true')
 )
+"""Environment variable toggle that is used to request manpage in sdists."""
 
 
 @contextmanager
@@ -116,18 +114,13 @@ def build_sdist(  # noqa: WPS210, WPS430
          sdist_directory: os.PathLike,
          config_settings: dict[str, str] | None = None,
 ) -> str:
-    config_settings = config_settings or {}
-    build_manpages_requested = (
-        BUILD_MANPAGES_CONFIG_SETTING in config_settings or
-        BUILD_MANPAGES_CONFIG_ENVVAR
-    )
     original_src_dir = Path.cwd().resolve()
     with _run_in_temporary_directory() as tmp_dir:
         tmp_src_dir = Path(tmp_dir) / 'src'
         copytree(original_src_dir, tmp_src_dir)
         os.chdir(tmp_src_dir)
 
-        if build_manpages_requested:
+        if BUILD_MANPAGES:
             Path('docs/man/man1/').mkdir(exist_ok=True, parents=True)
             version_number = _get_package_distribution_version()
             for rst_in in _generate_rst_in_templates():
@@ -162,17 +155,11 @@ def build_sdist(  # noqa: WPS210, WPS430
 def get_requires_for_build_sdist(
         config_settings: dict[str, str] | None = None,
 ) -> list[str]:
-    config_settings = config_settings or {}
-    build_manpages_requested = (
-        BUILD_MANPAGES_CONFIG_SETTING in config_settings or
-        BUILD_MANPAGES_CONFIG_ENVVAR
-    )
-
     manpage_build_deps = [
         'docutils',  # provides `rst2man`
         'jinja2',  # used in `hacking/build-ansible.py generate-man`
         'pyyaml',  # needed for importing in-tree `ansible-core` from `lib/`
-    ] if build_manpages_requested else []
+    ] if BUILD_MANPAGES else []
 
     return _setuptools_get_requires_for_build_sdist(
         config_settings=config_settings,
