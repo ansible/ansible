@@ -667,6 +667,10 @@ class PathMapper:
 
         minimal: dict[str, str] = {}
 
+        packaging = {
+            'integration': 'packaging/',
+        }
+
         # Early classification that needs to occur before common classification belongs here.
 
         if path.startswith('test/units/compat/'):
@@ -748,6 +752,9 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
+            if path.startswith('packaging/pep517_backend/'):
+                return packaging
+
             return minimal
 
         if path.startswith('test/ansible_test/'):
@@ -835,16 +842,17 @@ class PathMapper:
                 return minimal
 
             if path in (
-                    'setup.py',
+                'MANIFEST.in',
+                'pyproject.toml',
+                'requirements.txt',
+                'setup.cfg',
+                'setup.py',
             ):
-                return all_tests(self.args)  # broad impact, run all tests
+                return packaging
 
             if ext in (
-                    '.in',
                     '.md',
                     '.rst',
-                    '.toml',
-                    '.txt',
             ):
                 return minimal
 
