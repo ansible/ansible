@@ -1,0 +1,2 @@
+bugfixes:
+  - roles - Fix templating ``public``, ``allow_duplicates`` and ``rolespec_validate`` (https://github.com/ansible/ansible/issues/80304).
