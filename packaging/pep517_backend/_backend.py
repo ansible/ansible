@@ -47,6 +47,10 @@ __all__ = (  # noqa: WPS317, WPS410
 BUILD_MANPAGES_CONFIG_SETTING = '--build-manpages'
 """Config setting name toggle that is used to request manpage in sdists."""
 
+BUILD_MANPAGES_CONFIG_ENVVAR = (
+    os.environ.get("ANSIBLE_PEP517_BUILD_MANPAGES", "0").lower() in ("1", "true")
+)
+
 
 @contextmanager
 def _run_in_temporary_directory() -> t.Iterator[Path]:
@@ -112,8 +116,10 @@ def build_sdist(  # noqa: WPS210, WPS430
          sdist_directory: os.PathLike,
          config_settings: dict[str, str] | None = None,
 ) -> str:
-    build_manpages_requested = BUILD_MANPAGES_CONFIG_SETTING in (
-        config_settings or {}
+    config_settings = config_settings or {}
+    build_manpages_requested = (
+        BUILD_MANPAGES_CONFIG_SETTING in config_settings or
+        BUILD_MANPAGES_CONFIG_ENVVAR
     )
     original_src_dir = Path.cwd().resolve()
     with _run_in_temporary_directory() as tmp_dir:
@@ -156,10 +162,11 @@ def build_sdist(  # noqa: WPS210, WPS430
 def get_requires_for_build_sdist(
         config_settings: dict[str, str] | None = None,
 ) -> list[str]:
-    build_manpages_requested = BUILD_MANPAGES_CONFIG_SETTING in (
-        config_settings or {}
+    config_settings = config_settings or {}
+    build_manpages_requested = (
+        BUILD_MANPAGES_CONFIG_SETTING in config_settings or
+        BUILD_MANPAGES_CONFIG_ENVVAR
     )
-    build_manpages_requested = True  # FIXME: Once pypa/build#559 is addressed.
 
     manpage_build_deps = [
         'docutils',  # provides `rst2man`

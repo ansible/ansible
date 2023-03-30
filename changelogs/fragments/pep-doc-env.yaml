@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Add ``ANSIBLE_PEP517_BUILD_MANPAGES`` envvar to internal pyproject build
+    backend to control whether or not to build manpages
+    (https://github.com/ansible/ansible/pull/80363).

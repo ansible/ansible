@@ -1231,7 +1231,7 @@ def build(allow_dirty: bool = False) -> None:
         git("worktree", "add", "-d", temp_dir)
 
         try:
-            run("python", "-m", "build", "--config-setting=--build-manpages", env=env, cwd=temp_dir)
+            run("python", "-m", "build", env=env | dict(ANSIBLE_PEP517_BUILD_MANPAGES=1), cwd=temp_dir)
 
             get_sdist_path(version, dist_dir).rename(sdist_file)
             get_wheel_path(version, dist_dir).rename(wheel_file)
