@@ -548,7 +548,7 @@ def main():
                 # checksum filename
                 for line in lines:
                     # Split by one whitespace to keep the leading type char ' ' (whitespace) for text and '*' for binary
-                    parts = line.split(" ", 1)
+                    parts = re.split('[ \t]', line, 1)
                     if len(parts) == 2:
                         # Remove the leading type char, we expect
                         if parts[1].startswith((" ", "*",)):
