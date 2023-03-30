@@ -587,7 +587,7 @@ class Candidate(
 
     @classmethod
     def with_signatures_repopulated(cls, collection):
-        # type: (t.Type[Collection], Collection) -> Collection
+        # type: (t.Type[Candidate], Candidate) -> Candidate
         if collection.type != 'galaxy':
             raise ValueError(
                 f"Invalid collection type for {collection}: unable to get signatures from a galaxy server."
