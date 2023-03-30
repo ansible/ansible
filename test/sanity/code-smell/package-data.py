@@ -180,11 +180,12 @@ def create_sdist(tmp_dir):
     pathlib.Path(f'changelogs/CHANGELOG-v{version.major}.{version.minor}.rst').touch()
 
     create = subprocess.run(
-        [sys.executable, '-m', 'build', '--sdist', '--config-setting=--build-manpages', '--outdir', tmp_dir],
+        [sys.executable, '-m', 'build', '--sdist', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         check=False,
+        env={"ANSIBLE_PEP517_BUILD_MANPAGES": '1'}
     )
 
     stderr = create.stderr

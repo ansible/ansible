@@ -170,11 +170,11 @@ def test_installing_sdist_build_with_modern_deps_to_old_env(
     tmp_dir_sdist_w_modern_tools = tmp_path / 'sdist-w-modern-tools'
     build_dists(
         venv_python_exe, '--sdist',
-        '--config-setting=--build-manpages',
         f'--outdir={tmp_dir_sdist_w_modern_tools!s}',
         str(SRC_ROOT_DIR),
         env_vars={
             'PIP_CONSTRAINT': str(MODERNISH_BUILD_DEPS_FILE),
+            'ANSIBLE_PEP517_BUILD_MANPAGES': '1',
         },
     )
     tmp_path_sdist_w_modern_tools = (
@@ -284,11 +284,11 @@ def test_dist_rebuilds_with_manpages_premutations(
     tmp_dir_sdist_with_manpages = tmp_path / 'sdist-with-manpages'
     build_dists(
         venv_python_exe, '--sdist',
-        '--config-setting=--build-manpages',
         f'--outdir={tmp_dir_sdist_with_manpages!s}',
         str(SRC_ROOT_DIR),
         env_vars={
             'PIP_CONSTRAINT': str(LOWEST_SUPPORTED_BUILD_DEPS_FILE),
+            'ANSIBLE_PEP517_BUILD_MANPAGES': '1',
         },
     )
     tmp_path_sdist_with_manpages = (
@@ -306,11 +306,11 @@ def test_dist_rebuilds_with_manpages_premutations(
     tmp_dir_rebuilt_sdist = tmp_path / 'rebuilt-sdist'
     build_dists(
         venv_python_exe, '--sdist',
-        '--config-setting=--build-manpages',
         f'--outdir={tmp_dir_rebuilt_sdist!s}',
         str(sdist_without_manpages_path),
         env_vars={
             'PIP_CONSTRAINT': str(MODERNISH_BUILD_DEPS_FILE),
+            'ANSIBLE_PEP517_BUILD_MANPAGES': '1',
         },
     )
     tmp_path_rebuilt_sdist = tmp_dir_rebuilt_sdist / EXPECTED_SDIST_NAME
