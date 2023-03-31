@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import re
+import subprocess
 import sys
 import typing as t
 from configparser import ConfigParser
@@ -80,8 +82,13 @@ def build_sdist(  # noqa: WPS210, WPS430
 
         if build_manpages_requested:
             version_number = _get_package_distribution_version()
-            from .man import build_man_pages, DEFAULT_RELATIVE_OUTPUT_DIR
-            build_man_pages(version_number, tmp_src_dir / DEFAULT_RELATIVE_OUTPUT_DIR)
+
+            build_man_pages_command = (
+                pathlib.Path(tmp_src_dir) / 'hacking/build-man-pages.py',
+                '--version', version_number,
+            )
+
+            subprocess.check_output(build_man_pages_command)
 
         Path('pyproject.toml').write_text(
             re.sub(

@@ -45,6 +45,7 @@ include MANIFEST.in
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
 recursive-include hacking/build_library *.py
+include hacking/build-man-pages.py
 include hacking/build-ansible.py
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py

@@ -1,7 +1,9 @@
+#!/usr/bin/env python
 """Build ansible-core man pages."""
 
 from __future__ import annotations
 
+import argparse
 import io
 import pathlib
 import subprocess
@@ -12,18 +14,20 @@ import docutils.core
 import docutils.writers.manpage
 
 SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
-CHECKOUT_DIR = SCRIPT_DIR.parent.parent
+CHECKOUT_DIR = SCRIPT_DIR.parent
 
 DEFAULT_RELATIVE_OUTPUT_DIR = 'docs/man/man1'
 
 
 def main() -> None:
     """Main program entry point."""
-    sys.path.insert(0, str(CHECKOUT_DIR / 'lib'))
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument('--output-dir', metavar='DIR', default=DEFAULT_RELATIVE_OUTPUT_DIR, type=pathlib.Path, help='directory where to build man pages')
+    parser.add_argument('--version', required=True, help='version to embed in the man pages')
 
-    from ansible import __version__
+    args = parser.parse_args()
 
-    build_man_pages(__version__, CHECKOUT_DIR / DEFAULT_RELATIVE_OUTPUT_DIR)
+    build_man_pages(args.version, args.output_dir)
 
 
 def build_man_pages(version: str, output_dir: pathlib.Path) -> None:
