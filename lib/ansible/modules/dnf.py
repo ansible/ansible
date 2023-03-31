@@ -18,6 +18,13 @@ short_description: Manages packages with the I(dnf) package manager
 description:
      - Installs, upgrade, removes, and lists packages and groups with the I(dnf) package manager.
 options:
+  use_backend:
+    description:
+      - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
+    default: "auto"
+    choices: [ auto, dnf4, dnf5 ]
+    type: str
+    version_added: 2.15
   name:
     description:
       - "A package name or package specifier with version, like C(name-1.0).
@@ -1452,6 +1459,7 @@ def main():
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
     yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'dnf4', 'dnf5'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec

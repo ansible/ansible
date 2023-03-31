@@ -40,6 +40,7 @@ lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
+lib/ansible/modules/dnf5.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/git.py pylint:disallowed-name
