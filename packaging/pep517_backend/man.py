@@ -7,7 +7,6 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-import typing as t
 
 import docutils.core
 import docutils.writers.manpage
@@ -24,12 +23,11 @@ def main() -> None:
 
     from ansible import __version__
 
-    build_man_pages(__version__)
+    build_man_pages(__version__, CHECKOUT_DIR / DEFAULT_RELATIVE_OUTPUT_DIR)
 
 
-def build_man_pages(version: str, output_dir: pathlib.Path | None = None) -> None:
+def build_man_pages(version: str, output_dir: pathlib.Path) -> None:
     """Build all man pages for ansible-core."""
-    output_dir = output_dir or CHECKOUT_DIR / DEFAULT_RELATIVE_OUTPUT_DIR
     output_dir.mkdir(exist_ok=True, parents=True)
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -40,10 +38,8 @@ def build_man_pages(version: str, output_dir: pathlib.Path | None = None) -> Non
             _convert_rst_to_man(rst_doc_template, destination_path)
 
 
-def _generate_rst_in_templates(output_dir: pathlib.Path) -> t.Iterable[pathlib.Path]:
+def _generate_rst_in_templates(output_dir: pathlib.Path) -> list[pathlib.Path]:
     """Create ``*.1.rst.in`` files out of CLI Python modules."""
-    entry_points = list(pathlib.Path(CHECKOUT_DIR / 'lib/ansible/cli').glob('*.py'))
-
     generate_man_cmd = (
         sys.executable,
         CHECKOUT_DIR / 'hacking/build-ansible.py',
@@ -51,12 +47,12 @@ def _generate_rst_in_templates(output_dir: pathlib.Path) -> t.Iterable[pathlib.P
         '--template-file', CHECKOUT_DIR / 'docs/templates/man.j2',
         '--output-dir', output_dir,
         '--output-format', 'man',
-        *entry_points,
-    )
+        *pathlib.Path(CHECKOUT_DIR / 'lib/ansible/cli').glob('*.py'),
+    )  # fmt: skip
 
-    subprocess.run(tuple(map(str, generate_man_cmd)), check=True)
+    subprocess.check_call(generate_man_cmd)
 
-    return output_dir.glob('*.1.rst.in')
+    return list(output_dir.glob('*.1.rst.in'))
 
 
 def _convert_rst_to_man(rst_doc_template: str, destination_path: pathlib.Path) -> None:
