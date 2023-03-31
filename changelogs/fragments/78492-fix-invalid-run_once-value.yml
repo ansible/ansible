@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "strategy plugins: get the correctly templated and validated run_once value on strategy linear (https://github.com/ansible/ansible/issues/78492)"
