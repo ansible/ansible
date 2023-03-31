@@ -35,6 +35,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
@@ -213,7 +214,10 @@ class StrategyModule(StrategyBase):
                                 skip_rest = True
                                 break
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        if templar.is_template(task.run_once):
+                            setattr(task, 'run_once', boolean(templar.template(task.run_once), strict=True))
+
+                        run_once = task.run_once or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True

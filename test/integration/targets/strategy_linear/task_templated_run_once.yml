@@ -1,0 +1,20 @@
+- hosts: testhost,testhost2
+  gather_facts: no
+  vars:
+    run_once_flag: false
+  tasks:
+    - debug:
+        msg: "I am {{ item }}"
+      run_once: "{{ run_once_flag }}"
+      register: reg1
+      loop:
+        - "{{ inventory_hostname }}"
+
+    - assert:
+        that:
+          - "reg1.results[0].msg == 'I am testhost'"
+      when: inventory_hostname == 'testhost'
+    - assert:
+        that:
+          - "reg1.results[0].msg == 'I am testhost2'"
+      when: inventory_hostname == 'testhost2'
