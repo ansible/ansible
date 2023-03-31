@@ -12,7 +12,8 @@
                 "why": "Test deprecation"
             },
             "description": [
-                "A random module."
+                "A random module.",
+                "See O(foo.bar.baz#role:main:foo=bar) for how this is used in the P(foo.bar.baz#role)'s C(main) entrypoint."
             ],
             "filename": "./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py",
             "has_action": false,

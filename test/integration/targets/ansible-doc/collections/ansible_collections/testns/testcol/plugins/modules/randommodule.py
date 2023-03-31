@@ -9,6 +9,7 @@ module: randommodule
 short_description: A random module
 description:
     - A random module.
+    - See O(foo.bar.baz#role:main:foo=bar) for how this is used in the P(foo.bar.baz#role)'s C(main) entrypoint.
 author:
     - Ansible Core Team
 version_added: 1.0.0
