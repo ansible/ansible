@@ -11,9 +11,9 @@ module: dnf5
 author: Ansible Core Team
 description:
   - Installs, upgrade, removes, and lists packages and groups with the I(dnf5) package manager.
-  - "WARNING: The I(dnf5) package manager is still under development and not all features that existing I(dnf) module
+  - "WARNING: The I(dnf5) package manager is still under development and not all features that the existing I(dnf) module
     provides are implemented in I(dnf5), please consult specific options for more information."
-short_description: Manages packages with the I(dnf) package manager
+short_description: Manages packages with the I(dnf5) package manager
 options:
   name:
     description:
@@ -453,6 +453,13 @@ class Dnf5Module(YumDnf):
                 rc=1,
             )
 
+        if self.enable_plugin or self.disable_plugin:
+            self.module.fail_json(
+                msg="enable_plugin and disable_plugin options are not yet implemented in DNF5",
+                failures=[],
+                rc=1,
+            )
+
         base = libdnf5.base.Base()
         conf = base.get_config()
 
@@ -605,7 +612,7 @@ class Dnf5Module(YumDnf):
                 else:
                     failures.append(log)
 
-            if transaction.get_problems() == libdnf5.base.GoalProblem_SOLVER_ERROR:
+            if transaction.get_problems() & libdnf5.base.GoalProblem_SOLVER_ERROR != 0:
                 msg = "Depsolve Error occurred"
             else:
                 msg = "Failed to install some of the specified packages"
