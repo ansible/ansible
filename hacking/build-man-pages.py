@@ -60,7 +60,7 @@ def _generate_rst_in_templates(output_dir: pathlib.Path) -> list[pathlib.Path]:
 
 
 def _convert_rst_to_man(rst_doc_template: str, destination_path: pathlib.Path) -> None:
-    """Render a ``*.1.rst.in`` templates into a man page."""
+    """Render a ``*.1.rst.in`` template into a man page."""
     with io.StringIO(rst_doc_template) as in_mem_rst_doc:
         docutils.core.publish_file(
             source=in_mem_rst_doc,

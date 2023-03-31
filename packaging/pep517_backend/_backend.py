@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
 import re
 import subprocess
 import sys
@@ -84,7 +83,7 @@ def build_sdist(  # noqa: WPS210, WPS430
             version_number = _get_package_distribution_version()
 
             build_man_pages_command = (
-                pathlib.Path(tmp_src_dir) / 'hacking/build-man-pages.py',
+                tmp_src_dir / 'hacking/build-man-pages.py',
                 '--version', version_number,
             )
 
