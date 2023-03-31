@@ -9,3 +9,13 @@ plugins/modules/invalid_yaml_syntax.py:0:0: missing-documentation: No DOCUMENTAT
 plugins/modules/invalid_yaml_syntax.py:8:15: documentation-syntax-error: DOCUMENTATION is not valid YAML
 plugins/modules/invalid_yaml_syntax.py:12:15: invalid-examples: EXAMPLES is not valid YAML
 plugins/modules/invalid_yaml_syntax.py:16:15: return-syntax-error: RETURN is not valid YAML
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a2.description: Directive "V(C\(foo\))" contains unnecessarily quoted "(" for dictionary value @ data['options']['a2']['description']. Got 'V(C\\(foo\\)).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a4.description: Directive "P(foo.bar#baz)" must contain a FQCN; found "foo.bar" for dictionary value @ data['options']['a4']['description']. Got 'P(foo.bar#baz).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a5.description: Directive "P(foo.bar.baz)" must contain a "#" for dictionary value @ data['options']['a5']['description']. Got 'P(foo.bar.baz).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a6.description: Directive "P(foo.bar.baz#woof)" must contain a valid plugin type; found "woof" for dictionary value @ data['options']['a6']['description']. Got 'P(foo.bar.baz#woof).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a7.description: Directive "E(foo\(bar)" contains unnecessarily quoted "(" for dictionary value @ data['options']['a7']['description']. Got 'E(foo\\(bar).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(bar)" contains a non-existing option "bar"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(bar=bam)" contains a non-existing option "bar"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(foo.bar=1)" contains a non-existing option "foo.bar"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(bam)" contains a non-existing return value "bam"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(does.not.exist=true)" contains a non-existing return value "does.not.exist"
