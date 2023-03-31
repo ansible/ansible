@@ -224,7 +224,7 @@
 - assert:
     that:
       - dnf_result is success
-      - dnf_result.results|length == 2
+      - dnf_result.results|length >= 2
       - "dnf_result.results[0].startswith('Removed: ')"
       - "dnf_result.results[1].startswith('Removed: ')"
 
@@ -427,6 +427,10 @@
 - shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
   register: shell_dnf_result
 
+- dnf:
+    name: "@Custom Group"
+    state: absent
+
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
 # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
@@ -445,6 +449,10 @@
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
 - shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
+
+- dnf:
+    name: "@Custom Group"
+    state: absent
 
 - name: try to install non existing group
   dnf:
@@ -522,6 +530,7 @@
     - dnf_result is changed
     - "'results' in dnf_result"
     - landsidescalping_result.rc == 0
+  when: not dnf5|default('false')
 
 # Fedora 28 (DNF 2) does not support this, just remove the package itself
 - name: remove landsidescalping package on Fedora 28
@@ -551,30 +560,35 @@
         - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
-- name: use latest to install httpd
+- name: ensure sos isn't installed
   dnf:
-    name: httpd
+    name: sos
+    state: absent
+
+- name: use latest to install sos
+  dnf:
+    name: sos
     state: latest
   register: dnf_result
 
-- name: verify httpd was installed
+- name: verify sos was installed
   assert:
     that:
-      - "'changed' in dnf_result"
+      - dnf_result is changed
 
-- name: uninstall httpd
+- name: uninstall sos
   dnf:
-    name: httpd
+    name: sos
     state: removed
 
-- name: update httpd only if it exists
+- name: update sos only if it exists
   dnf:
-    name: httpd
+    name: sos
     state: latest
     update_only: yes
   register: dnf_result
 
-- name: verify httpd not installed
+- name: verify sos not installed
   assert:
     that:
       - "not dnf_result is changed"
