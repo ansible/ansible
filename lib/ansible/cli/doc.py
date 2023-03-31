@@ -411,10 +411,17 @@ class DocCLI(CLI, RoleMixin):
             plugin_fqcn = plugin_type = ''
         else:
             plugin_fqcn = plugin_type = ''
+        entrypoint = None
+        if ':' in text:
+            entrypoint, text = text.split(':', 1)
         if value is not None:
             text = f"{text}={value}"
         if plugin_fqcn and plugin_type:
-            return f"`{text}' (of {plugin_type} {plugin_fqcn})"
+            plugin_suffix = '' if plugin_type in ('role', 'module', 'playbook') else ' plugin'
+            plugin = f"{plugin_type}{plugin_suffix} {plugin_fqcn}"
+            if plugin_type == 'role' and entrypoint is not None:
+                plugin = f"{plugin}, {entrypoint} entrypoint"
+            return f"`{text}' (of {plugin})"
         return f"`{text}'"
 
     @classmethod
