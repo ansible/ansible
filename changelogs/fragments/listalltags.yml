@@ -1,0 +1,2 @@
+bugfixes:
+  - list-tags now shows the 'never' tag, which was being excluded by default. To list all tasks you still need to add `--list-tasks --tags never,all`.
