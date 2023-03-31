@@ -163,8 +163,6 @@ options:
     default: "yes"
   allow_downgrade:
     description:
-      - This is currently on by default. dnf5 does not currently provide an option to turn this off.
-        Note that this is a change in behavior from the existing dnf module.
       - Specify if the named package and version is allowed to downgrade
         a maybe already installed higher version of that package.
         Note that setting allow_downgrade=True can make this module
@@ -174,7 +172,7 @@ options:
         package and others can cause changes to the packages which were
         in the earlier transaction).
     type: bool
-    default: "yes"
+    default: "no"
   install_repoquery:
     description:
       - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
@@ -351,12 +349,32 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 libdnf5 = None
 
 
-def is_spec_installed(base, spec):
+def is_installed(base, spec):
     settings = libdnf5.base.ResolveSpecSettings()
     query = libdnf5.rpm.PackageQuery(base)
     query.filter_installed()
     match, nevra = query.resolve_pkg_spec(spec, settings, True)
     return match
+
+
+def is_newer_version_installed(base, spec):
+    try:
+        spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
+    except RuntimeError:
+        return False
+    spec_name = spec_nevra.get_name()
+    v = spec_nevra.get_version()
+    r = spec_nevra.get_release()
+    if not v or not r:
+        return False
+    spec_evr = "{}:{}-{}".format(spec_nevra.get_epoch() or "0", v, r)
+
+    query = libdnf5.rpm.PackageQuery(base)
+    query.filter_installed()
+    query.filter_name([spec_name])
+    query.filter_evr([spec_evr], libdnf5.common.QueryCmp_GT)
+
+    return query.size() > 0
 
 
 def package_to_dict(package):
@@ -573,21 +591,26 @@ class Dnf5Module(YumDnf):
         results = []
         if self.names == ["*"] and self.state == "latest":
             goal.add_rpm_upgrade(settings)
-        elif self.state in {"install", "present"}:
+        elif self.state in {"install", "present", "latest"}:
+            upgrade = self.state == "latest"
             for spec in self.names:
-                if not is_spec_installed(base, spec):
+                if is_newer_version_installed(base, spec):
+                    if self.allow_downgrade:
+                        if upgrade:
+                            if is_installed(base, spec):
+                                goal.add_upgrade(spec, settings)
+                            else:
+                                goal.add_install(spec, settings)
+                        else:
+                            goal.add_install(spec, settings)
+                elif is_installed(base, spec):
+                    if upgrade:
+                        goal.add_upgrade(spec, settings)
+                else:
                     if self.update_only:
                         results.append("Packages providing {} not installed due to update_only specified".format(spec))
                     else:
                         goal.add_install(spec, settings)
-        elif self.state == "latest":
-            for spec in self.names:
-                if is_spec_installed(base, spec):
-                    goal.add_upgrade(spec, settings)
-                elif not self.update_only:
-                    goal.add_install(spec, settings)
-                else:
-                    results.append("Packages providing {} not installed due to update_only specified".format(spec))
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
                 try:
@@ -690,8 +713,6 @@ def main():
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec["argument_spec"]["allowerasing"] = dict(default=False, type="bool")
     yumdnf_argument_spec["argument_spec"]["nobest"] = dict(default=False, type="bool")
-    # FIXME https://github.com/rpm-software-management/dnf5/issues/388
-    yumdnf_argument_spec["argument_spec"]["allow_downgrade"] = dict(type='bool', default=True)
     Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
 
 
