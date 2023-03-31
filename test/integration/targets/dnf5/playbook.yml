@@ -1,0 +1,19 @@
+- hosts: localhost
+  tasks:
+    - block:
+        - command: "dnf install -y 'dnf-command(copr)'"
+        - command: dnf copr enable -y rpmsoftwaremanagement/dnf5-unstable
+        - command: dnf install -y python3-libdnf5
+
+        - include_role:
+            name: dnf
+          vars:
+            dnf5: true
+            dnf_log_files:
+              - /var/log/dnf5.log
+      when:
+        - ansible_distribution == 'Fedora'
+        - ansible_distribution_major_version is version('37', '>=')
+      module_defaults:
+        dnf:
+          use_backend: dnf5

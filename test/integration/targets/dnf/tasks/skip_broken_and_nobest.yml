@@ -240,7 +240,8 @@
     - name: Do an "upgrade" to an older version of broken-a, allow_downgrade=false
       dnf:
         name:
-          - broken-a-1.2.3-1*
+          #- broken-a-1.2.3-1*
+          - broken-a-1.2.3-1.el7.x86_64
         state: latest
         allow_downgrade: false
       check_mode: true
