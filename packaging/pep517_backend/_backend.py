@@ -87,7 +87,7 @@ def build_sdist(  # noqa: WPS210, WPS430
                 '--version', version_number,
             )
 
-            subprocess.check_output(build_man_pages_command)
+            subprocess.check_call(build_man_pages_command)
 
         Path('pyproject.toml').write_text(
             re.sub(
