@@ -40,7 +40,7 @@ attributes:
     become:
       support: none
     bypass_host_loop:
-      support: full
+      support: none
     bypass_task_loop:
       support: none
     check_mode:
