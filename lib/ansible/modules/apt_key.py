@@ -86,11 +86,11 @@ EXAMPLES = '''
     - name: somerepo |no apt key
       ansible.builtin.get_url:
         url: https://download.example.com/linux/ubuntu/gpg
-        dest: /etc/apt/trusted.gpg.d/somerepo.asc
+        dest: /usr/share/keyrings/somerepo.asc
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
 
 - name: Add an apt key by id from a keyserver
