@@ -1,0 +1,2 @@
+bugfixes:
+  - iptables - fix iptables chain creation so it behaves like the command line utility (https://github.com/ansible/ansible/issues/80256).
