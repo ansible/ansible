@@ -292,7 +292,7 @@ The correct formats for semantic markup are as follows:
 * ``RV()`` for return value names, whether mentioned alone or with values. For example: ``The module returns RV(changed=true) in case of changes.`` and ``Use the RV(stdout) return value for standard output.``
 * ``E()`` for environment variables. For example: ``If not set, the environment variable E(ACME_PASSWORD) will be used.``
 
-The parameters for these formatting functions can use quoting with backslashes: ``V(foo(bar="a\\b"\), baz)`` results in the formatted value ``foo(bar="a\b"), baz)``.
+The parameters for these formatting functions can use escaping with backslashes: ``V(foo(bar="a\\b"\), baz)`` results in the formatted value ``foo(bar="a\b"), baz)``.
 
 Rules for using ``O()`` and ``RV()`` are very strict. You must follow syntax rules so that documentation renderers can create hyperlinks for the options resp. return values.
 
@@ -319,7 +319,7 @@ Possible macros include the following:
 * ``I()`` for italic text.
 * ``HORIZONTALLINE`` for a horizontal rule (the ``<hr>`` html tag) to separate long descriptions.
 
-Note that ``C()``, ``B()``, and ``I()`` do **not allow quoting**, and thus cannot contain the value ``)`` as it always ends the formatting sequence. If you need to use ``)`` inside ``C()``, we recommend to use ``V()`` instead; see the above section on semantic markup.
+Note that ``C()``, ``B()``, and ``I()`` do **not allow escaping**, and thus cannot contain the value ``)`` as it always ends the formatting sequence. If you need to use ``)`` inside ``C()``, we recommend to use ``V()`` instead; see the above section on semantic markup.
 
 .. _module_docs_fragments:
 
