@@ -3,18 +3,58 @@
   vars:
     run_once_flag: false
   tasks:
-    - debug:
-        msg: "I am {{ item }}"
-      run_once: "{{ run_once_flag }}"
-      register: reg1
-      loop:
-        - "{{ inventory_hostname }}"
+    - name: Use normal template
+      block: 
+      - debug:
+          msg: "I am {{ item }}"
+        run_once: "{{ run_once_flag }}"
+        register: reg1
+        loop:
+          - "{{ inventory_hostname }}"
 
-    - assert:
-        that:
-          - "reg1.results[0].msg == 'I am testhost'"
-      when: inventory_hostname == 'testhost'
-    - assert:
-        that:
-          - "reg1.results[0].msg == 'I am testhost2'"
-      when: inventory_hostname == 'testhost2'
+      - assert:
+          that:
+            - "reg1.results[0].msg == 'I am testhost'"
+        when: inventory_hostname == 'testhost'
+      - assert:
+          that:
+            - "reg1.results[0].msg == 'I am testhost2'"
+        when: inventory_hostname == 'testhost2'
+
+    
+    - name: Use omit
+      block:
+        - debug:
+            msg: "I am {{ item }}"
+          run_once: "{{ omit }}"
+          register: reg2
+          loop:
+            - "{{ inventory_hostname }}"
+
+        - assert:
+            that:
+              - "reg2.results[0].msg == 'I am testhost'"
+          when: inventory_hostname == 'testhost'
+        - assert:
+            that:
+              - "reg2.results[0].msg == 'I am testhost2'"
+          when: inventory_hostname == 'testhost2'
+
+
+    - name: Use compound template expression with omit
+      block:
+        - debug:
+            msg: "I am {{ item }}"
+          run_once: "{{ run_once_flag or omit }}"
+          register: reg3
+          loop:
+            - "{{ inventory_hostname }}"
+
+        - assert:
+            that:
+              - "reg3.results[0].msg == 'I am testhost'"
+          when: inventory_hostname == 'testhost'
+        - assert:
+            that:
+              - "reg3.results[0].msg == 'I am testhost2'"
+          when: inventory_hostname == 'testhost2'

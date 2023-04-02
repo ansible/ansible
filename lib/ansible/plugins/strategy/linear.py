@@ -215,7 +215,12 @@ class StrategyModule(StrategyBase):
                                 break
 
                         if templar.is_template(task.run_once):
-                            setattr(task, 'run_once', boolean(templar.template(task.run_once), strict=True))
+                            templated_run_once = templar.template(task.run_once)
+                            omit_value = templar.available_variables.get('omit')
+                            if omit_value is not None and templated_run_once == omit_value:
+                                task.set_to_context("run_once")
+                            else:
+                                setattr(task, 'run_once', boolean(templated_run_once, strict=True))
 
                         run_once = task.run_once or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
