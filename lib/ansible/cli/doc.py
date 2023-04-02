@@ -42,6 +42,9 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
 
+from ansible.utils._antsibull_docs_parser.parser import parse, Context
+from ansible.utils._antsibull_docs_parser.ansible_doc_text import to_ansible_doc_text
+
 display = Display()
 
 
@@ -357,28 +360,6 @@ class DocCLI(CLI, RoleMixin):
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'version_added_collection', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
 
-    # Warning: If you add more elements here, you also need to add it to the docsite build (in the
-    # ansible-community/antsibull repo)
-    _ITALIC = re.compile(r"\bI\(([^)]+)\)")
-    _BOLD = re.compile(r"\bB\(([^)]+)\)")
-    _MODULE = re.compile(r"\bM\(([^)]+)\)")
-    _PLUGIN = re.compile(r"\bP\(([^#)]+)#([a-z]+)\)")
-    _LINK = re.compile(r"\bL\(([^)]+), *([^)]+)\)")
-    _URL = re.compile(r"\bU\(([^)]+)\)")
-    _REF = re.compile(r"\bR\(([^)]+), *([^)]+)\)")
-    _CONST = re.compile(r"\bC\(([^)]+)\)")
-    _SEM_PARAMETER_STRING = r"\(((?:[^\\)]+|\\.)+)\)"
-    _SEM_OPTION_NAME = re.compile(r"\bO" + _SEM_PARAMETER_STRING)
-    _SEM_OPTION_VALUE = re.compile(r"\bV" + _SEM_PARAMETER_STRING)
-    _SEM_ENV_VARIABLE = re.compile(r"\bE" + _SEM_PARAMETER_STRING)
-    _SEM_RET_VALUE = re.compile(r"\bRV" + _SEM_PARAMETER_STRING)
-    _RULER = re.compile(r"\bHORIZONTALLINE\b")
-
-    # helper for unescaping
-    _UNESCAPE = re.compile(r"\\(.)")
-    _FQCN_TYPE_PREFIX_RE = re.compile(r'^([^.]+\.[^.]+\.[^#]+)#([a-z]+):(.*)$')
-    _IGNORE_MARKER = 'ignore:'
-
     # rst specific
     _RST_NOTE = re.compile(r".. note::")
     _RST_SEEALSO = re.compile(r".. seealso::")
@@ -390,40 +371,6 @@ class DocCLI(CLI, RoleMixin):
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
 
-    @staticmethod
-    def _tty_ify_sem_simle(matcher):
-        text = DocCLI._UNESCAPE.sub(r'\1', matcher.group(1))
-        return f"`{text}'"
-
-    @staticmethod
-    def _tty_ify_sem_complex(matcher):
-        text = DocCLI._UNESCAPE.sub(r'\1', matcher.group(1))
-        value = None
-        if '=' in text:
-            text, value = text.split('=', 1)
-        m = DocCLI._FQCN_TYPE_PREFIX_RE.match(text)
-        if m:
-            plugin_fqcn = m.group(1)
-            plugin_type = m.group(2)
-            text = m.group(3)
-        elif text.startswith(DocCLI._IGNORE_MARKER):
-            text = text[len(DocCLI._IGNORE_MARKER):]
-            plugin_fqcn = plugin_type = ''
-        else:
-            plugin_fqcn = plugin_type = ''
-        entrypoint = None
-        if ':' in text:
-            entrypoint, text = text.split(':', 1)
-        if value is not None:
-            text = f"{text}={value}"
-        if plugin_fqcn and plugin_type:
-            plugin_suffix = '' if plugin_type in ('role', 'module', 'playbook') else ' plugin'
-            plugin = f"{plugin_type}{plugin_suffix} {plugin_fqcn}"
-            if plugin_type == 'role' and entrypoint is not None:
-                plugin = f"{plugin}, {entrypoint} entrypoint"
-            return f"`{text}' (of {plugin})"
-        return f"`{text}'"
-
     @classmethod
     def find_plugins(cls, path, internal, plugin_type, coll_filter=None):
         display.deprecated("find_plugins method as it is incomplete/incorrect. use ansible.plugins.list functions instead.", version='2.17')
@@ -431,21 +378,7 @@ class DocCLI(CLI, RoleMixin):
 
     @classmethod
     def tty_ify(cls, text):
-
-        # general formatting
-        t = cls._ITALIC.sub(r"`\1'", text)    # I(word) => `word'
-        t = cls._BOLD.sub(r"*\1*", t)         # B(word) => *word*
-        t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = cls._URL.sub(r"\1", t)                      # U(word) => word
-        t = cls._LINK.sub(r"\1 <\2>", t)                # L(word, url) => word <url>
-        t = cls._PLUGIN.sub("[" + r"\1" + "]", t)       # P(word#type) => [word]
-        t = cls._REF.sub(r"\1", t)            # R(word, sphinx-ref) => word
-        t = cls._CONST.sub(r"`\1'", t)        # C(word) => `word'
-        t = cls._SEM_OPTION_NAME.sub(cls._tty_ify_sem_complex, t)  # O(expr)
-        t = cls._SEM_OPTION_VALUE.sub(cls._tty_ify_sem_simle, t)  # V(expr)
-        t = cls._SEM_ENV_VARIABLE.sub(cls._tty_ify_sem_simle, t)  # E(expr)
-        t = cls._SEM_RET_VALUE.sub(cls._tty_ify_sem_complex, t)  # RV(expr)
-        t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
+        t = to_ansible_doc_text(parse(text, Context()))
 
         # remove rst
         t = cls._RST_SEEALSO.sub(r"See also:", t)   # seealso to See also:

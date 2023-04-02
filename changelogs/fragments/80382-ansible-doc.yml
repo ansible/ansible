@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-doc - replace semantic markup parsing and text rendering code with the code from `antsibull-docs-parser 0.2.0 <https://github.com/ansible-community/antsibull-docs-parser/releases/tag/0.2.0>`__ (https://github.com/ansible/ansible/pull/80383)."
