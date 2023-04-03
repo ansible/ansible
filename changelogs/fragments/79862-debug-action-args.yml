@@ -1,2 +1,0 @@
-minor_changes:
-- debug - Perform argspec valdiation in debug action plugin (https://github.com/ansible/ansible/issues/79862)

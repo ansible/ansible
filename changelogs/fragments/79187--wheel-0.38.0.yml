@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.

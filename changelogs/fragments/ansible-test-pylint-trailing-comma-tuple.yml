@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Enable the ``trailing-comma-tuple`` rule in the ``pylint`` sanity test.

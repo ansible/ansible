@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible_facts.hardware - Define all processor facts on s390x (https://github.com/ansible/ansible/issues/19755)

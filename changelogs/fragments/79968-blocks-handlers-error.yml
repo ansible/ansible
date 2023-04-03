@@ -1,2 +1,0 @@
-minor_changes:
-  - Make using blocks as handlers a parser error (https://github.com/ansible/ansible/issues/79968)

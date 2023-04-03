@@ -1,3 +1,0 @@
-minor_changes:
-- ansible-galaxy - Add ability to specify collection versions on the CLI without the need for a colon.
-  Such as ``namespace.name==1.2.3`` vs ``namespace.name:1.2.3``.

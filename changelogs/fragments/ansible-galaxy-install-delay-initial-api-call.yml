@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - make initial call to Galaxy server on-demand only when installing, getting info about, and listing roles.

@@ -1,2 +1,0 @@
-bugfixes:
-  - vault - show filename additionally if missing secrets prevents decryption (https://github.com/ansible/ansible/issues/79723)

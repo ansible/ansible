@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - fix warning message about failing to run an image to include the image name

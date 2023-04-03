@@ -1,4 +1,0 @@
-minor_changes:
-  - >
-    Remove unused Python stdlib imports from module_utils which were not present for backwards compatibility in:
-    common.file, compat.selectors, facts.network.iscsi, facts.network.nvme, yumdnf

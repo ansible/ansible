@@ -1,2 +1,0 @@
-bugfixes:
-  - Ansible.Basic.cs - Ignore compiler warning (reported as an error) when running under PowerShell 7.3.x.
