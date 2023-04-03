@@ -1,4 +1,0 @@
-bugfixes:
-  - ansible-test - Integration test target prefixes defined in a ``tests/integration/target-prefixes.{group}`` file
-                   can now contain an underscore (``_``) character.
-                   Resolves issue https://github.com/ansible/ansible/issues/79225

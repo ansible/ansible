@@ -1,3 +1,0 @@
-bugfixes:
-- loops/delegate_to - Do not double calculate the values of loops and ``delegate_to``
-  (https://github.com/ansible/ansible/issues/80038)

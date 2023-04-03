@@ -1,6 +1,0 @@
-bugfixes:
-  - >-
-    ansible-vault encrypt_string - started appending a line feed at the end of the encrypted string output. Missing newline
-    character caused problems identifying where the string ends in some shells (like bash) or accidentally copying an
-    extra trailing terminator symbol (e.g., zsh prints out a ``%`` sign to signal where the original output stops)
-    (https://github.com/ansible/ansible/issues/78932).

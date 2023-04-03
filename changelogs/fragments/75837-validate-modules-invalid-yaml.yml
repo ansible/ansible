@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test sanity - correctly report invalid YAML in validate-modules (https://github.com/ansible/ansible/issues/75837).

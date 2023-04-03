@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Update the NIOS test plugin to use a newer multi-arch test container.

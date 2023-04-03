@@ -1,4 +1,0 @@
-bugfixes:
-  - ansible-test - Perform PyPI proxy configuration after instances are ready and bootstrapping has been completed.
-                   Only target instances are affected, as controller instances were already handled this way.
-                   This avoids proxy configuration errors when target instances are not yet ready for use.

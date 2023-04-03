@@ -1,3 +1,0 @@
-removed_features:
-  - Remove deprecated ``ANSIBLE_CALLBACK_WHITELIST`` configuration environment variable, use ``ANSIBLE_CALLBACKS_ENABLED`` instead. (https://github.com/ansible/ansible/issues/78821)
-  - Remove deprecated ``callback_whitelist`` configuration option, use ``callbacks_enabled`` instead. (https://github.com/ansible/ansible/issues/78822)

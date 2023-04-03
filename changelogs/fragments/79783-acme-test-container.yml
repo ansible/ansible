@@ -1,2 +1,0 @@
-minor_changes:
-  - "ansible-test acme test container - update version to update used Pebble version, underlying Python and Go base containers, and Python requirements (https://github.com/ansible/ansible/pull/79783)."

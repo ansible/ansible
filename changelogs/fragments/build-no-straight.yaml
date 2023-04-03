@@ -1,2 +1,0 @@
-minor_changes:
-  - Removed ``straight.plugin`` from the build and packaging requirements.

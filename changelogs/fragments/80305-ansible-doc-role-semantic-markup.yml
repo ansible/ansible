@@ -1,2 +1,0 @@
-minor_changes:
-  - "ansible-doc - support role extension for semantic markup spec so that ``O()`` and ``RV()`` referring to role entrypoints are rendered more readable (https://github.com/ansible/ansible/pull/80305)."

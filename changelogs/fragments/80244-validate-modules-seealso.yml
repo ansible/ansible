@@ -1,2 +1,0 @@
-minor_changes:
-  - "validate-modules sanity test - support the ``plugin`` see-also part of the semantic markup specification (https://github.com/ansible/ansible/pull/80244)."

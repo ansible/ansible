@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Update ``default`` containers to include new ``docs-build`` sanity test requirements.

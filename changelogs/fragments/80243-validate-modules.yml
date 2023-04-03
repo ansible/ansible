@@ -1,2 +1,0 @@
-minor_changes:
-  - "validate-modules sanity test - add support for semantic markup (https://github.com/ansible/ansible/pull/80243)."

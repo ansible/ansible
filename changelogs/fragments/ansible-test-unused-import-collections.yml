@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Enable the ``unused-import`` rule for the ``pylint`` sanity test for collections.

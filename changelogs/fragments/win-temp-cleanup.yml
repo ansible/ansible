@@ -1,8 +1,0 @@
-bugfixes:
-- >-
-  Windows - Improve temporary file cleanup used by modules. Will use a more reliable delete operation on Windows
-  Server 2016 and newer to delete files that might still be open by other software like Anti Virus scanners. There are
-  still scenarios where a file or directory cannot be deleted but the new method should work in more scenarios.
-- >-
-  Windows - Display a warning if the module failed to cleanup any temporary files rather than failing the task. The
-  warning contains a brief description of what failed to be deleted.

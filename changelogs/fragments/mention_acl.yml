@@ -1,2 +1,0 @@
-bugfixes:
-  - updated error messages to include 'acl' and not just mode changes when failing to set required permissions on remote.

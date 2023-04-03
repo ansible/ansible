@@ -1,2 +1,0 @@
-bugfixes:
-  - "``ansible_eval_concat`` - avoid redundant unsafe wrapping of templated strings converted to Python types"

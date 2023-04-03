@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-doc now will correctly display short descriptions on listing filters/tests no matter the directory sorting.

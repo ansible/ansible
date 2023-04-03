@@ -1,4 +1,0 @@
-minor_changes:
-  - Get user input for ``pause`` and ``paramiko_ssh`` from the strategy rather than access ``sys.stdin`` in the WorkerProcess.
-deprecated_features:
-  - The ``ConnectionBase()._new_stdin`` attribute is deprecated, use ``display.prompt_until(msg)`` instead.

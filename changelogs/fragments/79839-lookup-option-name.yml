@@ -1,3 +1,0 @@
----
-bugfixes:
-  - templates - Fixed ``TypeError`` when a lookup plugin has an option called ``name``.

@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-test - Updated the Azure Pipelines CI plugin to work with newer versions of git.
-  - ansible-test - Moved git handling out of the validate-modules sanity test and into ansible-test.
-  - ansible-test - Removed the ``--keep-git`` sanity test option, which was limited to testing ansible-core itself.

@@ -1,2 +1,0 @@
-bugfixes:
-  - display - reduce risk of post-fork output deadlocks (https://github.com/ansible/ansible/pull/79522)

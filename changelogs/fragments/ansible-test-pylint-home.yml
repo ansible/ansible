@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Set ``PYLINTHOME`` for the ``pylint`` sanity test to prevent failures due to ``pylint`` checking for the existence of an obsolete home directory.

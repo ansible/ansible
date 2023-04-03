@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix traceback when using the ``template`` module and running with ``ANSIBLE_DEBUG=1`` (https://github.com/ansible/ansible/issues/79763)

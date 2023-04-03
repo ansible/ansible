@@ -1,6 +1,0 @@
-minor_changes:
-  - "Removed unused imports from the following action plugins: async_status, command, pause, set_stats, uri, validate_argument_spec"
-  - "Removed unused imports from the following lookup plugins: fileglob, template"
-  - "Removed unused imports from the following strategy plugins: debug"
-  - "Removed unused imports from the following set of test plugins: files"
-  - "Removed unused imports from the following vars plugins: host_group_vars"
