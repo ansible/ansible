@@ -1,2 +1,0 @@
-bugfixes:
-  - "normal action plugin - remove obsolete ``if`` (https://github.com/ansible/ansible/pull/79690)."

@@ -1,2 +1,0 @@
-bugfixes:
-  - "jinja2_native: preserve quotes in strings (https://github.com/ansible/ansible/issues/79083)"

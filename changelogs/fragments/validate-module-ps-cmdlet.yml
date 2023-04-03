@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test - Fix validate-modules error when retrieving PowerShell argspec when retrieved inside a Cmdlet

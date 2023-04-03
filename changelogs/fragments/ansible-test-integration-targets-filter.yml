@@ -1,4 +1,0 @@
-bugfixes:
-  - ansible-test - Allow disabled, unsupported, unstable and destructive integration test targets to be selected using their respective prefixes.
-  - ansible-test - Allow unstable tests to run when targeted changes are made and the ``--allow-unstable-changed`` option is specified
-                   (resolves https://github.com/ansible/ansible/issues/74213).

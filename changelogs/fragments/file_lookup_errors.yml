@@ -1,2 +1,0 @@
-bugfixes:
-  - file lookup now plays nice with generic lookup ``errors`` option.

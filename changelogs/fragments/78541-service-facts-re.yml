@@ -1,3 +1,0 @@
-bugfixes:
-- service_facts - Use python re to parse service output instead of grep
-  (https://github.com/ansible/ansible/issues/78541)

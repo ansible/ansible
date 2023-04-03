@@ -1,2 +1,0 @@
-bugfixes:
-  - unarchive - allow relative path for ``dest`` (https://github.com/ansible/ansible/issues/64612)

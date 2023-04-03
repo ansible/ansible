@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Removed pointless comparison in diff evaluation logic.

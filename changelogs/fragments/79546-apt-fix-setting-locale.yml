@@ -1,2 +1,0 @@
-bugfixes:
-  - apt - set locale to fix updating the cache (https://github.com/ansible/ansible/issues/79523).

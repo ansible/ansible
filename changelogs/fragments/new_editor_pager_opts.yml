@@ -1,2 +1,0 @@
-minor_changes:
-  - allow user to set ansible specific env vars for selecting pager and editor, but still fall back to commonly used defaults.

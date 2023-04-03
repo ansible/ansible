@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy collection install - respect symlinks when installing from source or local repository (https://github.com/ansible/ansible/issues/78442)

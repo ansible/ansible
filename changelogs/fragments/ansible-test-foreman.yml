@@ -1,3 +1,0 @@
-deprecated_features:
-  - ansible-test - The ``foreman`` test plugin is now deprecated.
-                   It will be removed in a future release.

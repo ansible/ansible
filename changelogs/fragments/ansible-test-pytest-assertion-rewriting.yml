@@ -1,5 +1,0 @@
-bugfixes:
-  - ansible-test - Add support for ``pytest`` assertion rewriting when running unit tests on Python 3.5 and later.
-                   Resolves issue https://github.com/ansible/ansible/issues/68032
-known_issues:
-  - ansible-test - Unit tests for collections do not support ``pytest`` assertion rewriting on Python 2.7.

@@ -1,2 +1,0 @@
-minor_changes:
-- sanity tests - updates the collection-deprecated-version tests to ignore the ``prerelease`` component of the collection version ().

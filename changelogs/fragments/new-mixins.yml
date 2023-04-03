@@ -1,2 +1,0 @@
-minor_changes:
-  - Introduce ``Delegatable`` and ``Notifiable`` mixin classes for playbook objects

@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy collection/role init - preserve symlinks (https://github.com/ansible/ansible/issues/39334).

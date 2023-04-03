@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-config limit shorthand format to assigned values
