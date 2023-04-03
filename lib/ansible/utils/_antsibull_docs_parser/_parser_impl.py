@@ -12,6 +12,10 @@ Internal parsing code.
 import re
 import typing as t
 
+# The following makes it easier for us to script updates of the bundled code. It is not part of
+# upstream antsibull-docs-parser
+_BUNDLED_METADATA = {"pypi_name": "antsibull-docs-parser", "version": "0.2.0"}
+
 _ESCAPE_OR_COMMA = re.compile(r"\\(.)| *(,) *")
 _ESCAPE_OR_CLOSING = re.compile(r"\\(.)|([)])")
 

@@ -48,6 +48,8 @@ def get_bundled_libs(paths):
     bundled_libs = set()
     for filename in fnmatch.filter(paths, 'lib/ansible/compat/*/__init__.py'):
         bundled_libs.add(filename)
+    for filename in fnmatch.filter(paths, 'lib/ansible/utils/_antsibull_docs_parser/*.py'):
+        bundled_libs.add(filename)
 
     bundled_libs.add('lib/ansible/module_utils/compat/selectors.py')
     bundled_libs.add('lib/ansible/module_utils/distro/__init__.py')

@@ -1,4 +1,5 @@
 # VENDORED FROM antsibull-docs-parser - DO NOT MODIFY HERE!
+# pylint: disable=useless-option-value:
 
 # Author: Felix Fontein <felix@fontein.de>
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or
@@ -13,6 +14,10 @@ import abc
 import typing as t
 
 from . import dom
+
+# The following makes it easier for us to script updates of the bundled code. It is not part of
+# upstream antsibull-docs-parser
+_BUNDLED_METADATA = {"pypi_name": "antsibull-docs-parser", "version": "0.2.0"}
 
 
 class LinkProvider(abc.ABC):

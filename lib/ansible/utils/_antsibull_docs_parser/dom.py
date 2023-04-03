@@ -23,6 +23,10 @@ else:
     # Python 3.6/3.7 do not have t.Literal
     ErrorType = str  # pragma: no cover
 
+# The following makes it easier for us to script updates of the bundled code. It is not part of
+# upstream antsibull-docs-parser
+_BUNDLED_METADATA = {"pypi_name": "antsibull-docs-parser", "version": "0.2.0"}
+
 
 class PluginIdentifier(NamedTuple):
     fqcn: str
