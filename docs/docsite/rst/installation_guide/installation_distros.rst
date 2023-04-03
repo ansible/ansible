@@ -2,10 +2,13 @@
 
 Installing Ansible on specific operating systems
 ================================================
+.. note:: These instructions are provided by their respective communities. Any bugs/issues should be filed with that community to update these instructions. Ansible maintains only the pip install instructions.
 
 The ``ansible`` package can always be :ref:`installed from PyPI using pip <intro_installation_guide>` on most systems but it is also packaged and maintained by the community for a variety of Linux distributions.
 
 The following instructions will guide you through installing the ``ansible`` package with your preferred distribution's package manager.
+
+.. note:: For maintainers wanting to add distributions not mentioned within the guide, install instructions are included here only for distributions with reasonably up to date version of ansible and follow Ansible policies and version constraints. The distribution MUST ensure that ansible-core and ansible are synced.Maintainers MUST include a way to contact them with their instructions here and are encouraged to join the Ansible Packaging <https://matrix.to/#/#packaging:ansible.com_ matrix room.
 
 .. contents::
   :local:
