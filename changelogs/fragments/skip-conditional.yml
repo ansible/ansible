@@ -1,2 +1,0 @@
-minor_changes:
-- Added the conditional that was False if ``when`` caused a task to skip under ``false_condition``.

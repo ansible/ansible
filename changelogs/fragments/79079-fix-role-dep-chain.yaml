@@ -1,2 +1,0 @@
-bugfixes:
-  - include_role - Inherit from role parents beyond a depth of 3 (https://github.com/ansible/ansible/issues/47023).

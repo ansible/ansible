@@ -1,4 +1,0 @@
-minor_changes:
-  - >
-    Remove unused internal imports from module_utils which were not present for backwards compatibility in:
-    common.file, common.parameters, facts.system.caps, yumdnf

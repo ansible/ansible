@@ -21,6 +21,7 @@ lib/ansible/parsing/yaml/constructor.py mypy-3.9:type-var  # too many occurrence
 lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
 lib/ansible/keyword_desc.yml no-unwanted-files
+lib/ansible/modules/_include.py validate-modules:ansible-deprecated-module
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented

@@ -1,2 +1,0 @@
-minor_changes:
-  - pycompat24 module_utils - Remove support for Python 2.5 and earlier.

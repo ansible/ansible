@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix conditionally notifying ``include_tasks` handlers when ``force_handlers`` is used (https://github.com/ansible/ansible/issues/79776)

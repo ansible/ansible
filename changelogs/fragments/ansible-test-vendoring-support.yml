@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - Support loading of vendored Python packages from ansible-core.
-  - ansible-test - Exclude ansible-core vendored Python packages from ansible-test payloads.

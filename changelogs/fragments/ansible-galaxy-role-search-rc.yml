@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    ``ansible-galaxy search rolename`` - give a warning instead of non-zero return code when search results are empty.
-    This is similar to the behavior when listing roles, which gives a warning if a role cannot be found and exits with a return code of ``0``.
