@@ -411,9 +411,9 @@ class LookupModule(LookupBase):
                         if ident:
                             changed = True
 
-                    if changed and b_path != to_bytes('/dev/null'):
-                        content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
-                        _write_password_file(b_path, content)
+                if changed and b_path != to_bytes('/dev/null'):
+                    content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
+                    _write_password_file(b_path, content)
 
             finally:
                 if first_process:
