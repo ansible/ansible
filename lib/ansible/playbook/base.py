@@ -525,7 +525,7 @@ class FieldAttributeBase:
             if field_attribute is not None and field_attribute == name:
                 last = True
 
-            if attribute.finalized:
+            if attribute._finalized:
                 continue
 
             if attribute.static:

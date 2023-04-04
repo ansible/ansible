@@ -41,7 +41,7 @@ display = Display()
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    import_playbook = NonInheritableFieldAttribute(isa='string', prority=90)
+    import_playbook = NonInheritableFieldAttribute(isa='string', priority=90)
     vars_val = NonInheritableFieldAttribute(isa='dict', default=dict, alias='vars', priority=100)
 
     @staticmethod
