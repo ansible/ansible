@@ -513,9 +513,21 @@ class FieldAttributeBase:
 
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
+        last = False
 
         # sort by priority
         for (name, attribute) in sorted(self.fattributes.items(), key=lambda i: i[1].priority):
+
+            # only process until the field we need
+            if last:
+                break
+
+            if field_attribute is not None and field_attribute == name:
+                last = True
+
+            if attribute.finalized:
+                continue
+
             if attribute.static:
                 value = getattr(self, name)
 
@@ -572,11 +584,10 @@ class FieldAttributeBase:
                         msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
-            # only process until the field we need
-            if field_attribute is not None:
-                if field_attribute == name:
-                    break
+            # we finalized THIS FA
+            attribute._finalized = True
 
+        # finalized the whole object
         self._finalized = True
 
     def _load_vars(self, attr, ds):
@@ -725,7 +736,7 @@ class Base(FieldAttributeBase):
     name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True, priority=99)
 
     # connection/transport
-    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection') priority=25)
+    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'), priority=25)
     port = FieldAttribute(isa='int', priority=24)
     remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'), priority=24)
 
@@ -738,7 +749,7 @@ class Base(FieldAttributeBase):
     # flags and misc. settings
     environment = FieldAttribute(isa='list', extend=True, prepend=True, priority=35)
     no_log = FieldAttribute(isa='bool', priority=50)
-    run_once = FieldAttribute(isa='bool', priority=80 )
+    run_once = FieldAttribute(isa='bool', priority=80)
     ignore_errors = FieldAttribute(isa='bool', priority=10)
     ignore_unreachable = FieldAttribute(isa='bool', priority=10)
     check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'), priority=35)
