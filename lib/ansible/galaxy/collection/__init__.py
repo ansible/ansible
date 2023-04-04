@@ -770,7 +770,7 @@ def install_collections(
                 )
 
             if concrete_coll_pin.type == 'galaxy':
-                concrete_coll_pin = concrete_coll_pin.with_signatures_repopulated(concrete_coll_pin)
+                concrete_coll_pin = concrete_coll_pin.with_signatures_repopulated()
 
             try:
                 install(concrete_coll_pin, output_path, artifacts_manager)

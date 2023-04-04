@@ -585,14 +585,12 @@ class Candidate(
     def __init__(self, *args, **kwargs):
         super(Candidate, self).__init__()
 
-    @classmethod
-    def with_signatures_repopulated(cls, collection):
-        # type: (t.Type[Candidate], Candidate) -> Candidate
-        if collection.type != 'galaxy':
-            raise ValueError(
-                f"Invalid collection type for {collection}: unable to get signatures from a galaxy server."
-            )
-        signatures = collection.src.get_collection_signatures(
-            collection.namespace, collection.name, collection.ver
-        )
-        return cls(collection.fqcn, collection.ver, collection.src, collection.type, frozenset([*collection.signatures, *signatures]))
+    def with_signatures_repopulated(self):  # type: (Candidate) -> Candidate
+        """Populate a new Candidate instance with Galaxy signatures.
+        :raises AssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
+        """
+        if self.type != 'galaxy':
+            raise AssertionError(f"Invalid collection type for {self}: unable to get signatures from a galaxy server.")
+
+        signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
+        return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))
