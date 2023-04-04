@@ -1,0 +1,4 @@
+bugfixes:
+- AnsibleModule.run_command - Only use selectors when needed, and rely on Python
+  stdlib subprocess for the simple task of collecting stdout/stderr when prompt
+  matching is not required.
