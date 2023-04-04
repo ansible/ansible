@@ -61,6 +61,8 @@ If there is no appropriate room for your community, please create it.
 
 For more information, see the community-hosted `Matrix FAQ <https://hackmd.io/@ansible-community/community-matrix-faq>`_.
 
+You can add Matrix shields to your repository's ``README.md`` using the shield in the `community-topics repository <https://github.com/ansible-community/community-topics#community-topics>`_ as a template.
+
 Ansible community on IRC
 ------------------------
 
