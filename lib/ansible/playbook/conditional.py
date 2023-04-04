@@ -42,7 +42,7 @@ class Conditional:
     to be run conditionally when a condition is met or skipped.
     '''
 
-    when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
+    when = FieldAttribute(isa='list', default=list, extend=True, prepend=True, priority=60)
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to

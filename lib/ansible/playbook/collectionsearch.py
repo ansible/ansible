@@ -36,7 +36,7 @@ def _ensure_default_collection(collection_list=None):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
+    collections = FieldAttribute(isa='list', listof=string_types, priority=99, default=_ensure_default_collection,
                                  always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):

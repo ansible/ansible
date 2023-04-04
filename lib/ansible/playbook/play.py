@@ -58,16 +58,16 @@ class Play(Base, Taggable, CollectionSearch):
     hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-2)
 
     # Facts
-    gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
+    gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True, priority=50)
 
     # defaults to be deprecated, should be 'None' in future
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True, priority=45)
+    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True, priority=45)
+    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH, priority=45)
 
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
-    vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
+    vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False, priority=95)
 
     # Role Attributes
     roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
@@ -79,11 +79,11 @@ class Play(Base, Taggable, CollectionSearch):
     tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
 
     # Flag/Setting Attributes
-    force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
-    max_fail_percentage = NonInheritableFieldAttribute(isa='percent', always_post_validate=True)
-    serial = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
-    strategy = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
-    order = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
+    force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True, priority=80)
+    max_fail_percentage = NonInheritableFieldAttribute(isa='percent', always_post_validate=True, priority=50)
+    serial = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True, priority=50)
+    strategy = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True, priority=95)
+    order = NonInheritableFieldAttribute(isa='string', always_post_validate=True, priority=0)
 
     # =================================================================================
 
