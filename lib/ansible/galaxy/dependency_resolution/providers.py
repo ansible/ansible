@@ -25,7 +25,6 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 from collections.abc import Set
