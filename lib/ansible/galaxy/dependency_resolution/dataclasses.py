@@ -587,7 +587,7 @@ class Candidate(
 
     def with_signatures_repopulated(self):  # type: (Candidate) -> Candidate
         """Populate a new Candidate instance with Galaxy signatures.
-        :raises AssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
+        :raises AnsibleAssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
         """
         if self.type != 'galaxy':
             raise AnsibleAssertionError(f"Invalid collection type for {self!r}: unable to get signatures from a galaxy server.")
