@@ -67,6 +67,8 @@ Selecting an Ansible package and version to install
 
 Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; The following instructions  use ``ansible``, but  you can substitute ``ansible-core``  if you prefer to start with a more minimal package and separately install only the Ansible Collections you require. The ``ansible`` or ``ansible-core`` packages may be available in your operating systems package manager, and you are free to install these packages with your preferred method. These installation instructions only cover the officially supported means of installing the python package with ``pip``.
 
+See the :ref:`Ansible package release status table<ansible_changelogs>` for the ``ansible-core`` version included in the package.
+
 Installing and upgrading Ansible
 ================================
 
