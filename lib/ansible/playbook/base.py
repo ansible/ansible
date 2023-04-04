@@ -555,7 +555,10 @@ class FieldAttributeBase:
                 if method:
                     value = method(attribute, getattr(self, name), templar)
                 elif attribute.isa == 'class':
-                    value = attribute.post_validate(templar, field_attribute=field_attribute)
+                    if isinstance(value, attribute.class_type):
+                        value = attribute.post_validate(templar, field_attribute=field_attribute)
+                    else:
+                        value = getattr(self, name)
                 else:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
