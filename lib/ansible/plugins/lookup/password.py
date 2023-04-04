@@ -364,7 +364,6 @@ class LookupModule(LookupBase):
             try:
                 # make sure only one process finishes all the job first
                 first_process, lockfile = _get_lock(b_path)
-
                 content = _read_password_file(b_path)
 
                 if content is None or b_path == to_bytes('/dev/null'):
@@ -411,9 +410,9 @@ class LookupModule(LookupBase):
                         if ident:
                             changed = True
 
-                    if changed and b_path != to_bytes('/dev/null'):
-                        content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
-                        _write_password_file(b_path, content)
+                if changed and b_path != to_bytes('/dev/null'):
+                    content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
+                    _write_password_file(b_path, content)
 
             finally:
                 if first_process:
