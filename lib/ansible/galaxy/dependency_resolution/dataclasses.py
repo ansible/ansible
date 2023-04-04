@@ -27,7 +27,7 @@ if t.TYPE_CHECKING:
     )
 
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -584,3 +584,13 @@ class Candidate(
 
     def __init__(self, *args, **kwargs):
         super(Candidate, self).__init__()
+
+    def with_signatures_repopulated(self):  # type: (Candidate) -> Candidate
+        """Populate a new Candidate instance with Galaxy signatures.
+        :raises AnsibleAssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
+        """
+        if self.type != 'galaxy':
+            raise AnsibleAssertionError(f"Invalid collection type for {self!r}: unable to get signatures from a galaxy server.")
+
+        signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
+        return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))

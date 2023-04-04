@@ -5,7 +5,7 @@
     state: directory
 
 - name: install simple collection from first accessible server
-  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 -vvvv
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: from_first_good_server
@@ -30,6 +30,7 @@
     - install_normal_files.files[1].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
+    - 'from_first_good_server.stdout|regex_findall("has not signed namespace1\.name1")|length == 1'
 
 - name: Remove the collection
   file:
