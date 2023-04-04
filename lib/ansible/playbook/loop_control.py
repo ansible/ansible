@@ -27,7 +27,7 @@ class LoopControl(FieldAttributeBase):
 
     loop_var = NonInheritableFieldAttribute(isa='string', default='item', always_post_validate=True, priority=90)
     index_var = NonInheritableFieldAttribute(isa='string', always_post_validate=True, priority=80)
-    label = NonInheritableFieldAttribute(isa='string',j priority=70)
+    label = NonInheritableFieldAttribute(isa='string', priority=70)
     pause = NonInheritableFieldAttribute(isa='float', default=0, always_post_validate=True, priority=90)
     extended = NonInheritableFieldAttribute(isa='bool', always_post_validate=True, priority=90)
     extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True, priority=90)
