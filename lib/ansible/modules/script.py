@@ -47,6 +47,8 @@ notes:
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
   - If the path to the local script contains spaces, it needs to be quoted.
   - This module is also supported for Windows targets.
+  - If the script returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+    the output through C(base64)
 seealso:
   - module: ansible.builtin.shell
   - module: ansible.windows.win_shell

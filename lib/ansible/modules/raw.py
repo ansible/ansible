@@ -39,6 +39,8 @@ description:
      - This module does not require python on the remote system, much like
        the M(ansible.builtin.script) module.
      - This module is also supported for Windows targets.
+     - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+       the output through C(base64)
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.raw
