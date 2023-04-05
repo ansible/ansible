@@ -114,6 +114,8 @@ class FieldAttributeBase:
         # init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
+        self._templar = None
+
     @property
     def finalized(self):
         return self._finalized
@@ -504,6 +506,22 @@ class FieldAttributeBase:
                 # mostly playcontext as only tasks/handlers/blocks really resolve parent
                 setattr(self, name, Sentinel)
 
+    def update_templar(self, templar):
+        self._templar = templar
+
+    def __gettattr__(self, name):
+
+        # this should only be called when an attribute is not yet finalized,
+        # once it is, it will appear as a property with the correct value.
+        if name in self.fattributes:
+            if self._templar is None:
+                raise AttributeError
+            self.post_validate(self._templar, field_attribute=name)
+        else:
+            raise AttributeError
+
+        return getattr(self, name)
+
     def post_validate(self, templar, field_attribute=None):
         '''
         we can't tell that everything is of the right type until we have
@@ -585,6 +603,14 @@ class FieldAttributeBase:
                         msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
                     else:
                         msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+
+                    # ensure booleans are not 'true' cause template string that failed is truthy
+                    if attribute.isa == 'bool':
+                        if name == 'no_log':
+                            setattr(self, name, True)
+                        else:
+                            setattr(self, name, attribute.default)
+
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
             # we finalized THIS FA
