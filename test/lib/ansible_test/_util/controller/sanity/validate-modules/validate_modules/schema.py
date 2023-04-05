@@ -20,8 +20,12 @@ from ansible.parsing.quoting import unquote
 from ansible.utils.version import SemanticVersion
 from ansible.release import __version__
 
-from antsibull_docs_parser import dom
-from antsibull_docs_parser.parser import parse, Context
+try:
+    from antsibull_docs_parser import dom
+    from antsibull_docs_parser.parser import parse, Context
+except ImportError:
+    # Handled in main.py
+    pass
 
 from .utils import parse_isodate
 

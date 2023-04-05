@@ -33,8 +33,14 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
 
-from antsibull_docs_parser import dom
-from antsibull_docs_parser.parser import parse, Context
+try:
+    from antsibull_docs_parser import dom
+    from antsibull_docs_parser.parser import parse, Context
+except ImportError:
+    import traceback
+    ANTSIBULL_DOCS_PARSER_FAILURE = traceback.format_exc()
+else:
+    ANTSIBULL_DOCS_PARSER_FAILURE = None
 
 import yaml
 
@@ -2611,6 +2617,10 @@ def run():
 
 
 def main():
+    if ANTSIBULL_DOCS_PARSER_FAILURE is not None:
+        print('FATAL ERROR: Cannot import antsibull-docs-parser')
+        print(ANTSIBULL_DOCS_PARSER_FAILURE)
+        sys.exit(255)
     try:
         run()
     except KeyboardInterrupt:
