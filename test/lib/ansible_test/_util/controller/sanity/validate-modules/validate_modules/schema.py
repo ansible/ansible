@@ -20,8 +20,8 @@ from ansible.parsing.quoting import unquote
 from ansible.utils.version import SemanticVersion
 from ansible.release import __version__
 
-from ansible.utils._antsibull_docs_parser import dom
-from ansible.utils._antsibull_docs_parser.parser import parse, Context
+from antsibull_docs_parser import dom
+from antsibull_docs_parser.parser import parse, Context
 
 from .utils import parse_isodate
 

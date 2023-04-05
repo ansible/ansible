@@ -17,7 +17,7 @@ from .format import format_paragraphs as _format_paragraphs
 
 # The following makes it easier for us to script updates of the bundled code. It is not part of
 # upstream antsibull-docs-parser
-_BUNDLED_METADATA = {"pypi_name": "antsibull-docs-parser", "version": "0.2.0"}
+_BUNDLED_METADATA = {"pypi_name": "antsibull-docs-parser", "version": "0.2.0", "comment": "Keep in sync with validate-modules's requirements.in"}
 
 
 class AnsibleDocTextFormatter(Formatter):

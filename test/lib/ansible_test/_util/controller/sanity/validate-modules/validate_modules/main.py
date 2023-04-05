@@ -33,8 +33,8 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
 
-from ansible.utils._antsibull_docs_parser import dom
-from ansible.utils._antsibull_docs_parser.parser import parse, Context
+from antsibull_docs_parser import dom
+from antsibull_docs_parser.parser import parse, Context
 
 import yaml
 

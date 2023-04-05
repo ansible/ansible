@@ -42,8 +42,8 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
 
-from ansible.utils._antsibull_docs_parser.parser import parse, Context
-from ansible.utils._antsibull_docs_parser.ansible_doc_text import to_ansible_doc_text
+from antsibull_docs_parser.parser import parse, Context
+from antsibull_docs_parser.ansible_doc_text import to_ansible_doc_text
 
 display = Display()
 
