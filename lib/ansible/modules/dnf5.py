@@ -445,8 +445,8 @@ class Dnf5Module(YumDnf):
 
         # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
         self.module.fail_json(
-            msg="Could not import the dnf python module using {0} ({1}). "
-            "Please install `python3-dnf` or `python2-dnf` package or ensure you have specified the "
+            msg="Could not import the libdnf5 python module using {0} ({1}). "
+            "Please install python3-libdnf5 package or ensure you have specified the "
             "correct ansible_python_interpreter. (attempted {2})".format(
                 sys.executable, sys.version.replace("\n", ""), system_interpreters
             ),
