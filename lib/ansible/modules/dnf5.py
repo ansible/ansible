@@ -629,11 +629,12 @@ class Dnf5Module(YumDnf):
 
         if transaction.get_problems():
             failures = []
-            for log in transaction.get_resolve_logs_as_strings():
-                if log.startswith("No match for argument") and self.state in {"install", "present", "latest"}:
-                    failures.append("No package {} available.".format(log.rsplit(' ', 1)[-1]))
+            for log_event in transaction.get_resolve_logs():
+                if log_event.get_problem() == libdnf5.base.GoalProblem_NOT_FOUND and self.state in {"install", "present", "latest"}:
+                    # NOTE dnf module compat
+                    failures.append("No package {} available.".format(log_event.get_spec()))
                 else:
-                    failures.append(log)
+                    failures.append(log_event.to_string())
 
             if transaction.get_problems() & libdnf5.base.GoalProblem_SOLVER_ERROR != 0:
                 msg = "Depsolve Error occurred"
