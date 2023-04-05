@@ -18,6 +18,11 @@ def validate_modules() -> None:
     sys.modules['voluptuous'] = voluptuous = mock.MagicMock()
     sys.modules['voluptuous.humanize'] = voluptuous.humanize = mock.MagicMock()
 
+    # Mock out antsibull_docs_parser to facilitate testing without it, since tests aren't covering anything that uses it.
+
+    sys.modules['antsibull_docs_parser'] = antsibull_docs_parser = mock.MagicMock()
+    sys.modules['antsibull_docs_parser.parser'] = antsibull_docs_parser.parser = mock.MagicMock()
+
 
 @pytest.mark.parametrize('cstring,cexpected', [
     ['if type(foo) is Bar', True],
