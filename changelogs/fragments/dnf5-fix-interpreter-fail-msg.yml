@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf5 - fix module and package names in the message following failed module respawn attempt
