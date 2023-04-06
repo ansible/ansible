@@ -291,8 +291,12 @@ class GenerateMan(Command):
             tvars['cli_list'] = cli_list
             tvars['cli_bin_name_list'] = cli_bin_name_list
             tvars['cli'] = cli_name
-            if '-i' in tvars['options']:
+            if '-i' in tvars['option_names']:
+                tvars['inventory'] = True
                 print('uses inventory')
+            if '-M' in tvars['option_names']:
+                tvars['library'] = True
+                print('uses library')
 
             manpage = template.render(tvars)
             filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
