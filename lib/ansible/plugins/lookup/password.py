@@ -47,7 +47,7 @@ DOCUMENTATION = """
           - A list of names that compose a custom character set in the generated passwords.
           - This parameter defines the possible character sets in the resulting password, not the required character sets.
             If you want to require certain character sets for passwords, you can use the C(community.general.random_string lookup) plugin -
-            U(https://docs.ansible.com/ansible/latest/collections/community/general/random_string_lookup.html).
+            M(community.general.random_string).
           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9, and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes or represented literally ( :, -)."
           - "Though string modules can vary by Python version, valid values for both major releases include:
