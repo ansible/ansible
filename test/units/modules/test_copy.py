@@ -179,6 +179,18 @@ DATA = (  # Going from no permissions to setting all for user, group, and/or oth
     (0o100777, u'a=,u=rX', 0o0400),
     (0o040777, u'a=,u=rX', 0o0500),
 
+    # Verify X uses computed not original mode
+    (0o100777, u'a=,u=rX', 0o0400),
+    (0o040777, u'a=,u=rX', 0o0500),
+
+    # Verify "a" if combined with something else ("ao", "oa", "aa" all should mean "a")
+    (0o100777, u'ao=rX', 0o0555),
+    (0o040777, u'ao=rX', 0o0555),
+    (0o100777, u'oa=rX', 0o0555),
+    (0o040777, u'oa=rX', 0o0555),
+    (0o100777, u'aa=rX', 0o0555),
+    (0o040777, u'aa=rX', 0o0555),
+
     # Multiple permissions
     (0o040000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0755),
     (0o100000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0644),
