@@ -508,47 +508,46 @@ class StrategyBase:
         return task_result
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
+        templar = Templar(None)
         # iterate in reversed order since last handler loaded with the same name wins
         for handler in (h for b in reversed(iterator._play.handlers) for h in b.block if h.name):
-            try:
-                if not handler.cached_name:
-                    handler_templar = Templar(None)
-                    if handler_templar.is_template(handler.name):
-                        handler_templar.available_variables = self._variable_manager.get_vars(
-                            play=iterator._play,
-                            task=handler,
-                            _hosts=self._hosts_cache,
-                            _hosts_all=self._hosts_cache_all
-                        )
-                        handler.name = handler_templar.template(handler.name)
-                    handler.cached_name = True
-
-                # first we check with the full result of get_name(), which may
-                # include the role name (if the handler is from a role). If that
-                # is not found, we resort to the simple name field, which doesn't
-                # have anything extra added to it.
-                candidates = (
-                    handler.name,
-                    handler.get_name(include_role_fqcn=False),
-                    handler.get_name(include_role_fqcn=True),
-                )
-
-                if notification in candidates:
-                    yield handler
-                    break
-            except (UndefinedError, AnsibleUndefinedVariable) as e:
-                # We skip this handler due to the fact that it may be using
-                # a variable in the name that was conditionally included via
-                # set_fact or some other method, and we don't want to error
-                # out unnecessarily
-                if not handler.listen:
-                    display.warning(
-                        "Handler '%s' is unusable because it has no listen topics and "
-                        "the name could not be templated (host-specific variables are "
-                        "not supported in handler names). The error: %s" % (handler.name, to_text(e))
+            if not handler.cached_name:
+                if templar.is_template(handler.name):
+                    templar.available_variables = self._variable_manager.get_vars(
+                        play=iterator._play,
+                        task=handler,
+                        _hosts=self._hosts_cache,
+                        _hosts_all=self._hosts_cache_all
                     )
+                    try:
+                        handler.name = templar.template(handler.name)
+                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                        # We skip this handler due to the fact that it may be using
+                        # a variable in the name that was conditionally included via
+                        # set_fact or some other method, and we don't want to error
+                        # out unnecessarily
+                        if not handler.listen:
+                            display.warning(
+                                "Handler '%s' is unusable because it has no listen topics and "
+                                "the name could not be templated (host-specific variables are "
+                                "not supported in handler names). The error: %s" % (handler.name, to_text(e))
+                            )
+                        continue
+                handler.cached_name = True
 
-        templar = Templar(None)
+            # first we check with the full result of get_name(), which may
+            # include the role name (if the handler is from a role). If that
+            # is not found, we resort to the simple name field, which doesn't
+            # have anything extra added to it.
+            if notification in {
+                handler.name,
+                handler.get_name(include_role_fqcn=False),
+                handler.get_name(include_role_fqcn=True),
+            }:
+                yield handler
+                break
+
+        templar.available_variables = {}
         for handler in (h for b in iterator._play.handlers for h in b.block):
             if listeners := handler.listen:
                 if notification in handler.get_validated_value(
