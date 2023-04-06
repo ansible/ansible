@@ -11,7 +11,7 @@ from ansible.module_utils.compat.version import StrictVersion
 from functools import partial
 from urllib.parse import urlparse
 
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid, Exclusive
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, MultipleInvalid, Required, Schema, Self, ValueInvalid, Exclusive
 from ansible.constants import DOCUMENTABLE_PLUGINS
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
@@ -19,6 +19,9 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils.version import SemanticVersion
 from ansible.release import __version__
+
+from antsibull_docs_parser import dom
+from antsibull_docs_parser.parser import parse, Context
 
 from .utils import parse_isodate
 
@@ -81,57 +84,8 @@ def date(error_code=None):
     return Any(isodate, error_code=error_code)
 
 
-_MODULE = re.compile(r"\bM\(([^)]+)\)")
-_PLUGIN = re.compile(r"\bP\(([^)]+)\)")
-_LINK = re.compile(r"\bL\(([^)]+)\)")
-_URL = re.compile(r"\bU\(([^)]+)\)")
-_REF = re.compile(r"\bR\(([^)]+)\)")
-
-_SEM_PARAMETER_STRING = r"\(((?:[^\\)]+|\\.)+)\)"
-_SEM_OPTION_NAME = re.compile(r"\bO" + _SEM_PARAMETER_STRING)
-_SEM_OPTION_VALUE = re.compile(r"\bV" + _SEM_PARAMETER_STRING)
-_SEM_ENV_VARIABLE = re.compile(r"\bE" + _SEM_PARAMETER_STRING)
-_SEM_RET_VALUE = re.compile(r"\bRV" + _SEM_PARAMETER_STRING)
-
-_UNESCAPE = re.compile(r"\\(.)")
-_CONTENT_LINK_SPLITTER_RE = re.compile(r'(?:\[[^\]]*\])?\.')
-_CONTENT_LINK_END_STUB_RE = re.compile(r'\[[^\]]*\]$')
-_FQCN_TYPE_PREFIX_RE = re.compile(r'^([^.]+\.[^.]+\.[^#]+)#([a-z]+):(.*)$')
-_IGNORE_MARKER = 'ignore:'
-_IGNORE_STRING = '(ignore)'
-
-_VALID_PLUGIN_TYPES = set(DOCUMENTABLE_PLUGINS)
-
-
-def _check_module_link(directive, content):
-    if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(content):
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a FQCN' % directive), 'invalid-documentation-markup')
-
-
-def _check_plugin_link(directive, content):
-    if '#' not in content:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a "#"' % directive), 'invalid-documentation-markup')
-    plugin_fqcn, plugin_type = content.split('#', 1)
-    if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(plugin_fqcn):
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a FQCN; found "%s"' % (directive, plugin_fqcn)),
-            'invalid-documentation-markup')
-    if plugin_type not in _VALID_PLUGIN_TYPES:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a valid plugin type; found "%s"' % (directive, plugin_type)),
-            'invalid-documentation-markup')
-
-
-def _check_link(directive, content):
-    if ',' not in content:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
-    idx = content.rindex(',')
-    title = content[:idx]
-    url = content[idx + 1:].lstrip(' ')
-    _check_url(directive, url)
+# Roles can also be referenced by semantic markup
+_VALID_PLUGIN_TYPES = set(DOCUMENTABLE_PLUGINS + ('role', ))
 
 
 def _check_url(directive, content):
@@ -139,67 +93,10 @@ def _check_url(directive, content):
         parsed_url = urlparse(content)
         if parsed_url.scheme not in ('', 'http', 'https'):
             raise ValueError('Schema must be HTTP, HTTPS, or not specified')
-    except ValueError as exc:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain an URL' % directive), 'invalid-documentation-markup')
-
-
-def _check_ref(directive, content):
-    if ',' not in content:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
-
-
-def _check_sem_quoting(directive, content):
-    for m in _UNESCAPE.finditer(content):
-        if m.group(1) not in ('\\', ')'):
-            raise _add_ansible_error_code(
-                Invalid('Directive "%s" contains unnecessarily quoted "%s"' % (directive, m.group(1))),
-                'invalid-documentation-markup')
-    return _UNESCAPE.sub(r'\1', content)
-
-
-def _parse_prefix(directive, content):
-    value = None
-    if '=' in content:
-        content, value = content.split('=', 1)
-    m = _FQCN_TYPE_PREFIX_RE.match(content)
-    if m:
-        plugin_fqcn = m.group(1)
-        plugin_type = m.group(2)
-        content = m.group(3)
-        if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(plugin_fqcn):
-            raise _add_ansible_error_code(
-                Invalid('Directive "%s" must contain a FQCN; found "%s"' % (directive, plugin_fqcn)),
-                'invalid-documentation-markup')
-        if plugin_type not in _VALID_PLUGIN_TYPES:
-            raise _add_ansible_error_code(
-                Invalid('Directive "%s" must contain a valid plugin type; found "%s"' % (directive, plugin_type)),
-                'invalid-documentation-markup')
-    elif content.startswith(_IGNORE_MARKER):
-        content = content[len(_IGNORE_MARKER):]
-        plugin_fqcn = plugin_type = _IGNORE_STRING
-    else:
-        plugin_fqcn = plugin_type = None
-    if ':' in content or '#' in content:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" contains wrongly specified FQCN/plugin type' % directive),
-            'invalid-documentation-markup')
-    content_link = _CONTENT_LINK_SPLITTER_RE.split(content)
-    for i, part in enumerate(content_link):
-        if i == len(content_link) - 1:
-            part = _CONTENT_LINK_END_STUB_RE.sub('', part)
-            content_link[i] = part
-        if '.' in part or '[' in part or ']' in part:
-            raise _add_ansible_error_code(
-                Invalid('Directive "%s" contains invalid name "%s"' % (directive, content)),
-                'invalid-documentation-markup')
-    return plugin_fqcn, plugin_type, content_link, content, value
-
-
-def _check_sem_option_return_value(directive, content):
-    content = _check_sem_quoting(directive, content)
-    _parse_prefix(directive, content)
+        return []
+    except ValueError:
+        return [_add_ansible_error_code(
+            Invalid('Directive %s must contain a valid URL' % directive), 'invalid-documentation-markup')]
 
 
 def doc_string(v):
@@ -207,35 +104,55 @@ def doc_string(v):
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(
             Invalid('Must be a string'), 'invalid-documentation')
-    for m in _MODULE.finditer(v):
-        _check_module_link(m.group(0), m.group(1))
-    for m in _PLUGIN.finditer(v):
-        _check_plugin_link(m.group(0), m.group(1))
-    for m in _LINK.finditer(v):
-        _check_link(m.group(0), m.group(1))
-    for m in _URL.finditer(v):
-        _check_url(m.group(0), m.group(1))
-    for m in _REF.finditer(v):
-        _check_ref(m.group(0), m.group(1))
-    for m in _SEM_OPTION_NAME.finditer(v):
-        _check_sem_option_return_value(m.group(0), m.group(1))
-    for m in _SEM_OPTION_VALUE.finditer(v):
-        _check_sem_quoting(m.group(0), m.group(1))
-    for m in _SEM_ENV_VARIABLE.finditer(v):
-        _check_sem_quoting(m.group(0), m.group(1))
-    for m in _SEM_RET_VALUE.finditer(v):
-        _check_sem_option_return_value(m.group(0), m.group(1))
+    errors = []
+    for par in parse(v, Context(), errors='message', strict=True, add_source=True):
+        for part in par:
+            if part.type == dom.PartType.ERROR:
+                errors.append(_add_ansible_error_code(Invalid(part.message), 'invalid-documentation-markup'))
+            if part.type == dom.PartType.URL:
+                errors.extend(_check_url('U()', part.url))
+            if part.type == dom.PartType.LINK:
+                errors.extend(_check_url('L()', part.url))
+            if part.type == dom.PartType.MODULE:
+                if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.fqcn)),
+                        'invalid-documentation-markup'))
+            if part.type == dom.PartType.PLUGIN:
+                if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.plugin.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.plugin.fqcn)),
+                        'invalid-documentation-markup'))
+                if part.plugin.type not in _VALID_PLUGIN_TYPES:
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a valid plugin type; found "%s"' % (part.source, part.plugin.type)),
+                        'invalid-documentation-markup'))
+            if part.type == dom.PartType.OPTION_NAME:
+                if part.plugin is not None and not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.plugin.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.plugin.fqcn)),
+                        'invalid-documentation-markup'))
+                if part.plugin is not None and part.plugin.type not in _VALID_PLUGIN_TYPES:
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a valid plugin type; found "%s"' % (part.source, part.plugin.type)),
+                        'invalid-documentation-markup'))
+            if part.type == dom.PartType.RETURN_VALUE:
+                if part.plugin is not None and not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.plugin.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.plugin.fqcn)),
+                        'invalid-documentation-markup'))
+                if part.plugin is not None and part.plugin.type not in _VALID_PLUGIN_TYPES:
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a valid plugin type; found "%s"' % (part.source, part.plugin.type)),
+                        'invalid-documentation-markup'))
+    if len(errors) == 1:
+        raise errors[0]
+    if errors:
+        raise MultipleInvalid(errors)
     return v
 
 
-def doc_string_or_strings(v):
-    """Match a documentation string, or list of strings."""
-    if isinstance(v, string_types):
-        return doc_string(v)
-    if isinstance(v, (list, tuple)):
-        return [doc_string(vv) for vv in v]
-    raise _add_ansible_error_code(
-        Invalid('Must be a string or list of strings'), 'invalid-documentation')
+doc_string_or_strings = Any(doc_string, [doc_string])
 
 
 def is_callable(v):

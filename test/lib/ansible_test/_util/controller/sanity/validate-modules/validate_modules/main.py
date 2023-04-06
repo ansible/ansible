@@ -33,6 +33,9 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
 
+from antsibull_docs_parser import dom
+from antsibull_docs_parser.parser import parse, Context
+
 import yaml
 
 from voluptuous.humanize import humanize_error
@@ -79,10 +82,6 @@ from .schema import (
     ansible_module_kwargs_schema,
     doc_schema,
     return_schema,
-    _SEM_OPTION_NAME,
-    _SEM_RET_VALUE,
-    _check_sem_quoting,
-    _parse_prefix,
 )
 
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
@@ -1164,39 +1163,31 @@ class ModuleValidator(Validator):
 
         return doc_info, doc
 
-    def _check_sem_option(self, directive, content):
-        try:
-            content = _check_sem_quoting(directive, content)
-            plugin_fqcn, plugin_type, option_link, option, value = _parse_prefix(directive, content)
-        except Exception:
-            # Validation errors have already been covered in the schema check
+    def _check_sem_option(self, part: dom.OptionNamePart, current_plugin: dom.PluginIdentifier) -> None:
+        if part.plugin is None or part.plugin != current_plugin:
             return
-        if plugin_fqcn is not None:
+        if part.entrypoint is not None:
             return
-        if tuple(option_link) not in self._all_options:
+        if tuple(part.link) not in self._all_options:
             self.reporter.error(
                 path=self.object_path,
                 code='invalid-documentation-markup',
-                msg='Directive "%s" contains a non-existing option "%s"' % (directive, option)
+                msg='Directive "%s" contains a non-existing option "%s"' % (part.source, part.name)
             )
 
-    def _check_sem_return_value(self, directive, content):
-        try:
-            content = _check_sem_quoting(directive, content)
-            plugin_fqcn, plugin_type, rv_link, rv, value = _parse_prefix(directive, content)
-        except Exception:
-            # Validation errors have already been covered in the schema check
+    def _check_sem_return_value(self, part: dom.ReturnValuePart, current_plugin: dom.PluginIdentifier) -> None:
+        if part.plugin is None or part.plugin != current_plugin:
             return
-        if plugin_fqcn is not None:
+        if part.entrypoint is not None:
             return
-        if tuple(rv_link) not in self._all_return_values:
+        if tuple(part.link) not in self._all_return_values:
             self.reporter.error(
                 path=self.object_path,
                 code='invalid-documentation-markup',
-                msg='Directive "%s" contains a non-existing return value "%s"' % (directive, rv)
+                msg='Directive "%s" contains a non-existing return value "%s"' % (part.source, part.name)
             )
 
-    def _validate_semantic_markup(self, object):
+    def _validate_semantic_markup(self, object) -> None:
         # Make sure we operate on strings
         if is_iterable(object):
             for entry in object:
@@ -1205,10 +1196,19 @@ class ModuleValidator(Validator):
         if not isinstance(object, string_types):
             return
 
-        for m in _SEM_OPTION_NAME.finditer(object):
-            self._check_sem_option(m.group(0), m.group(1))
-        for m in _SEM_RET_VALUE.finditer(object):
-            self._check_sem_return_value(m.group(0), m.group(1))
+        if self.collection:
+            fqcn = f'{self.collection_name}.{self.name}'
+        else:
+            fqcn = f'ansible.builtin.{self.name}'
+        current_plugin = dom.PluginIdentifier(fqcn=fqcn, type=self.plugin_type)
+        for par in parse(object, Context(current_plugin=current_plugin), errors='message', add_source=True):
+            for part in par:
+                # Errors are already covered during schema validation, we only check for option and
+                # return value references
+                if part.type == dom.PartType.OPTION_NAME:
+                    self._check_sem_option(part, current_plugin)
+                if part.type == dom.PartType.RETURN_VALUE:
+                    self._check_sem_return_value(part, current_plugin)
 
     def _validate_semantic_markup_collect(self, destination, sub_key, data, all_paths):
         if not isinstance(data, dict):
