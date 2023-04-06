@@ -135,14 +135,11 @@ def opts_docs(cli_class_name, cli_module_name):
         'long_desc': trim_docstring(cli.__doc__),
         'actions': {},
         'content_depth': 2,
+        'arguments': getattr(cli, 'ARGUMENTS', None),
     }
     option_info = {'option_names': [],
                    'options': [],
                    'groups': []}
-
-    for extras in ('ARGUMENTS'):
-        if hasattr(cli, extras):
-            docs[extras.lower()] = getattr(cli, extras)
 
     common_opts = opt_doc_list(cli.parser)
     groups_info = get_option_groups(cli.parser)
