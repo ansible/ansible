@@ -99,7 +99,7 @@ class PlayContext(Base):
     # privilege escalation fields
     become = FieldAttribute(isa='bool', priority=70)
     become_method = FieldAttribute(isa='string', priority=70)
-    become_user = FieldAttribute(isa='string',  priority=65)
+    become_user = FieldAttribute(isa='string', priority=65)
     become_pass = FieldAttribute(isa='string', priority=65)
     become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE, priority=65)
     become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS, priority=65)
