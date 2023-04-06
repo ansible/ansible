@@ -1058,7 +1058,7 @@ class AnsibleModule(object):
             # An empty user or 'a' means 'all'.
             users = permlist.pop(0)
             use_umask = (users == '')
-            if users == 'a' or users == '':
+            if 'a' in users or users == '':
                 users = 'ugo'
 
             # Check if there are illegal characters in the user list

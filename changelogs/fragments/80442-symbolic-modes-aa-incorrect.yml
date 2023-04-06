@@ -1,0 +1,2 @@
+bugfixes:
+  - file modules - Symbolic modes with "a" combined with anything else were incorrect ("aa=rx").
