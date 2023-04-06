@@ -204,6 +204,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   * A list of references to other modules, documentation or Internet resources
   * In Ansible 2.10 and later, references to modules must use  the FQCN or ``ansible.builtin`` for modules in ``ansible-core``.
+  * Plugin references are supported since ansible-core 2.15.
   * A reference can be one of the following formats:
 
 
@@ -217,6 +218,15 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         # Reference by module name, including description
         - module: cisco.aci.aci_tenant
           description: ACI module to create tenants on a Cisco ACI fabric.
+
+        # Reference by plugin name
+        - plugin: ansible.builtin.file
+          plugin_type: lookup
+
+        # Reference by plugin name, including description
+        - plugin: ansible.builtin.file
+          plugin_type: lookup
+          description: You can use the ansible.builtin.file lookup to read files on the controller.
 
         # Reference by rST documentation anchor
         - ref: aci_guide
@@ -243,24 +253,16 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
 .. _module_documents_linking:
 
-Linking and other format macros within module documentation
------------------------------------------------------------
+Linking within module documentation
+-----------------------------------
 
 You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet with the help of some pre-defined macros. The correct formats for these macros are:
 
 * ``L()`` for links with a heading. For example: ``See L(Ansible Automation Platform,https://www.ansible.com/products/automation-platform).`` As of Ansible 2.10, do not use ``L()`` for relative links between Ansible documentation and collection documentation.
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/automation-platform) for an overview.``
 * ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
-* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``.
-
-There are also some macros which do not create links but we use them to display certain types of
-content in a uniform way:
-
-* ``I()`` for option names. For example: ``Required if I(state=present).``  This is italicized in
-  the documentation.
-* ``C()`` for files, option values, and inline code. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.`` or ``Use C(var | foo.bar.my_filter) to transform C(var) into the required format.``  This displays with a mono-space font in the documentation.
-* ``B()`` currently has no standardized usage. It is displayed in boldface in the documentation.
-* ``HORIZONTALLINE`` is used sparingly as a separator in long descriptions. It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation.
+* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``. A FQCN **must** be used, short names will create broken links; use ``ansible.builtin`` for modules in ansible-core.
+* ``P()`` for plugin names. For example: ``See also M(ansible.builtin.file#lookup) or M(community.general.json_query#filter)``. This is supported since ansible-core 2.15. FQCNs must be used; use ``ansible.builtin`` for plugins in ansible-core.
 
 .. note::
 
@@ -275,6 +277,49 @@ content in a uniform way:
 .. note::
 
    Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description.
+
+.. _semantic_markup:
+
+Semantic markup within module documentation
+-------------------------------------------
+
+You can use semantic markup to highlight option names, option values, and environment variables. The markup processor formats these highlighted terms in a uniform way. With semantic markup, we can modify how the output looks without changing underlying code.
+
+The correct formats for semantic markup are as follows:
+
+* ``O()`` for option names, whether mentioned alone or with values. For example: ``Required if O(state=present).`` and ``Use with O(force) to require secure access.``
+* ``V()`` for option values when mentioned alone. For example: ``Possible values include V(monospace) and V(pretty).``
+* ``RV()`` for return value names, whether mentioned alone or with values. For example: ``The module returns RV(changed=true) in case of changes.`` and ``Use the RV(stdout) return value for standard output.``
+* ``E()`` for environment variables. For example: ``If not set, the environment variable E(ACME_PASSWORD) will be used.``
+
+The parameters for these formatting functions can use escaping with backslashes: ``V(foo(bar="a\\b"\), baz)`` results in the formatted value ``foo(bar="a\b"), baz)``.
+
+Rules for using ``O()`` and ``RV()`` are very strict. You must follow syntax rules so that documentation renderers can create hyperlinks for the options and return values, respectively.
+
+The allowed syntaxes are as follows:
+- To reference an option for the current plugin/module, or the entrypoint of the current role (inside role entrypoint documentation), use ``O(option)`` and ``O(option=name)``.
+- To reference an option for another entrypoint ``entrypoint`` from inside role documentation, use ``O(entrypoint:option)`` and ``O(entrypoint:option=name)``. The entrypoint information can be ignored by the documentation renderer, turned into a link to that entrypoint, or even directly to the option of that entrypoint.
+- To reference an option for *another* plugin/module ``plugin.fqcn.name`` of type ``type``, use ``O(plugin.fqcn.name#type:option)`` and ``O(plugin.fqcn.name#type:option=name)``. For modules, use ``type=module``. The FQCN and plugin type can be ignored by the documentation renderer, turned into a link to that plugin, or even directly to the option of that plugin.
+- To reference an option for entrypoint ``entrypoint`` of *another* role ``role.fqcn.name``, use ``O(role.fqcn.name#role:entrypoint:option)`` and ``O(role.fqcn.name#role:entrypoint:option=name)``. The FQCN and entrypoint information can be ignored by the documentation renderer, turned into a link to that entrypoint, or even directly to the option of that entrypoint.
+- To reference options that do not exist (for example, options that were removed in an earlier version), use ``O(ignore:option)`` and ``O(ignore:option=name)``. The ``ignore:`` part will not be shown to the user by documentation rendering.
+
+Option names can refer to suboptions by listing the path to the option separated by dots. For example, if you have an option ``foo`` with suboption ``bar``, then you must use ``O(foo.bar)`` to reference that suboption. You can add array indications like ``O(foo[].bar)`` or even ``O(foo[-1].bar)`` to indicate specific list elements. Everything between ``[`` and ``]`` pairs will be ignored to determine the real name of the option. For example, ``O(foo[foo | length - 1].bar[])`` results in the same link as ``O(foo.bar)``, but the text ``foo[foo | length - 1].bar[]`` displays instead of ``foo.bar``.
+
+The same syntaxes can be used for ``RV()``, except that these will refer to return value names instead of option names; for example ``RV(ansible.builtin.service_facts#module:ansible_facts.services)`` refers to the :ref:`ansible_facts.services fact <ansible_collections.ansible.builtin.service_facts_module__return-ansible_facts/services>` returned by the :ref:`ansible.builtin.service_facts module <ansible_collections.ansible.builtin.service_facts_module>`.
+
+Format macros within module documentation
+-----------------------------------------
+
+While it is possible to use standard Ansible formatting macros to control the look of other terms in module documentation, you should do so sparingly.
+
+Possible macros include the following:
+
+* ``C()`` for ``monospace`` (code) text. For example: ``This module functions like the unix command C(foo).``
+* ``B()`` for bold text.
+* ``I()`` for italic text.
+* ``HORIZONTALLINE`` for a horizontal rule (the ``<hr>`` html tag) to separate long descriptions.
+
+Note that ``C()``, ``B()``, and ``I()`` do **not allow escaping**, and thus cannot contain the value ``)`` as it always ends the formatting sequence. If you need to use ``)`` inside ``C()``, we recommend to use ``V()`` instead; see the above section on semantic markup.
 
 .. _module_docs_fragments:
 
