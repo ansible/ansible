@@ -267,7 +267,7 @@ Running on macOS as a target
 ----------------------------
 
 When managing a system with macOS Monterey 12, macOS Ventura
-13 or above over SSH, one might encounter the following error:
+13 or above over SSH, the following error can occur:
 
   .. error::
         "eDSPermissionError" DS Error: -14120 (eDSPermissionError)
