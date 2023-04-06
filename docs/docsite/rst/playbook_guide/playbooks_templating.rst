@@ -42,7 +42,7 @@ Our hostname.yml:
       hosts: all
       tasks:
       - name: write hostname using jinja2
-        template:
+        ansible.builtin.template:
            src: templates/test.j2
            dest: /tmp/hostname
 
