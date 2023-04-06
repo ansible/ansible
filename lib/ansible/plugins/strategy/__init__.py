@@ -36,7 +36,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
 from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
@@ -507,7 +507,7 @@ class StrategyBase:
 
         return task_result
 
-    def search_handlers_by_name(self, handler_name: str, iterator: PlayIterator) -> Handler:
+    def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
         # iterate in reversed order since last handler loaded with the same name wins
         for handler in (h for b in reversed(iterator._play.handlers) for h in b.block if h.name):
             try:
@@ -533,8 +533,9 @@ class StrategyBase:
                     handler.get_name(include_role_fqcn=True),
                 )
 
-                if handler_name in candidates:
-                    return handler
+                if notification in candidates:
+                    yield handler
+                    break
             except (UndefinedError, AnsibleUndefinedVariable) as e:
                 # We skip this handler due to the fact that it may be using
                 # a variable in the name that was conditionally included via
@@ -547,21 +548,16 @@ class StrategyBase:
                         "not supported in handler names). The error: %s" % (handler.name, to_text(e))
                     )
 
-    def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
-        if (handler := self.search_handlers_by_name(notification, iterator)) is not None:
-            yield handler
-
         templar = Templar(None)
-        for listening_handler_block in iterator._play.handlers:
-            for listening_handler in listening_handler_block.block:
-                if listeners := listening_handler.listen:
-                    if notification in listening_handler.get_validated_value(
-                        'listen',
-                        listening_handler.fattributes.get('listen'),
-                        listeners,
-                        templar,
-                    ):
-                        yield listening_handler
+        for handler in (h for b in iterator._play.handlers for h in b.block):
+            if listeners := handler.listen:
+                if notification in handler.get_validated_value(
+                    'listen',
+                    handler.fattributes.get('listen'),
+                    listeners,
+                    templar,
+                ):
+                    yield handler
 
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
@@ -660,9 +656,7 @@ class StrategyBase:
                         for notification in result_item['_ansible_notify']:
                             if any(self.search_handlers_by_notification(notification, iterator)):
                                 iterator.add_notification(original_host.name, notification)
-                                display.vv(
-                                    f"Notification for handler {notification} has been saved."
-                                )
+                                display.vv(f"Notification for handler {notification} has been saved.")
                                 continue
 
                             msg = (
