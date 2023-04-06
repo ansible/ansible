@@ -265,8 +265,8 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 # Used for parsing symbolic file perms
 MODE_OPERATOR_RE = re.compile(r'[+=-]')
-USERS_RE = re.compile(r'[^ugo]')
-PERMS_RE = re.compile(r'[^rwxXstugo]')
+USERS_RE = re.compile(r'[ugo]+')
+PERMS_RE = re.compile(r'[rwxXstugo]*')
 
 
 #
@@ -1063,14 +1063,14 @@ class AnsibleModule(object):
 
             # Check if there are illegal characters in the user list
             # They can end up in 'users' because they are not split
-            if USERS_RE.match(users):
+            if not USERS_RE.fullmatch(users):
                 raise ValueError("bad symbolic permission for mode: %s" % mode)
 
             # Now we have two list of equal length, one contains the requested
             # permissions and one with the corresponding operators.
             for idx, perms in enumerate(permlist):
                 # Check if there are illegal characters in the permissions
-                if PERMS_RE.match(perms):
+                if not PERMS_RE.fullmatch(perms):
                     raise ValueError("bad symbolic permission for mode: %s" % mode)
 
                 for user in users:
