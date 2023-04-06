@@ -2,7 +2,12 @@
 
         A random module. See `foo=bar' (of role foo.bar.baz, main
         entrypoint) for how this is used in the [foo.bar.baz]'s `main'
-        entrypoint.
+        entrypoint. See the docsite <https://docs.ansible.com/ansible-
+        core/devel/> for more information on ansible-core. This module
+        is not related to the [ansible.builtin.copy] module.
+        -------------  You might also be interested in
+        ansible_python_interpreter. Sometimes you have [broken markup]
+        that will result in error messages.
 
 ADDED IN: version 1.0.0 of testns.testcol
 
