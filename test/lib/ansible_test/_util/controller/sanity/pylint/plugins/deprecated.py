@@ -160,6 +160,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
             self.add_message('ansible-deprecated-date', node=node, args=(date,))
 
     def _check_version(self, node, version, collection_name):
+        if collection_name is None:
+            collection_name = 'ansible.builtin'
         if not isinstance(version, (str, float)):
             if collection_name == 'ansible.builtin':
                 symbol = 'ansible-invalid-deprecated-version'
