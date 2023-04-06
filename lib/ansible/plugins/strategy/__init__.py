@@ -27,6 +27,7 @@ import queue
 import sys
 import threading
 import time
+import typing as t
 
 from collections import deque
 from multiprocessing import Lock
@@ -37,7 +38,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError, AnsibleAssertionError
 from ansible.executor import action_write_locks
-from ansible.executor.play_iterator import IteratingStates
+from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
@@ -506,53 +507,51 @@ class StrategyBase:
 
         return task_result
 
-    def search_handler_blocks_by_name(self, handler_name, handler_blocks, iterator):
+    def search_handlers_by_name(self, handler_name: str, iterator: PlayIterator) -> Handler:
         # iterate in reversed order since last handler loaded with the same name wins
-        for handler_block in reversed(handler_blocks):
-            for handler_task in handler_block.block:
-                if not handler_task.name:
-                    continue
-                try:
-                    if not handler_task.cached_name:
-                        handler_templar = Templar(None)
-                        if handler_templar.is_template(handler_task.name):
-                            handler_templar.available_variables = self._variable_manager.get_vars(
-                                play=iterator._play,
-                                task=handler_task,
-                                _hosts=self._hosts_cache,
-                                _hosts_all=self._hosts_cache_all
-                            )
-                            handler_task.name = handler_templar.template(handler_task.name)
-                        handler_task.cached_name = True
+        for handler in (h for b in reversed(iterator._play.handlers) for h in b.block if h.name):
+            try:
+                if not handler.cached_name:
+                    handler_templar = Templar(None)
+                    if handler_templar.is_template(handler.name):
+                        handler_templar.available_variables = self._variable_manager.get_vars(
+                            play=iterator._play,
+                            task=handler,
+                            _hosts=self._hosts_cache,
+                            _hosts_all=self._hosts_cache_all
+                        )
+                        handler.name = handler_templar.template(handler.name)
+                    handler.cached_name = True
 
-                    # first we check with the full result of get_name(), which may
-                    # include the role name (if the handler is from a role). If that
-                    # is not found, we resort to the simple name field, which doesn't
-                    # have anything extra added to it.
-                    candidates = (
-                        handler_task.name,
-                        handler_task.get_name(include_role_fqcn=False),
-                        handler_task.get_name(include_role_fqcn=True),
+                # first we check with the full result of get_name(), which may
+                # include the role name (if the handler is from a role). If that
+                # is not found, we resort to the simple name field, which doesn't
+                # have anything extra added to it.
+                candidates = (
+                    handler.name,
+                    handler.get_name(include_role_fqcn=False),
+                    handler.get_name(include_role_fqcn=True),
+                )
+
+                if handler_name in candidates:
+                    return handler
+            except (UndefinedError, AnsibleUndefinedVariable) as e:
+                # We skip this handler due to the fact that it may be using
+                # a variable in the name that was conditionally included via
+                # set_fact or some other method, and we don't want to error
+                # out unnecessarily
+                if not handler.listen:
+                    display.warning(
+                        "Handler '%s' is unusable because it has no listen topics and "
+                        "the name could not be templated (host-specific variables are "
+                        "not supported in handler names). The error: %s" % (handler.name, to_text(e))
                     )
 
-                    if handler_name in candidates:
-                        return handler_task
-                except (UndefinedError, AnsibleUndefinedVariable) as e:
-                    # We skip this handler due to the fact that it may be using
-                    # a variable in the name that was conditionally included via
-                    # set_fact or some other method, and we don't want to error
-                    # out unnecessarily
-                    if not handler_task.listen:
-                        display.warning(
-                            "Handler '%s' is unusable because it has no listen topics and "
-                            "the name could not be templated (host-specific variables are "
-                            "not supported in handler names). The error: %s" % (handler_task.name, to_text(e))
-                        )
-
-    def get_notified_handlers(self, notification, iterator, templar):
-        if (handler := self.search_handler_blocks_by_name(notification, iterator._play.handlers, iterator)) is not None:
+    def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
+        if (handler := self.search_handlers_by_name(notification, iterator)) is not None:
             yield handler
 
+        templar = Templar(None)
         for listening_handler_block in iterator._play.handlers:
             for listening_handler in listening_handler_block.block:
                 if listeners := listening_handler.listen:
@@ -659,7 +658,7 @@ class StrategyBase:
                         # handlers are actually flushed so the last defined handlers are exexcuted,
                         # otherwise depending on the setting either error or warn
                         for notification in result_item['_ansible_notify']:
-                            if any(self.get_notified_handlers(notification, iterator, handler_templar)):
+                            if any(self.search_handlers_by_notification(notification, iterator)):
                                 iterator.add_notification(original_host.name, notification)
                                 display.vv(
                                     f"Notification for handler {notification} has been saved."
@@ -952,10 +951,9 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             if _evaluate_conditional(target_host):
                 host_state = iterator.get_state_for_host(target_host.name)
-                templar = Templar(None)
                 # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.handler_notifications):
-                    for handler in self.get_notified_handlers(notification, iterator, templar):
+                    for handler in self.search_handlers_by_notification(notification, iterator):
                         if not handler.notify_host(target_host):
                             # NOTE even with notifications deduplicated this can still happen in case of handlers being
                             # notified multiple times using different names, like role name or fqcn
