@@ -97,6 +97,8 @@ options:
     state:
         description:
             - Whether the account should exist or not, taking action if the state is different from what is stated.
+            - See this L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#running-on-macos-as-a-target)
+              for additional requirements when removing users on macOS systems.
         type: str
         choices: [ absent, present ]
         default: present
