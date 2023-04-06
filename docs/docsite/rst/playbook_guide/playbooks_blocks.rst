@@ -154,7 +154,7 @@ You can use blocks with ``flush_handlers`` in a rescue task to ensure that all h
           ansible.builtin.debug:
             msg: 'I execute normally'
           changed_when: true
-          notify: run me even after an error
+          notify: Run me even after an error
 
         - name: Force a failure
           ansible.builtin.command: /bin/false
