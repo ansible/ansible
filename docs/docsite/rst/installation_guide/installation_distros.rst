@@ -34,6 +34,8 @@ Installing Ansible on OpenSUSE Tumbleweed/Leap
 .. code-block:: bash
 
     $ sudo zypper install ansible
+    
+See `OpenSUSE Support Portal <https://en.opensuse.org/Portal:Support>` for additional help with Ansible on OpenSUSE.
 
 .. _from_apt:
 
