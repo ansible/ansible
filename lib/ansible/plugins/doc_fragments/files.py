@@ -21,7 +21,7 @@ options:
       You must give Ansible enough information to parse them correctly.
       For consistent results, quote octal numbers (for example, C('644') or C('1777')) so Ansible receives
       a string and can do its own conversion from string into number.
-      Adding a leading zero (for example, C(0755)) works sometimes, but fails in loops and some other circumstances.
+      Adding a leading zero (for example, C(0755)) works sometimes, but can fail in loops and some other circumstances.
     - Giving Ansible a number without following either of these rules will end up with a decimal
       number which will have unexpected results.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
