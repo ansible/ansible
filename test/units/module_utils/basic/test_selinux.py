@@ -183,7 +183,7 @@ class TestSELinuxMU:
         am.is_special_selinux_path = lambda path: (False, None)
 
         with patch.object(basic, 'selinux', create=True) as selinux:
-            selinux.lsetfilecon.return_value=0
+            selinux.lsetfilecon.return_value = 0
             assert am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False) is True
             selinux.lsetfilecon.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
             selinux.lsetfilecon.reset_mock()
