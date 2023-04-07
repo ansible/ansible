@@ -75,6 +75,23 @@ options:
   a10:
     description: O(foo.bar=1).
     type: str
+
+  a11:
+    description: Something with suboptions.
+    type: dict
+    suboptions:
+      b1:
+        description:
+          - V(C\(foo\)).
+          - RV(bam).
+          - P(foo.bar#baz).
+          - P(foo.bar.baz).
+          - P(foo.bar.baz#woof).
+          - E(foo\(bar).
+          - O(bar).
+          - O(bar=bam).
+          - O(foo.bar=1).
+        type: str
 '''
 
 EXAMPLES = '''#'''
@@ -103,5 +120,8 @@ if __name__ == '__main__':
         a8=dict(),
         a9=dict(),
         a10=dict(),
+        a11=dict(type='dict', options=dict(
+            b1=dict(),
+        ))
     ))
     module.exit_json()
