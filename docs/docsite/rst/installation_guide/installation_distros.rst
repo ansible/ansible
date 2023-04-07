@@ -9,7 +9,7 @@ The ``ansible`` package can always be :ref:`installed from PyPI using pip <intro
 
 The following instructions will guide you through installing the ``ansible`` package with your preferred distribution's package manager.
 
-.. note:: For maintainers who wish to add distributions to this guide, installation instructions are included here only for distributions with a reasonably up-to-date version of ``ansible``. The distribution MUST ensure that ``ansible-core`` and ``ansible`` versions are kept in sync to the extent that their build system allows. Maintainers MUST include a way to contact them with their instructions here and are encouraged to join the `Ansible Packaging <https://matrix.to/#/#packaging:ansible.com>`_ matrix room.
+.. note:: For maintainers who wish to add distributions to this guide, installation instructions are included here only for distributions with a reasonably up-to-date version of ``ansible``. The distribution MUST ensure that ``ansible-core`` and ``ansible`` versions are kept in sync to the extent that the distribution build system allows. Maintainers MUST include a way to contact them with their instructions here and are encouraged to join the `Ansible Packaging <https://matrix.to/#/#packaging:ansible.com>`_ matrix room.
 
 .. contents::
   :local:
