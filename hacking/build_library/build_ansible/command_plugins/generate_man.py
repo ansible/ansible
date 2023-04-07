@@ -288,7 +288,6 @@ class GenerateMan(Command):
 
             # add rest to vars
             tvars = allvars[cli_name]
-            tvars['cli_list'] = cli_list
             tvars['cli_bin_name_list'] = cli_bin_name_list
             tvars['cli'] = cli_name
             if '-i' in tvars['option_names']:
