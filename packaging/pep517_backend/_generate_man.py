@@ -123,6 +123,7 @@ def opts_docs(cli_class_name, cli_module_name):
         pass
 
     # base/common cli info
+    cli_options = opt_doc_list(cli.parser)
     docs = {
         'cli': cli_module_name,
         'cli_name': cli_name,
@@ -131,22 +132,18 @@ def opts_docs(cli_class_name, cli_module_name):
         'long_desc': trim_docstring(cli.__doc__),
         'actions': {},
         'content_depth': 2,
+        'options': cli_options,
+        'arguments': getattr(cli, 'ARGUMENTS', None),
     }
     option_info = {'option_names': [],
-                   'options': [],
+                   'options': cli_options,
                    'groups': []}
 
-    for extras in ('ARGUMENTS'):
-        if hasattr(cli, extras):
-            docs[extras.lower()] = getattr(cli, extras)
-
-    common_opts = opt_doc_list(cli.parser)
     groups_info = get_option_groups(cli.parser)
     shared_opt_names = []
-    for opt in common_opts:
+    for opt in cli_options:
         shared_opt_names.extend(opt.get('options', []))
 
-    option_info['options'] = common_opts
     option_info['option_names'] = shared_opt_names
 
     option_info['groups'].extend(groups_info)
@@ -207,7 +204,6 @@ def opts_docs(cli_class_name, cli_module_name):
     action_depth = get_actions(cli.parser, docs)
     docs['content_depth'] = action_depth + 1
 
-    docs['options'] = opt_doc_list(cli.parser)
     return docs
 
 
@@ -285,11 +281,14 @@ class GenerateMan:
 
             # add rest to vars
             tvars = allvars[cli_name]
-            tvars['cli_list'] = cli_list
             tvars['cli_bin_name_list'] = cli_bin_name_list
             tvars['cli'] = cli_name
-            if '-i' in tvars['options']:
+            if '-i' in tvars['option_names']:
+                tvars['inventory'] = True
                 print('uses inventory')
+            if '-M' in tvars['option_names']:
+                tvars['library'] = True
+                print('uses library')
 
             manpage = template.render(tvars)
             filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
