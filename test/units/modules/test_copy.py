@@ -128,16 +128,19 @@ def test_split_pre_existing_dir_working_dir_exists(directory, expected, mocker):
 #
 # Info helpful for making new test cases:
 #
-# base_mode = {'dir no perms': 0o040000,
-# 'file no perms': 0o100000,
-# 'dir all perms': 0o400000 | 0o777,
-# 'file all perms': 0o100000, | 0o777}
+# base_mode = {
+# 'dir no perms':   0o040000,
+# 'file no perms':  0o100000,
+# 'dir all perms':  0o040000 | 0o777,
+# 'file all perms': 0o100000 | 0o777}
 #
-# perm_bits = {'x': 0b001,
+# perm_bits = {
+# 'x': 0b001,
 # 'w': 0b010,
 # 'r': 0b100}
 #
-# role_shift = {'u': 6,
+# role_shift = {
+# 'u': 6,
 # 'g': 3,
 # 'o': 0}
 
