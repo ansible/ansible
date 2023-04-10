@@ -262,7 +262,7 @@ You can link from your module documentation to other module docs, other resource
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/automation-platform) for an overview.``
 * ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
 * ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``. A FQCN **must** be used, short names will create broken links; use ``ansible.builtin`` for modules in ansible-core.
-* ``P()`` for plugin names. For example: ``See also M(ansible.builtin.file#lookup) or M(community.general.json_query#filter)``. This is supported since ansible-core 2.15. FQCNs must be used; use ``ansible.builtin`` for plugins in ansible-core.
+* ``P()`` for plugin names. For example: ``See also P(ansible.builtin.file#lookup) or P(community.general.json_query#filter)``. This is supported since ansible-core 2.15. FQCNs must be used; use ``ansible.builtin`` for plugins in ansible-core.
 
 .. note::
 
