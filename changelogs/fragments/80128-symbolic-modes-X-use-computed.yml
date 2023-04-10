@@ -1,0 +1,3 @@
+bugfixes:
+  - file modules - Make symbolic modes with X use the computed permission, not original file (https://github.com/ansible/ansible/issues/80128)
+  - copy unit tests - Fixing "dir all perms" documentation and formatting for easier reading.

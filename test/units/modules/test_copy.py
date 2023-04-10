@@ -128,16 +128,19 @@ def test_split_pre_existing_dir_working_dir_exists(directory, expected, mocker):
 #
 # Info helpful for making new test cases:
 #
-# base_mode = {'dir no perms': 0o040000,
-# 'file no perms': 0o100000,
-# 'dir all perms': 0o400000 | 0o777,
-# 'file all perms': 0o100000, | 0o777}
+# base_mode = {
+# 'dir no perms':   0o040000,
+# 'file no perms':  0o100000,
+# 'dir all perms':  0o040000 | 0o777,
+# 'file all perms': 0o100000 | 0o777}
 #
-# perm_bits = {'x': 0b001,
+# perm_bits = {
+# 'x': 0b001,
 # 'w': 0b010,
 # 'r': 0b100}
 #
-# role_shift = {'u': 6,
+# role_shift = {
+# 'u': 6,
 # 'g': 3,
 # 'o': 0}
 
@@ -171,6 +174,10 @@ DATA = (  # Going from no permissions to setting all for user, group, and/or oth
     # Same as chmod but is it a bug?
     # chmod a-X statfile <== removes execute from statfile
     (0o100777, u'a-X', 0o0666),
+
+    # Verify X uses computed not original mode
+    (0o100777, u'a=,u=rX', 0o0400),
+    (0o040777, u'a=,u=rX', 0o0500),
 
     # Multiple permissions
     (0o040000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0755),
