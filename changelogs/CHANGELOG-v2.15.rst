@@ -5,6 +5,25 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2023-04-10
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Bugfixes
+--------
+
+- AnsibleModule.run_command - Only use selectors when needed, and rely on Python stdlib subprocess for the simple task of collecting stdout/stderr when prompt matching is not required.
+- ansible-galaxy - reduce API calls to servers by fetching signatures only for final candidates.
+- dnf5 - fix module and package names in the message following failed module respawn attempt
+- dnf5 - use the logs API to determine transaction problems
+- validate-modules sanity test - replace semantic markup parsing and validating code with the code from `antsibull-docs-parser 0.2.0 <https://github.com/ansible-community/antsibull-docs-parser/releases/tag/0.2.0>`__ (https://github.com/ansible/ansible/pull/80406).
+
 v2.15.0b1
 =========
 
