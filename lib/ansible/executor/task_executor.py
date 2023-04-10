@@ -277,6 +277,7 @@ class TaskExecutor:
                             u" to something else to avoid variable collisions and unexpected behavior." % (self._task, loop_var))
 
         ran_once = False
+        initial_attrs = None
         no_log = False
         items_len = len(items)
         results = []
@@ -330,6 +331,8 @@ class TaskExecutor:
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
             res = self._execute(variables=task_vars)
             task_fields = self._task.dump_attrs()
+            if item_index == 0:
+                initial_attrs = task_fields
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
@@ -391,6 +394,8 @@ class TaskExecutor:
                         if var in task_vars and var not in self._job_vars:
                             del task_vars[var]
 
+        if initial_attrs is not None:
+            self._task.from_attrs(initial_attrs)
         self._task.no_log = no_log
 
         return results
