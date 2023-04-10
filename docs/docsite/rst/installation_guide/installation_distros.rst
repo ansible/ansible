@@ -10,7 +10,7 @@ The following instructions will guide you through installing the ``ansible`` pac
 .. contents::
   :local:
 
-Installing Ansible on Fedora or Enterprise Linux
+Installing Ansible on Fedora Linux
 -------------------------------------------------
 
 To install the batteries included ``ansible`` package on Fedora run
@@ -37,17 +37,22 @@ See the `Fedora Packages index <https://packages.fedoraproject.org/search?query=
 for a full list of Ansible collections packaged in Fedora.
 
 
-Users of Enterprise Linux distributions,
-including CentOS Stream, Almalinux, and Rocky Linux,
+Please `file a bug <https://bugzilla.redhat.com/enter_bug.cgi>`_ against the
+``Fedora`` product in Red Hat Bugzilla to reach the package maintainers.
+
+Installing Ansible from EPEL
+----------------------------------
+
+Users of CentOS Stream, Almalinux, Rocky Linux, and related distributions
 can install ``ansible`` or Ansible collections from the community maintained
 `EPEL <https://docs.fedoraproject.org/en-US/epel/>`_
 (Extra Packages for Enterprise Linux) repository.
 
 After `enabling the EPEL repository <https://docs.fedoraproject.org/en-US/epel/#_quickstart>`_,
-users can use the same ``dnf`` commands as for Fedora.
+users can use the same ``dnf`` commands as for Fedora Linux.
 
-Please `file a bug <https://bugzilla.redhat.com/enter_bug.cgi>`_
-in Red Hat Bugzilla to reach the package maintainers.
+Please `file a bug <https://bugzilla.redhat.com/enter_bug.cgi>`_ against the
+``Fedora EPEL`` product in Red Hat Bugzilla to reach the package maintainers.
 
 
 Installing Ansible on OpenSUSE Tumbleweed/Leap
