@@ -544,6 +544,19 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
           - vars_plugin_staging
     '''
 
+At times a value provided by a vars plugin will contain unsafe values. The utility function `wrap_var` provided by `ansible.utils.unsafe_proxy` should be used to ensure that Ansible handles the variable and value correctly. The use cases for unsafe data is covered in :ref:`playbooks_advanced_syntax.unsafe_strings`
+
+.. code-block:: python
+
+    from ansible.plugins.vars import BaseVarsPlugin
+    import ansible.utils.unsafe_proxy
+
+    class VarsPlugin(BaseVarsPlugin):
+        def get_vars(self, loader, path, entities):
+            return dict(
+                something_unsafe=ansible.utils.unsafe_proxy.wrap_var("{{ SOMETHING_UNSAFE }}")
+            )
+
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.
 
