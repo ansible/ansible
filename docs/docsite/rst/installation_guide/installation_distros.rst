@@ -39,7 +39,7 @@ for a full list of Ansible collections packaged in Fedora.
 
 Users of Enterprise Linux distributions,
 including CentOS Stream, RHEL, Almalinux, and Rocky Linux,
-can install ``ansible`` or Ansible collections from the community supported
+can install ``ansible`` or Ansible collections from the community maintained
 `EPEL <https://docs.fedoraproject.org/en-US/epel/>`_
 (Extra Packages for Enterprise Linux) repository.
 
