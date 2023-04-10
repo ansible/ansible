@@ -56,6 +56,12 @@ options:
     type: list
     elements: str
     version_added: "2.2"
+  follow_symlinks:
+    description:
+      - Follow symbolic links when using C(dir) option.
+    type: bool
+    default: no
+    version_added: "2.2"  
   extensions:
     description:
       - List of file extensions to read when using C(dir).
