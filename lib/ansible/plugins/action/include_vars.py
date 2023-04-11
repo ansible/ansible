@@ -20,7 +20,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions', 'follow_symlinks']
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name', 'hash_behaviour']
 
@@ -62,7 +62,6 @@ class ActionModule(ActionBase):
         self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
-        self.follow_symlinks = self._task.args.get('follow_symlinks', False)
 
         # convert/validate extensions list
         if isinstance(self.valid_extensions, string_types):
@@ -183,7 +182,7 @@ class ActionModule(ActionBase):
             The default depth is unlimited.
         """
         current_depth = 0
-        sorted_walk = list(walk(self.source_dir, onerror=self._log_walk, followlinks=self.follow_symlinks))
+        sorted_walk = list(walk(self.source_dir, onerror=self._log_walk, followlinks=True))
         sorted_walk.sort(key=lambda x: x[0])
         for current_root, current_dir, current_files in sorted_walk:
             current_depth += 1
