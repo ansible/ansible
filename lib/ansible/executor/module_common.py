@@ -1377,20 +1377,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None, action_groups=None):
-    if redirected_names:
-        resolved_action_name = redirected_names[-1]
-    else:
-        resolved_action_name = action
-
-    if redirected_names is not None:
-        msg = (
-            "Finding module_defaults for the action %s. "
-            "The caller passed a list of redirected action names, which is deprecated. "
-            "The task's resolved action should be provided as the first argument instead."
-        )
-        display.deprecated(msg % resolved_action_name, version='2.16')
-
+def get_action_args_with_defaults(action, args, defaults, templar, action_groups=None):
     # Get the list of groups that contain this action
     if action_groups is None:
         msg = (
@@ -1401,7 +1388,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         display.warning(msg=msg)
         group_names = []
     else:
-        group_names = action_groups.get(resolved_action_name, [])
+        group_names = action_groups.get(action, [])
 
     tmp_args = {}
     module_defaults = {}
@@ -1420,7 +1407,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
                 tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
     # handle specific action defaults
-    tmp_args.update(module_defaults.get(resolved_action_name, {}).copy())
+    tmp_args.update(module_defaults.get(action, {}).copy())
 
     # direct args override all
     tmp_args.update(args)
