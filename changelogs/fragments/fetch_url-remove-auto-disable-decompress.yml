@@ -1,0 +1,2 @@
+removed_features:
+  - "``fetch_url`` - remove auto disabling ``decompress`` when gzip is not available"
