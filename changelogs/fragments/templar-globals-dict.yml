@@ -1,0 +1,2 @@
+minor_changes:
+  - "``Templar`` - do not add the ``dict`` constructor to ``globals`` as all required Jinja2 versions already do so"
