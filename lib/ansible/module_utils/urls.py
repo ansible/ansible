@@ -1865,12 +1865,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
 
-    if not HAS_GZIP and decompress is True:
-        decompress = False
-        module.deprecate(
-            '%s. "decompress" has been automatically disabled to prevent a failure' % GzipDecodedReader.missing_gzip_error(),
-            version='2.16'
-        )
+    if not HAS_GZIP:
+        module.fail_json(msg=GzipDecodedReader.missing_gzip_error())
 
     # ensure we use proper tempdir
     old_tempdir = tempfile.tempdir
