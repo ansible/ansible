@@ -97,7 +97,7 @@ To circumvent this, you can encrypt the variables individually using ``ansible-v
 #. Inside this subdirectory, create two files named ``vars`` and ``vault``.
 #. In the ``vars`` file, define all of the variables needed, including any sensitive ones.
 #. Copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``.
-#. Adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables using jinja2 syntax: ``db_password: {{ vault_db_password }}``.
+#. Adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables using jinja2 syntax: ``db_password: "{{ vault_db_password }}"``.
 #. Encrypt the ``vault`` file to protect its contents.
 #. Use the variable name from the ``vars`` file in your playbooks.
 
