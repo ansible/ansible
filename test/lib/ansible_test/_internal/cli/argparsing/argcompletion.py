@@ -16,10 +16,19 @@ class Substitute:
 try:
     import argcomplete
 
-    from argcomplete import (
-        CompletionFinder,
-        default_validator,
-    )
+    try:
+        # argcomplete 3+
+        # see: https://github.com/kislyuk/argcomplete/commit/bd781cb08512b94966312377186ebc5550f46ae0
+        from argcomplete.finders import (
+            CompletionFinder,
+            default_validator,
+        )
+    except ImportError:
+        # argcomplete <3
+        from argcomplete import (
+            CompletionFinder,
+            default_validator,
+        )
 
     warn = argcomplete.warn  # pylint: disable=invalid-name
 except ImportError:
@@ -70,7 +79,13 @@ class CompType(enum.Enum):
 def register_safe_action(action_type):  # type: (t.Type[argparse.Action]) -> None
     """Register the given action as a safe action for argcomplete to use during completion if it is not already registered."""
     if argcomplete and action_type not in argcomplete.safe_actions:
-        argcomplete.safe_actions += (action_type,)
+        if isinstance(argcomplete.safe_actions, set):
+            # argcomplete 3+
+            # see: https://github.com/kislyuk/argcomplete/commit/bd781cb08512b94966312377186ebc5550f46ae0
+            argcomplete.safe_actions.add(action_type)
+        else:
+            # argcomplete <3
+            argcomplete.safe_actions += (action_type,)
 
 
 def get_comp_type():  # type: () -> t.Optional[CompType]
