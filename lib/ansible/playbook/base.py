@@ -543,8 +543,8 @@ class FieldAttributeBase:
             if field_attribute is not None and field_attribute == name:
                 last = True
 
-            if attribute._finalized:
-                continue
+            #if attribute._finalized:
+            #    continue
 
             if attribute.static:
                 value = getattr(self, name)
@@ -614,7 +614,7 @@ class FieldAttributeBase:
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
             # we finalized THIS FA
-            attribute._finalized = True
+            # attribute._finalized = True
 
         # finalized the whole object
         self._finalized = True
