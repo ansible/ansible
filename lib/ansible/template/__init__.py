@@ -45,7 +45,7 @@ from ansible.errors import (
     AnsibleOptionsError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
@@ -565,9 +565,6 @@ class Templar:
             loader=FileSystemLoader(loader.get_basedir() if loader else '.'),
         )
         self.environment.template_class.environment_class = environment_class
-
-        # jinja2 global is inconsistent across versions, this normalizes them
-        self.environment.globals['dict'] = dict
 
         # Custom globals
         self.environment.globals['lookup'] = self._lookup
