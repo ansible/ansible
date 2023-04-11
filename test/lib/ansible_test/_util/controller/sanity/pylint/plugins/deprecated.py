@@ -95,7 +95,7 @@ ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version_raw.split('.')[:3]))
 
 
 def _get_expr_name(node):
-    """Funciton to get either ``attrname`` or ``name`` from ``node.func.expr``
+    """Function to get either ``attrname`` or ``name`` from ``node.func.expr``
 
     Created specifically for the case of ``display.deprecated`` or ``self._display.deprecated``
     """
@@ -104,6 +104,17 @@ def _get_expr_name(node):
     except AttributeError:
         # If this fails too, we'll let it raise, the caller should catch it
         return node.func.expr.name
+
+
+def _get_func_name(node):
+    """Function to get either ``attrname`` or ``name`` from ``node.func``
+
+    Created specifically for the case of ``from ansible.module_utils.common.warnings import deprecate``
+    """
+    try:
+        return node.func.attrname
+    except AttributeError:
+        return node.func.name
 
 
 def parse_isodate(value):
@@ -218,8 +229,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
         date = None
         collection_name = None
         try:
-            if (node.func.attrname == 'deprecated' and 'display' in _get_expr_name(node) or
-                    node.func.attrname == 'deprecate' and _get_expr_name(node)):
+            funcname = _get_func_name(node)
+            if (funcname == 'deprecated' and 'display' in _get_expr_name(node) or
+                    funcname == 'deprecate'):
                 if node.keywords:
                     for keyword in node.keywords:
                         if len(node.keywords) == 1 and keyword.arg is None:
