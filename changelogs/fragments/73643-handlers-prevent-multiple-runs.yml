@@ -1,0 +1,2 @@
+bugfixes:
+  - Prevent running same handler multiple times when included via ``include_role`` (https://github.com/ansible/ansible/issues/73643)
