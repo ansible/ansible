@@ -380,6 +380,9 @@ class VariableManager:
                     finally:
                         attempted_files.append(vars_file)
 
+                    if not isinstance(vars_file, text_type):
+                        raise AnsibleError(f"Invalid vars_file entry {vars_file}, expected a string, got {vars_file.__class__.__name__}")
+
                     try:
                         play_search_stack = play.get_search_path()
                         found_file = real_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
