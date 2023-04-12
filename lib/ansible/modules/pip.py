@@ -271,15 +271,16 @@ import tempfile
 import operator
 import shlex
 import traceback
+import importlib.metadata  # Import importlib.metadata for Python 3.8+
 
 from ansible.module_utils.compat.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
 try:
-    from pkg_resources import Requirement
-
+    # Use importlib.metadata to get the version information
+    setuptools_version = importlib.metadata.version("setuptools")
     HAS_SETUPTOOLS = True
-except ImportError:
+except Exception:
     HAS_SETUPTOOLS = False
     SETUPTOOLS_IMP_ERR = traceback.format_exc()
 
@@ -288,12 +289,11 @@ from ansible.module_utils.basic import AnsibleModule, is_executable, missing_req
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.six import PY3
 
-
-#: Python one-liners to be run at the command line that will determine the
-# installed version for these special libraries.  These are libraries that
-# don't end up in the output of pip freeze.
-_SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.__version__)',
-                             'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
+# Update the _SPECIAL_PACKAGE_CHECKERS dictionary to use importlib.metadata
+_SPECIAL_PACKAGE_CHECKERS = {
+    'setuptools': 'import importlib.metadata; print(importlib.metadata.version("setuptools"))',
+    'pip': 'import importlib.metadata; print(importlib.metadata.version("pip"))'
+}
 
 _VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
 
