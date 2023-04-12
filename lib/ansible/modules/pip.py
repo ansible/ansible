@@ -272,7 +272,7 @@ import operator
 import shlex
 import traceback
 
-# Import version from importlib.metadata for Python 3.8+, otherwise use backport importlib_metadata
+# Import version from importlib.metadata for Python 3.10+, otherwise use backport importlib_metadata
 try:
     from importlib.metadata import version
 except ImportError:
@@ -296,11 +296,12 @@ from ansible.module_utils.six import PY3
 
 # Update the _SPECIAL_PACKAGE_CHECKERS dictionary to use appropriate import and version function
 _SPECIAL_PACKAGE_CHECKERS = {
-    'setuptools': 'try: from importlib.metadata import version; print(version("setuptools")) except ImportError: from importlib_metadata import version; print(version("setuptools"))',
-    'pip': 'try: from importlib.metadata import version; print(version("pip")) except ImportError: from importlib_metadata import version; print(version("pip"))'
+    'setuptools': 'from importlib.metadata import version; print(version("setuptools"))',
+    'pip': 'from importlib.metadata import version; print(version("pip"))'
 }
 
 # The rest of your code
+# Note: Please address the usage of the 'Requirement' class in the remaining code
 
 
 _VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
