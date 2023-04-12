@@ -1060,7 +1060,7 @@ def test_verify_file_hash_deleted_file(manifest_info):
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=False)) as mock_isfile:
             collection._verify_file_hash(b'path/', 'file', digest, error_queue)
 
-            assert mock_isfile.called_once
+            mock_isfile.assert_called_once()
 
     assert len(error_queue) == 1
     assert error_queue[0].installed is None
@@ -1083,7 +1083,7 @@ def test_verify_file_hash_matching_hash(manifest_info):
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=True)) as mock_isfile:
             collection._verify_file_hash(b'path/', 'file', digest, error_queue)
 
-            assert mock_isfile.called_once
+            mock_isfile.assert_called_once()
 
     assert error_queue == []
 
@@ -1105,7 +1105,7 @@ def test_verify_file_hash_mismatching_hash(manifest_info):
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=True)) as mock_isfile:
             collection._verify_file_hash(b'path/', 'file', different_digest, error_queue)
 
-            assert mock_isfile.called_once
+            mock_isfile.assert_called_once()
 
     assert len(error_queue) == 1
     assert error_queue[0].installed == digest
