@@ -272,7 +272,7 @@ import operator
 import shlex
 import traceback
 
-# Import importlib.metadata for Python 3.8+, otherwise use backport importlib_metadata
+# Import version from importlib.metadata for Python 3.8+, otherwise use backport importlib_metadata
 try:
     from importlib.metadata import version
 except ImportError:
@@ -282,8 +282,8 @@ from ansible.module_utils.compat.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
 try:
-    # Use importlib.metadata to get the version information
-    setuptools_version = importlib.metadata.version("setuptools")
+    # Use version from either importlib.metadata or importlib_metadata to get the version information
+    setuptools_version = version("setuptools")
     HAS_SETUPTOOLS = True
 except Exception:
     HAS_SETUPTOOLS = False
@@ -294,16 +294,20 @@ from ansible.module_utils.basic import AnsibleModule, is_executable, missing_req
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.six import PY3
 
-# Update the _SPECIAL_PACKAGE_CHECKERS dictionary to use importlib.metadata
+# Update the _SPECIAL_PACKAGE_CHECKERS dictionary to use appropriate import and version function
 _SPECIAL_PACKAGE_CHECKERS = {
-    'setuptools': 'import importlib.metadata; print(importlib.metadata.version("setuptools"))',
-    'pip': 'import importlib.metadata; print(importlib.metadata.version("pip"))'
+    'setuptools': 'try: from importlib.metadata import version; print(version("setuptools")) except ImportError: from importlib_metadata import version; print(version("setuptools"))',
+    'pip': 'try: from importlib.metadata import version; print(version("pip")) except ImportError: from importlib_metadata import version; print(version("pip"))'
 }
+
+# The rest of your code
+
 
 _VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
 
 op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
            "<": operator.lt, "==": operator.eq, "!=": operator.ne, "~=": operator.ge}
+
 
 
 def _is_vcs_url(name):
