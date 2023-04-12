@@ -93,7 +93,7 @@ class TestApparmorFacts(BaseFactsTest):
     collector_class = ApparmorFactCollector
 
     def test_collect(self):
-        facts_dict = super(TestApparmorFacts, self).test_collect()
+        facts_dict = super(TestApparmorFacts, self)._test_collect()
         self.assertIn('status', facts_dict['apparmor'])
 
 
@@ -191,7 +191,7 @@ class TestEnvFacts(BaseFactsTest):
     collector_class = EnvFactCollector
 
     def test_collect(self):
-        facts_dict = super(TestEnvFacts, self).test_collect()
+        facts_dict = super(TestEnvFacts, self)._test_collect()
         self.assertIn('HOME', facts_dict['env'])
 
 
@@ -355,7 +355,6 @@ class TestSelinuxFacts(BaseFactsTest):
             facts_dict = fact_collector.collect(module=module)
             self.assertIsInstance(facts_dict, dict)
             self.assertEqual(facts_dict['selinux']['status'], 'Missing selinux Python library')
-            return facts_dict
 
 
 class TestServiceMgrFacts(BaseFactsTest):

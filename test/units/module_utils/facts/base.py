@@ -48,6 +48,9 @@ class BaseFactsTest(unittest.TestCase):
     @patch('platform.system', return_value='Linux')
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
     def test_collect(self, mock_gfc, mock_ps):
+        self._test_collect()
+
+    def _test_collect(self):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
@@ -62,4 +65,3 @@ class BaseFactsTest(unittest.TestCase):
         facts_dict = fact_collector.collect_with_namespace(module=module,
                                                            collected_facts=self.collected_facts)
         self.assertIsInstance(facts_dict, dict)
-        return facts_dict
