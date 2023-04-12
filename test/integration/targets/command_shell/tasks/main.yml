@@ -287,20 +287,20 @@
 - name: check default var expansion
   command: /bin/sh -c 'echo "\$TEST"'
   environment:
-    TEST: ansible
+    TEST: z
   register: command_result7
 
 - name: assert vars were expanded
   assert:
     that:
-      - command_result7.stdout == '\\ansible'
+      - command_result7.stdout == '\\z'
 
 - name: check disabled var expansion
   command: /bin/sh -c 'echo "\$TEST"'
   args:
     expand_argument_vars: false
   environment:
-    TEST: ansible
+    TEST: z
   register: command_result8
 
 - name: assert vars were not expanded
