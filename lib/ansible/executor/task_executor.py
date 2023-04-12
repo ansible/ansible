@@ -403,6 +403,7 @@ class TaskExecutor:
         # NOTE: run_once cannot contain loop vars because it's templated earlier also
         # This is saving the post-validated field from the last loop so the strategy can use the templated value post task execution
         self._task.run_once = task_fields.get('run_once')
+        self._task.action = task_fields.get('action')
 
         return results
 
