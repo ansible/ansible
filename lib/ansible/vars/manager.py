@@ -393,11 +393,11 @@ class VariableManager:
                         continue
                     except AnsibleParserError:
                         raise
-                    else:
-                        display.vvv("Read vars_file '%s'" % vars_file_item)
                 else:
                     if skip_count != vars_file_count:
                         raise AnsibleFileNotFound("The following vars files were not found: %s" % ', '.join(attempted_files))
+
+                display.vvv("Read vars_file '%s'" % vars_file_item)
 
             # By default, we now merge in all exported vars from all roles in the play,
             # unless the user has disabled this via a config option
