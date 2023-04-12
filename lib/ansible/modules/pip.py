@@ -271,7 +271,12 @@ import tempfile
 import operator
 import shlex
 import traceback
-import importlib.metadata  # Import importlib.metadata for Python 3.8+
+
+# Import importlib.metadata for Python 3.8+, otherwise use backport importlib_metadata
+try:
+    from importlib.metadata import version
+except ImportError:
+    from importlib_metadata import version
 
 from ansible.module_utils.compat.version import LooseVersion
 
