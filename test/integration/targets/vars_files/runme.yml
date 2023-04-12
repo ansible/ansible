@@ -13,7 +13,7 @@
   gather_facts: no
   vars:
     _vars_files:
-        - 'vars/{{ foo }}.yml'
+        - 'vars/{{ foo|default("MISSING") }}.yml'
         - 'vars/defaults.yml'
   vars_files:
     - "vars/common.yml"
