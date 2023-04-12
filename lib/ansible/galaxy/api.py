@@ -906,8 +906,7 @@ class GalaxyAPI:
         try:
             signatures = data["signatures"]
         except KeyError:
-            # Noisy since this is used by the dep resolver, so require more verbosity than Galaxy calls
-            display.vvvvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
+            display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
             return []
         else:
             return [signature_info["signature"] for signature_info in signatures]
