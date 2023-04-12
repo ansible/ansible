@@ -137,6 +137,12 @@ class TaskExecutor:
                                 self._task.ignore_errors = item_ignore
                             elif self._task.ignore_errors and not item_ignore:
                                 self._task.ignore_errors = item_ignore
+                        if 'unreachable' in item and item['unreachable']:
+                            item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
+                            if not res.get('unreachable'):
+                                self._task.ignore_unreachable = item_ignore_unreachable
+                            elif self._task.ignore_unreachable and not item_ignore_unreachable:
+                                self._task.ignore_unreachable = item_ignore_unreachable
 
                         # ensure to accumulate these
                         for array in ['warnings', 'deprecations']:
@@ -349,6 +355,7 @@ class TaskExecutor:
 
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
+            res['_ansible_ignore_unreachable'] = task_fields.get('ignore_unreachable')
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
@@ -392,9 +399,10 @@ class TaskExecutor:
                         if var in task_vars and var not in self._job_vars:
                             del task_vars[var]
 
-        if task_fields is not None:
-            self._task.from_attrs(task_fields)
         self._task.no_log = no_log
+        # NOTE: run_once cannot contain loop vars because it's templated earlier also
+        # This is saving the post-validated field from the last loop so the strategy can use the templated value post task execution
+        self._task.run_once = task_fields.get('run_once')
 
         return results
 
