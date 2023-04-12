@@ -54,6 +54,8 @@ class PlaybookCLI(CLI):
         opt_help.add_module_options(self.parser)
 
         # ansible playbook specific opts
+        self.parser.add_argument('--syntax-check', dest='syntax', action='store_true',
+                                 help="perform a syntax check on the playbook, but do not execute it")
         self.parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
                                  help="list all tasks that would be executed")
         self.parser.add_argument('--list-tags', dest='listtags', action='store_true',

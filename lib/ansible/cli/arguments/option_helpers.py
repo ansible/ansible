@@ -235,8 +235,6 @@ def add_check_options(parser):
     """Add options for commands which can run with diagnostic information of tasks"""
     parser.add_argument("-C", "--check", default=False, dest='check', action='store_true',
                         help="don't make any changes; instead, try to predict some of the changes that may occur")
-    parser.add_argument('--syntax-check', dest='syntax', action='store_true',
-                        help="perform a syntax check on the playbook, but do not execute it")
     parser.add_argument("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                         help="when changing (small) files and templates, show the differences in those"
                              " files; works great with --check")

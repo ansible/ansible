@@ -1,0 +1,3 @@
+bugfixes:
+- syntax check - Limit ``--syntax-check`` to ``ansible-playbook`` only, as that is the only CLI affected by this argument
+  (https://github.com/ansible/ansible/issues/80506)
