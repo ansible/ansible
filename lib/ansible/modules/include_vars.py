@@ -140,6 +140,7 @@ EXAMPLES = r'''
 
 - name: Bare include (free-form)
   ansible.builtin.include_vars: myvars.yaml
+
 - name: Include all .json and .jsn files in vars/all and all nested directories (2.3)
   ansible.builtin.include_vars:
     dir: vars/all
@@ -156,10 +157,12 @@ EXAMPLES = r'''
   ansible.builtin.include_vars:
     dir: vars/services
     depth: 1
+
 - name: Include only files matching bastion.yaml (2.2)
   ansible.builtin.include_vars:
     dir: vars
     files_matching: bastion.yaml
+
 - name: Include all .yaml files except bastion.yaml (2.3)
   ansible.builtin.include_vars:
     dir: vars
@@ -167,6 +170,7 @@ EXAMPLES = r'''
       - 'bastion.yaml'
     extensions:
       - 'yaml'
+
 - name: Ignore warnings raised for files with unknown extensions while loading (2.7)
   ansible.builtin.include_vars:
     dir: vars
