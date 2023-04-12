@@ -21,7 +21,8 @@ def test_input():
 
 
 def test_parse_distribution_file_clear_linux(mock_module, test_input):
-    test_input['data'] = open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files/ClearLinux')).read()
+    with open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files/ClearLinux')) as file:
+        test_input['data'] = file.read()
 
     result = (
         True,
@@ -43,7 +44,8 @@ def test_parse_distribution_file_clear_linux_no_match(mock_module, distro_file, 
     Test against data from Linux Mint and CoreOS to ensure we do not get a reported
     match from parse_distribution_file_ClearLinux()
     """
-    test_input['data'] = open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files', distro_file)).read()
+    with open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files', distro_file)) as file:
+        test_input['data'] = file.read()
 
     result = (False, {})
 

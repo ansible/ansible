@@ -18,6 +18,12 @@ __metaclass__ = type
 
 import os
 
+
+def read_lines(path):
+    with open(path) as file:
+        return file.readlines()
+
+
 LSBLK_OUTPUT = b"""
 /dev/sda
 /dev/sda1                             32caaec3-ef40-4691-a3b6-438c3f9bc1c0
@@ -368,7 +374,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'armv61',
         'nproc_out': 1,
         'sched_getaffinity': set([0]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv6-rev7-1cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv6-rev7-1cpu-cpuinfo')),
         'expected_result': {
             'processor': ['0', 'ARMv6-compatible processor rev 7 (v6l)'],
             'processor_cores': 1,
@@ -381,7 +387,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'armv71',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev4-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev4-4cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'ARMv7 Processor rev 4 (v7l)',
@@ -399,7 +405,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'aarch64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/aarch64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/aarch64-4cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'AArch64 Processor rev 4 (aarch64)',
@@ -417,7 +423,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
@@ -435,7 +441,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
@@ -457,7 +463,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'arm64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/arm64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/arm64-4cpu-cpuinfo')),
         'expected_result': {
             'processor': ['0', '1', '2', '3'],
             'processor_cores': 1,
@@ -470,7 +476,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'armv71',
         'nproc_out': 8,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev3-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev3-8cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'ARMv7 Processor rev 3 (v7l)',
@@ -492,7 +498,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 2,
         'sched_getaffinity': set([0, 1]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
@@ -505,7 +511,7 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_vcpus': 2},
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64-power7-rhel7-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64-power7-rhel7-8cpu-cpuinfo')),
         'architecture': 'ppc64',
         'nproc_out': 8,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7]),
@@ -528,7 +534,7 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64le-power8-24cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64le-power8-24cpu-cpuinfo')),
         'architecture': 'ppc64le',
         'nproc_out': 24,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]),
@@ -567,7 +573,7 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo')),
         'architecture': 's390x',
         'nproc_out': 2,
         'sched_getaffinity': set([0, 1]),
@@ -583,7 +589,7 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo')),
         'architecture': 's390x',
         'nproc_out': 64,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
@@ -601,7 +607,7 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/sparc-t5-debian-ldom-24vcpu')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/sparc-t5-debian-ldom-24vcpu')),
         'architecture': 'sparc64',
         'nproc_out': 24,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]),

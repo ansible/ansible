@@ -81,9 +81,8 @@ class TestGalaxy(unittest.TestCase):
 
         # creating a temp file with installation requirements
         cls.role_req = './delete_me_requirements.yml'
-        fd = open(cls.role_req, "w")
-        fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '%s'" % (cls.role_tar, cls.role_name, cls.role_path))
-        fd.close()
+        with open(cls.role_req, "w") as fd:
+            fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '%s'" % (cls.role_tar, cls.role_name, cls.role_path))
 
     @classmethod
     def makeTar(cls, output_file, source_dir):
