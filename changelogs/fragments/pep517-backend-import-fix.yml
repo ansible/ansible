@@ -1,0 +1,2 @@
+bugfixes:
+  - pep517 build backend - Use the documented ``import_module`` import from ``importlib``.
