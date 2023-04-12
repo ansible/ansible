@@ -181,3 +181,6 @@ grep out.txt -e "ERROR! Using a block as a handler is not supported."
 
 ansible-playbook test_block_as_handler-import.yml "$@"  2>&1 | tee out.txt
 grep out.txt -e "ERROR! Using a block as a handler is not supported."
+
+ansible-playbook test_include_role_handler_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "1" ]
