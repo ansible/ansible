@@ -9,7 +9,7 @@ import sys
 import typing as t
 from configparser import ConfigParser
 from contextlib import contextmanager, suppress
-from importlib.metadata import import_module
+from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from shutil import copytree
