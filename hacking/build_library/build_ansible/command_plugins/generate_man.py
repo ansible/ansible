@@ -87,17 +87,6 @@ def dedupe_groups(parser):
     return action_groups
 
 
-def get_option_groups(option_parser):
-    groups = []
-    for action_group in dedupe_groups(option_parser)[1:]:
-        group_info = {}
-        group_info['desc'] = action_group.description
-        group_info['options'] = action_group._actions
-        group_info['group_obj'] = action_group
-        groups.append(group_info)
-    return groups
-
-
 def opt_doc_list(parser):
     ''' iterate over options lists '''
 
@@ -160,15 +149,6 @@ def opts_docs(cli_bin_name):
         'library': '-M' in shared_opt_names,
         'cli_bin_name_list': cli_bin_name_list,
     }
-    option_info = {
-        'groups': [],
-    }
-
-    groups_info = get_option_groups(cli.parser)
-
-    option_info['groups'].extend(groups_info)
-
-    docs.update(option_info)
 
     # now for each action/subcommand
     # force populate parser with per action options
