@@ -10,6 +10,7 @@ __metaclass__ = type
 import argparse
 import os.path
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
@@ -22,6 +23,7 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
 PROJECT_DIR_PATH = Path(__file__).parents[4]
+PROJECT_BIN_DIR_PATH = PROJECT_DIR_PATH / 'bin'
 DEFAULT_TEMPLATE_FILE = PROJECT_DIR_PATH / 'docs/templates/man.j2'
 
 
@@ -106,6 +108,15 @@ def opt_doc_list(parser):
     return results
 
 
+@lru_cache(maxsize=1)
+def lookup_cli_bin_names():
+    """List the installable CLI entrypoints."""
+    return [
+        bin_path.name for bin_path in PROJECT_BIN_DIR_PATH.iterdir()
+        if bin_path.name.removeprefix('ansible-') not in {'connection', 'test'}
+    ]
+
+
 # def opts_docs(cli, name):
 def opts_docs(cli_class_name, cli_module_name):
     ''' generate doc structure from options '''
@@ -113,6 +124,9 @@ def opts_docs(cli_class_name, cli_module_name):
     cli_bin_name = 'ansible-%s' % cli_module_name
     if cli_module_name == 'adhoc':
         cli_bin_name = 'ansible'
+
+    cli_bin_name_list = lookup_cli_bin_names()
+    assert cli_bin_name in cli_bin_name_list
 
     # WIth no action/subcommand
     # shared opts set
@@ -139,6 +153,7 @@ def opts_docs(cli_class_name, cli_module_name):
         'content_depth': 2,
         'options': cli_options,
         'arguments': getattr(cli, 'ARGUMENTS', None),
+        'cli_bin_name_list': cli_bin_name_list,
     }
     option_info = {'option_names': [],
                    'options': cli_options,
@@ -243,7 +258,6 @@ class GenerateMan(Command):
 
         allvars = {}
         cli_list = []
-        cli_bin_name_list = []
 
         for cli_module_name in cli_modules:
             binary = os.path.basename(os.path.expanduser(cli_module_name))
@@ -266,7 +280,6 @@ class GenerateMan(Command):
 
             # FIXME:
             allvars[cli_name] = opts_docs(cli_class_name, cli_name)
-            cli_bin_name_list.append(cli_bin_name)
 
         cli_list = allvars.keys()
 
@@ -281,7 +294,6 @@ class GenerateMan(Command):
 
             # add rest to vars
             tvars = allvars[cli_name]
-            tvars['cli_bin_name_list'] = cli_bin_name_list
             tvars['cli'] = cli_name
             if '-i' in tvars['option_names']:
                 tvars['inventory'] = True
