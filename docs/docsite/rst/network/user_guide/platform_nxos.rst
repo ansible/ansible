@@ -29,7 +29,7 @@ Connections available
     Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
                             ``ansible.netcommon.network_cli``             ``ansible.netcommon.httpapi``
 
-    |enable_mode|         supported: use ``ansible_become: true``      not supported by NX-API
+    |enable_mode|         supported: use ``ansible_become: true``     not supported by NX-API
                           with ``ansible_become_method: enable``
                           and ``ansible_become_password:``
 
