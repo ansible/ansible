@@ -45,10 +45,17 @@ class FacterFactCollector(BaseFactCollector):
 
         return facter_path
 
-    def run_facter(self, module, facter_path):
+    def find_puppet(self, module):
+        puppet_path = module.get_bin_path('puppet', opt_dirs=['/opt/puppetlabs/bin'])
+
+        return puppet_path
+
+    def run_facter(self, module, facter_path, options):
         # if facter is installed, and we can use --json because
         # ruby-json is ALSO installed, include facter data in the JSON
-        rc, out, err = module.run_command(facter_path + " --json")
+
+        rc, out, err = module.run_command(facter_path + options)
+
         return rc, out, err
 
     def get_facter_output(self, module):
@@ -56,7 +63,13 @@ class FacterFactCollector(BaseFactCollector):
         if not facter_path:
             return None
 
-        rc, out, err = self.run_facter(module, facter_path)
+        options = " --json"
+
+        if self.find_puppet(module):
+            options += " --puppet"
+
+        rc, out, err = self.run_facter(module, facter_path, options)
+
 
         if rc != 0:
             return None
