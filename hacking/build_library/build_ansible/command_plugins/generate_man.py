@@ -110,16 +110,16 @@ def opt_doc_list(parser):
 def opts_docs(cli_class_name, cli_module_name):
     ''' generate doc structure from options '''
 
-    cli_name = 'ansible-%s' % cli_module_name
+    cli_bin_name = 'ansible-%s' % cli_module_name
     if cli_module_name == 'adhoc':
-        cli_name = 'ansible'
+        cli_bin_name = 'ansible'
 
     # WIth no action/subcommand
     # shared opts set
     # instantiate each cli and ask its options
     cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
                                    fromlist=[cli_class_name]), cli_class_name)
-    cli = cli_klass([cli_name])
+    cli = cli_klass([cli_bin_name])
 
     # parse the common options
     try:
@@ -131,7 +131,7 @@ def opts_docs(cli_class_name, cli_module_name):
     cli_options = opt_doc_list(cli.parser)
     docs = {
         'cli': cli_module_name,
-        'cli_name': cli_name,
+        'cli_name': cli_bin_name,
         'usage': cli.parser.format_usage(),
         'short_desc': cli.parser.description,
         'long_desc': trim_docstring(cli.__doc__),
