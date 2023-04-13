@@ -161,7 +161,6 @@ def opts_docs(cli_bin_name):
         'cli_bin_name_list': cli_bin_name_list,
     }
     option_info = {
-        'options': cli_options,
         'groups': [],
     }
 
