@@ -240,16 +240,10 @@ class GenerateMan(Command):
 
         cli_modules = args.cli_modules
 
-        # various cli parsing things checks sys.argv if the 'args' that are passed in are []
-        # so just remove any args so the cli modules dont try to parse them resulting in warnings
-        sys.argv = [sys.argv[0]]
-
         allvars = {}
-        output = {}
         cli_list = []
         cli_bin_name_list = []
 
-        # for binary in os.listdir('../../lib/ansible/cli'):
         for cli_module_name in cli_modules:
             binary = os.path.basename(os.path.expanduser(cli_module_name))
 
@@ -263,12 +257,10 @@ class GenerateMan(Command):
             if cli_name == 'adhoc':
                 cli_class_name = 'AdHocCLI'
                 # myclass = 'AdHocCLI'
-                output[cli_name] = 'ansible.1.rst.in'
                 cli_bin_name = 'ansible'
             else:
                 # myclass = "%sCLI" % libname.capitalize()
                 cli_class_name = "%sCLI" % cli_name.capitalize()
-                output[cli_name] = 'ansible-%s.1.rst.in' % cli_name
                 cli_bin_name = 'ansible-%s' % cli_name
 
             # FIXME:
