@@ -48,7 +48,7 @@ class FacterFactCollector(BaseFactCollector):
     def run_facter(self, module, facter_path):
         # if facter is installed, and we can use --json because
         # ruby-json is ALSO installed, include facter data in the JSON
-        rc, out, err = module.run_command(facter_path + " --puppet --json")
+        rc, out, err = module.run_command(facter_path + " --json")
         return rc, out, err
 
     def get_facter_output(self, module):
