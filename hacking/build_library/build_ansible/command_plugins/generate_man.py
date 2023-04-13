@@ -12,6 +12,7 @@ import os.path
 import sys
 from functools import lru_cache
 from importlib import import_module
+from itertools import chain
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
@@ -141,6 +142,10 @@ def opts_docs(cli_bin_name):
     cli.init_parser()
 
     cli_options = opt_doc_list(cli.parser)
+    shared_opt_names = set(chain.from_iterable(
+        opt.get('options', []) for opt in cli_options
+    ))
+
     docs = {
         'cli': target_cli_module,  # FIXME: sphinx-only
         'cli_name': cli_bin_name,
@@ -158,9 +163,6 @@ def opts_docs(cli_bin_name):
                    'groups': []}
 
     groups_info = get_option_groups(cli.parser)
-    shared_opt_names = []
-    for opt in cli_options:
-        shared_opt_names.extend(opt.get('options', []))
 
     option_info['option_names'] = shared_opt_names
 
