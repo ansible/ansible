@@ -9,8 +9,8 @@ __metaclass__ = type
 
 import argparse
 import os.path
-import pathlib
 import sys
+from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -21,7 +21,7 @@ from ..change_detection import update_file_if_different  # pylint: disable=relat
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
-DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'docs/templates/man.j2'
+DEFAULT_TEMPLATE_FILE = Path(__file__).parents[4] / 'docs/templates/man.j2'
 
 
 # from https://www.python.org/dev/peps/pep-0257/
