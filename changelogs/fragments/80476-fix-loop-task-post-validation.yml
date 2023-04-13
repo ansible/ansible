@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix post-validating looped task fields so the strategy uses the correct values after task execution.
