@@ -99,6 +99,54 @@ def opt_doc_list(parser):
     return results
 
 
+def get_actions(
+        cli, shared_opt_names, parser=None, initial_depth=1,
+):
+    actions = {}
+    discovered_depth = 0
+    if parser is None:
+        parser = cli.parser
+    try:
+        subparser = parser._subparsers._group_actions[0].choices
+    except AttributeError:
+        subparser = {}
+
+    for action, action_parser in subparser.items():
+        option_names = []
+        uncommon_options = []
+        for action_doc in opt_doc_list(action_parser):
+            for option_alias in action_doc.get('options', []):
+                if option_alias in shared_opt_names:
+                    continue
+
+                if option_alias not in option_names:
+                    option_names.append(option_alias)
+
+                if action_doc in uncommon_options:
+                    continue
+
+                uncommon_options.append(action_doc)
+
+        nested_depth, nested_actions = get_actions(
+            cli,
+            shared_opt_names,
+            action_parser,
+            initial_depth=initial_depth + 1,
+        )
+        discovered_depth = max(discovered_depth, nested_depth)
+        actions[action] = {
+            'option_names': option_names,
+            'options': uncommon_options,
+            'actions': nested_actions,
+            'name': action,
+            'desc': trim_docstring(getattr(
+                cli, f'execute_{action}',
+            ).__doc__),
+        }
+
+    return initial_depth + discovered_depth, actions
+
+
 @lru_cache(maxsize=1)
 def lookup_cli_bin_names():
     """List the installable CLI entrypoints."""
@@ -135,76 +183,25 @@ def opts_docs(cli_bin_name):
         opt.get('options', []) for opt in cli_options
     ))
 
-    docs = {
+    return {
         'cli': target_cli_module,  # FIXME: sphinx-only
         'cli_name': cli_bin_name,
         'usage': cli.parser.format_usage(),
         'short_desc': cli.parser.description,
         'long_desc': trim_docstring(cli.__doc__),
-        'actions': {},
-        'content_depth': 2,
         'options': cli_options,
         'arguments': getattr(cli, 'ARGUMENTS', None),
         'inventory': '-i' in shared_opt_names,
         'library': '-M' in shared_opt_names,
         'cli_bin_name_list': cli_bin_name_list,
+        **dict(zip(
+            (
+                'content_depth',  # FIXME: sphinx-only
+                'actions',
+            ),
+            get_actions(cli, shared_opt_names, cli.parser),
+        )),
     }
-
-    # now for each action/subcommand
-    # force populate parser with per action options
-
-    def get_actions(parser, docs):
-        # use class attrs not the attrs on a instance (not that it matters here...)
-        try:
-            subparser = parser._subparsers._group_actions[0].choices
-        except AttributeError:
-            subparser = {}
-
-        depth = 0
-
-        for action, parser in subparser.items():
-            action_info = {'option_names': [],
-                           'options': [],
-                           'actions': {}}
-            # docs['actions'][action] = {}
-            # docs['actions'][action]['name'] = action
-            action_info['name'] = action
-            action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
-
-            # docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
-            action_doc_list = opt_doc_list(parser)
-
-            uncommon_options = []
-            for action_doc in action_doc_list:
-                # uncommon_options = []
-
-                option_aliases = action_doc.get('options', [])
-                for option_alias in option_aliases:
-
-                    if option_alias in shared_opt_names:
-                        continue
-
-                    # TODO: use set
-                    if option_alias not in action_info['option_names']:
-                        action_info['option_names'].append(option_alias)
-
-                    if action_doc in action_info['options']:
-                        continue
-
-                    uncommon_options.append(action_doc)
-
-                action_info['options'] = uncommon_options
-
-            depth = 1 + get_actions(parser, action_info)
-
-            docs['actions'][action] = action_info
-
-        return depth
-
-    action_depth = get_actions(cli.parser, docs)
-    docs['content_depth'] = action_depth + 1
-
-    return docs
 
 
 class GenerateMan(Command):
