@@ -156,15 +156,16 @@ def opts_docs(cli_bin_name):
         'content_depth': 2,
         'options': cli_options,
         'arguments': getattr(cli, 'ARGUMENTS', None),
+        'inventory': '-i' in shared_opt_names,
+        'library': '-M' in shared_opt_names,
         'cli_bin_name_list': cli_bin_name_list,
     }
-    option_info = {'option_names': [],
-                   'options': cli_options,
-                   'groups': []}
+    option_info = {
+        'options': cli_options,
+        'groups': [],
+    }
 
     groups_info = get_option_groups(cli.parser)
-
-    option_info['option_names'] = shared_opt_names
 
     option_info['groups'].extend(groups_info)
 
@@ -285,16 +286,10 @@ class GenerateMan(Command):
             # template it!
             env = Environment(loader=FileSystemLoader(template_dir))
             template = env.get_template(template_basename)
-
-            # add rest to vars
-            tvars = allvars[cli_name]
-            if '-i' in tvars['option_names']:
-                tvars['inventory'] = True
-                print('uses inventory')
-            if '-M' in tvars['option_names']:
-                tvars['library'] = True
-                print('uses library')
-
-            manpage = template.render(tvars)
-            filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
+            manpage = template.render(allvars[cli_name])
+            filename = os.path.join(
+                output_dir,
+                doc_name_formats[output_format] %
+                allvars[cli_name]['cli_name'],
+            )
             update_file_if_different(filename, to_bytes(manpage))
