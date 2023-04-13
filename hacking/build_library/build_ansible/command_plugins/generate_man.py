@@ -11,6 +11,7 @@ import argparse
 import os.path
 import sys
 from functools import lru_cache
+from importlib import import_module
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
@@ -117,31 +118,28 @@ def lookup_cli_bin_names():
     ]
 
 
-# def opts_docs(cli, name):
-def opts_docs(cli_class_name, target_cli_module):
+def opts_docs(cli_bin_name):
     ''' generate doc structure from options '''
-
-    cli_bin_name = 'ansible-%s' % target_cli_module
-    if target_cli_module == 'adhoc':
-        cli_bin_name = 'ansible'
-
     cli_bin_name_list = lookup_cli_bin_names()
     assert cli_bin_name in cli_bin_name_list
 
-    # WIth no action/subcommand
-    # shared opts set
-    # instantiate each cli and ask its options
-    cli_klass = getattr(__import__("ansible.cli.%s" % target_cli_module,
-                                   fromlist=[cli_class_name]), cli_class_name)
-    cli = cli_klass([cli_bin_name])
+    if cli_bin_name == 'ansible':
+        target_cli_module = 'adhoc'
+        cli_class_name = 'AdHocCLI'
+    else:
+        target_cli_module = cli_bin_name.removeprefix('ansible-')
+        cli_class_name = f'{target_cli_module.capitalize()}CLI'
 
-    # parse the common options
-    try:
-        cli.init_parser()
-    except Exception:
-        pass
+    cli_class = getattr(
+        import_module(
+            f'ansible.cli.{target_cli_module}',
+            package='ansible',
+        ),
+        cli_class_name,
+    )
+    cli = cli_class([cli_bin_name])
+    cli.init_parser()
 
-    # base/common cli info
     cli_options = opt_doc_list(cli.parser)
     docs = {
         'cli': target_cli_module,  # FIXME: sphinx-only
@@ -269,17 +267,11 @@ class GenerateMan(Command):
 
             cli_name = os.path.splitext(binary)[0]
 
+            cli_bin_name = f'ansible-{cli_name}'
             if cli_name == 'adhoc':
-                cli_class_name = 'AdHocCLI'
-                # myclass = 'AdHocCLI'
                 cli_bin_name = 'ansible'
-            else:
-                # myclass = "%sCLI" % libname.capitalize()
-                cli_class_name = "%sCLI" % cli_name.capitalize()
-                cli_bin_name = 'ansible-%s' % cli_name
 
-            # FIXME:
-            allvars[cli_name] = opts_docs(cli_class_name, cli_name)
+            allvars[cli_name] = opts_docs(cli_bin_name)
 
         cli_list = allvars.keys()
 
