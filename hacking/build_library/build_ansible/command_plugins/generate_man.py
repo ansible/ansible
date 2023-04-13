@@ -118,11 +118,11 @@ def lookup_cli_bin_names():
 
 
 # def opts_docs(cli, name):
-def opts_docs(cli_class_name, cli_module_name):
+def opts_docs(cli_class_name, target_cli_module):
     ''' generate doc structure from options '''
 
-    cli_bin_name = 'ansible-%s' % cli_module_name
-    if cli_module_name == 'adhoc':
+    cli_bin_name = 'ansible-%s' % target_cli_module
+    if target_cli_module == 'adhoc':
         cli_bin_name = 'ansible'
 
     cli_bin_name_list = lookup_cli_bin_names()
@@ -131,7 +131,7 @@ def opts_docs(cli_class_name, cli_module_name):
     # WIth no action/subcommand
     # shared opts set
     # instantiate each cli and ask its options
-    cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
+    cli_klass = getattr(__import__("ansible.cli.%s" % target_cli_module,
                                    fromlist=[cli_class_name]), cli_class_name)
     cli = cli_klass([cli_bin_name])
 
@@ -144,7 +144,7 @@ def opts_docs(cli_class_name, cli_module_name):
     # base/common cli info
     cli_options = opt_doc_list(cli.parser)
     docs = {
-        'cli': cli_module_name,
+        'cli': target_cli_module,  # FIXME: sphinx-only
         'cli_name': cli_bin_name,
         'usage': cli.parser.format_usage(),
         'short_desc': cli.parser.description,
