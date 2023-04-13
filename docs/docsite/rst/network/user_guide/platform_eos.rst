@@ -32,7 +32,7 @@ Connections available
 
     |enable_mode|         supported: |br|                             supported: |br|
 
-                          * use ``ansible_become: true``               * ``httpapi``
+                          * use ``ansible_become: true``              * ``httpapi``
                             with ``ansible_become_method: enable``      uses ``ansible_become: true``
                                                                         with ``ansible_become_method: enable``
 
