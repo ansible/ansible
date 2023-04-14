@@ -73,19 +73,19 @@ def _get_package_distribution_version() -> str:
     return getattr(import_module(version_mod_str), version_var_str)
 
 
-def _generate_rst_in_templates() -> t.Iterable[Path]:
+def _generate_rst_in_templates(target_dir: os.PathLike) -> t.Iterable[Path]:
     """Create ``*.1.rst.in`` files out of CLI Python modules."""
     generate_man_cmd = (
         sys.executable,
         'hacking/build-ansible.py',
         'generate-man',
         '--template-file=docs/templates/man.j2',
-        '--output-dir=docs/man/man1/',
+        f'--output-dir={target_dir !s}',
         '--output-format=man',
         *Path('lib/ansible/cli/').glob('*.py'),
     )
     subprocess.check_call(tuple(map(str, generate_man_cmd)))
-    return Path('docs/man/man1/').glob('*.1.rst.in')
+    return Path(target_dir).glob('*.1.rst.in')
 
 
 def _convert_rst_in_template_to_manpage(
@@ -122,9 +122,10 @@ def build_sdist(  # noqa: WPS210, WPS430
         os.chdir(tmp_src_dir)
 
         if build_manpages_requested:
-            Path('docs/man/man1/').mkdir(exist_ok=True, parents=True)
+            manpage_man1_dir_path = Path('docs/man/man1/')
+            manpage_man1_dir_path.mkdir(exist_ok=True, parents=True)
             version_number = _get_package_distribution_version()
-            for rst_in in _generate_rst_in_templates():
+            for rst_in in _generate_rst_in_templates(manpage_man1_dir_path):
                 _convert_rst_in_template_to_manpage(
                     rst_doc_template=rst_in.read_text(),
                     destination_path=rst_in.with_suffix('').with_suffix(''),
