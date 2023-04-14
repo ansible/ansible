@@ -56,9 +56,8 @@ def trim_docstring(docstring):
     return '\n'.join(trimmed)
 
 
-def get_options(optlist):
-    ''' get actual options '''
-
+def get_normalized_options_from_actions(optlist):
+    """Retrieve actual options from list."""
     opts = []
     for opt in optlist:
         res = {
@@ -74,7 +73,8 @@ def get_options(optlist):
     return opts
 
 
-def dedupe_groups(parser):
+def extract_unique_action_groups(parser):
+    """Get action groups out of the parser."""
     action_groups = []
     for action_group in parser._action_groups:
         found = False
@@ -87,21 +87,26 @@ def dedupe_groups(parser):
     return action_groups
 
 
-def opt_doc_list(parser):
-    ''' iterate over options lists '''
-
+def traverse_cli_options(parser):
+    """Extract options list out of a CLI parser."""
     results = []
-    for option_group in dedupe_groups(parser)[1:]:
-        results.extend(get_options(option_group._actions))
+    for option_group in extract_unique_action_groups(parser)[1:]:
+        results.extend(
+            get_normalized_options_from_actions(option_group._actions),
+        )
 
-    results.extend(get_options(parser._actions))
+    results.extend(get_normalized_options_from_actions(parser._actions))
 
     return results
 
 
-def get_actions(
+def traverse_cli_actions(
         cli, shared_opt_names, parser=None, initial_depth=1,
 ):
+    """Extract actions out of a CLI parser recursively.
+
+    :returns: A tuple of nesting depth and CLI actions.
+    """
     actions = {}
     discovered_depth = 0
     if parser is None:
@@ -114,7 +119,7 @@ def get_actions(
     for action, action_parser in subparser.items():
         option_names = []
         uncommon_options = []
-        for action_doc in opt_doc_list(action_parser):
+        for action_doc in traverse_cli_options(action_parser):
             for option_alias in action_doc.get('options', []):
                 if option_alias in shared_opt_names:
                     continue
@@ -127,7 +132,7 @@ def get_actions(
 
                 uncommon_options.append(action_doc)
 
-        nested_depth, nested_actions = get_actions(
+        nested_depth, nested_actions = traverse_cli_actions(
             cli,
             shared_opt_names,
             action_parser,
@@ -156,8 +161,8 @@ def lookup_cli_bin_names():
     ]
 
 
-def opts_docs(cli_bin_name):
-    ''' generate doc structure from options '''
+def generate_cli_jinja2_context(cli_bin_name):
+    """Make Jinja2 context doc structure from CLI."""
     cli_bin_name_list = lookup_cli_bin_names()
     assert cli_bin_name in cli_bin_name_list
 
@@ -178,7 +183,7 @@ def opts_docs(cli_bin_name):
     cli = cli_class([cli_bin_name])
     cli.init_parser()
 
-    cli_options = opt_doc_list(cli.parser)
+    cli_options = traverse_cli_options(cli.parser)
     shared_opt_names = set(chain.from_iterable(
         opt.get('options', []) for opt in cli_options
     ))
@@ -199,7 +204,7 @@ def opts_docs(cli_bin_name):
                 'content_depth',  # FIXME: sphinx-only
                 'actions',
             ),
-            get_actions(cli, shared_opt_names, cli.parser),
+            traverse_cli_actions(cli, shared_opt_names, cli.parser),
         )),
     }
 
@@ -250,7 +255,7 @@ class GenerateMan(Command):
             if cli_name == 'adhoc':
                 cli_bin_name = 'ansible'
 
-            allvars[cli_name] = opts_docs(cli_bin_name)
+            allvars[cli_name] = generate_cli_jinja2_context(cli_bin_name)
 
         cli_list = allvars.keys()
 
