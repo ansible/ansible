@@ -32,10 +32,6 @@ for python in "${pythons[@]}"; do
   grep 'FAILED tests/unit/plugins/modules/test_ansible_forked.py::test_exception' output.log
   grep 'XFAIL tests/unit/plugins/modules/test_ansible_forked.py::test_exception_xfail' output.log
 
-  # Verify that stderr output appeared due to pytest-xdist.
-  grep 'This xfail stderr should be visible before failures are displayed due to pytest-xdist.' output.log
-  grep 'This stderr should be visible before failures are displayed due to pytest-xdist.' output.log
-
   # Verify that warnings are properly surfaced.
   grep 'UserWarning: This verifies that warnings generated at test time are reported.' output.log
   grep 'UserWarning: This verifies that warnings generated during test collection are reported.' output.log

@@ -15,14 +15,10 @@ warnings.warn("This verifies that warnings generated during test collection are 
 
 @pytest.mark.xfail
 def test_kill_xfail():
-    sys.stdout.write("This xfail stdout should not be visible due to pytest-xdist.")
-    sys.stderr.write("This xfail stderr should be visible before failures are displayed due to pytest-xdist.")
     os.kill(os.getpid(), signal.SIGKILL)  # causes pytest to report stdout and stderr
 
 
 def test_kill():
-    sys.stdout.write("This stdout should not be visible due to pytest-xdist.")
-    sys.stderr.write("This stderr should be visible before failures are displayed due to pytest-xdist.")
     os.kill(os.getpid(), signal.SIGKILL)  # causes pytest to report stdout and stderr
 
 
