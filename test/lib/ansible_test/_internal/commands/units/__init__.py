@@ -253,7 +253,6 @@ def command_units(args: UnitsConfig) -> None:
 
         cmd = [
             'pytest',
-            '--forked',
             '-r', 'a',
             '-n', str(args.num_workers) if args.num_workers else 'auto',
             '--color', 'yes' if args.color else 'no',
@@ -274,6 +273,8 @@ def command_units(args: UnitsConfig) -> None:
 
         if data_context().content.collection:
             plugins.append('ansible_pytest_collections')
+
+        plugins.append('ansible_forked')
 
         if plugins:
             env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
