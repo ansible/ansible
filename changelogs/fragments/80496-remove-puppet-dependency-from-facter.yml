@@ -1,4 +1,2 @@
 bugfixes:
-  father_facts - Remove the default --puppet flag from facter in gather facts since it has a none zero return value in version 4.3.0 in the 
-  absense of puppet.
-  (https://github.com/ansible/ansible/issues/80496)
+  - father_facts - Remove the default --puppet flag from facter in gather facts since it has a none zero return value in version 4.3.0 in the absense of puppet. (https://github.com/ansible/ansible/issues/80496)

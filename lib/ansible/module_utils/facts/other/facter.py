@@ -70,7 +70,6 @@ class FacterFactCollector(BaseFactCollector):
 
         rc, out, err = self.run_facter(module, facter_path, options)
 
-
         if rc != 0:
             return None
 
