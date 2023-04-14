@@ -230,3 +230,28 @@
 - assert:
     that:
       - baz.ansible_facts.foo|type_debug != "AnsibleUnsafeText"
+
+- name: setup test following symlinks
+  delegate_to: localhost
+  block:
+    - name: create directory to test following symlinks
+      file:
+        path: "{{ role_path }}/test_symlink"
+        state: directory
+
+    - name: create symlink to the vars2 dir
+      file:
+        src: "{{ role_path }}/vars2"
+        dest: "{{ role_path }}/test_symlink/symlink"
+        state: link
+
+- name: include vars by following the symlink
+  include_vars:
+    dir: "{{ role_path }}/test_symlink"
+  register: follow_sym
+
+- assert:
+    that: follow_sym.ansible_included_var_files | sort == [hash1, hash2]
+  vars:
+    hash1: "{{ role_path }}/test_symlink/symlink/hashes/hash1.yml"
+    hash2: "{{ role_path }}/test_symlink/symlink/hashes/hash2.yml"

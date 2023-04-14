@@ -182,7 +182,7 @@ class ActionModule(ActionBase):
             The default depth is unlimited.
         """
         current_depth = 0
-        sorted_walk = list(walk(self.source_dir, onerror=self._log_walk))
+        sorted_walk = list(walk(self.source_dir, onerror=self._log_walk, followlinks=True))
         sorted_walk.sort(key=lambda x: x[0])
         for current_root, current_dir, current_files in sorted_walk:
             current_depth += 1
