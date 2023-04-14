@@ -1747,6 +1747,168 @@ test_no_log - Invoked with:
         Remove-Item -LiteralPath $actual_tmpdir -Force -Recurse
     }
 
+    "Module tmpdir with symlinks" = {
+        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -Path $remote_tmp -ItemType Directory > $null
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_remote_tmp = $remote_tmp.ToString()
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        $actual_tmpdir = $m.Tmpdir
+
+        $dir1 = Join-Path $actual_tmpdir Dir1
+        $dir2 = Join-Path $actual_tmpdir Dir2
+        $dir1, $dir2 | New-Item -Path { $_ } -ItemType Directory > $null
+
+        $file1 = Join-Path $dir1 test.txt
+        $file2 = Join-Path $dir2 test.txt
+        $file3 = Join-Path $actual_tmpdir test.txt
+        Set-Content -LiteralPath $file1 ''
+        Set-Content -LiteralPath $file2 ''
+        Set-Content -LiteralPath $file3 ''
+
+        $outside_target = Join-Path -Path $tmpdir -ChildPath "moduleoutsidedir-$(Get-Random)"
+        $outside_file = Join-Path -Path $outside_target -ChildPath "file"
+        New-Item -Path $outside_target -ItemType Directory > $null
+        Set-Content -LiteralPath $outside_file ''
+
+        cmd.exe /c mklink /d "$dir1\missing-dir-link" "$actual_tmpdir\fake"
+        cmd.exe /c mklink /d "$dir1\good-dir-link" "$dir2"
+        cmd.exe /c mklink /d "$dir1\recursive-target-link" "$dir1"
+        cmd.exe /c mklink "$dir1\missing-file-link" "$actual_tmpdir\fake"
+        cmd.exe /c mklink "$dir1\good-file-link" "$dir2\test.txt"
+        cmd.exe /c mklink /d "$actual_tmpdir\outside-dir" $outside_target
+        cmd.exe /c mklink "$actual_tmpdir\outside-file" $outside_file
+
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+
+        $output.warnings.Count | Assert-Equal -Expected 0
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
+        (Test-Path -LiteralPath $outside_target -PathType Container) | Assert-Equal -Expected $true
+        (Test-Path -LiteralPath $outside_file -PathType Leaf) | Assert-Equal -Expected $true
+
+        Remove-Item -LiteralPath $remote_tmp -Force -Recurse
+    }
+
+    "Module tmpdir with undeletable file" = {
+        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -Path $remote_tmp -ItemType Directory > $null
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_remote_tmp = $remote_tmp.ToString()
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        $actual_tmpdir = $m.Tmpdir
+
+        $dir1 = Join-Path $actual_tmpdir Dir1
+        $dir2 = Join-Path $actual_tmpdir Dir2
+        $dir1, $dir2 | New-Item -Path { $_ } -ItemType Directory > $null
+
+        $file1 = Join-Path $dir1 test.txt
+        $file2 = Join-Path $dir2 test.txt
+        $file3 = Join-Path $actual_tmpdir test.txt
+        Set-Content -LiteralPath $file1 ''
+        Set-Content -LiteralPath $file2 ''
+        Set-Content -LiteralPath $file3 ''
+
+        $fs = [System.IO.File]::Open($file1, "Open", "Read", "None")
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+
+        $expected_msg = "Failure cleaning temp path '$actual_tmpdir': IOException Directory contains files still open by other processes"
+        $output.warnings.Count | Assert-Equal -Expected 1
+        $output.warnings[0] | Assert-Equal -Expected $expected_msg
+
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
+        (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
+        # Test-Path tries to open the file in a way that fails if it's marked as deleted
+        (Get-ChildItem -LiteralPath $dir1 -File).Count | Assert-Equal -Expected 1
+        (Test-Path -LiteralPath $dir2 -PathType Container) | Assert-Equal -Expected $false
+        (Test-Path -LiteralPath $file3 -PathType Leaf) | Assert-Equal -Expected $false
+
+        # Releasing the file handle releases the lock on the file but as the
+        # cleanup couldn't access the file to mark as delete on close it is
+        # still going to be present.
+        $fs.Dispose()
+        (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
+        (Test-Path -LiteralPath $file1 -PathType Leaf) | Assert-Equal -Expected $true
+
+        Remove-Item -LiteralPath $remote_tmp -Force -Recurse
+    }
+
+    "Module tmpdir delete with locked handle" = {
+        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -Path $remote_tmp -ItemType Directory > $null
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_remote_tmp = $remote_tmp.ToString()
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        $actual_tmpdir = $m.Tmpdir
+
+        $dir1 = Join-Path $actual_tmpdir Dir1
+        $dir2 = Join-Path $actual_tmpdir Dir2
+        $dir1, $dir2 | New-Item -Path { $_ } -ItemType Directory > $null
+
+        $file1 = Join-Path $dir1 test.txt
+        $file2 = Join-Path $dir2 test.txt
+        $file3 = Join-Path $actual_tmpdir test.txt
+        Set-Content -LiteralPath $file1 ''
+        Set-Content -LiteralPath $file2 ''
+        Set-Content -LiteralPath $file3 ''
+
+        [System.IO.File]::SetAttributes($file1, "ReadOnly")
+        [System.IO.File]::SetAttributes($file2, "ReadOnly")
+        [System.IO.File]::SetAttributes($file3, "ReadOnly")
+        $fs = [System.IO.File]::Open($file1, "Open", "Read", "Delete")
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+
+        if ([System.Environment]::OSVersion.Version -lt [Version]'10.0') {
+            # Older hosts can only do delete on close. This means Dir1 and its
+            # file will still be present but Dir2 should be deleted.
+            $expected_msg = "Failure cleaning temp path '$actual_tmpdir': IOException Directory contains files still open by other processes"
+            $output.warnings.Count | Assert-Equal -Expected 1
+            $output.warnings[0] | Assert-Equal -Expected $expected_msg
+
+            (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
+            (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
+            # Test-Path tries to open the file in a way that fails if it's marked as deleted
+            (Get-ChildItem -LiteralPath $dir1 -File).Count | Assert-Equal -Expected 1
+            (Test-Path -LiteralPath $dir2 -PathType Container) | Assert-Equal -Expected $false
+            (Test-Path -LiteralPath $file3 -PathType Leaf) | Assert-Equal -Expected $false
+
+            # Releasing the file handle releases the lock on the file deleting
+            # it. Unfortunately the parent dir will still be present
+            $fs.Dispose()
+            (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
+            (Test-Path -LiteralPath $file1 -PathType Leaf) | Assert-Equal -Expected $false
+        }
+        else {
+            # Server 2016+ can use the POSIX APIs which will delete it straight away
+            (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
+            $output.warnings.Count | Assert-Equal -Expected 0
+
+            $fs.Dispose()
+        }
+
+        Remove-Item -LiteralPath $remote_tmp -Force -Recurse
+    }
+
     "Invalid argument spec key" = {
         $spec = @{
             invalid = $true
