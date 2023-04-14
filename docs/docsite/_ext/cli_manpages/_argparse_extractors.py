@@ -1,32 +1,15 @@
-# coding: utf-8
-# Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""Original manpage generator helpers."""
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-
-import argparse
-import os.path
-import sys
+import typing as t
+from argparse import _StoreAction
 from functools import lru_cache
 from importlib import import_module
 from itertools import chain
-from pathlib import Path
+from sys import maxsize as _sys_maxsize
 
-from jinja2 import Environment, FileSystemLoader
-
-from ansible.module_utils.common.text.converters import to_bytes
-
-# Pylint doesn't understand Python3 namespace modules.
-from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
-from ..commands import Command  # pylint: disable=relative-beyond-top-level
-
-
-PROJECT_DIR_PATH = Path(__file__).parents[4]
-PROJECT_BIN_DIR_PATH = PROJECT_DIR_PATH / 'bin'
-DEFAULT_TEMPLATE_FILE = PROJECT_DIR_PATH / 'docs/templates/man.j2'
+from ._paths import PROJECT_BIN_DIR_PATH
 
 
 # from https://www.python.org/dev/peps/pep-0257/
@@ -37,14 +20,14 @@ def trim_docstring(docstring):
     # and split into a list of lines:
     lines = docstring.expandtabs().splitlines()
     # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxsize
+    indent = _sys_maxsize
     for line in lines[1:]:
         stripped = line.lstrip()
         if stripped:
             indent = min(indent, len(line) - len(stripped))
     # Remove indentation (first line is special):
     trimmed = [lines[0].strip()]
-    if indent < sys.maxsize:
+    if indent < _sys_maxsize:
         for line in lines[1:]:
             trimmed.append(line[indent:].rstrip())
     # Strip off trailing and leading blank lines:
@@ -64,7 +47,7 @@ def get_normalized_options_from_actions(optlist):
             'desc': opt.help,
             'options': opt.option_strings
         }
-        if isinstance(opt, argparse._StoreAction):
+        if isinstance(opt, _StoreAction):
             res['arg'] = opt.dest.upper()
         elif not res['options']:
             continue
@@ -207,69 +190,3 @@ def generate_cli_jinja2_context(cli_bin_name):
             traverse_cli_actions(cli, shared_opt_names, cli.parser),
         )),
     }
-
-
-class GenerateMan(Command):
-    name = 'generate-man'
-
-    @classmethod
-    def init_parser(cls, add_parser):
-        parser = add_parser(name=cls.name,
-                            description='Generate cli documentation from cli docstrings')
-
-        parser.add_argument("-t", "--template-file", action="store", dest="template_file",
-                            default=DEFAULT_TEMPLATE_FILE, help="path to jinja2 template")
-        parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
-                            default='/tmp/', help="Output directory for rst files")
-        parser.add_argument("-f", "--output-format", action="store", dest="output_format",
-                            default='man',
-                            help="Output format for docs (the default 'man')")
-        parser.add_argument('cli_modules', help='CLI module name(s)', metavar='MODULE_NAME', nargs='*')
-
-    @staticmethod
-    def main(args):
-        template_file = args.template_file
-        template_path = os.path.expanduser(template_file)
-        template_dir = os.path.abspath(os.path.dirname(template_path))
-        template_basename = os.path.basename(template_file)
-
-        output_dir = os.path.abspath(args.output_dir)
-        output_format = args.output_format
-
-        cli_modules = args.cli_modules
-
-        allvars = {}
-        cli_list = []
-
-        for cli_module_name in cli_modules:
-            binary = os.path.basename(os.path.expanduser(cli_module_name))
-
-            if not binary.endswith('.py'):
-                continue
-            elif binary == '__init__.py':
-                continue
-
-            cli_name = os.path.splitext(binary)[0]
-
-            cli_bin_name = f'ansible-{cli_name}'
-            if cli_name == 'adhoc':
-                cli_bin_name = 'ansible'
-
-            allvars[cli_name] = generate_cli_jinja2_context(cli_bin_name)
-
-        cli_list = allvars.keys()
-
-        doc_name_formats = {'man': '%s.1.rst.in'}
-
-        for cli_name in cli_list:
-
-            # template it!
-            env = Environment(loader=FileSystemLoader(template_dir))
-            template = env.get_template(template_basename)
-            manpage = template.render(allvars[cli_name])
-            filename = os.path.join(
-                output_dir,
-                doc_name_formats[output_format] %
-                allvars[cli_name]['cli_name'],
-            )
-            update_file_if_different(filename, to_bytes(manpage))
