@@ -15,18 +15,6 @@ from pathlib import Path
 from shutil import copytree
 from tempfile import TemporaryDirectory
 
-try:
-    from contextlib import chdir as _chdir_cm
-except ImportError:
-    @contextmanager
-    def _chdir_cm(path: os.PathLike) -> t.Iterator[None]:
-        original_wd = Path.cwd()
-        os.chdir(path)
-        try:
-            yield
-        finally:
-            os.chdir(original_wd)
-
 from setuptools.build_meta import (
     build_sdist as _setuptools_build_sdist,
     get_requires_for_build_sdist as _setuptools_get_requires_for_build_sdist,
@@ -37,6 +25,8 @@ with suppress(ImportError):
     # NOTE: `get_requires_for_build_sdist()` when `--build-manpages` is passed.
     from docutils.core import publish_file
     from docutils.writers import manpage
+
+from ._compat import chdir_cm
 
 
 __all__ = (  # noqa: WPS317, WPS410
@@ -51,7 +41,7 @@ BUILD_MANPAGES_CONFIG_SETTING = '--build-manpages'
 @contextmanager
 def _run_in_temporary_directory() -> t.Iterator[Path]:
     with TemporaryDirectory(prefix='.tmp-ansible-pep517-') as tmp_dir:
-        with _chdir_cm(tmp_dir):
+        with chdir_cm(tmp_dir):
             yield Path(tmp_dir)
 
 
