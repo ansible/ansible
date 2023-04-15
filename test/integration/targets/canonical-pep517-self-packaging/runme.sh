@@ -29,3 +29,17 @@ python -Im pytest ${PYTEST_VERY_VERBOSE_FLAG} \
   -p no:forked \
   -p no:mock \
   -ra
+
+SRC_ROOT_DIR=$(readlink -f "${OUTPUT_DIR}"/../../../..)
+ls -1 docs/man/man1/ &>/dev/null && exit 1
+PIP_CONSTRAINT=modernish-build-constraints.txt \
+  python -Im pip install \
+    docutils jinja2 pyyaml
+PYTHONPATH="${SRC_ROOT_DIR}"/packaging/ \
+  python -m pep517_backend generate-manpages
+generated_manpage_number="$(
+  find docs/man/man1/ -name 'ansible*.1' -type f \
+  | wc -l \
+  | sed 's#^ *##g'
+)"
+test "${generated_manpage_number}" == 9
