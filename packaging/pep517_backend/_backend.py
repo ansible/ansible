@@ -121,6 +121,23 @@ def generate_manpages(target_dir: os.PathLike) -> None:
         rst_in.unlink()
 
 
+def self_eliminate_from(pyproject_path):
+    """Replace PEP 517 build backend with the setuptools' one."""
+    pyproject_path = Path(pyproject_path)
+    pyproject_path.write_text(
+        re.sub(
+            r"""(?x)
+            backend-path\s=\s\[  # value is a list of double-quoted strings
+                [^]]+
+            ].*\n
+            build-backend\s=\s"[^"]+".*\n  # value is double-quoted
+            """,
+            'build-backend = "setuptools.build_meta"\n',
+            pyproject_path.read_text(),
+        )
+    )
+
+
 def build_sdist(  # noqa: WPS210, WPS430
          sdist_directory: os.PathLike,
          config_settings: dict[str, str] | None = None,
@@ -137,18 +154,7 @@ def build_sdist(  # noqa: WPS210, WPS430
         if build_manpages_requested:
             generate_manpages('docs/man/man1/')
 
-        Path('pyproject.toml').write_text(
-            re.sub(
-                r"""(?x)
-                backend-path\s=\s\[  # value is a list of double-quoted strings
-                    [^]]+
-                ].*\n
-                build-backend\s=\s"[^"]+".*\n  # value is double-quoted
-                """,
-                'build-backend = "setuptools.build_meta"\n',
-                Path('pyproject.toml').read_text(),
-            )
-        )
+        self_eliminate_from('pyproject.toml')
 
         built_sdist_basename = _setuptools_build_sdist(
             sdist_directory=sdist_directory,
