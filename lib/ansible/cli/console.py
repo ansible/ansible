@@ -44,7 +44,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
        It supports several commands, and you can modify its configuration at
        runtime:
 
-       - `cd [pattern]`: change host/group (you can use host patterns eg.: app*.dc*:!app01*)
+       - `cd [pattern]`: change host/group
+         (you can use host patterns eg.: app*.dc*:!app01*)
        - `list`: list available hosts in the current path
        - `list groups`: list groups included in the current path
        - `become`: toggle the become flag
