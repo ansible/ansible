@@ -108,6 +108,19 @@ def _convert_rst_in_template_to_manpage(
         )
 
 
+def generate_manpages(target_dir: os.PathLike) -> None:
+    """Generate all manpages into a given directory."""
+    Path(target_dir).mkdir(exist_ok=True, parents=True)
+    version_number = _get_package_distribution_version()
+    for rst_in in _generate_rst_in_templates(target_dir):
+        _convert_rst_in_template_to_manpage(
+            rst_doc_template=rst_in.read_text(),
+            destination_path=rst_in.with_suffix('').with_suffix(''),
+            version_number=version_number,
+        )
+        rst_in.unlink()
+
+
 def build_sdist(  # noqa: WPS210, WPS430
          sdist_directory: os.PathLike,
          config_settings: dict[str, str] | None = None,
@@ -122,16 +135,7 @@ def build_sdist(  # noqa: WPS210, WPS430
         os.chdir(tmp_src_dir)
 
         if build_manpages_requested:
-            manpage_man1_dir_path = Path('docs/man/man1/')
-            manpage_man1_dir_path.mkdir(exist_ok=True, parents=True)
-            version_number = _get_package_distribution_version()
-            for rst_in in _generate_rst_in_templates(manpage_man1_dir_path):
-                _convert_rst_in_template_to_manpage(
-                    rst_doc_template=rst_in.read_text(),
-                    destination_path=rst_in.with_suffix('').with_suffix(''),
-                    version_number=version_number,
-                )
-                rst_in.unlink()
+            generate_manpages('docs/man/man1/')
 
         Path('pyproject.toml').write_text(
             re.sub(
