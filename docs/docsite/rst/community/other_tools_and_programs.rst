@@ -30,7 +30,7 @@ A free, open-source text editor and IDE that supports auto-indentation, syntax h
 PyCharm
 -------
 
-A full IDE (integrated development environment) for Python software development. It ships with everything you need to write python scripts and complete software, including support for YAML syntax highlighting. It's a little overkill for writing roles/playbooks, but it can be a very useful tool if you write modules and submit code for Ansible. Can be used to debug the Ansible engine. For more information, see `PyCharm <https://www.jetbrains.com/pycharm/>`_
+A full IDE (integrated development environment) for Python software development. It ships with everything you need to write python scripts and complete software, including support for YAML syntax highlighting. It's a little overkill for writing roles/playbooks, but it can be a very useful tool if you write modules and submit code for Ansible. Can be used to debug ``ansible-core``. For more information, see `PyCharm <https://www.jetbrains.com/pycharm/>`_
 
 
 Sublime
