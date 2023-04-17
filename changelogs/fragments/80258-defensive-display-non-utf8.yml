@@ -1,0 +1,4 @@
+bugfixes:
+- Display - Defensively configure writing to stdout and stderr with a custom encoding error handler that will replace invalid characters
+  while providing a deprecation warning that non-utf8 text will result in an error in a future version.
+- module responses - Ensure that module responses are utf-8 adhereing to JSON RFC and expectations of the core code.
