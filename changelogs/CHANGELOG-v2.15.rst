@@ -5,6 +5,25 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.0b3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2023-04-17
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Bugfixes
+--------
+
+- Fix post-validating looped task fields so the strategy uses the correct values after task execution.
+- Prevent running same handler multiple times when included via ``include_role`` (https://github.com/ansible/ansible/issues/73643)
+- ansible-test - Add support for ``argcomplete`` version 3.
+- pep517 build backend - Use the documented ``import_module`` import from ``importlib``.
+- syntax check - Limit ``--syntax-check`` to ``ansible-playbook`` only, as that is the only CLI affected by this argument (https://github.com/ansible/ansible/issues/80506)
+
 v2.15.0b2
 =========
 
@@ -156,7 +175,7 @@ Minor Changes
 Breaking Changes / Porting Guide
 --------------------------------
 
-- ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated (https://github.com/ansible/ansible/pull/79217).
+- ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated (https://github.com/ansible/ansible/pull/79362).
 - ansible-test - Integration tests which depend on specific file permissions when running in an ansible-test managed host environment may require changes. Tests that require permissions other than ``755`` or ``644`` may need to be updated to set the necessary permissions as part of the test run.
 - ansible-test - The ``vcenter`` test plugin now defaults to using a user-provided static configuration instead of the ``govcsim`` simulator for collections. Set the ``ANSIBLE_VCSIM_CONTAINER`` environment variable to ``govcsim`` to use the simulator. Keep in mind that the simulator is deprecated and will be removed in a future release.
 - ansible-test sanity - previously plugins and modules in collections whose name started with ``_`` were treated as deprecated, even when they were not marked as deprecated in ``meta/runtime.yml``. This is no longer the case (https://github.com/ansible/ansible/pull/79362).
