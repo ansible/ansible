@@ -101,6 +101,8 @@ notes:
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
     -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+    -  If the command returns non UTF-8 data, it must be encoded to avoid issues. This may necessitate using M(ansible.builtin.shell) so the output
+       can be piped through C(base64).
 seealso:
 - module: ansible.builtin.raw
 - module: ansible.builtin.script

@@ -90,6 +90,8 @@ notes:
   - An alternative to using inline shell scripts with this module is to use
     the M(ansible.builtin.script) module possibly together with the M(ansible.builtin.template) module.
   - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+  - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+    the output through C(base64).
 seealso:
 - module: ansible.builtin.command
 - module: ansible.builtin.raw
