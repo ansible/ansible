@@ -65,7 +65,7 @@ An open-source, free GUI text editor created and maintained by Microsoft. Useful
 
 .. note::
 
-    Visual studio code is not maintained by the community.
+    the Visual Studio Code Ansible extension  is maintained by the Ansible community and  Red Hat.
 
 
 
