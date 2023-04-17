@@ -259,25 +259,29 @@ else:
     to_native = to_bytes
 
 
-def _json_encode_fallback(obj):
-    if isinstance(obj, Set):
-        return list(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("Cannot json serialize %s" % to_native(obj))
+def _json_encode_fallback(encoder=None):
+    def inner(obj):
+        if isinstance(obj, Set):
+            return list(obj)
+        elif isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        elif encoder:
+            return encoder(obj)
+        raise TypeError("Cannot json serialize %s" % to_native(obj))
+    return inner
 
 
-def jsonify(data, **kwargs):
+def jsonify(data, encoder=None, **kwargs):
     for encoding in ("utf-8", "latin-1"):
         try:
-            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
+            return json.dumps(data, encoding=encoding, default=_json_encode_fallback(encoder), **kwargs)
         # Old systems using old simplejson module does not support encoding keyword.
         except TypeError:
             try:
                 new_data = container_to_text(data, encoding=encoding)
             except UnicodeDecodeError:
                 continue
-            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
+            return json.dumps(new_data, default=_json_encode_fallback(encoder), **kwargs)
         except UnicodeDecodeError:
             continue
     raise UnicodeError('Invalid unicode encoding encountered')
