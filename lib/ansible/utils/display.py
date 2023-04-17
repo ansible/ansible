@@ -197,18 +197,6 @@ def _synchronize_textiowrapper(tio, lock):
     buffer.flush = _wrap_with_lock(buffer.flush, lock)
 
 
-def _replacing_warning_handler(display):
-    def _wraps_with_display(exception):
-        # TODO: This should probably be deferred until after the current display is completed
-        #       this will require some amount of new functionality
-        display.deprecated(
-            'Non UTF-8 encoded data replaced with "?" while displaying text to stdout/stderr, this is temporary and will become an error',
-            version='2.18',
-        )
-        return '?', exception.end
-    return _wraps_with_display
-
-
 def setraw(fd, when=termios.TCSAFLUSH):
     """Put terminal into a raw mode.
 
@@ -310,7 +298,7 @@ class Display(metaclass=Singleton):
         except Exception as ex:
             self.warning(f"failed to patch stdout/stderr for fork-safety: {ex}")
 
-        codecs.register_error('_replacing_warning_handler', _replacing_warning_handler(self))
+        codecs.register_error('_replacing_warning_handler', self._replacing_warning_handler)
         try:
             sys.stdout.reconfigure(errors='_replacing_warning_handler')
             sys.stderr.reconfigure(errors='_replacing_warning_handler')
@@ -318,6 +306,15 @@ class Display(metaclass=Singleton):
             self.warning(f"failed to reconfigure stdout/stderr with custom encoding error handler: {ex}")
 
         self.setup_curses = False
+
+    def _replacing_warning_handler(self, exception):
+        # TODO: This should probably be deferred until after the current display is completed
+        #       this will require some amount of new functionality
+        self.deprecated(
+            'Non UTF-8 encoded data replaced with "?" while displaying text to stdout/stderr, this is temporary and will become an error',
+            version='2.18',
+        )
+        return '?', exception.end
 
     def set_queue(self, queue):
         """Set the _final_q on Display, so that we know to proxy display over the queue
