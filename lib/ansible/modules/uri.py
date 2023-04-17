@@ -260,9 +260,9 @@ EXAMPLES = r'''
 - name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
   ansible.builtin.uri:
     url: http://www.example.com
-    return_content: true
+    return_content: trueple.com
   register: this
-  failed_when: "'AWESOME' not in this.content"
+  failed_when: "this is failed or 'AWESOME' not in this.content"
 
 - name: Create a JIRA issue
   ansible.builtin.uri:
