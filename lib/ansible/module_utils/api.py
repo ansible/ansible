@@ -26,10 +26,14 @@ The 'api' module provides the following common argument specs:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import copy
 import functools
+import itertools
 import random
 import sys
 import time
+
+import ansible.module_utils.compat.typing as t
 
 
 def rate_limit_argument_spec(spec=None):
@@ -141,6 +145,15 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
     :param backoff_iterator: An iterable of delays in seconds.
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
     """
+    def _emit_isolated_iterator_copies(original_iterator):  # type: (t.Iterable[t.Any]) -> t.Generator
+        # Ref: https://stackoverflow.com/a/30232619/595220
+        _copiable_iterator, _first_iterator_copy = itertools.tee(original_iterator)
+        yield _first_iterator_copy
+        while True:
+            yield copy.copy(_copiable_iterator)
+    backoff_iterator_generator = _emit_isolated_iterator_copies(backoff_iterator)
+    del backoff_iterator  # prevent accidental use elsewhere
+
     if should_retry_error is None:
         should_retry_error = retry_never
 
@@ -152,7 +165,7 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
             """
             call_retryable_function = functools.partial(function, *args, **kwargs)
 
-            for delay in backoff_iterator:
+            for delay in next(backoff_iterator_generator):
                 try:
                     return call_retryable_function()
                 except Exception as e:
