@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - fix installing collections from directories that have a trailing path separator (https://github.com/ansible/ansible/issues/77803).
