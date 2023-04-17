@@ -36,7 +36,23 @@ from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
 
+from ansible.plugins.loader import module_loader
+from ansible.cli.doc import DocCLI
+
 display = Display()
+
+
+def get_action_options(action):
+    # avoid circulairty
+
+    if action is None:
+        # fallback/default hardcoded list from before
+        options = ('creates', 'removes', 'chdir', 'executable', 'warn', 'stdin', 'stdin_add_newline', 'strip_empty_ends')
+    else:
+        doc, *stuff = DocCLI._get_plugin_doc(action, 'module', module_loader, [])
+        options = doc.get('options', {}).keys()
+
+    return options
 
 
 class ActionBase(ABC):

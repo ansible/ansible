@@ -43,13 +43,6 @@ PATH_CACHE = {}  # type: dict[str, list[PluginPathContext] | None]
 PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]]]
 
 
-def get_plugin_class(obj):
-    if isinstance(obj, string_types):
-        return obj.lower().replace('module', '')
-    else:
-        return obj.__class__.__name__.lower().replace('module', '')
-
-
 class AnsiblePlugin(ABC):
 
     # allow extra passthrough parameters
@@ -110,6 +103,7 @@ class AnsiblePlugin(ABC):
     @property
     def plugin_type(self):
         return self.__class__.__name__.lower().replace('module', '')
+<<<<<<< HEAD
 
     @property
     def option_definitions(self):
@@ -141,3 +135,5 @@ class AnsibleJinja2Plugin(AnsiblePlugin):
     @property
     def j2_function(self):
         return self._function
+=======
+>>>>>>> f738e1e53d (sws)
