@@ -231,12 +231,15 @@ class PasslibHash(BaseHash):
             settings['ident'] = ident
 
         # starting with passlib 1.7 'using' and 'hash' should be used instead of 'encrypt'
-        if hasattr(self.crypt_algo, 'hash'):
-            result = self.crypt_algo.using(**settings).hash(secret)
-        elif hasattr(self.crypt_algo, 'encrypt'):
-            result = self.crypt_algo.encrypt(secret, **settings)
-        else:
-            raise AnsibleError("installed passlib version %s not supported" % passlib.__version__)
+        try:
+            if hasattr(self.crypt_algo, 'hash'):
+                result = self.crypt_algo.using(**settings).hash(secret)
+            elif hasattr(self.crypt_algo, 'encrypt'):
+                result = self.crypt_algo.encrypt(secret, **settings)
+            else:
+                raise AnsibleError("installed passlib version %s not supported" % passlib.__version__)
+        except ValueError as e:
+            raise AnsibleError("Could not hash the secret.", orig_exc=e)
 
         # passlib.hash should always return something or raise an exception.
         # Still ensure that there is always a result.
