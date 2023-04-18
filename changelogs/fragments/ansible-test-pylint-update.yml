@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Update ``pylint`` to 2.17.2 to resolve several possible false positives.
