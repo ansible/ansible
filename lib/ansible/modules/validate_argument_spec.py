@@ -69,7 +69,7 @@ EXAMPLES = r'''
 
 - name: verify vars needed for this task file are present when included, with spec from a spec file
   ansible.builtin.validate_argument_spec:
-        argument_spec: "{{lookup('ansible.builtin.file', 'myargspec.yml')['specname']['options']}}"
+        argument_spec: "{{(lookup('ansible.builtin.file', 'myargspec.yml') | from_yaml )['specname']['options']}}"
 
 
 - name: verify vars needed for next include and not from inside it, also with params i'll only define there
