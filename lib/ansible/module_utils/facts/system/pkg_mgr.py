@@ -17,7 +17,6 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # ansible module, use that as the value for the 'name' key.
 PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/yum', 'name': 'yum'},
-            {'path': '/usr/bin/dnf', 'name': 'dnf'},
             {'path': '/usr/bin/apt-get', 'name': 'apt'},
             {'path': '/usr/bin/zypper', 'name': 'zypper'},
             {'path': '/usr/sbin/urpmi', 'name': 'urpmi'},
@@ -42,6 +41,7 @@ PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/installp', 'name': 'installp'},
             {'path': '/QOpenSys/pkgs/bin/yum', 'name': 'yum'},
             {'path': '', 'name': 'dnf5'},
+            {'path': '', 'name': 'dnf'},
             ]
 
 
@@ -73,13 +73,11 @@ class PkgMgrFactCollector(BaseFactCollector):
         if os.path.exists('/run/ostree-booted'):
             return "atomic_container"
 
-        if pkg_mgr_name == 'dnf' and os.path.realpath('/usr/bin/dnf') == '/usr/bin/dnf5':
-            pkg_mgr_name = 'dnf5'
-        elif pkg_mgr_name == 'unknown' and os.path.exists('/usr/bin/microdnf'):
-            if os.path.realpath('/usr/bin/microdnf') == '/usr/bin/dnf5':
+        pkg_mgr_name = 'dnf'
+        for bin_path in ('/usr/bin/dnf', '/usr/bin/microdnf'):
+            if os.path.exists(bin_path) and os.path.realpath(bin_path) == '/usr/bin/dnf5':
                 pkg_mgr_name = 'dnf5'
-            else:
-                pkg_mgr_name = 'dnf'
+                break
 
         if collected_facts['ansible_distribution'] == 'Fedora':
             if int(collected_facts['ansible_distribution_major_version']) < 23 and self._pkg_mgr_exists('yum'):
