@@ -1,0 +1,2 @@
+docs:
+  - uri module now has correct example with failed_when
