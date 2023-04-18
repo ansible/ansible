@@ -17,6 +17,13 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # ansible module, use that as the value for the 'name' key.
 PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/yum', 'name': 'yum'},
+
+            # NOTE the path key for dnf/dnf5 is effectively discarded when matched for RedHat distributions,
+            # special logic to infer the default pkg_mgr is used in `PkgMgrFactCollector._check_rh_versions()`
+            # leaving them here so a list of package modules can be constructed by iterating over `name` keys
+            {'path': '/usr/bin/dnf-3', 'name': 'dnf'},
+            {'path': '/usr/bin/dnf5', 'name': 'dnf5'},
+
             {'path': '/usr/bin/apt-get', 'name': 'apt'},
             {'path': '/usr/bin/zypper', 'name': 'zypper'},
             {'path': '/usr/sbin/urpmi', 'name': 'urpmi'},
@@ -40,8 +47,6 @@ PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
             {'path': '/usr/bin/installp', 'name': 'installp'},
             {'path': '/QOpenSys/pkgs/bin/yum', 'name': 'yum'},
-            {'path': '', 'name': 'dnf5'},
-            {'path': '', 'name': 'dnf'},
             ]
 
 
@@ -73,7 +78,11 @@ class PkgMgrFactCollector(BaseFactCollector):
         if os.path.exists('/run/ostree-booted'):
             return "atomic_container"
 
+        # default to dnf regardless to what was matched from PKG_MGRS, infer the default pkg_mgr below
         pkg_mgr_name = 'dnf'
+        # since /usr/bin/dnf and /usr/bin/microdnf can point to different versions of dnf in different distributions
+        # the only way to infer the default package manager is to look at the binary they are pointing to
+        # microdnf is likely used only in fedora minimal container so /usr/bin/dnf takes precedence
         for bin_path in ('/usr/bin/dnf', '/usr/bin/microdnf'):
             if os.path.exists(bin_path) and os.path.realpath(bin_path) == '/usr/bin/dnf5':
                 pkg_mgr_name = 'dnf5'
@@ -129,7 +138,7 @@ class PkgMgrFactCollector(BaseFactCollector):
 
         pkg_mgr_name = 'unknown'
         for pkg in self.pkg_mgrs(collected_facts):
-            if pkg['path'] and os.path.exists(pkg['path']):
+            if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
 
         # Handle distro family defaults when more than one package manager is
