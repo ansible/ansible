@@ -84,8 +84,9 @@ class PkgMgrFactCollector(BaseFactCollector):
         # the only way to infer the default package manager is to look at the binary they are pointing to
         # microdnf is likely used only in fedora minimal container so /usr/bin/dnf takes precedence
         for bin_path in ('/usr/bin/dnf', '/usr/bin/microdnf'):
-            if os.path.exists(bin_path) and os.path.realpath(bin_path) == '/usr/bin/dnf5':
-                pkg_mgr_name = 'dnf5'
+            if os.path.exists(bin_path):
+                if os.path.realpath(bin_path) == '/usr/bin/dnf5':
+                    pkg_mgr_name = 'dnf5'
                 break
 
         if collected_facts['ansible_distribution'] == 'Fedora':
