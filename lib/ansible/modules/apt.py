@@ -445,7 +445,7 @@ class PolicyRcD(object):
 
     def __exit__(self, type, value, traceback):
         """
-        This method will be called when we enter the context, before we call `apt-get …`
+        This method will be called when we exit the context, after `apt-get …` is done
         """
 
         # if policy_rc_d is null then we don't need to modify policy-rc.d
