@@ -18,6 +18,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/bin/dnf', 'name': 'dnf'},
+            {'path': '/usr/bin/dnf5', 'name': 'dnf5'},
             {'path': '/usr/bin/apt-get', 'name': 'apt'},
             {'path': '/usr/bin/zypper', 'name': 'zypper'},
             {'path': '/usr/sbin/urpmi', 'name': 'urpmi'},
@@ -77,11 +78,10 @@ class PkgMgrFactCollector(BaseFactCollector):
                 if int(collected_facts['ansible_distribution_major_version']) < 23:
                     if self._pkg_mgr_exists('yum'):
                         pkg_mgr_name = 'yum'
-                elif int(collected_facts['ansible_distribution_major_version']) >= 39:
-                    # /usr/bin/dnf is planned to be a symlink to /usr/bin/dnf5
-                    if self._pkg_mgr_exists('dnf'):
-                        pkg_mgr_name = 'dnf5'
-                else:
+                elif int(collected_facts['ansible_distribution_major_version']) < 39:
+                    # Always use dnf if it's available.
+                    # dnf5 or yum may be installed on Fedora < 39,
+                    # but the system default should be prefered.
                     if self._pkg_mgr_exists('dnf'):
                         pkg_mgr_name = 'dnf'
             except ValueError:

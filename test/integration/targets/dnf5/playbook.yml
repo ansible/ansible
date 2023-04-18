@@ -3,7 +3,7 @@
     - block:
         - command: "dnf install -y 'dnf-command(copr)'"
         - command: dnf copr enable -y rpmsoftwaremanagement/dnf5-unstable
-        - command: dnf install -y python3-libdnf5
+        - command: dnf install -y python3-libdnf5 dnf5
 
         - include_role:
             name: dnf
@@ -11,6 +11,41 @@
             dnf5: true
             dnf_log_files:
               - /var/log/dnf5.log
+
+        - name: Ensure python3-dnf is absent
+          command: "dnf remove -y python3-dnf --setopt=protected_packages="
+
+        - name: Re-gather facts
+          setup:
+            gather_subset:
+              - "!all"
+              - "!min"
+              - "pkg_mgr"
+        - debug: var=ansible_pkg_mgr
+
+        - name: Ensure that dnf5 is used when dnf is absent
+          assert:
+            that: "ansible_pkg_mgr == 'dnf5'"
+
+        - name: Install python3-dnf
+          dnf5:
+            name:
+              - python3-dnf
+              - /usr/bin/dnf
+
+        - name: Re-gather facts
+          setup:
+            gather_subset:
+              - "!all"
+              - "!min"
+              - "pkg_mgr"
+        - debug: var=ansible_pkg_mgr
+
+        - name: Check the distribution default package manager
+          vars:
+            _expected: "{{ 'dnf' if ansible_distribution_major_version | int < 39 else 'dnf5' }}"
+          assert:
+            that: ansible_pkg_mgr == _expected
       when:
         - ansible_distribution == 'Fedora'
         - ansible_distribution_major_version is version('37', '>=')

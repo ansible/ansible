@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - Fix ``dnf`` and ``dnf5`` package module discovery on Fedora Linux. Now,
+    ansible prefers ``dnf`` on Fedora < 39 and prefers ``dnf5`` on Fedora >= 39
+    but falls back if the default is not available
+    (https://github.com/ansible/ansible/pull/80546).
