@@ -18,8 +18,8 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/yum', 'name': 'yum'},
 
-            # NOTE the path key for dnf/dnf5 is effectively discarded when matched for RedHat distributions,
-            # special logic to infer the default pkg_mgr is used in `PkgMgrFactCollector._check_rh_versions()`
+            # NOTE the `path` key for dnf/dnf5 is effectively discarded when matched for Red Hat OS family,
+            # special logic to infer the default `pkg_mgr` is used in `PkgMgrFactCollector._check_rh_versions()`
             # leaving them here so a list of package modules can be constructed by iterating over `name` keys
             {'path': '/usr/bin/dnf-3', 'name': 'dnf'},
             {'path': '/usr/bin/dnf5', 'name': 'dnf5'},
@@ -78,15 +78,14 @@ class PkgMgrFactCollector(BaseFactCollector):
         if os.path.exists('/run/ostree-booted'):
             return "atomic_container"
 
-        # default to dnf regardless to what was matched from PKG_MGRS, infer the default pkg_mgr below
-        pkg_mgr_name = 'dnf'
-        # since /usr/bin/dnf and /usr/bin/microdnf can point to different versions of dnf in different distributions
-        # the only way to infer the default package manager is to look at the binary they are pointing to
-        # microdnf is likely used only in fedora minimal container so /usr/bin/dnf takes precedence
+        # Reset whatever was matched from PKG_MGRS, infer the default pkg_mgr below
+        pkg_mgr_name = 'unknown'
+        # Since /usr/bin/dnf and /usr/bin/microdnf can point to different versions of dnf in different distributions
+        # the only way to infer the default package manager is to look at the binary they are pointing to.
+        # /usr/bin/microdnf is likely used only in fedora minimal container so /usr/bin/dnf takes precedence
         for bin_path in ('/usr/bin/dnf', '/usr/bin/microdnf'):
             if os.path.exists(bin_path):
-                if os.path.realpath(bin_path) == '/usr/bin/dnf5':
-                    pkg_mgr_name = 'dnf5'
+                pkg_mgr_name = 'dnf5' if os.path.realpath(bin_path) == '/usr/bin/dnf5' else 'dnf'
                 break
 
         if collected_facts['ansible_distribution'] == 'Fedora':
