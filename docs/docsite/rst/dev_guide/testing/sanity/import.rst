@@ -70,7 +70,7 @@ Instead of using ``import another_library``:
    else:
        ANOTHER_LIBRARY_IMPORT_ERROR = None
 
-Then in the plugin code, for example in ``run`` method of the plugin (some plugins don't have a 'run' and will require it in the ``__init__`` method instead):
+Then in the plugin code, for example in the ``run`` method of the plugin (some plugins don't have a ``run`` method and will require it in the ``__init__`` method instead):
 
 .. code-block:: python
 
