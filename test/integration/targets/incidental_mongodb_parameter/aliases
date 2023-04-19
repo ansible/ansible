@@ -7,3 +7,4 @@ skip/freebsd
 skip/rhel
 needs/root
 context/target
+disabled  # tests are no longer passing due to errors attempting to add GPG keys
