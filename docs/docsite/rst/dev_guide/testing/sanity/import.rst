@@ -10,6 +10,17 @@ This enables support for sanity tests such as :ref:`testing_validate-modules` an
 Handling import errors
 ----------------------
 
+Ansible executes across many hosts and can uses different interpreters (normally python) that can even have multiple versions installed in parallel at the same time.
+To ensure users get an actionable and easy to understand error we try to ensure any non core libraries that a module/plugin are guarded in their imports to avoid a traceback,
+which most users won't be able to understand, much less use to solve the issue.
+
+Another reason we do this is to allow us to import the code for inspection, this is how we can easily test, document, configure, etc based on the code without having to install
+any and all requirements everywhere, specially when that is not the context you might execute the code in.
+
+The code below shows examples on how to avoid errors on import and then use the provided ``missing_required_lib`` to ensure the user knows which LIBRARY is missing,
+on which HOST it is missing on and the specific INTERPRETER that requires it.
+
+
 In modules
 ^^^^^^^^^^
 
@@ -34,7 +45,7 @@ Instead of using ``import another_library``:
 
    The ``missing_required_lib`` import above will be used below.
 
-Then in the module code:
+Then in the module code, normally inside the ``main`` method:
 
 .. code-block:: python
 
@@ -59,7 +70,7 @@ Instead of using ``import another_library``:
    else:
        ANOTHER_LIBRARY_IMPORT_ERROR = None
 
-Then in the plugin code, for example in ``__init__`` of the plugin:
+Then in the plugin code, for example in ``run`` method of the plugin (some plugins don't have a 'run' and will require it in the ``__init__`` method instead):
 
 .. code-block:: python
 
