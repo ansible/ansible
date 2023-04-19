@@ -4,3 +4,4 @@ skip/osx
 skip/freebsd
 skip/rhel
 needs/root
+disabled  # tests are no longer passing due to errors attempting to add GPG keys
