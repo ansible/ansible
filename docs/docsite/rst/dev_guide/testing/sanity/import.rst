@@ -11,7 +11,7 @@ Handling import errors
 ----------------------
 
 Ansible executes across many hosts and can use multiple Python interpreters at the same time, which may even have different versions.
-To ensure users get an actionable and easy to understand error we try to ensure any non core libraries that a module/plugin are guarded in their imports to avoid a traceback,
+To ensure users get an actionable and easy to understand error we try to ensure any non-core imports in modules/plugins are guarded to avoid a traceback,
 which most users won't be able to understand, much less use to solve the issue.
 
 Another reason we do this is to allow us to import the code for inspection, this is how we can easily test, document, configure, etc based on the code without having to install
