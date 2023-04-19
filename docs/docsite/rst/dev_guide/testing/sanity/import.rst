@@ -10,7 +10,7 @@ This enables support for sanity tests such as :ref:`testing_validate-modules` an
 Handling import errors
 ----------------------
 
-Ansible executes across many hosts and can uses different interpreters (normally python) that can even have multiple versions installed in parallel at the same time.
+Ansible executes across many hosts and can use multiple Python interpreters at the same time, which may even have different versions.
 To ensure users get an actionable and easy to understand error we try to ensure any non core libraries that a module/plugin are guarded in their imports to avoid a traceback,
 which most users won't be able to understand, much less use to solve the issue.
 
