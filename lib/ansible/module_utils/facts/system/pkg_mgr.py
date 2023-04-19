@@ -56,10 +56,7 @@ class OpenBSDPkgMgrFactCollector(BaseFactCollector):
     _platform = 'OpenBSD'
 
     def collect(self, module=None, collected_facts=None):
-        facts_dict = {}
-
-        facts_dict['pkg_mgr'] = 'openbsd_pkg'
-        return facts_dict
+        return {'pkg_mgr': 'openbsd_pkg'}
 
 
 # the fact ends up being 'pkg_mgr' so stick with that naming/spelling
@@ -88,21 +85,14 @@ class PkgMgrFactCollector(BaseFactCollector):
                 pkg_mgr_name = 'dnf5' if os.path.realpath(bin_path) == '/usr/bin/dnf5' else 'dnf'
                 break
 
-        if collected_facts['ansible_distribution'] == 'Fedora':
-            if int(collected_facts['ansible_distribution_major_version']) < 23 and self._pkg_mgr_exists('yum'):
-                pkg_mgr_name = 'yum'
-        elif collected_facts['ansible_distribution'] == 'Amazon':
-            if int(collected_facts['ansible_distribution_major_version']) < 2022 and self._pkg_mgr_exists('yum'):
-                pkg_mgr_name = 'yum'
-        else:
-            # If it's not one of the above and it's Red Hat family of distros, assume
-            # RHEL or a clone. For versions of RHEL < 8 that Ansible supports, the
-            # vendor supported official package manager is 'yum' and in RHEL 8+
-            # (as far as we know at the time of this writing) it is 'dnf'.
-            # If anyone wants to force a non-official package manager then they
-            # can define a provider to either the package or yum action plugins.
-            if int(collected_facts['ansible_distribution_major_version']) < 8:
-                pkg_mgr_name = 'yum'
+        distro_major_ver = int(collected_facts['ansible_distribution_major_version'])
+        if (
+            (collected_facts['ansible_distribution'] == 'Fedora' and distro_major_ver < 23)
+            or (collected_facts['ansible_distribution'] == 'Amazon' and distro_major_ver < 2022)
+            or distro_major_ver < 8  # assume RHEL or a clone
+        ) and self._pkg_mgr_exists('yum'):
+            pkg_mgr_name = 'yum'
+
         return pkg_mgr_name
 
     def _check_apt_flavor(self, pkg_mgr_name):
@@ -133,7 +123,6 @@ class PkgMgrFactCollector(BaseFactCollector):
             return PKG_MGRS
 
     def collect(self, module=None, collected_facts=None):
-        facts_dict = {}
         collected_facts = collected_facts or {}
 
         pkg_mgr_name = 'unknown'
@@ -158,5 +147,4 @@ class PkgMgrFactCollector(BaseFactCollector):
         if pkg_mgr_name == 'apt':
             pkg_mgr_name = self._check_apt_flavor(pkg_mgr_name)
 
-        facts_dict['pkg_mgr'] = pkg_mgr_name
-        return facts_dict
+        return {'pkg_mgr': pkg_mgr_name}
