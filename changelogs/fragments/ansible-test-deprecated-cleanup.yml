@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Removed the deprecated ``--docker-no-pull`` option.
+  - ansible-test - Removed the deprecated ``--no-pip-check`` option.
+  - ansible-test - Removed the deprecated ``foreman`` test plugin.
+  - ansible-test - Removed the deprecated ``govcsim`` support from the ``vcenter`` test plugin.

@@ -8,7 +8,6 @@ import sys
 import typing as t
 
 from .util import (
-    display,
     verify_sys_executable,
     version_to_str,
     type_guard,
@@ -135,12 +134,6 @@ class EnvironmentConfig(CommonConfig):
                 files.append((os.path.abspath(config_path), config_path))
 
         data_context().register_payload_callback(host_callback)
-
-        if args.docker_no_pull:
-            display.warning('The --docker-no-pull option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
-
-        if args.no_pip_check:
-            display.warning('The --no-pip-check option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
 
     @property
     def controller(self) -> ControllerHostConfig:
