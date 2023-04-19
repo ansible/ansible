@@ -3,8 +3,46 @@
 # Copyright 2021 Red Hat
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import re
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+
+def validate_mac_address(mac):
+    """
+    Validates a MAC address in the format xx:xx:xx:xx:xx:xx, where x is a hexadecimal digit.
+    """
+    pattern = r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+    return bool(re.match(pattern, mac))
+
+def validate_ipv4_address(ip):
+    """
+    Validates an IPv4 address in dotted decimal notation.
+    """
+    pattern = r"^(\d{1,3}\.){3}\d{1,3}$"
+    return bool(re.match(pattern, ip))
+
+def validate_ipv6_address(ip):
+    """
+    Validates an IPv6 address in hexadecimal notation.
+    """
+    pattern = r"^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$"
+    return bool(re.match(pattern, ip, re.I))
+
+def validate_ipv4_prefix(prefix):
+    """
+    Validates an IPv4 prefix in CIDR notation.
+    """
+    pattern = r"^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$"
+    return bool(re.match(pattern, prefix))
+
+def validate_ipv6_prefix(prefix):
+    """
+    Validates an IPv6 prefix in CIDR notation.
+    """
+    pattern = r"^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}/\d{1,3}$"
+    return bool(re.match(pattern, prefix, re.I))
+
 
 
 DOCUMENTATION = r'''
