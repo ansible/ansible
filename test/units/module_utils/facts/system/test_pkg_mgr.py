@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2023, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
 
 
@@ -8,6 +15,7 @@ _FEDORA_FACTS = {
 }
 
 # NOTE pkg_mgr == "dnf" means the dnf module for the dnf version 4, which is accessible via /usr/bin/dnf-3
+
 
 def test_default_dnf_version_detection_fedora_dnf4(mocker):
     mocker.patch("os.path.exists", lambda p: p in ("/usr/bin/dnf", "/usr/bin/dnf-3"))
