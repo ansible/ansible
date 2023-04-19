@@ -1723,12 +1723,16 @@ def prepare_multipart(fields):
                 except Exception:
                     mime = 'application/octet-stream'
             main_type, sep, sub_type = mime.partition('/')
+
+            multipart_encoding_str = value.get("multipart_encoding")
+            if not multipart_encoding_str:
+                multipart_encoding_str = "base64"
         else:
             raise TypeError(
                 'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
             )
 
-        multipart_encoding = set_multipart_encoding(value.get("multipart_encoding"))
+        multipart_encoding = set_multipart_encoding(multipart_encoding_str)
         
         if not content and filename:
             with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
