@@ -17,7 +17,7 @@ which most users won't be able to understand, much less use to solve the issue.
 Another reason we do this is to allow us to import the code for inspection. This is how we can easily test, document, configure, etc based on the code without having to install
 any and all requirements everywhere, specially when that is not the context you might execute the code in.
 
-The code below shows examples on how to avoid errors on import and then use the provided ``missing_required_lib`` to ensure the user knows which LIBRARY is missing,
+The code below shows examples of how to avoid errors on import and then use the provided ``missing_required_lib`` to ensure the user knows which LIBRARY is missing,
 on which HOST it is missing on and the specific INTERPRETER that requires it.
 
 
