@@ -66,17 +66,16 @@ class PkgMgrFactCollector(BaseFactCollector):
     _platform = 'Generic'
     required_facts = set(['distribution'])
 
-    def _pkg_mgr_exists(self, pkg_mgr_name):
-        for cur_pkg_mgr in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == pkg_mgr_name]:
-            if os.path.exists(cur_pkg_mgr['path']):
-                return pkg_mgr_name
+    def __init__(self, *args, **kwargs):
+        super(PkgMgrFactCollector, self).__init__(*args, **kwargs)
+        self._default_unknown_pkg_mgr = 'unknown'
 
     def _check_rh_versions(self, pkg_mgr_name, collected_facts):
         if os.path.exists('/run/ostree-booted'):
             return "atomic_container"
 
         # Reset whatever was matched from PKG_MGRS, infer the default pkg_mgr below
-        pkg_mgr_name = 'unknown'
+        pkg_mgr_name = self._default_unknown_pkg_mgr
         # Since /usr/bin/dnf and /usr/bin/microdnf can point to different versions of dnf in different distributions
         # the only way to infer the default package manager is to look at the binary they are pointing to.
         # /usr/bin/microdnf is likely used only in fedora minimal container so /usr/bin/dnf takes precedence
@@ -85,12 +84,17 @@ class PkgMgrFactCollector(BaseFactCollector):
                 pkg_mgr_name = 'dnf5' if os.path.realpath(bin_path) == '/usr/bin/dnf5' else 'dnf'
                 break
 
-        distro_major_ver = int(collected_facts['ansible_distribution_major_version'])
+        try:
+            distro_major_ver = int(collected_facts['ansible_distribution_major_version'])
+        except ValueError:
+            # a non integer magical future version
+            return self._default_unknown_pkg_mgr
+
         if (
             (collected_facts['ansible_distribution'] == 'Fedora' and distro_major_ver < 23)
             or (collected_facts['ansible_distribution'] == 'Amazon' and distro_major_ver < 2022)
             or distro_major_ver < 8  # assume RHEL or a clone
-        ) and self._pkg_mgr_exists('yum'):
+        ) and any(pm for pm in PKG_MGRS if pm['name'] == 'yum' and os.path.exists(pm['path'])):
             pkg_mgr_name = 'yum'
 
         return pkg_mgr_name
@@ -125,7 +129,7 @@ class PkgMgrFactCollector(BaseFactCollector):
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}
 
-        pkg_mgr_name = 'unknown'
+        pkg_mgr_name = self._default_unknown_pkg_mgr
         for pkg in self.pkg_mgrs(collected_facts):
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
