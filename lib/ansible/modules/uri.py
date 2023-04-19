@@ -76,6 +76,13 @@ options:
     choices: [ form-urlencoded, json, raw, form-multipart ]
     default: raw
     version_added: "2.0"
+  multipart_encoding:
+    description:
+      - Defines the encoding that is used to build a C(form-multipart) upload payload.
+      - This option can be added seperately for every file in body. (See examples)
+    type: str
+    choices: [base64, 7or8bit]
+    default: base64
   method:
     description:
       - The HTTP method of the request or response.
@@ -308,10 +315,12 @@ EXAMPLES = r'''
       file1:
         filename: /bin/true
         mime_type: application/octet-stream
+        multipart_encoding: base64
       file2:
         content: text based file content
         filename: fake.txt
         mime_type: text/plain
+        multipart_encoding: 7or8bit
       text_form_field: value
 
 - name: Connect to website using a previously stored cookie

@@ -1728,9 +1728,11 @@ def prepare_multipart(fields):
                 'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
             )
 
+        multipart_encoding = set_multipart_encoding(value.get("multipart_encoding"))
+        
         if not content and filename:
             with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
-                part = email.mime.application.MIMEApplication(f.read())
+                part = email.mime.application.MIMEApplication(f.read(), _encoder=multipart_encoding)
                 del part['Content-Type']
                 part.add_header('Content-Type', '%s/%s' % (main_type, sub_type))
         else:
@@ -1787,6 +1789,20 @@ def prepare_multipart(fields):
 #
 # Module-related functions
 #
+def set_multipart_encoding(encoding="base64"):
+    """Takes an string with specific encoding type for multipart data.
+    Will return reference to function from email.encoders library.
+    If given string is empty or related key doesn't exist
+    it will resolve to default base64 based encoding"""
+    from email import encoders
+    encoders_dict = {
+        "base64": encoders.encode_base64,
+        "7or8bit": encoders.encode_7or8bit
+    }
+    if encoders_dict.get(encoding):
+        return encoders_dict.get(encoding)
+    else:
+        return encoders_dict.get("base64")
 
 
 def basic_auth_header(username, password):
