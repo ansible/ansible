@@ -1733,7 +1733,7 @@ def prepare_multipart(fields):
             )
 
         multipart_encoding = set_multipart_encoding(multipart_encoding_str)
-        
+
         if not content and filename:
             with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
                 part = email.mime.application.MIMEApplication(f.read(), _encoder=multipart_encoding)
