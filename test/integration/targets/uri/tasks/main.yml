@@ -259,6 +259,7 @@
   pip:
     name: "{{ item }}"
   with_items:
+    - pyasn1 == 0.4.8 ; python_version == '2.6'  # 0.5.0 drops support for Python 2.6
     - ndg-httpsclient
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 

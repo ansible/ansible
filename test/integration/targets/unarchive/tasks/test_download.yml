@@ -7,6 +7,7 @@
 - name: Install packages to make TLS connections work on CentOS 6
   pip:
     name:
+      - pyasn1 == 0.4.8 ; python_version == '2.6'  # 0.5.0 drops support for Python 2.6
       - urllib3==1.10.2
       - ndg_httpsclient==0.4.4
       - pyOpenSSL==16.2.0
