@@ -26,7 +26,7 @@ become
     set to ``yes`` to activate privilege escalation.
 
 become_user
-    set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level. Default value is ``root``.
+    set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: true``, to allow it to be set at host level. Default value is ``root``.
 
 become_method
     (at play or task level) overrides the default method set in ansible.cfg, set to use any of the :ref:`become_plugins`.
@@ -79,7 +79,7 @@ ansible_become_method
     which privilege escalation method should be used
 
 ansible_become_user
-    set the user you become through privilege escalation; does not imply ``ansible_become: yes``
+    set the user you become through privilege escalation; does not imply ``ansible_become: true``
 
 ansible_become_password
     set the privilege escalation password. See :ref:`playbooks_vault` for details on how to avoid having secrets in plain text
@@ -300,7 +300,7 @@ As of version 2.6, Ansible supports ``become`` for privilege escalation (enterin
 
 You must set the connection type to either ``connection: ansible.netcommon.network_cli`` or ``connection: ansible.netcommon.httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` documentation for details.
 
-You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
+You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: true`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
 
 If you see this error message, the task that generated it requires ``enable`` mode to succeed:
 

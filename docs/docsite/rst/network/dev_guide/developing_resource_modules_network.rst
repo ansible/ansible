@@ -551,7 +551,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
         file: "{{ test_case_to_run }}"
      vars:
         ansible_connection: local
-        ansible_become: no
+        ansible_become: false
      with_first_found: "{{ test_items }}"
      loop_control:
        loop_var: test_case_to_run

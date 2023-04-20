@@ -32,8 +32,8 @@ Connections available
 
     |enable_mode|         supported: |br|                             supported: |br|
 
-                          * use ``ansible_become: yes``               * ``httpapi``
-                            with ``ansible_become_method: enable``      uses ``ansible_become: yes``
+                          * use ``ansible_become: true``              * ``httpapi``
+                            with ``ansible_become_method: enable``      uses ``ansible_become: true``
                                                                         with ``ansible_become_method: enable``
 
     Returned Data Format  ``stdout[0].``                              ``stdout[0].messages[0].``
@@ -56,7 +56,7 @@ Example CLI ``group_vars/eos.yml``
    ansible_network_os: arista.eos.eos
    ansible_user: myuser
    ansible_password: !vault...
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
    ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
@@ -110,7 +110,7 @@ Example eAPI ``group_vars/eos.yml``
    ansible_network_os: arista.eos.eos
    ansible_user: myuser
    ansible_password: !vault...
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
    proxy_env:
      http_proxy: http://proxy.example.com:8080

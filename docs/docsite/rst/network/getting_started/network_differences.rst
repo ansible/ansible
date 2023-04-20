@@ -56,13 +56,13 @@ Several network platforms support privilege escalation, where certain tasks must
 Using ``become`` for privilege escalation
 -----------------------------------------
 
-Use the top-level Ansible parameter ``become: yes`` with ``become_method: enable`` to run a task, play, or playbook with escalated privileges on any network platform that supports privilege escalation. You must use either ``connection: network_cli`` or ``connection: httpapi`` with ``become: yes`` with ``become_method: enable``. If you are using ``network_cli`` to connect Ansible to your network devices, a ``group_vars`` file would look like:
+Use the top-level Ansible parameter ``become: true`` with ``become_method: enable`` to run a task, play, or playbook with escalated privileges on any network platform that supports privilege escalation. You must use either ``connection: network_cli`` or ``connection: httpapi`` with ``become: true`` with ``become_method: enable``. If you are using ``network_cli`` to connect Ansible to your network devices, a ``group_vars`` file would look like:
 
 .. code-block:: yaml
 
    ansible_connection: ansible.netcommon.network_cli
    ansible_network_os: cisco.ios.ios
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
 
 For more information, see :ref:`Become and Networks<become_network>`
