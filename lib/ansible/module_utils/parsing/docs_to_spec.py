@@ -6,6 +6,7 @@ __metaclass__ = type
 
 from collections.abc import Sequence
 
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.six import string_types
 # from ansible.module_utils._text import to_text
 
@@ -94,18 +95,35 @@ def get_restrictions_from_doc(restrictions):
     return reargs
 
 
+def validate_spec(spec, restrictions, task_args):
+
+    validator = ArgumentSpecValidator(spec, **restrictions)
+    return validator.validate(task_args)
+
+
+def validate_spec_from_plugin(plugin):
+    # take plugin object (name?), get docs and process with above
+    pass
+
+
 '''
 # example usage:
 
+        #prep
         argpsec = get_options_from_docs(doc.get('options', {}))
         restrictions = get_restrictions_from_doc(doc.get('restrictions', {}))
-        validator = ModuleArgumentSpecValidator(argspec, **restrictions)
-        validation_result = validator.validate(params)
 
-        final_params = validation_result.validated_parameters
+        # do
+        validated = validate_spec(argspec, restrictions, task_params)
 
-        no_log_values = validation_result._no_log_values
-        aliases = validation_result._aliases
+        # error handle
+        if valided.error_messages:
+            raise ActionFail({'msg': 'Validation of arguments failed:\n%s' % '\n'.join(validated.error_messages), 'argument_errors': validatec.error_messages})
+
+        # get info
+        final_params = valided.validated_parameters
+        no_log_values = valided._no_log_values
+        aliases = validated._aliases
 
 '''
 
