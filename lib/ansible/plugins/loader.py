@@ -30,7 +30,7 @@ from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PLUGIN_INSTANCE_CACHE
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
@@ -230,6 +230,8 @@ class PluginLoader:
             PATH_CACHE[class_name] = None
         if class_name not in PLUGIN_PATH_CACHE:
             PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
+        if class_name not in PLUGIN_INSTANCE_CACHE:
+            PLUGIN_INSTANCE_CACHE[class_name] = {}
 
         # hold dirs added at runtime outside of config
         self._extra_dirs = []
@@ -238,7 +240,10 @@ class PluginLoader:
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
-
+        try:
+            self._plugin_instance_cache = PLUGIN_INSTANCE_CACHE[class_name] if self.type == 'vars' else None
+        except ValueError:
+            self._plugin_instance_cache = None
         self._searched_paths = set()
 
     @property
@@ -257,11 +262,13 @@ class PluginLoader:
             MODULE_CACHE[self.class_name] = {}
             PATH_CACHE[self.class_name] = None
             PLUGIN_PATH_CACHE[self.class_name] = defaultdict(dict)
+            PLUGIN_INSTANCE_CACHE[self.class_name] = {}
 
             # reset internal caches
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
+            self._plugin_instance_cache = PLUGIN_INSTANCE_CACHE[self.class_name] if self.type == 'vars' else None
             self._searched_paths = set()
 
     def __setstate__(self, data):
@@ -278,6 +285,7 @@ class PluginLoader:
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')
         PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
+        PLUGIN_INSTANCE_CACHE[class_name] = data.get('PLUGIN_INSTANCE_CACHE')
 
         self.__init__(class_name, package, config, subdir, aliases, base_class)
         self._extra_dirs = data.get('_extra_dirs', [])
@@ -299,6 +307,7 @@ class PluginLoader:
             _searched_paths=self._searched_paths,
             PATH_CACHE=PATH_CACHE[self.class_name],
             PLUGIN_PATH_CACHE=PLUGIN_PATH_CACHE[self.class_name],
+            PLUGIN_INSTANCE_CACHE=PLUGIN_INSTANCE_CACHE[self.class_name],
         )
 
     def format_paths(self, paths):
@@ -861,8 +870,6 @@ class PluginLoader:
     def get_with_context(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
-        found_in_cache = True
-        class_only = kwargs.pop('class_only', False)
         collection_list = kwargs.pop('collection_list', None)
         if name in self.aliases:
             name = self.aliases[name]
@@ -870,6 +877,13 @@ class PluginLoader:
         if not plugin_load_context.resolved or not plugin_load_context.plugin_resolved_path:
             # FIXME: this is probably an error (eg removed plugin)
             return get_with_context_result(None, plugin_load_context)
+
+        return self.get_from_context(plugin_load_context, *args, **kwargs)
+
+    def get_from_context(self, plugin_load_context, *args, **kwargs):
+        ''' instantiates a plugin of the given name using arguments '''
+        found_in_cache = True
+        class_only = kwargs.pop('class_only', False)
 
         fq_name = plugin_load_context.resolved_fqcn
         if '.' not in fq_name:
@@ -917,7 +931,23 @@ class PluginLoader:
                 raise
 
         self._update_object(obj, name, path, redirected_names, fq_name)
+        if self._plugin_instance_cache is not None:
+            self._plugin_instance_cache[path] = (obj, plugin_load_context)
         return get_with_context_result(obj, plugin_load_context)
+
+    def get_from_cached_load_context(self, name, plugin_path):
+        plugin_load_context = None
+        found_in_cache = False
+
+        if plugin_path not in (self._plugin_instance_cache or {}):
+            return None, found_in_cache
+
+        plugin, plugin_load_context = self._plugin_instance_cache[plugin_path]
+        if not plugin.__class__.reuse_instance:
+            plugin = vars_loader.get_from_context(plugin_load_context).object
+        else:
+            found_in_cache = True
+        return plugin, found_in_cache
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
         ''' formats data to display debug info for plugin loading, also avoids processing unless really needed '''
@@ -1060,6 +1090,15 @@ class PluginLoader:
             else:
                 fqcn = f"ansible.builtin.{basename}"
             self._update_object(obj, basename, path, resolved=fqcn)
+            if self._plugin_instance_cache is not None:
+                context = PluginLoadContext()
+                context.resolved = True
+                context.original_name = basename
+                context.plugin_resolved_name = basename
+                context.plugin_resolved_path = path
+                context.plugin_resolved_collection = 'ansible.builtin' if fqcn.startswith('ansible.builtin.') else ''
+                context._resolved_fqcn = fqcn
+                self._plugin_instance_cache[path] = (obj, context)
             yield obj
 
 

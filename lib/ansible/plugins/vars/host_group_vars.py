@@ -78,7 +78,7 @@ def load_found_files(loader, data, found_files):
 class VarsModule(BaseVarsPlugin):
 
     REQUIRES_ENABLED = True
-    cache_instance = True
+    reuse_instance = True
 
     def get_vars(self, loader, path, entities, cache=True):
         ''' parses the inventory file '''

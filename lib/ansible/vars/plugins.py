@@ -17,39 +17,31 @@ from ansible.utils.vars import combine_vars
 
 display = Display()
 
-cached_vars_plugin_order = None
-cached_stateless_vars_plugins = {}
+load_vars_plugins = None
+has_stage_cache = {}
 
 
-def initialize_vars_plugin_caches():
-    auto = []
-    enabled = []
+def _load_vars_plugins():
+    global load_vars_plugins
+    load_vars_plugins = []
 
-    for auto_run_plugin in vars_loader.all(class_only=True):
+    for legacy_plugin in vars_loader.all():
         needs_enabled = False
-        if hasattr(auto_run_plugin, 'REQUIRES_ENABLED'):
-            needs_enabled = auto_run_plugin.REQUIRES_ENABLED
-        elif hasattr(auto_run_plugin, 'REQUIRES_WHITELIST'):
-            needs_enabled = auto_run_plugin.REQUIRES_WHITELIST
+        if hasattr(legacy_plugin, 'REQUIRES_ENABLED'):
+            needs_enabled = legacy_plugin.REQUIRES_ENABLED
+        elif hasattr(legacy_plugin, 'REQUIRES_WHITELIST'):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+            needs_enabled = legacy_plugin.REQUIRES_WHITELIST
         if needs_enabled:
             continue
-        # we can use _load_name here since we don't need to distinguish between builtin and legacy
-        # (builtins should have REQUIRES_ENABLED=True)
-        plugin_name = auto_run_plugin._load_name
-        auto.append(plugin_name)
-        if auto_run_plugin.cache_instance:
-            cached_stateless_vars_plugins[plugin_name] = auto_run_plugin
+        load_vars_plugins.append((legacy_plugin.ansible_name, legacy_plugin._original_path))
 
-    for enabled_plugin in C.VARIABLE_PLUGINS_ENABLED:
-        plugin = vars_loader.get(enabled_plugin)
-        enabled.append(enabled_plugin)
-        if plugin.cache_instance:
-            cached_stateless_vars_plugins[enabled_plugin] = plugin
-
-    global cached_vars_plugin_order
-    cached_vars_plugin_order = auto + enabled
+    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
+        plugin = vars_loader.get(plugin_name)
+        if not plugin:
+            continue
+        load_vars_plugins.append((plugin_name, plugin._original_path))
 
 
 def get_plugin_vars(loader, plugin, path, entities):
@@ -76,35 +68,38 @@ def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    if cached_vars_plugin_order is None:
-        initialize_vars_plugin_caches()
+    if load_vars_plugins is None:
+        _load_vars_plugins()
 
-    for plugin_name in cached_vars_plugin_order:
-        if plugin_name in cached_stateless_vars_plugins:
-            plugin = cached_stateless_vars_plugins[plugin_name]
-        else:
-            plugin = vars_loader.get(plugin_name)
+    for plugin_name, plugin_path in load_vars_plugins:
+        plugin, found_in_cache = vars_loader.get_from_cached_load_context(plugin_name, plugin_path)
+        if plugin is None:
+            continue
 
-        collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
         # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-        if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
+        if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
                 "This should be removed from the plugin %s." % plugin.ansible_name
             )
 
-        has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
+        if (plugin_name, plugin_path) not in has_stage_cache or not found_in_cache:
+            has_stage_cache[(plugin_name, plugin_path)] = hasattr(plugin, 'get_option') and plugin.has_option('stage')
+
+        has_stage = has_stage_cache[(plugin_name, plugin_path)]
+        allow_stage = None if not has_stage else plugin.get_option('stage')
 
         # if a plugin-specific setting has not been provided, use the global setting
         # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
-        use_global = (has_stage and plugin.get_option('stage') is None) or not has_stage
+        use_global = (has_stage and allow_stage is None) or not has_stage
 
         if use_global:
             if C.RUN_VARS_PLUGINS == 'demand' and stage == 'inventory':
                 continue
             elif C.RUN_VARS_PLUGINS == 'start' and stage == 'task':
                 continue
-        elif has_stage and plugin.get_option('stage') not in ('all', stage):
+        elif has_stage and allow_stage not in ('all', stage):
             continue
 
         data = combine_vars(data, get_plugin_vars(loader, plugin, path, entities))
