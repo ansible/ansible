@@ -544,7 +544,7 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
           - vars_plugin_staging
     '''
 
-At times a value provided by a vars plugin will contain unsafe values. The utility function `wrap_var` provided by `ansible.utils.unsafe_proxy` should be used to ensure that Ansible handles the variable and value correctly. The use cases for unsafe data is covered in `unsafe strings section of the playbook guide <https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_advanced_syntax.html#unsafe-or-raw-strings>`_.
+At times a value provided by a vars plugin will contain unsafe values. The utility function `wrap_var` provided by `ansible.utils.unsafe_proxy` should be used to ensure that Ansible handles the variable and value correctly. The use cases for unsafe data is covered in :ref:`unsafe_strings`.
 
 .. code-block:: python
 
