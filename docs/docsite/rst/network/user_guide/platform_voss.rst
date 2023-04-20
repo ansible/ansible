@@ -29,7 +29,7 @@ Connections available
 
     Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
-    |enable_mode|         supported: use ``ansible_become: yes``
+    |enable_mode|         supported: use ``ansible_become: true``
                           with ``ansible_become_method: enable``
 
     Returned Data Format  ``stdout[0].``
@@ -51,7 +51,7 @@ Example CLI ``group_vars/voss.yml``
    ansible_connection: ansible.netcommon.network_cli
    ansible_network_os: community.network.voss
    ansible_user: myuser
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
    ansible_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
