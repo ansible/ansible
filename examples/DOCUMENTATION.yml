@@ -5,7 +5,7 @@
 # See https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html for more information
 #
 module: modulename
-short_description: This is a sentence describing the module.
+short_description: This is a short phrase describing the module
 description:
     - Longer description of the module.
     - You might include instructions.
