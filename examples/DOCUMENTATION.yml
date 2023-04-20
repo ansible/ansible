@@ -18,7 +18,7 @@ options:
         description:
             - Description of the options goes here.
             - Must be written in sentences.
-        required: true 
+        required: true or false
         default: a string or the word null
         choices:
           - enable
@@ -31,6 +31,6 @@ requirements:
     - like the factor package
     - zypper >= 1.0        
 seealso: 
-   - specify references to other modules
+   - specify references to other modules, useful guides, and so on
 notes:
     - other things consumers of your module should know
