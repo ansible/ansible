@@ -1148,6 +1148,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 display.debug('ANSIBALLZ: Lock acquired: %s' % id(lock))
                 # Check that no other process has created this while we were
                 # waiting for the lock
+                # moved now from line 1247
+                now = datetime.datetime.utcnow()
                 if not os.path.exists(cached_module_filename):
                     display.debug('ANSIBALLZ: Creating module')
                     # Create the module zip data
@@ -1241,7 +1243,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         else:
             coverage = ''
 
-        now = datetime.datetime.utcnow()
+        # moved to line 1152 to try and fix issue #80089
+        # now = datetime.datetime.utcnow()
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
