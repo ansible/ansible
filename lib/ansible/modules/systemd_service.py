@@ -90,7 +90,7 @@ notes:
     - Before 2.4 you always required C(name).
     - Globs are not supported in name, i.e C(postgres*.service).
     - The service names might vary by specific OS/distribution
-    - The order of execution when having mulitple properties is to first enable/disable, then mask/unmask and then deal with service state.
+    - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with service state.
       It has been reported that systemctl can behave differently depending on the order of operations if you do the same manually.
 requirements:
     - A system managed by systemd.
