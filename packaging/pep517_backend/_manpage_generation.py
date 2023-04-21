@@ -2,16 +2,17 @@
 
 import os
 import typing as t
-import subprocess
 import sys
 from configparser import ConfigParser
-from functools import lru_cache
+from functools import lru_cache, partial
 from importlib import import_module
-from io import StringIO
 from pathlib import Path
 
-from docutils.core import publish_file
-from docutils.writers import manpage
+from docutils.core import publish_string
+from jinja2 import Template
+
+
+_convert_rst_to_manpage_text = partial(publish_string, writer_name='manpage')
 
 
 @lru_cache(maxsize=1)
@@ -19,6 +20,13 @@ def _make_in_tree_ansible_importable() -> None:
     """Add the library directory to module lookup paths."""
     lib_path = str(Path.cwd() / 'lib/')
     sys.path.insert(0, lib_path)  # NOTE: for the current runtime session
+
+
+@lru_cache(maxsize=1)
+def _make_in_tree_sphinx_extension_importable() -> None:
+    """Add the Sphinx extension directory to module lookup paths."""
+    sphinx_ext_path = str(Path.cwd() / 'docs' / 'docsite' / '_ext')
+    sys.path.insert(0, sphinx_ext_path)
 
 
 @lru_cache(maxsize=1)
@@ -34,49 +42,67 @@ def _get_package_distribution_version() -> str:
     return getattr(import_module(version_mod_str), version_var_str)
 
 
-def _generate_rst_in_templates(target_dir: os.PathLike) -> t.Iterable[Path]:
-    """Create ``*.1.rst.in`` files out of CLI Python modules."""
-    generate_man_cmd = (
-        sys.executable,
-        'hacking/build-ansible.py',
-        'generate-man',
-        '--template-file=docs/templates/man.j2',
-        f'--output-dir={target_dir !s}',
-        '--output-format=man',
-        *Path('lib/ansible/cli/').glob('*.py'),
-    )
-    subprocess.check_call(tuple(map(str, generate_man_cmd)))
-    return Path(target_dir).glob('*.1.rst.in')
+@lru_cache(maxsize=1)
+def _load_jinja2_template() -> Template:
+    _make_in_tree_sphinx_extension_importable()
+    templates_dir_path = import_module(
+        'cli_manpages._paths',
+        'cli_manpages',
+    ).TEMPLATES_DIR_PATH
+    return Template((templates_dir_path / 'man.j2').read_text())
 
 
-def _convert_rst_in_template_to_manpage(
-        rst_doc_template: str,
-        destination_path: os.PathLike,
-        version_number: str,
-) -> None:
-    """Render pre-made ``*.1.rst.in`` templates into manpages.
+@lru_cache(maxsize=1)
+def _lookup_cli_bin_names() -> t.List[str]:
+    _make_in_tree_sphinx_extension_importable()
+    lookup_cli_bin_names = import_module(
+        'cli_manpages._argparse_extractors',
+        'cli_manpages',
+    ).lookup_cli_bin_names
+    return lookup_cli_bin_names()
 
-    This includes pasting the hardcoded version into the resulting files.
-    The resulting ``in``-files are wiped in the process.
-    """
-    templated_rst_doc = rst_doc_template.replace('%VERSION%', version_number)
 
-    with StringIO(templated_rst_doc) as in_mem_rst_doc:
-        publish_file(
-            source=in_mem_rst_doc,
-            destination_path=destination_path,
-            writer=manpage.Writer(),
-        )
+@lru_cache(maxsize=1)
+def _get_cli_jinja2_context_generator() -> t.Callable:
+    _make_in_tree_sphinx_extension_importable()
+    return import_module(
+        'cli_manpages._argparse_extractors',
+        'cli_manpages',
+    ).generate_cli_jinja2_context
+
+
+def _render_manpage_rst_from_j2_template(
+        jinja2_template: Template,
+        cli_bin_name: str,
+        ansible_version: str,
+) -> str:
+    generate_cli_jinja2_context = _get_cli_jinja2_context_generator()
+    jinja2_ctx = generate_cli_jinja2_context(cli_bin_name)
+    manpage_document = jinja2_template.render({
+        'ansible_core_version': ansible_version,
+        **jinja2_ctx,
+    })
+    return manpage_document
 
 
 def generate_manpages(target_dir: os.PathLike) -> None:
     """Generate all manpages into a given directory."""
-    Path(target_dir).mkdir(exist_ok=True, parents=True)
-    version_number = _get_package_distribution_version()
-    for rst_in in _generate_rst_in_templates(target_dir):
-        _convert_rst_in_template_to_manpage(
-            rst_doc_template=rst_in.read_text(),
-            destination_path=rst_in.with_suffix('').with_suffix(''),
-            version_number=version_number,
+    manpages_dir_path = Path(target_dir)
+
+    cli_bin_name_list = _lookup_cli_bin_names()
+    jinja2_template = _load_jinja2_template()
+    ansible_version = _get_package_distribution_version()
+    for cli_bin_name in cli_bin_name_list:
+        manpage_name = f'{cli_bin_name}.1'
+        print(
+            f'Rendering {manpage_name} RST template in-memory...',
+            file=sys.stderr,
         )
-        rst_in.unlink()
+        manpage_rst = _render_manpage_rst_from_j2_template(
+            jinja2_template, cli_bin_name, ansible_version,
+        )
+        print(f'Making {manpage_name} manpage in-memory...', file=sys.stderr)
+        manpage_document = _convert_rst_to_manpage_text(manpage_rst)
+        print(f'Writing {manpage_name} to disk...', file=sys.stderr)
+        manpages_dir_path.mkdir(exist_ok=True, parents=True)
+        (manpages_dir_path / manpage_name).write_bytes(manpage_document)

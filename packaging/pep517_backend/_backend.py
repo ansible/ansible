@@ -90,8 +90,8 @@ def get_requires_for_build_sdist(
     build_manpages_requested = True  # FIXME: Once pypa/build#559 is addressed.
 
     manpage_build_deps = [
-        'docutils',  # provides `rst2man`
-        'jinja2',  # used in `hacking/build-ansible.py generate-man`
+        'docutils',  # provides API to convert RST to manpages
+        'jinja2',  # used in `_manpage_generation.py`
         'pyyaml',  # needed for importing in-tree `ansible-core` from `lib/`
     ] if build_manpages_requested else []
 
