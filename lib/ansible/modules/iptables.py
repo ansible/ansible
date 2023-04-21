@@ -241,6 +241,7 @@ options:
     type: list
     elements: str
     default: []
+    version_added: "2.16"
   to_ports:
     description:
       - This specifies a destination port or range of ports to use, without
