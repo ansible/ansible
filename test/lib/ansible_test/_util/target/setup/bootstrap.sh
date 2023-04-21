@@ -73,7 +73,7 @@ pip_install() {
 
     while true; do
         # shellcheck disable=SC2086
-        "${python_interpreter}" -m pip install --disable-pip-version-check ${pip_packages} \
+        "${python_interpreter}" -m pip install -v --disable-pip-version-check ${pip_packages} \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10

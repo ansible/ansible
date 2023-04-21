@@ -141,7 +141,7 @@ def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
             write_text_file(os.path.join(tempdir, path), content, True)
             options.extend(['-c', path])
 
-        command = [sys.executable, pip, 'install'] + options
+        command = [sys.executable, pip, 'install', '-v'] + options
 
         env = common_pip_environment()
 
