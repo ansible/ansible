@@ -3,7 +3,6 @@ PLUGIN_FORMATTER=../../hacking/build-ansible.py docs-build
 TESTING_FORMATTER=../bin/testing_formatter.sh
 KEYWORD_DUMPER=../../hacking/build-ansible.py document-keywords
 CONFIG_DUMPER=../../hacking/build-ansible.py document-config
-GENERATE_CLI=../../hacking/build-ansible.py generate-man
 COLLECTION_DUMPER=../../hacking/build-ansible.py collection-meta
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
@@ -69,12 +68,12 @@ docs: htmldocs
 coredocs: core_htmldocs
 
 
-generate_rst: collections_meta config cli keywords plugins testing
-core_generate_rst: collections_meta config cli keywords core_plugins testing
+generate_rst: collections_meta config keywords plugins testing
+core_generate_rst: collections_meta config keywords core_plugins testing
 
 # At the moment localizing the plugins and collections is not required for the ongoing
 # localisation effort. It will come at a later time.
-gettext_generate_rst: collections_meta config cli keywords testing
+gettext_generate_rst: collections_meta config keywords testing
 
 # The following symlinks are necessary to produce two different docsets
 # from the same set of rst files (Ansible the package docs, and core docs).
@@ -178,7 +177,6 @@ clean:
 	rm -f rst/reference_appendices/config.rst
 	rm -f rst/reference_appendices/playbooks_keywords.rst
 	rm -f rst/dev_guide/collections_galaxy_meta.rst
-	rm -f rst/cli/*.rst
 	for filename in `ls rst/collections/` ; do \
 		if test x"$$filename" != x'all_plugins.rst' ; then \
 			rm -rf "rst/collections/$$filename"; \
@@ -194,11 +192,6 @@ clean:
 
 collections_meta: ../templates/collections_galaxy_meta.rst.j2
 	$(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/dev_guide/ $(EXTRA_COLLECTION_META_ARGS) ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
-
-# TODO: make generate_man output dir cli option
-cli:
-	mkdir -p rst/cli
-	$(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst $(EXTRA_CLI_DUMPER_ARGS) ../../lib/ansible/cli/*.py
 
 keywords: ../templates/playbooks_keywords.rst.j2
 	$(KEYWORD_DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ ../../lib/ansible/keyword_desc.yml $(EXTRA_KEYWORD_DUMPER_ARGS)
