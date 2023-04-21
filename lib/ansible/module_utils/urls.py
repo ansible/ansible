@@ -37,6 +37,7 @@ __metaclass__ = type
 
 import atexit
 import base64
+import email.encoders
 import email.mime.multipart
 import email.mime.nonmultipart
 import email.mime.application
@@ -1712,6 +1713,7 @@ def prepare_multipart(fields):
             filename = None
         elif isinstance(value, Mapping):
             filename = value.get('filename')
+            multipart_encoding_str = value.get('multipart_encoding') or 'base64'
             content = value.get('content')
             if not any((filename, content)):
                 raise ValueError('at least one of filename or content must be provided')
@@ -1724,17 +1726,13 @@ def prepare_multipart(fields):
                     mime = 'application/octet-stream'
             main_type, sep, sub_type = mime.partition('/')
 
-            multipart_encoding_str = value.get("multipart_encoding")
-            if not multipart_encoding_str:
-                multipart_encoding_str = "base64"
         else:
             raise TypeError(
                 'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
             )
 
-        multipart_encoding = set_multipart_encoding(multipart_encoding_str)
-
         if not content and filename:
+            multipart_encoding = set_multipart_encoding(multipart_encoding_str)
             with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
                 part = email.mime.application.MIMEApplication(f.read(), _encoder=multipart_encoding)
                 del part['Content-Type']
@@ -1790,24 +1788,23 @@ def prepare_multipart(fields):
     )
 
 
-#
-# Module-related functions
-#
-def set_multipart_encoding(encoding="base64"):
+def set_multipart_encoding(encoding):
     """Takes an string with specific encoding type for multipart data.
     Will return reference to function from email.encoders library.
-    If given string is empty or related key doesn't exist
-    it will resolve to default base64 based encoding"""
-    from email import encoders
+    If given string key doesn't exist it will raise a ValueError"""
     encoders_dict = {
-        "base64": encoders.encode_base64,
-        "7or8bit": encoders.encode_7or8bit
+        "base64": email.encoders.encode_base64,
+        "7or8bit": email.encoders.encode_7or8bit
     }
     if encoders_dict.get(encoding):
         return encoders_dict.get(encoding)
     else:
-        return encoders_dict.get("base64")
+        raise ValueError("multipart_encoding must be one of %s." % repr(encoders_dict.keys()))
 
+
+#
+# Module-related functions
+#
 
 def basic_auth_header(username, password):
     """Takes a username and password and returns a byte string suitable for
