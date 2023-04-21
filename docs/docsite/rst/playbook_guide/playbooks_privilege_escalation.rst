@@ -91,7 +91,7 @@ For example, if you want to run all tasks as ``root`` on a server named ``webser
 
 .. code-block:: text
 
-    webserver ansible_user=manager ansible_become=yes
+    webserver ansible_user=manager ansible_become=true
 
 .. note::
     The variables defined above are generic for all become plugins but plugin specific ones can also be set instead.
