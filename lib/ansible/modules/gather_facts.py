@@ -26,6 +26,8 @@ options:
             - A toggle that controls if the fact modules are executed in parallel or serially and in order.
               This can guarantee the merge order of module facts at the expense of performance.
             - By default it will be true if more than one fact module is used.
+            - For low cost/delay fact modules parallelism overhead might end up meaning the whole process takes longer.
+              Test your specific case to see if it is a speed improvement or not.
         type: bool
 attributes:
     action:
