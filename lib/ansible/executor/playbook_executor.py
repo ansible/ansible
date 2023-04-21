@@ -265,7 +265,7 @@ class PlaybookExecutor:
         if context.CLIARGS['start_at_task'] and not self._tqm._start_at_done:
             display.error(
                 "No matching task \"%s\" found."
-                " Note: --start-at-task can only follow static includes."
+                " Note: --start-at-task can only follow dynamic includes."
                 % context.CLIARGS['start_at_task']
             )
 
