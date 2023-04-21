@@ -23,7 +23,7 @@ Become directives
 You can set the directives that control ``become`` at the play or task level. You can override these by setting connection variables, which often differ from one host to another. These variables and directives are independent. For example, setting ``become_user`` does not set ``become``.
 
 become
-    set to ``yes`` to activate privilege escalation.
+    set to ``true`` to activate privilege escalation.
 
 become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: true``, to allow it to be set at host level. Default value is ``root``.
