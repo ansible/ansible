@@ -150,6 +150,7 @@ test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored co
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
+test/integration/targets/gathering_facts/library/slow shebang
 test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
 test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
