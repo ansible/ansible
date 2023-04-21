@@ -1,9 +1,9 @@
 """Tests for validate-modules regexes."""
 from __future__ import annotations
 
-import mock
 import pathlib
 import sys
+from unittest import mock
 
 import pytest
 
