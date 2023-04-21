@@ -75,7 +75,6 @@ def test_prepare_multipart():
     assert headers.get_content_type() == 'multipart/form-data'
     boundary = headers.get_boundary()
     assert boundary is not None
-    #print(b_data)
     with open(multipart, 'rb') as f:
         b_expected = f.read().replace(fixture_boundary, boundary.encode())
 
