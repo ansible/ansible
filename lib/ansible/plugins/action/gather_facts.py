@@ -69,7 +69,7 @@ class ActionModule(ActionBase):
         # on conflict the last plugin processed wins, but try to do deep merge and append to lists.
         return merge_hash(result, filtered_res, list_merge='append_rp')
 
-    def run(self, tmp: str = None, task_vars: dict[str, t.Any] = None) -> dict[str, t.Any]:
+    def run(self, tmp: t.Optional[str] = None, task_vars: t.Optional[dict[str, t.Any]] = None) -> dict[str, t.Any]:
 
         self._supports_check_mode = True
 
