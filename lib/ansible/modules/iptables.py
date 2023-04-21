@@ -234,6 +234,13 @@ options:
     elements: str
     default: []
     version_added: "2.11"
+  source_ports:
+    description:
+      - This specifies multiple source port numbers or port ranges to match in the multiport module.
+      - It can only be used in conjunction with the protocols tcp, udp, udplite, dccp and sctp.
+    type: list
+    elements: str
+    default: []
   to_ports:
     description:
       - This specifies a destination port or range of ports to use, without
@@ -626,6 +633,8 @@ def construct_rule(params):
     append_param(rule, params['to_destination'], '--to-destination', False)
     append_match(rule, params['destination_ports'], 'multiport')
     append_csv(rule, params['destination_ports'], '--dports')
+    append_match(rule, params['source_ports'], 'multiport')
+    append_csv(rule, params['source_ports'], '--sports')
     append_param(rule, params['to_source'], '--to-source', False)
     append_param(rule, params['goto'], '-g', False)
     append_param(rule, params['in_interface'], '-i', False)
@@ -801,6 +810,7 @@ def main():
             fragment=dict(type='str'),
             set_counters=dict(type='str'),
             source_port=dict(type='str'),
+            source_ports=dict(type='list', elements='str', default=[]),
             destination_port=dict(type='str'),
             destination_ports=dict(type='list', elements='str', default=[]),
             to_ports=dict(type='str'),
