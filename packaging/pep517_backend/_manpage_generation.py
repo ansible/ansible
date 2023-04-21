@@ -5,6 +5,7 @@ import typing as t
 import subprocess
 import sys
 from configparser import ConfigParser
+from functools import lru_cache
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
@@ -13,12 +14,14 @@ from docutils.core import publish_file
 from docutils.writers import manpage
 
 
+@lru_cache(maxsize=1)
 def _make_in_tree_ansible_importable() -> None:
     """Add the library directory to module lookup paths."""
     lib_path = str(Path.cwd() / 'lib/')
     sys.path.insert(0, lib_path)  # NOTE: for the current runtime session
 
 
+@lru_cache(maxsize=1)
 def _get_package_distribution_version() -> str:
     """Retrieve the current version number from setuptools config."""
     setup_cfg_path = Path.cwd() / 'setup.cfg'
