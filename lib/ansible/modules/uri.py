@@ -62,6 +62,8 @@ options:
         or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
       - If C(body_format) is set to 'form-multipart' it will convert a dictionary
         into 'multipart/form-multipart' body. (Added in v2.10)
+      - 'multipart_encoding' for 'form-multipart' files allows to change multipart file encoding
+        (Added in v2.16)
     type: raw
   body_format:
     description:
