@@ -92,7 +92,7 @@ class ActionModule(ActionBase):
         else:
             parallel = boolean(parallel)
 
-        if parallel:
+        if not parallel:
             # serially execute each module
             for fact_module in modules:
                 # just one module, no need for fancy async
@@ -107,7 +107,7 @@ class ActionModule(ActionBase):
 
             self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
-            # do it async
+            # do it async, aka parallel
             jobs = {}
             for fact_module in modules:
                 mod_args = self._get_module_args(fact_module, task_vars)
