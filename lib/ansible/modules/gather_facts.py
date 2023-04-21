@@ -50,6 +50,8 @@ attributes:
 notes:
     - This is mostly a wrapper around other fact gathering modules.
     - Options passed into this action must be supported by all the underlying fact modules configured.
+    - If using O(gather_timeout) and parallel execution, it will limit the total execution time of
+      modules that do not accept O(gather_timeout) themselves.
     - Facts returned by each module will be merged, conflicts will favor 'last merged'.
       Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:
