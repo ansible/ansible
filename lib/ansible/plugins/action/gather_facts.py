@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import os
 import time
+import typing as t
 
 from ansible import constants as C
 from ansible.executor.module_common import get_action_args_with_defaults
@@ -16,7 +17,7 @@ from ansible.utils.vars import merge_hash
 
 class ActionModule(ActionBase):
 
-    def _get_module_args(self, fact_module, task_vars):
+    def _get_module_args(self, fact_module: str, task_vars: dict[str, t.Any]) -> dict[str, t.Any]:
 
         mod_args = self._task.args.copy()
 
@@ -58,7 +59,7 @@ class ActionModule(ActionBase):
 
         return mod_args
 
-    def _combine_task_result(self, result, task_result):
+    def _combine_task_result(self, result: dict[str, t.Any], task_result: dict[str, t.Any]) -> dict[str, t.Any]:
         filtered_res = {
             'ansible_facts': task_result.get('ansible_facts', {}),
             'warnings': task_result.get('warnings', []),
@@ -68,7 +69,7 @@ class ActionModule(ActionBase):
         # on conflict the last plugin processed wins, but try to do deep merge and append to lists.
         return merge_hash(result, filtered_res, list_merge='append_rp')
 
-    def run(self, tmp=None, task_vars=None):
+    def run(self, tmp: str = None, task_vars: dict[str, t.Any] = None) -> dict[str, t.Any]:
 
         self._supports_check_mode = True
 
@@ -79,7 +80,6 @@ class ActionModule(ActionBase):
         modules = list(C.config.get_config_value('FACTS_MODULES', variables=task_vars))
 
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-        print(task_vars.pop('ansible_facts_parallel', None), self._task.args.pop('parallel', None))
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
