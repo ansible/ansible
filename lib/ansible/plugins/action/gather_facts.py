@@ -122,7 +122,8 @@ class ActionModule(ActionBase):
             for fact_module in modules:
                 mod_args = self._get_module_args(fact_module, task_vars)
 
-                #  if module does not handle timeout, use timeout to handle module
+                #  if module does not handle timeout, use timeout to handle module, hijack async_val as this is what async_wrapper uses
+                # TODO: make this action compain abuot async/async setitngs, use parallel option instead .. or remove parallel in favor of async settings?
                 if timeout and 'gather_timeout' not in mod_args:
                     self._task.async_val = timeout
                     async_val = self._task.async_val
@@ -152,8 +153,9 @@ class ActionModule(ActionBase):
                 else:
                     time.sleep(0.5)
 
-        if async_val != 0:
-            self._task.async_val = async_val
+            # restore value for post processing
+            if async_val != 0:
+                self._task.async_val = async_val
 
         if skipped:
             result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
