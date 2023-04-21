@@ -12,27 +12,30 @@ from docutils.core import publish_string
 from jinja2 import Template
 
 
+PROJECT_DIR_PATH = Path(__file__).parents[2]
+
+
 _convert_rst_to_manpage_text = partial(publish_string, writer_name='manpage')
 
 
 @lru_cache(maxsize=1)
 def _make_in_tree_ansible_importable() -> None:
     """Add the library directory to module lookup paths."""
-    lib_path = str(Path.cwd() / 'lib/')
+    lib_path = str(PROJECT_DIR_PATH / 'lib/')
     sys.path.insert(0, lib_path)  # NOTE: for the current runtime session
 
 
 @lru_cache(maxsize=1)
 def _make_in_tree_sphinx_extension_importable() -> None:
     """Add the Sphinx extension directory to module lookup paths."""
-    sphinx_ext_path = str(Path.cwd() / 'docs' / 'docsite' / '_ext')
+    sphinx_ext_path = str(PROJECT_DIR_PATH / 'docs' / 'docsite' / '_ext')
     sys.path.insert(0, sphinx_ext_path)
 
 
 @lru_cache(maxsize=1)
 def _get_package_distribution_version() -> str:
     """Retrieve the current version number from setuptools config."""
-    setup_cfg_path = Path.cwd() / 'setup.cfg'
+    setup_cfg_path = PROJECT_DIR_PATH / 'setup.cfg'
     setup_cfg = ConfigParser()
     setup_cfg.read_string(setup_cfg_path.read_text())
     cfg_version = setup_cfg.get('metadata', 'version')
