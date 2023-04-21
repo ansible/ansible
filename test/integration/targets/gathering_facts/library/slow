@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sleep 6
+sleep 10
 
 echo '{
     "changed": false,
