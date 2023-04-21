@@ -18,7 +18,7 @@ include examples/ansible.cfg
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
 recursive-include licenses *.txt
-recursive-include packaging *.py
+recursive-include packaging *.j2 *.py
 recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.txt
 recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md

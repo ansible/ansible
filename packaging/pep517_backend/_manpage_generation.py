@@ -47,12 +47,13 @@ def _get_package_distribution_version() -> str:
 
 @lru_cache(maxsize=1)
 def _load_jinja2_template() -> Template:
-    _make_in_tree_sphinx_extension_importable()
-    templates_dir_path = import_module(
-        'cli_manpages._paths',
-        'cli_manpages',
-    ).TEMPLATES_DIR_PATH
-    return Template((templates_dir_path / 'man.j2').read_text())
+    manpage_rst_template_path = (
+        PROJECT_DIR_PATH
+        / 'packaging'
+        / 'pep517_backend'
+        / '_manpage_rst_template.j2'
+    )
+    return Template(manpage_rst_template_path.read_text())
 
 
 @lru_cache(maxsize=1)
