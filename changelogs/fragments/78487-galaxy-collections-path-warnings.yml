@@ -1,0 +1,6 @@
+---
+minor_changes:
+- >-
+  Add ``GALAXY_COLLECTIONS_PATH_WARNING`` option to disable the warning
+  given by ``ansible-galaxy collection install`` when installing a collection
+  to a path that isn't in the configured collection paths.

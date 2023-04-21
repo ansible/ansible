@@ -1366,6 +1366,15 @@ GALAXY_COLLECTION_SKELETON_IGNORE:
   ini:
   - {key: collection_skeleton_ignore, section: galaxy}
   type: list
+GALAXY_COLLECTIONS_PATH_WARNING:
+  name: "ansible-galaxy collection install colections path warnings"
+  description: "whether ``ansible-galaxy collection install`` should warn about ``--collections-path`` missing from configured :ref:`collections_paths`"
+  default: true
+  type: bool
+  env: [{name: ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING}]
+  ini:
+    - {key: collections_path_warning, section: galaxy}
+  version_added: "2.16"
 # TODO: unused?
 #GALAXY_SCMS:
 #  name: Galaxy SCMS
