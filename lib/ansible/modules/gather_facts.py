@@ -33,8 +33,8 @@ attributes:
     action:
         support: full
     async:
-        details: multiple modules can be executed in parallel or serially, but the action itself will not be async
-        support: partial
+        details: while this action does not support the task 'async' kewyords it can do it's own parallel processing using the C(parallel) option.
+        support: None
     bypass_host_loop:
         support: none
     check_mode:
