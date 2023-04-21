@@ -1,0 +1,2 @@
+bugfixes:
+  - "``pkg_mgr`` - fix the default dnf version detection"
