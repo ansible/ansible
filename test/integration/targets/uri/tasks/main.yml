@@ -551,6 +551,9 @@
         content: text based file content
         filename: fake.txt
         mime_type: text/plain
+      file3:
+        filename: formdata.txt
+        multipart_encoding: '7or8bit'
       text_form_field1: value1
       text_form_field2:
         content: value2
@@ -562,6 +565,7 @@
     that:
       - multipart.json.files.file1 == '_multipart/form-data_\n'
       - multipart.json.files.file2 == 'text based file content'
+      - multipart.json.files.file3 == '_multipart/form-data_\r\n'
       - multipart.json.form.text_form_field1 == 'value1'
       - multipart.json.form.text_form_field2 == 'value2'
 
