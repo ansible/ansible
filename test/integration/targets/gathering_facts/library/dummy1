@@ -3,9 +3,11 @@
 CANARY="${OUTPUT_DIR}/canary.txt"
 
 echo "$0" >> "${CANARY}"
+LINES=0
 
-until [ `wc -l "${CANARY}" |cut -f 1 -d' '` -gt 2 ]
+until test "${LINES}" -gt 2
 do
+	LINES=`wc -l "${CANARY}" |awk '{print $1}'`
 	sleep 1
 done
 
