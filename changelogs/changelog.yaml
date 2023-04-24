@@ -1190,6 +1190,17 @@ releases:
     - ansible_eval_concat-remove-redundant-unsafe-wrap.yml
     - fix-manifest.yml
     release_date: '2023-03-21'
+  2.14.5:
+    changes:
+      release_summary: '| Release Date: 2023-04-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.5_summary.yaml
+    release_date: '2023-04-24'
   2.14.5rc1:
     changes:
       bugfixes:
