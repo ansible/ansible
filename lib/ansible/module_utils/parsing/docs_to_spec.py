@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from collections.abc import Sequence
+from ansible.module_utils.common._collections_compat import Sequence
 
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.six import string_types
