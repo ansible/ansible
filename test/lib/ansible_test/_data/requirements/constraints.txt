@@ -45,6 +45,7 @@ MarkupSafe < 2.0.0 ; python_version < '3.6' # MarkupSafe >= 2.0.0. requires Pyth
 MarkupSafe < 2.1.0 ; python_version >= '3.6' # MarkupSafe 2.1.0 and later require setuptools 39.2+ or installation from a wheel, which not all environments support
 botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
 setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require python 3.5 or later
+setuptools <= 67.7.2 ; python_version >= '3.5' # avoid future breaking changes with setuptools
 cffi != 1.14.4 # Fails on systems with older gcc. Should be fixed in the next release. https://foss.heptapod.net/pypy/cffi/-/issues/480
 websocket-client < 1 ; python_version < '3'  # version 1.0.0 drops support for python 2
 certifi < 2020.4.5.2 ; python_version < '3'  # version 2020.4.5.2 drops support for python 2
