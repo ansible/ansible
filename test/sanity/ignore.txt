@@ -148,6 +148,7 @@ test/integration/targets/collections_relative_imports/collection_root/ansible_co
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/gathering_facts/library/bogus_facts shebang
+test/integration/targets/gathering_facts/library/dummy1 shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
 test/integration/targets/gathering_facts/library/slow shebang
