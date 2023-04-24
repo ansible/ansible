@@ -1358,6 +1358,17 @@ releases:
     - v2.13.8rc1_summary.yaml
     - validate-module-ps-cmdlet.yml
     release_date: '2023-02-20'
+  2.13.9:
+    changes:
+      release_summary: '| Release Date: 2023-04-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 2.13.9_summary.yaml
+    release_date: '2023-04-24'
   2.13.9rc1:
     changes:
       breaking_changes:
