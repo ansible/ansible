@@ -1,0 +1,17 @@
+#!/bin/sh
+
+CANARY="${OUTPUT_DIR}/canary.txt"
+
+echo "$0" >> "${CANARY}"
+
+until [ `wc -l "${CANARY}" |cut -f 1 -d' '` -gt 2 ]
+do
+	sleep 1
+done
+
+echo '{
+    "changed": false,
+    "ansible_facts": {
+        "dummy": "$0"
+    }
+}'
