@@ -34,7 +34,7 @@ ansible localhost -m debug -a var=playbook_dir --playbook-dir=/doesnotexist/tmp 
 env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/doesnotexist/tmp"'
 
 # test adhoc callback triggers
-ANSIBLE_STDOUT_CALLBACK=callback_debug ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible --playbook-dir . testhost -i ../../inventory -m ping | grep -E '^v2_' | diff -u adhoc-callback.stdout -
+ANSIBLE_CALLBACK_PLUGINS=../support-callback_plugins/callback_plugins ANSIBLE_STDOUT_CALLBACK=callback_debug ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible --playbook-dir . testhost -i ../../inventory -m ping | grep -E '^v2_' | diff -u adhoc-callback.stdout -
 
 # CB_WANTS_IMPLICIT isn't anything in Ansible itself.
 # Our test cb plugin just accepts it. It lets us avoid copypasting the whole

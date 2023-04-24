@@ -947,7 +947,7 @@ class StrategyBase:
                 # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.handler_notifications):
                     for handler in self.search_handlers_by_notification(notification, iterator):
-                        if not handler.notify_host(target_host):
+                        if handler.notify_host(target_host):
                             # NOTE even with notifications deduplicated this can still happen in case of handlers being
                             # notified multiple times using different names, like role name or fqcn
                             self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)

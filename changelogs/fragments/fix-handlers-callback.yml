@@ -1,0 +1,2 @@
+bugfixes:
+  - "handlers - fix ``v2_playbook_on_notify`` callback not being called when notifying handlers"
