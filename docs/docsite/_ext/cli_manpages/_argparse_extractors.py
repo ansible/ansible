@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import typing as t
-from argparse import _StoreAction
+from argparse import _ArgumentGroup, _StoreAction, ArgumentParser
 from functools import lru_cache
 from importlib import import_module
 from itertools import chain
@@ -13,7 +13,7 @@ from ._paths import PROJECT_BIN_DIR_PATH
 
 
 # from https://www.python.org/dev/peps/pep-0257/
-def trim_docstring(docstring):
+def trim_docstring(docstring: t.Optional[str]) -> str:
     if not docstring:
         return ''
     # Convert tabs to spaces (following the normal Python rules)
@@ -39,7 +39,9 @@ def trim_docstring(docstring):
     return '\n'.join(trimmed)
 
 
-def get_normalized_options_from_actions(optlist):
+def get_normalized_options_from_actions(
+        optlist: t.Iterable,
+) -> t.List[t.Dict[str, t.Any]]:
     """Retrieve actual options from list."""
     opts = []
     for opt in optlist:
@@ -56,7 +58,9 @@ def get_normalized_options_from_actions(optlist):
     return opts
 
 
-def extract_unique_action_groups(parser):
+def extract_unique_action_groups(
+        parser: ArgumentParser,
+) -> t.List[_ArgumentGroup]:
     """Get action groups out of the parser."""
     action_groups = []
     for action_group in parser._action_groups:
@@ -70,7 +74,7 @@ def extract_unique_action_groups(parser):
     return action_groups
 
 
-def traverse_cli_options(parser):
+def traverse_cli_options(parser: ArgumentParser) -> t.List[t.Dict[str, t.Any]]:
     """Extract options list out of a CLI parser."""
     results = []
     for option_group in extract_unique_action_groups(parser)[1:]:
@@ -84,7 +88,10 @@ def traverse_cli_options(parser):
 
 
 def traverse_cli_actions(
-        cli, shared_opt_names, parser=None, initial_depth=1,
+        cli: t.Any,  # NOTE: the actual type isn't importable at this point
+        shared_opt_names: t.Set[str],
+        parser: t.Optional[ArgumentParser] = None,
+        initial_depth: int = 1,
 ):
     """Extract actions out of a CLI parser recursively.
 
@@ -136,7 +143,7 @@ def traverse_cli_actions(
 
 
 @lru_cache(maxsize=1)
-def lookup_cli_bin_names():
+def lookup_cli_bin_names() -> t.List[str]:
     """List the installable CLI entrypoints."""
     return [
         bin_path.name for bin_path in PROJECT_BIN_DIR_PATH.iterdir()
@@ -144,7 +151,7 @@ def lookup_cli_bin_names():
     ]
 
 
-def generate_cli_jinja2_context(cli_bin_name):
+def generate_cli_jinja2_context(cli_bin_name: str) -> t.Dict[str, t.Any]:
     """Make Jinja2 context doc structure from CLI."""
     cli_bin_name_list = lookup_cli_bin_names()
     assert cli_bin_name in cli_bin_name_list
