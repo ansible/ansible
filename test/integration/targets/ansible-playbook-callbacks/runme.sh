@@ -2,7 +2,7 @@
 
 set -eux
 
-export ANSIBLE_CALLBACK_PLUGINS=../ansible/callback_plugins
+export ANSIBLE_CALLBACK_PLUGINS=../support-callback_plugins/callback_plugins
 export ANSIBLE_ROLES_PATH=../
 export ANSIBLE_STDOUT_CALLBACK=callback_debug
 
