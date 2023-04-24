@@ -71,6 +71,7 @@ Work in Collections is tracked within the individual Collection repositories.
 
 You can refer to the :ref:`Ansible package porting guides<porting_guides>` for tips on updating your playbooks to run on newer versions of Ansible. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details. You can download older Ansible releases from `<https://releases.ansible.com/ansible/>`_.
 
+.. _ansible_changelogs:
 
 Ansible community changelogs
 ----------------------------
