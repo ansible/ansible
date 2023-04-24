@@ -155,6 +155,7 @@ bootstrap_remote_freebsd()
 
     packages="
         python${python_package_version}
+        py${python_package_version}-setuptools
         ${virtualenv_pkg}
         bash
         curl
