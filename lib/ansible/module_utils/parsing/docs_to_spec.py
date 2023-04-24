@@ -29,7 +29,7 @@ def option_to_spec(option, deprecate=None):
 
     # Use passed-in function to handle deprecations
     if deprecate is not None and 'deprecated' in option:
-        deprecate(option['deprecated'])
+        deprecate(**option['deprecated'])
 
     return spec
 
