@@ -1191,30 +1191,22 @@ class OpenBsdService(Service):
             return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
 
     def service_enable(self):
+
         if not self.enable_cmd:
             return super(OpenBsdService, self).service_enable()
 
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'status'))
 
+        status_action = None
         if self.enable:
-            if rc == 0:
-                return
-
             if rc != 0:
-                status_action = "set %s status on" % (self.name)
-            else:
-                status_action = ''
-        else:
-            if rc == 1:
-                return
+                status_action = "set %s status on" % self.name
+        elif self.enabled is not None:
+            # should be explicit False at this point
+            if rc != 1:
+                status_action = "set %s status off" % self.name
 
-            status_action = "set %s status off" % self.name
-
-        # Verify state assumption
-        if not status_action:
-            self.module.fail_json(msg="status_action is not set, this should never happen")
-
-        if status_action:
+        if status_action is not None:
             self.changed = True
             if not self.module.check_mode:
                 rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, status_action))
