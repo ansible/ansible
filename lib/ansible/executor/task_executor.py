@@ -1164,6 +1164,9 @@ class TaskExecutor:
                 socket_path = start_connection(self._play_context, options, self._task._uuid)
                 display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
                 setattr(self._connection, '_socket_path', socket_path)
+        else:
+            # TODO: set self._connection to dummy/noop connection
+            pass
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
