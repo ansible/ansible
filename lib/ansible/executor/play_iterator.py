@@ -241,13 +241,6 @@ class PlayIterator:
 
         return self._host_states[host.name].copy()
 
-    def cache_block_tasks(self, block):
-        display.deprecated(
-            'PlayIterator.cache_block_tasks is now noop due to the changes '
-            'in the way tasks are cached and is deprecated.',
-            version=2.16
-        )
-
     def get_next_task_for_host(self, host, peek=False):
 
         display.debug("getting the next task for host %s" % host.name)
@@ -583,14 +576,6 @@ class PlayIterator:
         if state.always_child_state is not None:
             return self.is_any_block_rescuing(state.always_child_state)
         return False
-
-    def get_original_task(self, host, task):
-        display.deprecated(
-            'PlayIterator.get_original_task is now noop due to the changes '
-            'in the way tasks are cached and is deprecated.',
-            version=2.16
-        )
-        return (None, None)
 
     def _insert_tasks_into_state(self, state, task_list):
         # if we've failed at all, or if the task list is empty, just return the current state
