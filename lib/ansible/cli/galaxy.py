@@ -131,7 +131,7 @@ def _format_header(path, h1, h2, w1=10, w2=7):
 
 
 def _format_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
-    return('{fqcn:{cwidth}} {version:{vwidth}}\n'.format(
+    return ('{fqcn:{cwidth}} {version:{vwidth}}\n'.format(
         fqcn=to_text(collection.fqcn),
         version=collection.ver,
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
