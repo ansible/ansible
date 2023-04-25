@@ -1200,16 +1200,16 @@ class OpenBsdService(Service):
         status_action = None
         if self.enable:
             if rc != 0:
-                status_action = "set %s status on" % self.name
+                status_action = "on"
         elif self.enabled is not None:
             # should be explicit False at this point
             if rc != 1:
-                status_action = "set %s status off" % self.name
+                status_action = "off"
 
         if status_action is not None:
             self.changed = True
             if not self.module.check_mode:
-                rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, status_action))
+                rc, stdout, stderr = self.execute_command("%s set %s status %s" % (self.enable_cmd, self.name, status_action))
 
                 if rc != 0:
                     if stderr:
