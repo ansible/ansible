@@ -1214,22 +1214,16 @@ class OpenBsdService(Service):
         if not status_action:
             self.module.fail_json(msg="status_action is not set, this should never happen")
 
-        self.changed = True
-
-        if self.module.check_mode:
-            self.module.exit_json(changed=self.changed, msg="changing service enablement")
-
-        status_modified = 0
         if status_action:
-            rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, status_action))
+            self.changed = True
+            if not self.module.check_mode:
+                rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, status_action))
 
-            if rc != 0:
-                if stderr:
-                    self.module.fail_json(msg=stderr)
-                else:
-                    self.module.fail_json(msg="rcctl failed to modify service status")
-
-            status_modified = 1
+                if rc != 0:
+                    if stderr:
+                        self.module.fail_json(msg=stderr)
+                    else:
+                        self.module.fail_json(msg="rcctl failed to modify service status")
 
 
 class NetBsdService(Service):
