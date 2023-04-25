@@ -1,2 +1,3 @@
 bugfixes:
-  - service module does not permanently configure flags flags on Openbsd when enabling/disabling a service.
+  - service module, does not permanently configure flags flags on Openbsd when enabling/disabling a service.
+  - service module, enable/disable is not a exclusive action in checkmode anymore.
