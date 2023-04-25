@@ -372,7 +372,7 @@ class OpenBSDScanService(BaseService):
                 if variable == '' or '=' not in variable:
                     continue
                 else:
-                    k, v = variable.replace(undy, '').split('=')
+                    k, v = variable.replace(undy, '', 1).split('=')
                     info[k] = v
         return info
 
