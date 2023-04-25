@@ -372,7 +372,7 @@ class OpenBSDScanService(BaseService):
                 if variable == '' or '=' not in variable:
                     continue
                 else:
-                    k,v = variable.replace(undy, '').split('=')
+                    k, v = variable.replace(undy, '').split('=')
                     info[k] = v
         return info
 
@@ -384,7 +384,7 @@ class OpenBSDScanService(BaseService):
 
             for svc in self.query_rcctl('all'):
                 services[svc] = {'name': svc, 'source': 'rcctl'}
-                services[svc].update(get_info(svc))
+                services[svc].update(self.get_info(svc))
 
             for svc in self.query_rcctl('on'):
                 services[svc].update({'status': 'enabled'})
