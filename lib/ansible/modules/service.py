@@ -76,7 +76,6 @@ options:
         - Additional arguments provided on the command line.
         - While using remote hosts with systemd this setting will be ignored.
         type: str
-        default: ''
         aliases: [ args ]
     use:
         description:
@@ -217,7 +216,7 @@ class Service(object):
         self.svc_initscript = None
         self.svc_initctl = None
         self.enable_cmd = None
-        self.arguments = module.params.get('arguments', '')
+        self.arguments = module.params.get('arguments')
         self.rcconf_file = None
         self.rcconf_key = None
         self.rcconf_value = None
@@ -643,8 +642,9 @@ class LinuxService(Service):
 
         # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
+            args = '' if self.arguments is None else self.arguments
             # check the job status by upstart response
-            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments))
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, args))
             if "stop/waiting" in initctl_status_stdout:
                 self.running = False
             elif "start/running" in initctl_status_stdout:
@@ -943,7 +943,7 @@ class LinuxService(Service):
 
         # Decide what command to run
         svc_cmd = ''
-        arguments = self.arguments
+        arguments = '' if self.arguments is None else self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
                 if self.svc_cmd.endswith("initctl"):
@@ -1026,7 +1026,8 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        args = '' if self.arguments is None else self.arguments
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', args))
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1046,7 +1047,8 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        args = '' if self.arguments is None else self.arguments
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', args))
         try:
             rcvars = shlex.split(stdout, comments=True)
         except Exception:
@@ -1111,7 +1113,8 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        args = '' if self.arguments is None else self.arguments
+        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, args))
 
         if self.sleep:
             time.sleep(self.sleep)
@@ -1224,11 +1227,11 @@ class OpenBsdService(Service):
 
         # If there are arguments from the user we use these as flags unless
         # they are already set.
-        if self.arguments and self.arguments != current_flags:
+        if self.arguments is not None and self.arguments != current_flags:
             changed_flags = self.arguments
         # If the user has not supplied any arguments and the current flags
         # differ from the default we reset them.
-        elif not self.arguments and current_flags != default_flags:
+        elif self.arguments is None and current_flags != default_flags:
             changed_flags = ' '
         # Otherwise there is no need to modify flags.
         else:
@@ -1596,8 +1599,9 @@ class AIX(Service):
                 time.sleep(self.sleep)
             srccmd = self.startsrc_cmd
 
-        if self.arguments and self.action in ('start', 'restart'):
-            return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, self.arguments, srccmd_parameter, self.name))
+        args = '' if self.arguments is None else self.arguments
+        if args and self.action in ('start', 'restart'):
+            return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, args, srccmd_parameter, self.name))
         else:
             return self.execute_command("%s %s %s" % (srccmd, srccmd_parameter, self.name))
 
@@ -1614,7 +1618,7 @@ def main():
             pattern=dict(type='str'),
             enabled=dict(type='bool'),
             runlevel=dict(type='str', default='default'),
-            arguments=dict(type='str', default='', aliases=['args']),
+            arguments=dict(type='str', aliases=['args']),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
