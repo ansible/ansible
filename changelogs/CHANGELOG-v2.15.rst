@@ -5,6 +5,30 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-04-25
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Bugfixes
+--------
+
+- Display - Defensively configure writing to stdout and stderr with a custom encoding error handler that will replace invalid characters while providing a deprecation warning that non-utf8 text will result in an error in a future version.
+- ``pkg_mgr`` - fix the default dnf version detection
+- ansible-galaxy - fix installing collections from directories that have a trailing path separator (https://github.com/ansible/ansible/issues/77803).
+- ansible-test - Update ``pylint`` to 2.17.2 to resolve several possible false positives.
+- ansible-test - Update ``pylint`` to 2.17.3 to resolve several possible false positives.
+- ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged ``setuptools`` instead of installing the latest version from PyPI.
+- dnf5 - Use ``transaction.check_gpg_signatures`` API call to check package signatures AND possibly to recover from when keys are missing.
+- handlers - fix ``v2_playbook_on_notify`` callback not being called when notifying handlers
+- module responses - Ensure that module responses are utf-8 adhereing to JSON RFC and expectations of the core code.
+- module/role argument spec - validate the type for options that are None when the option is required or has a non-None default (https://github.com/ansible/ansible/issues/79656).
+
 v2.15.0b3
 =========
 
@@ -142,6 +166,7 @@ Minor Changes
 - ansible-test - Update the NIOS test plugin to use a newer multi-arch test container.
 - ansible-test - Update the ``ansible-bad-import-from`` rule in the ``pylint`` sanity test to recommend ``ansible.module_utils.six.moves.collections_abc`` instead of ``ansible.module_utils.common._collections_compat``.
 - ansible-test - Update the ``base`` and ``default`` test containers with the latest requirements.
+- ansible-test - Update the ``default`` containers to include the ``pylint`` requirements update.
 - ansible-test - Updated the Azure Pipelines CI plugin to work with newer versions of git.
 - ansible-test - Use ``stop --time 0`` followed by ``rm`` to remove ephemeral containers instead of ``rm -f``. This speeds up teardown of ephemeral containers.
 - ansible-test - Warnings are now shown when using containers that were built with VOLUME instructions.
