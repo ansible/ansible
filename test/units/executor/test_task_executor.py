@@ -219,12 +219,12 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.return_value = True
         action_loader.get.return_value = mock.sentinel.handler
 
-        mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
         te._task.action = action
+        te._connection = MagicMock()
 
-        handler = te._get_action_handler(mock_connection, mock_templar)
+        handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
 
@@ -257,13 +257,13 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = True
 
-        mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.netconf_suffix'
         module_prefix = action.split('_', 1)[0]
         te._task.action = action
+        te._connection = MagicMock()
 
-        handler = te._get_action_handler(mock_connection, mock_templar)
+        handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),  # called twice
@@ -296,12 +296,12 @@ class TestTaskExecutor(unittest.TestCase):
         context = MagicMock(resolved=False)
         module_loader.find_plugin_with_context.return_value = context
 
-        mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
         module_prefix = action.split('_', 1)[0]
         te._task.action = action
-        handler = te._get_action_handler(mock_connection, mock_templar)
+        te._connection = MagicMock()
+        handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
 

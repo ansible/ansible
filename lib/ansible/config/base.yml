@@ -1919,6 +1919,14 @@ RUN_VARS_PLUGINS:
     demand: will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
     start: will run vars_plugins relative to inventory sources after importing that inventory source.
   version_added: "2.10"
+SAFE_ACTIONS:
+  name: Actoins that are always safe to run
+  default: ['assert', 'add_host', 'debug', 'fail',  'import_playbook', 'import_tasks', 'import_role', 'include_role', 'include_tasks', 'include_vars', 'group_by', 'meta', 'set_fact', 'set_stats', 'validate_argument_spec']
+  type: list
+  elements: str
+  env: [{name: ANSIBLE_SAFE_ACTIONS}]
+  ini:
+  - {key: safe_actions, section: defaults}
 SHOW_CUSTOM_STATS:
   name: Display custom stats
   default: False
