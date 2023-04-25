@@ -361,6 +361,21 @@ class OpenBSDScanService(BaseService):
                     svcs.append(svc)
         return svcs
 
+    def get_info(self, name):
+        info = {}
+        rc, stdout, stderr = self.module.run_command("%s get %s" % (self.rcctl_path, name))
+        if 'needs root privileges' in stderr.lower():
+            self.module.warn('rcctl requires root privileges')
+        else:
+            undy = '%s_' % name
+            for variable in stdout.split('\n'):
+                if variable == '' or '=' not in variable:
+                    continue
+                else:
+                    k,v = variable.replace(undy, '').split('=')
+                    info[k] = v
+        return info
+
     def gather_services(self):
 
         services = {}
@@ -369,6 +384,7 @@ class OpenBSDScanService(BaseService):
 
             for svc in self.query_rcctl('all'):
                 services[svc] = {'name': svc, 'source': 'rcctl'}
+                services[svc].update(get_info(svc))
 
             for svc in self.query_rcctl('on'):
                 services[svc].update({'status': 'enabled'})
