@@ -458,6 +458,8 @@ releases:
         instead of ``ansible.module_utils.common._collections_compat``.
       - ansible-test - Update the ``base`` and ``default`` test containers with the
         latest requirements.
+      - ansible-test - Update the ``default`` containers to include the ``pylint``
+        requirements update.
       - ansible-test - Updated the Azure Pipelines CI plugin to work with newer versions
         of git.
       - ansible-test - Use ``stop --time 0`` followed by ``rm`` to remove ephemeral
@@ -778,3 +780,44 @@ releases:
     - ansible-test-argcomplete-3.yml
     - pep517-backend-import-fix.yml
     release_date: '2023-04-17'
+  2.15.0rc1:
+    changes:
+      bugfixes:
+      - Display - Defensively configure writing to stdout and stderr with a custom
+        encoding error handler that will replace invalid characters while providing
+        a deprecation warning that non-utf8 text will result in an error in a future
+        version.
+      - '``pkg_mgr`` - fix the default dnf version detection'
+      - ansible-galaxy - fix installing collections from directories that have a trailing
+        path separator (https://github.com/ansible/ansible/issues/77803).
+      - ansible-test - Update ``pylint`` to 2.17.2 to resolve several possible false
+        positives.
+      - ansible-test - Update ``pylint`` to 2.17.3 to resolve several possible false
+        positives.
+      - ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged
+        ``setuptools`` instead of installing the latest version from PyPI.
+      - dnf5 - Use ``transaction.check_gpg_signatures`` API call to check package
+        signatures AND possibly to recover from when keys are missing.
+      - handlers - fix ``v2_playbook_on_notify`` callback not being called when notifying
+        handlers
+      - module responses - Ensure that module responses are utf-8 adhereing to JSON
+        RFC and expectations of the core code.
+      - module/role argument spec - validate the type for options that are None when
+        the option is required or has a non-None default (https://github.com/ansible/ansible/issues/79656).
+      release_summary: '| Release Date: 2023-04-25
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.0rc1_summary.yaml
+    - 79677-fix-argspec-type-check.yml
+    - 80258-defensive-display-non-utf8.yml
+    - a-g-col-install-directory-with-trailing-sep.yml
+    - ansible-test-freebsd-bootstrap-setuptools.yml
+    - ansible-test-pylint-update.yml
+    - dnf5-gpg-check-api.yml
+    - fix-handlers-callback.yml
+    - pkg_mgr-default-dnf.yml
+    release_date: '2023-04-25'
