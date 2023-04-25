@@ -1201,7 +1201,7 @@ class OpenBsdService(Service):
         if self.enable:
             if rc != 0:
                 status_action = "on"
-        elif self.enabled is not None:
+        elif self.enable is not None:
             # should be explicit False at this point
             if rc != 1:
                 status_action = "off"
