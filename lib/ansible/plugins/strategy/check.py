@@ -19,3 +19,9 @@ class StrategyModule(StrategyBase):
         result = self._tqm.RUN_OK
         work_to_do = True
 
+        # create dummy to run all tasks against
+        self._inventory.add_dynamic_host({'name': 'ansible_dummy'})
+        dummy_host = self._inventory.get_host('ansible_dummy')
+        # ansible_connection = 'dummy'
+
+        # TODO: fool iterator and only run tasks for a dummy host
