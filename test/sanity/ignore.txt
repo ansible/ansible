@@ -240,7 +240,6 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
-lib/ansible/executor/play_iterator.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/included_file.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
