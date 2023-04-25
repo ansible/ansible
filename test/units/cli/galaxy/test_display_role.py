@@ -5,24 +5,22 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.cli.galaxy import _display_role
+from ansible.cli.galaxy import _dump_roles_as_human
 
 
 def test_display_role(mocker, capsys):
-    mocked_galaxy_role = mocker.Mock(install_info=None)
-    mocked_galaxy_role.name = 'testrole'
-    _display_role(mocked_galaxy_role)
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == '- testrole, (unknown version)'
+    marshalled_role = {'name': 'testrole', 'version': None}
+    result = _dump_roles_as_human({'roles': [marshalled_role]})
+    assert result == (
+        "# roles\n"
+        "- testrole, (unknown version)"
+    )
 
 
 def test_display_role_known_version(mocker, capsys):
-    mocked_galaxy_role = mocker.Mock(install_info={'version': '1.0.0'})
-    mocked_galaxy_role.name = 'testrole'
-    _display_role(mocked_galaxy_role)
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == '- testrole, 1.0.0'
+    marshalled_role = {'name': 'testrole', 'version': '1.0.0'}
+    result = _dump_roles_as_human({'roles': [marshalled_role]})
+    assert result == (
+        "# roles\n"
+        "- testrole, 1.0.0"
+    )

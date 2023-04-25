@@ -5,37 +5,31 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.cli.galaxy import _display_header
+from ansible.cli.galaxy import _format_header
 
 
 def test_display_header_default(capsys):
-    _display_header('/collections/path', 'h1', 'h2')
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == ''
-    assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'h1         h2     '
-    assert out_lines[3] == '---------- -------'
+    assert _format_header('/collections/path', 'h1', 'h2') == (
+        '\n'
+        '# /collections/path\n'
+        'h1         h2     \n'
+        '---------- -------\n'
+    )
 
 
 def test_display_header_widths(capsys):
-    _display_header('/collections/path', 'Collection', 'Version', 18, 18)
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == ''
-    assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'Collection         Version           '
-    assert out_lines[3] == '------------------ ------------------'
+    assert _format_header('/collections/path', 'Collection', 'Version', 18, 18) == (
+        '\n'
+        '# /collections/path\n'
+        'Collection         Version           \n'
+        '------------------ ------------------\n'
+    )
 
 
 def test_display_header_small_widths(capsys):
-    _display_header('/collections/path', 'Col', 'Ver', 1, 1)
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == ''
-    assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'Col Ver'
-    assert out_lines[3] == '--- ---'
+    assert _format_header('/collections/path', 'Col', 'Ver', 1, 1) == (
+        '\n'
+        '# /collections/path\n'
+        'Col Ver\n'
+        '--- ---\n'
+    )

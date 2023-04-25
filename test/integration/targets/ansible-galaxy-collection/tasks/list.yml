@@ -123,6 +123,24 @@
   with_dict: "{{ list_result_json.stdout | from_json }}"
   when: "'dev' in item.key"
 
+- name: list collections in requirements format
+  command: ansible-galaxy collection list --format requirements
+  register: list_result_requirements
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+
+- debug: msg="{{ list_result_requirements }}"
+- assert:
+    that:
+      - "list_result_requirements.stdout_lines[0] == 'collections:'"
+      - "'\n- name: dev.collection1\n  version: ' + latest in list_result_requirements.stdout"
+      - "'\n- name: dev.collection2\n  version: placeholder' in list_result_requirements.stdout"
+      - "'\n- name: dev.collection3\n  version: ' + latest in list_result_requirements.stdout"
+      - "'\n- name: dev.collection5\n  version: ' + latest in list_result_requirements.stdout"
+      - "'\n- name: dev.collection6\n  version: ' + latest in list_result_requirements.stdout"
+  vars:
+    latest: "'*'"
+
 - name: list single collection in json format
   command: "ansible-galaxy collection list {{ item.key }} --format json"
   register: list_single_result_json
@@ -146,6 +164,15 @@
     that:
       - "(item.stdout | from_yaml)[galaxy_dir + '/dev/ansible_collections'][item.item.key].version == item.item.value"
   with_items: "{{ list_single_result_json.results }}"
+
+- name: list single collection in requirements format
+  command: "ansible-galaxy collection list dev.collection2 --format requirements"
+  register: list_single_result_requirements
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev"
+
+- assert:
+    that: "'collections:\n- name: dev.collection2\n  version: placeholder' == list_single_result_requirements.stdout"
 
 - name: test that no json is emitted when no collection paths are usable
   command: "ansible-galaxy collection list --format json"

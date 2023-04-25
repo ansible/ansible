@@ -118,8 +118,8 @@ def with_collection_artifacts_manager(wrapped_method):
     return method_wrapper
 
 
-def _display_header(path, h1, h2, w1=10, w2=7):
-    display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
+def _format_header(path, h1, h2, w1=10, w2=7):
+    return ('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
         path,
         h1,
         h2,
@@ -130,18 +130,8 @@ def _display_header(path, h1, h2, w1=10, w2=7):
     ))
 
 
-def _display_role(gr):
-    install_info = gr.install_info
-    version = None
-    if install_info:
-        version = install_info.get("version", None)
-    if not version:
-        version = "(unknown version)"
-    display.display("- %s, %s" % (gr.name, version))
-
-
-def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
-    display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+def _format_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
+    return('{fqcn:{cwidth}} {version:{vwidth}}\n'.format(
         fqcn=to_text(collection.fqcn),
         version=collection.ver,
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
@@ -193,6 +183,81 @@ class RoleDistributionServer:
             self._api = self.api_servers[0]
 
         return self._api
+
+
+def _dump_collections_as_human(gathered_collections):
+    """
+    Dump the collections in a human-readable format
+    : param gathered_collections: Dict[str, List[Candidate]]
+    """
+    output = ''
+    gathered_candidates = []
+
+    for collections in gathered_collections.values():
+        gathered_candidates.extend(collections)
+    fqcn_width, version_width = _get_collection_widths(gathered_candidates)
+
+    for collection_path, collections in gathered_collections.items():
+        output += _format_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+        # Sort collections by the namespace and name
+        for collection in sorted(collections, key=to_text):
+            output += _format_collection(collection, fqcn_width, version_width)
+    return output
+
+
+def _dump_collections(collections_in_paths, output_format):
+    if output_format == 'human':
+        return _dump_collections_as_human(collections_in_paths)
+    elif output_format in {'json', 'yaml'}:
+        marshalled = {
+            path: {collection.fqcn: {'version': collection.ver} for collection in collections}
+            for path, collections in collections_in_paths.items()
+        }
+        if output_format == 'json':
+            return json.dumps(marshalled)
+        elif output_format == 'yaml':
+            return yaml_dump(marshalled)
+    elif output_format == 'requirements':
+        collections = sum(collections_in_paths.values(), [])
+        marshalled = [{'name': collection.fqcn, 'version': collection.ver} for collection in collections]
+        return yaml_dump({"collections": marshalled})
+
+
+def _marshall_role(gr):
+    """
+    Collect role attributes that we want to print
+    : param role: GalaxyRole
+    """
+    install_info = gr.install_info
+    version = None
+    if install_info:
+        version = install_info.get("version", None)
+    return {"name": gr.name, "version": version}
+
+
+def _dump_roles_as_human(marshalled_roles):
+    """Dump roles marshalled with _marshall_role to human-readable text."""
+    out_lines = []
+    for role_path, roles in marshalled_roles.items():
+        out_lines.append('# %s' % role_path)
+        for gr in roles:
+            version = gr['version']
+            if version is None:
+                version = "(unknown version)"
+            out_lines.append("- %s, %s" % (gr['name'], version))
+    return '\n'.join(out_lines)
+
+
+def _dump_roles(gathered_roles, output_format):
+    marshalled_roles = {path: list(map(_marshall_role, roles)) for path, roles in gathered_roles.items()}
+    if output_format == 'human':
+        return _dump_roles_as_human(marshalled_roles)
+    elif output_format == 'json':
+        return json.dumps(marshalled_roles)
+    elif output_format == 'yaml':
+        return yaml_dump(marshalled_roles)
+    elif output_format == 'requirements':
+        return yaml_dump({"roles": sum(marshalled_roles.values(), [])})
 
 
 class GalaxyCLI(CLI):
@@ -381,10 +446,8 @@ class GalaxyCLI(CLI):
         list_parser.set_defaults(func=self.execute_list)
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
-
-        if galaxy_type == 'collection':
-            list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
-                                     help="Format to display the list of collections in.")
+        list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json', 'requirements'), default='human',
+                                 help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1539,7 +1602,9 @@ class GalaxyCLI(CLI):
         warnings = []
         roles_search_paths = context.CLIARGS['roles_path']
         role_name = context.CLIARGS['role']
+        output_format = context.CLIARGS['output_format']
 
+        found_roles = {}
         for path in roles_search_paths:
             role_path = GalaxyCLI._resolve_path(path)
             if os.path.isdir(path):
@@ -1553,8 +1618,7 @@ class GalaxyCLI(CLI):
                 gr = GalaxyRole(self.galaxy, self.lazy_role_api, role_name, path=os.path.join(role_path, role_name))
                 if os.path.isdir(gr.path):
                     role_found = True
-                    display.display('# %s' % os.path.dirname(gr.path))
-                    _display_role(gr)
+                    found_roles[role_path] = [gr]
                     break
                 warnings.append("- the role %s was not found" % role_name)
             else:
@@ -1566,12 +1630,12 @@ class GalaxyCLI(CLI):
                     warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
                     continue
 
-                display.display('# %s' % role_path)
                 path_files = os.listdir(role_path)
                 for path_file in path_files:
                     gr = GalaxyRole(self.galaxy, self.lazy_role_api, path_file, path=path)
                     if gr.metadata:
-                        _display_role(gr)
+                        found_roles.setdefault(role_path, [])
+                        found_roles[role_path].append(gr)
 
         # Do not warn if the role was found in any of the search paths
         if role_found and role_name:
@@ -1584,7 +1648,7 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError(
                 "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
             )
-
+        display.display(_dump_roles(found_roles, output_format))
         return 0
 
     @with_collection_artifacts_manager
@@ -1626,25 +1690,11 @@ class GalaxyCLI(CLI):
         ))
 
         seen = set()
-        fqcn_width, version_width = _get_collection_widths(collections)
         for collection in sorted(collections, key=lambda c: c.src):
             collection_found = True
             collection_path = pathlib.Path(to_text(collection.src)).parent.parent.as_posix()
-
-            if output_format in {'yaml', 'json'}:
-                collections_in_paths.setdefault(collection_path, {})
-                collections_in_paths[collection_path][collection.fqcn] = {'version': collection.ver}
-            else:
-                if collection_path not in seen:
-                    _display_header(
-                        collection_path,
-                        'Collection',
-                        'Version',
-                        fqcn_width,
-                        version_width
-                    )
-                    seen.add(collection_path)
-                _display_collection(collection, fqcn_width, version_width)
+            collections_in_paths.setdefault(collection_path, [])
+            collections_in_paths[collection_path].append(collection)
 
         path_found = False
         for path in collections_search_paths:
@@ -1669,12 +1719,7 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError(
                 "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
             )
-
-        if output_format == 'json':
-            display.display(json.dumps(collections_in_paths))
-        elif output_format == 'yaml':
-            display.display(yaml_dump(collections_in_paths))
-
+        display.display(_dump_collections(collections_in_paths, output_format))
         return 0
 
     def execute_publish(self):
