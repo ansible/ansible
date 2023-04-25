@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - >-
+    Fixed `pip` module failure in case of usage quotes for
+    `virtualenv_command` option for the venv command.
+    (https://github.com/ansible/ansible/issues/76372)
