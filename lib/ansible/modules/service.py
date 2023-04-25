@@ -76,6 +76,7 @@ options:
         - Additional arguments provided on the command line.
         - While using remote hosts with systemd this setting will be ignored.
         type: str
+        default: ''
         aliases: [ args ]
     use:
         description:
@@ -216,7 +217,7 @@ class Service(object):
         self.svc_initscript = None
         self.svc_initctl = None
         self.enable_cmd = None
-        self.arguments = module.params.get('arguments')
+        self.arguments = module.params.get('arguments', '')
         self.rcconf_file = None
         self.rcconf_key = None
         self.rcconf_value = None
@@ -642,9 +643,8 @@ class LinuxService(Service):
 
         # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
-            args = '' if self.arguments is None else self.arguments
             # check the job status by upstart response
-            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, args))
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments))
             if "stop/waiting" in initctl_status_stdout:
                 self.running = False
             elif "start/running" in initctl_status_stdout:
@@ -943,7 +943,7 @@ class LinuxService(Service):
 
         # Decide what command to run
         svc_cmd = ''
-        arguments = '' if self.arguments is None else self.arguments
+        arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
                 if self.svc_cmd.endswith("initctl"):
@@ -1026,8 +1026,7 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        args = '' if self.arguments is None else self.arguments
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', args))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1047,8 +1046,7 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        args = '' if self.arguments is None else self.arguments
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', args))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
         try:
             rcvars = shlex.split(stdout, comments=True)
         except Exception:
@@ -1113,8 +1111,7 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        args = '' if self.arguments is None else self.arguments
-        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, args))
+        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
 
         if self.sleep:
             time.sleep(self.sleep)
@@ -1197,73 +1194,30 @@ class OpenBsdService(Service):
         if not self.enable_cmd:
             return super(OpenBsdService, self).service_enable()
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'getdef', self.name, 'flags'))
-
-        if stderr:
-            self.module.fail_json(msg=stderr)
-
-        getdef_string = stdout.rstrip()
-
-        # Depending on the service the string returned from 'getdef' may be
-        # either a set of flags or the boolean YES/NO
-        if getdef_string == "YES" or getdef_string == "NO":
-            default_flags = ''
-        else:
-            default_flags = getdef_string
-
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'flags'))
-
-        if stderr:
-            self.module.fail_json(msg=stderr)
-
-        get_string = stdout.rstrip()
-
-        # Depending on the service the string returned from 'get' may be
-        # either a set of flags or the boolean YES/NO
-        if get_string == "YES" or get_string == "NO":
-            current_flags = ''
-        else:
-            current_flags = get_string
-
-        # If there are arguments from the user we use these as flags unless
-        # they are already set.
-        if self.arguments is not None and self.arguments != current_flags:
-            changed_flags = self.arguments
-        # If the user has not supplied any arguments and the current flags
-        # differ from the default we reset them.
-        elif self.arguments is None and current_flags != default_flags:
-            changed_flags = ' '
-        # Otherwise there is no need to modify flags.
-        else:
-            changed_flags = ''
-
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'status'))
 
         if self.enable:
-            if rc == 0 and not changed_flags:
+            if rc == 0:
                 return
 
             if rc != 0:
                 status_action = "set %s status on" % (self.name)
             else:
                 status_action = ''
-            if changed_flags:
-                flags_action = "set %s flags %s" % (self.name, changed_flags)
-            else:
-                flags_action = ''
         else:
             if rc == 1:
                 return
 
             status_action = "set %s status off" % self.name
-            flags_action = ''
 
         # Verify state assumption
-        if not status_action and not flags_action:
-            self.module.fail_json(msg="neither status_action or status_flags is set, this should never happen")
+        if not status_action:
+            self.module.fail_json(msg="status_action is not set, this should never happen")
+
+        self.changed = True
 
         if self.module.check_mode:
-            self.module.exit_json(changed=True, msg="changing service enablement")
+            self.module.exit_json(changed=self.changed, msg="changing service enablement")
 
         status_modified = 0
         if status_action:
@@ -1276,25 +1230,6 @@ class OpenBsdService(Service):
                     self.module.fail_json(msg="rcctl failed to modify service status")
 
             status_modified = 1
-
-        if flags_action:
-            rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, flags_action))
-
-            if rc != 0:
-                if stderr:
-                    if status_modified:
-                        error_message = "rcctl modified service status but failed to set flags: " + stderr
-                    else:
-                        error_message = stderr
-                else:
-                    if status_modified:
-                        error_message = "rcctl modified service status but failed to set flags"
-                    else:
-                        error_message = "rcctl failed to modify service flags"
-
-                self.module.fail_json(msg=error_message)
-
-        self.changed = True
 
 
 class NetBsdService(Service):
@@ -1599,9 +1534,8 @@ class AIX(Service):
                 time.sleep(self.sleep)
             srccmd = self.startsrc_cmd
 
-        args = '' if self.arguments is None else self.arguments
-        if args and self.action in ('start', 'restart'):
-            return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, args, srccmd_parameter, self.name))
+        if self.arguments and self.action in ('start', 'restart'):
+            return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, self.arguments, srccmd_parameter, self.name))
         else:
             return self.execute_command("%s %s %s" % (srccmd, srccmd_parameter, self.name))
 
@@ -1618,7 +1552,7 @@ def main():
             pattern=dict(type='str'),
             enabled=dict(type='bool'),
             runlevel=dict(type='str', default='default'),
-            arguments=dict(type='str', aliases=['args']),
+            arguments=dict(type='str', default='', aliases=['args']),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
