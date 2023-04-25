@@ -1,0 +1,7 @@
+minor_changes:
+- >-
+  Roles can now be listed with ``ansible-galaxy list`` using the ``--format`` option
+  (https://github.com/ansible/ansible/issues/15916).
+- >-
+  Collections and roles can be listed in a format compatible for a ``requirements.yml``
+  file using ``ansible-galaxy [collection|role] list --format requirements``.
