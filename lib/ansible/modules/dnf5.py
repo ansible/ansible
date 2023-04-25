@@ -662,9 +662,6 @@ class Dnf5Module(YumDnf):
                 action = libdnf5.base.transaction.transaction_item_action_to_string(pkg.get_action())
             results.append("{}: {}".format(actions_compat_map.get(action, action), pkg.get_package().get_nevra()))
 
-        result_to_str = {
-            libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_SIGNED: "package is not signed",
-        }
         msg = ""
         if self.module.check_mode:
             if results:
@@ -672,22 +669,12 @@ class Dnf5Module(YumDnf):
         else:
             transaction.download(self.download_dir or "")
             if not self.download_only:
-                for pkg in transaction.get_transaction_packages():
-                    if not self.disable_gpg_check:
-                        result = libdnf5.rpm.RpmSignature(base).check_package_signature(pkg.get_package())
-                        if result == libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_SIGNED:
-                            self.module.fail_json(
-                                msg="Failed to validate GPG signature for {}: {}".format(pkg.get_package().get_nevra(), result_to_str.get(result, result)),
-                                failures=[],
-                                rc=1,
-                            )
-                        if result in {
-                            libdnf5.rpm.RpmSignature.CheckResult_FAILED_KEY_MISSING,
-                            libdnf5.rpm.RpmSignature.CheckResult_FAILED_NOT_TRUSTED,
-                            libdnf5.rpm.RpmSignature.CheckResult_FAILED
-                        }:
-                            # FIXME https://github.com/rpm-software-management/dnf5/issues/386
-                            pass
+                if not self.disable_gpg_check and not transaction.check_gpg_signatures():
+                    self.module.fail_json(
+                        msg="Failed to validate GPG signatures: {}".format(",".join(transaction.get_gpg_signature_problems())),
+                        failures=[],
+                        rc=1,
+                    )
 
                 transaction.set_description("ansible dnf5 module")
                 result = transaction.run()
