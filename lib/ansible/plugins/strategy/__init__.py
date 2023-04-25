@@ -77,6 +77,15 @@ class StrategySentinel:
 _sentinel = StrategySentinel()
 
 
+def implicit_noop_task(loader):
+
+    noop_task = Task()
+    noop_task.action = 'meta'
+    noop_task.args['_raw_params'] = 'noop'
+    noop_task.implicit = True
+    noop_task.set_loader(loader)
+
+
 def post_process_whens(result, task, templar, task_vars):
     cond = None
     if task.changed_when:

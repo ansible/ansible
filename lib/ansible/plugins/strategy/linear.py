@@ -39,7 +39,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader
-from ansible.plugins.strategy import StrategyBase
+from ansible.plugins.strategy import StrategyBase, implicit_noop_task
 from ansible.template import Templar
 from ansible.utils.display import Display
 
@@ -60,11 +60,8 @@ class StrategyModule(StrategyBase):
         be a noop task to keep the iterator in lock step across
         all hosts.
         '''
-        noop_task = Task()
-        noop_task.action = 'meta'
-        noop_task.args['_raw_params'] = 'noop'
-        noop_task.implicit = True
-        noop_task.set_loader(iterator._play._loader)
+
+        noop_task = implicit_noop_task(iterator._play._loader)
 
         state_task_per_host = {}
         for host in hosts:
