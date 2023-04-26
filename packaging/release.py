@@ -1267,6 +1267,10 @@ def build(allow_dirty: bool = False) -> None:
 
         commit_time = int(git("show", "-s", "--format=%ct", capture_output=True).stdout)
 
+        env.update(
+            SOURCE_DATE_EPOCH=str(commit_time),
+        )
+
         git("worktree", "add", "-d", temp_dir)
 
         try:
