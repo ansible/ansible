@@ -18,7 +18,7 @@
     that:
     - "web_data.token.find('v=' ~ 'Zm9vOmJhcg==') == -1"
     fail_msg: "Was expecting 'foo:bar' in base64, but received: {{ web_data }}"
-    success_msg: "Expected Basic authentication even Bearer headers were sent"  
+    success_msg: "Expected Basic authentication even Bearer headers were sent"
 
 - name: test Url lookup with use_netrc=False
   set_fact:

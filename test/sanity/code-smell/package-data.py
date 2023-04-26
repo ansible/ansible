@@ -4,12 +4,17 @@ import contextlib
 import fnmatch
 import glob
 import os
+import pathlib
 import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+
+import packaging.version
+
+from ansible.release import __version__
 
 
 def assemble_files_to_ship(complete_file_list):
@@ -29,9 +34,6 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/ticket_stubs/*',
         'test/sanity/code-smell/botmeta.*',
         'test/sanity/code-smell/release-names.*',
-        'test/utils/*',
-        'test/utils/*/*',
-        'test/utils/*/*/*',
         'test/results/.tmp/*',
         'test/results/.tmp/*/*',
         'test/results/.tmp/*/*/*',
@@ -47,14 +49,13 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/cgroup_perf_recap_graph.py',
         'hacking/create_deprecated_issues.py',
         'hacking/deprecated_issue_template.md',
-        'hacking/create_deprecation_bug_reports.py',
+        'hacking/create-bulk-issues.py',
         'hacking/fix_test_syntax.py',
         'hacking/get_library.py',
         'hacking/metadata-tool.py',
         'hacking/report.py',
         'hacking/return_skeleton_generator.py',
         'hacking/test-module',
-        'test/support/README.md',
         'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
         'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
         '.cherry_picker.toml',
@@ -173,8 +174,13 @@ def clean_repository(file_list):
 
 def create_sdist(tmp_dir):
     """Create an sdist in the repository"""
+    # Make sure a changelog exists for this version when testing from devel.
+    # When testing from a stable branch the changelog will already exist.
+    version = packaging.version.Version(__version__)
+    pathlib.Path(f'changelogs/CHANGELOG-v{version.major}.{version.minor}.rst').touch()
+
     create = subprocess.run(
-        ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
+        [sys.executable, '-m', 'build', '--sdist', '--no-isolation', '--config-setting=--build-manpages', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,

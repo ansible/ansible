@@ -253,7 +253,7 @@ import stat
 import time
 import traceback
 from functools import partial
-from zipfile import ZipFile, BadZipfile
+from zipfile import ZipFile
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -265,6 +265,11 @@ try:  # python 3.3+
     from shlex import quote  # type: ignore[attr-defined]
 except ImportError:  # older python
     from pipes import quote
+
+try:  # python 3.2+
+    from zipfile import BadZipFile  # type: ignore[attr-defined]
+except ImportError:  # older python
+    from zipfile import BadZipfile as BadZipFile
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -337,6 +342,7 @@ class ZipArchive(object):
     def _legacy_file_list(self):
         rc, out, err = self.module.run_command([self.cmd_path, '-v', self.src])
         if rc:
+            self.module.debug(err)
             raise UnarchiveError('Neither python zipfile nor unzip can read %s' % self.src)
 
         for line in out.splitlines()[3:-2]:
@@ -350,7 +356,7 @@ class ZipArchive(object):
 
         try:
             archive = ZipFile(self.src)
-        except BadZipfile as e:
+        except BadZipFile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -375,7 +381,7 @@ class ZipArchive(object):
         self._files_in_archive = []
         try:
             archive = ZipFile(self.src)
-        except BadZipfile as e:
+        except BadZipFile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -417,6 +423,7 @@ class ZipArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd)
+        self.module.debug(err)
 
         old_out = out
         diff = ''
@@ -745,6 +752,9 @@ class ZipArchive(object):
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True, None
+
+        self.module.debug(err)
+
         return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, err)
 
 
@@ -794,6 +804,7 @@ class TgzArchive(object):
         locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
+            self.module.debug(err)
             raise UnarchiveError('Unable to list files in the archive: %s' % err)
 
         for filename in out.splitlines():
@@ -1022,7 +1033,12 @@ def main():
 
     src = module.params['src']
     dest = module.params['dest']
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    abs_dest = os.path.abspath(dest)
+    b_dest = to_bytes(abs_dest, errors='surrogate_or_strict')
+
+    if not os.path.isabs(dest):
+        module.warn("Relative destination path '{dest}' was resolved to absolute path '{abs_dest}'.".format(dest=dest, abs_dest=abs_dest))
+
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 

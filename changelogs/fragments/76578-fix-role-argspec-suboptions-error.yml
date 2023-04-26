@@ -1,2 +1,0 @@
-bugfixes:
-  - Module and role argument validation - include the valid suboption choices in the error when an invalid suboption is provided.

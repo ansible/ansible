@@ -28,7 +28,7 @@ Connections available
 
     Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
-    |enable_mode|         supported: use ``ansible_become: yes``
+    |enable_mode|         supported: use ``ansible_become: true``
                           with ``ansible_become_method: enable``
                           and ``ansible_become_password:``
 
@@ -52,7 +52,7 @@ Example CLI ``group_vars/mlx.yml``
    ansible_network_os: community.network.ironware
    ansible_user: myuser
    ansible_password: !vault...
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
    ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'

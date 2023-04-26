@@ -1,0 +1,26 @@
+- name: Create relative test directory
+  file:
+    path: test-unarchive-relative
+    state: directory
+
+- name: Unarchive a file using a relative destination path
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar"
+    dest: test-unarchive-relative
+    remote_src: yes
+  register: relative_dest_1
+
+- name: Unarchive a file using a relative destination path again
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar"
+    dest: test-unarchive-relative
+    remote_src: yes
+  register: relative_dest_2
+
+- name: Ensure changes were made correctly
+  assert:
+    that:
+      - relative_dest_1 is changed
+      - relative_dest_1.warnings | length > 0
+      - relative_dest_1.warnings[0] is search('absolute path')
+      - relative_dest_2 is not changed

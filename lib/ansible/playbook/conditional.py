@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import typing as t
 
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
@@ -28,6 +29,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
+from ansible.template import Templar
 from ansible.utils.display import Display
 
 display = Display()
@@ -57,11 +59,19 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [value])
 
-    def evaluate_conditional(self, templar, all_vars):
+    def evaluate_conditional(self, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
         '''
         Loops through the conditionals set on this object, returning
         False if any of them evaluate as such.
         '''
+        return self.evaluate_conditional_with_result(templar, all_vars)[0]
+
+    def evaluate_conditional_with_result(self, templar: Templar, all_vars: dict[str, t.Any]) -> tuple[bool, t.Optional[str]]:
+        """
+        Loops through the conditionals set on this object, returning
+        False if any of them evaluate as such as well as the condition
+        that was false.
+        """
 
         # since this is a mix-in, it may not have an underlying datastructure
         # associated with it, so we pull it out now in case we need it for
@@ -71,6 +81,7 @@ class Conditional:
             ds = getattr(self, '_ds')
 
         result = True
+        false_condition: t.Optional[str] = None
         try:
             for conditional in self.when:
 
@@ -88,12 +99,13 @@ class Conditional:
 
                 display.debug("Evaluated conditional (%s): %s" % (conditional, res))
                 if not result:
+                    false_condition = conditional
                     break
 
         except Exception as e:
             raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
 
-        return result
+        return result, false_condition
 
     def _check_conditional(self, conditional, templar, all_vars):
         '''

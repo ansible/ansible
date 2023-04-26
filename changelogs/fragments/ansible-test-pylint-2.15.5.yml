@@ -1,4 +1,0 @@
-bugfixes:
-  - ansible-test - Update the ``pylint`` sanity test to use version 2.15.5.
-  - ansible-test - Update the ``pylint`` sanity test requirements to resolve crashes on Python 3.11.
-                   (https://github.com/ansible/ansible/issues/78882)

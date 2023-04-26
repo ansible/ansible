@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: "{{ item }}"
+      loop:
+        - setup_test_user
+        - role-meta-inheritance

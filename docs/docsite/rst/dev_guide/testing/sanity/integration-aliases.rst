@@ -63,7 +63,7 @@ Skipping
 Aliases can be used to skip platforms using one of the following:
 
 - ``skip/freebsd`` - Skip tests on FreeBSD.
-- ``skip/osx`` - Skip tests on macOS.
+- ``skip/macos`` - Skip tests on macOS.
 - ``skip/rhel`` - Skip tests on RHEL.
 - ``skip/docker`` - Skip tests when running in a Docker container.
 
@@ -157,9 +157,7 @@ Some of the available aliases are:
 - ``cloud/azure``
 - ``cloud/cs``
 - ``cloud/digitalocean``
-- ``cloud/foreman``
 - ``cloud/openshift``
-- ``cloud/tower``
 - ``cloud/vcenter``
 
 Untested

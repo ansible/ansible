@@ -257,7 +257,7 @@ If you want tag inheritance, you probably want to use imports. However, using bo
 
 .. code-block:: yaml
 
-   - name: Apply the db tag to the include and to all tasks in db.yaml
+   - name: Apply the db tag to the include and to all tasks in db.yml
      include_tasks:
        file: db.yml
        # adds 'db' tag to tasks within db.yml
@@ -301,7 +301,7 @@ For example:
 
 .. warning::
    * Fact gathering is tagged with 'always' by default. It is only skipped if
-     you apply a tag and then use a different tag in ``--tags`` or the same
+     you apply a tag to the play and then use a different tag in ``--tags`` or the same
      tag in ``--skip-tags``.
 
 .. warning::
@@ -339,7 +339,7 @@ Once you have added tags to your tasks, includes, blocks, plays, roles, and impo
 * ``--tags tagged`` - run only tasks with at least one tag
 * ``--tags untagged`` - run only tasks with no tags
 
-For example, to run only tasks and blocks tagged ``configuration`` and ``packages`` in a very long playbook:
+For example, to run only tasks and blocks tagged either ``configuration`` or ``packages`` in a very long playbook:
 
 .. code-block:: bash
 
@@ -350,6 +350,12 @@ To run all tasks except those tagged ``packages``:
 .. code-block:: bash
 
    ansible-playbook example.yml --skip-tags "packages"
+
+To run all tasks, even those excluded because are tagged ``never``:
+
+.. code-block:: bash
+
+   ansible-playbook example.yml --tags "all,never"
 
 Previewing the results of using tags
 ------------------------------------

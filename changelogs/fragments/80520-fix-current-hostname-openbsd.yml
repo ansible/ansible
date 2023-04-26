@@ -1,0 +1,2 @@
+bugfixes:
+  - The ``hostname`` module now also updates both current and permanent hostname on OpenBSD. Before it only updated the permanent hostname (https://github.com/ansible/ansible/issues/80520).

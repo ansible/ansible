@@ -168,7 +168,9 @@ pause_test = pexpect.spawn(
 pause_test.logfile = log_buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.send('\n')  # test newline does not stop the prompt - waiting for a timeout or ctrl+C
 pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
 pause_test.send('C')
 pause_test.expect('Task after pause')
 pause_test.expect(pexpect.EOF)
@@ -187,6 +189,7 @@ pause_test.logfile = log_buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
 pause_test.send('A')
 pause_test.expect('user requested abort!')
 pause_test.expect(pexpect.EOF)
@@ -225,6 +228,7 @@ pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.expect(r"Waiting for two seconds:")
 pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
 pause_test.send('C')
 pause_test.expect('Task after pause')
 pause_test.expect(pexpect.EOF)
@@ -244,6 +248,7 @@ pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.expect(r"Waiting for two seconds:")
 pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
 pause_test.send('A')
 pause_test.expect('user requested abort!')
 pause_test.expect(pexpect.EOF)
@@ -272,6 +277,24 @@ pause_test.send('\r')
 pause_test.expect(r'Enter some text \(output is hidden\):')
 pause_test.send('supersecretpancakes')
 pause_test.send('\r')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# Test input is not returned if a timeout is given
+
+playbook = 'pause-6.yml'
+
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = log_buffer
+pause_test.expect(r'Wait for three seconds:')
+pause_test.send('ignored user input')
+pause_test.expect('Task after pause')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
 

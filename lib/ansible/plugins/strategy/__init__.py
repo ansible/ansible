@@ -27,6 +27,7 @@ import queue
 import sys
 import threading
 import time
+import typing as t
 
 from collections import deque
 from multiprocessing import Lock
@@ -37,10 +38,10 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
 from ansible.executor import action_write_locks
-from ansible.executor.play_iterator import IteratingStates
+from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -53,6 +54,7 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
+from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
@@ -126,6 +128,24 @@ def results_thread_main(strategy):
                 strategy.normalize_task_result(result)
                 with strategy._results_lock:
                     strategy._results.append(result)
+            elif isinstance(result, PromptSend):
+                try:
+                    value = display.prompt_until(
+                        result.prompt,
+                        private=result.private,
+                        seconds=result.seconds,
+                        complete_input=result.complete_input,
+                        interrupt_input=result.interrupt_input,
+                    )
+                except AnsibleError as e:
+                    value = e
+                except BaseException as e:
+                    # relay unexpected errors so bugs in display are reported and don't cause workers to hang
+                    try:
+                        raise AnsibleError(f"{e}") from e
+                    except AnsibleError as e:
+                        value = e
+                strategy._workers[result.worker_id].worker_queue.put(value)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
@@ -241,6 +261,8 @@ class StrategyBase:
 
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
+
+        self._worker_queues = dict()
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
@@ -385,7 +407,10 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
+                    # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
+                    worker_prc = WorkerProcess(
+                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
+                    )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
@@ -482,6 +507,57 @@ class StrategyBase:
 
         return task_result
 
+    def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
+        templar = Templar(None)
+        # iterate in reversed order since last handler loaded with the same name wins
+        for handler in (h for b in reversed(iterator._play.handlers) for h in b.block if h.name):
+            if not handler.cached_name:
+                if templar.is_template(handler.name):
+                    templar.available_variables = self._variable_manager.get_vars(
+                        play=iterator._play,
+                        task=handler,
+                        _hosts=self._hosts_cache,
+                        _hosts_all=self._hosts_cache_all
+                    )
+                    try:
+                        handler.name = templar.template(handler.name)
+                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                        # We skip this handler due to the fact that it may be using
+                        # a variable in the name that was conditionally included via
+                        # set_fact or some other method, and we don't want to error
+                        # out unnecessarily
+                        if not handler.listen:
+                            display.warning(
+                                "Handler '%s' is unusable because it has no listen topics and "
+                                "the name could not be templated (host-specific variables are "
+                                "not supported in handler names). The error: %s" % (handler.name, to_text(e))
+                            )
+                        continue
+                handler.cached_name = True
+
+            # first we check with the full result of get_name(), which may
+            # include the role name (if the handler is from a role). If that
+            # is not found, we resort to the simple name field, which doesn't
+            # have anything extra added to it.
+            if notification in {
+                handler.name,
+                handler.get_name(include_role_fqcn=False),
+                handler.get_name(include_role_fqcn=True),
+            }:
+                yield handler
+                break
+
+        templar.available_variables = {}
+        for handler in (h for b in iterator._play.handlers for h in b.block):
+            if listeners := handler.listen:
+                if notification in handler.get_validated_value(
+                    'listen',
+                    handler.fattributes.get('listen'),
+                    listeners,
+                    templar,
+                ):
+                    yield handler
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -491,46 +567,6 @@ class StrategyBase:
 
         ret_results = []
         handler_templar = Templar(self._loader)
-
-        def search_handler_blocks_by_name(handler_name, handler_blocks):
-            # iterate in reversed order since last handler loaded with the same name wins
-            for handler_block in reversed(handler_blocks):
-                for handler_task in handler_block.block:
-                    if handler_task.name:
-                        try:
-                            if not handler_task.cached_name:
-                                if handler_templar.is_template(handler_task.name):
-                                    handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
-                                                                                                          task=handler_task,
-                                                                                                          _hosts=self._hosts_cache,
-                                                                                                          _hosts_all=self._hosts_cache_all)
-                                    handler_task.name = handler_templar.template(handler_task.name)
-                                handler_task.cached_name = True
-
-                            # first we check with the full result of get_name(), which may
-                            # include the role name (if the handler is from a role). If that
-                            # is not found, we resort to the simple name field, which doesn't
-                            # have anything extra added to it.
-                            candidates = (
-                                handler_task.name,
-                                handler_task.get_name(include_role_fqcn=False),
-                                handler_task.get_name(include_role_fqcn=True),
-                            )
-
-                            if handler_name in candidates:
-                                return handler_task
-                        except (UndefinedError, AnsibleUndefinedVariable) as e:
-                            # We skip this handler due to the fact that it may be using
-                            # a variable in the name that was conditionally included via
-                            # set_fact or some other method, and we don't want to error
-                            # out unnecessarily
-                            if not handler_task.listen:
-                                display.warning(
-                                    "Handler '%s' is unusable because it has no listen topics and "
-                                    "the name could not be templated (host-specific variables are "
-                                    "not supported in handler names). The error: %s" % (handler_task.name, to_text(e))
-                                )
-                            continue
 
         cur_pass = 0
         while True:
@@ -612,49 +648,24 @@ class StrategyBase:
                     result_items = [task_result._result]
 
                 for result_item in result_items:
-                    if '_ansible_notify' in result_item:
-                        if task_result.is_changed():
-                            # The shared dictionary for notified handlers is a proxy, which
-                            # does not detect when sub-objects within the proxy are modified.
-                            # So, per the docs, we reassign the list so the proxy picks up and
-                            # notifies all other threads
-                            for handler_name in result_item['_ansible_notify']:
-                                found = False
-                                # Find the handler using the above helper.  First we look up the
-                                # dependency chain of the current task (if it's from a role), otherwise
-                                # we just look through the list of handlers in the current play/all
-                                # roles and use the first one that matches the notify name
-                                target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
-                                if target_handler is not None:
-                                    found = True
-                                    if target_handler.notify_host(original_host):
-                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                    if '_ansible_notify' in result_item and task_result.is_changed():
+                        # only ensure that notified handlers exist, if so save the notifications for when
+                        # handlers are actually flushed so the last defined handlers are exexcuted,
+                        # otherwise depending on the setting either error or warn
+                        for notification in result_item['_ansible_notify']:
+                            if any(self.search_handlers_by_notification(notification, iterator)):
+                                iterator.add_notification(original_host.name, notification)
+                                display.vv(f"Notification for handler {notification} has been saved.")
+                                continue
 
-                                for listening_handler_block in iterator._play.handlers:
-                                    for listening_handler in listening_handler_block.block:
-                                        listeners = getattr(listening_handler, 'listen', []) or []
-                                        if not listeners:
-                                            continue
-
-                                        listeners = listening_handler.get_validated_value(
-                                            'listen', listening_handler.fattributes.get('listen'), listeners, handler_templar
-                                        )
-                                        if handler_name not in listeners:
-                                            continue
-                                        else:
-                                            found = True
-
-                                        if listening_handler.notify_host(original_host):
-                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
-
-                                # and if none were found, then we raise an error
-                                if not found:
-                                    msg = ("The requested handler '%s' was not found in either the main handlers list nor in the listening "
-                                           "handlers list" % handler_name)
-                                    if C.ERROR_ON_MISSING_HANDLER:
-                                        raise AnsibleError(msg)
-                                    else:
-                                        display.warning(msg)
+                            msg = (
+                                f"The requested handler '{notification}' was not found in either the main handlers"
+                                " list nor in the listening handlers list"
+                            )
+                            if C.ERROR_ON_MISSING_HANDLER:
+                                raise AnsibleError(msg)
+                            else:
+                                display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -933,6 +944,15 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             if _evaluate_conditional(target_host):
                 host_state = iterator.get_state_for_host(target_host.name)
+                # actually notify proper handlers based on all notifications up to this point
+                for notification in list(host_state.handler_notifications):
+                    for handler in self.search_handlers_by_notification(notification, iterator):
+                        if handler.notify_host(target_host):
+                            # NOTE even with notifications deduplicated this can still happen in case of handlers being
+                            # notified multiple times using different names, like role name or fqcn
+                            self._tqm.send_callback('v2_playbook_on_notify', handler, target_host)
+                    iterator.clear_notification(target_host.name, notification)
+
                 if host_state.run_state == IteratingStates.HANDLERS:
                     raise AnsibleError('flush_handlers cannot be used as a handler')
                 if target_host.name not in self._tqm._unreachable_hosts:

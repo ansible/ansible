@@ -1,0 +1,2 @@
+bugfixes:
+  - module/role argument spec - validate the type for options that are None when the option is required or has a non-None default (https://github.com/ansible/ansible/issues/79656).

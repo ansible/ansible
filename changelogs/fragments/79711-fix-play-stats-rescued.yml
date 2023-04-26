@@ -1,2 +1,0 @@
-bugfixes:
-  - Correctly count rescued tasks in play recap (https://github.com/ansible/ansible/issues/79711)

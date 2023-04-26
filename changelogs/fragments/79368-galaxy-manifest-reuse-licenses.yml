@@ -1,3 +1,0 @@
-minor_changes:
-- collections - Add additional includes for REUSE license files (https://github.com/ansible/ansible/issues/79368)
-- collections - Add additional ignores for commonly rejected file extensions

@@ -81,9 +81,8 @@ class TestGalaxy(unittest.TestCase):
 
         # creating a temp file with installation requirements
         cls.role_req = './delete_me_requirements.yml'
-        fd = open(cls.role_req, "w")
-        fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '%s'" % (cls.role_tar, cls.role_name, cls.role_path))
-        fd.close()
+        with open(cls.role_req, "w") as fd:
+            fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '%s'" % (cls.role_tar, cls.role_name, cls.role_path))
 
     @classmethod
     def makeTar(cls, output_file, source_dir):
@@ -169,7 +168,9 @@ class TestGalaxy(unittest.TestCase):
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             # testing that error expected is raised
             self.assertRaises(AnsibleError, gc.run)
-            self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
+            assert mocked_display.call_count == 2
+            assert mocked_display.mock_calls[0].args[0] == "Starting galaxy role install process"
+            assert "fake_role_name was NOT installed successfully" in mocked_display.mock_calls[1].args[0]
 
     def test_exit_without_ignore_with_flag(self):
         ''' tests that GalaxyCLI exits without the error specified if the --ignore-errors flag is used  '''
@@ -177,7 +178,9 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=["ansible-galaxy", "install", "--server=None", "fake_role_name", "--ignore-errors"])
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             gc.run()
-            self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
+            assert mocked_display.call_count == 2
+            assert mocked_display.mock_calls[0].args[0] == "Starting galaxy role install process"
+            assert "fake_role_name was NOT installed successfully" in mocked_display.mock_calls[1].args[0]
 
     def test_parse_no_action(self):
         ''' testing the options parser when no action is given '''

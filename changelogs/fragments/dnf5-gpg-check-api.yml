@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf5 - Use ``transaction.check_gpg_signatures`` API call to check package signatures AND possibly to recover from when keys are missing.

@@ -105,6 +105,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             raise AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
+            if use_handlers:
+                raise AnsibleParserError("Using a block as a handler is not supported.", obj=task_ds)
             t = Block.load(
                 task_ds,
                 play=play,
@@ -305,6 +307,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # template the role name now, if needed
                     all_vars = variable_manager.get_vars(play=play, task=ir)
                     templar = Templar(loader=loader, variables=all_vars)
+                    ir.post_validate(templar=templar)
                     ir._role_name = templar.template(ir._role_name)
 
                     # uses compiled list from object

@@ -325,7 +325,6 @@ def filter_options(
 ) -> c.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
-        ('--docker-no-pull', 0, False),
         ('--truncate', 1, str(args.truncate)),
         ('--color', 1, 'yes' if args.color else 'no'),
         ('--redact', 0, False),
@@ -346,7 +345,7 @@ def filter_options(
             ('--metadata', 1, args.metadata_path),
             ('--exclude', 1, exclude),
             ('--require', 1, require),
-            ('--base-branch', 1, args.base_branch or get_ci_provider().get_base_branch()),
+            ('--base-branch', 1, False),
         ])
 
     pass_through_args: list[str] = []

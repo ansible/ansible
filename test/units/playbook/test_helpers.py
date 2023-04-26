@@ -152,20 +152,10 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(block.always, list)
         self.assertEqual(len(block.always), 0)
 
-    def test_block_unknown_action_use_handlers(self):
-        ds = [{
-            'block': [{'action': 'foo_test_block_unknown_action'}]
-        }]
-        res = helpers.load_list_of_tasks(ds, play=self.mock_play, use_handlers=True,
-                                         variable_manager=self.mock_variable_manager, loader=self.fake_loader)
-        self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
-        self._assert_default_block(res[0])
-
-    def test_one_bogus_block_use_handlers(self):
+    def test_block_use_handlers(self):
         ds = [{'block': True}]
         self.assertRaisesRegex(errors.AnsibleParserError,
-                               "A malformed block was encountered",
+                               "Using a block as a handler is not supported.",
                                helpers.load_list_of_tasks,
                                ds, play=self.mock_play, use_handlers=True,
                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)

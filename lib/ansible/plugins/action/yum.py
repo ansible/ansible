@@ -23,7 +23,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-VALID_BACKENDS = frozenset(('yum', 'yum4', 'dnf'))
+VALID_BACKENDS = frozenset(('yum', 'yum4', 'dnf', 'dnf4', 'dnf5'))
 
 
 class ActionModule(ActionBase):
@@ -53,6 +53,9 @@ class ActionModule(ActionBase):
 
         module = self._task.args.get('use', self._task.args.get('use_backend', 'auto'))
 
+        if module == 'dnf':
+            module = 'auto'
+
         if module == 'auto':
             try:
                 if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
@@ -81,7 +84,7 @@ class ActionModule(ActionBase):
             )
 
         else:
-            if module == "yum4":
+            if module in {"yum4", "dnf4"}:
                 module = "dnf"
 
             # eliminate collisions with collections search while still allowing local override
@@ -90,7 +93,6 @@ class ActionModule(ActionBase):
             if not self._shared_loader_obj.module_loader.has_plugin(module):
                 result.update({'failed': True, 'msg': "Could not find a yum module backend for %s." % module})
             else:
-                # run either the yum (yum3) or dnf (yum4) backend module
                 new_module_args = self._task.args.copy()
                 if 'use_backend' in new_module_args:
                     del new_module_args['use_backend']

@@ -27,7 +27,7 @@ if t.TYPE_CHECKING:
     )
 
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -211,6 +211,8 @@ class _ComputedReqKindsMixin:
     @classmethod
     def from_dir_path(cls, dir_path, art_mgr):
         """Make collection from an directory with metadata."""
+        if dir_path.endswith(to_bytes(os.path.sep)):
+            dir_path = dir_path.rstrip(to_bytes(os.path.sep))
         b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
         if not _is_collection_dir(b_dir_path):
             display.warning(
@@ -261,6 +263,8 @@ class _ComputedReqKindsMixin:
         regardless of whether any of known metadata files are present.
         """
         # There is no metadata, but it isn't required for a functional collection. Determine the namespace.name from the path.
+        if dir_path.endswith(to_bytes(os.path.sep)):
+            dir_path = dir_path.rstrip(to_bytes(os.path.sep))
         u_dir_path = to_text(dir_path, errors='surrogate_or_strict')
         path_list = u_dir_path.split(os.path.sep)
         req_name = '.'.join(path_list[-2:])
@@ -419,6 +423,9 @@ class _ComputedReqKindsMixin:
                 'is not an HTTP URL.'.
                 format(not_url=req_source.api_server),
             )
+
+        if req_type == 'dir' and req_source.endswith(os.path.sep):
+            req_source = req_source.rstrip(os.path.sep)
 
         tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_sources)
 
@@ -584,3 +591,13 @@ class Candidate(
 
     def __init__(self, *args, **kwargs):
         super(Candidate, self).__init__()
+
+    def with_signatures_repopulated(self):  # type: (Candidate) -> Candidate
+        """Populate a new Candidate instance with Galaxy signatures.
+        :raises AnsibleAssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
+        """
+        if self.type != 'galaxy':
+            raise AnsibleAssertionError(f"Invalid collection type for {self!r}: unable to get signatures from a galaxy server.")
+
+        signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
+        return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))

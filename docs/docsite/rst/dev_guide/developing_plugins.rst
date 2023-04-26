@@ -75,7 +75,17 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
         type: boolean/float/integer/list/none/path/pathlist/pathspec/string/tmppath
         version_added: X.x
 
-To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For the plugin types (such as 'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', and 'vars') that support embedded documentation, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
+To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. 
+Some plugin types hande this differently:
+
+* Become, callback, connection and shell plugins are guaranteed to have the engine call ``set_options()``. 
+* Lookup plugins always require you to handle it in the ``run()`` method.
+* Inventory plugins are done automatically if you use the ``base _read_config_file()`` method. If not, you must use ``self.get_option(<option_name>)``.
+* Cache plugins do it on load.
+* Cliconf, httpapi and netconf plugins indirectly piggy back on connection plugins.
+* Vars plugin settings are populated when first accessed (using the ``self.get_option()`` or ``self.get_options()`` method.
+
+If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
 Configuration sources follow the precedence rules for values in Ansible. When there are multiple values from the same category, the value defined last takes precedence. For example, in the above configuration block, if both ``name_of_ansible_var`` and ``name_of_second_var`` are defined, the value of the ``option_name`` option will be the value of ``name_of_second_var``. Refer to :ref:`general_precedence_rules` for further information.
 
@@ -533,6 +543,19 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
         extends_documentation_fragment:
           - vars_plugin_staging
     '''
+
+At times a value provided by a vars plugin will contain unsafe values. The utility function `wrap_var` provided by `ansible.utils.unsafe_proxy` should be used to ensure that Ansible handles the variable and value correctly. The use cases for unsafe data is covered in :ref:`unsafe_strings`.
+
+.. code-block:: python
+
+    from ansible.plugins.vars import BaseVarsPlugin
+    from ansible.utils.unsafe_proxy import wrap_var
+
+    class VarsPlugin(BaseVarsPlugin):
+        def get_vars(self, loader, path, entities):
+            return dict(
+                something_unsafe=wrap_var("{{ SOMETHING_UNSAFE }}")
+            )
 
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.

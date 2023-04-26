@@ -34,9 +34,14 @@ DOCUMENTATION:
 EXAMPLES: |
 
     # ab => {'a':1, 'b':3, 'c': 4}
-    ab: {{ {'a':1, 'b':2} | combine({'b':3, 'c':4}) }}
+    ab: {{ {'a':1, 'b':2} | ansible.builtin.combine({'b':3, 'c':4}) }}
 
-    many: "{{ dict1 | combine(dict2, dict3, dict4) }}"
+    many: "{{ dict1 | ansible.builtin.combine(dict2, dict3, dict4) }}"
+    
+    # defaults => {'a':{'b':3, 'c':4}, 'd': 5}
+    # customization => {'a':{'c':20}}
+    # final => {'a':{'b':3, 'c':20}, 'd': 5}
+    final: "{{ defaults | ansible.builtin.combine(customization, recursive=true) }}"
 
 RETURN:
   _value:

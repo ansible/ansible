@@ -124,6 +124,7 @@ Creating correct and informative module output
 
 Modules must output valid JSON only. Follow these guidelines for creating correct, useful module output:
 
+* Module return data must be encoded as strict UTF-8. Modules that cannot return UTF-8 encoded data should return the data encoded by something such as base64. Optionally modules can make the determination if they can encode as UTF-8 and utilize ``errors='replace'`` to replace non UTF-8 characters making the return values lossy.
 * Make your top-level return type a hash (dictionary).
 * Nest complex return values within the top-level hash.
 * Incorporate any lists or simple scalar values within the top-level return hash.

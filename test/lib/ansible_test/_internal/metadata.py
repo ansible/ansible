@@ -4,6 +4,7 @@ import typing as t
 
 from .util import (
     display,
+    generate_name,
 )
 
 from .io import (
@@ -26,6 +27,7 @@ class Metadata:
         self.cloud_config: t.Optional[dict[str, dict[str, t.Union[int, str, bool]]]] = None
         self.change_description: t.Optional[ChangeDescription] = None
         self.ci_provider: t.Optional[str] = None
+        self.session_id = generate_name()
 
     def populate_changes(self, diff: t.Optional[list[str]]) -> None:
         """Populate the changeset using the given diff."""
@@ -53,6 +55,7 @@ class Metadata:
             cloud_config=self.cloud_config,
             ci_provider=self.ci_provider,
             change_description=self.change_description.to_dict(),
+            session_id=self.session_id,
         )
 
     def to_file(self, path: str) -> None:
@@ -77,6 +80,7 @@ class Metadata:
         metadata.cloud_config = data['cloud_config']
         metadata.ci_provider = data['ci_provider']
         metadata.change_description = ChangeDescription.from_dict(data['change_description'])
+        metadata.session_id = data['session_id']
 
         return metadata
 

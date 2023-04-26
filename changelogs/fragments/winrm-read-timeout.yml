@@ -1,2 +1,0 @@
-bugfixes:
-- winrm - Increase the read timeout to 10 seconds later than the operation timeout reducing the chances of a false read timeout

@@ -245,8 +245,8 @@ need to install them into the virtualenv. There are two methods:
       $ cp -v /usr/lib64/python3.*/site-packages/*selinux*.so ./py3-ansible/lib64/python3.*/site-packages/
 
 
-Running on macOS
-----------------
+Running on macOS as a controller
+--------------------------------
 
 When executing Ansible on a system with macOS as a controller machine one might encounter the following error:
 
@@ -259,6 +259,25 @@ In general the recommended workaround is to set the following environment variab
   .. code-block:: shell
 
         $ export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
+
+.. _macos_as_a_target_faq:
+
+Running on macOS as a target
+----------------------------
+
+When managing a system with macOS Monterey 12, macOS Ventura
+13 or above over SSH, the following error can occur:
+
+  .. error::
+        "eDSPermissionError" DS Error: -14120 (eDSPermissionError)
+
+This is a good indication that *Allow full disk access for remote users* has not been enabled.
+
+.. seealso::
+
+   For more details, check out `the official Apple user guide article
+   <https://support.apple.com/guide/mac-help/mchlp1066/mac#mchlp1b6a98a>`_.
 
 
 Running on BSD
@@ -319,7 +338,7 @@ There are a few common errors that one might run into when trying to execute Ans
   .. error::
       /usr/bin/python: EDC5129I No such file or directory
 
-  To fix this set the path to the python installation in your inventory like so::
+  To fix this set the path to the python installation in your inventory like so:
 
   .. code-block:: ini
 

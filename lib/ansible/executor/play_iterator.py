@@ -60,6 +60,8 @@ class HostState:
         self._blocks = blocks[:]
         self.handlers = []
 
+        self.handler_notifications = []
+
         self.cur_block = 0
         self.cur_regular_task = 0
         self.cur_rescue_task = 0
@@ -120,6 +122,7 @@ class HostState:
     def copy(self):
         new_state = HostState(self._blocks)
         new_state.handlers = self.handlers[:]
+        new_state.handler_notifications = self.handler_notifications[:]
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
@@ -237,13 +240,6 @@ class PlayIterator:
             self.set_state_for_host(host.name, HostState(blocks=[]))
 
         return self._host_states[host.name].copy()
-
-    def cache_block_tasks(self, block):
-        display.deprecated(
-            'PlayIterator.cache_block_tasks is now noop due to the changes '
-            'in the way tasks are cached and is deprecated.',
-            version=2.16
-        )
 
     def get_next_task_for_host(self, host, peek=False):
 
@@ -581,14 +577,6 @@ class PlayIterator:
             return self.is_any_block_rescuing(state.always_child_state)
         return False
 
-    def get_original_task(self, host, task):
-        display.deprecated(
-            'PlayIterator.get_original_task is now noop due to the changes '
-            'in the way tasks are cached and is deprecated.',
-            version=2.16
-        )
-        return (None, None)
-
     def _insert_tasks_into_state(self, state, task_list):
         # if we've failed at all, or if the task list is empty, just return the current state
         if (state.fail_state != FailedStates.NONE and state.run_state == IteratingStates.TASKS) or not task_list:
@@ -650,3 +638,12 @@ class PlayIterator:
         if not isinstance(fail_state, FailedStates):
             raise AnsibleAssertionError('Expected fail_state to be a FailedStates but was %s' % (type(fail_state)))
         self._host_states[hostname].fail_state = fail_state
+
+    def add_notification(self, hostname: str, notification: str) -> None:
+        # preserve order
+        host_state = self._host_states[hostname]
+        if notification not in host_state.handler_notifications:
+            host_state.handler_notifications.append(notification)
+
+    def clear_notification(self, hostname: str, notification: str) -> None:
+        self._host_states[hostname].handler_notifications.remove(notification)

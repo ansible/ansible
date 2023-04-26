@@ -28,7 +28,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
-from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.api import GalaxyAPI, GalaxyError
 from ansible.galaxy.collection import (
     build_collection,
     download_collections,
@@ -244,7 +244,7 @@ class GalaxyCLI(CLI):
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
-        common.add_argument('--timeout', dest='timeout', type=int,
+        common.add_argument('--timeout', dest='timeout', type=int, default=60,
                             help="The time to wait for operations against the galaxy server, defaults to 60s.")
 
         opt_help.add_verbosity_options(common)
@@ -1220,7 +1220,7 @@ class GalaxyCLI(CLI):
                 remote_data = None
                 try:
                     remote_data = self.api.lookup_role_by_name(role, False)
-                except AnsibleError as e:
+                except GalaxyError as e:
                     if e.http_code == 400 and 'Bad Request' in e.message:
                         # Role does not exist in Ansible Galaxy
                         data = u"- the role %s was not found" % role
@@ -1393,7 +1393,10 @@ class GalaxyCLI(CLI):
         upgrade = context.CLIARGS.get('upgrade', False)
 
         collections_path = C.COLLECTIONS_PATHS
-        if len([p for p in collections_path if p.startswith(path)]) == 0:
+        if (
+            C.GALAXY_COLLECTIONS_PATH_WARNING
+            and len([p for p in collections_path if p.startswith(path)]) == 0
+        ):
             display.warning("The specified collections path '%s' is not part of the configured Ansible "
                             "collections paths '%s'. The installed collection will not be picked up in an Ansible "
                             "run, unless within a playbook-adjacent collections directory." % (to_text(path), to_text(":".join(collections_path))))
@@ -1629,9 +1632,8 @@ class GalaxyCLI(CLI):
             collection_path = pathlib.Path(to_text(collection.src)).parent.parent.as_posix()
 
             if output_format in {'yaml', 'json'}:
-                collections_in_paths[collection_path] = {
-                    collection.fqcn: {'version': collection.ver} for collection in collections
-                }
+                collections_in_paths.setdefault(collection_path, {})
+                collections_in_paths[collection_path][collection.fqcn] = {'version': collection.ver}
             else:
                 if collection_path not in seen:
                     _display_header(

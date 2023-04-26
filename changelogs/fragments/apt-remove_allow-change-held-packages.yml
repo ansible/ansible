@@ -1,2 +1,0 @@
-minor_changes:
-  - apt - add allow-change-held-packages option to apt remove (https://github.com/ansible/ansible/issues/78131)

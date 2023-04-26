@@ -1,2 +1,0 @@
-bugfixes:
-- TaskExecutor - don't ignore templated _raw_params that k=v parser failed to parse (https://github.com/ansible/ansible/issues/79862)

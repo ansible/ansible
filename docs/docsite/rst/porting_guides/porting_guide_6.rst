@@ -273,7 +273,7 @@ Deprecated Features
 -------------------
 
 - The google.cloud collection is considered unmaintained and will be removed from Ansible 8 if no one starts maintaining it again before Ansible 8. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/105).
-- The servicenow.servicenow collection has been deprecated by its maintainers (https://github.com/ServiceNowITOM/servicenow-ansible/pull/69) and will be removed from Ansible 7. It can still be installed manually, but it is suggested to swich to `servicenow.itsm <https://galaxy.ansible.com/servicenow/itsm>`__ instead (https://github.com/ansible-community/community-topics/issues/124).
+- The servicenow.servicenow collection has been deprecated by its maintainers (https://github.com/ServiceNowITOM/servicenow-ansible/pull/69) and will be removed from Ansible 7. It can still be installed manually, but it is suggested to switch to `servicenow.itsm <https://galaxy.ansible.com/servicenow/itsm>`__ instead (https://github.com/ansible-community/community-topics/issues/124).
 
 Porting Guide for v6.2.0
 ========================
@@ -576,7 +576,7 @@ Ansible-core
 amazon.aws
 ~~~~~~~~~~
 
-- amazon.aws collection - The amazon.aws collection has dropped support for ``botocore<1.19.0`` and ``boto3<1.16.0``. Most modules will continue to work with older versions of the AWS SDK, however compatability with older versions of the SDK is not guaranteed and will not be tested. When using older versions of the SDK a warning will be emitted by Ansible (https://github.com/ansible-collections/amazon.aws/pull/574).
+- amazon.aws collection - The amazon.aws collection has dropped support for ``botocore<1.19.0`` and ``boto3<1.16.0``. Most modules will continue to work with older versions of the AWS SDK, however compatibility with older versions of the SDK is not guaranteed and will not be tested. When using older versions of the SDK a warning will be emitted by Ansible (https://github.com/ansible-collections/amazon.aws/pull/574).
 
 ansible.netcommon
 ~~~~~~~~~~~~~~~~~
@@ -678,12 +678,12 @@ cisco.nxos
 - The minimum required ansible.netcommon version has been bumped to v2.6.1.
 - Updated base plugin references to ansible.netcommon.
 - `nxos_facts` - change default gather_subset to `min` from `!config` (https://github.com/ansible-collections/cisco.nxos/issues/418).
-- nxos_file_copy has been rewritten as a module. This change also removes the dependency on pexpect for file_pull operation. Since this now uses AnsibleModule class for argspec validation, the validation messages will be slighlty different. Expect changes in the return payload in some cases. All functionality remains unchanged.
+- nxos_file_copy has been rewritten as a module. This change also removes the dependency on pexpect for file_pull operation. Since this now uses AnsibleModule class for argspec validation, the validation messages will be slightly different. Expect changes in the return payload in some cases. All functionality remains unchanged.
 
 community.aws
 ~~~~~~~~~~~~~
 
-- community.aws collection - The community.aws collection has dropped support for ``botocore<1.19.0`` and ``boto3<1.16.0``. Most modules will continue to work with older versions of the AWS SDK, however compatability with older versions of the SDK is not guaranteed and will not be tested. When using older versions of the SDK a warning will be emitted by Ansible (https://github.com/ansible-collections/community.aws/pull/809).
+- community.aws collection - The community.aws collection has dropped support for ``botocore<1.19.0`` and ``boto3<1.16.0``. Most modules will continue to work with older versions of the AWS SDK, however compatibility with older versions of the SDK is not guaranteed and will not be tested. When using older versions of the SDK a warning will be emitted by Ansible (https://github.com/ansible-collections/community.aws/pull/809).
 - s3_bucket_notifications - refactor module to support SNS / SQS targets as well as the existing support for Lambda functions (https://github.com/ansible-collections/community.aws/issues/140).
 
 community.general
@@ -956,7 +956,7 @@ community.network
 junipernetworks.junos
 ~~~~~~~~~~~~~~~~~~~~~
 
-- 'router_id' options is deprecated from junos_ospf_interfaces, junos_ospfv2 and junos_ospfv3 resuorce module.
+- 'router_id' options is deprecated from junos_ospf_interfaces, junos_ospfv2 and junos_ospfv3 resource module.
 
 purestorage.flasharray
 ~~~~~~~~~~~~~~~~~~~~~~

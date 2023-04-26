@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-inventory now supports the limit command line options.

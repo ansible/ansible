@@ -5,12 +5,13 @@
 # See https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html for more information
 #
 module: modulename
-short_description: This is a sentence describing the module
+short_description: This is a short phrase describing the module
 description:
     - Longer description of the module.
     - You might include instructions.
 version_added: "X.Y"
 author: "Your AWESOME name (@awesome-github-id)"
+deprecated: "X.5"
 options:
 # One or more of the following
     option_name:
@@ -21,13 +22,15 @@ options:
         default: a string or the word null
         choices:
           - enable
-          - disable
+          - disable  
         aliases:
           - repo_name
         version_added: "1.X"
-notes:
-    - Other things consumers of your module should know.
 requirements:
-    - list of required things.
+    - list of required things
     - like the factor package
-    - zypper >= 1.0
+    - zypper >= 1.0        
+seealso: 
+   - specify references to other modules, useful guides, and so on
+notes:
+    - other things consumers of your module should know

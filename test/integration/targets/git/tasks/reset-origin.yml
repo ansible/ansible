@@ -12,7 +12,14 @@
     state: directory
 
 - name: RESET-ORIGIN | Initialise the repo with a file named origin,see github.com/ansible/ansible/pull/22502
-  shell: git init; echo "PR 22502" > origin; git add origin; git commit -m "PR 22502"
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "PR 22502" > origin
+    git add origin
+    git commit -m "PR 22502"
   args:
     chdir: "{{ repo_dir }}/origin"
 

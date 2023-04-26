@@ -82,7 +82,7 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, variable_manager):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -92,6 +92,7 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
         self._final_q = final_q
+        self._variable_manager = variable_manager
         self._loop_eval_error = None
 
         self._task.squash()
@@ -136,6 +137,12 @@ class TaskExecutor:
                                 self._task.ignore_errors = item_ignore
                             elif self._task.ignore_errors and not item_ignore:
                                 self._task.ignore_errors = item_ignore
+                        if 'unreachable' in item and item['unreachable']:
+                            item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
+                            if not res.get('unreachable'):
+                                self._task.ignore_unreachable = item_ignore_unreachable
+                            elif self._task.ignore_unreachable and not item_ignore_unreachable:
+                                self._task.ignore_unreachable = item_ignore_unreachable
 
                         # ensure to accumulate these
                         for array in ['warnings', 'deprecations']:
@@ -215,12 +222,7 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
         items = None
-        loop_cache = self._job_vars.get('_ansible_loop_cache')
-        if loop_cache is not None:
-            # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
-            # to avoid reprocessing the loop
-            items = loop_cache
-        elif self._task.loop_with:
+        if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
                 if self._task.loop_with == 'first_found':
@@ -281,6 +283,7 @@ class TaskExecutor:
                             u" to something else to avoid variable collisions and unexpected behavior." % (self._task, loop_var))
 
         ran_once = False
+        task_fields = None
         no_log = False
         items_len = len(items)
         results = []
@@ -352,6 +355,7 @@ class TaskExecutor:
 
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
+            res['_ansible_ignore_unreachable'] = task_fields.get('ignore_unreachable')
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
@@ -396,8 +400,28 @@ class TaskExecutor:
                             del task_vars[var]
 
         self._task.no_log = no_log
+        # NOTE: run_once cannot contain loop vars because it's templated earlier also
+        # This is saving the post-validated field from the last loop so the strategy can use the templated value post task execution
+        self._task.run_once = task_fields.get('run_once')
+        self._task.action = task_fields.get('action')
 
         return results
+
+    def _calculate_delegate_to(self, templar, variables):
+        """This method is responsible for effectively pre-validating Task.delegate_to and will
+        happen before Task.post_validate is executed
+        """
+        delegated_vars, delegated_host_name = self._variable_manager.get_delegated_vars_and_hostname(
+            templar,
+            self._task,
+            variables
+        )
+        # At the point this is executed it is safe to mutate self._task,
+        # since `self._task` is either a copy referred to by `tmp_task` in `_run_loop`
+        # or just a singular non-looped task
+        if delegated_host_name:
+            self._task.delegate_to = delegated_host_name
+            variables.update(delegated_vars)
 
     def _execute(self, variables=None):
         '''
@@ -410,6 +434,8 @@ class TaskExecutor:
             variables = self._job_vars
 
         templar = Templar(loader=self._loader, variables=variables)
+
+        self._calculate_delegate_to(templar, variables)
 
         context_validation_error = None
 
@@ -450,9 +476,11 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         try:
-            if not self._task.evaluate_conditional(templar, tempvars):
+            conditional_result, false_condition = self._task.evaluate_conditional_with_result(templar, tempvars)
+            if not conditional_result:
                 display.debug("when evaluation is False, skipping this task")
-                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=no_log)
+                return dict(changed=False, skipped=True, skip_reason='Conditional result was False',
+                            false_condition=false_condition, _ansible_no_log=no_log)
         except AnsibleError as e:
             # loop error takes precedence
             if self._loop_eval_error is not None:

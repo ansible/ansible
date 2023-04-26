@@ -45,7 +45,7 @@ from ansible.errors import (
     AnsibleOptionsError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
@@ -566,9 +566,6 @@ class Templar:
         )
         self.environment.template_class.environment_class = environment_class
 
-        # jinja2 global is inconsistent across versions, this normalizes them
-        self.environment.globals['dict'] = dict
-
         # Custom globals
         self.environment.globals['lookup'] = self._lookup
         self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
@@ -810,12 +807,12 @@ class Templar:
 
         return now
 
-    def _query_lookup(self, name, *args, **kwargs):
+    def _query_lookup(self, name, /, *args, **kwargs):
         ''' wrapper for lookup, force wantlist true'''
         kwargs['wantlist'] = True
         return self._lookup(name, *args, **kwargs)
 
-    def _lookup(self, name, *args, **kwargs):
+    def _lookup(self, name, /, *args, **kwargs):
         instance = lookup_loader.get(name, loader=self._loader, templar=self)
 
         if instance is None:

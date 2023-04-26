@@ -11,7 +11,7 @@ jobs:
   - ${{ each job in parameters.jobs }}:
     - job: test_${{ replace(replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_'), '@', '_') }}
       displayName: ${{ job.name }}
-      container: default
+      container: $[ variables.defaultContainer ]
       workspace:
         clean: all
       steps:

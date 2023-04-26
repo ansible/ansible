@@ -14,10 +14,14 @@ lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
 lib/ansible/galaxy/collection/__init__.py mypy-3.9:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.10:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.11:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/gpg.py mypy-3.9:arg-type
+lib/ansible/galaxy/collection/gpg.py mypy-3.10:arg-type
+lib/ansible/galaxy/collection/gpg.py mypy-3.11:arg-type
 lib/ansible/parsing/yaml/constructor.py mypy-3.9:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
 lib/ansible/keyword_desc.yml no-unwanted-files
+lib/ansible/modules/_include.py validate-modules:ansible-deprecated-module
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
@@ -37,6 +41,7 @@ lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
+lib/ansible/modules/dnf5.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/git.py pylint:disallowed-name
@@ -178,27 +183,15 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
-test/support/integration/plugins/module_utils/network/common/utils.py pylint:unused-import
 test/support/integration/plugins/modules/sefcontext.py pylint:unused-import
 test/support/integration/plugins/modules/zypper.py pylint:unused-import
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:unused-import
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/connection/network_cli.py pylint:pointless-string-statement
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/ipaddr.py pylint:pointless-string-statement
 test/support/windows-integration/plugins/action/win_reboot.py pylint:unused-import
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
-test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
-test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
-test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
-test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/network/common/utils.py pylint:use-a-generator
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/netconf/netconf.py pylint:used-before-assignment
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/network.py pylint:consider-using-dict-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:use-a-generator
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pep8:E501
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pylint:used-before-assignment
@@ -231,6 +224,8 @@ test/units/modules/test_apt.py pylint:disallowed-name
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-version
 test/units/module_utils/basic/test_run_command.py pylint:disallowed-name
+test/units/module_utils/common/warnings/test_deprecate.py pylint:ansible-deprecated-no-version  # testing Display.deprecated call without a version or date
+test/units/module_utils/common/warnings/test_deprecate.py pylint:ansible-deprecated-version  # testing Deprecated version found in call to Display.deprecated or AnsibleModule.deprecate
 test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
 test/units/module_utils/urls/test_gzip.py replace-urlopen
@@ -245,3 +240,8 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
+lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
+lib/ansible/playbook/included_file.py pylint:ansible-deprecated-version
+lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
+lib/ansible/template/__init__.py pylint:ansible-deprecated-version
+lib/ansible/module_utils/common/file.py pylint:ansible-deprecated-version

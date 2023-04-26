@@ -1,0 +1,40 @@
+- name: Create repo to install from
+  deb822_repository:
+    name: ansible-test local
+    uris: file:{{ repodir }}
+    suites:
+      - stable
+      - testing
+    components:
+      - main
+    architectures:
+      - all
+    trusted: yes
+  register: deb822_install_repo
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: deb822_install_repo is changed
+
+- block:
+    - name: Install package from local repo
+      apt:
+        name: foo=1.0.0
+      register: deb822_install_pkg
+  always:
+    - name: Uninstall foo
+      apt:
+        name: foo
+        state: absent
+      when: deb822_install_pkg is changed
+
+    - name: remove repo
+      deb822_repository:
+        name: ansible-test local
+        state: absent
+
+- assert:
+    that:
+      - deb822_install_repo is changed
+      - deb822_install_pkg is changed

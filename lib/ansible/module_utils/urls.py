@@ -1309,7 +1309,7 @@ class Request:
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
                  ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
         """This class works somewhat similarly to the ``Session`` class of from requests
-        by defining a cookiejar that an be used across requests as well as cascaded defaults that
+        by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
 
         For documentation of params, see ``Request.open``
@@ -1865,12 +1865,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
 
-    if not HAS_GZIP and decompress is True:
-        decompress = False
-        module.deprecate(
-            '%s. "decompress" has been automatically disabled to prevent a failure' % GzipDecodedReader.missing_gzip_error(),
-            version='2.16'
-        )
+    if not HAS_GZIP:
+        module.fail_json(msg=GzipDecodedReader.missing_gzip_error())
 
     # ensure we use proper tempdir
     old_tempdir = tempfile.tempdir

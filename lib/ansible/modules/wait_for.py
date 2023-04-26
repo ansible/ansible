@@ -100,7 +100,7 @@ options:
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
-        support: full
+        support: none
     diff_mode:
         support: none
     platform:

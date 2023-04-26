@@ -95,7 +95,7 @@ ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version_raw.split('.')[:3]))
 
 
 def _get_expr_name(node):
-    """Funciton to get either ``attrname`` or ``name`` from ``node.func.expr``
+    """Function to get either ``attrname`` or ``name`` from ``node.func.expr``
 
     Created specifically for the case of ``display.deprecated`` or ``self._display.deprecated``
     """
@@ -104,6 +104,17 @@ def _get_expr_name(node):
     except AttributeError:
         # If this fails too, we'll let it raise, the caller should catch it
         return node.func.expr.name
+
+
+def _get_func_name(node):
+    """Function to get either ``attrname`` or ``name`` from ``node.func``
+
+    Created specifically for the case of ``from ansible.module_utils.common.warnings import deprecate``
+    """
+    try:
+        return node.func.attrname
+    except AttributeError:
+        return node.func.name
 
 
 def parse_isodate(value):
@@ -160,6 +171,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
             self.add_message('ansible-deprecated-date', node=node, args=(date,))
 
     def _check_version(self, node, version, collection_name):
+        if collection_name is None:
+            collection_name = 'ansible.builtin'
         if not isinstance(version, (str, float)):
             if collection_name == 'ansible.builtin':
                 symbol = 'ansible-invalid-deprecated-version'
@@ -202,7 +215,12 @@ class AnsibleDeprecatedChecker(BaseChecker):
     @property
     def collection_version(self) -> t.Optional[SemanticVersion]:
         """Return the collection version, or None if ansible-core is being tested."""
-        return SemanticVersion(self.config.collection_version) if self.config.collection_version is not None else None
+        if self.config.collection_version is None:
+            return None
+        sem_ver = SemanticVersion(self.config.collection_version)
+        # Ignore pre-release for version comparison to catch issues before the final release is cut.
+        sem_ver.prerelease = ()
+        return sem_ver
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
@@ -211,8 +229,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
         date = None
         collection_name = None
         try:
-            if (node.func.attrname == 'deprecated' and 'display' in _get_expr_name(node) or
-                    node.func.attrname == 'deprecate' and _get_expr_name(node)):
+            funcname = _get_func_name(node)
+            if (funcname == 'deprecated' and 'display' in _get_expr_name(node) or
+                    funcname == 'deprecate'):
                 if node.keywords:
                     for keyword in node.keywords:
                         if len(node.keywords) == 1 and keyword.arg is None:
