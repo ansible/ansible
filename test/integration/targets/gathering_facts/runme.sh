@@ -25,3 +25,17 @@ ansible-playbook  test_module_defaults.yml "$@" --tags default_fact_module
 ANSIBLE_FACTS_MODULES='ansible.legacy.setup' ansible-playbook test_module_defaults.yml "$@" --tags custom_fact_module
 
 ansible-playbook test_module_defaults.yml "$@" --tags networking
+
+# test it works by default
+ANSIBLE_FACTS_MODULES='ansible.legacy.slow' ansible -m gather_facts localhost --playbook-dir ./ "$@"
+
+# test that gather_facts will timeout parallel modules that dont support gather_timeout when using gather_Timeout
+ANSIBLE_FACTS_MODULES='ansible.legacy.slow' ansible -m gather_facts localhost --playbook-dir ./ -a 'gather_timeout=1 parallel=true' "$@" 2>&1 |grep 'Timeout exceeded'
+
+# test that gather_facts parallel w/o timing out
+ANSIBLE_FACTS_MODULES='ansible.legacy.slow' ansible -m gather_facts localhost --playbook-dir ./ -a 'gather_timeout=30 parallel=true' "$@" 2>&1 |grep -v 'Timeout exceeded'
+
+
+# test parallelism
+ANSIBLE_FACTS_MODULES='dummy1,dummy2,dummy3' ansible -m gather_facts localhost --playbook-dir ./ -a 'gather_timeout=30 parallel=true' "$@" 2>&1
+rm "${OUTPUT_DIR}/canary.txt"

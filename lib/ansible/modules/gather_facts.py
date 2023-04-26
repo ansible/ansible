@@ -26,13 +26,15 @@ options:
             - A toggle that controls if the fact modules are executed in parallel or serially and in order.
               This can guarantee the merge order of module facts at the expense of performance.
             - By default it will be true if more than one fact module is used.
+            - For low cost/delay fact modules parallelism overhead might end up meaning the whole process takes longer.
+              Test your specific case to see if it is a speed improvement or not.
         type: bool
 attributes:
     action:
         support: full
     async:
-        details: multiple modules can be executed in parallel or serially, but the action itself will not be async
-        support: partial
+        details: while this action does not support the task 'async' keywords it can do its own parallel processing using the C(parallel) option.
+        support: none
     bypass_host_loop:
         support: none
     check_mode:
@@ -48,6 +50,8 @@ attributes:
 notes:
     - This is mostly a wrapper around other fact gathering modules.
     - Options passed into this action must be supported by all the underlying fact modules configured.
+    - If using C(gather_timeout) and parallel execution, it will limit the total execution time of
+      modules that do not accept C(gather_timeout) themselves.
     - Facts returned by each module will be merged, conflicts will favor 'last merged'.
       Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:
