@@ -23,6 +23,7 @@ __metaclass__ = type
 
 from abc import ABC
 
+import types
 import typing as t
 
 from ansible import constants as C
