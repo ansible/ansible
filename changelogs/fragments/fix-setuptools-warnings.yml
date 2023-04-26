@@ -1,0 +1,2 @@
+minor_changes:
+  - Use ``package_data`` instead of ``include_package_data`` for ``setup.cfg`` to avoid ``setuptools`` warnings.
