@@ -1,0 +1,2 @@
+minor_changes:
+  - The minimum required ``setuptools`` version is now 45.2.0, as it is the oldest version to support Python 3.10.
