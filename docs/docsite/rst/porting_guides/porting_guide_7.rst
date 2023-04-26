@@ -92,6 +92,25 @@ Networking
 
 No notable changes
 
+Porting Guide for v7.5.0
+========================
+
+Added Collections
+-----------------
+
+- microsoft.ad (version 1.0.0)
+
+Deprecated Features
+-------------------
+
+cisco.ios
+~~~~~~~~~
+
+- ios_bgp_address_family - deprecate redistribute.ospf.match.external with redistribute.ospf.match.externals which enables attributes for OSPF type E1 and E2 routes
+- ios_bgp_address_family - deprecate redistribute.ospf.match.nssa_external with redistribute.ospf.match.nssa_externals which enables attributes for OSPF type N1 and N2 routes
+- ios_bgp_address_family - deprecate redistribute.ospf.match.type_1 with redistribute.ospf.match.nssa_externals.type_1
+- ios_bgp_address_family - deprecate redistribute.ospf.match.type_2 with redistribute.ospf.match.nssa_externals.type_2
+
 Porting Guide for v7.4.0
 ========================
 
@@ -127,7 +146,7 @@ fortinet.fortios
 purestorage.fusion
 ~~~~~~~~~~~~~~~~~~
 
-- Patching of resource properties was brought to parity with underlying Python SDK, meaning the collection can create/update/delete all resource properties the SDK can
+- Patching of resource properties was brought to parity with underlying Python SDK
 - fusion_volume - fixed and reorganized, arguments changed
 
 Deprecated Features
@@ -156,10 +175,10 @@ purestorage.fusion
 ~~~~~~~~~~~~~~~~~~
 
 - fusion_hw - hardware module is being removed as changing hardware type has never been supported by Pure Storage Fusion
-- fusion_info - nigs subset is deprecated in favor of network_interface_groups and will be removed in the version 1.7.0 (https://github.com/Pure-Storage-Ansible/Fusion-Collection/pull/46).
-- fusion_info - placements subset is deprecated in favor of placement_groups and will be removed in the version 1.7.0 (https://github.com/Pure-Storage-Ansible/Fusion-Collection/pull/62).
-- fusion_pg - placement_engine option is deprecated because Fusion API does not longer support this parameter It will be removed in the version 2.0.0 (https://github.com/Pure-Storage-Ansible/Fusion-Collection/pull/53).
-- fusion_se - parameters "addresses", "gateway" and "network_interface_groups" are deprecated in favor of "iscsi" and will be removed in version 2.0.0
+- fusion_info - nigs subset is deprecated in favor of network_interface_groups and will be removed in the version 1.7.0
+- fusion_info - placements subset is deprecated in favor of placement_groups and will be removed in the version 1.7.0
+- fusion_pg - placement_engine option is deprecated because Fusion API does not longer support this parameter It will be removed in the version 2.0.0
+- fusion_se - parameters 'addresses', 'gateway' and 'network_interface_groups' are deprecated in favor of 'iscsi' and will be removed in version 2.0.0
 - fusion_tn - tenant networks are being replaced by storage endpoints ```fusion_se``` and Network Interface Groups ```fusion_nig```
 
 Porting Guide for v7.3.0
