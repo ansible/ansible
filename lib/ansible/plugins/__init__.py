@@ -84,6 +84,13 @@ class AnsiblePlugin(ABC):
             options[option] = self.get_option(option, hostvars=hostvars)
         return options
 
+    def get_option_and_origin(self, option, hostvars=None):
+        try:
+            option_value, origin = C.config.get_config_value_and_origin(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
+        except AnsibleError as e:
+            raise KeyError(to_native(e))
+        return option_value, origin
+
     def set_option(self, option, value):
         self._options[option] = value
 

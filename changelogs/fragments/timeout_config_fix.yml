@@ -1,0 +1,2 @@
+bugfixes:
+  - connection timeouts defined in ansible.cfg will now be properly used, the --timeout cli option was obscuring them by always being set.
