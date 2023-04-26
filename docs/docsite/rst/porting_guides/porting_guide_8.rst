@@ -94,6 +94,40 @@ Networking
 
 No notable changes
 
+Porting Guide for v8.0.0a2
+==========================
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_os_deployment- Issue(260496) - OS installation will support only NFS and CIFS share to store the custom ISO in the destination_path, HTTP/HTTPS/FTP not supported
+- idrac_redfish_storage_contoller - Issue(256164) - If incorrect value is provided for one of the attributes in the provided attribute list for controller configuration, then this module does not exit with error.
+- idrac_user - Issue(192043) The module may error out with the message ``Unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_application_alerts_syslog - Issue(215374) - The module does not provide a proper error message if the destination_address is more than 255 characters.
+- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the following parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
+- ome_device_power_settings - Issue(212679) - The module displays the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not exist or is not applicable for the resource URI.``
+- ome_smart_fabric_uplink - Issue(186024) - Despite the module supported by OpenManage Enterprise Modular, it does not allow the creation of multiple uplinks of the same name. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+
+Deprecated Features
+-------------------
+
+check_point.mgmt
+~~~~~~~~~~~~~~~~
+
+- add/set/delete nat-rule modules - will be replaced by the single cp_mgmt_nat_rule module.
+- cp_mgmt_show_task/s modules - will be replaced by the by the single cp_mgmt_task_facts module.
+
+cisco.ios
+~~~~~~~~~
+
+- ios_bgp_address_family - deprecate redistribute.ospf.match.external with redistribute.ospf.match.externals which enables attributes for OSPF type E1 and E2 routes
+- ios_bgp_address_family - deprecate redistribute.ospf.match.nssa_external with redistribute.ospf.match.nssa_externals which enables attributes for OSPF type N1 and N2 routes
+- ios_bgp_address_family - deprecate redistribute.ospf.match.type_1 with redistribute.ospf.match.nssa_externals.type_1
+- ios_bgp_address_family - deprecate redistribute.ospf.match.type_2 with redistribute.ospf.match.nssa_externals.type_2
+
 Porting Guide for v8.0.0a1
 ==========================
 
@@ -154,7 +188,7 @@ Breaking Changes
 Ansible-core
 ~~~~~~~~~~~~
 
-- ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated (https://github.com/ansible/ansible/pull/79217).
+- ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated (https://github.com/ansible/ansible/pull/79362).
 - ansible-test - Integration tests which depend on specific file permissions when running in an ansible-test managed host environment may require changes. Tests that require permissions other than ``755`` or ``644`` may need to be updated to set the necessary permissions as part of the test run.
 - ansible-test - The ``vcenter`` test plugin now defaults to using a user-provided static configuration instead of the ``govcsim`` simulator for collections. Set the ``ANSIBLE_VCSIM_CONTAINER`` environment variable to ``govcsim`` to use the simulator. Keep in mind that the simulator is deprecated and will be removed in a future release.
 - ansible-test sanity - previously plugins and modules in collections whose name started with ``_`` were treated as deprecated, even when they were not marked as deprecated in ``meta/runtime.yml``. This is no longer the case (https://github.com/ansible/ansible/pull/79362).
