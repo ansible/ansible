@@ -10,6 +10,7 @@ import dataclasses
 import datetime
 import enum
 import functools
+import gzip
 import hashlib
 import http.client
 import inspect
@@ -21,6 +22,7 @@ import re
 import secrets
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -765,6 +767,41 @@ def set_ansible_version(current_version: Version, requested_version: Version) ->
     ANSIBLE_RELEASE_FILE.write_text(updated)
 
 
+def repeatable_sdist(original_path: pathlib.Path, output_path: pathlib.Path, mtime: int) -> None:
+    """Read the specified sdist and write out a new copy with uniform file metadata at the specified location."""
+    with tarfile.open(original_path) as original_archive:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tar_file = pathlib.Path(temp_dir) / "sdist.tar"
+
+            with tarfile.open(tar_file, mode="w") as tar_archive:
+                for original_info in original_archive.getmembers():  # type: tarfile.TarInfo
+                    tar_archive.addfile(repeatable_tar_info(original_info, mtime), original_archive.extractfile(original_info))
+
+            with tar_file.open("rb") as tar_archive:
+                with gzip.GzipFile(output_path, "wb", mtime=mtime) as output_archive:
+                    shutil.copyfileobj(tar_archive, output_archive)
+
+
+def repeatable_tar_info(original: tarfile.TarInfo, mtime: int) -> tarfile.TarInfo:
+    """Return a copy of the given TarInfo with uniform file metadata."""
+    sanitized = tarfile.TarInfo()
+    sanitized.name = original.name
+    sanitized.size = original.size
+    sanitized.mtime = mtime
+    sanitized.mode = (original.mode & ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)) | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR
+    sanitized.type = original.type
+    sanitized.linkname = original.linkname
+    sanitized.uid = 0
+    sanitized.gid = 0
+    sanitized.uname = "root"
+    sanitized.gname = "root"
+
+    if original.mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+        sanitized.mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+
+    return sanitized
+
+
 def test_built_artifact(path: pathlib.Path) -> None:
     """Test the specified built artifact by installing it in a venv and running some basic commands."""
     with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -1228,12 +1265,14 @@ def build(allow_dirty: bool = False) -> None:
         temp_dir = pathlib.Path(temp_dir_name)
         dist_dir = temp_dir / "dist"
 
+        commit_time = int(git("show", "-s", "--format=%ct", capture_output=True).stdout)
+
         git("worktree", "add", "-d", temp_dir)
 
         try:
             run("python", "-m", "build", "--config-setting=--build-manpages", env=env, cwd=temp_dir)
 
-            get_sdist_path(version, dist_dir).rename(sdist_file)
+            repeatable_sdist(get_sdist_path(version, dist_dir), sdist_file, commit_time)
             get_wheel_path(version, dist_dir).rename(wheel_file)
         finally:
             git("worktree", "remove", temp_dir)
