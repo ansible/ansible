@@ -581,6 +581,8 @@ DEFAULT_EXECUTABLE:
     - "This indicates the command to use to spawn a shell under for Ansible's execution needs on a target.
       Users may need to change this in rare instances when shell usage is constrained, but in most cases it may be left as is."
   env: [{name: ANSIBLE_EXECUTABLE}]
+  vars:
+    - name: ansible_shell_executable
   ini:
   - {key: executable, section: defaults}
 DEFAULT_FACT_PATH:
@@ -856,6 +858,8 @@ DEFAULT_MODULE_COMPRESSION:
   env: []
   ini:
   - {key: module_compression, section: defaults}
+  vars:
+    - name: ansible_module_compression
 # vars:
 #   - name: ansible_module_compression
 DEFAULT_MODULE_NAME:

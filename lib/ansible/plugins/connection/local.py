@@ -61,7 +61,7 @@ class Connection(ConnectionBase):
         self._play_context.remote_user = self.default_user
 
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self.default_user), host=self._play_context.remote_addr)
             self._connected = True
         return self
 

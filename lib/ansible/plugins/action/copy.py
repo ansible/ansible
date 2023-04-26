@@ -212,7 +212,7 @@ class ActionModule(ActionBase):
         # NOTE: do not add to this. This should be made a generic function for action plugins.
         # This should also use the same argspec as the module instead of keeping it in sync.
         if 'invocation' not in result:
-            if self._play_context.no_log:
+            if self._task.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
             else:
                 # NOTE: Should be removed in the future. For now keep this broken
@@ -285,10 +285,10 @@ class ActionModule(ActionBase):
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
-            if self._play_context.diff and not raw:
+            if self._task.diff and not raw:
                 result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars))
 
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
                 result['changed'] = True
                 return result
