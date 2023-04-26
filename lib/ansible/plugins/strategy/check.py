@@ -4,6 +4,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
+DOCUMENTATION = '''
+    name: check
+    short_description: Does not execute most tasks for dummy host
+    description:
+        - This strategy ignores hosts mostly and tries to run the playbook w/o really executing anything,
+          except tasks that affect the play itself, like  imports, includes, debug, ... .
+    version_added: "histerical"
+'''
+
+
+from ansible import constants as C
+from ansible.plugins.strategy import StrategyBase, implicit_noop_task
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.display import Display
 
