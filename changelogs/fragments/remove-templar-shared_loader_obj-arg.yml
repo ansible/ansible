@@ -1,0 +1,2 @@
+removed_features:
+  - "``Templar`` - remove deprecated ``shared_loader_obj`` parameter of ``__init__``"

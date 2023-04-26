@@ -243,5 +243,4 @@ test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-va
 lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/included_file.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
-lib/ansible/template/__init__.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/common/file.py pylint:ansible-deprecated-version
