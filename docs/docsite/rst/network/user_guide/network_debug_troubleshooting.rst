@@ -634,7 +634,7 @@ For example:
 
 Suggestions to resolve:
 
- Use ``connection: ansible.netcommon.network_cli`` and ``become: yes``
+ Use ``connection: ansible.netcommon.network_cli`` and ``become: true``
 
 
 Proxy Issues

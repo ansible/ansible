@@ -146,12 +146,6 @@ def add_global_options(
         help='install command requirements',
     )
 
-    global_parser.add_argument(
-        '--no-pip-check',
-        action='store_true',
-        help=argparse.SUPPRESS,  # deprecated, kept for now (with a warning) for backwards compatibility
-    )
-
     add_global_remote(global_parser, controller_mode)
     add_global_docker(global_parser, controller_mode)
 
@@ -396,7 +390,6 @@ def add_global_docker(
     """Add global options for Docker."""
     if controller_mode != ControllerMode.DELEGATED:
         parser.set_defaults(
-            docker_no_pull=False,
             docker_network=None,
             docker_terminate=None,
             prime_containers=False,
@@ -405,12 +398,6 @@ def add_global_docker(
         )
 
         return
-
-    parser.add_argument(
-        '--docker-no-pull',
-        action='store_true',
-        help=argparse.SUPPRESS,  # deprecated, kept for now (with a warning) for backwards compatibility
-    )
 
     parser.add_argument(
         '--docker-network',

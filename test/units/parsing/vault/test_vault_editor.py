@@ -90,10 +90,9 @@ class TestVaultEditor(unittest.TestCase):
 
     def _create_file(self, test_dir, name, content=None, symlink=False):
         file_path = os.path.join(test_dir, name)
-        opened_file = open(file_path, 'wb')
-        if content:
-            opened_file.write(content)
-        opened_file.close()
+        with open(file_path, 'wb') as opened_file:
+            if content:
+                opened_file.write(content)
         return file_path
 
     def _vault_editor(self, vault_secrets=None):
@@ -174,10 +173,9 @@ class TestVaultEditor(unittest.TestCase):
         tmp_path = editor_args[-1]
 
         # simulate the tmp file being editted
-        tmp_file = open(tmp_path, 'wb')
-        if new_src_contents:
-            tmp_file.write(new_src_contents)
-        tmp_file.close()
+        with open(tmp_path, 'wb') as tmp_file:
+            if new_src_contents:
+                tmp_file.write(new_src_contents)
 
     def _faux_command(self, tmp_path):
         pass
@@ -198,13 +196,13 @@ class TestVaultEditor(unittest.TestCase):
 
         ve._edit_file_helper(src_file_path, self.vault_secret, existing_data=src_file_contents)
 
-        new_target_file = open(src_file_path, 'rb')
-        new_target_file_contents = new_target_file.read()
-        self.assertEqual(src_file_contents, new_target_file_contents)
+        with open(src_file_path, 'rb') as new_target_file:
+            new_target_file_contents = new_target_file.read()
+            self.assertEqual(src_file_contents, new_target_file_contents)
 
     def _assert_file_is_encrypted(self, vault_editor, src_file_path, src_contents):
-        new_src_file = open(src_file_path, 'rb')
-        new_src_file_contents = new_src_file.read()
+        with open(src_file_path, 'rb') as new_src_file:
+            new_src_file_contents = new_src_file.read()
 
         # TODO: assert that it is encrypted
         self.assertTrue(vault.is_encrypted(new_src_file_contents))
@@ -339,8 +337,8 @@ class TestVaultEditor(unittest.TestCase):
         ve.encrypt_file(src_file_path, self.vault_secret)
         ve.edit_file(src_file_path)
 
-        new_src_file = open(src_file_path, 'rb')
-        new_src_file_contents = new_src_file.read()
+        with open(src_file_path, 'rb') as new_src_file:
+            new_src_file_contents = new_src_file.read()
 
         self.assertTrue(b'$ANSIBLE_VAULT;1.1;AES256' in new_src_file_contents)
 
@@ -367,8 +365,8 @@ class TestVaultEditor(unittest.TestCase):
                         vault_id='vault_secrets')
         ve.edit_file(src_file_path)
 
-        new_src_file = open(src_file_path, 'rb')
-        new_src_file_contents = new_src_file.read()
+        with open(src_file_path, 'rb') as new_src_file:
+            new_src_file_contents = new_src_file.read()
 
         self.assertTrue(b'$ANSIBLE_VAULT;1.2;AES256;vault_secrets' in new_src_file_contents)
 
@@ -399,8 +397,8 @@ class TestVaultEditor(unittest.TestCase):
 
         ve.edit_file(src_file_link_path)
 
-        new_src_file = open(src_file_path, 'rb')
-        new_src_file_contents = new_src_file.read()
+        with open(src_file_path, 'rb') as new_src_file:
+            new_src_file_contents = new_src_file.read()
 
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
 
@@ -485,9 +483,8 @@ class TestVaultEditor(unittest.TestCase):
             error_hit = True
 
         # verify decrypted content
-        f = open(v11_file.name, "rb")
-        fdata = to_text(f.read())
-        f.close()
+        with open(v11_file.name, "rb") as f:
+            fdata = to_text(f.read())
 
         os.unlink(v11_file.name)
 

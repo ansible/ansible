@@ -19,9 +19,12 @@ from ansible.module_utils.facts.system.distribution import DistributionFiles
     )
 )
 def test_parse_distribution_file_slackware(mock_module, distro_file, expected_version):
+    with open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files', distro_file)) as file:
+        data = file.read()
+
     test_input = {
         'name': 'Slackware',
-        'data': open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files', distro_file)).read(),
+        'data': data,
         'path': '/etc/os-release',
         'collected_facts': None,
     }

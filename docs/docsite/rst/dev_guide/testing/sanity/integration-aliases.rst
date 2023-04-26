@@ -157,9 +157,7 @@ Some of the available aliases are:
 - ``cloud/azure``
 - ``cloud/cs``
 - ``cloud/digitalocean``
-- ``cloud/foreman``
 - ``cloud/openshift``
-- ``cloud/tower``
 - ``cloud/vcenter``
 
 Untested

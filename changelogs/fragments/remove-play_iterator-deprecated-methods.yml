@@ -1,0 +1,2 @@
+removed_features:
+  - PlayIterator - remove deprecated ``cache_block_tasks`` and ``get_original_task`` methods
