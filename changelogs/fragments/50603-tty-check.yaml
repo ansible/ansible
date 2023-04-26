@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "ansible-vault create: Now raises an error when opening the editor without
+    tty. The flag --skip-tty-check restores previous behaviour."

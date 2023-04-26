@@ -171,7 +171,28 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
         cli.parse()
+        self.assertRaisesRegexp(errors.AnsibleOptionsError,
+                                "not a tty, editor cannot be opened",
+                                cli.run)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_skip_tty_check(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'create', '--skip-tty-check', '/dev/null/foo'])
+        cli.parse()
         cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_with_tty(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        self.tty_stdout_patcher = patch('ansible.cli.sys.stdout.isatty', return_value=True)
+        self.tty_stdout_patcher.start()
+        cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+        self.tty_stdout_patcher.stop()
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
