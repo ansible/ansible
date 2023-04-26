@@ -296,7 +296,7 @@ class ActionBase(ABC):
             try:
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
                                                                             task_vars=use_vars,
-                                                                            module_compression=self._play_context.module_compression,
+                                                                            module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION', variables=task_vars)
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),

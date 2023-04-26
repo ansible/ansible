@@ -1,0 +1,2 @@
+minor_changes:
+  - module compression is not sourced directly via config, bypassing play_context.
