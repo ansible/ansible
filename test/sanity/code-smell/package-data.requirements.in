@@ -5,3 +5,4 @@ pyyaml  # ansible-core requirement
 resolvelib < 1.1.0
 rstcheck < 6  # match version used in other sanity tests
 antsibull-changelog
+setuptools == 45.2.0  # minimum supported setuptools
