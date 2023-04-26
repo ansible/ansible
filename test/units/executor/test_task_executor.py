@@ -224,7 +224,8 @@ class TestTaskExecutor(unittest.TestCase):
         te._task.action = action
         te._connection = MagicMock()
 
-        handler = te._get_action_handler(mock_templar)
+        with patch('ansible.executor.task_executor.start_connection'):
+            handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
 
@@ -263,7 +264,8 @@ class TestTaskExecutor(unittest.TestCase):
         te._task.action = action
         te._connection = MagicMock()
 
-        handler = te._get_action_handler(mock_templar)
+        with patch('ansible.executor.task_executor.start_connection'):
+            handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),  # called twice
@@ -301,7 +303,9 @@ class TestTaskExecutor(unittest.TestCase):
         module_prefix = action.split('_', 1)[0]
         te._task.action = action
         te._connection = MagicMock()
-        handler = te._get_action_handler(mock_templar)
+
+        with patch('ansible.executor.task_executor.start_connection'):
+            handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
 
@@ -373,7 +377,9 @@ class TestTaskExecutor(unittest.TestCase):
 
         te._get_connection = MagicMock(return_value=mock_connection)
         context = MagicMock()
-        te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
+
+        with patch('ansible.executor.task_executor.start_connection'):
+            te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
 
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
