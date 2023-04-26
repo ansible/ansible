@@ -860,6 +860,12 @@ def get_release_artifact_details(repository: str, version: Version, validate: bo
 
     artifacts = [describe_release_artifact(version, item, validate) for item in data["urls"]]
 
+    expected_artifact_types = {"bdist_wheel", "sdist"}
+    found_artifact_types = set(artifact.package_type for artifact in artifacts)
+
+    if found_artifact_types != expected_artifact_types:
+        raise RuntimeError(f"Expected {expected_artifact_types} artifact types, but found {found_artifact_types} instead.")
+
     return artifacts
 
 
