@@ -1166,7 +1166,7 @@ class TaskExecutor:
                 setattr(self._connection, '_socket_path', socket_path)
         else:
             # TODO: set self._connection to dummy/noop connection
-            pass
+            self._connection = self._get_connection({}, templar, 'local')
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
