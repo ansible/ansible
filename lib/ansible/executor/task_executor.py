@@ -607,7 +607,7 @@ class TaskExecutor:
             cvars['ansible_python_interpreter'] = sys.executable
 
         # get handler
-        self._handler, module_context = self._get_action_handler_with_module_context(connection=self._connection, templar=templar)
+        self._handler, module_context = self._get_action_handler_with_module_context(templar=templar)
 
         if module_context is not None:
             module_defaults_fqcn = module_context.resolved_fqcn
