@@ -232,7 +232,7 @@ class TestTaskExecutor(unittest.TestCase):
             action, collection_list=te._task.collections)
 
         action_loader.get.assert_called_once_with(
-            te._task.action, task=te._task, connection=mock_connection,
+            te._task.action, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
@@ -270,7 +270,7 @@ class TestTaskExecutor(unittest.TestCase):
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_once_with(
-            module_prefix, task=te._task, connection=mock_connection,
+            module_prefix, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
@@ -309,7 +309,7 @@ class TestTaskExecutor(unittest.TestCase):
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_once_with(
-            'ansible.legacy.normal', task=te._task, connection=mock_connection,
+            'ansible.legacy.normal', task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=None)
@@ -404,8 +404,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.poll = 0.05
 
         mock_play_context = MagicMock()
-
-        mock_connection = MagicMock()
 
         mock_action = MagicMock()
         mock_queue = MagicMock()
