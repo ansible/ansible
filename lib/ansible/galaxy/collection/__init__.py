@@ -888,7 +888,7 @@ def verify_collections(
                         # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
                         # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                         # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
-                        if not signatures and not collection.signature_sources:
+                        if artifacts_manager.keyring is None or not signatures:
                             api_proxy.get_collection_version_metadata(
                                 remote_collection,
                             )

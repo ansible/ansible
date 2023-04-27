@@ -166,6 +166,7 @@ def _is_concrete_artifact_pointer(tested_str):
 
 
 class _ComputedReqKindsMixin:
+    UNIQUE_ATTRS = ('fqcn', 'ver', 'src', 'type')
 
     def __init__(self, *args, **kwargs):
         if not self.may_have_offline_galaxy_info:
@@ -179,6 +180,12 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
+
+    def __hash__(self):
+        return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
+
+    def __eq__(self, candidate):
+        return hash(self) == hash(candidate)
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
