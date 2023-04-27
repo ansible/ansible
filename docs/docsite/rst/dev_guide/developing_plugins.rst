@@ -487,18 +487,16 @@ Vars plugins
 
 Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
 
-Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4. Vars plugins are supported by collections starting with Ansible 2.10.
+Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4. Vars plugins are supported by collections starting with Ansible 2.10. Ansible 2.0 did not pass passwords to older plugins, so vaults were unavailable.
 
-Older plugins used a ``run`` method as their main body/work:
+Legacy plugins used a ``run`` method as their main body/work:
 
 .. code-block:: python
 
     def run(self, name, vault_password=None):
         pass # your code goes here
 
-
-Ansible 2.0 did not pass passwords to older plugins, so vaults were unavailable.
-Most of the work now  happens in the ``get_vars`` method which is called from the VariableManager when needed.
+Most of the work now happens in the ``get_vars`` method which is called from the VariableManager when needed.
 
 .. code-block:: python
 
@@ -512,6 +510,23 @@ The parameters are:
  * entities: these are host or group names that are pertinent to the variables needed. The plugin will get called once for hosts and again for groups.
 
 This ``get_vars`` method just needs to return a dictionary structure with the variables.
+
+.. code-block:: python
+
+    from ansible.module_utils.common.text.converters import to_text
+
+    ...
+
+        def get_vars(self, loader, path, entities):
+            return dict(
+                custom_vars_plugin_something=to_text("some text")
+            )
+
+.. code-block:: yaml
+
+    - name: Display a variable from the above vars plugin
+      ansible.builtin.debug:
+        var: custom_vars_plugin_something
 
 Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible. Since Ansible version 2.10, vars plugin execution can be toggled by the user to run when preparing to execute a task or after importing an inventory source.
 
@@ -551,7 +566,7 @@ At times a value provided by a vars plugin will contain unsafe values. The utili
     from ansible.plugins.vars import BaseVarsPlugin
     from ansible.utils.unsafe_proxy import wrap_var
 
-    class VarsPlugin(BaseVarsPlugin):
+    class VarsModule(BaseVarsPlugin):
         def get_vars(self, loader, path, entities):
             return dict(
                 something_unsafe=wrap_var("{{ SOMETHING_UNSAFE }}")
