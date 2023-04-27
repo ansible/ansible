@@ -37,11 +37,11 @@ class ActionModule(ActionBase):
 
     # We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True
-    TRANSFERS_FILES = False
+    _requires_connection = False
+    _supports_check_mode = True
 
     def run(self, tmp=None, task_vars=None):
 
-        self._supports_check_mode = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect

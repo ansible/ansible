@@ -31,7 +31,6 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
-from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
 
@@ -39,7 +38,6 @@ display = Display()
 
 
 RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]
-NON_CONNECTED_ACTIONS = add_internal_fqcns(C.SAFE_ACTIONS)
 
 __all__ = ['TaskExecutor']
 
@@ -1153,7 +1151,8 @@ class TaskExecutor:
             handler_name = 'ansible.legacy.normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
-        if handler_name not in NON_CONNECTED_ACTIONS:
+        handler_class = self._shared_loader_obj.aciton_loader.get(handler_name, class_only=True)
+        if getattr(handler_class, '_requires_connection', True):
             # for persistent connections, initialize socket path and start connection manager
             if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
                 self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
