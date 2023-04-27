@@ -350,6 +350,8 @@ Sample specification
    # roles/myapp/tasks/main.yml entry point
    main:
      short_description: The main entry point for the myapp role.
+     description:
+       - Does int and str things with myapp.
      options:
        myapp_int:
          type: "int"
@@ -365,6 +367,8 @@ Sample specification
    # roles/myapp/tasks/alternate.yml entry point
    alternate:
      short_description: The alternate entry point for the myapp role.
+     description:
+       - Does only int things with myapp.
      options:
        myapp_int:
          type: "int"
