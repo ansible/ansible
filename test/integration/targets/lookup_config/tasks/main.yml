@@ -72,5 +72,5 @@
       - lookup_config_7 is failed
       - '"Invalid setting" in lookup_config_7.msg'
       - ssh_user_and_port == ['lola', 2022]
-      - ssh_user_and_port_and_origin == [('lola', 'var: ansible_ssh_user', (2022, 'var: ansible_ssh_port')]
+      - ssh_user_and_port_and_origin == [('lola', 'var: ansible_ssh_user'), (2022, 'var: ansible_ssh_port')]
       - yolo_remote == ["yolo"]
