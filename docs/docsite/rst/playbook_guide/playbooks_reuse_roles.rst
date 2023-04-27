@@ -281,63 +281,38 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
     * This should be ``main`` in the case of an unspecified entry point.
     * This will be the base name of the tasks file to execute, with no ``.yml`` or ``.yaml`` file extension.
 
-    :short_description:
+.. csv-table:: Role Argument Specification Fields :rst:dir:`csv-table`
 
-        * A short, one-line description of the entry point.
+    :header: "Name", "Description", "Type", "Required", "Default"
+
+    "short_descriptio"n, " A short, one-line description of the entry point. ", "str", "Yes", ""
+    description, "A longer description that may contain multiple lines.", "str", "No", "null"
+    author, "Name of the entry point authors.", "list\n elements: 'str'", "No", []
+    options:, 'Options are often called "parameters" or "arguments".', "dict", "No", {}
+
+
+Options themselves have a defined structure:
+.. csv-table:: Role Argument Specification options:rst:dir:`csv-table`
+
+    :header: "Name", "Description", "Type", "Required", "Default"
+
+    "name", "The name of the option/argument.", "String", "Yes", ""
+    "description", "Detailed explanation of what this option does. It should be written in full sentences.", "str", "No", "null"
+    "type", "The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``.", "No",  "str"
+    "required", "Denote if the option is required or not", "bool", "No", "False'
+    "default", "If an option is not required, the value is set to this if not otherwise provided", "No", "null"
+    "choices", "List of option values.", "No", []
+    "elements", Specifies the data type for list elements when type is ``list``., "No", "null"
+    "options", "If this option takes a dict or list of dicts, you can define the structure here.", "No", "null"
+
+.. note::
         * The ``short_description`` is displayed by ``ansible-doc -t role -l``.
-
-    :description:
-
-        * A longer description that may contain multiple lines.
-
-    :author:
-
-        * Name of the entry point authors.
-        * Use a multi-line list if there is more than one author.
-
-    :options:
-
-        * Options are often called "parameters" or "arguments". This section defines those options.
-        * For each role option (argument), you may include:
-
-        :option-name:
-
-           * The name of the option/argument.
-
-        :description:
-
-           * Detailed explanation of what this option does. It should be written in full sentences.
-
-        :type:
-
-           * The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``. Default is ``str``.
-           * If an option is of type ``list``, ``elements`` should be specified.
-
-        :required:
-
-           * Only needed if ``true``.
-           * If missing, the option is not required.
-
-        :default:
-
-           * If ``required`` is false/missing, ``default`` may be specified (assumed 'null' if missing).
-           * Ensure that the default value in the docs matches the default value in the code. The actual
-             default for the role variable will always come from ``defaults/main.yml``.
-           * The default field must not be listed as part of the description, unless it requires additional information or conditions.
-           * If the option is a boolean value, you should use `true/false` if you want to be compatible with `ansible-lint`.
-
-        :choices:
-
-           * List of option values.
-           * Should be absent if empty.
-
-        :elements:
-
-           * Specifies the data type for list elements when type is ``list``.
-
-        :options:
-
-           * If this option takes a dict or list of dicts, you can define the structure here.
+        * description is not required by Ansible itself but ansibullbot does expect it to be there to build documentation.
+        * If a type is ``list``, ``elements`` should be specified.
+        * Ensure that the default value in the docs matches the default value in the code. The actual
+          default for the role variable will always come from ``defaults/main.yml``.
+        * The default field must not be listed as part of the description, unless it requires additional information or conditions.
+        * If the option is a boolean value, you should use `true/false` for defaults if you want to be compatible with `ansible-lint`.
 
 Sample specification
 --------------------
