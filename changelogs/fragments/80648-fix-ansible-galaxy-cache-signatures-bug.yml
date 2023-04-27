@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
+  - ansible-galaxy collection verify - fix verifying signed collections when the keyring is not configured.
