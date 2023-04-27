@@ -1151,10 +1151,13 @@ class TaskExecutor:
             handler_name = 'ansible.legacy.normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
-        handler_class = self._shared_loader_obj.aciton_loader.get(handler_name, class_only=True)
-        if getattr(handler_class, '_requires_connection', True):
-            # for persistent connections, initialize socket path and start connection manager
-            if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
+        # networking/psersistent connections handling
+        if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
+
+            # check handler in case we dont need to do all the work to setup persistent connection
+            handler_class = self._shared_loader_obj.aciton_loader.get(handler_name, class_only=True)
+            if getattr(handler_class, '_requires_connection', True):
+                # for persistent connections, initialize socket path and start connection manager
                 self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
                 display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
                 display.vvvv('using connection plugin %s' % self._connection.transport, host=self._play_context.remote_addr)
@@ -1163,9 +1166,9 @@ class TaskExecutor:
                 socket_path = start_connection(self._play_context, options, self._task._uuid)
                 display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
                 setattr(self._connection, '_socket_path', socket_path)
-        else:
-            # TODO: set self._connection to dummy/noop connection
-            self._connection = self._get_connection({}, templar, 'local')
+            else:
+                # TODO: set self._connection to dummy/noop connection, using local for now
+                self._connection = self._get_connection({}, templar, 'local')
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
