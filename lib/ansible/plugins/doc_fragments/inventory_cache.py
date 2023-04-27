@@ -67,12 +67,6 @@ options:
       - name: ANSIBLE_CACHE_PLUGIN_PREFIX
       - name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX
     ini:
-      - section: default
-        key: fact_caching_prefix
-        deprecated:
-          alternatives: Use the 'defaults' section instead
-          why: Fixes typing error in INI section name
-          version: '2.16'
       - section: defaults
         key: fact_caching_prefix
       - section: inventory
