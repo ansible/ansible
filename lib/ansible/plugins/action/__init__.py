@@ -874,38 +874,6 @@ class ActionBase(ABC):
 
         return mystat['stat']
 
-    def _remote_checksum(self, path, all_vars, follow=False):
-        """Deprecated. Use _execute_remote_stat() instead.
-
-        Produces a remote checksum given a path,
-        Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
-        0 = unknown error
-        1 = file does not exist, this might not be an error
-        2 = permissions issue
-        3 = its a directory, not a file
-        4 = stat module failed, likely due to not finding python
-        5 = appropriate json module not found
-        """
-        self._display.deprecated("The '_remote_checksum()' method is deprecated. "
-                                 "The plugin author should update the code to use '_execute_remote_stat()' instead", "2.16")
-        x = "0"  # unknown error has occurred
-        try:
-            remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
-            if remote_stat['exists'] and remote_stat['isdir']:
-                x = "3"  # its a directory not a file
-            else:
-                x = remote_stat['checksum']  # if 1, file is missing
-        except AnsibleError as e:
-            errormsg = to_text(e)
-            if errormsg.endswith(u'Permission denied'):
-                x = "2"  # cannot read file
-            elif errormsg.endswith(u'MODULE FAILURE'):
-                x = "4"  # python not found or module uncaught exception
-            elif 'json' in errormsg:
-                x = "5"  # json module needed
-        finally:
-            return x  # pylint: disable=lost-exception
-
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
         ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
 

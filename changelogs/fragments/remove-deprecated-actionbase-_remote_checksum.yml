@@ -1,0 +1,2 @@
+removed_features:
+  - ActionBase - remove deprecated ``_remote_checksum`` method
