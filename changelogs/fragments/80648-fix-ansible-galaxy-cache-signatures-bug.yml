@@ -1,2 +1,2 @@
 bugfixes:
-  - ansible-galaxy collection - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
+  - ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
