@@ -244,4 +244,3 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
 lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/included_file.py pylint:ansible-deprecated-version
-lib/ansible/module_utils/common/file.py pylint:ansible-deprecated-version
