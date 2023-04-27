@@ -1,0 +1,7 @@
+bugfixes:
+  - service module, does not permanently configure flags flags on Openbsd when enabling/disabling a service.
+  - service module, enable/disable is not a exclusive action in checkmode anymore.
+breaking_changes:
+  - service module will not permanently configure variables/flags for openbsd when doing enable/disable operation anymore,
+    this module was never meant to do this type of work, just to manage the service state itself. A rcctl_config or similar
+    module should be created and used instead.
