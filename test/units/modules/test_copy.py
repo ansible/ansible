@@ -192,6 +192,10 @@ UMASK_DATA = (
 INVALID_DATA = (
     (0o040000, u'a=foo', "bad symbolic permission for mode: a=foo"),
     (0o040000, u'f=rwx', "bad symbolic permission for mode: f=rwx"),
+    (0o100777, u'of=r', "bad symbolic permission for mode: of=r"),
+
+    (0o100777, u'ao=r', "bad symbolic permission for mode: ao=r"),
+    (0o100777, u'oa=r', "bad symbolic permission for mode: oa=r"),
 )
 
 
