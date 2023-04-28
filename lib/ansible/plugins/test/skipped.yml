@@ -14,7 +14,7 @@ DOCUMENTATION:
       required: True
 EXAMPLES: |
   # test 'status' to know how to respond
-  {{ (taskresults is skipped) }}
+  {{ taskresults is skipped }}
 
 RETURN:
   _value:
