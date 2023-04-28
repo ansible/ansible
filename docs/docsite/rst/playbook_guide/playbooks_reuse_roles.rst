@@ -307,7 +307,7 @@ Options themselves have a defined structure:
 
 .. note::
         * The ``short_description`` is displayed by ``ansible-doc -t role -l``.
-        * description is not required by Ansible itself but ansibullbot does expect it to be there to build documentation.
+        * description is not required by Ansible itself but antsibull-docs does expect it to be there to build documentation.
         * If a type is ``list``, ``elements`` should be specified.
         * Ensure that the default value in the docs matches the default value in the code. The actual
           default for the role variable will always come from ``defaults/main.yml``.
