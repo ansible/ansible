@@ -379,3 +379,15 @@ class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
 class AnsiblePluginNotFound(AnsiblePluginError):
     ''' Indicates we did not find an Ansible plugin '''
     pass
+
+
+class AnsibleVaultError(AnsibleError):
+    pass
+
+
+class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
+class AnsibleVaultFormatError(AnsibleError):
+    pass

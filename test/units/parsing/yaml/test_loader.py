@@ -173,7 +173,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 
     @property
     def vault_secret(self):
-        return vault.match_encrypt_secret(self.vault_secrets)[1]
+        return vault.lib.match_encrypt_secret(self.vault_secrets)[1]
 
     def test_wrong_password(self):
         plaintext = u"Ansible"
@@ -184,7 +184,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 
         bobs_vault = vault.VaultLib(bobs_secrets)
 
-        ciphertext = bobs_vault.encrypt(plaintext, vault.match_encrypt_secret(bobs_secrets)[1])
+        ciphertext = bobs_vault.encrypt(plaintext, vault.lib.match_encrypt_secret(bobs_secrets)[1])
 
         try:
             self.vault.decrypt(ciphertext)
