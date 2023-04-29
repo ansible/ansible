@@ -24,6 +24,7 @@ from unittest.mock import patch, MagicMock
 
 from units.mock.loader import DictDataLoader
 
+from ansible import errors
 from ansible.release import __version__
 from ansible.parsing import vault
 from ansible import cli
@@ -379,3 +380,28 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         match = vault.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
+
+
+class TestCliScriptPasswordFile(unittest.TestCase):
+    def _mock_popen(self, mock_popen, return_code=0, stdout=b'', stderr=b''):
+        def communicate():
+            return stdout, stderr
+        mock_popen.return_value = MagicMock(returncode=return_code)
+        mock_popen_instance = mock_popen.return_value
+        mock_popen_instance.communicate = communicate
+
+    @patch('ansible.cli.subprocess.Popen')
+    @patch('ansible.cli.is_executable')
+    @patch('os.path.exists')
+    def test_get_password_from_script_non_zero_return_code(self, mock_exists, mock_is_executable, mock_popen):
+        mock_exists.return_value = True
+        mock_is_executable.return_value = True
+        rc = 37
+
+        for stderr in (b'That did not work for a random reason', ''):
+            with self.subTest(stderr=stderr):
+                self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+                err_suffix = ': %s' % stderr if stderr else '.'
+                self.assertRaisesRegex(errors.AnsibleError,
+                                       r'The password script.*returned an error \(rc=%s\)%s' % (rc, err_suffix),
+                                       cli.CLI.get_password_from_file, "/dev/null/some_password_script")

@@ -460,8 +460,9 @@ class ScriptVaultSecret(FileVaultSecret):
 
     def _check_results(self, stdout, stderr, popen):
         if popen.returncode != 0:
-            raise AnsibleError("Vault password script %s returned non-zero (%s): %s" %
-                               (self.filename, popen.returncode, stderr))
+            err_suffix = ": %s" % stderr if stderr else "."
+            raise AnsibleError("Vault password script %s returned an error (rc=%s)%s" %
+                               (self.filename, popen.returncode, err_suffix))
 
     def _build_command(self):
         return [self.filename]

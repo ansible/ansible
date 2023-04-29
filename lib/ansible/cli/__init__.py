@@ -604,14 +604,16 @@ class CLI(ABC):
             cmd = [b_pwd_file]
 
             try:
-                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             except OSError as e:
                 raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
                                    " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
 
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("The password script %s returned an error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
+                err_suffix = ": %s" % stderr if stderr else "."
+                raise AnsibleError("The password script %s returned an error (rc=%s)%s" % (pwd_file, p.returncode, err_suffix))
             secret = stdout
 
         else:

@@ -312,16 +312,18 @@ class TestScriptVaultSecret(unittest.TestCase):
 
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_non_zero_return_code(self, mock_popen):
-        stderr = b'That did not work for a random reason'
         rc = 37
 
-        self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
-        secret = vault.ScriptVaultSecret(filename='/dev/null/some_vault_secret')
-        with patch.object(secret, 'loader') as mock_loader:
-            mock_loader.is_executable = MagicMock(return_value=True)
-            self.assertRaisesRegex(errors.AnsibleError,
-                                   r'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
-                                   secret.load)
+        for stderr in (b'That did not work for a random reason', ''):
+            self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+            secret = vault.ScriptVaultSecret(filename='/dev/null/some_vault_secret')
+            with self.subTest(stderr=stderr):
+                with patch.object(secret, 'loader') as mock_loader:
+                    mock_loader.is_executable = MagicMock(return_value=True)
+                    err_suffix = ': %s' % stderr if stderr else '.'
+                    self.assertRaisesRegex(errors.AnsibleError,
+                                           r'Vault password script.*returned an error \(rc=%s\)%s' % (rc, err_suffix),
+                                           secret.load)
 
 
 class TestScriptIsClient(unittest.TestCase):
