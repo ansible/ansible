@@ -480,9 +480,8 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
 
     def _run(self, command):
         try:
-            p = subprocess.Popen(command,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+            # STDERR not captured to make it easier for users to prompt for input in their scripts
+            p = subprocess.Popen(command, stdout=subprocess.PIPE)
         except OSError as e:
             msg_format = "Problem running vault password client script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
@@ -494,13 +493,14 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
         return stdout, stderr, p
 
     def _check_results(self, stdout, stderr, popen):
+        err_suffix = ': %s' % stderr if stderr else '.'
         if popen.returncode == self.VAULT_ID_UNKNOWN_RC:
-            raise AnsibleError('Vault password client script %s did not find a secret for vault-id=%s: %s' %
-                               (self.filename, self._vault_id, stderr))
+            raise AnsibleError('Vault password client script %s did not find a secret for vault-id=%s%s' %
+                               (self.filename, self._vault_id, err_suffix))
 
         if popen.returncode != 0:
-            raise AnsibleError("Vault password client script %s returned non-zero (%s) when getting secret for vault-id=%s: %s" %
-                               (self.filename, popen.returncode, self._vault_id, stderr))
+            raise AnsibleError("Vault password client script %s returned non-zero (%s) when getting secret for vault-id=%s%s" %
+                               (self.filename, popen.returncode, self._vault_id, err_suffix))
 
     def _build_command(self):
         command = [self.filename]

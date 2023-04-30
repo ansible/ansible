@@ -87,7 +87,7 @@ To create a vault password client script:
   * Within the script itself:
       * Print the passwords to standard output
       * Accept a ``--vault-id`` option
-      * If the script prompts for data (for example, a database password), display the prompts to the TTY.
+      * To prompt for data (for example, a database password), you can write to standard error or write to the TTY directly.
 
 When you run a playbook that uses vault passwords stored in a third-party tool, specify the script as the source within the ``--vault-id`` flag. For example:
 

@@ -326,6 +326,52 @@ class TestScriptVaultSecret(unittest.TestCase):
                                            secret.load)
 
 
+class TestClientScriptVaultSecret(unittest.TestCase):
+    def test(self):
+        secret = vault.ClientScriptVaultSecret()
+        self.assertIsNone(secret._bytes)
+        self.assertIsNone(secret._text)
+
+    def _mock_popen(self, mock_popen, return_code=0, stdout=b'', stderr=b''):
+        def communicate():
+            return stdout, stderr
+        mock_popen.return_value = MagicMock(returncode=return_code)
+        mock_popen_instance = mock_popen.return_value
+        mock_popen_instance.communicate = communicate
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_client_file_vault_id_unknown_return_code(self, mock_popen):
+        rc = 2
+
+        for stderr in (b'That did not work for a random reason', ''):
+            self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+            secret = vault.ClientScriptVaultSecret(filename='/dev/null/some_vault_secret-client')
+            with self.subTest(stderr=stderr):
+                with patch.object(secret, 'loader') as mock_loader:
+                    mock_loader.is_executable = MagicMock(return_value=True)
+                    err_suffix = ': %s' % stderr if stderr else '.'
+                    self.assertRaisesRegex(errors.AnsibleError,
+                                           (r'Vault password client script.*did not find a secret '
+                                               'for vault-id=.*%s' % err_suffix),
+                                           secret.load)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_client_file_non_zero_return_code(self, mock_popen):
+        rc = 37
+
+        for stderr in (b'That did not work for a random reason', ''):
+            self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+            secret = vault.ClientScriptVaultSecret(filename='/dev/null/some_vault_secret-client')
+            with self.subTest(stderr=stderr):
+                with patch.object(secret, 'loader') as mock_loader:
+                    mock_loader.is_executable = MagicMock(return_value=True)
+                    err_suffix = ': %s' % stderr if stderr else '.'
+                    self.assertRaisesRegex(errors.AnsibleError,
+                                           (r'Vault password client script.*returned non-zero \(%s\) '
+                                               'when getting secret for vault-id=.*%s' % (rc, err_suffix)),
+                                           secret.load)
+
+
 class TestScriptIsClient(unittest.TestCase):
     def test_randomname(self):
         filename = 'randomname'
