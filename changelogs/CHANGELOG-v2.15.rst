@@ -5,6 +5,28 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.0rc2
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-05-01
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Minor Changes
+-------------
+
+- The minimum required ``setuptools`` version is now 45.2.0, as it is the oldest version to support Python 3.10.
+- Use ``package_data`` instead of ``include_package_data`` for ``setup.cfg`` to avoid ``setuptools`` warnings.
+
+Bugfixes
+--------
+
+- ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
+- ansible-galaxy collection verify - fix verifying signed collections when the keyring is not configured.
+
 v2.15.0rc1
 ==========
 
@@ -166,6 +188,7 @@ Minor Changes
 - ansible-test - Update the NIOS test plugin to use a newer multi-arch test container.
 - ansible-test - Update the ``ansible-bad-import-from`` rule in the ``pylint`` sanity test to recommend ``ansible.module_utils.six.moves.collections_abc`` instead of ``ansible.module_utils.common._collections_compat``.
 - ansible-test - Update the ``base`` and ``default`` test containers with the latest requirements.
+- ansible-test - Update the ``default`` containers to include the ``package-data`` requirements update.
 - ansible-test - Update the ``default`` containers to include the ``pylint`` requirements update.
 - ansible-test - Updated the Azure Pipelines CI plugin to work with newer versions of git.
 - ansible-test - Use ``stop --time 0`` followed by ``rm`` to remove ephemeral containers instead of ``rm -f``. This speeds up teardown of ephemeral containers.
