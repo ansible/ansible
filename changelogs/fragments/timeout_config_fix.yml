@@ -1,0 +1,5 @@
+bugfixes:
+  - connection timeouts defined in ansible.cfg will now be properly used, the --timeout cli option was obscuring them by always being set.
+breaking_changes:
+  - Any plugin using the config system and the `cli` entry to use the `timeout` from the command line, will see the value change if the use had configured it in any of the lower precedence methods.
+    If relying on this behaviour to consume the global/generic timeout from the DEFAULT_TIMEOUT constant, please consult the documentation on plugin configuration to add the overlaping entries.
