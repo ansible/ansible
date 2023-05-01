@@ -495,7 +495,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
 
         def __is_absent():
             __is_absent.counter += 1
-            return not __is_absent.counter > 1
+            return __is_absent.counter <= 1
         __is_absent.counter = 0
 
         b_lines = [l for l in b_lines if l.rstrip(b'\r\n') != b_line or __is_absent()]
