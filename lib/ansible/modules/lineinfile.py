@@ -127,6 +127,12 @@ options:
     type: bool
     default: no
     version_added: "2.5"
+  uniq:
+    description:
+      - If set to yes/true, leaves only one (first) LINE in file, removing all other same lines
+    type: bool
+    default: no
+    version_added: "2.14"
   others:
     description:
       - All arguments accepted by the M(ansible.builtin.file) module also work here.
@@ -294,7 +300,7 @@ def check_file_attrs(module, changed, message, diff):
 
 
 def present(module, dest, regexp, search_string, line, insertafter, insertbefore, create,
-            backup, backrefs, firstmatch):
+            backup, backrefs, firstmatch, uniq):
 
     diff = {'before': '',
             'after': '',
@@ -316,6 +322,14 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
     else:
         with open(b_dest, 'rb') as f:
             b_lines = f.readlines()
+
+    if uniq:
+      used=set()
+      prev_qty = len(b_lines)
+      b_lines = [ l for l in b_lines if l.rstrip(b'\r\n') != b_line or ( l not in used and (used.add(l) or True) ) ]
+      if len(b_lines) != prev_qty:
+        msg = 'made line unique'
+        changed = True
 
     if module._diff:
         diff['before'] = to_native(b''.join(b_lines))
@@ -581,6 +595,7 @@ def main():
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
             firstmatch=dict(type='bool', default=False),
+            uniq=dict(type='bool', default=False),
             validate=dict(type='str'),
         ),
         mutually_exclusive=[
@@ -595,6 +610,7 @@ def main():
     backrefs = params['backrefs']
     path = params['path']
     firstmatch = params['firstmatch']
+    uniq = params['uniq']
     regexp = params['regexp']
     search_string = params['search_string']
     line = params['line']
@@ -626,7 +642,7 @@ def main():
             ins_aft = 'EOF'
 
         present(module, path, regexp, search_string, line,
-                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+                ins_aft, ins_bef, create, backup, backrefs, firstmatch, uniq)
     else:
         if (regexp, search_string, line) == (None, None, None):
             module.fail_json(msg='one of line, search_string, or regexp is required with state=absent')
