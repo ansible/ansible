@@ -17,11 +17,9 @@ from ansible.utils.vars import merge_hash
 
 class ActionModule(ActionBase):
 
-    def _get_module_args(self, fact_module: str, task_vars: dict[str, t.Any]) -> dict[str, t.Any]:
-
     _supports_check_mode = True
 
-    def _get_module_args(self, fact_module, task_vars):
+    def _get_module_args(self, fact_module: str, task_vars: dict[str, t.Any]) -> dict[str, t.Any]:
 
         mod_args = self._task.args.copy()
 
