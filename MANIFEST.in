@@ -1,20 +1,20 @@
 include COPYING
-include requirements.txt
-recursive-include docs *
-include examples/hosts
+include bin/*
+include changelogs/CHANGELOG*.rst
+include changelogs/changelog.yaml
 include examples/ansible.cfg
+include examples/hosts
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
+include hacking/build-ansible.py
+include hacking/test-module.py
+include hacking/update-sanity-requirements.py
 include licenses/*.txt
+include requirements.txt
+recursive-include docs *
+recursive-include hacking/build_library *.py
 recursive-include packaging *.py
 recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.txt
 recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
 recursive-include test/units *
-include changelogs/CHANGELOG*.rst
-include changelogs/changelog.yaml
-recursive-include hacking/build_library *.py
-include hacking/build-ansible.py
-include hacking/test-module.py
-include hacking/update-sanity-requirements.py
-include bin/*
