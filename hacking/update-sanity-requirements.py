@@ -45,7 +45,19 @@ class SanityTest:
             subprocess.run(pip + ['install', 'wheel'], env=env, check=True)  # make bdist_wheel available during pip install
             subprocess.run(pip + ['install', '-r', self.source_path], env=env, check=True)
 
-            pip_freeze = subprocess.run(pip + ['freeze'], env=env, check=True, capture_output=True, text=True)
+            keep_setuptools = any(line.startswith('setuptools ') for line in self.source_path.read_text().splitlines())
+
+            exclude_packages = ['pip', 'distribute', 'wheel']
+
+            if not keep_setuptools:
+                exclude_packages.append('setuptools')
+
+            freeze_options = ['--all']
+
+            for exclude_package in exclude_packages:
+                freeze_options.extend(('--exclude', exclude_package))
+
+            pip_freeze = subprocess.run(pip + ['freeze'] + freeze_options, env=env, check=True, capture_output=True, text=True)
 
         requirements = f'# edit "{self.source_path.name}" and generate with: {SELF} --test {self.name}\n{pip_freeze.stdout}'
 
