@@ -323,14 +323,6 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
         with open(b_dest, 'rb') as f:
             b_lines = f.readlines()
 
-    if uniq:
-      used=set()
-      prev_qty = len(b_lines)
-      b_lines = [ l for l in b_lines if l.rstrip(b'\r\n') != b_line or ( l not in used and (used.add(l) or True) ) ]
-      if len(b_lines) != prev_qty:
-        msg = 'made line unique'
-        changed = True
-
     if module._diff:
         diff['before'] = to_native(b''.join(b_lines))
 
@@ -497,6 +489,14 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
         b_lines.insert(index[1], b_line + b_linesep)
         msg = 'line added'
         changed = True
+
+    if uniq:
+        used = set()
+        prev_qty = len(b_lines)
+        b_lines = [l for l in b_lines if l.rstrip(b'\r\n') != b_line or (l not in used and (used.add(l) or True))]
+        if len(b_lines) != prev_qty:
+            msg = 'made line unique'
+            changed = True
 
     if module._diff:
         diff['after'] = to_native(b''.join(b_lines))
