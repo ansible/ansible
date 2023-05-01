@@ -1,3 +1,4 @@
 minor_changes:
   - ansible-test - Update the ``base`` and ``default`` test containers with the latest requirements.
   - ansible-test - Update the ``default`` containers to include the ``pylint`` requirements update.
+  - ansible-test - Update the ``default`` containers to include the ``package-data`` requirements update.
