@@ -492,10 +492,12 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
 
     if uniq:
         prev_qty = len(b_lines)
+
         def __is_absent():
-            __is_absent.counter+=1
+            __is_absent.counter += 1
             return not __is_absent.counter > 1
-        __is_absent.counter=0
+        __is_absent.counter = 0
+
         b_lines = [l for l in b_lines if l.rstrip(b'\r\n') != b_line or __is_absent()]
         if len(b_lines) != prev_qty:
             msg = 'made line unique'
