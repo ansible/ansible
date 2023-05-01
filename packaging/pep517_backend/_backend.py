@@ -2,16 +2,10 @@
 
 from __future__ import annotations
 
-import gzip
 import os
 import re
-import shutil
-import stat
 import subprocess
 import sys
-import tarfile
-import tempfile
-import time
 import typing as t
 from configparser import ConfigParser
 from contextlib import contextmanager, suppress
@@ -151,56 +145,12 @@ def build_sdist(  # noqa: WPS210, WPS430
             )
         )
 
-        tmp_sdist_directory = tmp_dir / "sdist"
-
         built_sdist_basename = _setuptools_build_sdist(
-            sdist_directory=tmp_sdist_directory,
+            sdist_directory=sdist_directory,
             config_settings=config_settings,
         )
 
-        built_sdist = Path(tmp_sdist_directory) / built_sdist_basename
-        output_sdist = Path(sdist_directory) / built_sdist_basename
-
-        source_date_epoch = int(os.environ.get("SOURCE_DATE_EPOCH", time.time()))
-
-        reproducible_sdist(built_sdist, output_sdist, source_date_epoch)
-
     return built_sdist_basename
-
-
-def reproducible_sdist(original_path: Path, output_path: Path, mtime: int) -> None:
-    """Read the specified sdist and write out a new copy with uniform file metadata at the specified location."""
-    with tarfile.open(original_path) as original_archive:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            tar_file = Path(temp_dir) / "sdist.tar"
-
-            with tarfile.open(tar_file, mode="w") as tar_archive:
-                for original_info in original_archive.getmembers():  # type: tarfile.TarInfo
-                    tar_archive.addfile(reproducible_tar_info(original_info, mtime), original_archive.extractfile(original_info))
-
-            with tar_file.open("rb") as tar_archive:
-                with gzip.GzipFile(output_path, "wb", mtime=mtime) as output_archive:
-                    shutil.copyfileobj(tar_archive, output_archive)
-
-
-def reproducible_tar_info(original: tarfile.TarInfo, mtime: int) -> tarfile.TarInfo:
-    """Return a copy of the given TarInfo with uniform file metadata."""
-    output = tarfile.TarInfo()
-    output.name = original.name
-    output.size = original.size
-    output.mtime = mtime  # NOTE: This differs from wheel, which uses this as a max, not the actual value.
-    output.mode = (original.mode & ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)) | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR
-    output.type = original.type
-    output.linkname = original.linkname
-    output.uid = 0
-    output.gid = 0
-    output.uname = "root"
-    output.gname = "root"
-
-    if original.mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
-        output.mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-
-    return output
 
 
 def get_requires_for_build_sdist(
