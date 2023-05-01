@@ -767,7 +767,7 @@ def set_ansible_version(current_version: Version, requested_version: Version) ->
     ANSIBLE_RELEASE_FILE.write_text(updated)
 
 
-def repeatable_sdist(original_path: pathlib.Path, output_path: pathlib.Path, mtime: int) -> None:
+def create_reproducible_sdist(original_path: pathlib.Path, output_path: pathlib.Path, mtime: int) -> None:
     """Read the specified sdist and write out a new copy with uniform file metadata at the specified location."""
     with tarfile.open(original_path) as original_archive:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -775,14 +775,14 @@ def repeatable_sdist(original_path: pathlib.Path, output_path: pathlib.Path, mti
 
             with tarfile.open(tar_file, mode="w") as tar_archive:
                 for original_info in original_archive.getmembers():  # type: tarfile.TarInfo
-                    tar_archive.addfile(repeatable_tar_info(original_info, mtime), original_archive.extractfile(original_info))
+                    tar_archive.addfile(create_reproducible_tar_info(original_info, mtime), original_archive.extractfile(original_info))
 
             with tar_file.open("rb") as tar_archive:
                 with gzip.GzipFile(output_path, "wb", mtime=mtime) as output_archive:
                     shutil.copyfileobj(tar_archive, output_archive)
 
 
-def repeatable_tar_info(original: tarfile.TarInfo, mtime: int) -> tarfile.TarInfo:
+def create_reproducible_tar_info(original: tarfile.TarInfo, mtime: int) -> tarfile.TarInfo:
     """Return a copy of the given TarInfo with uniform file metadata."""
     sanitized = tarfile.TarInfo()
     sanitized.name = original.name
@@ -1282,7 +1282,7 @@ def build(allow_dirty: bool = False) -> None:
         try:
             run("python", "-m", "build", "--config-setting=--build-manpages", env=env, cwd=temp_dir)
 
-            repeatable_sdist(get_sdist_path(version, dist_dir), sdist_file, commit_time)
+            create_reproducible_sdist(get_sdist_path(version, dist_dir), sdist_file, commit_time)
             get_wheel_path(version, dist_dir).rename(wheel_file)
         finally:
             git("worktree", "remove", temp_dir)
