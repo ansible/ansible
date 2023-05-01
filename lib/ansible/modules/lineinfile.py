@@ -132,7 +132,7 @@ options:
       - If set to yes/true, leaves only one (first) LINE in file, removing all other same lines
     type: bool
     default: no
-    version_added: "2.14"
+    version_added: "2.16"
   others:
     description:
       - All arguments accepted by the M(ansible.builtin.file) module also work here.
