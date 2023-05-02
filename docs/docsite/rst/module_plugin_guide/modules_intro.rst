@@ -60,3 +60,6 @@ For a list of all available modules, see the :ref:`Collection docs <list_of_coll
        Questions? Help? Ideas?  Stop by the list on Google Groups
    :ref:`communication_irc`
        How to join Ansible chat channels
+   :ref:`all_modules_and_plugins`
+       All modules and plugins available
+       

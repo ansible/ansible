@@ -250,7 +250,7 @@ Submit a pull request
 
     .. code-block:: bash
 
-      $ansible-test sanity changelogs/fragments/ --docker -v
+      $ ansible-test sanity changelogs/fragments/ --docker -v
 
 
   b. If the tests passed, commit and push the changes:

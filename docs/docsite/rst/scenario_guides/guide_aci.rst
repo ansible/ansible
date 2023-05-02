@@ -217,13 +217,13 @@ Every Ansible ACI module accepts the following parameters that influence the mod
         Timeout value for socket-level communication.
 
     use_proxy
-        Use system proxy settings. (Defaults to ``yes``)
+        Use system proxy settings. (Defaults to ``true``)
 
     use_ssl
-        Use HTTPS or HTTP for APIC REST communication. (Defaults to ``yes``)
+        Use HTTPS or HTTP for APIC REST communication. (Defaults to ``true``)
 
     validate_certs
-        Validate certificate when using HTTPS communication. (Defaults to ``yes``)
+        Validate certificate when using HTTPS communication. (Defaults to ``true``)
 
     output_level
         Influence the level of detail ACI modules return to the user. (One of ``normal``, ``info`` or ``debug``) *New in version 2.5*

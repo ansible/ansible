@@ -27,8 +27,8 @@ Release schedule
 :2023-05-30: Ansible-8.0.0rc2 when necessary, otherwise Ansible-8.0.0 release.
 :2023-06-06: Ansible-8.0.0 release when Ansible-8.0.0rc2 was necessary.
 :2023-05-30 or 2023-06-06: Create the ansible-build-data directory and files for Ansible-9.
-:2023-06-12: Release of ansible-core 2.15.1.
-:2023-06-13: Release of Ansible-8.1.0 (bugfix + compatible features: every four weeks.)
+:2023-06-20: Release of ansible-core 2.15.1.
+:2023-06-22: Release of Ansible-8.1.0 (bugfix + compatible features: every four weeks.)
 
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.3.0; Ansible-8.0.0 could ship with community.crypto 2.3.1.  It would not ship with community.crypto 2.4.0.
 
@@ -49,7 +49,7 @@ Ansible 8.x minor releases will occur approximately every four weeks if changes 
 
 .. note::
 
-    Minor releases will stop when Ansible-8 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
+    Minor releases will stop when Ansible-9 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
 For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
