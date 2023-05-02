@@ -108,8 +108,6 @@ class TestIncludeRole(unittest.TestCase):
                 # skip meta: role_complete
                 continue
             role = task._role
-            if not role:
-                continue
 
             yield (role.get_name(),
                    self.var_manager.get_vars(play=play, task=task))
@@ -201,7 +199,7 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-main')
             else:
-                self.fail()
+                self.fail()  # pragma: nocover
         self.assertFalse(expected_roles)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
@@ -247,5 +245,5 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
             else:
-                self.fail()
+                self.fail()  # pragma: nocover
         self.assertFalse(expected_roles)
