@@ -90,12 +90,8 @@ def assemble_files_to_ship(complete_file_list):
 
     # Manpages
     ignore_script = ('ansible-connection', 'ansible-test')
-    manpages = ['docs/man/man1/ansible.1']
-    for dirname, dummy, files in os.walk('bin'):
-        for filename in files:
-            if filename in ignore_script:
-                continue
-            manpages.append('docs/man/man1/%s.1' % filename)
+    script_names = [os.path.basename(path) for path in complete_file_list if path.startswith('bin/')]
+    manpages = [f'docs/man/man1/{name}.1' for name in script_names if name not in ignore_script]
 
     # Misc
     misc_generated_files = [
@@ -149,7 +145,7 @@ def clean_repository(file_list):
     """Copy the repository to clean it of artifacts"""
     # Create a tempdir that will be the clean repo
     with tempfile.TemporaryDirectory() as repo_root:
-        directories = set((repo_root + os.path.sep,))
+        directories = {repo_root + os.path.sep}
 
         for filename in file_list:
             # Determine if we need to create the directory
@@ -351,33 +347,12 @@ def check_installed_files_are_wanted(install_dir, to_install_files):
     return results
 
 
-def _find_symlinks():
-    symlink_list = []
-    for dirname, directories, filenames in os.walk('.'):
-        for filename in filenames:
-            path = os.path.join(dirname, filename)
-            # Strip off "./" from the front
-            path = path[2:]
-            if os.path.islink(path):
-                symlink_list.append(path)
-
-    return symlink_list
-
-
 def main():
     """All of the files in the repository"""
-    complete_file_list = []
-    for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        complete_file_list.append(path)
+    complete_file_list = sys.argv[1:] or sys.stdin.read().splitlines()
 
-    # ansible-test isn't currently passing symlinks to us so construct those ourselves for now
-    for filename in _find_symlinks():
-        if filename not in complete_file_list:
-            # For some reason ansible-test is passing us lib/ansible/module_utils/ansible_release.py
-            # which is a symlink even though it doesn't pass any others
-            complete_file_list.append(filename)
-
-    # We may run this after docs sanity tests so get a clean repository to run in
+    # Limit visible files to those reported by ansible-test.
+    # This avoids including files which are not committed to git.
     with clean_repository(complete_file_list) as clean_repo_dir:
         os.chdir(clean_repo_dir)
 
