@@ -264,6 +264,7 @@ virtualenv:
   sample: "/tmp/virtualenv"
 '''
 
+import argparse
 import os
 import re
 import sys
@@ -304,6 +305,18 @@ op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
 def _is_vcs_url(name):
     """Test whether a name is a vcs url or not."""
     return re.match(_VCS_RE, name)
+
+
+def _is_venv_command(command):
+    venv_parser = argparse.ArgumentParser()
+    venv_parser.add_argument('-m', type=str)
+    argv = shlex.split(command)
+    if argv[0] == 'pyvenv':
+        return True
+    args, dummy = venv_parser.parse_known_args(argv[1:])
+    if args.m == 'venv':
+        return True
+    return False
 
 
 def _is_package_name(name):
@@ -540,7 +553,7 @@ def setup_virtualenv(module, env, chdir, out, err):
     virtualenv_python = module.params['virtualenv_python']
     # -p is a virtualenv option, not compatible with pyenv or venv
     # this conditional validates if the command being used is not any of them
-    if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
+    if not _is_venv_command(module.params['virtualenv_command']):
         if virtualenv_python:
             cmd.append('-p%s' % virtualenv_python)
         elif PY3:
