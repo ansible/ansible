@@ -38,7 +38,7 @@ DOCUMENTATION:
     postfix:
       description: Indicator of the end of each line inside a comment block, only available for styles that support multiline comments.
       type: string
-    protfix_count:
+    postfix_count:
       description: Number of times to add a postfix at the end of a line, when a prefix exists and is usable.
       type: int
       default: 1
