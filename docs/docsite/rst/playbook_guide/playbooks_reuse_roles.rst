@@ -282,9 +282,9 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
     * This will be the base name of the tasks file to execute, with no ``.yml`` or ``.yaml`` file extension.
 
 .. list-table:: Role Argument Specification Fields
-    :width: 90%
-    :widths: auto
-    :header-rows: 1
+  :width: 90%
+  :widths: auto
+  :header-rows: 1
 
     * - Name
       - Description
