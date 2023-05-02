@@ -68,7 +68,7 @@ define the following keys:
 
 As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
 The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
-case form of the server identifier and ``{{ key }}`` is the key to define. For example I can define ``token`` for
+case form of the server identifier and ``{{ key }}`` is the key to define. For example, you can define ``token`` for
 ``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``.
 
 For operations that use only one Galaxy server (for example, the ``publish``, ``info``, or ``install`` commands). the ``ansible-galaxy collection`` command uses the first entry in the
