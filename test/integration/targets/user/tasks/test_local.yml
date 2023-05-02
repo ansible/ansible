@@ -211,7 +211,9 @@
       - local_user_test_1 is changed
       - local_user_test_2 is not changed
       - local_user_test_3 is changed
+      - "local_user_test_3.groups == 'testgroup1,testgroup2'"
       - local_user_test_4 is changed
+      - "local_user_test_4.groups == 'testgroup1,testgroup2,testgroup3,testgroup4'"
       - local_user_test_4_again is not changed
       - local_user_test_6 is changed
       - local_user_test_7 is changed

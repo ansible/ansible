@@ -589,6 +589,10 @@ class User(object):
             module.warn("'append' is set, but no 'groups' are specified. Use 'groups' for appending new groups."
                         "This will change to an error in Ansible 2.14.")
 
+        self.groups_diff = {'before': [], 'after': []}
+        if self.groups is not None:
+            self.groups_diff['after'] = module.params['groups'] or []
+
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
         if self.module.params['password'] and self.platform != 'Darwin':
@@ -850,6 +854,7 @@ class User(object):
         if self.groups is not None:
             # get a list of all groups for the user, including the primary
             current_groups = self.user_group_membership(exclude_primary=False)
+            self.groups_diff['before'] = current_groups
             groups_need_mod = False
             groups = []
 
@@ -868,8 +873,10 @@ class User(object):
                                     cmd.append('-a')
                                 groups_need_mod = True
                                 break
+                        self.groups_diff['after'] = list(set(current_groups) | groups)
                     else:
                         groups_need_mod = True
+                        self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 if self.local:
@@ -1519,6 +1526,7 @@ class FreeBsdUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
+            self.groups_diff['before'] = current_groups
             groups = self.get_groups_set(names_only=True)
 
             group_diff = set(current_groups).symmetric_difference(groups)
@@ -1530,8 +1538,10 @@ class FreeBsdUser(User):
                         if g in group_diff:
                             groups_need_mod = True
                             break
+                    self.groups_diff['after'] = list(set(current_groups) | groups)
                 else:
                     groups_need_mod = True
+                    self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -1705,6 +1715,7 @@ class OpenBSDUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
+            self.groups_diff['before'] = current_groups
             groups_need_mod = False
             groups_option = '-S'
             groups = []
@@ -1723,8 +1734,10 @@ class OpenBSDUser(User):
                                 groups_option = '-G'
                                 groups_need_mod = True
                                 break
+                        self.groups_diff['after'] = list(set(current_groups) | groups)
                     else:
                         groups_need_mod = True
+                        self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 cmd.append(groups_option)
@@ -1882,6 +1895,7 @@ class NetBSDUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
+            self.groups_diff['before'] = current_groups
             groups_need_mod = False
             groups = []
 
@@ -1899,8 +1913,10 @@ class NetBSDUser(User):
                                 groups = set(current_groups).union(groups)
                                 groups_need_mod = True
                                 break
+                        self.groups_diff['after'] = list(set(current_groups) | groups)
                     else:
                         groups_need_mod = True
+                        self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 if len(groups) > 16:
@@ -2123,6 +2139,7 @@ class SunOS(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
+            self.groups_diff['before'] = current_groups
             groups = self.get_groups_set(names_only=True)
             group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
@@ -2133,8 +2150,10 @@ class SunOS(User):
                         if g in group_diff:
                             groups_need_mod = True
                             break
+                    self.groups_diff['after'] = list(set(current_groups) | groups)
                 else:
                     groups_need_mod = True
+                    self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -2677,6 +2696,7 @@ class AIX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
+            self.groups_diff['before'] = current_groups
             groups_need_mod = False
             groups = []
 
@@ -2693,8 +2713,10 @@ class AIX(User):
                             if g in group_diff:
                                 groups_need_mod = True
                                 break
+                        self.groups_diff['after'] = list(set(current_groups) | groups)
                     else:
                         groups_need_mod = True
+                        self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -2875,6 +2897,7 @@ class HPUX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
+            self.groups_diff['before'] = current_groups
             groups_need_mod = False
             groups = []
 
@@ -2891,8 +2914,10 @@ class HPUX(User):
                             if g in group_diff:
                                 groups_need_mod = True
                                 break
+                        self.groups_diff['after'] = list(set(current_groups) | groups)
                     else:
                         groups_need_mod = True
+                        self.groups_diff['after'] = list(groups)
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -3020,6 +3045,7 @@ class BusyBox(User):
 
     def modify_user(self):
         current_groups = self.user_group_membership()
+        self.groups_diff['before'] = current_groups
         groups = []
         rc = None
         out = ''
@@ -3047,6 +3073,11 @@ class BusyBox(User):
                         rc, out, err = self.execute_command(remove_cmd)
                         if rc is not None and rc != 0:
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+            if self.append:
+                self.groups_diff['after'] = list(set(current_groups) | groups)
+            else:
+                self.groups_diff['after'] = list(groups)
 
         # Manage password
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -3138,6 +3169,8 @@ def main():
     result = {}
     result['name'] = user.name
     result['state'] = user.state
+    if module._diff:
+        result['diff'] = {'before': {}, 'after': {}}
     if user.state == 'absent':
         if user.user_exists():
             if module.check_mode:
@@ -3204,7 +3237,10 @@ def main():
         result['home'] = info[5]
         result['shell'] = info[6]
         if user.groups is not None:
-            result['groups'] = user.groups
+            result['groups'] = ','.join(sorted(user.groups_diff['after']))
+            if module._diff:
+                result['diff']['before']['groups'] = ','.join(sorted(user.groups_diff['before']))
+                result['diff']['after']['groups'] = ','.join(sorted(user.groups_diff['after']))
 
         # handle missing homedirs
         info = user.user_info()
