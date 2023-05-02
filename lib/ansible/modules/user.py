@@ -2417,19 +2417,23 @@ class DarwinUser(User):
         err = ''
         changed = False
 
-        current = set(self._list_user_groups())
+        self.groups_diff['before'] = self._list_user_groups()
+        current = set(self.groups_diff['before'])
         if self.groups is not None:
             target = self.get_groups_set(names_only=True)
         else:
             target = set([])
 
         if self.append is False:
+            self.groups_diff['after'] = list(target)
             for remove in current - target:
                 (_rc, _out, _err) = self.__modify_group(remove, 'delete')
                 rc += rc
                 out += _out
                 err += _err
                 changed = True
+        else:
+            self.groups_diff['after'] = list(current | target)
 
         for add in target - current:
             (_rc, _out, _err) = self.__modify_group(add, 'add')
