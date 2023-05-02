@@ -92,7 +92,7 @@ Diff mode produces a large amount of output, so it is best used when checking a 
 Enforcing or preventing diff mode on tasks
 ------------------------------------------
 
-Because the ``--diff`` option can reveal sensitive information, you can disable it for a task by specifying ``diff: no``. For example:
+Because the ``--diff`` option can reveal sensitive information, you can disable it for a task by specifying ``diff: false``. For example:
 
 .. code-block:: yaml
 
