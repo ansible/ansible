@@ -1,0 +1,3 @@
+bugfixes:
+  - pep517 build backend - Copy symlinks when copying the source tree.
+    This avoids tracebacks in various scenarios, such as when a venv is present in the source tree.
