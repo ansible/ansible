@@ -1155,7 +1155,7 @@ class TaskExecutor:
         if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
 
             # check handler in case we dont need to do all the work to setup persistent connection
-            handler_class = self._shared_loader_obj.aciton_loader.get(handler_name, class_only=True)
+            handler_class = self._shared_loader_obj.action_loader.get(handler_name, class_only=True)
             if getattr(handler_class, '_requires_connection', True):
                 # for persistent connections, initialize socket path and start connection manager
                 self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
