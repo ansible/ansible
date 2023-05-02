@@ -94,6 +94,33 @@ Networking
 
 No notable changes
 
+Porting Guide for v8.0.0a3
+==========================
+
+Known Issues
+------------
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- The modules and plugins using the vendored code from Docker SDK for Python currently do not work with requests 2.29.0 and/or urllib3 2.0.0. The same is currently true for the latest version of Docker SDK for Python itself (https://github.com/ansible-collections/community.docker/issues/611, https://github.com/ansible-collections/community.docker/pull/612).
+
+Breaking Changes
+----------------
+
+lowlydba.sqlserver
+~~~~~~~~~~~~~~~~~~
+
+- Updating minimum DBATools version to v2.0.0 to allow for pwsh 7.3+ compatibility. There may also be breaking change behavior in DBATools, see https://blog.netnerds.net/2023/03/whats-new-dbatools-2.0/. (https://github.com/lowlydba/lowlydba.sqlserver/pull/181)
+
+Deprecated Features
+-------------------
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- x509_crl - the ``mode`` option is deprecated; use ``crl_mode`` instead. The ``mode`` option will change its meaning in community.crypto 3.0.0, and will refer to the CRL file's mode instead (https://github.com/ansible-collections/community.crypto/issues/596).
+
 Porting Guide for v8.0.0a2
 ==========================
 
