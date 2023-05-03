@@ -15,7 +15,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import collection
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.loader import init_plugin_loader
 
 

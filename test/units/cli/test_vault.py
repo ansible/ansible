@@ -29,7 +29,7 @@ from units.mock.vault_helper import TextVaultSecret
 
 from ansible import context, errors
 from ansible.cli.vault import VaultCLI
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 

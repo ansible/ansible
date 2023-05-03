@@ -6,7 +6,7 @@ from collections import ChainMap
 from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 __all__ = ['AnsibleJ2Vars']

@@ -24,7 +24,7 @@ import shlex
 import subprocess
 import sys
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def run_cmd(cmd, live=False, readsize=10):

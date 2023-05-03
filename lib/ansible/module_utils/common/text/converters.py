@@ -168,7 +168,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 handler, otherwise it will use replace.
             :surrogate_then_replace: Does the same as surrogate_or_replace but
                 `was added for symmetry with the error handlers in
-                :func:`ansible.module_utils._text.to_bytes` (Added in Ansible 2.3)
+                :func:`ansible.module_utils.common.text.converters.to_bytes` (Added in Ansible 2.3)
 
         Because surrogateescape was added in Python3 this usually means that
         Python3 will use `surrogateescape` and Python2 will use the fallback
@@ -179,7 +179,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         The default until Ansible-2.2 was `surrogate_or_replace`
         In Ansible-2.3 this defaults to `surrogate_then_replace` for symmetry
-        with :func:`ansible.module_utils._text.to_bytes` .
+        with :func:`ansible.module_utils.common.text.converters.to_bytes` .
     :kwarg nonstring: The strategy to use if a nonstring is specified in
         ``obj``.  Default is 'simplerepr'.  Valid values are:
 

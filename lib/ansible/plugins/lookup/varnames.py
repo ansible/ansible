@@ -46,7 +46,7 @@ _value:
 import re
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 

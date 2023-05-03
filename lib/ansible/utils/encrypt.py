@@ -15,7 +15,7 @@ from collections import namedtuple
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.utils.display import Display
 
 PASSLIB_E = CRYPT_E = None

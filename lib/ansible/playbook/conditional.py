@@ -27,7 +27,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.utils.display import Display

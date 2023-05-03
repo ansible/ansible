@@ -24,7 +24,7 @@ import re
 
 import ansible.module_utils.compat.typing as t
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector

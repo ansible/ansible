@@ -12,7 +12,7 @@ import pathlib
 
 import yaml
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from antsibull_docs.jinja2.environment import doc_environment
 
 # Pylint doesn't understand Python3 namespace modules.

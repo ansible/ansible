@@ -29,7 +29,7 @@ from collections.abc import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
 from ansible.utils.collection_loader import resource_from_fqcr

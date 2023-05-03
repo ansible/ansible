@@ -7,7 +7,7 @@ import sys
 import traceback
 
 import ansible.constants as C
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 
 target = sys.argv.pop(1)
 myclass = "%sCLI" % target.capitalize()

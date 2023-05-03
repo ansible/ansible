@@ -25,7 +25,7 @@ from units.compat import unittest
 from unittest.mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import PY3
 
 from units.mock.vault_helper import TextVaultSecret

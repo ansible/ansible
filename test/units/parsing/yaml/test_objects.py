@@ -24,7 +24,7 @@ from units.compat import unittest
 
 from ansible.errors import AnsibleError
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 from ansible.parsing import vault
 from ansible.parsing.yaml.loader import AnsibleLoader

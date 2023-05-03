@@ -23,7 +23,7 @@ import stat
 
 import ansible.module_utils.compat.typing as t
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
 from ansible.module_utils.six.moves import configparser, StringIO

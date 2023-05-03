@@ -34,7 +34,7 @@ from unittest.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils import six
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 
 from units.mock.loader import DictDataLoader

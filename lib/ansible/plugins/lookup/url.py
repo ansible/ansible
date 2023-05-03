@@ -211,7 +211,7 @@ RETURN = """
 from urllib.error import HTTPError, URLError
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display

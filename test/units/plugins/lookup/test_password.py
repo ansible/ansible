@@ -36,7 +36,7 @@ from unittest.mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.loader import PluginLoader, lookup_loader
 from ansible.plugins.lookup import password
 

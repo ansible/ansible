@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils import urls
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 import pytest
 

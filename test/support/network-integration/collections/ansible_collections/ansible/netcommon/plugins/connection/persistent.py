@@ -29,7 +29,7 @@ options:
 """
 from ansible.executor.task_executor import start_connection
 from ansible.plugins.connection import ConnectionBase
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection as SocketConnection
 from ansible.utils.display import Display
 

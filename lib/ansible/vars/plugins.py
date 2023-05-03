@@ -10,7 +10,7 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.loader import vars_loader
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display

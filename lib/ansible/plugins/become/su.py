@@ -94,7 +94,7 @@ DOCUMENTATION = """
 import re
 import shlex
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.become import BecomeBase
 
 

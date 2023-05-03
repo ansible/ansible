@@ -12,7 +12,7 @@ from string import ascii_lowercase
 from gettext import dgettext
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins import AnsiblePlugin
 
 

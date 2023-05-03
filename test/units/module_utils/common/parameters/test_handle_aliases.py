@@ -9,7 +9,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common.parameters import _handle_aliases
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def test_handle_aliases_no_aliases():

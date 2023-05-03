@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import shlex
 from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
 if PY3:

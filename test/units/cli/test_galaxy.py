@@ -39,7 +39,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.galaxy import collection
 from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from units.compat import unittest

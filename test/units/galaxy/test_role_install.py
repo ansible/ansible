@@ -16,7 +16,7 @@ from io import StringIO
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.galaxy import api, role, Galaxy
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 

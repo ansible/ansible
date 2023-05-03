@@ -384,7 +384,7 @@ from ansible.errors import (
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _parse_clixml

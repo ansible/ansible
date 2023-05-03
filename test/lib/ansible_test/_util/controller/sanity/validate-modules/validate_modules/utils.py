@@ -28,7 +28,7 @@ from io import BytesIO, TextIOWrapper
 import yaml
 import yaml.reader
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.yaml import SafeLoader
 from ansible.module_utils.six import string_types

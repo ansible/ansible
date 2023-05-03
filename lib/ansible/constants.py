@@ -10,7 +10,7 @@ import re
 from string import ascii_letters, digits
 
 from ansible.config.manager import ConfigManager
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.release import __version__

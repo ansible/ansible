@@ -31,7 +31,7 @@ from unittest.mock import patch, MagicMock, mock_open
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote, builtins
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import init_plugin_loader

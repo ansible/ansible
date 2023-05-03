@@ -88,7 +88,7 @@ import time
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils._junit_xml import (
     TestCase,

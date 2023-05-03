@@ -27,7 +27,7 @@ import time
 from collections.abc import Mapping, Sequence
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import text_type, string_types
 from ansible.plugins import AnsiblePlugin
 
