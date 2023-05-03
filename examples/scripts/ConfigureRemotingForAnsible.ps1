@@ -289,9 +289,22 @@ Else {
 # Disable AllowUnencrypted
 $allowUnencryptedSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "AllowUnencrypted" }
 If (($allowUnencryptedSetting.Value) -eq $true) {
-    Write-Verbose "Disabling AllowUnencrypted support."
-    Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
-    Write-ProgressLog "Disabled AllowUnencrypted support."
+    If (Get-NetConnectionProfile -NetworkCategory "Public") {
+        Write-Verbose "Switching Firewall Profile from Public to Private."
+        Set-NetConnectionProfile -NetworkCategory Private
+        Write-ProgressLog "Switching Firewall Profile from Public to Private."
+        Write-Verbose "Disabling AllowUnencrypted support."
+        Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
+        Write-ProgressLog "Disabled AllowUnencrypted support."
+        Write-Verbose "Switching Firewall Profile from Private to Public."
+        Set-NetConnectionProfile -NetworkCategory Public
+        Write-ProgressLog "Switching Firewall Profile from Private to Public."
+    }
+    Else {
+        Write-Verbose "Disabling AllowUnencrypted support."
+        Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
+        Write-ProgressLog "Disabled AllowUnencrypted support."
+    }
 }
 Else {
     Write-Verbose "AllowUnencrypted is already disabled."
