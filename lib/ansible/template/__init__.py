@@ -46,7 +46,7 @@ from ansible.errors import (
     AnsibleUndefinedVariable,
 )
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat

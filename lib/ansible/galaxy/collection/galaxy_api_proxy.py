@@ -18,7 +18,7 @@ if t.TYPE_CHECKING:
     )
 
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 

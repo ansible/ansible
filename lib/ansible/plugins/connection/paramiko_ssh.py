@@ -299,7 +299,7 @@ from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 display = Display()
 

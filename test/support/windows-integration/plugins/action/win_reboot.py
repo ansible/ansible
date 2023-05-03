@@ -7,7 +7,7 @@ __metaclass__ = type
 from datetime import datetime
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.reboot import ActionModule as RebootActionModule
 from ansible.utils.display import Display

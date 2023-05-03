@@ -6,7 +6,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 B_FLAG_FILES = frozenset([b'MANIFEST.json', b'galaxy.yml'])
 

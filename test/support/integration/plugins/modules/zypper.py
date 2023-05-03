@@ -203,7 +203,7 @@ import xml
 import re
 from xml.dom.minidom import parseString as parseXML
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule

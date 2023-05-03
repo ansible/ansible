@@ -20,7 +20,7 @@ import time
 import syslog
 import multiprocessing
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 
 PY3 = sys.version_info[0] == 3
 

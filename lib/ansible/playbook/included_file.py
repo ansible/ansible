@@ -24,7 +24,7 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import remove_omit
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.handler import Handler
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole

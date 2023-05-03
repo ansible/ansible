@@ -26,7 +26,7 @@ from types import MappingProxyType
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base

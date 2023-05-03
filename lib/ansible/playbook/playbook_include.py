@@ -23,7 +23,7 @@ import os
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import split_args
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping

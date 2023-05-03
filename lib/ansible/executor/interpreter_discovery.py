@@ -10,7 +10,7 @@ import pkgutil
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink

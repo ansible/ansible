@@ -14,7 +14,7 @@ from abc import abstractmethod
 from functools import wraps
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.display import Display
 from ansible.plugins.loader import connection_loader, get_shell_plugin

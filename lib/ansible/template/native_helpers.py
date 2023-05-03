@@ -10,7 +10,7 @@ import ast
 from itertools import islice, chain
 from types import GeneratorType
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.native_jinja import NativeJinjaText

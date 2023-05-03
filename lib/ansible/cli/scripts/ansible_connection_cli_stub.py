@@ -23,7 +23,7 @@ from contextlib import contextmanager
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder

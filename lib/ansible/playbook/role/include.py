@@ -24,7 +24,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.role.definition import RoleDefinition
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 __all__ = ['RoleInclude']

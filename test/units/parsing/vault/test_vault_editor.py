@@ -34,7 +34,7 @@ from ansible.parsing import vault
 from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
 
 from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 from units.mock.vault_helper import TextVaultSecret
 
