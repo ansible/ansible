@@ -886,7 +886,7 @@ class PluginLoader:
         class_only = kwargs.pop('class_only', False)
 
         fq_name = plugin_load_context.resolved_fqcn
-        if '.' not in fq_name:
+        if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
@@ -943,7 +943,7 @@ class PluginLoader:
             return None, found_in_cache
 
         plugin, plugin_load_context = self._plugin_instance_cache[plugin_path]
-        if not plugin.__class__.reuse_instance:
+        if not getattr(plugin.__class__, 'reuse_instance', False):
             plugin = vars_loader.get_from_context(plugin_load_context).object
         else:
             found_in_cache = True

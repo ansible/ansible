@@ -50,6 +50,14 @@ def get_plugin_vars(loader, plugin, path, entities):
     try:
         data = plugin.get_vars(loader, path, entities)
     except AttributeError:
+        if hasattr(plugin, 'get_host_vars') or hasattr(plugin, 'get_group_vars'):
+            display.deprecated(
+                f"The vars plugin {plugin.ansible_name} from {plugin._original_path} is relying "
+                "on the deprecated entrypoints 'get_host_vars' and 'get_group_vars'. "
+                "This plugin should be updated to inherit from BaseVarsPlugin and define "
+                "a 'get_vars' method as the main entrypoint instead.",
+                version="2.20",
+            )
         try:
             for entity in entities:
                 if isinstance(entity, Host):

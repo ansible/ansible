@@ -12,12 +12,15 @@ export ANSIBLE_VARS_PLUGINS=./vars_plugins
 export ANSIBLE_VARS_ENABLED=require_enabled
 [ "$(ansible-inventory -i localhost, --list --yaml all "$@" | grep -c 'require_enabled')" = "1" ]
 
-# Test the deprecated class attribute
+# Test deprecated features
 export ANSIBLE_VARS_PLUGINS=./deprecation_warning
-WARNING="The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. Use 'REQUIRES_ENABLED' instead."
+WARNING_1="The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. Use 'REQUIRES_ENABLED' instead."
+WARNING_2="The vars plugin v2_vars_plugin .* is relying on the deprecated entrypoints 'get_host_vars' and 'get_group_vars'"
 ANSIBLE_DEPRECATION_WARNINGS=True ANSIBLE_NOCOLOR=True ANSIBLE_FORCE_COLOR=False \
-	ansible-inventory -i localhost, --list all 2> err.txt
-ansible localhost -m debug -a "msg={{ lookup('file', 'err.txt') | regex_replace('\n', '') }}" | grep "$WARNING"
+        ansible-inventory -i localhost, --list all 2> err.txt
+for WARNING in "$WARNING_1" "$WARNING_2"; do
+	ansible localhost -m debug -a "msg={{ lookup('file', 'err.txt') | regex_replace('\n', '') }}" | grep "$WARNING"
+done
 
 # Test how many times vars plugins are loaded for a simple play containing a task
 # host_group_vars is stateless, so we can load it once and reuse it, every other vars plugin should be instantiated before it runs
