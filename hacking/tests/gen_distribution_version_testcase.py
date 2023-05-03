@@ -19,7 +19,7 @@ import subprocess
 import sys
 
 from ansible.module_utils import distro
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 
 
 filelist = [

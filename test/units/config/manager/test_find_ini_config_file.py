@@ -13,7 +13,7 @@ import stat
 import pytest
 
 from ansible.config.manager import find_ini_config_file
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 
 real_exists = os.path.exists
 real_isdir = os.path.isdir

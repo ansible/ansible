@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 import os
 
 from ansible.constants import TREE_DIR
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
 

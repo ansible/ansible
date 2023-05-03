@@ -24,7 +24,7 @@ EXAMPLES = '''
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin
 
 

@@ -9,7 +9,7 @@ import os
 from ansible.errors import AnsibleError
 from ansible.cli.galaxy import with_collection_artifacts_manager
 from ansible.galaxy.collection import find_existing_collections
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display

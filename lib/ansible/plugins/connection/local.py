@@ -29,7 +29,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath

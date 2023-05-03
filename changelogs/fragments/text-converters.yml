@@ -1,0 +1,2 @@
+minor_changes:
+  - Use ``ansible.module_utils.common.text.converters`` instead of ``ansible.module_utils._text``.

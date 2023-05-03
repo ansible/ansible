@@ -26,7 +26,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import collection, api, dependency_resolution
 from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirement
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display

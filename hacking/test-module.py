@@ -47,7 +47,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.plugins.loader import init_plugin_loader
 from ansible.executor import module_common
 import ansible.constants as C
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.template import Templar
 
 import json

@@ -282,7 +282,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def is_running_service(service_status):

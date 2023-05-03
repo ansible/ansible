@@ -22,7 +22,7 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute

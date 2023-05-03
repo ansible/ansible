@@ -94,7 +94,7 @@ from collections.abc import MutableMapping, MutableSequence
 from functools import partial
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleRuntimeError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin

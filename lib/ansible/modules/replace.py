@@ -185,7 +185,7 @@ import re
 import tempfile
 from traceback import format_exc
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
 
