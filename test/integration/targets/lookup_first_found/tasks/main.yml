@@ -96,4 +96,9 @@
       - foo is defined
 
 # TODO: no 'terms' test
-#-- {{ query('first_found', files=['rasdaemon.yml', 'default.yml', 'q'], paths=[ '/tmp/zh', '/tmp' ], errors='ignore') }}"
+- name: test first_found lookup with no terms
+  set_fact:
+    no_terms: "{{ query('first_found', files=['missing1', 'hosts', 'missing2'], paths=['/etc'], errors='ignore') }}"
+
+- assert:
+    that: "no_terms|first == '/etc/hosts'"
