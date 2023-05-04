@@ -1,0 +1,2 @@
+bugfixes:
+  - jinja2_native - fix playbook execution being stuck when omitted else clause should have been executed in an expression like ``'foo' if bar`` (https://github.com/ansible/ansible/issues/80706)

@@ -10,6 +10,8 @@ import ast
 from itertools import islice, chain
 from types import GeneratorType
 
+from jinja2.runtime import Undefined
+
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -113,6 +115,15 @@ def ansible_native_concat(nodes):
             # https://github.com/pallets/jinja/issues/1200
             # https://github.com/ansible/ansible/issues/70831#issuecomment-664190894
             return out
+
+        if type(out) is Undefined:
+            # In some cases (e.g. when omitted else is hit in `{{ 'foo' if bar }}`)
+            # Jinja2 forces Undefined being returned instead of configured undefined object.
+            # Since Undefined does not trigger an error and instead is converted to an empty string,
+            # returning it as is does not appear to be useful and for the if-else case above
+            # it would be unexpected to return something other than an empty string even for native types.
+            # See https://github.com/pallets/jinja/commit/4d331a0ae3fd74f0aeec892337eea55755ec1ebe
+            return ''
 
         # short-circuit literal_eval for anything other than strings
         if not isinstance(out, string_types):

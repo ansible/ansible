@@ -1,0 +1,5 @@
+- assert:
+    that:
+      - omitted_else == ""
+  vars:
+    omitted_else: "{{ 'foo' if false }}"

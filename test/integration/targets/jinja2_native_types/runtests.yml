@@ -38,3 +38,4 @@
     - import_tasks: test_types.yml
     - import_tasks: test_none.yml
     - import_tasks: test_template.yml
+    - import_tasks: test_exprs.yml
