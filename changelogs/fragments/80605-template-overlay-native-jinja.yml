@@ -1,0 +1,2 @@
+bugfixes:
+  - "Properly disable ``jinja2_native`` in the template module when jinja2 override is used in the template (https://github.com/ansible/ansible/issues/80605)"
