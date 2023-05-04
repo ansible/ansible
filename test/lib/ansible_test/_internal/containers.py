@@ -45,6 +45,7 @@ from .docker_util import (
     get_docker_container_id,
     get_docker_host_ip,
     get_podman_host_ip,
+    get_session_container_name,
     require_docker,
     detect_host_properties,
 )
@@ -118,7 +119,7 @@ def run_support_container(
     Start a container used to support tests, but not run them.
     Containers created this way will be accessible from tests.
     """
-    name = f'{name}-{args.session_name}'
+    name = get_session_container_name(args, name)
 
     if args.prime_containers:
         docker_pull(args, image)
