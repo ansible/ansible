@@ -960,7 +960,7 @@ class Templar:
             # In case this is a recursive call and we set different concat
             # function up the stack, reset it in case the value of convert_data
             # changed in this call
-            self.environment.concat = self.environment.__class__.concat
+            myenv.concat = myenv.__class__.concat
             # the concat function is set for each Ansible environment,
             # however for convert_data=False we need to use the concat
             # function that avoids any evaluation and set it temporarily
@@ -968,13 +968,13 @@ class Templar:
             # the concat function is called internally in Jinja,
             # most notably for macro execution
             if not self.jinja2_native and not convert_data:
-                self.environment.concat = ansible_concat
+                myenv.concat = ansible_concat
 
             self.cur_context = t.new_context(jvars, shared=True)
             rf = t.root_render_func(self.cur_context)
 
             try:
-                res = self.environment.concat(rf)
+                res = myenv.concat(rf)
                 unsafe = getattr(self.cur_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
@@ -1002,7 +1002,7 @@ class Templar:
                 # "Hello world\n!\n" instead of "Hello world!\n".
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
-                    res += self.environment.newline_sequence * (data_newlines - res_newlines)
+                    res += myenv.newline_sequence * (data_newlines - res_newlines)
                     if unsafe:
                         res = wrap_var(res)
             return res
