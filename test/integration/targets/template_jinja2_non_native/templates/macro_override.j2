@@ -1,0 +1,7 @@
+#jinja2: variable_start_string:'<<',variable_end_string:'>>'
+Use a jinja2 override to trigger creating and using an environment overlay.
+
+{% macro m() %}
+"foo" "bar"
+{% endmacro %}
+<< m() >>
