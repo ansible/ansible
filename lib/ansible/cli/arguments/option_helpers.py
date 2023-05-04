@@ -16,7 +16,7 @@ from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
@@ -250,8 +250,8 @@ def add_connect_options(parser):
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
-                               help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+    connect_group.add_argument('-T', '--timeout', default=None, type=int, dest='timeout',
+                               help="override the connection timeout in seconds (default depends on connection)")
 
     # ssh only
     connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',

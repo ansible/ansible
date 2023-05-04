@@ -17,7 +17,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
 from ansible.utils.display import Display
@@ -82,6 +82,8 @@ class VaultCLI(CLI):
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
         create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        create_parser.add_argument('--skip-tty-check', default=False, help='allows editor to be opened when no tty attached',
+                                   dest='skip_tty_check', action='store_true')
 
         decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
@@ -447,8 +449,11 @@ class VaultCLI(CLI):
         if len(context.CLIARGS['args']) != 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
-        self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
-                                vault_id=self.encrypt_vault_id)
+        if sys.stdout.isatty() or context.CLIARGS['skip_tty_check']:
+            self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
+                                    vault_id=self.encrypt_vault_id)
+        else:
+            raise AnsibleOptionsError("not a tty, editor cannot be opened")
 
     def execute_edit(self):
         ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''

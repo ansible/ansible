@@ -21,7 +21,7 @@ import datetime
 import time
 
 from ansible.errors import AnsibleError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 

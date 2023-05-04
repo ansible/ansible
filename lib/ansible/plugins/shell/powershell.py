@@ -23,7 +23,7 @@ import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
 

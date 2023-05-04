@@ -148,8 +148,10 @@ test/integration/targets/collections_relative_imports/collection_root/ansible_co
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/gathering_facts/library/bogus_facts shebang
+test/integration/targets/gathering_facts/library/dummy1 shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
+test/integration/targets/gathering_facts/library/slow shebang
 test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
 test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
@@ -242,6 +244,3 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
 lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/included_file.py pylint:ansible-deprecated-version
-lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
-lib/ansible/template/__init__.py pylint:ansible-deprecated-version
-lib/ansible/module_utils/common/file.py pylint:ansible-deprecated-version

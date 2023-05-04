@@ -124,7 +124,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -916,7 +916,7 @@ def verify_collections(
                         # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
                         # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                         # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
-                        if not signatures and not collection.signature_sources:
+                        if artifacts_manager.keyring is None or not signatures:
                             api_proxy.get_collection_version_metadata(
                                 remote_collection,
                             )

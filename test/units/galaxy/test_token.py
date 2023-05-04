@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 import ansible.constants as C
 from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
 from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
 @pytest.fixture()

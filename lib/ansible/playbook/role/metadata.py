@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base

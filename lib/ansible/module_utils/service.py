@@ -39,7 +39,7 @@ import subprocess
 import traceback
 
 from ansible.module_utils.six import PY2, b
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
 def sysv_is_enabled(name, runlevel=None):

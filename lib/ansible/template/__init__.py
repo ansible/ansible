@@ -46,7 +46,7 @@ from ansible.errors import (
     AnsibleUndefinedVariable,
 )
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
@@ -545,14 +545,7 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, shared_loader_obj=None, variables=None):
-        if shared_loader_obj is not None:
-            display.deprecated(
-                "The `shared_loader_obj` option to `Templar` is no longer functional, "
-                "ansible.plugins.loader is used directly instead.",
-                version='2.16',
-            )
-
+    def __init__(self, loader, variables=None):
         self._loader = loader
         self._available_variables = {} if variables is None else variables
 

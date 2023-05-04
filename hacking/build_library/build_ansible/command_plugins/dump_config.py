@@ -12,7 +12,7 @@ import pathlib
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level

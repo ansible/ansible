@@ -64,7 +64,7 @@ from collections.abc import MutableMapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 NoneType = type(None)

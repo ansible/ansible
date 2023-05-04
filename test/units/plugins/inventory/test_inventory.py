@@ -27,7 +27,7 @@ from unittest import mock
 from ansible import constants as C
 from units.compat import unittest
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from units.mock.path import mock_unfrackpath_noop
 
 from ansible.inventory.manager import InventoryManager, split_host_pattern
