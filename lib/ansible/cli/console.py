@@ -39,26 +39,30 @@ class ConsoleCLI(CLI, cmd.Cmd):
     '''
        A REPL that allows for running ad-hoc tasks against a chosen inventory
        from a nice shell with built-in tab completion (based on dominis'
-       ansible-shell).
+       ``ansible-shell``).
 
        It supports several commands, and you can modify its configuration at
        runtime:
 
-       - `cd [pattern]`: change host/group (you can use host patterns eg.: app*.dc*:!app01*)
-       - `list`: list available hosts in the current path
-       - `list groups`: list groups included in the current path
-       - `become`: toggle the become flag
-       - `!`: forces shell module instead of the ansible module (!yum update -y)
-       - `verbosity [num]`: set the verbosity level
-       - `forks [num]`: set the number of forks
-       - `become_user [user]`: set the become_user
-       - `remote_user [user]`: set the remote_user
-       - `become_method [method]`: set the privilege escalation method
-       - `check [bool]`: toggle check mode
-       - `diff [bool]`: toggle diff mode
-       - `timeout [integer]`: set the timeout of tasks in seconds (0 to disable)
-       - `help [command/module]`: display documentation for the command or module
-       - `exit`: exit ansible-console
+       - ``cd [pattern]``: change host/group
+         (you can use host patterns eg.: ``app*.dc*:!app01*``)
+       - ``list``: list available hosts in the current path
+       - ``list groups``: list groups included in the current path
+       - ``become``: toggle the become flag
+       - ``!``: forces shell module instead of the ansible module
+         (``!yum update -y``)
+       - ``verbosity [num]``: set the verbosity level
+       - ``forks [num]``: set the number of forks
+       - ``become_user [user]``: set the become_user
+       - ``remote_user [user]``: set the remote_user
+       - ``become_method [method]``: set the privilege escalation method
+       - ``check [bool]``: toggle check mode
+       - ``diff [bool]``: toggle diff mode
+       - ``timeout [integer]``: set the timeout of tasks in seconds
+         (0 to disable)
+       - ``help [command/module]``: display documentation for
+         the command or module
+       - ``exit``: exit ``ansible-console``
     '''
 
     name = 'ansible-console'
