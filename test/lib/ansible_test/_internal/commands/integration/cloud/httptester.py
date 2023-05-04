@@ -13,7 +13,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
 )
 
@@ -62,8 +61,6 @@ class HttptesterProvider(CloudProvider):
             'http-test-container',
             ports,
             aliases=aliases,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
             env={
                 KRB5_PASSWORD_ENV: generate_password(),
             },
