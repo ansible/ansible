@@ -25,10 +25,10 @@ from . import (
 
 # We add BasicAuthentication, to make the tasks that deal with
 # direct API access easier to deal with across galaxy_ng and pulp
-SETTINGS = b'''
-CONTENT_ORIGIN = 'http://ansible-ci-pulp:80'
-ANSIBLE_API_HOSTNAME = 'http://ansible-ci-pulp:80'
-ANSIBLE_CONTENT_HOSTNAME = 'http://ansible-ci-pulp:80/pulp/content'
+SETTINGS = '''
+CONTENT_ORIGIN = 'http://{host}:80'
+ANSIBLE_API_HOSTNAME = 'http://{host}:80'
+ANSIBLE_CONTENT_HOSTNAME = 'http://{host}:80/pulp/content'
 TOKEN_AUTH_DISABLED = True
 GALAXY_REQUIRE_CONTENT_APPROVAL = False
 GALAXY_AUTHENTICATION_CLASSES = [
@@ -120,7 +120,7 @@ class GalaxyProvider(CloudProvider):
         pulp_id = descriptor.container_id
 
         injected_files = {
-            '/etc/pulp/settings.py': SETTINGS,
+            '/etc/pulp/settings.py': SETTINGS.format(host=descriptor.name).encode(),
             '/etc/cont-init.d/111-postgres': SET_ADMIN_PASSWORD,
             '/etc/cont-init.d/000-ansible-test-overrides': OVERRIDES,
         }
