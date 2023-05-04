@@ -8,7 +8,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
 )
 
@@ -21,8 +20,6 @@ from . import (
 
 class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
-
-    DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
@@ -51,17 +48,18 @@ class ACMEProvider(CloudProvider):
             14000,  # Pebble ACME CA
         ]
 
-        run_support_container(
+        descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
-            self.DOCKER_SIMULATOR_NAME,
+            'acme-simulator',
             ports,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
         )
 
-        self._set_cloud_config('acme_host', self.DOCKER_SIMULATOR_NAME)
+        if not descriptor:
+            return
+
+        self._set_cloud_config('acme_host', descriptor.name)
 
     def _setup_static(self) -> None:
         raise NotImplementedError()

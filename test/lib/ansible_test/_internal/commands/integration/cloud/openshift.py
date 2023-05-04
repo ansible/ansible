@@ -16,7 +16,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
     wait_for_file,
 )
@@ -30,8 +29,6 @@ from . import (
 
 class OpenShiftCloudProvider(CloudProvider):
     """OpenShift cloud provider plugin. Sets up cloud resources before delegation."""
-
-    DOCKER_CONTAINER_NAME = 'openshift-origin'
 
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args, config_extension='.kubeconfig')
@@ -74,10 +71,8 @@ class OpenShiftCloudProvider(CloudProvider):
             self.args,
             self.platform,
             self.image,
-            self.DOCKER_CONTAINER_NAME,
+            'openshift-origin',
             ports,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
             cmd=cmd,
         )
 
@@ -87,7 +82,7 @@ class OpenShiftCloudProvider(CloudProvider):
         if self.args.explain:
             config = '# Unknown'
         else:
-            config = self._get_config(self.DOCKER_CONTAINER_NAME, 'https://%s:%s/' % (self.DOCKER_CONTAINER_NAME, port))
+            config = self._get_config(descriptor.name, 'https://%s:%s/' % (descriptor.name, port))
 
         self._write_config(config)
 

@@ -8,7 +8,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
 )
 
@@ -21,8 +20,6 @@ from . import (
 
 class NiosProvider(CloudProvider):
     """Nios plugin. Sets up NIOS mock server for tests."""
-
-    DOCKER_SIMULATOR_NAME = 'nios-simulator'
 
     # Default image to run the nios simulator.
     #
@@ -65,17 +62,18 @@ class NiosProvider(CloudProvider):
             nios_port,
         ]
 
-        run_support_container(
+        descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
-            self.DOCKER_SIMULATOR_NAME,
+            'nios-simulator',
             ports,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
         )
 
-        self._set_cloud_config('NIOS_HOST', self.DOCKER_SIMULATOR_NAME)
+        if not descriptor:
+            return
+
+        self._set_cloud_config('NIOS_HOST', descriptor.name)
 
     def _setup_static(self) -> None:
         raise NotImplementedError()

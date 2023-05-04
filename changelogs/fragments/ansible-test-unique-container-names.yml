@@ -1,0 +1,6 @@
+bugfixes:
+  - ansible-test - All containers created by ansible-test now include the current test session ID in their name.
+                   This avoids conflicts between concurrent ansible-test invocations using the same container host.
+breaking_changes:
+  - ansible-test - Test plugins that rely on containers no longer support reusing running containers.
+                   The previous behavior was an undocumented, untested feature.
