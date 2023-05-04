@@ -71,6 +71,7 @@ SERVER_DEF = [
     ('password', False, 'str'),
     ('token', False, 'str'),
     ('auth_url', False, 'str'),
+    ('v2', False, 'bool'),
     ('v3', False, 'bool'),
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
@@ -79,6 +80,7 @@ SERVER_DEF = [
 
 # config definition fields
 SERVER_ADDITIONAL = {
+    'v2': {'default': 'False'},
     'v3': {'default': 'False'},
     'validate_certs': {'cli': [{'name': 'validate_certs'}]},
     'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
@@ -645,16 +647,25 @@ class GalaxyCLI(CLI):
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
             v3 = server_options.pop('v3')
+            v2 = server_options.pop('v2')
             if server_options['validate_certs'] is None:
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
+            # This allows a user to explicitly force use of an API version when
+            # multiple versions are supported. This was added for testing
+            # against pulp_ansible and I'm not sure it has a practical purpose
+            # outside of this use case. As such, this option is not documented
+            # as of now
+            if v2 or v3:
+                display.warning(
+                    f'The specified v{"2" if v2 else "3"} configuration for the galaxy server "{server_key}" is '
+                    'not a public configuration, and may be removed at any time without warning.'
+                )
             if v3:
-                # This allows a user to explicitly indicate the server uses the /v3 API
-                # This was added for testing against pulp_ansible and I'm not sure it has
-                # a practical purpose outside of this use case. As such, this option is not
-                # documented as of now
                 server_options['available_api_versions'] = {'v3': '/v3'}
+            elif v2:
+                server_options['available_api_versions'] = {'v2': '/v2'}
 
             # default case if no auth info is provided.
             server_options['token'] = None

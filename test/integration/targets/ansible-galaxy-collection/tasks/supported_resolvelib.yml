@@ -20,11 +20,11 @@
 
     - include_tasks: install.yml
       vars:
-        test_name: pulp_v3
+        test_name: galaxy_ng
         test_id: '{{ test_name }} (resolvelib {{ resolvelib_version }})'
-        test_server: '{{ pulp_server }}published/api/'
+        test_server: '{{ galaxy_ng_server }}'
         vX: "v3/"
-        requires_auth: false
+        requires_auth: true
       args:
         apply:
           environment:

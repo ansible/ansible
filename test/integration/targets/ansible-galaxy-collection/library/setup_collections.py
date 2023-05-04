@@ -77,6 +77,7 @@ RETURN = '''
 #
 '''
 
+import datetime
 import os
 import subprocess
 import tarfile
@@ -90,7 +91,7 @@ from multiprocessing import dummy as threading
 from multiprocessing import TimeoutError
 
 
-COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 120
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 300
 
 
 def publish_collection(module, collection):
@@ -104,6 +105,7 @@ def publish_collection(module, collection):
     collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (namespace, name, version))
     b_collection_dir = to_bytes(collection_dir, errors='surrogate_or_strict')
     os.mkdir(b_collection_dir)
+    os.mkdir(os.path.join(b_collection_dir, b'meta'))
 
     with open(os.path.join(b_collection_dir, b'README.md'), mode='wb') as fd:
         fd.write(b"Collection readme")
@@ -120,6 +122,8 @@ def publish_collection(module, collection):
     }
     with open(os.path.join(b_collection_dir, b'galaxy.yml'), mode='wb') as fd:
         fd.write(to_bytes(yaml.safe_dump(galaxy_meta), errors='surrogate_or_strict'))
+    with open(os.path.join(b_collection_dir, b'meta/runtime.yml'), mode='wb') as fd:
+        fd.write(b'requires_ansible: ">=1.0.0"')
 
     with tempfile.NamedTemporaryFile(mode='wb') as temp_fd:
         temp_fd.write(b"data")
@@ -241,9 +245,13 @@ def run_module():
         supports_check_mode=False
     )
 
-    result = dict(changed=True, results=[])
+    start = datetime.datetime.now()
+    result = dict(changed=True, results=[], start=str(start))
 
-    pool = threading.Pool(4)
+    # Increase back to 4 after concurrency issues in galaxy_ng are resolved
+    # See https://issues.redhat.com/browse/AAH-2332
+    # Also timeout constant was changed
+    pool = threading.Pool(1)
     publish_func = partial(publish_collection, module)
     try:
         result['results'] = pool.map_async(
@@ -258,7 +266,9 @@ def run_module():
         r['build']['rc'] + r['publish']['rc'] for r in result['results']
     ))
 
-    module.exit_json(failed=failed, **result)
+    end = datetime.datetime.now()
+    delta = end - start
+    module.exit_json(failed=failed, end=str(end), delta=str(delta), **result)
 
 
 def main():

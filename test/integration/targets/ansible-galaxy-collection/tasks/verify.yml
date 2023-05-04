@@ -3,6 +3,11 @@
   args:
     chdir: '{{ galaxy_dir }}/scratch'
 
+- name: created required runtime.yml
+  copy:
+    content: 'requires_ansible: ">=1.0.0"'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/verify/meta/runtime.yml'
+
 - name: build the collection
   command: ansible-galaxy collection build scratch/ansible_test/verify
   args:
@@ -13,8 +18,10 @@
   args:
     chdir: '{{ galaxy_dir }}'
 
+# TODO: this may be intentionally installing from a different server than we verify with later
 - name: test verifying a tarfile
   command: ansible-galaxy collection verify {{ galaxy_dir }}/ansible_test-verify-1.0.0.tar.gz
+  # command: ansible-galaxy collection install ansible_test.verify:1.0.0 -vvvv {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -25,12 +32,16 @@
         "ERROR! 'file' type is not supported. The format namespace.name is expected." in verify.stderr
 
 - name: install the collection from the server
-  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_api_fallback }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -vvvv {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_GALAXY_SERVER_LIST: secondary,galaxy_ng
 
 # This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: verify the collection against the first valid server
   command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -vvvv {{ galaxy_verbosity }}
   register: verify
+  environment:
+    ANSIBLE_GALAXY_SERVER_LIST: secondary,galaxy_ng
 
 - assert:
     that:

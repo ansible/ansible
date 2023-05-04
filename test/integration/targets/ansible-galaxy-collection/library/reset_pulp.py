@@ -84,7 +84,8 @@ def invoke_api(module, url, method='GET', data=None, status_codes=None):
 
     resp, info = fetch_url(module, url, method=method, data=data, headers=headers)
     if info['status'] not in status_codes:
-        module.fail_json(url=url, **info)
+        info['url'] = url
+        module.fail_json(**info)
 
     data = to_text(resp.read())
     if data:
@@ -105,7 +106,7 @@ def delete_pulp_distribution(distribution, module):
 
 def delete_pulp_orphans(module):
     """ Deletes any orphaned pulp objects. """
-    orphan_uri = module.params['pulp_api'] + '/pulp/api/v3/orphans/'
+    orphan_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/orphans/'
     task_info = invoke_api(module, orphan_uri, method='DELETE', status_codes=[202])
     wait_pulp_task(task_info['task'], module)
 
@@ -125,25 +126,39 @@ def get_galaxy_namespaces(module):
     return [n['name'] for n in ns_info['data']]
 
 
-def get_pulp_distributions(module):
+def get_pulp_distributions(module, distribution):
     """ Gets a list of all the pulp distributions. """
     distro_uri = module.params['pulp_api'] + '/pulp/api/v3/distributions/ansible/ansible/'
-    distro_info = invoke_api(module, distro_uri)
+    distro_info = invoke_api(module, distro_uri + '?name=' + distribution)
     return [module.params['pulp_api'] + r['pulp_href'] for r in distro_info['results']]
 
 
-def get_pulp_repositories(module):
+def get_pulp_repositories(module, repository):
     """ Gets a list of all the pulp repositories. """
     repo_uri = module.params['pulp_api'] + '/pulp/api/v3/repositories/ansible/ansible/'
-    repo_info = invoke_api(module, repo_uri)
+    repo_info = invoke_api(module, repo_uri + '?name=' + repository)
     return [module.params['pulp_api'] + r['pulp_href'] for r in repo_info['results']]
+
+
+def get_repo_collections(repository, module):
+    collections_uri = module.params['galaxy_ng_server'] + 'v3/plugin/ansible/content/' + repository + '/collections/index/'
+    # status code 500 isn't really expected, an unhandled exception is causing this instead of a 404
+    # See https://issues.redhat.com/browse/AAH-2329
+    info = invoke_api(module, collections_uri + '?limit=100&offset=0', status_codes=[200, 500])
+    if not info:
+        return []
+    return [module.params['pulp_api'] + c['href'] for c in info['data']]
+
+
+def delete_repo_collection(collection, module):
+    task_info = invoke_api(module, collection, method='DELETE', status_codes=[202])
+    wait_pulp_task(task_info['task'], module)
 
 
 def new_galaxy_namespace(name, module):
     """ Creates a new namespace in Galaxy NG. """
-    ns_uri = module.params['galaxy_ng_server'] + 'v3/_ui/namespaces/'
-    data = {'name': name, 'groups': [{'name': 'system:partner-engineers', 'object_permissions':
-            ['add_namespace', 'change_namespace', 'upload_to_namespace']}]}
+    ns_uri = module.params['galaxy_ng_server'] + 'v3/namespaces/ '
+    data = {'name': name, 'groups': []}
     ns_info = invoke_api(module, ns_uri, method='POST', data=data, status_codes=[201])
 
     return ns_info['id']
@@ -151,16 +166,17 @@ def new_galaxy_namespace(name, module):
 
 def new_pulp_repository(name, module):
     """ Creates a new pulp repository. """
-    repo_uri = module.params['pulp_api'] + '/pulp/api/v3/repositories/ansible/ansible/'
-    data = {'name': name}
+    repo_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/repositories/ansible/ansible/'
+    # retain_repo_versions to work around https://issues.redhat.com/browse/AAH-2332
+    data = {'name': name, 'retain_repo_versions': '1024'}
     repo_info = invoke_api(module, repo_uri, method='POST', data=data, status_codes=[201])
 
-    return module.params['pulp_api'] + repo_info['pulp_href']
+    return repo_info['pulp_href']
 
 
 def new_pulp_distribution(name, base_path, repository, module):
     """ Creates a new pulp distribution for a repository. """
-    distro_uri = module.params['pulp_api'] + '/pulp/api/v3/distributions/ansible/ansible/'
+    distro_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/distributions/ansible/ansible/'
     data = {'name': name, 'base_path': base_path, 'repository': repository}
     task_info = invoke_api(module, distro_uri, method='POST', data=data, status_codes=[202])
     task_info = wait_pulp_task(task_info['task'], module)
@@ -194,8 +210,15 @@ def main():
     )
     module.params['force_basic_auth'] = True
 
-    [delete_pulp_distribution(d, module) for d in get_pulp_distributions(module)]
-    [delete_pulp_repository(r, module) for r in get_pulp_repositories(module)]
+    # It may be due to the process of cleaning up orphans, but we cannot delete the namespace
+    # while a collection still exists, so this is just a new safety to nuke all collections
+    # first
+    for repository in module.params['repositories']:
+        [delete_repo_collection(c, module) for c in get_repo_collections(repository, module)]
+
+    for repository in module.params['repositories']:
+        [delete_pulp_distribution(d, module) for d in get_pulp_distributions(module, repository)]
+        [delete_pulp_repository(r, module) for r in get_pulp_repositories(module, repository)]
     delete_pulp_orphans(module)
     [delete_galaxy_namespace(n, module) for n in get_galaxy_namespaces(module)]
 
