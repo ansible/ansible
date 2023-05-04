@@ -923,7 +923,6 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
-        missing_sig_msg = f"Server {self.api_server} has not signed {namespace}.{name}:{version}"
         signatures = [signature_info["signature"] for signature_info in data.get("signatures") or []]
         if not signatures:
             display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
