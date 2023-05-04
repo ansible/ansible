@@ -52,7 +52,7 @@ class GalaxyProvider(CloudProvider):
         super().__init__(args)
 
         # TODO: Add sha or tag
-        self.pulp = os.environ.get(
+        self.image = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
             'quay.io/pulp/galaxy'
         )
@@ -63,8 +63,8 @@ class GalaxyProvider(CloudProvider):
         """Setup cloud resource before delegation and reg cleanup callback."""
         super().setup()
 
+        name = 'galaxy-pulp'
         galaxy_port = 80
-        pulp_host = 'ansible-ci-pulp'
 
         ports = [
             galaxy_port,
@@ -73,9 +73,12 @@ class GalaxyProvider(CloudProvider):
         descriptor = run_support_container(
             self.args,
             self.platform,
-            self.pulp,
-            'galaxy-pulp',
+            self.image,
+            name,
             ports,
+            aliases=[
+                name,
+            ],
             start=True,
             allow_existing=True,
             options=[
@@ -100,7 +103,7 @@ class GalaxyProvider(CloudProvider):
                 docker_exec(self.args, descriptor.container_id, ['mkdir', '-p', os.path.dirname(path)], True)
                 docker_cp_to(self.args, descriptor.container_id, temp_fd.name, path)
 
-        self._set_cloud_config('PULP_HOST', pulp_host)
+        self._set_cloud_config('PULP_HOST', name)
         self._set_cloud_config('GALAXY_PORT', str(galaxy_port))
         self._set_cloud_config('PULP_USER', 'admin')
         self._set_cloud_config('PULP_PASSWORD', 'password')
