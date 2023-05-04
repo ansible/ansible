@@ -128,14 +128,14 @@ def get_galaxy_namespaces(module):
 
 def get_pulp_distributions(module, distribution):
     """ Gets a list of all the pulp distributions. """
-    distro_uri = module.params['pulp_api'] + '/pulp/api/v3/distributions/ansible/ansible/'
+    distro_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/distributions/ansible/ansible/'
     distro_info = invoke_api(module, distro_uri + '?name=' + distribution)
     return [module.params['pulp_api'] + r['pulp_href'] for r in distro_info['results']]
 
 
 def get_pulp_repositories(module, repository):
     """ Gets a list of all the pulp repositories. """
-    repo_uri = module.params['pulp_api'] + '/pulp/api/v3/repositories/ansible/ansible/'
+    repo_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/repositories/ansible/ansible/'
     repo_info = invoke_api(module, repo_uri + '?name=' + repository)
     return [module.params['pulp_api'] + r['pulp_href'] for r in repo_info['results']]
 
