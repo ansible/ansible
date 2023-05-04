@@ -934,6 +934,8 @@ class Templar:
                     key = key.strip()
                     if hasattr(myenv, key):
                         setattr(myenv, key, ast.literal_eval(val.strip()))
+                    else:
+                        display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
