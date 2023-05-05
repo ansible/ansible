@@ -932,7 +932,10 @@ class Templar:
                                            " Did you use something different from colon as key-value separator?" % pair.strip())
                     (key, val) = pair.split(':', 1)
                     key = key.strip()
-                    setattr(myenv, key, ast.literal_eval(val.strip()))
+                    if hasattr(myenv, key):
+                        setattr(myenv, key, ast.literal_eval(val.strip()))
+                    else:
+                        display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".

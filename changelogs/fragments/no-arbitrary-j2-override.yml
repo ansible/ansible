@@ -1,0 +1,2 @@
+bugfixes:
+  - templating - prevent setting arbitrary attributes on Jinja2 environments via Jinja2 overrides in templates
