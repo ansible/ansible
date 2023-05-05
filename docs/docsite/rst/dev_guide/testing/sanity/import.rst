@@ -15,7 +15,7 @@ To ensure users get an actionable and easy to understand error we try to ensure 
 which most users won't be able to understand, much less use to solve the issue.
 
 Another reason Ansible does this is to import the code for inspection. This allows Ansible to easily test, document, configure, etc based on the code without having to install
-any and all requirements everywhere, specially when that is not the context you might execute the code in.
+any and all requirements everywhere, especially when that is not the context in which you execute the code.
 
 The code below shows examples of how to avoid errors on import and then use the provided ``missing_required_lib`` to ensure the user knows which LIBRARY is missing,
 on which HOST it is missing on and the specific INTERPRETER that requires it.
