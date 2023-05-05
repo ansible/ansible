@@ -14,7 +14,7 @@ Ansible executes across many hosts and can use multiple Python interpreters at t
 To ensure users get an actionable and easy to understand error we try to ensure any non-core imports in modules/plugins are guarded to avoid a traceback,
 which most users won't be able to understand, much less use to solve the issue.
 
-Another reason we do this is to allow us to import the code for inspection. This is how we can easily test, document, configure, etc based on the code without having to install
+Another reason Ansible does this is to import the code for inspection. This allows Ansible to easily test, document, configure, etc based on the code without having to install
 any and all requirements everywhere, specially when that is not the context you might execute the code in.
 
 The code below shows examples of how to avoid errors on import and then use the provided ``missing_required_lib`` to ensure the user knows which LIBRARY is missing,
