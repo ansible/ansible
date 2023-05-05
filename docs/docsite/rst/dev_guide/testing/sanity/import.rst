@@ -18,7 +18,7 @@ Another reason Ansible does this is to import the code for inspection. This allo
 any and all requirements everywhere, especially when that is not the context in which you execute the code.
 
 The code below shows examples of how to avoid errors on import and then use the provided ``missing_required_lib`` to ensure the user knows which LIBRARY is missing,
-on which HOST it is missing on and the specific INTERPRETER that requires it.
+on which HOST it is missing and the specific INTERPRETER that requires it.
 
 
 In modules
