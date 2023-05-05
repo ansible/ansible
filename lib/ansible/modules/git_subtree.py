@@ -111,9 +111,15 @@ EXAMPLES = '''
     GIT_TERMINAL_PROMPT: 0
 '''
 
-import subprocess
+RETURN = '''
+msg:
+  description: The response body content.
+  returned: on success
+  type: str
+  sample: "{}"
+'''
+
 import os
-import sys
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -143,15 +149,17 @@ def main():
             command.append('--squash')
         if commit_message:
             command.extend(['-m', commit_message])
-
         try:
-            rc, stdout, stderr = module.run_command(command,cwd=working_directory,check_rc=True)
+            rc, stdout, stderr = module.run_command(command, cwd=working_directory, check_rc=True)
         except Exception as e:
-            module.fail_json(msg=f"Error running command {e.cmd}: {e.stderr.strip()}", rc=e.returncode)
-
+            module.fail_json(msg="Error running command %s" % e.cmd, rc=e.returncode)
+        mesg = stdout.strip()
         module.exit_json(
             changed=True,
-            msg=stdout.strip(),
+            failed=False,
+            msg='Added new subtree %s' % prefix,
+            stdout=mesg,
+            stderr='',
             rc=rc
         )
     else:
@@ -163,20 +171,26 @@ def main():
             command.extend(['-m', commit_message])
 
         try:
-            rc, stdout, stderr = module.run_command(command,cwd=working_directory,check_rc=True)
+            rc, stdout, stderr = module.run_command(command, cwd=working_directory, check_rc=True)
         except Exception as e:
-            module.fail_json(msg=f"Error running command {e.cmd}: {e.stderr.strip()}", rc=e.returncode)
+            module.fail_json(msg="Error running command %s" % e.cmd, rc=e.returncode)
         if 'is already at commit' in stderr:
+            mesg = stdout.strip()
             module.exit_json(
                 changed=False,
-                msg=stdout.strip(),
+                failed=False,
+                msg="skipped since already at commit",
+                stdout=mesg,
+                stderr='',
                 rc=rc
             )
         else:
-
+            mesg = stdout.strip()
             module.exit_json(
                 changed=True,
-                msg=stdout.strip(),
+                msg='Updated existing subtree %s' % prefix,
+                stdout=mesg,
+                stderr='',
                 rc=rc
             )
     return True
