@@ -12,7 +12,7 @@ module: git_subtree
 short_description: Ansible module that mimic git subtree add/pull in an idempotent way.
 description:
     - This module mimics the functionality of the git subtree command by adding a subtree from a source repository to a subdirectory in the main repository.
-version_added: "2.9"
+version_added: "2.16"
 author:
     - Riadh Hamdi (@riadhhamdi) (rhamdi@redhat.com)
 options:
@@ -125,10 +125,7 @@ def main():
             prefix=dict(required=True),
             squash=dict(type='bool', default=False),
             commit_message=dict(default=''),
-            working_directory=dict(default=None),
-            username=dict(default=None),
-            password=dict(default=None, no_log=True),
-            ssh_key=dict(default=None)
+            working_directory=dict(default=None)
         ),
         supports_check_mode=False,
     )
@@ -148,23 +145,14 @@ def main():
             command.extend(['-m', commit_message])
 
         try:
-            if sys.version_info >= (3, 5):
-                result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_directory, check=True, text=True)
-            else:
-                result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_directory)
-                out, err = result.communicate()
-                result.stdout = out.decode('utf-8')
-                result.stderr = err.decode('utf-8')
-                result.returncode = result.wait()
-                if result.returncode != 0:
-                    raise subprocess.CalledProcessError(result.returncode, result.args, result.stderr)
-        except subprocess.CalledProcessError as e:
+            rc, stdout, stderr = module.run_command(command,cwd=working_directory,check_rc=True)
+        except Exception as e:
             module.fail_json(msg=f"Error running command {e.cmd}: {e.stderr.strip()}", rc=e.returncode)
 
         module.exit_json(
             changed=True,
-            msg=result.stdout.strip(),
-            rc=result.returncode
+            msg=stdout.strip(),
+            rc=rc
         )
     else:
         # the subtree already exists, update it
@@ -175,31 +163,23 @@ def main():
             command.extend(['-m', commit_message])
 
         try:
-            if sys.version_info >= (3, 5):
-                result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_directory, check=True, text=True)
-            else:
-                result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_directory)
-                out, err = result.communicate()
-                result.stdout = out.decode('utf-8')
-                result.stderr = err.decode('utf-8')
-                result.returncode = result.wait()
-                if result.returncode != 0:
-                    raise subprocess.CalledProcessError(result.returncode, result.args, result.stderr)
-        except subprocess.CalledProcessError as e:
+            rc, stdout, stderr = module.run_command(command,cwd=working_directory,check_rc=True)
+        except Exception as e:
             module.fail_json(msg=f"Error running command {e.cmd}: {e.stderr.strip()}", rc=e.returncode)
-        if 'is already at commit' in result.stderr:
+        if 'is already at commit' in stderr:
             module.exit_json(
                 changed=False,
-                msg=result.stdout.strip(),
-                rc=result.returncode
+                msg=stdout.strip(),
+                rc=rc
             )
         else:
 
             module.exit_json(
                 changed=True,
-                msg=result.stdout.strip(),
-                rc=result.returncode
+                msg=stdout.strip(),
+                rc=rc
             )
+    return True
 
 
 if __name__ == '__main__':
