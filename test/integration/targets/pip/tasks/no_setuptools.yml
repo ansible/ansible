@@ -1,0 +1,33 @@
+- name: create a virtualenv for use without setuptools
+  pip:
+    name: packaging
+    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+
+- name: Remove setuptools
+  pip:
+    name: setuptools
+    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+    state: absent
+
+- name: Ensure pkg_resources is gone
+  command: "{{ remote_tmp_dir }}/no_setuptools/bin/python -c 'import pkg_resources'"
+  register: result
+  failed_when: result.rc == 0
+
+- name: Checkmode install pip
+  pip:
+    name: pip
+    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+  check_mode: true
+  register: pip_check_mode
+
+- assert:
+    that:
+      - pip_check_mode.stdout is contains "pip=="
+      - pip_check_mode.stdout is not contains "setuptools=="
+
+- name: Install fallible
+  pip:
+    name: fallible==0.0.1a2
+    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+  register: fallible_install

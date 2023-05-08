@@ -52,3 +52,6 @@
   module_defaults:
     pip:
       virtualenv_command: "{{ virtualenv }}"
+
+- include_tasks: no_setuptools.yml
+  when: ansible_python.version_info[:2] >= [3, 8]

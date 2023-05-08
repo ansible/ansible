@@ -134,7 +134,7 @@ notes:
 requirements:
 - pip
 - virtualenv
-- setuptools
+- setuptools or packaging
 author:
 - Matt Wright (@mattupstate)
 '''
@@ -275,14 +275,20 @@ import traceback
 
 from ansible.module_utils.compat.version import LooseVersion
 
-SETUPTOOLS_IMP_ERR = None
+PACKAGING_IMP_ERR = None
+HAS_PACKAGING = False
+HAS_SETUPTOOLS = False
 try:
-    from pkg_resources import Requirement
-
-    HAS_SETUPTOOLS = True
+    from packaging.requirement import Requirement  # type: ignore[import]
+    HAS_PACKAGING = True
 except ImportError:
-    HAS_SETUPTOOLS = False
-    SETUPTOOLS_IMP_ERR = traceback.format_exc()
+    HAS_PACKAGING = False
+    PACKAGING_IMP_ERR = traceback.format_exc()
+    try:
+        from pkg_resources import Requirement
+        HAS_SETUPTOOLS = True
+    except ImportError:
+        pass
 
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
@@ -293,8 +299,16 @@ from ansible.module_utils.six import PY3
 #: Python one-liners to be run at the command line that will determine the
 # installed version for these special libraries.  These are libraries that
 # don't end up in the output of pip freeze.
-_SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.__version__)',
-                             'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
+_SPECIAL_PACKAGE_CHECKERS = {
+    'importlib': {
+        'setuptools': 'from importlib.metadata import version; print(version("setuptools"))',
+        'pip': 'from importlib.metadata import version; print(version("pip"))',
+    },
+    'pkg_resources': {
+        'setuptools': 'import setuptools; print(setuptools.__version__)',
+        'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)',
+    }
+}
 
 _VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
 
@@ -503,7 +517,7 @@ def _fail(module, cmd, out, err):
     module.fail_json(cmd=cmd, msg=msg)
 
 
-def _get_package_info(module, package, env=None):
+def _get_package_info(module, package, python_bin=None):
     """This is only needed for special packages which do not show up in pip freeze
 
     pip and setuptools fall into this category.
@@ -511,20 +525,19 @@ def _get_package_info(module, package, env=None):
     :returns: a string containing the version number if the package is
         installed.  None if the package is not installed.
     """
-    if env:
-        opt_dirs = ['%s/bin' % env]
-    else:
-        opt_dirs = []
-    python_bin = module.get_bin_path('python', False, opt_dirs)
-
     if python_bin is None:
+        return
+
+    discovery_mechanism = 'pkg_resources'
+    importlib_rc = module.run_command([python_bin, '-c', 'import importlib.metadata'])[0]
+    if importlib_rc == 0:
+        discovery_mechanism = 'importlib'
+
+    rc, out, err = module.run_command([python_bin, '-c', _SPECIAL_PACKAGE_CHECKERS[discovery_mechanism][package]])
+    if rc:
         formatted_dep = None
     else:
-        rc, out, err = module.run_command([python_bin, '-c', _SPECIAL_PACKAGE_CHECKERS[package]])
-        if rc:
-            formatted_dep = None
-        else:
-            formatted_dep = '%s==%s' % (package, out.strip())
+        formatted_dep = '%s==%s' % (package, out.strip())
     return formatted_dep
 
 
@@ -602,13 +615,13 @@ class Package:
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
         try:
-            self._requirement = Requirement.parse(name_string)
+            self._requirement = Requirement(name_string)
             # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
-            if self._requirement.project_name == "distribute" and "setuptools" in name_string:
+            project_name = Package.canonicalize_name(self._requirement.name)
+            if project_name == "distribute" and "setuptools" in name_string:
                 self.package_name = "setuptools"
-                self._requirement.project_name = "setuptools"
             else:
-                self.package_name = Package.canonicalize_name(self._requirement.project_name)
+                self.package_name = project_name
             self._plain_package = True
         except ValueError as e:
             pass
@@ -616,7 +629,7 @@ class Package:
     @property
     def has_version_specifier(self):
         if self._plain_package:
-            return bool(self._requirement.specs)
+            return bool(self._requirement.specifier)
         return False
 
     def is_satisfied_by(self, version_to_test):
@@ -672,9 +685,9 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_SETUPTOOLS:
-        module.fail_json(msg=missing_required_lib("setuptools"),
-                         exception=SETUPTOOLS_IMP_ERR)
+    if not HAS_SETUPTOOLS and not HAS_PACKAGING:
+        module.fail_json(msg=missing_required_lib("packaging"),
+                         exception=PACKAGING_IMP_ERR)
 
     state = module.params['state']
     name = module.params['name']
@@ -714,6 +727,9 @@ def main():
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 venv_created = True
                 out, err = setup_virtualenv(module, env, chdir, out, err)
+            py_bin = os.path.join(env, 'bin', 'python')
+        else:
+            py_bin = module.params['executable'] or sys.executable
 
         pip = _get_pip(module, env, module.params['executable'])
 
@@ -796,7 +812,7 @@ def main():
                     # So we need to get those via a specialcase
                     for pkg in ('setuptools', 'pip'):
                         if pkg in name:
-                            formatted_dep = _get_package_info(module, pkg, env)
+                            formatted_dep = _get_package_info(module, pkg, py_bin)
                             if formatted_dep is not None:
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
