@@ -1,17 +1,5 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2023 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -21,7 +9,6 @@ import json
 import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
-
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -49,6 +36,12 @@ class FacterFactCollector(BaseFactCollector):
         # if facter is installed, and we can use --json because
         # ruby-json is ALSO installed, include facter data in the JSON
         rc, out, err = module.run_command(facter_path + " --puppet --json")
+
+        # for some versions of facter, --puppet returns an error if puppet is not present,
+        # try again w/o it, other errors should still appear and be sent back
+        if rc != 0:
+            rc, out, err = module.run_command(facter_path + " --json")
+
         return rc, out, err
 
     def get_facter_output(self, module):
