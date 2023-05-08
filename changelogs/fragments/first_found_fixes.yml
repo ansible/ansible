@@ -1,0 +1,3 @@
+bugfixes:
+  - first found lookup has been updated to use the normalized argument parsing (pythonic) matching the documented examples.
+  - first found lookup, fixed an issue with subsequent items clobbering information from previous ones.
