@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the ``nios-test-container`` to version 2.0.0, which supports API version 2.9.
