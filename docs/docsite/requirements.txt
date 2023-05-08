@@ -12,6 +12,6 @@ pyyaml
 rstcheck
 sphinx-notfound-page >= 0.6
 sphinx-intl
-sphinx-ansible-theme >= 0.9.1
+sphinx-ansible-theme >= 0.10.2
 sphinx
 resolvelib
