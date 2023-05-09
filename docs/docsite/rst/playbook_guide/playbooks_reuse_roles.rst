@@ -313,7 +313,8 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
     - {}
 
 
-Options themselves have a defined structure:
+Options themselves have a defined structure
+
 .. list-table:: Role Argument Specification options
   :width: 90%
   :widths: auto
