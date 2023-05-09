@@ -319,7 +319,7 @@ Options themselves have a defined structure:
   :widths: auto
   :header-rows: 1
 
-    * - _name (really the option name itself)
+    * - <Name> (really the option name itself)
       - Description
       - Type
       - Required
