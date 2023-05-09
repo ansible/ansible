@@ -1,0 +1,3 @@
+bugfixes:
+- Display - Defensively configure writing to stdout and stderr with the replace encoding error handler that will replace invalid characters
+  (https://github.com/ansible/ansible/issues/80258)

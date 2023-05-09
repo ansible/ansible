@@ -228,6 +228,12 @@ class Display(metaclass=Singleton):
         except Exception as ex:
             self.warning(f"failed to patch stdout/stderr for fork-safety: {ex}")
 
+        try:
+            sys.stdout.reconfigure(errors='replace')
+            sys.stderr.reconfigure(errors='replace')
+        except Exception as ex:
+            self.warning(f"failed to reconfigure stdout/stderr with the replace error handler: {ex}")
+
     def set_queue(self, queue):
         """Set the _final_q on Display, so that we know to proxy display over the queue
         instead of directly writing to stdout/stderr from forks
