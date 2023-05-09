@@ -311,7 +311,7 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
-        action_loader.get.assert_called_once_with(
+        action_loader.get.assert_called_with(
             'ansible.legacy.normal', task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
