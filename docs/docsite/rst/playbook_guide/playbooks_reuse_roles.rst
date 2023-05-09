@@ -285,31 +285,32 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
   :width: 90%
   :widths: auto
   :header-rows: 1
-    *  - Name
-       - Description
-       - Type
-       - Required
-       - Default
-    *  - short_description
-       - A short, one-line description of the entry point.
-       - str
-       - Yes
-       -  
-    *  - description
-       - A longer description that may contain multiple lines.
-       - list\n elements: str
-       - No (see notes)
-       - null
-    *  - author
-       - Name of the entry point authors.
-       - list\n elements: str
-       - No
-       - []
-    *  - options
-       - Options are often called "parameters" or "arguments".
-       - dict (see table below)
-       - No
-       - {}
+
+  * - Name
+    - Description
+    - Type
+    - Required
+    - Default
+  * - short_description
+    - A short, one-line description of the entry point.
+    - str
+    - Yes
+    -  
+  * - description
+    - A longer description that may contain multiple lines.
+    - list\n elements: str
+    - No (see notes)
+    - null
+  * - author
+    - Name of the entry point authors.
+    - list\n elements: str
+    - No
+    - []
+  * - options
+    - Options are often called "parameters" or "arguments".
+    - dict (see table below)
+    - No
+    - {}
 
 
 Options themselves have a defined structure:
@@ -317,50 +318,51 @@ Options themselves have a defined structure:
   :width: 90%
   :widths: auto
   :header-rows: 1
-    *  - <Name> (the option itself)
-       - Description
-       - Type
-       - Required
-       - Default
-    *  - name
-       - The name of the option/argument.
-       - str
-       - Yes
-       -   
-    *  - description
-       - Detailed explanation of what this option does. It should be written in full sentences.
-       - list\n elements: str
-       - No
-       - null
-    *  - type
-       - The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``.
-       - No
-       - str
-    *  - required
-       - Denote if the option is required or not
-       - bool
-       - No
-       - false
-    *  - default
-       - If an option is not required, the value is set to this if not otherwise provided
-       - any (either null or should match Type above)
-       - No
-       - null
-    *  - choices
-       - List of option values.
-       - list
-       - No
-       - []
-    *  - elements
-       - Specifies the data type for list elements when type is ``list``.
-       - str
-       - No
-       - null
-    *  - options
-       - If this option takes a dict or list of dicts, you can define the structure here.
-       - dict (recursively use this same table)
-       - No
-       - null
+
+  * - <Name> (the option itself)
+    - Description
+    - Type
+    - Required
+    - Default
+  * - name
+    - The name of the option/argument.
+    - str
+    - Yes
+    -   
+  * - description
+    - Detailed explanation of what this option does. It should be written in full sentences.
+    - list\n elements: str
+    - No
+    - null
+  * - type
+    - The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``.
+    - No
+    - str
+  * - required
+    - Denote if the option is required or not
+    - bool
+    - No
+    - false
+  * - default
+    - If an option is not required, the value is set to this if not otherwise provided
+    - any (either null or should match Type above)
+    - No
+    - null
+  * - choices
+    - List of option values.
+    - list
+    - No
+    - []
+  * - elements
+    - Specifies the data type for list elements when type is ``list``.
+    - str
+    - No
+    - null
+  * - options
+    - If this option takes a dict or list of dicts, you can define the structure here.
+    - dict (recursively use this same table)
+    - No
+    - null
 
 .. note::
         * The ``short_description`` is displayed by ``ansible-doc -t role -l``.
