@@ -194,12 +194,28 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
             # put the result on the result queue
             display.debug("sending task result for task %s" % self._task._uuid)
-            self._final_q.send_task_result(
-                self._host.name,
-                self._task._uuid,
-                executor_result,
-                task_fields=self._task.dump_attrs(),
-            )
+            try:
+                self._final_q.send_task_result(
+                    self._host.name,
+                    self._task._uuid,
+                    executor_result,
+                    task_fields=self._task.dump_attrs(),
+                )
+            except Exception as e:
+                display.debug(f'failed to send task result ({e}), sending surrogate result')
+                self._final_q.send_task_result(
+                    self._host.name,
+                    self._task._uuid,
+                    # Overriding the task result, to represent the failure
+                    # TODO: Extend more standard keys to this such as stdout/stderr?
+                    {
+                        'failed': True,
+                        'msg': executor_result.get('msg') or f'{e}',
+                        'exception': executor_result.get('exception') or traceback.format_exc(),
+                    },
+                    # More than likely the failure pickling was caused by the task attrs, omit for safety
+                    {},
+                )
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
