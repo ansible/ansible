@@ -1,0 +1,3 @@
+---
+- name: 'Ping in common/roles/common_ping/tasks/main.yml'
+  ping:
