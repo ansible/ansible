@@ -298,7 +298,7 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
       -  
     * - description
       - A longer description that may contain multiple lines.
-      - str
+      - list\n elements: str
       - No (see notes)
       - null
     * - author
@@ -319,7 +319,7 @@ Options themselves have a defined structure:
   :widths: auto
   :header-rows: 1
 
-    * - Name
+    * - _name (really the option name itself)
       - Description
       - Type
       - Required
@@ -331,7 +331,7 @@ Options themselves have a defined structure:
       -   
     * - description
       - Detailed explanation of what this option does. It should be written in full sentences.
-      -  str
+      - list\n elements: str
       - No
       - null
     * - type
@@ -390,7 +390,9 @@ Sample specification
          type: "int"
          required: false
          default: 42
-         description: "The integer value, defaulting to 42."
+         description:
+            - "The integer value, defaulting to 42."
+            - "The question, you need to figure out yourself."
 
        myapp_str:
          type: "str"
