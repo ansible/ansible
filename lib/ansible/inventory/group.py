@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from collections.abc import Mapping, MutableMapping
+from enum import Enum
 from itertools import chain
 
 from ansible import constants as C
@@ -53,9 +54,14 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
     return name
 
 
+class InventoryObjectType(Enum):
+    HOST = 0
+    GROUP = 0
+
+
 class Group:
     ''' a group of ansible hosts '''
-    base_type = 'Group'
+    base_type = InventoryObjectType.GROUP
 
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 

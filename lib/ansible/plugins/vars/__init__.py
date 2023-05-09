@@ -30,8 +30,7 @@ class BaseVarsPlugin(AnsiblePlugin):
     """
     Loads variables for groups and/or hosts
     """
-    # set to True on subclasses that don't need reinstantiation per invocation
-    reuse_instance = False
+    is_stateless = False
 
     def __init__(self):
         """ constructor """

@@ -149,6 +149,3 @@ class AnsibleJinja2Plugin(AnsiblePlugin):
     @property
     def j2_function(self):
         return self._function
-
-
-PLUGIN_INSTANCE_CACHE = {}  # type: dict[str, dict[str, AnsiblePlugin]]
