@@ -56,6 +56,8 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
+            - Depending on I(read_whole_file), the regular expression or pattern MUST either match the
+              ENTIRE file content or an ENTIRE line, not just parts of it.
             - Works only when I(file_type) is C(file).
         type: str
     read_whole_file:
