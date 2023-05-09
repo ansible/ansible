@@ -92,11 +92,11 @@ class TestDataLoader(unittest.TestCase):
             - { role: 'testrole' }
 
         testrole/tasks/main.yml:
-        - include: "include1.yml"
+        - include_tasks: "include1.yml"
           static: no
 
         testrole/tasks/include1.yml:
-        - include: include2.yml
+        - include_tasks: include2.yml
           static: no
 
         testrole/tasks/include2.yml:

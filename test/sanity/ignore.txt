@@ -21,7 +21,6 @@ lib/ansible/parsing/yaml/constructor.py mypy-3.9:type-var  # too many occurrence
 lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
 lib/ansible/keyword_desc.yml no-unwanted-files
-lib/ansible/modules/_include.py validate-modules:ansible-deprecated-module
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
@@ -242,5 +241,3 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
-lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
-lib/ansible/playbook/included_file.py pylint:ansible-deprecated-version

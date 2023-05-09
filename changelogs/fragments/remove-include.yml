@@ -1,0 +1,3 @@
+removed_features:
+- >-
+  Removed ``include`` which has been deprecated in Ansible 2.12. Use ``include_tasks`` or ``import_tasks`` instead.

@@ -150,18 +150,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 templar = Templar(loader=loader, variables=all_vars)
 
                 # check to see if this include is dynamic or static:
-                # 1. the user has set the 'static' option to false or true
-                # 2. one of the appropriate config options was set
-                if action in C._ACTION_INCLUDE_TASKS:
-                    is_static = False
-                elif action in C._ACTION_IMPORT_TASKS:
-                    is_static = True
-                else:
-                    include_link = get_versioned_doclink('user_guide/playbooks_reuse_includes.html')
-                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks instead. See %s for details' % include_link, "2.16")
-                    is_static = not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop
-
-                if is_static:
+                if action in C._ACTION_IMPORT_TASKS:
                     if t.loop is not None:
                         if action in C._ACTION_IMPORT_TASKS:
                             raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
