@@ -342,7 +342,7 @@ Options themselves have a defined structure:
       - Denote if the option is required or not
       - bool
       - No
-      - False
+      - false
     * - default
       - If an option is not required, the value is set to this if not otherwise provided
       - any (either null or should match Type above)
@@ -370,8 +370,8 @@ Options themselves have a defined structure:
         * If a type is ``list``, ``elements`` should be specified.
         * Ensure that the default value in the docs matches the default value in the code. The actual
           default for the role variable will always come from ``defaults/main.yml``.
-        * The default field must not be listed as part of the description, unless it requires additional information or conditions.
-        * If the option's type is boolean, you should use `true/false` for defaults if you want to be compatible with `ansible-lint`.
+        * The default field should not be listed as part of the description, unless it requires additional information or conditions.
+        * If the option's type is boolean, you should use ``true``/``false`` for defaults if you want to be compatible with `ansible-lint`.
         * The options in options is recursive, so it has the same structure.
 
 Sample specification
