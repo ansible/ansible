@@ -229,10 +229,9 @@ class TestTaskExecutor(unittest.TestCase):
 
         self.assertIs(mock.sentinel.handler, handler)
 
-        action_loader.has_plugin.assert_called_once_with(
-            action, collection_list=te._task.collections)
+        action_loader.has_plugin.assert_called_once_with(action, collection_list=te._task.collections)
 
-        action_loader.get.assert_called_once_with(
+        action_loader.get.assert_called_with(
             te._task.action, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
