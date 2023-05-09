@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.playbook.play import Play
@@ -45,6 +46,7 @@ class Playbook:
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader = loader
         self._file_name = None
+        self._collection = None
 
     @staticmethod
     def load(file_name, variable_manager=None, loader=None):
@@ -66,6 +68,7 @@ class Playbook:
         add_all_plugin_dirs(self._basedir)
 
         self._file_name = file_name
+        self._collection = _get_collection_name_from_path(self._file_name)
 
         try:
             ds = self._loader.load_from_file(os.path.basename(file_name))
@@ -104,7 +107,7 @@ class Playbook:
                             break
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars, collection=self._collection)
                 self._entries.append(entry_obj)
 
         # we're done, so restore the old basedir in the loader

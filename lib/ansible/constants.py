@@ -187,3 +187,16 @@ for setting in config.get_configuration_definitions():
 
 for warn in config.WARNINGS:
     _warning(warn)
+
+
+class _Constants(type(sys)):
+
+    _constants = {}
+
+    def __getitem__(self, name):
+        return _constants[name]
+
+    def __setitem__(self, name, value):
+        return _constants[name] = value
+
+sys.modules[__name__] = _Constants('constants')

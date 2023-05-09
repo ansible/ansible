@@ -47,6 +47,10 @@ class CollectionSearch:
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)
 
+        # ensure 'current's object collection is here', only playbooks and plays should have this property
+        if getattr(self, '_collection', False) and self._collection not in ds:
+            ds.insert(0, self._collection)
+
         if not ds:  # don't return an empty collection list, just return None
             return None
 
@@ -57,7 +61,6 @@ class CollectionSearch:
         env = NativeEnvironment()
         for collection_name in ds:
             if is_template(collection_name, env):
-                display.warning('"collections" is not templatable, but we found: %s, '
-                                'it will not be templated and will be used "as is".' % (collection_name))
+                display.warning(f'"collections" is not templatable, but we found: {collection_name}, it will not be templated and will be used "as is".')
 
         return ds

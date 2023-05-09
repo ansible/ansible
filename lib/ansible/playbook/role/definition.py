@@ -154,6 +154,13 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         role_tuple = None
 
+        # ensure play collection context
+        if self._play._collection:
+            if not self._collection_list:
+                self._collection_list = [self._play._collection]
+            elif self._play._collection not in self._collection_list:
+                self._collection_list.insert(0, self._play._collection)
+
         # try to load as a collection-based role first
         if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
             role_tuple = _get_collection_role_path(role_name, self._collection_list)

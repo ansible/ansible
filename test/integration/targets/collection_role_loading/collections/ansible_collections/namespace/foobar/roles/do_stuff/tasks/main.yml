@@ -1,0 +1,3 @@
+---
+- name: 'Ping in foobar/role/do_stuff/tasks/main.yml'
+  ping:
