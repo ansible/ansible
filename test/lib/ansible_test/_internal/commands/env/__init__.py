@@ -85,7 +85,7 @@ def show_dump_env(args: EnvConfig) -> None:
         ),
         git=get_ci_provider().get_git_details(args),
         platform=dict(
-            datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            datetime=datetime.datetime.now(tz=datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
             platform=platform.platform(),
             uname=platform.uname(),
         ),
