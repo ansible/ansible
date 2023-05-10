@@ -339,6 +339,7 @@ Options themselves have a defined structure
     - The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``.
     - No
     - str
+    - 
   * - required
     - Denote if the option is required or not
     - bool
