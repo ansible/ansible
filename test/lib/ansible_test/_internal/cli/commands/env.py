@@ -55,7 +55,7 @@ def do_env(
 
     env.add_argument(
         '--timeout',
-        type=int,
+        type=float,
         metavar='MINUTES',
         help='timeout for future ansible-test commands (0 clears)',
     )

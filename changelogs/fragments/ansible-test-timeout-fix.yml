@@ -1,0 +1,5 @@
+bugfixes:
+  - ansible-test - Fix various cases where the test timeout could expire without terminating the tests.
+minor_changes:
+  - ansible-test - Refactored ``env`` command logic and timeout handling.
+  - ansible-test - Allow float values for the ``--timeout`` option to the ``env`` command. This simplifies testing.
