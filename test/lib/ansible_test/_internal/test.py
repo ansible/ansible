@@ -127,7 +127,7 @@ class TestResult:
 
 class TestTimeout(TestResult):
     """Test timeout."""
-    def __init__(self, timeout_duration):  # type: (int) -> None
+    def __init__(self, timeout_duration: int | float) -> None:
         super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
