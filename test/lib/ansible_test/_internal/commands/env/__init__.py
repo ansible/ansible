@@ -42,16 +42,20 @@ from ...ci import (
     get_ci_provider,
 )
 
+from ...timeout import (
+    TimeoutDetail,
+)
+
 
 class EnvConfig(CommonConfig):
     """Configuration for the `env` command."""
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'env')
 
-        self.show = args.show
-        self.dump = args.dump
-        self.timeout = args.timeout
-        self.list_files = args.list_files
+        self.show: bool = args.show
+        self.dump: bool = args.dump
+        self.timeout: int | float | None = args.timeout
+        self.list_files: bool = args.list_files
 
         if not self.show and not self.dump and self.timeout is None and not self.list_files:
             # default to --show if no options were given
@@ -124,25 +128,18 @@ def set_timeout(args: EnvConfig) -> None:
     if args.timeout is None:
         return
 
-    if args.timeout:
-        deadline = (datetime.datetime.utcnow() + datetime.timedelta(minutes=args.timeout)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    timeout = TimeoutDetail.create(args.timeout)
 
-        display.info('Setting a %d minute test timeout which will end at: %s' % (args.timeout, deadline), verbosity=1)
+    if timeout:
+        display.info(f'Setting a {timeout.duration} minute test timeout which will end at: {timeout.deadline}', verbosity=1)
     else:
-        deadline = None
-
         display.info('Clearing existing test timeout.', verbosity=1)
 
     if args.explain:
         return
 
-    if deadline:
-        data = dict(
-            duration=args.timeout,
-            deadline=deadline,
-        )
-
-        write_json_file(TIMEOUT_PATH, data)
+    if timeout:
+        write_json_file(TIMEOUT_PATH, timeout.to_dict())
     elif os.path.exists(TIMEOUT_PATH):
         os.remove(TIMEOUT_PATH)
 
