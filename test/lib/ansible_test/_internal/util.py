@@ -905,6 +905,10 @@ class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
 
 
+class TimeoutExpiredError(SystemExit):
+    """Error raised when the test timeout has been reached or exceeded."""
+
+
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
     def __init__(
