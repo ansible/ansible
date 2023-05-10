@@ -15,7 +15,7 @@ from xml.dom import minidom
 from xml.etree import ElementTree as ET
 
 
-@dataclasses.dataclass  # type: ignore[misc]  # https://github.com/python/mypy/issues/5374
+@dataclasses.dataclass
 class TestResult(metaclass=abc.ABCMeta):
     """Base class for the result of a test case."""
 
