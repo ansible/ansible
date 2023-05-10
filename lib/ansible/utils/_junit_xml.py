@@ -139,6 +139,10 @@ class TestSuite:
     system_out: t.Optional[str] = None
     system_err: t.Optional[str] = None
 
+    def __post_init__(self):
+        if self.timestamp and self.timestamp.tzinfo != datetime.timezone.utc:
+            raise ValueError(f'timestamp.tzinfo must be {datetime.timezone.utc!r}')
+
     @property
     def disabled(self) -> int:
         """The number of disabled test cases."""
@@ -182,7 +186,7 @@ class TestSuite:
             skipped=self.skipped,
             tests=self.tests,
             time=self.time,
-            timestamp=self.timestamp.isoformat(timespec='seconds') if self.timestamp else None,
+            timestamp=self.timestamp.replace(tzinfo=None).isoformat(timespec='seconds') if self.timestamp else None,
         )
 
     def get_xml_element(self) -> ET.Element:
