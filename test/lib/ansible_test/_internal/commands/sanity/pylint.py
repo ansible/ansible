@@ -156,19 +156,19 @@ class PylintTest(SanitySingleVersion):
             except CollectionDetailError as ex:
                 display.warning('Skipping pylint collection version checks since collection detail loading failed: %s' % ex.reason)
 
-        test_start = datetime.datetime.utcnow()
+        test_start = datetime.datetime.now(tz=datetime.timezone.utc)
 
         for context, context_paths in sorted(contexts):
             if not context_paths:
                 continue
 
-            context_start = datetime.datetime.utcnow()
+            context_start = datetime.datetime.now(tz=datetime.timezone.utc)
             messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail)
-            context_end = datetime.datetime.utcnow()
+            context_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
 
-        test_end = datetime.datetime.utcnow()
+        test_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
         for context_time in context_times:
             display.info(context_time, verbosity=4)

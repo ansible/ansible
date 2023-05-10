@@ -170,7 +170,7 @@ def cloud_init(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) 
 
     if not args.explain and results:
         result_name = '%s-%s.json' % (
-            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0, tzinfo=None))))
 
         data = dict(
             clouds=results,
