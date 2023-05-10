@@ -114,7 +114,7 @@ class TestResult:
                 junit_xml.TestSuite(
                     name='ansible-test',
                     cases=[test_case],
-                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None),  # naive UTC timestamp to maintain output format
+                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                 ),
             ],
         )
@@ -157,7 +157,7 @@ One or more of the following situations may be responsible:
             suites=[
                 junit_xml.TestSuite(
                     name='ansible-test',
-                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None),  # naive UTC timestamp to maintain output format
+                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                     cases=[
                         junit_xml.TestCase(
                             name='timeout',
