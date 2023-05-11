@@ -33,6 +33,10 @@ DOCUMENTATION = """
         description: name of the plugin for which you want to retrieve configuration settings.
         type: string
         version_added: '2.12'
+      show_origin:
+        description: toggle the display of what configuration subsystem the value came from
+        type: bool
+        version_added: '2.16'
 """
 
 EXAMPLES = """
@@ -67,7 +71,8 @@ EXAMPLES = """
 RETURN = """
 _raw:
   description:
-    - value(s) of the key(s) in the config
+    - A list of value(s) of the key(s) in the config if show_origin is false (default)
+    - Optionally, a list of 2 element lists (value, origin) if show_origin is true
   type: raw
 """
 
@@ -92,7 +97,7 @@ def _get_plugin_config(pname, ptype, config, variables):
         p = loader.get(pname, class_only=True)
         if p is None:
             raise AnsibleLookupError('Unable to load %s plugin "%s"' % (ptype, pname))
-        result = C.config.get_config_value(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
+        result, origin = C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
     except AnsibleLookupError:
         raise
     except AnsibleError as e:
@@ -101,7 +106,7 @@ def _get_plugin_config(pname, ptype, config, variables):
             raise MissingSetting(msg, orig_exc=e)
         raise e
 
-    return result
+    return result, origin
 
 
 def _get_global_config(config):
@@ -124,6 +129,7 @@ class LookupModule(LookupBase):
         missing = self.get_option('on_missing')
         ptype = self.get_option('plugin_type')
         pname = self.get_option('plugin_name')
+        show_origin = self.get_option('show_origin')
 
         if (ptype or pname) and not (ptype and pname):
             raise AnsibleOptionsError('Both plugin_type and plugin_name are required, cannot use one without the other')
@@ -138,9 +144,10 @@ class LookupModule(LookupBase):
                 raise AnsibleOptionsError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
 
             result = Sentinel
+            origin = None
             try:
                 if pname:
-                    result = _get_plugin_config(pname, ptype, term, variables)
+                    result, origin = _get_plugin_config(pname, ptype, term, variables)
                 else:
                     result = _get_global_config(term)
             except MissingSetting as e:
@@ -152,5 +159,8 @@ class LookupModule(LookupBase):
                     pass  # this is not needed, but added to have all 3 options stated
 
             if result is not Sentinel:
-                ret.append(result)
+                if show_origin:
+                    ret.append((result, origin))
+                else:
+                    ret.append(result)
         return ret
