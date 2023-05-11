@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - properly set gpg check options on enabled repositories according to the ``disable_gpg_check`` option (https://github.com/ansible/ansible/issues/80110)
