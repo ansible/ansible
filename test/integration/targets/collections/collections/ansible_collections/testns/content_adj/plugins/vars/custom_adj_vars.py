@@ -36,10 +36,14 @@ DOCUMENTATION = '''
 '''
 
 from ansible.plugins.vars import BaseVarsPlugin
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class VarsModule(BaseVarsPlugin):
 
     def get_vars(self, loader, path, entities, cache=True):
+        display.debug(f"Executing VarsModule {self.ansible_name} with path {path} and entities {entities}")
         super(VarsModule, self).get_vars(loader, path, entities)
         return {'collection': 'adjacent', 'adj_var': 'value'}

@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - ping:
+    register: legacy
+  - ansible.builtin.ping:
+    register: builtin
+  - assert:
+      that:
+        - legacy['ping'] == 'legacy'
+        - builtin['ping'] == 'pong'

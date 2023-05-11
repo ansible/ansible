@@ -18,6 +18,7 @@ from ansible.utils.vars import combine_vars
 
 display = Display()
 
+VARS_PLUGIN_CACHE = []
 
 def get_plugin_vars(loader, plugin, path, entities):
 
@@ -39,44 +40,51 @@ def get_plugin_vars(loader, plugin, path, entities):
     return data
 
 
+def load_vars_plugins(loader):
+    enabled_vars_plugins = []
+    enabled_canonical_names = []
+    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
+        vars_plugin = vars_loader.get(plugin_name)
+        if vars_plugin is None:
+            # Error if there's no play directory or the name is wrong?
+            continue
+        enabled_canonical_names.append(vars_plugin.ansible_name)
+        if '.' not in vars_plugin.ansible_name:
+            # Legacy plugin will be loaded below with all()
+            continue
+
+        invalid_collection_option = hasattr(vars_plugin, 'REQUIRES_ENABLED') or hasattr(vars_plugin, 'REQUIRES_WHITELIST')
+        if not vars_plugin.ansible_name.startswith('ansible.builtin.') and invalid_collection_option:
+            display.warning(
+                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
+                "This should be removed from the plugin %s." % vars_plugin.ansible_name
+            )
+        enabled_vars_plugins.append(vars_plugin)
+
+    legacy_vars_plugins = []
+    for plugin in vars_loader.all():
+        if plugin.ansible_name.startswith('ansible.builtin.'):
+            continue
+        if hasattr(plugin, 'REQUIRES_WHITELIST'):
+            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+        if getattr(plugin, 'REQUIRES_ENABLED', getattr(plugin, 'REQUIRES_WHITELIST', False)):
+            if plugin.ansible_name not in enabled_canonical_names:
+                continue
+        legacy_vars_plugins.append(plugin)
+
+    global VARS_PLUGIN_CACHE
+    VARS_PLUGIN_CACHE = legacy_vars_plugins + enabled_vars_plugins
+
+
 def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    vars_plugin_list = list(vars_loader.all())
-    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
-            vars_plugin = vars_loader.get(plugin_name)
-            if vars_plugin is None:
-                # Error if there's no play directory or the name is wrong?
-                continue
-            if vars_plugin not in vars_plugin_list:
-                vars_plugin_list.append(vars_plugin)
+    if not VARS_PLUGIN_CACHE:
+        load_vars_plugins(loader)
 
-    for plugin in vars_plugin_list:
-        # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
-
-        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
-
-        # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
-        needs_enabled = not builtin_or_legacy
-        if hasattr(plugin, 'REQUIRES_ENABLED'):
-            needs_enabled = plugin.REQUIRES_ENABLED
-        elif hasattr(plugin, 'REQUIRES_WHITELIST'):
-            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
-                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
-            needs_enabled = plugin.REQUIRES_WHITELIST
-
-        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
-        # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-        if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
-            display.warning(
-                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                "This should be removed from the plugin %s." % plugin.ansible_name
-            )
-        elif builtin_or_legacy and needs_enabled and not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
-            continue
-
+    for plugin in VARS_PLUGIN_CACHE:
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
 
         # if a plugin-specific setting has not been provided, use the global setting

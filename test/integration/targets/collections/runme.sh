@@ -81,6 +81,11 @@ ansible-playbook -i "${INVENTORY_PATH}" -v "${TEST_PLAYBOOK}" "$@"
 
 if [[ ${INVENTORY_PATH} != *.winrm ]]; then
 	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
+
+	ansible-playbook test_connection_in_loops.yml
+        # verify TE is loading connection plugin twice per task in the test case
+	conn1="Loading Connection 'ansible_collections.testns.testcoll.plugins.connection.localconn'"
+	test "$(ANSIBLE_DEBUG=True ansible-playbook test_connection_in_loops.yml | grep -ce "$conn1")" == 4
 fi
 
 echo "--- validating bypass_host_loop with collection search"
