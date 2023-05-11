@@ -92,8 +92,8 @@ stages:
               test: rhel/8.7@3.6
             - name: RHEL 8.7 py39
               test: rhel/8.7@3.9
-            - name: RHEL 9.1
-              test: rhel/9.1
+            - name: RHEL 9.2
+              test: rhel/9.2
             - name: FreeBSD 12.4
               test: freebsd/12.4
             - name: FreeBSD 13.1
@@ -110,8 +110,8 @@ stages:
               test: macos/13.2
             - name: RHEL 8.7
               test: rhel/8.7
-            - name: RHEL 9.1
-              test: rhel/9.1
+            - name: RHEL 9.2
+              test: rhel/9.2
             - name: FreeBSD 13.1
               test: freebsd/13.1
             - name: FreeBSD 13.2
@@ -129,8 +129,8 @@ stages:
               test: fedora/37
             - name: RHEL 8.7
               test: rhel/8.7
-            - name: RHEL 9.1
-              test: rhel/9.1
+            - name: RHEL 9.2
+              test: rhel/9.2
             - name: Ubuntu 20.04
               test: ubuntu/20.04
             - name: Ubuntu 22.04
