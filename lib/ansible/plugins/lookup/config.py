@@ -71,8 +71,8 @@ EXAMPLES = """
 RETURN = """
 _raw:
   description:
-    - value(s) of the key(s) in the config if show_origin is false
-    - a tuple of (value, origin) if show_origin is true
+    - A list of value(s) of the key(s) in the config if show_origin is false (default)
+    - Optionally, a list of 2 element lists (value, origin) if show_origin is true
   type: raw
 """
 
