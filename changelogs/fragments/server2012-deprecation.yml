@@ -1,0 +1,8 @@
+deprecated_features:
+- >-
+  Support for Windows Server 2012 and 2012 R2 has been removed as the support end of life from Microsoft is October
+  10th 2023. These versions of Windows will no longer be tested in this Ansible release and it cannot be guaranteed
+  that they will continue to work going forward.
+
+removed_features:
+- ansible-test - Removed support for the remote Windows targets 2012 and 2012-R2
