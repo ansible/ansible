@@ -181,3 +181,33 @@
     path: '{{ galaxy_dir }}/scratch/ansible_test/ignore/{{ item }}'
     state: directory
   loop: '{{ collection_ignored_directories }}'
+
+- name: create collection with skeleton type "community"
+  command: ansible-galaxy collection init ansible_test3.my_collection --type community
+  args:
+    chdir: '{{ galaxy_dir }}/scratch'
+  register: init_type_community
+
+- name: get result of "create collection with skeleton type community"
+  find:
+    path: '{{ galaxy_dir }}/scratch/ansible_test3/my_collection'
+  register: init_type_community_actual
+
+- debug:
+    var: init_type_community_actual.files | map(attribute='path') | list
+
+- name: assert "create collection with skeleton type community"
+  assert:
+    that:
+    - '"Collection ansible_test3.my_collection was created successfully" in init_type_community.stdout'
+    - init_type_community_actual.files | length == 10
+    - (init_type_community_actual.files | map(attribute='path') | list)[0] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[1] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[2] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[3] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[4] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[5] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[6] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[7] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[8] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[9] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'CONTRIBUTING.md', 'MAINTAINING.md', 'MAINTAINERS', 'REVIEW_CHECKLIST.md', 'codecov.yml']

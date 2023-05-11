@@ -1,0 +1,253 @@
+# README FIRST
+# 1. If you don't have unit tests, remove that section.
+# 2. If your collection depends on other collections ensure they are installed,
+#    add them to the "test-deps" input.
+# 3. For the comprehensive list of the inputs supported by the
+#    ansible-community/ansible-test-gh-action GitHub Action, see
+#    https://github.com/marketplace/actions/ansible-test.
+# 4. If you want to prevent merging PRs that do not pass all tests,
+#    make sure to add the "check" job to your repository branch
+#    protection once this workflow is added.
+#    It is also possible to tweak which jobs are allowed to fail. See
+#    https://github.com/marketplace/actions/alls-green#gotchas for more detail.
+# 5. If you need help please ask in #ansible-community on the Libera.chat IRC
+#    network.
+
+name: CI
+on:
+  # Run CI against all pushes (direct commits, also merged PRs), Pull Requests
+  push:
+    branches:
+      - main
+      - stable-*
+  pull_request:
+  # Run CI once per day (at 06:00 UTC)
+  # This ensures that even if there haven't been commits that we are still
+  # testing against latest version of ansible-test for each ansible-core
+  # version
+  schedule:
+    - cron: '0 6 * * *'
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.pull_request.number || github.sha
+    }}
+  cancel-in-progress: true
+
+jobs:
+
+###
+# Sanity tests (REQUIRED)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_sanity.html
+
+  sanity:
+    name: Sanity (Ⓐ${{ matrix.ansible }})
+    strategy:
+      matrix:
+        ansible:
+          # It's important that Sanity is tested against all stable-X.Y branches
+          # Testing against `devel` may fail as new tests are added.
+          # An alternative to `devel` is the `milestone` branch with
+          # gets synchronized with `devel` every few weeks and therefore
+          # tends to be a more stable target. Be aware that it is not updated
+          # around creation of a new stable branch, this might cause a problem
+          # that two different versions of ansible-test use the same sanity test
+          # ignore.txt file.
+          # The commented branches below are EOL,
+          # do you really need your collection to support them if it still does?
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          # - stable-2.10 # Only if your collection supports ansible-base 2.10
+          # - stable-2.11 # Only if your collection supports ansible-core 2.11
+          - stable-2.12
+          - stable-2.13
+          - stable-2.14
+          - devel
+        # - milestone
+    # Ansible-test on various stable branches does not yet work well with cgroups v2.
+    # Since ubuntu-latest now uses Ubuntu 22.04, we need to fall back to the ubuntu-20.04
+    # image for these stable branches. The list of branches where this is necessary will
+    # shrink over time, check out https://github.com/ansible-collections/news-for-maintainers/issues/28
+    # for the latest list.
+    runs-on: >-
+      ${{ contains(fromJson(
+          '["stable-2.9", "stable-2.10", "stable-2.11"]'
+      ), matrix.ansible) && 'ubuntu-20.04' || 'ubuntu-latest' }}
+    steps:
+      # Run sanity tests inside a Docker container.
+      # The docker container has all the pinned dependencies that are
+      # required and all Python versions Ansible supports.
+      - name: Perform sanity testing
+        # See the documentation for the following GitHub action on
+        # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: sanity
+          # OPTIONAL If your sanity tests require code
+          # from other collections, install them like this
+          # test-deps: >-
+          #   ansible.netcommon
+          #   ansible.utils
+          # OPTIONAL If set to true, will test only against changed files,
+          # which should improve CI performance. See limitations on
+          # https://github.com/ansible-community/ansible-test-gh-action#pull-request-change-detection
+          pull-request-change-detection: true
+
+###
+# Unit tests (OPTIONAL)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_units.html
+
+  units:
+    # Ansible-test on various stable branches does not yet work well with cgroups v2.
+    # Since ubuntu-latest now uses Ubuntu 22.04, we need to fall back to the ubuntu-20.04
+    # image for these stable branches. The list of branches where this is necessary will
+    # shrink over time, check out https://github.com/ansible-collections/news-for-maintainers/issues/28
+    # for the latest list.
+    runs-on: >-
+      ${{ contains(fromJson(
+          '["stable-2.9", "stable-2.10", "stable-2.11"]'
+      ), matrix.ansible) && 'ubuntu-20.04' || 'ubuntu-latest' }}
+    name: Units (Ⓐ${{ matrix.ansible }})
+    strategy:
+      # As soon as the first unit test fails, cancel the others to free up the CI queue
+      fail-fast: true
+      matrix:
+        ansible:
+          # The commented branches below are EOL,
+          # do you really need your collection to support them if it still does?
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          # - stable-2.10 # Only if your collection supports ansible-base 2.10
+          # - stable-2.11 # Only if your collection supports ansible-core 2.11
+          - stable-2.12
+          - stable-2.13
+          - stable-2.14
+          - devel
+        # - milestone
+
+    steps:
+      - name: >-
+          Perform unit testing against
+          Ansible version ${{ matrix.ansible }}
+        # See the documentation for the following GitHub action on
+        # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: units
+          # OPTIONAL If your unit tests require code
+          # from other collections, install them like this
+          test-deps: >-
+            ansible.netcommon
+            ansible.utils
+          # OPTIONAL If set to true, will test only against changed files,
+          # which should improve CI performance. See limitations on
+          # https://github.com/ansible-community/ansible-test-gh-action#pull-request-change-detection
+          pull-request-change-detection: true
+
+###
+# Integration tests (RECOMMENDED)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html
+
+
+# If the application you are testing is available as a docker container and you want to test
+# multiple versions see the following for an example:
+# https://github.com/ansible-collections/community.zabbix/tree/master/.github/workflows
+
+  integration:
+    # Ansible-test on various stable branches does not yet work well with cgroups v2.
+    # Since ubuntu-latest now uses Ubuntu 22.04, we need to fall back to the ubuntu-20.04
+    # image for these stable branches. The list of branches where this is necessary will
+    # shrink over time, check out https://github.com/ansible-collections/news-for-maintainers/issues/28
+    # for the latest list.
+    runs-on: >-
+      ${{ contains(fromJson(
+          '["stable-2.9", "stable-2.10", "stable-2.11"]'
+      ), matrix.ansible) && 'ubuntu-20.04' || 'ubuntu-latest' }}
+    name: I (Ⓐ${{ matrix.ansible }}+py${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible:
+          # The commented branches below are EOL,
+          # do you really need your collection to support them if it still does?
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          # - stable-2.10 # Only if your collection supports ansible-base 2.10
+          # - stable-2.11 # Only if your collection supports ansible-core 2.11
+          - stable-2.12
+          - stable-2.13
+          - stable-2.14
+          - devel
+        # - milestone
+        python:
+          - '2.6'
+          - '2.7'
+          - '3.5'
+          - '3.6'
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+        exclude:
+          # Because ansible-test doesn't support Python 3.9 for Ansible 2.9
+          # and Python 3.10 is supported in 2.12 or later.
+          - ansible: stable-2.9
+            python: '3.9'
+          - ansible: stable-2.9
+            python: '3.10'
+          - ansible: stable-2.10
+            python: '3.10'
+          - ansible: stable-2.11
+            python: '3.10'
+          # Python 2.6 is not supported with ansible-core >= 2.13
+          - ansible: stable-2.13
+            python: '2.6'
+          - ansible: stable-2.14
+            python: '2.6'
+          - ansible: devel
+            python: '2.6'
+            
+
+    steps:
+      - name: >-
+          Perform integration testing against
+          Ansible version ${{ matrix.ansible }}
+          under Python ${{ matrix.python }}
+        # See the documentation for the following GitHub action on
+        # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          # OPTIONAL command to run before invoking `ansible-test integration`
+          # pre-test-cmd:
+          target-python-version: ${{ matrix.python }}
+          testing-type: integration
+          # OPTIONAL If your integration tests require code
+          # from other collections, install them like this
+          test-deps: ansible.netcommon
+          # OPTIONAL If set to true, will test only against changed files,
+          # which should improve CI performance. See limitations on
+          # https://github.com/ansible-community/ansible-test-gh-action#pull-request-change-detection
+          pull-request-change-detection: true
+
+
+  check:  # This job does nothing and is only used for the branch protection
+          # or multi-stage CI jobs, like making sure that all tests pass before
+          # a publishing job is started.
+    if: always()
+
+    needs:
+      - sanity
+      - units
+      - integration
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

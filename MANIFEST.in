@@ -21,7 +21,8 @@ recursive-include licenses *.txt
 recursive-include packaging *.py
 recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.txt
-recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
+recursive-include test/support *.py *.ps1 *.psm1 *.cs *.
+recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep *.rst .gitignore CODE_OF_CONDUCT.md *.yaml LICENSE CONTRIBUTING.md MAINTAINERS MAINTAINING.md REVIEW_CHECKLIST.md *.json
 exclude test/sanity/code-smell/botmeta.*
 exclude test/sanity/code-smell/release-names.*
 exclude test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py

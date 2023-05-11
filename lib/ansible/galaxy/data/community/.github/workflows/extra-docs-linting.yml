@@ -1,0 +1,34 @@
+name: Lint extra docsite docs and links
+on:
+  # Run CI against all pushes (direct commits, also merged PRs), Pull Requests
+  push:
+    branches:
+      - main
+      - stable-*
+  pull_request:
+  # Run CI once per day (at 06:00 UTC)
+  # This ensures that even if there haven't been commits that we are still testing against latest version of ansible-test for each ansible-base version
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  docsite:
+    name: Lint extra docsite docs and links
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      - name: Install antsibull-docs
+        run: pip install antsibull-docs --disable-pip-version-check
+
+      - name: Run collection docs linter
+        run: antsibull-docs lint-collection-docs .

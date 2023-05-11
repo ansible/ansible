@@ -354,9 +354,12 @@ class GalaxyCLI(CLI):
                                  **obj_name_kwargs)
 
         if galaxy_type == 'role':
-            init_parser.add_argument('--type', dest='role_type', action='store', default='default',
-                                     help="Initialize using an alternate role type. Valid types include: 'container', "
-                                          "'apb' and 'network'.")
+            type_choices = ['container', 'apb', 'network']
+        else:
+            type_choices = ['community']
+            init_parser.add_argument('--type', dest='{0}_type'.format(galaxy_type), action='store', default='default',
+                                     choices=type_choices,
+                                     help="Initialize using an alternate {0} type. Valid types include: 'container', 'apb' and 'network'.".format(galaxy_type))
 
     def add_remove_options(self, parser, parents=None):
         remove_parser = parser.add_parser('remove', parents=parents, help='Delete roles from roles_path.')
@@ -1084,6 +1087,7 @@ class GalaxyCLI(CLI):
             inject_data.update(dict(
                 namespace=namespace,
                 collection_name=collection_name,
+                collection_type=context.CLIARGS['collection_type'],
                 version='1.0.0',
                 readme='README.md',
                 authors=['your name <example@domain.com>'],
@@ -1121,7 +1125,7 @@ class GalaxyCLI(CLI):
         if obj_skeleton is not None:
             own_skeleton = False
         else:
-            own_skeleton = True
+            own_skeleton = not (galaxy_type == 'collection' and inject_data['collection_type'] == 'community')
             obj_skeleton = self.galaxy.default_role_skeleton_path
             skeleton_ignore_expressions = ['^.*/.git_keep$']
 
