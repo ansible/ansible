@@ -357,9 +357,9 @@ class GalaxyCLI(CLI):
             type_choices = ['container', 'apb', 'network']
         else:
             type_choices = ['community']
-            init_parser.add_argument('--type', dest='{0}_type'.format(galaxy_type), action='store', default='default',
-                                     choices=type_choices,
-                                     help="Initialize using an alternate {0} type. Valid types include: 'container', 'apb' and 'network'.".format(galaxy_type))
+        init_parser.add_argument('--type', dest='{}_type'.format(galaxy_type), action='store', default='default',
+                                 choices=type_choices,
+                                 help="Initialize using an alternate {} type. Valid types include: {}".format(galaxy_type, type_choices))
 
     def add_remove_options(self, parser, parents=None):
         remove_parser = parser.add_parser('remove', parents=parents, help='Delete roles from roles_path.')
