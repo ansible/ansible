@@ -1,0 +1,2 @@
+minor_changes:
+- Added new collection type ``community`` which supports `Community Collection Template <https://github.com/ansible-collections/collection_template>`_ as a skeleton to initialize a new collection using ``ansible-galaxy`` command. To use run ``ansible-galaxy collection init my_namespace.my_collection --type community`` (https://github.com/ansible/ansible/issues/80782).
