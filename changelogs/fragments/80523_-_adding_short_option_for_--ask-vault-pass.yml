@@ -1,0 +1,2 @@
+minor_changes:
+  - cli - Added short option '-J' for asking for vault password (https://github.com/ansible/ansible/issues/80523).
