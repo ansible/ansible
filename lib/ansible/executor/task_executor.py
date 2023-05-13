@@ -578,6 +578,14 @@ class TaskExecutor:
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
+            # attempt to close existing connection if any
+            if self._connection:
+                try:
+                    self._connection.close()
+                except AttributeError:
+                    pass
+                except Exception as e:
+                    display.debug(u"error closing connection: %s" % to_text(e))
             self._connection = self._get_connection(cvars, templar, current_connection)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
