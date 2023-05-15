@@ -1,5 +1,16 @@
 ancestor: 2.14.0
 releases:
+  2.15.0:
+    changes:
+      release_summary: '| Release Date: 2023-05-15
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.0_summary.yaml
+    release_date: '2023-05-15'
   2.15.0b1:
     changes:
       breaking_changes:
