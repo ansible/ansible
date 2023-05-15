@@ -5,97 +5,13 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
-v2.15.0rc2
-==========
+v2.15.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2023-05-01
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
-
-
-Minor Changes
--------------
-
-- The minimum required ``setuptools`` version is now 45.2.0, as it is the oldest version to support Python 3.10.
-- Use ``package_data`` instead of ``include_package_data`` for ``setup.cfg`` to avoid ``setuptools`` warnings.
-
-Bugfixes
---------
-
-- ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
-- ansible-galaxy collection verify - fix verifying signed collections when the keyring is not configured.
-
-v2.15.0rc1
-==========
-
-Release Summary
----------------
-
-| Release Date: 2023-04-25
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
-
-
-Bugfixes
---------
-
-- Display - Defensively configure writing to stdout and stderr with a custom encoding error handler that will replace invalid characters while providing a deprecation warning that non-utf8 text will result in an error in a future version.
-- ``pkg_mgr`` - fix the default dnf version detection
-- ansible-galaxy - fix installing collections from directories that have a trailing path separator (https://github.com/ansible/ansible/issues/77803).
-- ansible-test - Update ``pylint`` to 2.17.2 to resolve several possible false positives.
-- ansible-test - Update ``pylint`` to 2.17.3 to resolve several possible false positives.
-- ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged ``setuptools`` instead of installing the latest version from PyPI.
-- dnf5 - Use ``transaction.check_gpg_signatures`` API call to check package signatures AND possibly to recover from when keys are missing.
-- handlers - fix ``v2_playbook_on_notify`` callback not being called when notifying handlers
-- module responses - Ensure that module responses are utf-8 adhereing to JSON RFC and expectations of the core code.
-- module/role argument spec - validate the type for options that are None when the option is required or has a non-None default (https://github.com/ansible/ansible/issues/79656).
-
-v2.15.0b3
-=========
-
-Release Summary
----------------
-
-| Release Date: 2023-04-17
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
-
-
-Bugfixes
---------
-
-- Fix post-validating looped task fields so the strategy uses the correct values after task execution.
-- Prevent running same handler multiple times when included via ``include_role`` (https://github.com/ansible/ansible/issues/73643)
-- ansible-test - Add support for ``argcomplete`` version 3.
-- pep517 build backend - Use the documented ``import_module`` import from ``importlib``.
-- syntax check - Limit ``--syntax-check`` to ``ansible-playbook`` only, as that is the only CLI affected by this argument (https://github.com/ansible/ansible/issues/80506)
-
-v2.15.0b2
-=========
-
-Release Summary
----------------
-
-| Release Date: 2023-04-10
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
-
-
-Bugfixes
---------
-
-- AnsibleModule.run_command - Only use selectors when needed, and rely on Python stdlib subprocess for the simple task of collecting stdout/stderr when prompt matching is not required.
-- ansible-galaxy - reduce API calls to servers by fetching signatures only for final candidates.
-- dnf5 - fix module and package names in the message following failed module respawn attempt
-- dnf5 - use the logs API to determine transaction problems
-- validate-modules sanity test - replace semantic markup parsing and validating code with the code from `antsibull-docs-parser 0.2.0 <https://github.com/ansible-community/antsibull-docs-parser/releases/tag/0.2.0>`__ (https://github.com/ansible/ansible/pull/80406).
-
-v2.15.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2023-04-04
+| Release Date: 2023-05-15
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
 
 
@@ -132,8 +48,10 @@ Minor Changes
 - Removed unused imports from the following set of test plugins: files
 - Removed unused imports from the following strategy plugins: debug
 - Removed unused imports from the following vars plugins: host_group_vars
+- The minimum required ``setuptools`` version is now 45.2.0, as it is the oldest version to support Python 3.10.
 - Use ``ansible.module_utils.six.moves.collections_abc`` instead of ``ansible.module_utils.common._collections_compat`` in modules and module_utils.
 - Use ``collections.abc`` instead of ``ansible.module_utils.common._collections_compat`` in controller code.
+- Use ``package_data`` instead of ``include_package_data`` for ``setup.cfg`` to avoid ``setuptools`` warnings.
 - ``AnsibleJ2Vars`` class that acts as a storage for all variables for templating purposes now uses ``collections.ChainMap`` internally.
 - add parameter ``numeric`` to the iptables module to disable dns lookups when running list -action internally (https://github.com/ansible/ansible/issues/78793).
 - allow user to set ansible specific env vars for selecting pager and editor, but still fall back to commonly used defaults.
@@ -250,8 +168,10 @@ Bugfixes
 --------
 
 - Ansible.Basic.cs - Ignore compiler warning (reported as an error) when running under PowerShell 7.3.x.
+- AnsibleModule.run_command - Only use selectors when needed, and rely on Python stdlib subprocess for the simple task of collecting stdout/stderr when prompt matching is not required.
 - BSD network facts - Do not assume column indexes, look for ``netmask`` and ``broadcast`` for determining the correct columns when parsing ``inet`` line (https://github.com/ansible/ansible/issues/79117)
 - Correctly count rescued tasks in play recap (https://github.com/ansible/ansible/issues/79711)
+- Display - Defensively configure writing to stdout and stderr with a custom encoding error handler that will replace invalid characters while providing a deprecation warning that non-utf8 text will result in an error in a future version.
 - Do not crash when templating an expression with a test or filter that is not a valid Ansible filter name (https://github.com/ansible/ansible/issues/78912, https://github.com/ansible/ansible/pull/78913).
 - Fix ``MANIFEST.in`` to exclude unwanted files in the ``packaging/`` directory.
 - Fix ``MANIFEST.in`` to include ``*.md`` files in the ``test/support/`` directory.
@@ -259,6 +179,7 @@ Bugfixes
 - Fix an issue where the value of ``become`` was ignored when used on a role used as a dependency in ``main/meta.yml`` (https://github.com/ansible/ansible/issues/79777)
 - Fix bug in `vars` applied to roles, they were being incorrectly exported among others while only vars/main.yml was meant to be. Also adjusted the precedence to act the same as inline params.
 - Fix conditionally notifying ``include_tasks` handlers when ``force_handlers`` is used (https://github.com/ansible/ansible/issues/79776)
+- Fix post-validating looped task fields so the strategy uses the correct values after task execution.
 - Fix reusing a connection in a task loop that uses a redirected or aliased name - https://github.com/ansible/ansible/issues/78425
 - Fix setting become activation in a task loop - https://github.com/ansible/ansible/issues/78425
 - Fix traceback when using the ``template`` module and running with ``ANSIBLE_DEBUG=1`` (https://github.com/ansible/ansible/issues/79763)
@@ -268,25 +189,32 @@ Bugfixes
 - Fixes the password lookup to not rewrite files if they are not changed when using the "encrypt" parameter (#79430).
 - Module and role argument validation - include the valid suboption choices in the error when an invalid suboption is provided.
 - Perform type check on data passed to Display.display to enforce the requirement of being given a python3 unicode string
+- Prevent running same handler multiple times when included via ``include_role`` (https://github.com/ansible/ansible/issues/73643)
 - TaskExecutor - don't ignore templated _raw_params that k=v parser failed to parse (https://github.com/ansible/ansible/issues/79862)
 - Windows - Display a warning if the module failed to cleanup any temporary files rather than failing the task. The warning contains a brief description of what failed to be deleted.
 - Windows - Ensure the module temp directory contains more unique values to avoid conflicts with concurrent runs - https://github.com/ansible/ansible/issues/80294
 - Windows - Improve temporary file cleanup used by modules. Will use a more reliable delete operation on Windows Server 2016 and newer to delete files that might still be open by other software like Anti Virus scanners. There are still scenarios where a file or directory cannot be deleted but the new method should work in more scenarios.
 - ``ansible-galaxy search rolename`` - give a warning instead of non-zero return code when search results are empty. This is similar to the behavior when listing roles, which gives a warning if a role cannot be found and exits with a return code of ``0``.
 - ``ansible_eval_concat`` - avoid redundant unsafe wrapping of templated strings converted to Python types
+- ``pkg_mgr`` - fix the default dnf version detection
 - ansible-config limit shorthand format to assigned values
 - ansible-doc - stop generating wrong module URLs for module see-alsos. The URLs for modules in ansible.builtin do now work, and URLs for modules outside ansible.builtin are no longer added (https://github.com/ansible/ansible/pull/80280).
 - ansible-doc now will correctly display short descriptions on listing filters/tests no matter the directory sorting.
 - ansible-galaxy - Improve retries for collection installs, to properly retry, and extend retry logic to common URL related connection errors (https://github.com/ansible/ansible/issues/80170 https://github.com/ansible/ansible/issues/80174)
+- ansible-galaxy - fix installing collections from directories that have a trailing path separator (https://github.com/ansible/ansible/issues/77803).
 - ansible-galaxy - fix installing collections in git repositories/directories which contain a MANIFEST.json file (https://github.com/ansible/ansible/issues/79796).
+- ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
 - ansible-galaxy - make initial call to Galaxy server on-demand only when installing, getting info about, and listing roles.
+- ansible-galaxy - reduce API calls to servers by fetching signatures only for final candidates.
 - ansible-galaxy collection install - respect symlinks when installing from source or local repository (https://github.com/ansible/ansible/issues/78442)
+- ansible-galaxy collection verify - fix verifying signed collections when the keyring is not configured.
 - ansible-galaxy collection/role init - preserve symlinks (https://github.com/ansible/ansible/issues/39334).
 - ansible-galaxy role info - fix unhandled AttributeError by catching the correct exception.
 - ansible-inventory will no longer duplicate host entries if they were part of a group's childrens tree.
 - ansible-inventory will not explicitly sort groups/hosts anymore, giving a chance (depending on output format) to match the order in the input sources.
 - ansible-playbook -K breaks when passwords have quotes (https://github.com/ansible/ansible/issues/79836).
 - ansible-test - Add ``wheel < 0.38.0`` constraint for Python 3.6 and earlier.
+- ansible-test - Add support for ``argcomplete`` version 3.
 - ansible-test - Add support for ``pytest`` assertion rewriting when running unit tests on Python 3.5 and later. Resolves issue https://github.com/ansible/ansible/issues/68032
 - ansible-test - Added a work-around for a traceback under Python 3.11 when completing certain command line options.
 - ansible-test - Allow disabled, unsupported, unstable and destructive integration test targets to be selected using their respective prefixes.
@@ -312,10 +240,13 @@ Bugfixes
 - ansible-test - Support Podman 4.4.0+ by adding the ``SYS_CHROOT`` capability when running containers.
 - ansible-test - Support loading of vendored Python packages from ansible-core.
 - ansible-test - The ``validate-modules`` sanity test now properly enforces documentation before imports for plugins. Previously this was only enforced for modules due to a coding error.
+- ansible-test - Update ``pylint`` to 2.17.2 to resolve several possible false positives.
+- ansible-test - Update ``pylint`` to 2.17.3 to resolve several possible false positives.
 - ansible-test - Update the ``pylint`` sanity test requirements to resolve crashes on Python 3.11. (https://github.com/ansible/ansible/issues/78882)
 - ansible-test - Update the ``pylint`` sanity test to use version 2.15.4.
 - ansible-test - Update the ``pylint`` sanity test to use version 2.15.5.
 - ansible-test - Use consistent file permissions when delegating tests to a container or remote host. Files with any execute bit set will use permissions ``755``. All other files will use permissions ``644``. (Resolves issue https://github.com/ansible/ansible/issues/75079)
+- ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged ``setuptools`` instead of installing the latest version from PyPI.
 - ansible-test - fix warning message about failing to run an image to include the image name
 - ansible-test runtime-metadata sanity test - do not crash on YAML parsing errors without a context mark (https://github.com/ansible/ansible/pull/78802).
 - ansible-test sanity - correctly report invalid YAML in validate-modules (https://github.com/ansible/ansible/issues/75837).
@@ -335,12 +266,16 @@ Bugfixes
 - copy remote_src=true - fix copying subdirs recursively when the dest exists and the src and dest have multiple common subdirectories in a common directory (https://github.com/ansible/ansible/issues/74536).
 - copy remote_src=true - fix reporting changed for copying empty directories.
 - display - reduce risk of post-fork output deadlocks (https://github.com/ansible/ansible/pull/79522)
+- dnf5 - Use ``transaction.check_gpg_signatures`` API call to check package signatures AND possibly to recover from when keys are missing.
+- dnf5 - fix module and package names in the message following failed module respawn attempt
+- dnf5 - use the logs API to determine transaction problems
 - file - touch action in check mode was always returning ok. Fix now evaluates the different conditions and returns the appropriate changed status. (https://github.com/ansible/ansible/issues/79360)
 - file lookup now handles missing files more gracefully.
 - file lookup now plays nice with generic lookup ``errors`` option.
 - get_url - Ensure we are passing ciphers to all url_get calls (https://github.com/ansible/ansible/issues/79717)
 - get_url module - Added a documentation reference to ``hashlib`` regarding algorithms, as well as a note about ``md5`` support on systems running in FIPS compliant mode.
 - get_url module - Removed out-of-date documentation stating that ``hashlib`` is a third-party library.
+- handlers - fix ``v2_playbook_on_notify`` callback not being called when notifying handlers
 - handlers - fix an issue where the ``flush_handlers`` meta task could not be used with FQCN: ``ansible.builtin.meta`` (https://github.com/ansible/ansible/issues/79023)
 - include_role - Inherit from role parents beyond a depth of 3 (https://github.com/ansible/ansible/issues/47023).
 - jinja2_native - fix intermittent 'could not find job' failures when a value of ``ansible_job_id`` from a result of an async task was inadvertently changed during execution; to prevent this a format of ``ansible_job_id`` was changed.
@@ -349,6 +284,8 @@ Bugfixes
 - known_hosts - do not return changed status when a non-existing key is removed (https://github.com/ansible/ansible/issues/78598)
 - list-tags now shows the 'never' tag, which was being excluded by default. To list all tasks you still need to add `--list-tasks --tags never,all`.
 - loops/delegate_to - Do not double calculate the values of loops and ``delegate_to`` (https://github.com/ansible/ansible/issues/80038)
+- module responses - Ensure that module responses are utf-8 adhereing to JSON RFC and expectations of the core code.
+- module/role argument spec - validate the type for options that are None when the option is required or has a non-None default (https://github.com/ansible/ansible/issues/79656).
 - module_utils/basic.py - Fix detection of available hashing algorithms on Python 3.x. All supported algorithms are now available instead of being limited to a hard-coded list. This affects modules such as ``get_url`` which accept an arbitrary checksum algorithm.
 - normal action plugin - remove obsolete ``if`` (https://github.com/ansible/ansible/pull/79690).
 - omit on keywords was resetting to default value, ignoring inheritance.
@@ -357,12 +294,14 @@ Bugfixes
 - paramiko connection was still using outdated playcontext, this should bring it up to date to use the 'correct' data for each task/loop.
 - password lookup now correctly reads stored ident fields.
 - password_hash - handle errors using unknown passlib hashtypes more gracefully (https://github.com/ansible/ansible/issues/45392).
+- pep517 build backend - Use the documented ``import_module`` import from ``importlib``.
 - plugin loader, fix detection for existing configuration before initializing for a plugin
 - role deduplication - Always create new role object, regardless of deduplication. Deduplication will only affect whether a duplicate call to a role will execute, as opposed to re-using the same object. (https://github.com/ansible/ansible/pull/78661)
 - roles - Fix templating ``public``, ``allow_duplicates`` and ``rolespec_validate`` (https://github.com/ansible/ansible/issues/80304).
 - service_facts - Use python re to parse service output instead of grep (https://github.com/ansible/ansible/issues/78541)
 - strategy plugins now correctly identify bad registered variables, even on skip.
 - strategy plugins: get the correctly templated and validated run_once value on strategy linear (https://github.com/ansible/ansible/issues/78492)
+- syntax check - Limit ``--syntax-check`` to ``ansible-playbook`` only, as that is the only CLI affected by this argument (https://github.com/ansible/ansible/issues/80506)
 - systemd - daemon-reload and daemon-reexec ignore errors when running in a chroot (https://github.com/ansible/ansible/pull/79643)
 - templates - Fixed ``TypeError`` when a lookup plugin has an option called ``name``.
 - unarchive - allow relative path for ``dest`` (https://github.com/ansible/ansible/issues/64612)
@@ -372,6 +311,7 @@ Bugfixes
 - user - fix comparing group IDs to existing group names so groups are not always updated (https://github.com/ansible/ansible/issues/79956).
 - user module - Removed ``password_expire_max`` from the return docs, as it is not returned.
 - user module - Removed ``password_expire_min`` from the return docs, as it is not returned.
+- validate-modules sanity test - replace semantic markup parsing and validating code with the code from `antsibull-docs-parser 0.2.0 <https://github.com/ansible-community/antsibull-docs-parser/releases/tag/0.2.0>`__ (https://github.com/ansible/ansible/pull/80406).
 - vault - show filename additionally if missing secrets prevents decryption (https://github.com/ansible/ansible/issues/79723)
 - winrm - Increase the read timeout to 10 seconds later than the operation timeout reducing the chances of a false read timeout
 
