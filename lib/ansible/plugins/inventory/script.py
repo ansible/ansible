@@ -29,6 +29,7 @@ DOCUMENTATION = '''
         - Enabled in configuration by default.
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
         - To write your own inventory script see U(../../../dev_guide/developing_inventory.html#developing-inventory-scripts).
+        - To find the scripts that used to be part of the code release, go to U(https://github.com/ansible-community/contrib-scripts/).
 '''
 
 import os
