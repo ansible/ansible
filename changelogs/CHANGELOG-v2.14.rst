@@ -5,6 +5,35 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-05-15
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Allow float values for the ``--timeout`` option to the ``env`` command. This simplifies testing.
+- ansible-test - Refactored ``env`` command logic and timeout handling.
+- ansible-test - Use ``datetime.datetime.now`` with ``tz`` specified instead of ``datetime.datetime.utcnow``.
+
+Bugfixes
+--------
+
+- Display - Defensively configure writing to stdout and stderr with the replace encoding error handler that will replace invalid characters (https://github.com/ansible/ansible/issues/80258)
+- Properly disable ``jinja2_native`` in the template module when jinja2 override is used in the template (https://github.com/ansible/ansible/issues/80605)
+- ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
+- ansible-galaxy collection verify - fix verifying signed collections when the keyring is not configured.
+- ansible-test - Fix handling of timeouts exceeding one day.
+- ansible-test - Fix various cases where the test timeout could expire without terminating the tests.
+- ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged ``setuptools`` instead of installing the latest version from PyPI.
+- pep517 build backend - Copy symlinks when copying the source tree. This avoids tracebacks in various scenarios, such as when a venv is present in the source tree.
+
 v2.14.5
 =======
 
