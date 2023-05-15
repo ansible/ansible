@@ -28,6 +28,7 @@ DOCUMENTATION = '''
     notes:
         - Enabled in configuration by default.
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
+        - To write your own inventory script see http://../../dev_guide/developing_inventory.html#developing-inventory-scripts
 '''
 
 import os
