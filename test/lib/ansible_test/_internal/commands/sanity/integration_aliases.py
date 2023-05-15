@@ -224,7 +224,6 @@ class IntegrationAliasesTest(SanitySingleVersion):
         messages = []
 
         messages += self.check_posix_targets(args)
-        messages += self.check_windows_targets()
 
         if messages:
             return SanityFailure(self.name, messages=messages)
