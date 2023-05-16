@@ -38,6 +38,7 @@ options:
       - Default is not to update the cache.
     aliases: [ update-cache ]
     type: bool
+    default: 'no'
   update_cache_retries:
     description:
       - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
