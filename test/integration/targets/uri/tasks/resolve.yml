@@ -1,7 +1,7 @@
 - name: create src file
   copy:
-    dest: '{{ files_dir }}/uri-resolved.txt'
-    content: 'ptux'
+    dest: "{{ files_dir }}/uri-resolved.txt"
+    content: "ptux"
 
 - name: Fetch file from
   ansible.builtin.uri:

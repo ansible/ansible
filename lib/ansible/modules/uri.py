@@ -397,7 +397,7 @@ EXAMPLES = r'''
     ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
 
 - name: Provide custom address resolution rules.
-  ansible.builtin.get_url:
+  ansible.builtin.uri:
     url: https://example.org
     resolve:
       example.org: 127.0.0.1:8443
@@ -636,7 +636,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
-        resolve=dict(type='dict', default={}),
+        resolve=dict(type='dict'),
     )
 
     module = AnsibleModule(

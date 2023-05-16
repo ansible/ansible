@@ -1,23 +1,23 @@
 - name: create src file
   copy:
-    dest: '{{ files_dir }}/resolved.txt'
-    content: 'ptux'
+    dest: "{{ files_dir }}/resolved.txt"
+    content: "ptux"
 
 - name: download resolved.txt from another host
   get_url:
-    url: 'http://hostname/resolved.txt'
-    dest: '{{ remote_tmp_dir }}/resolved_host.txt'
+    url: "http://hostname/resolved.txt"
+    dest: "{{ remote_tmp_dir }}/resolved_host.txt"
     resolve:
-      hostname: '127.0.0.1:{{ http_port }}'
+      hostname: "127.0.0.1:{{ http_port }}"
   register: result_resolve_host
 
 - name: download resolved.txt from matched host and port
   get_url:
-    url: 'http://hostname:12345/resolved.txt'
-    dest: '{{ remote_tmp_dir }}/resolved_host_and_port.txt'
+    url: "http://hostname:12345/resolved.txt"
+    dest: "{{ remote_tmp_dir }}/resolved_host_and_port.txt"
     resolve:
-      'hostname': '127.0.0.1:666'
-      'hostname:12345': '127.0.0.1:{{ http_port }}'
+      "hostname": "127.0.0.1:666"
+      "hostname:12345": "127.0.0.1:{{ http_port }}"
   register: result_resolve_host_and_port
 
 - name: Assert that the file was downloaded from the resolved host
