@@ -9086,7 +9086,7 @@ plugin_routing:
       redirect: vyos.vyos.vyos
     include:
       tombstone:
-        removal_date: 2023-06-01
+        removal_date: "2023-06-01"
         warning_text: Use include_tasks or import_tasks instead.
   become:
     doas:
