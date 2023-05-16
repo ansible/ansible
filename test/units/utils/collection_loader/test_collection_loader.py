@@ -865,8 +865,9 @@ def test_importlib_resources():
         testns_paths.append(Path(path) / 'ansible_collections' / 'testns')
 
     assert testns._paths == testns_paths
-    assert ansible_ns._paths == ansible_ns_paths
-    assert ansible_collections_ns._paths == [Path(p) / 'ansible_collections' for p in default_test_collection_paths[:2]]
+    # NOTE: The next two asserts check for subsets to accommodate running the unit tests when externally installed collections are available.
+    assert set(ansible_ns_paths).issubset(ansible_ns._paths)
+    assert set(Path(p) / 'ansible_collections' for p in default_test_collection_paths[:2]).issubset(ansible_collections_ns._paths)
     assert testcoll2 == second_path / 'ansible_collections' / 'testns' / 'testcoll2'
 
     assert {p.name for p in module_utils.glob('*.py')} == {'__init__.py', 'my_other_util.py', 'my_util.py'}
