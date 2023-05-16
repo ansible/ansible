@@ -9084,6 +9084,10 @@ plugin_routing:
       redirect: dellemc.os6.os6
     vyos:
       redirect: vyos.vyos.vyos
+    include:
+      tombstone:
+        removal_date: 2023-06-01
+        warning_text: Use include_tasks or import_tasks instead.
   become:
     doas:
       redirect: community.general.doas
