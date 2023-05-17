@@ -285,6 +285,14 @@ For more information about installation and configuration, see the `argcomplete 
 Installing ``argcomplete``
 --------------------------
 
+If you chose the ``pipx`` install instructions:
+
+.. code-block:: console
+
+    $ pipx inject ansible argcomplete
+
+Or, if you chose the ``pip`` install instructions:
+
 .. code-block:: console
 
     $ python3 -m pip install --user argcomplete
