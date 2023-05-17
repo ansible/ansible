@@ -55,6 +55,9 @@ required on control and managed nodes.
    * - 2.14
      - Python 3.9 - 3.11
      - Python 2.7, Python 3.5 - 3.11
+   * - 2.15
+     - Python 3.9 - 3.11
+     - Python 2.7, Python 3.5 - 3.11
 
 _`[†]`: Has a soft requirement of Python 3.8 as not packaged for older versions
 
