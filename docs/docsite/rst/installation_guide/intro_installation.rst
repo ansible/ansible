@@ -134,6 +134,22 @@ To upgrade an existing Ansible installation in this Python environment to the la
 
     $ python3 -m pip install --upgrade --user ansible
 
+Adding Ansible to ``PATH``
+---------------------------
+
+To add Ansible to ``PATH`` in your current shell session, execute:
+
+.. code-block:: console
+
+    $ export PATH="$HOME/.local/bin:$PATH"
+
+If you want to make this change permanent:
+
+.. code-block:: console
+
+    $ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    $ source ~/.bashrc
+
 Confirming your installation
 ----------------------------
 
