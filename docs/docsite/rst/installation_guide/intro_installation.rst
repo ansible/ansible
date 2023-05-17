@@ -34,32 +34,7 @@ The managed node also needs a user account that can SSH to the node with an inte
 Node requirement summary
 ========================
 
-The table below lists the current and historical versions of Python
-required on control and managed nodes.
-
-.. list-table::
-   :header-rows: 1
-
-   * - ansible-core Version
-     - Control node Python
-     - Managed node Python
-   * - 2.11
-     - Python 2.7, Python 3.5 - 3.9 `[†]`_
-     - Python 2.6 - 2.7, Python 3.5 - 3.9
-   * - 2.12
-     - Python 3.8 - 3.10
-     - Python 2.6 - 2.7, Python 3.5 - 3.10
-   * - 2.13
-     - Python 3.8 - 3.10
-     - Python 2.7, Python 3.5 - 3.10
-   * - 2.14
-     - Python 3.9 - 3.11
-     - Python 2.7, Python 3.5 - 3.11
-   * - 2.15
-     - Python 3.9 - 3.11
-     - Python 2.7, Python 3.5 - 3.11
-
-_`[†]`: Has a soft requirement of Python 3.8 as not packaged for older versions
+You can find details about control and managed node requirements for each Ansible version in the :ref:`support_life`.
 
 .. _getting_ansible:
 
