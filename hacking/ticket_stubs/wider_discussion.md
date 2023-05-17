@@ -14,10 +14,6 @@ Can you please post on ansible-development list so we can talk about this idea w
    * Matrix: [#devel:ansible.im](https://matrix.to/#/#devel:ansible.im)
    * #ansible-devel on [irc.libera.chat](https://libera.chat/)
 
-Or bring up in one of the weekly Matrix/IRC meetings with the core group:
-
-   * https://github.com/ansible/community/issues?q=is:open+label:meeting_agenda+label:core
-
 For other alternatives, check this page for a more complete list of communication channels and their purposes:
 
    * https://docs.ansible.com/ansible/latest/community/communication.html
