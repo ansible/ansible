@@ -273,7 +273,7 @@ To check the version of the ``ansible`` package that has been installed:
 
 .. code-block:: console
 
-    $ ansible-community --versio
+    $ ansible-community --version
 
 Adding Ansible command shell completion
 =======================================
