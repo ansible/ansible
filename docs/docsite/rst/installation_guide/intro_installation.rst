@@ -106,6 +106,8 @@ To upgrade an existing Ansible installation to the latest released version:
 
     $ pipx upgrade ansible
 
+.. _pipx_inject:
+
 Installing Extra Python Dependencies
 ------------------------------------
 
@@ -114,8 +116,6 @@ To install additional python dependencies that may be needed, with the example o
 .. code-block:: console
 
     $ pipx inject ansible argcomplete
-
-.. _pip_confirm:
 
 Installing and upgrading Ansible with pip
 =========================================
