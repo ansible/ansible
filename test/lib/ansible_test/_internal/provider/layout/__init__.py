@@ -95,7 +95,7 @@ class ContentLayout(Layout):
         unit_module_path: str,
         unit_module_utils_path: str,
         unit_messages: t.Optional[LayoutMessages],
-        unsupported: bool = False,
+        unsupported: bool | list[str] = False,
     ) -> None:
         super().__init__(root, paths)
 
