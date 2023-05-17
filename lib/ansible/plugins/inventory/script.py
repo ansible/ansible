@@ -30,8 +30,8 @@ DOCUMENTATION = '''
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
         - To write your own inventory script see U(../../../dev_guide/developing_inventory.html#developing-inventory-scripts).
         - To find the scripts that used to be part of the code release, go to U(https://github.com/ansible-community/contrib-scripts/).
-        - Aside from using C(ansible-inventory) to test your inventory script, you can also use U(https://github.com/ansible/ansible/blob/devel/examples/inventory_script_schema.json)
-          to validate the output directly.
+        - Aside from using C(ansible-inventory) to test your inventory script, you can also use
+          U(https://github.com/ansible/ansible/blob/devel/examples/inventory_script_schema.json) to validate the output directly.
 '''
 
 import os
