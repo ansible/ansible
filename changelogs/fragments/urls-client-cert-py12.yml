@@ -1,0 +1,2 @@
+bugfixes:
+- urls.py - fixed cert_file and key_file parameters when running on Python 3.12 - https://github.com/ansible/ansible/issues/80490
