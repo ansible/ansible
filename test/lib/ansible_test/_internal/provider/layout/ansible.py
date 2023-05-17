@@ -9,6 +9,11 @@ from . import (
     LayoutProvider,
 )
 
+from ...util import (
+    ANSIBLE_SOURCE_ROOT,
+    ANSIBLE_TEST_ROOT,
+)
+
 
 class AnsibleLayout(LayoutProvider):
     """Layout provider for Ansible source."""
@@ -26,6 +31,15 @@ class AnsibleLayout(LayoutProvider):
             module_utils='lib/ansible/module_utils',
         ))
 
+        errors: list[str] = []
+
+        if root != ANSIBLE_SOURCE_ROOT:
+            errors.extend((
+                f'Cannot test "{root}" with ansible-test from "{ANSIBLE_TEST_ROOT}".',
+                '',
+                f'Did you intend to run "{root}/bin/ansible-test" instead?',
+            ))
+
         return ContentLayout(root,
                              paths,
                              plugin_paths=plugin_paths,
@@ -42,4 +56,5 @@ class AnsibleLayout(LayoutProvider):
                              unit_module_path='test/units/modules',
                              unit_module_utils_path='test/units/module_utils',
                              unit_messages=None,
+                             unsupported=errors,
                              )
