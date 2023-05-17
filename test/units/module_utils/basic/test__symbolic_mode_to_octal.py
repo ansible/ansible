@@ -63,8 +63,8 @@ DATA = (  # Going from no permissions to setting all for user, group, and/or oth
     # Multiple permissions
     (0o040000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0755),
     (0o100000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0644),
-    (0o040777, u'u=rx,g=rx', 0o0550),
-    (0o100777, u'u=rx,g=rx', 0o0550),
+    (0o040777, u'ug=rx,o=', 0o0550),
+    (0o100777, u'ug=rx,o=', 0o0550),
 )
 
 UMASK_DATA = (
