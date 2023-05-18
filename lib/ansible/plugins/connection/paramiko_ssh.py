@@ -326,6 +326,7 @@ MissingHostKeyPolicy: type = object
 if paramiko:
     MissingHostKeyPolicy = paramiko.MissingHostKeyPolicy
 
+
 class MyAddPolicy(MissingHostKeyPolicy):
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
