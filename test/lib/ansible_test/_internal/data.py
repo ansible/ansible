@@ -10,7 +10,6 @@ from .util import (
     ApplicationError,
     import_plugins,
     is_subdir,
-    is_valid_identifier,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     ANSIBLE_SOURCE_ROOT,
@@ -216,12 +215,8 @@ class DataContext:
         elif 'ansible_collections' not in cwd.split(os.path.sep):
             blocks.append('No "ansible_collections" parent directory was found.')
 
-        if self.content.collection:
-            if not is_valid_identifier(self.content.collection.namespace):
-                blocks.append(f'The namespace "{self.content.collection.namespace}" is an invalid identifier or a reserved keyword.')
-
-            if not is_valid_identifier(self.content.collection.name):
-                blocks.append(f'The name "{self.content.collection.name}" is an invalid identifier or a reserved keyword.')
+        if isinstance(self.content.unsupported, list):
+            blocks.extend(self.content.unsupported)
 
         message = '\n'.join(blocks)
 
