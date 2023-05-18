@@ -1,0 +1,2 @@
+minor_changes:
+- command - Add option ``expand_argument_vars`` to disable argument expansion and use literal values - https://github.com/ansible/ansible/issues/54162

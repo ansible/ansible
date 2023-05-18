@@ -40,6 +40,14 @@ attributes:
     raw:
       support: full
 options:
+  expand_argument_vars:
+    description:
+      - Expands the arguments that are variables, for example C($HOME) will be expanded before being passed to the
+        command to run.
+      - Set to C(false) to disable expansion and treat the value as a literal argument.
+    type: bool
+    default: true
+    version_added: "2.16"
   free_form:
     description:
       - The command module takes a free form string as a command to run.
@@ -235,6 +243,7 @@ def main():
             argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
+            expand_argument_vars=dict(type='bool', default=True),
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
@@ -254,6 +263,7 @@ def main():
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
     strip = module.params['strip_empty_ends']
+    expand_argument_vars = module.params['expand_argument_vars']
 
     # we promissed these in 'always' ( _lines get autoaded on action plugin)
     r = {'changed': False, 'stdout': '', 'stderr': '', 'rc': None, 'cmd': None, 'start': None, 'end': None, 'delta': None, 'msg': ''}
@@ -321,7 +331,8 @@ def main():
     if not module.check_mode:
         r['start'] = datetime.datetime.now()
         r['rc'], r['stdout'], r['stderr'] = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None,
-                                                               data=stdin, binary_data=(not stdin_add_newline))
+                                                               data=stdin, binary_data=(not stdin_add_newline),
+                                                               expand_user_and_vars=expand_argument_vars)
         r['end'] = datetime.datetime.now()
     else:
         # this is partial check_mode support, since we end up skipping if we get here
