@@ -13,4 +13,4 @@ is_timeout() {
 
 trap "is_timeout" EXIT
 
-timeout 10 ansible-playbook -i ../../inventory runme.yml -v "$@"
+../test_utils/scripts/timeout.py -- 10 ansible-playbook -i ../../inventory runme.yml -v "$@"
