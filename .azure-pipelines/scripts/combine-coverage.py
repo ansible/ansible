@@ -19,19 +19,15 @@ import sys
 def main():
     """Main program entry point."""
     source_directory = sys.argv[1]
-
-    if '/ansible_collections/' in os.getcwd():
-        output_path = "tests/output"
-    else:
-        output_path = "test/results"
+    
+    output_path = "tests/output" if '/ansible_collections/' in os.getcwd() else "test/results"
 
     destination_directory = os.path.join(output_path, 'coverage')
 
     if not os.path.exists(destination_directory):
         os.makedirs(destination_directory)
 
-    jobs = {}
-    count = 0
+    jobs, count = {}, 0
 
     for name in os.listdir(source_directory):
         match = re.search('^Coverage (?P<attempt>[0-9]+) (?P<label>.+)$', name)
