@@ -14,6 +14,7 @@ try:
         ' '.join(args.command),
         shell=True,
         timeout=args.duration,
+        check=False,
     )
     sys.exit(p.returncode)
 except subprocess.TimeoutExpired:
