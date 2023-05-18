@@ -30,7 +30,7 @@ Here is a most basic example:
           ansible.builtin.debug:
             msg: 'Logging in as {{ username }}'
 
-The user input is hidden by default but it can be made visible by setting ``private: no``.
+The user input is hidden by default but it can be made visible by setting ``private: false``.
 
 .. note::
     Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible AWX). See :ref:`passing_variables_on_the_command_line`.

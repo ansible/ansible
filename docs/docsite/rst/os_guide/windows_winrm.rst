@@ -743,7 +743,7 @@ for additional configuration of WinRM connections:
 * ``ansible_winrm_send_cbt``: When using ``ntlm`` or ``kerberos`` over HTTPS,
   the authentication library will try to send channel binding tokens to
   mitigate against man in the middle attacks. This flag controls whether these
-  bindings will be sent or not (default: ``yes``).
+  bindings will be sent or not (default: ``true``).
 
 * ``ansible_winrm_*``: Any additional keyword arguments supported by
   ``winrm.Protocol`` may be provided in place of ``*``
