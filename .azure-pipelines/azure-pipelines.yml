@@ -58,7 +58,6 @@ stages:
           testFormat: units/{0}
           targets:
             - test: 2.7
-            - test: 3.5
             - test: 3.6
             - test: 3.7
             - test: 3.8

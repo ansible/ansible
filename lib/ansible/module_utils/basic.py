@@ -9,14 +9,14 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY3_MIN = sys.version_info >= (3, 5)
+_PY3_MIN = sys.version_info >= (3, 6)
 _PY2_MIN = (2, 7) <= sys.version_info < (3,)
 _PY_MIN = _PY3_MIN or _PY2_MIN
 
 if not _PY_MIN:
     print(
         '\n{"failed": true, '
-        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
+        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.6. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
 
