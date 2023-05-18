@@ -64,13 +64,13 @@ class ConnectionBase(AnsiblePlugin):
     supports_persistence = False
     force_persistence = False
 
-    default_user: t.Optional[str] = None
+    default_user: str | None = None
 
     def __init__(
         self,
         play_context: PlayContext,
-        new_stdin: t.Optional[io.TextIOWrapper] = None,
-        shell: t.Optional[ShellBase] = None,
+        new_stdin: io.TextIOWrapper | None = None,
+        shell: ShellBase | None = None,
         *args: t.Any,
         **kwargs: t.Any,
     ) -> None:
@@ -91,7 +91,7 @@ class ConnectionBase(AnsiblePlugin):
         self.success_key = None
         self.prompt = None
         self._connected = False
-        self._socket_path: t.Optional[str] = None
+        self._socket_path: str | None = None
 
         # helper plugins
         self._shell = shell
@@ -101,10 +101,10 @@ class ConnectionBase(AnsiblePlugin):
             shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
             self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
 
-        self.become: t.Optional[BecomeBase] = None
+        self.become: BecomeBase | None = None
 
     @property
-    def _new_stdin(self) -> t.Optional[io.TextIOWrapper]:
+    def _new_stdin(self) -> io.TextIOWrapper | None:
         display.deprecated(
             "The connection's stdin object is deprecated. "
             "Call display.prompt_until(msg) instead.",
@@ -121,7 +121,7 @@ class ConnectionBase(AnsiblePlugin):
         return self._connected
 
     @property
-    def socket_path(self) -> t.Optional[str]:
+    def socket_path(self) -> str | None:
         '''Read-only property holding the connection socket path for this remote host'''
         return self._socket_path
 
@@ -147,7 +147,7 @@ class ConnectionBase(AnsiblePlugin):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         """Run a command on the remote host.
 
         :arg cmd: byte string containing the command
@@ -296,7 +296,7 @@ class NetworkConnectionBase(ConnectionBase):
     def __init__(
         self,
         play_context: PlayContext,
-        new_stdin: io.TextIOWrapper,
+        new_stdin: io.TextIOWrapper | None = None,
         *args: t.Any,
         **kwargs: t.Any,
     ) -> None:
@@ -328,7 +328,7 @@ class NetworkConnectionBase(ConnectionBase):
                         return method
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         return self._local.exec_command(cmd, in_data, sudoable)
 
     def queue_message(self, level: str, message: str) -> None:
@@ -369,9 +369,9 @@ class NetworkConnectionBase(ConnectionBase):
 
     def set_options(
         self,
-        task_keys: t.Optional[dict[str, t.Any]] = None,
-        var_options: t.Optional[dict[str, t.Any]] = None,
-        direct: t.Optional[dict[str, t.Any]] = None,
+        task_keys: dict[str, t.Any] | None = None,
+        var_options: dict[str, t.Any] | None = None,
+        direct: dict[str, t.Any] | None = None,
     ) -> None:
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
         if self.get_option('persistent_log_messages'):

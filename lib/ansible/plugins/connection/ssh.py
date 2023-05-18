@@ -4,8 +4,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-from __future__ import annotations
+from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -586,8 +585,8 @@ class Connection(ConnectionBase):
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
-        self.control_path: t.Optional[str] = None
-        self.control_path_dir: t.Optional[str] = None
+        self.control_path: str | None = None
+        self.control_path_dir: str | None = None
 
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
@@ -607,11 +606,11 @@ class Connection(ConnectionBase):
 
     @staticmethod
     def _create_control_path(
-        host: t.Optional[str],
-        port: t.Optional[int],
-        user: t.Optional[str],
-        connection: t.Optional[ConnectionBase] = None,
-        pid: t.Optional[int] = None,
+        host: str | None,
+        port: int | None,
+        user: str | None,
+        connection: ConnectionBase | None = None,
+        pid: int | None = None,
     ) -> str:
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
@@ -679,7 +678,7 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
 
-    def _build_command(self, binary: str, subsystem: str, *other_args: t.Union[bytes, str]) -> list[bytes]:
+    def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         '''
         Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
         wrapped in local ssh shell commands and ready for execution.
@@ -921,7 +920,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _bare_run(self, cmd: list[bytes], in_data: t.Optional[bytes], sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
+    def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -1217,7 +1216,7 @@ class Connection(ConnectionBase):
         return (p.returncode, b_stdout, b_stderr)
 
     @_ssh_retry
-    def _run(self, cmd: list[bytes], in_data: t.Optional[bytes], sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
+    def _run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         """Wrapper around _bare_run that retries the connection
         """
         return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
@@ -1324,7 +1323,7 @@ class Connection(ConnectionBase):
     #
     # Main public methods
     #
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)

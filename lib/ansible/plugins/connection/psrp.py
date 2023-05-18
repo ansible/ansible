@@ -354,9 +354,9 @@ class Connection(ConnectionBase):
         self.always_pipeline_modules = True
         self.has_native_async = True
 
-        self.runspace: t.Optional[RunspacePool] = None
-        self.host: t.Optional[PSHost] = None
-        self._last_pipeline = False
+        self.runspace: RunspacePool | None = None
+        self.host: PSHost | None = None
+        self._last_pipeline: PowerShell | None = None
 
         self._shell_type = 'powershell'
         super(Connection, self).__init__(*args, **kwargs)
@@ -429,11 +429,11 @@ class Connection(ConnectionBase):
         self.runspace = None
         self._connect()
 
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data,
                                              sudoable=sudoable)
 
-        pwsh_in_data: t.Optional[t.Union[bytes, str]] = None
+        pwsh_in_data: bytes | str | None = None
 
         if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
@@ -812,9 +812,9 @@ if ($bytes_read -gt 0) {
     def _exec_psrp_script(
         self,
         script: str,
-        input_data: t.Optional[t.Union[bytes, str, t.Iterable]] = None,
+        input_data: bytes | str | t.Iterable | None = None,
         use_local_scope: bool = True,
-        arguments: t.Iterable[str] = None,
+        arguments: t.Iterable[str] | None = None,
     ) -> tuple[int, bytes, bytes]:
         # Check if there's a command on the current pipeline that still needs to be closed.
         if self._last_pipeline:

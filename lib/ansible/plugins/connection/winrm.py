@@ -252,8 +252,8 @@ class Connection(ConnectionBase):
         self.always_pipeline_modules = True
         self.has_native_async = True
 
-        self.protocol: t.Optional[winrm.Protocol] = None
-        self.shell_id: t.Optional[str] = None
+        self.protocol: winrm.Protocol | None = None
+        self.shell_id: str | None = None
         self.delegate = None
         self._shell: PowerShellBase
         self._shell_type = 'powershell'
@@ -603,7 +603,7 @@ class Connection(ConnectionBase):
         for i in range(0, byte_count, buffer_size):
             yield payload_bytes[i:i + buffer_size], i + buffer_size >= byte_count
 
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
 

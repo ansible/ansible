@@ -287,7 +287,6 @@ DOCUMENTATION = """
               option: '--private-key'
 """
 
-import io
 import os
 import socket
 import tempfile
@@ -323,8 +322,11 @@ Are you sure you want to continue connecting (yes/no)?
 # SSH Options Regex
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
+MissingHostKeyPolicy: type = object
+if paramiko:
+    MissingHostKeyPolicy = paramiko.MissingHostKeyPolicy
 
-class MyAddPolicy:
+class MyAddPolicy(MissingHostKeyPolicy):
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
 
@@ -377,7 +379,7 @@ class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
-    _log_channel: t.Optional[str] = None
+    _log_channel: str | None = None
 
     def _cache_key(self) -> str:
         return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
@@ -484,7 +486,7 @@ class Connection(ConnectionBase):
 
         ssh_connect_kwargs = self._parse_proxy_command(port)
 
-        ssh.set_missing_host_key_policy(MyAddPolicy(self))  # type: ignore[arg-type] # Import shenanigans make this hard to do
+        ssh.set_missing_host_key_policy(MyAddPolicy(self))
 
         conn_password = self.get_option('password')
 
@@ -536,7 +538,7 @@ class Connection(ConnectionBase):
 
         return ssh
 
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)

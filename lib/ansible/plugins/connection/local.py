@@ -66,7 +66,7 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the local host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
