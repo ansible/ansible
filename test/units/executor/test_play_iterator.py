@@ -86,7 +86,8 @@ class TestPlayIterator(unittest.TestCase):
               always:
               - name: role always task
                 debug: msg="always task in block in role"
-            - include: foo.yml
+            - name: role include_tasks
+              include_tasks: foo.yml
             - name: role task after include
               debug: msg="after include in role"
             - block:
@@ -171,12 +172,12 @@ class TestPlayIterator(unittest.TestCase):
         self.assertIsNotNone(task)
         self.assertEqual(task.name, "role always task")
         self.assertIsNotNone(task._role)
-        # role include task
-        # (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        # self.assertIsNotNone(task)
-        # self.assertEqual(task.action, 'debug')
-        # self.assertEqual(task.name, "role included task")
-        # self.assertIsNotNone(task._role)
+        # role include_tasks
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'include_tasks')
+        self.assertEqual(task.name, "role include_tasks")
+        self.assertIsNotNone(task._role)
         # role task after include
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
