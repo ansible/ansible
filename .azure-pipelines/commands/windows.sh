@@ -21,7 +21,7 @@ IFS=' ' read -r -a python_versions <<< \
 python_default="$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import constants; print(constants.CONTROLLER_MIN_PYTHON_VERSION)')"
 
 # version to test when only testing a single version
-single_version=2012-R2
+single_version=2022
 
 # shellcheck disable=SC2086
 ansible-test windows-integration --list-targets -v ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} > /tmp/explain.txt 2>&1 || { cat /tmp/explain.txt && false; }
