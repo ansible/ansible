@@ -284,6 +284,30 @@
     that:
       - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
+- name: check default var expansion
+  command: /bin/sh -c 'echo "\$TEST"'
+  environment:
+    TEST: z
+  register: command_result7
+
+- name: assert vars were expanded
+  assert:
+    that:
+      - command_result7.stdout == '\\z'
+
+- name: check disabled var expansion
+  command: /bin/sh -c 'echo "\$TEST"'
+  args:
+    expand_argument_vars: false
+  environment:
+    TEST: z
+  register: command_result8
+
+- name: assert vars were not expanded
+  assert:
+    that:
+      - command_result8.stdout == '$TEST'
+
 ##
 ## shell
 ##
@@ -546,3 +570,16 @@
       - command_strip.stderr == 'hello \n '
       - command_no_strip.stdout== 'hello \n \r\n'
       - command_no_strip.stderr == 'hello \n \r\n'
+
+- name: run shell with expand_argument_vars
+  shell: echo 'hi'
+  args:
+    expand_argument_vars: false
+  register: shell_expand_failure
+  ignore_errors: true
+
+- name: assert shell with expand_arguments_vars failed
+  assert:
+    that:
+      - shell_expand_failure is failed
+      - "shell_expand_failure.msg == 'Unsupported parameters for (shell) module: expand_argument_vars'"
