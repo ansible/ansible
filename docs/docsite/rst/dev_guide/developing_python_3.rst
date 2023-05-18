@@ -382,10 +382,10 @@ does have support for the older, percent-formatting.
 .. note:: Percent formatting added in Python 3.5
 
     Percent formatting of byte strings was added back into Python 3 in 3.5.
-    This isn't a problem for us because Python 3.5 is our minimum version.
+    This isn't a problem for us because Python 3.5 is less than our minimum version.
     However, if you happen to be testing Ansible code with Python 3.4 or
     earlier, you will find that the byte string formatting here won't work.
-    Upgrade to Python 3.5 to test.
+    Upgrade to a supported version of Python to test.
 
 .. seealso::
     Python documentation on `percent formatting <https://docs.python.org/3/library/stdtypes.html#string-formatting>`_

@@ -15,14 +15,14 @@ Ansible is an agentless automation tool that you install on a single host (refer
 Control node requirements
 =========================
 
-For your *control* node (the machine that runs Ansible), you can use nearly any UNIX-like machine with Python 3.9 or newer installed. This includes Red Hat, Debian, Ubuntu, macOS, BSDs, and Windows under a `Windows Subsystem for Linux (WSL) distribution <https://docs.microsoft.com/en-us/windows/wsl/about>`_. Windows without WSL is not natively supported as a control node; see `Matt Davis' blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ for more information.
+For your *control* node (the machine that runs Ansible), you can use nearly any UNIX-like machine with Python 3.10 or newer installed. This includes Red Hat, Debian, Ubuntu, macOS, BSDs, and Windows under a `Windows Subsystem for Linux (WSL) distribution <https://docs.microsoft.com/en-us/windows/wsl/about>`_. Windows without WSL is not natively supported as a control node; see `Matt Davis' blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_ for more information.
 
 .. _managed_node_requirements:
 
 Managed node requirements
 =========================
 
-The *managed* node (the machine that Ansible is managing) does not require Ansible to be installed, but requires Python 2.7, or Python 3.5 - 3.11 to run Ansible library code.
+The *managed* node (the machine that Ansible is managing) does not require Ansible to be installed, but requires Python 2.7, or Python 3.6 - 3.11 to run Ansible library code.
 The managed node also needs a user account that can SSH to the node with an interactive POSIX shell.
 
 .. note::
@@ -101,7 +101,7 @@ Installing and upgrading Ansible with pip
 Locating Python
 ---------------
 
-Locate and remember the path to the Python interpreter you wish to use to run Ansible. The following instructions refer to this Python  as ``python3``. For example, if you've determined that you want the Python at ``/usr/bin/python3.9`` to be the one that you'll install Ansible under, specify that instead of ``python3``.
+Locate and remember the path to the Python interpreter you wish to use to run Ansible. The following instructions refer to this Python  as ``python3``. For example, if you've determined that you want the Python at ``/usr/bin/python3.11`` to be the one that you'll install Ansible under, specify that instead of ``python3``.
 
 Ensuring ``pip`` is available
 -----------------------------
@@ -117,7 +117,7 @@ If all is well, you should see something like the following:
 .. code-block:: console
 
     $ python3 -m pip -V
-    pip 21.0.1 from /usr/lib/python3.9/site-packages/pip (python 3.9)
+    pip 23.1.2 from /usr/lib/python3.11/site-packages/pip (python 3.11)
 
 If so, ``pip`` is available, and you can move on to the :ref:`next step <pip_install>`.
 
