@@ -48,7 +48,18 @@ Release Manager
 Planned work
 ============
 
-* TBA
+* Data Tagging
+* Drop Python 3.5 support for module execution
+* Drop Python 3.9 support for controller
+* Add support to ``ansible-doc`` for collections to declare new plugin types
+* Preserve display context when proxying display over the queue
+* Update ``TaskExecutor`` to not unnecessarily establish persistent ``ansible-connection`` when not needed
+* Remove deprecated functionality
+* Decrease incidental integration tests
+* Add controller type hinting for descrete areas of the code
+* Decrease testing sanity ignores
+* Update ansible-test container images and VMs
+* Update ansible-test dependencies
 
 Delayed work
 ============
