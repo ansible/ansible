@@ -19,7 +19,7 @@ import sys
 def main():
     """Main program entry point."""
     source_directory = sys.argv[1]
-    
+
     output_path = "tests/output" if '/ansible_collections/' in os.getcwd() else "test/results"
 
     destination_directory = os.path.join(output_path, 'coverage')
