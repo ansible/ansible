@@ -354,7 +354,7 @@ When looping over complex data structures, the console output of your task can b
 
 The output of this task will display just the ``name`` field for each ``item`` instead of the entire contents of the multi-line ``{{ item }}`` variable.
 
-.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: yes`` on the task to prevent disclosure.
+.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: true`` on the task to prevent disclosure.
 
 Pausing within a loop
 ---------------------
@@ -454,7 +454,7 @@ Variable                    Description
 
 .. versionadded:: 2.14
 
-To disable the ``ansible_loop.allitems`` item, to reduce memory consumption, set ``loop_control.extended_allitems: no``.
+To disable the ``ansible_loop.allitems`` item, to reduce memory consumption, set ``loop_control.extended_allitems: false``.
 
 ::
 
