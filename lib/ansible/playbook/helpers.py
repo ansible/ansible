@@ -152,10 +152,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 if action in C._ACTION_IMPORT_TASKS:
                     if t.loop is not None:
-                        if action in C._ACTION_IMPORT_TASKS:
-                            raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
-                        else:
-                            raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
+                        raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
 
                     # we set a flag to indicate this include was static
                     t.statically_loaded = True
