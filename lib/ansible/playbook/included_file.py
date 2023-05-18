@@ -72,8 +72,6 @@ class IncludedFile:
             original_task = res._task
 
             if original_task.action in C._ACTION_ALL_INCLUDES:
-                if original_task.action in C._ACTION_INCLUDE:
-                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks/import_playbook instead', "2.16")
 
                 if original_task.loop:
                     if 'results' not in res._result:
@@ -118,7 +116,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in C._ACTION_ALL_INCLUDE_TASKS:
+                    if original_task.action in C._ACTION_INCLUDE_TASKS:
                         include_file = None
 
                         if original_task._parent:
