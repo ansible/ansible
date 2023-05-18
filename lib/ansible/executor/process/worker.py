@@ -203,6 +203,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                 )
             except Exception as e:
                 display.debug(f'failed to send task result ({e}), sending surrogate result')
+                msg = executor_result.get('msg') or e
+                exception = executor_result.get('exception') or traceback.format_exc()
                 self._final_q.send_task_result(
                     self._host.name,
                     self._task._uuid,
@@ -210,8 +212,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                     # TODO: Extend more standard keys to this such as stdout/stderr?
                     {
                         'failed': True,
-                        'msg': executor_result.get('msg') or f'{e}',
-                        'exception': executor_result.get('exception') or traceback.format_exc(),
+                        'msg': f'{msg}',
+                        'exception': f'{exception}',
                     },
                     # More than likely the failure pickling was caused by the task attrs, omit for safety
                     {},
