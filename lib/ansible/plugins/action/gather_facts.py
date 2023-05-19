@@ -17,6 +17,8 @@ from ansible.utils.vars import merge_hash
 
 class ActionModule(ActionBase):
 
+    _supports_check_mode = True
+
     def _get_module_args(self, fact_module: str, task_vars: dict[str, t.Any]) -> dict[str, t.Any]:
 
         mod_args = self._task.args.copy()
@@ -70,8 +72,6 @@ class ActionModule(ActionBase):
         return merge_hash(result, filtered_res, list_merge='append_rp')
 
     def run(self, tmp: t.Optional[str] = None, task_vars: t.Optional[dict[str, t.Any]] = None) -> dict[str, t.Any]:
-
-        self._supports_check_mode = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}

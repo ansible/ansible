@@ -27,7 +27,8 @@ from ansible.module_utils.parsing.convert_bool import boolean
 class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
-    TRANSFERS_FILES = False
+    _requires_connection = False
+
     _VALID_ARGS = frozenset(('fail_msg', 'msg', 'quiet', 'success_msg', 'that'))
 
     def run(self, tmp=None, task_vars=None):

@@ -30,6 +30,7 @@ import ansible.constants as C
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
