@@ -1,0 +1,5 @@
+bugfixes:
+  - Avoid mutating the ``C.DEFAULT_TRANSPORT`` config value.
+    Use a copy stored as ``C._CONNECTION_DEFAULT`` instead (which can be mutated).
+    This separates the config value (which should be immutable) from the processed value, which is not.
+    Without this, ``C.DEFAULT_TRANSPORT`` and ``C.config.get_config_value("C.DEFAULT_TRANSPORT")`` can diverge.

@@ -187,3 +187,8 @@ for setting in config.get_configuration_definitions():
 
 for warn in config.WARNINGS:
     _warning(warn)
+
+# This is the potentially mutated version of DEFAULT_TRANSPORT.
+# Once `smart` support is removed we can use DEFAULT_TRANSPORT directly.
+# The `set_default_transport` function in ssh_functions.py sets this.
+_CONNECTION_DEFAULT = config.get_config_value("DEFAULT_TRANSPORT")

@@ -55,12 +55,13 @@ def check_for_controlpersist(ssh_executable):
 def set_default_transport():
 
     # deal with 'smart' connection .. one time ..
-    if C.DEFAULT_TRANSPORT == 'smart':
+    # noinspection PyProtectedMember
+    if C._CONNECTION_DEFAULT == 'smart':
         # TODO: check if we can deprecate this as ssh w/o control persist should
         # not be as common anymore.
 
         # see if SSH can support ControlPersist if not use paramiko
         if not check_for_controlpersist('ssh') and paramiko is not None:
-            C.DEFAULT_TRANSPORT = "paramiko"
+            C._CONNECTION_DEFAULT = "paramiko"
         else:
-            C.DEFAULT_TRANSPORT = "ssh"
+            C._CONNECTION_DEFAULT = "ssh"

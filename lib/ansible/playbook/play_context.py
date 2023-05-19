@@ -222,7 +222,8 @@ class PlayContext(Base):
             delegated_host_name = templar.template(task.delegate_to)
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
 
-            delegated_transport = C.DEFAULT_TRANSPORT
+            # noinspection PyProtectedMember
+            delegated_transport = C._CONNECTION_DEFAULT
             for transport_var in C.MAGIC_VARIABLE_MAPPING.get('connection'):
                 if transport_var in delegated_vars:
                     delegated_transport = delegated_vars[transport_var]
@@ -303,7 +304,8 @@ class PlayContext(Base):
                 if remote_addr_local and inv_hostname_local:
                     setattr(new_info, 'connection', 'local')
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
-                    setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
+                    # noinspection PyProtectedMember
+                    setattr(new_info, 'connection', C._CONNECTION_DEFAULT)
 
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         # connection_user to be deprecated once connection=local is removed for, as local resets remote_user
