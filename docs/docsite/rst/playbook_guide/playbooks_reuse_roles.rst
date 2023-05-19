@@ -376,6 +376,12 @@ Options themselves have a defined structure
     - str
     - No
     -
+  * - version_added
+    - For roles in collections, the version of the collection this option was added in.
+      Should only be specified if this is different from the ``version_added`` value of the entrypoint itself.
+    - str
+    - No
+    -
 
 .. note::
         * The ``short_description`` is displayed by ``ansible-doc -t role -l``.
