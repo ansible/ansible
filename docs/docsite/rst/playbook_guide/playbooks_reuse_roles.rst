@@ -311,6 +311,11 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
     - dict (see table below)
     - No
     - {}
+  * - version_added
+    - For roles in a collection, the version of the collection the entry point was added in.
+    - str
+    - No
+    -
 
 
 Options themselves have a defined structure
