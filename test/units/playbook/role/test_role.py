@@ -142,18 +142,18 @@ class TestHashParams(unittest.TestCase):
         self.assertNotEqual(hash(res1), hash(res2))
         self.assertNotEqual(res1, res2)
 
-        foo = {}
-        foo[res1] = 'params1'
-        foo[res2] = 'params2'
+        params_dict = {}
+        params_dict[res1] = 'params1'
+        params_dict[res2] = 'params2'
 
-        self.assertEqual(len(foo), 2)
+        self.assertEqual(len(params_dict), 2)
 
-        del foo[res2]
-        self.assertEqual(len(foo), 1)
+        del params_dict[res2]
+        self.assertEqual(len(params_dict), 1)
 
-        for key in foo:
-            self.assertTrue(key in foo)
-            self.assertIn(key, foo)
+        for key in params_dict:
+            self.assertTrue(key in params_dict)
+            self.assertIn(key, params_dict)
 
 
 class TestRole(unittest.TestCase):

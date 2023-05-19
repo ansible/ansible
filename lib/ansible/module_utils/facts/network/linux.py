@@ -89,11 +89,11 @@ class LinuxNetwork(Network):
                         locally_reachable_ips['ipv4'].append(address)
 
         args = [ip_path, '-4', 'route', 'show', 'table', 'local']
-        rc, routes, _ = self.module.run_command(args)
+        rc, routes, dummy = self.module.run_command(args)
         if rc == 0:
             parse_locally_reachable_ips(routes)
         args = [ip_path, '-6', 'route', 'show', 'table', 'local']
-        rc, routes, _ = self.module.run_command(args)
+        rc, routes, dummy = self.module.run_command(args)
         if rc == 0:
             parse_locally_reachable_ips(routes)
 
@@ -274,7 +274,7 @@ class LinuxNetwork(Network):
                     elif words[0] == 'inet6':
                         if 'peer' == words[2]:
                             address = words[1]
-                            _, prefix = words[3].split('/')
+                            dummy, prefix = words[3].split('/')
                             scope = words[5]
                         else:
                             address, prefix = words[1].split('/')

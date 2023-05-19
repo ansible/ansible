@@ -787,13 +787,13 @@ class VaultEditor:
 
             passes = 3
             with open(tmp_path, "wb") as fh:
-                for _ in range(passes):
+                for dummy in range(passes):
                     fh.seek(0, 0)
                     # get a random chunk of data, each pass with other length
                     chunk_len = random.randint(max_chunk_len // 2, max_chunk_len)
                     data = os.urandom(chunk_len)
 
-                    for _ in range(0, file_len // chunk_len):
+                    for dummy in range(0, file_len // chunk_len):
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
