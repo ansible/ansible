@@ -1,0 +1,2 @@
+minor_changes:
+  - executor now skips persistent connection when it detects an action that does not require a connection.

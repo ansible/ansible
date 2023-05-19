@@ -23,6 +23,7 @@ class ActionModule(ActionBase):
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name', 'hash_behaviour']
+    _requires_connection = False
 
     def _set_dir_defaults(self):
         if not self.depth:
