@@ -41,6 +41,17 @@ Release schedule
   Breaking changes will be introduced in Ansible 9.0.0, although we encourage the use of deprecation periods that will show up in at least one Ansible release before the breaking change happens, this is not guaranteed.
 
 
+Planned major changes
+=====================
+
+- The cisco.nso collection will be removed as it is unmaintained (https://github.com/ansible-community/ansible-build-data/issues/190).
+- The community.fortios collection will be removed as it is unmaintained (https://github.com/ansible-community/ansible-build-data/issues/196).
+- The community.google collection will be removed as it is unmaintained (https://github.com/ansible-community/ansible-build-data/issues/198).
+- The community.skydive collection will be removed as it is unmaintained (https://github.com/ansible-community/ansible-build-data/issues/199).
+
+You can install removed collections manually with ``ansible-galaxy collection install <collection_name>``.
+
+
 Ansible minor releases
 =======================
 
