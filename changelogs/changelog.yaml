@@ -1252,6 +1252,17 @@ releases:
     - pep517-backend-import-fix.yml
     - win-temp-cleanup.yml
     release_date: '2023-04-17'
+  2.14.6:
+    changes:
+      release_summary: '| Release Date: 2023-05-22
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.6_summary.yaml
+    release_date: '2023-05-22'
   2.14.6rc1:
     changes:
       bugfixes:
