@@ -1853,9 +1853,13 @@ class AnsibleModule(object):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
-        The mechanism of this method for reading stdout and stderr differs from that of CPython
-        subprocess.Popen.communicate, in that this method will stop reading once the spawned command
-        has exited, as opposed to waiting until stdout/stderr are closed.
+        The mechanism of this method for reading stdout and stderr differs from
+        that of CPython subprocess.Popen.communicate, in that this method will
+        stop reading once the spawned command has exited and stdout and stderr
+        have been consumed, as opposed to waiting until stdout/stderr are
+        closed. This can be an important destinction, when taken into account
+        that a forked or backgrounded process may hold stdout or stderr open
+        for longer than the spawned command.
 
         :arg args: is the command to run
             * If args is a list, the command will be run with shell=False.
