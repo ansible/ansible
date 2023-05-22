@@ -2084,7 +2084,7 @@ class AnsibleModule(object):
 
                 # if we're checking for prompts, do it now, but only if stdout
                 # actually changed since the last loop
-                if stdout_changed and prompt_re and prompt_re.search(stdout) and not data:
+                if prompt_re and stdout_changed and prompt_re.search(stdout) and not data:
                     if encoding:
                         stdout = to_native(stdout, encoding=encoding, errors=errors)
                     return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
