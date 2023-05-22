@@ -430,9 +430,9 @@ class TestPlayIterator(unittest.TestCase):
         )
 
         # iterate past first task
-        _, task = itr.get_next_task_for_host(hosts[0])
+        dummy, task = itr.get_next_task_for_host(hosts[0])
         while (task and task.action != 'debug'):
-            _, task = itr.get_next_task_for_host(hosts[0])
+            dummy, task = itr.get_next_task_for_host(hosts[0])
 
         self.assertIsNotNone(task, 'iterated past end of play while looking for place to insert tasks')
 

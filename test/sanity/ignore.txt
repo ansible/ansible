@@ -6,11 +6,9 @@ examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
-lib/ansible/executor/playbook_executor.py pylint:disallowed-name
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
 lib/ansible/galaxy/collection/__init__.py mypy-3.9:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.10:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.11:attr-defined  # inline ignore has no effect
@@ -35,7 +33,6 @@ lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec 
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
-lib/ansible/modules/copy.py pylint:disallowed-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
@@ -43,15 +40,12 @@ lib/ansible/modules/dnf.py validate-modules:parameter-invalid
 lib/ansible/modules/dnf5.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
-lib/ansible/modules/git.py pylint:disallowed-name
 lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
-lib/ansible/modules/iptables.py pylint:disallowed-name
 lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/pip.py pylint:disallowed-name
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
@@ -65,7 +59,6 @@ lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/yum.py pylint:disallowed-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
@@ -73,7 +66,6 @@ lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
-lib/ansible/module_utils/compat/_selectors2.py pylint:disallowed-name
 lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.5!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends on presence of libselinux.so
@@ -88,7 +80,6 @@ lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bu
 lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
-lib/ansible/module_utils/facts/network/linux.py pylint:disallowed-name
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
@@ -109,13 +100,9 @@ lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py pylint:arguments-renamed
-lib/ansible/module_utils/urls.py pylint:disallowed-name
 lib/ansible/module_utils/urls.py replace-urlopen
-lib/ansible/parsing/vault/__init__.py pylint:disallowed-name
 lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
-lib/ansible/playbook/base.py pylint:disallowed-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
-lib/ansible/playbook/helpers.py pylint:disallowed-name
 lib/ansible/playbook/playbook_include.py pylint:arguments-renamed
 lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
@@ -124,13 +111,9 @@ lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
 lib/ansible/plugins/lookup/random_choice.py pylint:arguments-renamed
-lib/ansible/plugins/lookup/sequence.py pylint:disallowed-name
 lib/ansible/plugins/shell/cmd.py pylint:arguments-renamed
-lib/ansible/plugins/strategy/__init__.py pylint:disallowed-name
-lib/ansible/plugins/strategy/linear.py pylint:disallowed-name
 lib/ansible/utils/collection_loader/_collection_finder.py pylint:deprecated-class
 lib/ansible/utils/collection_loader/_collection_meta.py pylint:deprecated-class
-lib/ansible/vars/hostvars.py pylint:disallowed-name
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
@@ -220,20 +203,14 @@ test/support/windows-integration/plugins/modules/win_user_right.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_user.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_wait_for.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_whoami.ps1 pslint!skip
-test/units/executor/test_play_iterator.py pylint:disallowed-name
-test/units/modules/test_apt.py pylint:disallowed-name
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-version
-test/units/module_utils/basic/test_run_command.py pylint:disallowed-name
 test/units/module_utils/common/warnings/test_deprecate.py pylint:ansible-deprecated-no-version  # testing Display.deprecated call without a version or date
 test/units/module_utils/common/warnings/test_deprecate.py pylint:ansible-deprecated-version  # testing Deprecated version found in call to Display.deprecated or AnsibleModule.deprecate
 test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
 test/units/module_utils/urls/test_gzip.py replace-urlopen
 test/units/module_utils/urls/test_Request.py replace-urlopen
-test/units/parsing/vault/test_vault.py pylint:disallowed-name
-test/units/playbook/role/test_role.py pylint:disallowed-name
-test/units/plugins/test_plugins.py pylint:disallowed-name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits

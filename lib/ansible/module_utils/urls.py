@@ -1497,7 +1497,7 @@ class Request:
                     login = None
 
                 if login:
-                    username, _, password = login
+                    username, dummy, password = login
                     if username and password:
                         headers["Authorization"] = basic_auth_header(username, password)
 

@@ -698,7 +698,7 @@ def push_arguments(iptables_path, action, params, make_rule=True):
 
 def check_rule_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-C', params)
-    rc, _, __ = module.run_command(cmd, check_rc=False)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return (rc == 0)
 
 
@@ -732,7 +732,7 @@ def get_chain_policy(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
     if module.params['numeric']:
         cmd.append('--numeric')
-    rc, out, _ = module.run_command(cmd, check_rc=True)
+    rc, out, err = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
     result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
     if result:
@@ -742,7 +742,7 @@ def get_chain_policy(iptables_path, module, params):
 
 def get_iptables_version(iptables_path, module):
     cmd = [iptables_path, '--version']
-    rc, out, _ = module.run_command(cmd, check_rc=True)
+    rc, out, err = module.run_command(cmd, check_rc=True)
     return out.split('v')[1].rstrip('\n')
 
 
@@ -755,7 +755,7 @@ def check_chain_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
     if module.params['numeric']:
         cmd.append('--numeric')
-    rc, _, __ = module.run_command(cmd, check_rc=False)
+    rc, out, err = module.run_command(cmd, check_rc=False)
     return (rc == 0)
 
 
