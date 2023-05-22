@@ -76,15 +76,14 @@ class PromptSend:
     complete_input: t.Iterable[bytes] = None
 
 
-class FinalQueue(multiprocessing.queues.Queue):
+class FinalQueue(multiprocessing.queues.SimpleQueue):
     def __init__(self, *args, **kwargs):
         kwargs['ctx'] = multiprocessing_context
-        super(FinalQueue, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def send_callback(self, method_name, *args, **kwargs):
         self.put(
             CallbackSend(method_name, *args, **kwargs),
-            block=False
         )
 
     def send_task_result(self, *args, **kwargs):
@@ -94,19 +93,16 @@ class FinalQueue(multiprocessing.queues.Queue):
             tr = TaskResult(*args, **kwargs)
         self.put(
             tr,
-            block=False
         )
 
     def send_display(self, *args, **kwargs):
         self.put(
             DisplaySend(*args, **kwargs),
-            block=False
         )
 
     def send_prompt(self, **kwargs):
         self.put(
             PromptSend(**kwargs),
-            block=False
         )
 
 
