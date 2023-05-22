@@ -1848,9 +1848,14 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True,
+                    bufsize=-1):
         '''
         Execute a command, returns rc, stdout, and stderr.
+
+        The mechanism of this method for reading stdout and stderr differs from that of CPython
+        subprocess.Popen.communicate, in that this method will stop reading once the spawned command
+        has exited, as opposed to waiting until stdout/stderr are closed.
 
         :arg args: is the command to run
             * If args is a list, the command will be run with shell=False.
@@ -1905,6 +1910,8 @@ class AnsibleModule(object):
         :kw handle_exceptions: This flag indicates whether an exception will
             be handled inline and issue a failed_json or if the caller should
             handle it.
+        :kw bufsize: This corresponding argument to the open() function when
+            creating the stdin/stdout/stderr pipe file objects.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2002,6 +2009,7 @@ class AnsibleModule(object):
                 os.umask(umask)
 
         kwargs = dict(
+            bufsize=bufsize,
             executable=executable,
             shell=shell,
             close_fds=close_fds,
@@ -2031,17 +2039,14 @@ class AnsibleModule(object):
             if before_communicate_callback:
                 before_communicate_callback(cmd)
 
-            # the communication logic here is essentially taken from that
-            # of the _communicate() function in ssh.py
-
             stdout = b''
             stderr = b''
-            try:
-                selector = selectors.DefaultSelector()
-            except (IOError, OSError):
-                # Failed to detect default selector for the given platform
-                # Select PollSelector which is supported by major platforms
+
+            # Mirror the CPython subprocess logic and preference for the selector to use
+            if hasattr(selectors, 'PollSelector'):
                 selector = selectors.PollSelector()
+            else:
+                selector = selectors.SelectSelector()
 
             if data:
                 if not binary_data:
@@ -2049,53 +2054,58 @@ class AnsibleModule(object):
                 if isinstance(data, text_type):
                     data = to_bytes(data)
 
-            if not prompt_re:
-                stdout, stderr = cmd.communicate(input=data)
-            else:
-                # We only need this to look for a prompt, to abort instead of hanging
-                selector.register(cmd.stdout, selectors.EVENT_READ)
-                selector.register(cmd.stderr, selectors.EVENT_READ)
-                if os.name == 'posix':
-                    fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
-                    fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+            selector.register(cmd.stdout, selectors.EVENT_READ)
+            selector.register(cmd.stderr, selectors.EVENT_READ)
 
-                if data:
-                    cmd.stdin.write(data)
-                    cmd.stdin.close()
+            if os.name == 'posix':
+                fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+                fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
 
-                while True:
-                    events = selector.select(1)
-                    for key, event in events:
-                        b_chunk = key.fileobj.read()
-                        if b_chunk == b(''):
-                            selector.unregister(key.fileobj)
-                        if key.fileobj == cmd.stdout:
-                            stdout += b_chunk
-                        elif key.fileobj == cmd.stderr:
-                            stderr += b_chunk
-                    # if we're checking for prompts, do it now
-                    if prompt_re:
-                        if prompt_re.search(stdout) and not data:
-                            if encoding:
-                                stdout = to_native(stdout, encoding=encoding, errors=errors)
-                            return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
-                    # only break out if no pipes are left to read or
-                    # the pipes are completely read and
-                    # the process is terminated
-                    if (not events or not selector.get_map()) and cmd.poll() is not None:
-                        break
-                    # No pipes are left to read but process is not yet terminated
-                    # Only then it is safe to wait for the process to be finished
-                    # NOTE: Actually cmd.poll() is always None here if no selectors are left
-                    elif not selector.get_map() and cmd.poll() is None:
-                        cmd.wait()
-                        # The process is terminated. Since no pipes to read from are
-                        # left, there is no need to call select() again.
-                        break
+            if data:
+                cmd.stdin.write(data)
+                cmd.stdin.close()
 
-                cmd.stdout.close()
-                cmd.stderr.close()
-                selector.close()
+            while True:
+                # A timeout of 1 is both a little short and a little long.
+                # With None we could deadlock, with a lower value we would
+                # waste cycles. As it is, this is a mild inconvenience if
+                # we need to exit, and likely doesn't waste too many cycles
+                events = selector.select(1)
+                stdout_changed = False
+                for key, event in events:
+                    b_chunk = key.fileobj.read(32768)
+                    if not b_chunk:
+                        selector.unregister(key.fileobj)
+                    elif key.fileobj == cmd.stdout:
+                        stdout += b_chunk
+                        stdout_changed = True
+                    elif key.fileobj == cmd.stderr:
+                        stderr += b_chunk
+
+                # if we're checking for prompts, do it now, but only if stdout
+                # actually changed since the last loop
+                if stdout_changed and prompt_re and prompt_re.search(stdout) and not data:
+                    if encoding:
+                        stdout = to_native(stdout, encoding=encoding, errors=errors)
+                    return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
+
+                # break out if no pipes are left to read or the pipes are completely read
+                # and the process is terminated
+                if (not events or not selector.get_map()) and cmd.poll() is not None:
+                    break
+
+                # No pipes are left to read but process is not yet terminated
+                # Only then it is safe to wait for the process to be finished
+                # NOTE: Actually cmd.poll() is always None here if no selectors are left
+                elif not selector.get_map() and cmd.poll() is None:
+                    cmd.wait()
+                    # The process is terminated. Since no pipes to read from are
+                    # left, there is no need to call select() again.
+                    break
+
+            cmd.stdout.close()
+            cmd.stderr.close()
+            selector.close()
 
             rc = cmd.returncode
         except (OSError, IOError) as e:
