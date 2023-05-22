@@ -780,6 +780,17 @@ releases:
     fragments:
     - v2.13.1_summary.yaml
     release_date: '2022-06-20'
+  2.13.10:
+    changes:
+      release_summary: '| Release Date: 2023-05-22
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 2.13.10_summary.yaml
+    release_date: '2023-05-22'
   2.13.10rc1:
     changes:
       bugfixes:
