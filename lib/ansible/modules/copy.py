@@ -689,7 +689,7 @@ def main():
                 b_mysrc = b_src
                 if remote_src and os.path.isfile(b_src):
 
-                    _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
+                    dummy, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
                     shutil.copyfile(b_src, b_mysrc)
                     try:

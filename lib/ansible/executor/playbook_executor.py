@@ -238,7 +238,7 @@ class PlaybookExecutor:
                             else:
                                 basedir = '~/'
 
-                            (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
+                            (retry_name, ext) = os.path.splitext(os.path.basename(playbook_path))
                             filename = os.path.join(basedir, "%s.retry" % retry_name)
                             if self._generate_retry_inventory(filename, retries):
                                 display.display("\tto retry, use: --limit @%s\n" % filename)

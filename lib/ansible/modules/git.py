@@ -1124,7 +1124,7 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
     """ Helper function for creating archive using git_archive """
     all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
                        '.tgz': 'tgz'}
-    _, archive_ext = os.path.splitext(archive)
+    dummy, archive_ext = os.path.splitext(archive)
     archive_fmt = all_archive_fmt.get(archive_ext, None)
     if archive_fmt is None:
         module.fail_json(msg="Unable to get file extension from "

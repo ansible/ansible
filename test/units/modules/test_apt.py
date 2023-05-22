@@ -29,25 +29,25 @@ class AptExpandPkgspecTestCase(unittest.TestCase):
         ]
 
     def test_trivial(self):
-        foo = ["apt"]
+        pkg = ["apt"]
         self.assertEqual(
-            expand_pkgspec_from_fnmatches(None, foo, self.fake_cache), foo)
+            expand_pkgspec_from_fnmatches(None, pkg, self.fake_cache), pkg)
 
     def test_version_wildcard(self):
-        foo = ["apt=1.0*"]
+        pkg = ["apt=1.0*"]
         self.assertEqual(
-            expand_pkgspec_from_fnmatches(None, foo, self.fake_cache), foo)
+            expand_pkgspec_from_fnmatches(None, pkg, self.fake_cache), pkg)
 
     def test_pkgname_wildcard_version_wildcard(self):
-        foo = ["apt*=1.0*"]
+        pkg = ["apt*=1.0*"]
         m_mock = Mock()
         self.assertEqual(
-            expand_pkgspec_from_fnmatches(m_mock, foo, self.fake_cache),
+            expand_pkgspec_from_fnmatches(m_mock, pkg, self.fake_cache),
             ['apt', 'apt-utils'])
 
     def test_pkgname_expands(self):
-        foo = ["apt*"]
+        pkg = ["apt*"]
         m_mock = Mock()
         self.assertEqual(
-            expand_pkgspec_from_fnmatches(m_mock, foo, self.fake_cache),
+            expand_pkgspec_from_fnmatches(m_mock, pkg, self.fake_cache),
             ["apt", "apt-utils"])

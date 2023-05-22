@@ -810,7 +810,7 @@ def main():
 
         out_freeze_before = None
         if requirements or has_vcs:
-            _, out_freeze_before, _ = _get_packages(module, pip, chdir)
+            dummy, out_freeze_before, dummy = _get_packages(module, pip, chdir)
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -827,7 +827,7 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                dummy, out_freeze_after, dummy = _get_packages(module, pip, chdir)
                 changed = out_freeze_before != out_freeze_after
 
         changed = changed or venv_created

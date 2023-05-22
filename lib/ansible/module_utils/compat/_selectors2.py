@@ -81,7 +81,7 @@ def _fileobj_to_fd(fileobj):
 
 # Python 3.5 uses a more direct route to wrap system calls to increase speed.
 if sys.version_info >= (3, 5):
-    def _syscall_wrapper(func, _, *args, **kwargs):
+    def _syscall_wrapper(func, dummy, *args, **kwargs):
         """ This is the short-circuit version of the below logic
         because in Python 3.5+ all selectors restart system calls. """
         try:
@@ -342,8 +342,8 @@ if hasattr(select, "select"):
 
             timeout = None if timeout is None else max(timeout, 0.0)
             ready = []
-            r, w, _ = _syscall_wrapper(self._select, True, self._readers,
-                                       self._writers, timeout=timeout)
+            r, w, dummy = _syscall_wrapper(self._select, True, self._readers,
+                                           self._writers, timeout=timeout)
             r = set(r)
             w = set(w)
             for fd in r | w:
@@ -649,7 +649,7 @@ elif 'PollSelector' in globals():  # Platform-specific: Linux
 elif 'SelectSelector' in globals():  # Platform-specific: Windows
     DefaultSelector = SelectSelector
 else:  # Platform-specific: AppEngine
-    def no_selector(_):
+    def no_selector(dummy):
         raise ValueError("Platform does not have a selector")
     DefaultSelector = no_selector
     HAS_SELECT = False

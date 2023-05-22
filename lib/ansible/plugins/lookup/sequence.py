@@ -175,7 +175,7 @@ class LookupModule(LookupBase):
         if not match:
             return False
 
-        _, start, end, _, stride, _, format = match.groups()
+        dummy, start, end, dummy, stride, dummy, format = match.groups()
 
         if start is not None:
             try:
