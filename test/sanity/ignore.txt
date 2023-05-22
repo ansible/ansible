@@ -67,9 +67,6 @@ lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/yum.py pylint:disallowed-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
-lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
