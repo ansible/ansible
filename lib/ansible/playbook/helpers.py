@@ -274,18 +274,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     loader=loader,
                 )
 
-                #   1. the user has set the 'static' option to false or true
-                #   2. one of the appropriate config options was set
-                is_static = False
                 if action in C._ACTION_IMPORT_ROLE:
-                    is_static = True
-
-                if is_static:
                     if ir.loop is not None:
-                        if action in C._ACTION_IMPORT_ROLE:
-                            raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
-                        else:
-                            raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)
+                        raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
 
                     # we set a flag to indicate this include was static
                     ir.statically_loaded = True

@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove unreachable parser error for removed ``static`` parameter of ``include_role``
