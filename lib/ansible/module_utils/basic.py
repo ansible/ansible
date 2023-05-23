@@ -1846,14 +1846,6 @@ class AnsibleModule(object):
         if PY2 and sys.platform != 'win32':
             signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-    @staticmethod
-    def _register_event_read_pipes(selector, cmd):
-        for pipe in (cmd.stdout, cmd.stderr):
-            try:
-                selector.register(pipe, selectors.EVENT_READ)
-            except KeyError:
-                pass
-
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
                     expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True,
@@ -2066,7 +2058,8 @@ class AnsibleModule(object):
                 if isinstance(data, text_type):
                     data = to_bytes(data)
 
-            self._register_event_read_pipes(selector, cmd)
+            selector.register(cmd.stdout, selectors.EVENT_READ)
+            selector.register(cmd.stderr, selectors.EVENT_READ)
 
             if os.name == 'posix':
                 fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -2076,7 +2069,6 @@ class AnsibleModule(object):
                 cmd.stdin.write(data)
                 cmd.stdin.close()
 
-            process_exited = False
             while True:
                 # A timeout of 1 is both a little short and a little long.
                 # With None we could deadlock, with a lower value we would
@@ -2094,14 +2086,6 @@ class AnsibleModule(object):
                     elif key.fileobj == cmd.stderr:
                         stderr += b_chunk
 
-                if process_exited:
-                    # Below we've already determined there is nothing to read,
-                    # and that the process has exited from a previous loop
-                    # iteration. At this point, we've now attempted a final
-                    # read to attempt fetching anything else that may be
-                    # sitting in stdout/stderr
-                    break
-
                 # if we're checking for prompts, do it now, but only if stdout
                 # actually changed since the last loop
                 if prompt_re and stdout_changed and prompt_re.search(stdout) and not data:
@@ -2112,22 +2096,16 @@ class AnsibleModule(object):
                 # break out if no pipes are left to read or the pipes are completely read
                 # and the process is terminated
                 if (not events or not selector.get_map()) and cmd.poll() is not None:
-                    # We'll go through the loop one more time to ensure nothing
-                    # is waiting to be read
-                    self._register_event_read_pipes(selector, cmd)
-                    process_exited = True
-                    continue
+                    break
 
                 # No pipes are left to read but process is not yet terminated
                 # Only then it is safe to wait for the process to be finished
                 # NOTE: Actually cmd.poll() is always None here if no selectors are left
                 elif not selector.get_map() and cmd.poll() is None:
                     cmd.wait()
-                    # We'll go through the loop one more time to ensure nothing
-                    # is waiting to be read
-                    self._register_event_read_pipes(selector, cmd)
-                    process_exited = True
-                    continue
+                    # The process is terminated. Since no pipes to read from are
+                    # left, there is no need to call select() again.
+                    break
 
             cmd.stdout.close()
             cmd.stderr.close()
