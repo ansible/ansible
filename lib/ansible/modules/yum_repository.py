@@ -37,7 +37,6 @@ options:
         (bytes/sec) then this option is ignored. Default is C(0) (no bandwidth
         throttling).
     type: str
-    default: '0'
   baseurl:
     description:
       - URL to the directory where the yum repository's 'repodata' directory
@@ -52,7 +51,6 @@ options:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
     type: str
-    default: '1000'
   deltarpm_metadata_percentage:
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
@@ -61,14 +59,12 @@ options:
         required to be half the size of the packages. Use C(0) to turn off
         this check, and always download metadata.
     type: str
-    default: '100'
   deltarpm_percentage:
     description:
       - When the relative size of delta vs pkg is larger than this, delta is
         not used. Use C(0) to turn off delta rpm processing. Local repositories
         (with file:// I(baseurl)) have delta rpms turned off by default.
     type: str
-    default: '75'
   description:
     description:
       - A human readable string describing the repository. This option corresponds to the "name" property in the repo file.
@@ -95,7 +91,6 @@ options:
     elements: str
   failovermethod:
     choices: [roundrobin, priority]
-    default: roundrobin
     description:
       - C(roundrobin) randomly selects a URL out of the list of URLs to start
         with and proceeds through each of them as it encounters a failure
@@ -141,7 +136,6 @@ options:
       - C(none) means that no HTTP downloads should be cached.
     choices: [all, packages, none]
     type: str
-    default: all
   include:
     description:
       - Include external configuration file. Both, local path and URL is
@@ -165,27 +159,23 @@ options:
       - C(6) or C(IPv6) - resolve to IPv6 addresses only.
     choices: ['4', '6', IPv4, IPv6, whatever]
     type: str
-    default: whatever
   keepalive:
     description:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
     type: bool
-    default: 'no'
   keepcache:
     description:
       - Either C(1) or C(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
     choices: ['0', '1']
     type: str
-    default: '1'
   metadata_expire:
     description:
       - Time (in seconds) after which the metadata will expire.
       - Default value is 6 hours.
     type: str
-    default: '21600'
   metadata_expire_filter:
     description:
       - Filter the I(metadata_expire) time, allowing a trade of speed for
@@ -206,7 +196,6 @@ options:
       - Note that this option does not override "yum clean expire-cache".
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
     type: str
-    default: 'read-only:present'
   metalink:
     description:
       - Specifies a URL to a metalink file for the repomd.xml, a list of
@@ -227,7 +216,6 @@ options:
         expire.
       - Default value is 6 hours.
     type: str
-    default: '21600'
   name:
     description:
       - Unique repository ID. This option builds the section name of the repository in the repo file.
@@ -245,12 +233,10 @@ options:
         from 1 to 99.
       - This option only works if the YUM Priorities plugin is installed.
     type: str
-    default: '99'
   protect:
     description:
       - Protect packages from updates from other repositories.
     type: bool
-    default: 'no'
   proxy:
     description:
       - URL to the proxy server that yum should use. Set to C(_none_) to
@@ -269,7 +255,6 @@ options:
       - This tells yum whether or not it should perform a GPG signature check
         on the repodata from this repository.
     type: bool
-    default: 'no'
   reposdir:
     description:
       - Directory where the C(.repo) files will be stored.
@@ -280,20 +265,17 @@ options:
       - Set the number of times any attempt to retrieve a file should retry
         before returning an error. Setting this to C(0) makes yum try forever.
     type: str
-    default: '10'
   s3_enabled:
     description:
       - Enables support for S3 repositories.
       - This option only works if the YUM S3 plugin is installed.
     type: bool
-    default: 'no'
   skip_if_unavailable:
     description:
       - If set to C(true) yum will continue running if this repository cannot be
         contacted for any reason. This should be set carefully as all repos are
         consulted for any given command.
     type: bool
-    default: 'no'
   ssl_check_cert_permissions:
     description:
       - Whether yum should check the permissions on the paths for the
@@ -303,7 +285,6 @@ options:
         processes which use yum on repos that have client cert files which are
         readable only by root.
     type: bool
-    default: 'no'
   sslcacert:
     description:
       - Path to the directory containing the databases of the certificate
@@ -326,7 +307,6 @@ options:
     description:
       - Defines whether yum should verify SSL certificates/hosts at all.
     type: bool
-    default: 'yes'
     aliases: [ validate_certs ]
   state:
     description:
@@ -344,14 +324,12 @@ options:
     description:
       - Number of seconds to wait for a connection before timing out.
     type: str
-    default: '30'
   ui_repoid_vars:
     description:
       - When a repository id is displayed, append these yum variables to the
         string if they are used in the I(baseurl)/etc. Variables are appended
         in the order listed (and found).
     type: str
-    default: releasever basearch
   username:
     description:
       - Username to use for basic authentication to a repo or really any url.
@@ -627,7 +605,6 @@ def main():
         mirrorlist=dict(),
         mirrorlist_expire=dict(),
         name=dict(required=True),
-        params=dict(type='dict'),
         password=dict(no_log=True),
         priority=dict(),
         protect=dict(type='bool'),
@@ -658,11 +635,6 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
-
-    # Params was removed
-    # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
-    if module.params['params']:
-        module.fail_json(msg="The params option to yum_repository was removed in Ansible 2.5 since it circumvents Ansible's option handling")
 
     name = module.params['name']
     state = module.params['state']
