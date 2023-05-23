@@ -1,0 +1,2 @@
+removed_features:
+  - stat - removed unused `get_md5` parameter.
