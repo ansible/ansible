@@ -1852,8 +1852,6 @@ class AnsibleModule(object):
             try:
                 selector.register(pipe, selectors.EVENT_READ)
             except KeyError:
-                # The pipe has already been registered, this would only happen
-                # on our last pass attempt to read the pipe
                 pass
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
