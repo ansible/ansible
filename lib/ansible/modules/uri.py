@@ -707,7 +707,15 @@ def main():
         sub_type = 'octet-stream'
         content_encoding = 'utf-8'
 
-    maybe_json = content_type and sub_type.lower() in JSON_CANDIDATES
+    if sub_type and '+' in sub_type:
+        # https://www.rfc-editor.org/rfc/rfc6839#section-3.1
+        sub_type_suffix = sub_type.partition('+')[2]
+        maybe_json = content_type and sub_type_suffix.lower() in JSON_CANDIDATES
+    elif sub_type:
+        maybe_json = content_type and sub_type.lower() in JSON_CANDIDATES
+    else:
+        maybe_json = False
+
     maybe_output = maybe_json or return_content or info['status'] not in status_code
 
     if maybe_output:
