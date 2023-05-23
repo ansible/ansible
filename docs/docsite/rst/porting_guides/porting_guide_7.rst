@@ -92,6 +92,46 @@ Networking
 
 No notable changes
 
+Porting Guide for v7.6.0
+========================
+
+Known Issues
+------------
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- The modules and plugins using the vendored code from Docker SDK for Python currently do not work with requests 2.29.0 and/or urllib3 2.0.0. The same is currently true for the latest version of Docker SDK for Python itself (https://github.com/ansible-collections/community.docker/issues/611, https://github.com/ansible-collections/community.docker/pull/612).
+- docker_api connection plugin - does **not work with TCP TLS sockets**! This is caused by the inability to send an ``close_notify`` TLS alert without closing the connection with Python's ``SSLSocket`` (https://github.com/ansible-collections/community.docker/issues/605, https://github.com/ansible-collections/community.docker/pull/621).
+- docker_container_exec - does **not work with TCP TLS sockets** when the ``stdin`` option is used! This is caused by the inability to send an ``close_notify`` TLS alert without closing the connection with Python's ``SSLSocket`` (https://github.com/ansible-collections/community.docker/issues/605, https://github.com/ansible-collections/community.docker/pull/621).
+
+Major Changes
+-------------
+
+community.postgresql
+~~~~~~~~~~~~~~~~~~~~
+
+- postgresql_privs - the ``password`` argument is deprecated and will be removed in community.postgresql 4.0.0, use the ``login_password`` argument instead (https://github.com/ansible-collections/community.postgresql/issues/406).
+
+infoblox.nios_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Added Grid Master Candidate feature `#152 <https://github.com/infobloxopen/infoblox-ansible/pull/152>`_
+- Added Member Assignment to network and ranges `#152 <https://github.com/infobloxopen/infoblox-ansible/pull/152>`_
+- Added NIOS Range module with Create, Update and Delete features `#152 <https://github.com/infobloxopen/infoblox-ansible/pull/152>`_
+- Fixes issue unable to update/delete EAs using Ansible plugin `#180 <https://github.com/infobloxopen/infoblox-ansible/pull/180>`_
+- Fixes static and dynamic allocation of IPV4 address of A Record `#182 <https://github.com/infobloxopen/infoblox-ansible/pull/182>`_
+- Fixes to Update host name of  NIOS member `#176 <https://github.com/infobloxopen/infoblox-ansible/pull/176>`_
+- Updates default WAPI version to 2.9 `#176 <https://github.com/infobloxopen/infoblox-ansible/pull/176>`_
+
+Deprecated Features
+-------------------
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- x509_crl - the ``mode`` option is deprecated; use ``crl_mode`` instead. The ``mode`` option will change its meaning in community.crypto 3.0.0, and will refer to the CRL file's mode instead (https://github.com/ansible-collections/community.crypto/issues/596).
+
 Porting Guide for v7.5.0
 ========================
 
