@@ -5,7 +5,9 @@
 
 - name: Remove setuptools
   pip:
-    name: setuptools
+    name:
+      - setuptools
+      - pkg_resources  # This shouldn't be a thing, but ubuntu 20.04...
     virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
     state: absent
 
