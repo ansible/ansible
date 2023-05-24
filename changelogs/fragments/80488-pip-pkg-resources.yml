@@ -1,0 +1,3 @@
+bugfixes:
+- pip module - Update module to prefer use of the python ``packaging`` and ``importlib.metadata`` modules due to ``pkg_resources`` being deprecated
+  (https://github.com/ansible/ansible/issues/80488)
