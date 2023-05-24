@@ -121,7 +121,7 @@ class Timezone(object):
             # running in the global zone where changing the timezone has no effect.
             zonename_cmd = module.get_bin_path('zonename')
             if zonename_cmd is not None:
-                (rc, stdout, _) = module.run_command(zonename_cmd)
+                (rc, stdout, stderr) = module.run_command(zonename_cmd)
                 if rc == 0 and stdout.strip() == 'global':
                     module.fail_json(msg='Adjusting timezone is not supported in Global Zone')
 
@@ -731,7 +731,7 @@ class BSDTimezone(Timezone):
         # Strategy 3:
         #   (If /etc/localtime is not symlinked)
         #   Check all files in /usr/share/zoneinfo and return first non-link match.
-        for dname, _, fnames in sorted(os.walk(zoneinfo_dir)):
+        for dname, dirs, fnames in sorted(os.walk(zoneinfo_dir)):
             for fname in sorted(fnames):
                 zoneinfo_file = os.path.join(dname, fname)
                 if not os.path.islink(zoneinfo_file) and filecmp.cmp(zoneinfo_file, localtime_file):

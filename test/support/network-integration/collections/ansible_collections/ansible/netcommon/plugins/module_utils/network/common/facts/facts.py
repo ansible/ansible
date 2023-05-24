@@ -79,7 +79,7 @@ class FactsBase(object):
                 self._module.fail_json(
                     msg="Subset must be one of [%s], got %s"
                     % (
-                        ", ".join(sorted([item for item in valid_subsets])),
+                        ", ".join(sorted(list(valid_subsets))),
                         subset,
                     )
                 )

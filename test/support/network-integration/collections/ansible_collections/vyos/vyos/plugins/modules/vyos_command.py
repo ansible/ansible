@@ -192,7 +192,7 @@ def main():
     interval = module.params["interval"]
     match = module.params["match"]
 
-    for _ in range(retries):
+    for dummy in range(retries):
         responses = run_commands(module, commands)
 
         for item in list(conditionals):
