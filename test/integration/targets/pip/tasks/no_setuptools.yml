@@ -1,6 +1,16 @@
+- name: Get coverage version
+  pip:
+    name: coverage
+  check_mode: true
+  register: pip_coverage
+
 - name: create a virtualenv for use without setuptools
   pip:
-    name: packaging
+    name:
+      - packaging
+      # coverage is needed when ansible-test is invoked with --coverage
+      # and using a custom ansible_python_interpreter below
+      - '{{ pip_coverage.stdout_lines|select("match", "coverage==")|first }}'
     virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
 
 - name: Remove setuptools
