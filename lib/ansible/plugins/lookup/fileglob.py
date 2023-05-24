@@ -22,6 +22,9 @@ DOCUMENTATION = """
       - Matching is against local system files on the Ansible controller.
         To iterate a list of files on a remote node, use the M(ansible.builtin.find) module.
       - Returns a string list of paths joined by commas, or an empty list if no files match. For a 'true list' pass C(wantlist=True) to the lookup.
+    seealso:
+      - ref: playbooks_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """

@@ -16,6 +16,9 @@ DOCUMENTATION = """
         required: True
     notes:
       - This lookup does not understand 'globbing' nor shell environment variables.
+    seealso:
+      - ref: playbooks_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """

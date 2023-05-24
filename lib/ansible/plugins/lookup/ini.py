@@ -50,6 +50,9 @@ DOCUMENTATION = """
         default: False
         aliases: ['allow_none']
         version_added: '2.12'
+    seealso:
+      - ref: playbooks_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
