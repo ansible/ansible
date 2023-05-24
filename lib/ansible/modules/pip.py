@@ -279,13 +279,15 @@ PACKAGING_IMP_ERR = None
 HAS_PACKAGING = False
 HAS_SETUPTOOLS = False
 try:
-    from packaging.requirement import Requirement  # type: ignore[import]
+    from packaging.requirement import Requirement as parse_requirement  # type: ignore[import]
     HAS_PACKAGING = True
 except ImportError:
     HAS_PACKAGING = False
     PACKAGING_IMP_ERR = traceback.format_exc()
     try:
         from pkg_resources import Requirement
+        parse_requirement = Requirement.parse
+        del Requirement
         HAS_SETUPTOOLS = True
     except ImportError:
         pass
@@ -615,9 +617,11 @@ class Package:
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
         try:
-            self._requirement = Requirement(name_string)
+            self._requirement = parse_requirement(name_string)
             # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
-            project_name = Package.canonicalize_name(self._requirement.name)
+            project_name = Package.canonicalize_name(
+                getattr(self._requirement, 'name', None) or getattr(self._requirement, 'project_name', None)
+            )
             if project_name == "distribute" and "setuptools" in name_string:
                 self.package_name = "setuptools"
             else:
@@ -629,7 +633,7 @@ class Package:
     @property
     def has_version_specifier(self):
         if self._plain_package:
-            return bool(self._requirement.specifier)
+            return bool(getattr(self._requirement, 'specifier', None) or getattr(self._requirement, 'specs', None))
         return False
 
     def is_satisfied_by(self, version_to_test):

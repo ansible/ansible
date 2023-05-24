@@ -55,4 +55,3 @@
   module_defaults:
     pip:
       virtualenv_command: "{{ virtualenv }}"
-
