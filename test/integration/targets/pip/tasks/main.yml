@@ -40,6 +40,9 @@
         extra_args: "-c {{ remote_constraints }}"
 
     - include_tasks: pip.yml
+
+    - include_tasks: no_setuptools.yml
+      when: ansible_python.version_info[:2] >= [3, 8]
   always:
     - name: platform specific cleanup
       include_tasks: "{{ cleanup_filename }}"
@@ -53,5 +56,3 @@
     pip:
       virtualenv_command: "{{ virtualenv }}"
 
-- include_tasks: no_setuptools.yml
-  when: ansible_python.version_info[:2] >= [3, 8]
