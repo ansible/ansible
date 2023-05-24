@@ -279,7 +279,7 @@ PACKAGING_IMP_ERR = None
 HAS_PACKAGING = False
 HAS_SETUPTOOLS = False
 try:
-    from packaging.requirement import Requirement as parse_requirement  # type: ignore[import]
+    from packaging.requirements import Requirement as parse_requirement  # type: ignore[import]
     HAS_PACKAGING = True
 except ImportError:
     HAS_PACKAGING = False

@@ -16,20 +16,23 @@
   register: result
   failed_when: result.rc == 0
 
-- name: Checkmode install pip
-  pip:
-    name: pip
-    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
-  check_mode: true
-  register: pip_check_mode
+- vars:
+    ansible_python_interpreter: "{{ remote_tmp_dir }}/no_setuptools/bin/python"
+  block:
+    - name: Checkmode install pip
+      pip:
+        name: pip
+        virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+      check_mode: true
+      register: pip_check_mode
 
-- assert:
-    that:
-      - pip_check_mode.stdout is contains "pip=="
-      - pip_check_mode.stdout is not contains "setuptools=="
+    - assert:
+        that:
+          - pip_check_mode.stdout is contains "pip=="
+          - pip_check_mode.stdout is not contains "setuptools=="
 
-- name: Install fallible
-  pip:
-    name: fallible==0.0.1a2
-    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
-  register: fallible_install
+    - name: Install fallible
+      pip:
+        name: fallible==0.0.1a2
+        virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+      register: fallible_install
