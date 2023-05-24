@@ -138,9 +138,6 @@ test/integration/targets/module_precedence/roles_with_extension/foo/library/a.in
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/module_utils/library/test.py future-import-boilerplate # allow testing of Python 2.x implicit relative imports
 test/integration/targets/module_utils/module_utils/bar0/foo.py pylint:disallowed-name
-test/integration/targets/module_utils/module_utils/foo.py pylint:disallowed-name
-test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:disallowed-name
-test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:disallowed-name
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:disallowed-name
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
