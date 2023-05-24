@@ -1,0 +1,10 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - include_role:
+        name: ../setup_remote_tmp_dir
+    - include_role:
+        name: ../setup_gnutar
+    - include_tasks: tasks/prepare_tests.yml
+    
+    - include_tasks: tasks/test_tar.yml

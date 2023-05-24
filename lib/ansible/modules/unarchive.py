@@ -1054,6 +1054,9 @@ def main():
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source '%s' not readable" % src)
 
+    # ensure src is an absolute path before picking handlers
+    src = os.path.abspath(src)
+
     # skip working with 0 size archives
     try:
         if os.path.getsize(src) == 0:
