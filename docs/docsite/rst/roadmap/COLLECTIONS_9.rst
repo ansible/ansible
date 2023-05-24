@@ -30,15 +30,15 @@ Release schedule
 :2023-12-04: Release of ansible-core 2.16.1.
 :2023-12-05: Release of Ansible-9.1.0 (bugfix + compatible features: every four weeks.)
 
-.. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.3.0; Ansible-9.0.0 could ship with community.crypto 2.3.1.  It would not ship with community.crypto 2.4.0.
+.. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.3.0; Ansible-9.0.0 could ship with community.crypto 2.3.1. It would not ship with community.crypto 2.4.0.
 
-.. [2] After this date only changes blocking a release are accepted.  Accepted changes require creating a new rc and may slip the final release date.
+.. [2] After this date only changes blocking a release are accepted. Accepted changes require creating a new rc and may slip the final release date.
 
-.. [3] Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
+.. [3] Collections will be updated to a new version only if a blocker is approved. Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
 .. note::
 
-  Breaking changes will be introduced in Ansible 9.0.0, although we encourage the use of deprecation periods that will show up in at least one Ansible release before the breaking change happens, this is not guaranteed.
+  Breaking changes will be introduced in Ansible 9.0.0. We encourage the use of deprecation periods that give advance notice of breaking changes at least one Ansible release before they are introduced. However, deprecation notices are not guaranteed to take place.
 
 
 Planned major changes
@@ -55,12 +55,12 @@ You can install removed collections manually with ``ansible-galaxy collection in
 Ansible minor releases
 =======================
 
-Ansible 9.x minor releases will occur approximately every four weeks if changes to collections have been made or to align to a later ansible-core-2.16.x.  Ansible 9.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-9.0.0 ships with community.crypto 2.3.0; Ansible-9.1.0 may ship with community.crypto 2.4.0 but would not ship with community.crypto 3.0.0.
+Ansible 9.x minor releases will occur approximately every four weeks if changes to collections have been made or to align to a later ansible-core-2.16.x.  Ansible 9.x minor releases may contain new features but not backwards incompatibilities. In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-9.0.0 ships with community.crypto 2.3.0; Ansible-9.1.0 could ship with community.crypto 2.4.0 but not community.crypto 3.0.0.
 
 
 .. note::
 
-    Minor releases will stop when Ansible-10 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
+    Minor releases will stop when Ansible-10 is released. See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
 For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
