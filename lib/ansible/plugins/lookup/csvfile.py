@@ -36,7 +36,7 @@ DOCUMENTATION = r"""
         literally and cannot be used around the string unless they appear
         (escaped as required) in the first column of the file you are parsing.
     seealso:
-      - ref: playbooks_task_paths
+      - ref: playbook_task_paths
         description: Search paths used for relative files.
 """
 

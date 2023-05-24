@@ -17,7 +17,7 @@ DOCUMENTATION = """
     notes:
       - This lookup does not understand 'globbing' nor shell environment variables.
     seealso:
-      - ref: playbooks_task_paths
+      - ref: playbook_task_paths
         description: Search paths used for relative files.
 """
 

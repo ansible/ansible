@@ -46,7 +46,7 @@ DOCUMENTATION = """
             list and other potential errors return an empty string or empty list depending on the template call
             (in other words return values of C(lookup) v C(query)).
     seealso:
-      - ref: playbooks_task_paths
+      - ref: playbook_task_paths
         description: Search paths used for relative paths/files.
 """
 

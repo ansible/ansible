@@ -29,7 +29,7 @@ DOCUMENTATION = """
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globbing', use the fileglob lookup instead.
     seealso:
-      - ref: playbooks_task_paths
+      - ref: playbook_task_paths
         description: Search paths used for relative files.
 """
 

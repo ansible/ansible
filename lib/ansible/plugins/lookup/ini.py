@@ -51,7 +51,7 @@ DOCUMENTATION = """
         aliases: ['allow_none']
         version_added: '2.12'
     seealso:
-      - ref: playbooks_task_paths
+      - ref: playbook_task_paths
         description: Search paths used for relative files.
 """
 
