@@ -281,7 +281,8 @@ HAS_SETUPTOOLS = False
 try:
     from packaging.requirements import Requirement as parse_requirement  # type: ignore[import]
     HAS_PACKAGING = True
-except ImportError:
+except Exception:
+    # This is catching a generic Exception, due to packaging on EL7 raising a TypeError on import
     HAS_PACKAGING = False
     PACKAGING_IMP_ERR = traceback.format_exc()
     try:
