@@ -32,7 +32,7 @@ Release schedule
 
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.3.0; Ansible-9.0.0 could ship with community.crypto 2.3.1. It would not ship with community.crypto 2.4.0.
 
-.. [2] After this date only changes blocking a release are accepted. Accepted changes require creating a new rc and may slip the final release date.
+.. [2] After this date only changes blocking a release are accepted. Accepted changes require creating a new release candidate and may slip the final release date.
 
 .. [3] Collections will be updated to a new version only if a blocker is approved. Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
