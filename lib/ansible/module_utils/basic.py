@@ -2046,7 +2046,10 @@ class AnsibleModule(object):
             stdout = b''
             stderr = b''
 
-            # Mirror the CPython subprocess logic and preference for the selector to use
+            # Mirror the CPython subprocess logic and preference for the selector to use.
+            # poll/select have the advantage of not requiring any extra file
+            # descriptor, contrarily to epoll/kqueue (also, they require a single
+            # syscall).
             if hasattr(selectors, 'PollSelector'):
                 selector = selectors.PollSelector()
             else:
