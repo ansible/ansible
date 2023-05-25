@@ -26,6 +26,8 @@ attributes:
         platforms: debian
 notes:
     - This module supports Debian Squeeze (version 6) as well as its successors and derivatives.
+seealso:
+  - module: ansible.builtin.deb822_repository
 options:
     repo:
         description:
