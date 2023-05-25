@@ -513,6 +513,8 @@ class Dnf5Module(YumDnf):
         conf.installroot = self.installroot
         conf.use_host_config = True  # needed for installroot
         conf.cacheonly = self.cacheonly
+        if self.download_dir:
+            conf.destdir = self.download_dir
 
         base.setup()
 
@@ -667,7 +669,7 @@ class Dnf5Module(YumDnf):
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
         else:
-            transaction.download(self.download_dir or "")
+            transaction.download()
             if not self.download_only:
                 if not self.disable_gpg_check and not transaction.check_gpg_signatures():
                     self.module.fail_json(

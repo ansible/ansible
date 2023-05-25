@@ -1,0 +1,3 @@
+bugfixes:
+- dnf5 - Update dnf5 module to handle API change for setting the download directory
+  (https://github.com/ansible/ansible/issues/80887)
