@@ -1884,7 +1884,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     username = module.params.get('url_username', '')
     password = module.params.get('url_password', '')
-    http_agent = module.params.get('http_agent', 'ansible-httpget')
+    http_agent = module.params.get('http_agent', get_user_agent())
     force_basic_auth = module.params.get('force_basic_auth', '')
 
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
@@ -2068,3 +2068,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     except Exception as e:
         module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
     return fetch_temp_file.name
+
+
+def get_user_agent():
+    """Returns a user agent used by open_url"""
+    return u"ansible-httpget"
