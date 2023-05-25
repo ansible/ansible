@@ -669,7 +669,10 @@ class Dnf5Module(YumDnf):
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
         else:
-            transaction.download()
+            try:
+                transaction.download(self.download_dir or "")
+            except TypeError:
+                transaction.download()
             if not self.download_only:
                 if not self.disable_gpg_check and not transaction.check_gpg_signatures():
                     self.module.fail_json(
