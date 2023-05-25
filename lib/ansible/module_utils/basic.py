@@ -1857,7 +1857,7 @@ class AnsibleModule(object):
         that of CPython subprocess.Popen.communicate, in that this method will
         stop reading once the spawned command has exited and stdout and stderr
         have been consumed, as opposed to waiting until stdout/stderr are
-        closed. This can be an important destinction, when taken into account
+        closed. This can be an important distinction, when taken into account
         that a forked or backgrounded process may hold stdout or stderr open
         for longer than the spawned command.
 
@@ -1914,7 +1914,7 @@ class AnsibleModule(object):
         :kw handle_exceptions: This flag indicates whether an exception will
             be handled inline and issue a failed_json or if the caller should
             handle it.
-        :kw bufsize: This corresponding argument to the open() function when
+        :kw bufsize: The buffer size passed to the open() function when
             creating the stdin/stdout/stderr pipe file objects.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
