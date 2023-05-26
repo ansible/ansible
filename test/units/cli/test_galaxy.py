@@ -291,7 +291,7 @@ class ValidRoleTests(object):
             cls.role_skeleton_path = gc.galaxy.default_role_skeleton_path
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownRole(cls):
         shutil.rmtree(cls.test_dir, ignore_errors=True)
 
     def test_metadata(self):
@@ -342,6 +342,10 @@ class TestGalaxyInitDefault(unittest.TestCase, ValidRoleTests):
     def setUpClass(cls):
         cls.setUpRole(role_name='delete_me')
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
+
     def test_metadata_contents(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
             metadata = yaml.safe_load(mf)
@@ -353,6 +357,10 @@ class TestGalaxyInitAPB(unittest.TestCase, ValidRoleTests):
     @classmethod
     def setUpClass(cls):
         cls.setUpRole('delete_me_apb', galaxy_args=['--type=apb'])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
 
     def test_metadata_apb_tag(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
@@ -384,6 +392,10 @@ class TestGalaxyInitContainer(unittest.TestCase, ValidRoleTests):
     def setUpClass(cls):
         cls.setUpRole('delete_me_container', galaxy_args=['--type=container'])
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
+
     def test_metadata_container_tag(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
             metadata = yaml.safe_load(mf)
@@ -414,6 +426,10 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
     def setUpClass(cls):
         role_skeleton_path = os.path.join(os.path.split(__file__)[0], 'test_data', 'role_skeleton')
         cls.setUpRole('delete_me_skeleton', skeleton_path=role_skeleton_path, use_explicit_type=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
 
     def test_empty_files_dir(self):
         files_dir = os.path.join(self.role_dir, 'files')
