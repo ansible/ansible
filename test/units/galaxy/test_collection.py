@@ -457,19 +457,19 @@ def test_build_with_existing_files_and_manifest(collection_input):
     with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
-        manifest_file = next(m for m in members if m.path == "MANIFEST.json")
+        manifest_file = [m for m in members if m.path == "MANIFEST.json"][0]
         manifest_file_obj = actual.extractfile(manifest_file.name)
         manifest_file_text = manifest_file_obj.read()
         manifest_file_obj.close()
         assert manifest_file_text != b'{"collection_info": {"version": "6.6.6"}, "version": 1}'
 
-        json_file = next(m for m in members if m.path == "MANIFEST.json")
+        json_file = [m for m in members if m.path == "MANIFEST.json"][0]
         json_file_obj = actual.extractfile(json_file.name)
         json_file_text = json_file_obj.read()
         json_file_obj.close()
         assert json_file_text != b'{"files": [], "format": 1}'
 
-        sub_manifest_file = next(m for m in members if m.path == "plugins/MANIFEST.json")
+        sub_manifest_file = [m for m in members if m.path == "plugins/MANIFEST.json"][0]
         sub_manifest_file_obj = actual.extractfile(sub_manifest_file.name)
         sub_manifest_file_text = sub_manifest_file_obj.read()
         sub_manifest_file_obj.close()
@@ -768,11 +768,11 @@ def test_build_with_symlink_inside_collection(collection_input):
     with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
-        linked_folder = next(m for m in members if m.path == 'playbooks/roles/linked')
+        linked_folder = [m for m in members if m.path == 'playbooks/roles/linked'][0]
         assert linked_folder.type == tarfile.SYMTYPE
         assert linked_folder.linkname == '../../roles/linked'
 
-        linked_file = next(m for m in members if m.path == 'docs/README.md')
+        linked_file = [m for m in members if m.path == 'docs/README.md'][0]
         assert linked_file.type == tarfile.SYMTYPE
         assert linked_file.linkname == '../README.md'
 
