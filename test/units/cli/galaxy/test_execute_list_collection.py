@@ -19,16 +19,6 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.loader import init_plugin_loader
 
 
-def path_exists(path):
-    if to_native(path) == '/root/.ansible/collections/ansible_collections/sandwiches/ham':
-        return False
-    elif to_native(path) == '/usr/share/ansible/collections/ansible_collections/sandwiches/reuben':
-        return False
-    elif to_native(path) == 'nope':
-        return False
-    return True
-
-
 def isdir(path):
     if to_native(path) == 'nope':
         return False
@@ -134,8 +124,6 @@ def test_execute_list_collection_specific(mocker, capsys, mock_from_path, tmp_pa
     cliargs(collection_name=collection_name)
     init_plugin_loader()
 
-    mocker.patch('os.path.exists', path_exists)
-    # mocker.patch.object(pathlib.Path, 'is_dir', return_value=True)
     mocker.patch('ansible.galaxy.collection.validate_collection_name', collection_name)
     mocker.patch('ansible.cli.galaxy._get_collection_widths', return_value=(14, 5))
 
@@ -163,8 +151,6 @@ def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_from_pa
     cliargs(collection_name=collection_name)
     init_plugin_loader()
 
-    mocker.patch('os.path.exists', path_exists)
-    # mocker.patch.object(pathlib.Path, 'is_dir', return_value=True)
     mocker.patch('ansible.galaxy.collection.validate_collection_name', collection_name)
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', collection_name])
