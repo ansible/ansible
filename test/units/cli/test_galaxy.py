@@ -72,8 +72,7 @@ class TestGalaxy(unittest.TestCase):
 
         # making a temp dir for role installation
         cls.role_path = os.path.join(tempfile.mkdtemp(), "roles")
-        if not os.path.isdir(cls.role_path):
-            os.makedirs(cls.role_path)
+        os.makedirs(cls.role_path)
 
         # creating a tar file name for class data
         cls.role_tar = './delete_me.tar.gz'
