@@ -1250,12 +1250,7 @@ def test_install_implicit_role_with_collections(requirements_file, monkeypatch):
     assert len(mock_role_install.call_args[0][0]) == 1
     assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains collections which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert not found
+    assert not any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1282,12 +1277,7 @@ def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
     assert len(mock_role_install.call_args[0][0]) == 1
     assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains collections which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert found
+    assert any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1314,12 +1304,7 @@ def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
     assert len(mock_role_install.call_args[0][0]) == 1
     assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains collections which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert found
+    assert any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1346,9 +1331,4 @@ def test_install_collection_with_roles(requirements_file, monkeypatch):
 
     assert mock_role_install.call_count == 0
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains roles which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert found
+    assert any(list('contains roles which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
