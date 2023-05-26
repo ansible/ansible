@@ -2436,3 +2436,68 @@
       loop:
         - '{{ src }}'
         - '{{ src }}_dest'
+
+# Test a new exclude function
+# Issue: https://github.com/ansible/ansible/issues/80208
+
+- name: Test recursive copy of dir with exclude parameter
+  block:
+    - name: Copy directory
+      copy:
+        src: '{{ role_path }}/files-exclude/'
+        dest: '{{ local_temp_dir }}/exclude/'
+        excludes:
+          - '.excludedir'
+          - '*.log'
+      register: copy_result
+
+    - name: stat each file and dir that should exist
+      stat:
+        path: '{{ item }}'
+      register: stat_result
+      loop:
+        - '{{ local_temp_dir }}/exclude/foo.txt'
+        - '{{ local_temp_dir }}/exclude/subdir'
+        - '{{ local_temp_dir }}/exclude/subdir/bar.txt'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir1/empty.txt'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir2'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir2/baz.txt'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir2/subdir3'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir2/subdir3/subdir4'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir2/subdir3/subdir4/qux.txt'
+
+    - name: stat each file and dir that should NOT exist
+      stat:
+        path: '{{ item }}'
+      register: stat_negative_result
+      loop:
+        - '{{ local_temp_dir }}/exclude/.excludedir'
+        - '{{ local_temp_dir }}/exclude/.excludedir/unnecessary.txt'
+        - '{{ local_temp_dir }}/exclude/subdir/logfile.log'
+        - '{{ local_temp_dir }}/exclude/subdir/logfile.log'
+        - '{{ local_temp_dir }}/exclude/subdir/subdir2/subdir3/another.log'
+
+    - assert:
+        that:
+          - copy_result is changed
+          # all paths exist while excluded do not
+          - stat_result.results | map(attribute='stat') | map(attribute='exists') | unique == [true]
+          - not stat_negative_result.results | map(attribute='stat') | map(attribute='exists') | unique == [true]
+
+    - name: Copy directory again to verify that result is not changed
+      copy:
+        src: '{{ role_path }}/files-exclude/'
+        dest: '{{ local_temp_dir }}/exclude/'
+        excludes:
+          - '.excludedir'
+          - '*.log'
+      register: copy_result
+
+    - assert:
+        that:
+          - copy_result is not changed
+
+    - name: clean up src and dest
+      file:
+        path: '{{ local_temp_dir }}/exclude/'
+        state: absent

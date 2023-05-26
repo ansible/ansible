@@ -18,6 +18,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import json
@@ -26,6 +27,9 @@ import os.path
 import stat
 import tempfile
 import traceback
+import re
+import ast
+from fnmatch import fnmatch
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
@@ -35,11 +39,10 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
-
 # Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
 REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
-                          ('state', 'path', '_original_basename', 'recurse', 'force',
-                           '_diff_peek', 'src'))
+    ('state', 'path', '_original_basename', 'recurse', 'force',
+     '_diff_peek', 'src'))
 
 
 def _create_remote_file_args(module_args):
@@ -201,8 +204,28 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
     return r_files
 
 
-class ActionModule(ActionBase):
+def _check_if_excluded(basename, excludes, excludes_regex):
+    """
+    Function to check if file or directory name match any exclude patterns or do not match any include patterns
+    https://github.com/ansible/ansible/issues/80208
+    """
+    excludes = ast.literal_eval(str(excludes))
+    if not basename:
+        return False
+    filename_chunks = os.path.normpath(basename).split(os.sep)
+    for exclusion_pattern in excludes:
+        for chunk in filename_chunks:
+            match = False
+            if excludes_regex:
+                match = re.compile(exclusion_pattern).match(chunk)
+            else:
+                match = fnmatch(chunk, exclusion_pattern)
+            if match:
+                return 'file {} excluded by pattern "{}"'.format(basename, exclusion_pattern)
+    return False
 
+
+class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def _ensure_invocation(self, result):
@@ -338,7 +361,8 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
-            module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args,
+                                                 task_vars=task_vars)
 
         else:
             # no need to transfer the file, already correct hash, but still need to call
@@ -377,7 +401,8 @@ class ActionModule(ActionBase):
                 new_module_args['mode'] = lmode
 
             # Execute the file module.
-            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args,
+                                                 task_vars=task_vars)
 
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
@@ -416,6 +441,8 @@ class ActionModule(ActionBase):
         dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
+        excludes = self._task.args.get('excludes', None)
+        excludes_regex = self._task.args.get('excludes_regex', None)
 
         result['failed'] = True
         if not source and content is None:
@@ -496,6 +523,7 @@ class ActionModule(ActionBase):
             source_files['files'] = [(source, os.path.basename(source))]
 
         changed = False
+        excluded = list()
         module_return = dict(changed=False)
 
         # A register for if we executed a module.
@@ -506,9 +534,17 @@ class ActionModule(ActionBase):
         dest = self._remote_expand_user(dest)
 
         implicit_directories = set()
+
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
+            # Check if file is excluded or in excluded dir
+            if excludes:
+                exclude = _check_if_excluded(basename=source_rel, excludes=excludes, excludes_regex=excludes_regex)
+                if exclude:
+                    if not source_rel in excluded:
+                        excluded.append(source_rel)
+                    continue
 
             # We only follow symlinks for files in the non-recursive case
             if source_files['directories']:
@@ -540,6 +576,14 @@ class ActionModule(ActionBase):
             if dest_path in implicit_directories:
                 continue
 
+            # Check if dir is excluded
+            if excludes:
+                exclude = _check_if_excluded(basename=dest_path, excludes=excludes, excludes_regex=excludes_regex)
+                if exclude:
+                    if not dest_path in excluded:
+                        excluded.append(dest_path)
+                    continue
+
             # Use file module to create these
             new_module_args = _create_remote_file_args(self._task.args)
             new_module_args['path'] = os.path.join(dest, dest_path)
@@ -548,7 +592,8 @@ class ActionModule(ActionBase):
             new_module_args['recurse'] = False
             del new_module_args['src']
 
-            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args,
+                                                 task_vars=task_vars)
 
             if module_return.get('failed'):
                 result.update(module_return)
@@ -574,7 +619,8 @@ class ActionModule(ActionBase):
             if new_module_args.get('mode', None) == 'preserve':
                 new_module_args.pop('mode')
 
-            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args,
+                                                 task_vars=task_vars)
             module_executed = True
 
             if module_return.get('failed'):
@@ -591,7 +637,7 @@ class ActionModule(ActionBase):
             if 'path' in result and 'dest' not in result:
                 result['dest'] = result['path']
         else:
-            result.update(dict(dest=dest, src=source, changed=changed))
+            result.update(dict(dest=dest, src=source, changed=changed, excluded=excluded))
 
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)

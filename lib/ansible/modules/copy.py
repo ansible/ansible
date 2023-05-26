@@ -114,6 +114,19 @@ options:
     - If this is not provided, ansible will use the local calculated checksum of the src file.
     type: str
     version_added: '2.5'
+  excludes:
+    description:
+    - One or more (shell or regex) patterns, which type is controlled by I(excludes_regex) option.
+    - Items whose file or directory names match an I(excludes) pattern are ignored. Multiple patterns can be specified using a list.
+    type: list
+    aliases: [ exclude ]
+    elements: str  
+  excludes_regex:
+    description:
+    - If C(false), the exclude patterns are file globs (shell).
+    - If C(true), they are python regexes.
+    type: bool
+    default: no
 extends_documentation_fragment:
     - decrypt
     - files
@@ -216,6 +229,14 @@ EXAMPLES = r'''
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no
+
+- name: The excludes option is available not to copy some directories and files 
+  ansible.builtin.copy:
+    src: /source/directory
+    dest: /destination/directory
+    excludes:
+    - ".git"
+    - "*.log"  
 '''
 
 RETURN = r'''
@@ -229,6 +250,13 @@ src:
     returned: changed
     type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
+excluded:
+    description: List of files and directories excluded by pattern set with I(excluded) parameter.
+    returned: success
+    type: list
+    sample:
+    - files-exclude/subdir/logfile.log
+    - files-exclude/subdir/subdir2/subdir3/another.log
 md5sum:
     description: MD5 checksum of the file after running copy.
     returned: when supported
@@ -536,6 +564,8 @@ def main():
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True),
             validate=dict(type='str'),
+            excludes=dict(type='list', aliases=['exclude'], elements='str', default=[]),
+            excludes_regex=dict(type='bool', default=False),
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
