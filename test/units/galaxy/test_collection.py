@@ -171,28 +171,6 @@ def manifest_info(manifest_template):
 
 
 @pytest.fixture()
-def files_manifest_info():
-    return {
-        "files": [
-            {
-                "name": ".",
-                "ftype": "dir",
-                "chksum_type": None,
-                "chksum_sha256": None,
-                "format": 1
-            },
-            {
-                "name": "README.md",
-                "ftype": "file",
-                "chksum_type": "sha256",
-                "chksum_sha256": "individual_file_checksum",
-                "format": 1
-            }
-        ],
-        "format": 1}
-
-
-@pytest.fixture()
 def manifest(manifest_info):
     b_data = to_bytes(json.dumps(manifest_info))
 
