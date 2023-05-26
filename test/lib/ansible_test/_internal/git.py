@@ -99,7 +99,7 @@ class Git:
         :type branch: str
         :rtype: str
         """
-        cmd = ['merge-base', '--fork-point', branch]
+        cmd = ['merge-base', branch, 'HEAD']
         return self.run_git(cmd).strip()
 
     def is_valid_ref(self, ref):
