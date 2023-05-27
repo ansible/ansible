@@ -67,4 +67,4 @@ def test_invalid_strings_with_exceptions(am, code, expected, exception):
     if exception is None:
         assert res[1] == exception
     else:
-        assert type(res[1]) == exception
+        assert isinstance(res[1], exception)
