@@ -30,7 +30,7 @@ class DictDataLoader(DataLoader):
 
     def __init__(self, file_mapping=None):
         file_mapping = {} if file_mapping is None else file_mapping
-        assert type(file_mapping) == dict
+        assert isinstance(file_mapping, dict)
 
         super(DictDataLoader, self).__init__()
 
