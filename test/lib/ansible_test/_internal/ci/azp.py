@@ -70,7 +70,7 @@ class AzurePipelines(CIProvider):
                 os.environ['SYSTEM_JOBIDENTIFIER'],
             )
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         return prefix
 
@@ -121,7 +121,7 @@ class AzurePipelines(CIProvider):
                 task_id=str(uuid.UUID(os.environ['SYSTEM_TASKINSTANCEID'])),
             )
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         self.auth.sign_request(request)
 
@@ -154,7 +154,7 @@ class AzurePipelinesAuthHelper(CryptographyAuthHelper):
         try:
             agent_temp_directory = os.environ['AGENT_TEMPDIRECTORY']
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         # the temporary file cannot be deleted because we do not know when the agent has processed it
         # placing the file in the agent's temp directory allows it to be picked up when the job is running in a container
@@ -181,7 +181,7 @@ class AzurePipelinesChanges:
             self.source_branch_name = os.environ['BUILD_SOURCEBRANCHNAME']
             self.pr_branch_name = os.environ.get('SYSTEM_PULLREQUEST_TARGETBRANCH')
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         if self.source_branch.startswith('refs/tags/'):
             raise ChangeDetectionNotSupported('Change detection is not supported for tags.')

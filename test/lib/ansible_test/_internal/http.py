@@ -126,7 +126,7 @@ class HttpResponse:
         try:
             return json.loads(self.response)
         except ValueError:
-            raise HttpError(self.status_code, 'Cannot parse response to %s %s as JSON:\n%s' % (self.method, self.url, self.response))
+            raise HttpError(self.status_code, 'Cannot parse response to %s %s as JSON:\n%s' % (self.method, self.url, self.response)) from None
 
 
 class HttpError(ApplicationError):
