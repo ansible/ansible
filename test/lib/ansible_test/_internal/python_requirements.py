@@ -290,7 +290,7 @@ def run_pip(
                 connection.run([python.path], data=script, capture=True)
             except SubprocessError as ex:
                 if 'pip is unavailable:' in ex.stdout + ex.stderr:
-                    raise PipUnavailableError(python)
+                    raise PipUnavailableError(python) from None
 
             raise
 

@@ -143,7 +143,7 @@ class DiffParser:
                     traceback.format_exc(),
                 )
 
-                raise ApplicationError(message.strip())
+                raise ApplicationError(message.strip()) from None
 
             self.previous_line = self.line
 
