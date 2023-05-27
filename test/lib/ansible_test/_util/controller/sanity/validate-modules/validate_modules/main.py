@@ -94,7 +94,6 @@ REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 
@@ -440,21 +439,6 @@ class ModuleValidator(Validator):
                 code='missing-python-interpreter',
                 msg='Interpreter line is not "#!/usr/bin/python"',
             )
-
-    def _check_type_instead_of_isinstance(self, powershell=False):
-        if powershell:
-            return
-        for line_no, line in enumerate(self.text.splitlines()):
-            typekeyword = TYPE_REGEX.match(line)
-            if typekeyword:
-                # TODO: add column
-                self.reporter.error(
-                    path=self.object_path,
-                    code='unidiomatic-typecheck',
-                    msg=('Type comparison using type() found. '
-                         'Use isinstance() instead'),
-                    line=line_no + 1
-                )
 
     def _check_for_sys_exit(self):
         # Optimize out the happy path
@@ -2377,9 +2361,6 @@ class ModuleValidator(Validator):
         if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only:
             if self.plugin_type == 'module':
                 self._check_interpreter(powershell=self._powershell_module())
-            self._check_type_instead_of_isinstance(
-                powershell=self._powershell_module()
-            )
 
 
 class PythonPackageValidator(Validator):
