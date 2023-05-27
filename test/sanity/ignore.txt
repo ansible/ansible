@@ -57,6 +57,7 @@ lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends o
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
@@ -75,6 +76,7 @@ lib/ansible/module_utils/pycompat24.py no-get-exception
 lib/ansible/module_utils/six/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
+lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
