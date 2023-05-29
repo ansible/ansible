@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Upload code coverage reports to codecov.io.
 Multiple coverage files from multiple languages are accepted and aggregated after upload.

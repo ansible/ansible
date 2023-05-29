@@ -272,6 +272,8 @@ def get_injector_path() -> str:
 
     scripts = (
         ('python.py', '/usr/bin/env python', MODE_FILE_EXECUTE),
+        ('python2.py', '/usr/bin/env python2', MODE_FILE_EXECUTE),
+        ('python3.py', '/usr/bin/env python3', MODE_FILE_EXECUTE),
         ('virtualenv.sh', '/usr/bin/env bash', MODE_FILE),
     )
 

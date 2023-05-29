@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright: (c) 2014, Nandor Sivok <dominis@haxor.hu>
 # Copyright: (c) 2016, Redhat Inc
 # Copyright: (c) 2018, Ansible Project

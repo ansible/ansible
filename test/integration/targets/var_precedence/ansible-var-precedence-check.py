@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # A tool to check the order of precedence for ansible variables
 # https://github.com/ansible/ansible/blob/devel/test/integration/test_var_precedence.yml

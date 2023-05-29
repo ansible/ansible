@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Test suite used to verify ansible-test is able to run its containers on various container hosts."""
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #

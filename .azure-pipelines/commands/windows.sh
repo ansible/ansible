@@ -15,10 +15,10 @@ provider="${P:-default}"
 
 # python versions to test in order
 IFS=' ' read -r -a python_versions <<< \
-    "$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import constants; print(" ".join(constants.CONTROLLER_PYTHON_VERSIONS))')"
+    "$(PYTHONPATH="${PWD}/test/lib" python3 -c 'from ansible_test._internal import constants; print(" ".join(constants.CONTROLLER_PYTHON_VERSIONS))')"
 
 # python version to run full tests on while other versions run minimal tests
-python_default="$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import constants; print(constants.CONTROLLER_MIN_PYTHON_VERSION)')"
+python_default="$(PYTHONPATH="${PWD}/test/lib" python3 -c 'from ansible_test._internal import constants; print(constants.CONTROLLER_MIN_PYTHON_VERSION)')"
 
 # version to test when only testing a single version
 single_version=2022

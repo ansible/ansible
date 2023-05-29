@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Rewrite a sanity ignore file to expand Python versions for import ignores and write the file out with the correct Ansible version in the name."""
 
 import os

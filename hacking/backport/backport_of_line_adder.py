@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # (c) 2020, Red Hat, Inc. <relrod@redhat.com>
 #
 # This file is part of Ansible

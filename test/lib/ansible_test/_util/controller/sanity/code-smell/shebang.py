@@ -17,6 +17,7 @@ def main():
         b'#!/usr/bin/env fish',
         b'#!/usr/bin/env pwsh',
         b'#!/usr/bin/env python',
+        b'#!/usr/bin/env python3',
         b'#!/usr/bin/make -f',
     ])
 
@@ -24,6 +25,7 @@ def main():
         b'#!/bin/sh',
         b'#!/usr/bin/env bash',
         b'#!/usr/bin/env python',
+        b'#!/usr/bin/env python3',
     ])
 
     module_shebangs = {

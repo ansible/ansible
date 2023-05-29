@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # To run this script, first make webdocs in the toplevel of the checkout.  This will generate all
 # rst files from their sources.  Then run this script ./docs/bin/find-plugin-refs.py
