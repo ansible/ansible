@@ -63,7 +63,7 @@ def ensure_type(value, value_type, origin=None):
         :temppath: Same as 'tmppath'
         :tmp: Same as 'tmppath'
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
-            means colon separated strings.)  Split the value and then expand
+            means comma separated strings.)  Split the value and then expand
             each part for environment variables and tildes.
         :pathspec: Treat the value as a PATH string. Expands any environment variables
             tildes's in the value.
