@@ -347,6 +347,7 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
+libdnf5_version = None
 
 
 def is_installed(base, spec):
@@ -418,11 +419,15 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
+        global libdnf5_version
         has_dnf = True
         try:
             import libdnf5  # type: ignore[import]
         except ImportError:
             has_dnf = False
+        else:
+            lib_ver = libdnf5.conf.get_library_version()
+            libdnf5_version = (lib_ver.major, lib_ver.minor, lib_ver.micro)
 
         if has_dnf:
             return
@@ -669,10 +674,10 @@ class Dnf5Module(YumDnf):
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
         else:
-            try:
-                transaction.download(self.download_dir or "")
-            except TypeError:
-                transaction.download()
+            download_args = []
+            if libdnf5_version < (5, 0, 12):
+                download_args.append(self.download_dir or "")
+            transaction.download(*download_args)
             if not self.download_only:
                 if not self.disable_gpg_check and not transaction.check_gpg_signatures():
                     self.module.fail_json(
