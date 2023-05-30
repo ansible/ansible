@@ -8,7 +8,7 @@ DOCUMENTATION:
     - If multiple YAML documents are not supplied, this is the equivalend of using C(from_yaml).
   notes:
     - This filter functions as a wrapper to the Python C(yaml.safe_load_all) function, part of the L(pyyaml Python library, https://pypi.org/project/PyYAML/).
-    - Possible conflicts in variable names from the mulitple documents are resolved directly by the pyyaml library.
+    - Possible conflicts in variable names from the multiple documents are resolved directly by the pyyaml library.
   options:
     _input:
       description: A YAML string.
