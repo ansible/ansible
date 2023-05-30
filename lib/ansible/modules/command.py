@@ -161,6 +161,17 @@ EXAMPLES = r'''
       - dbname with whitespace
     creates: /path/to/database
 
+- name: Run command using argv with mixed argument formats
+  ansible.builtin.command:
+    argv:
+      - /path/to/binary
+      - -v
+      - --debug
+      - --longopt
+      - value for longopt
+      - --other-longopt=value for other longopt
+      - positional
+
 - name: Safely use templated variable to run command. Always use the quote filter to avoid injection issues
   ansible.builtin.command: cat {{ myfile|quote }}
   register: myoutput
