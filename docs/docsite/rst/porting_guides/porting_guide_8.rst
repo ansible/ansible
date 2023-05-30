@@ -94,23 +94,78 @@ Networking
 
 No notable changes
 
-Porting Guide for v8.0.0rc1
-===========================
+Porting Guide for v8.0.0
+========================
+
+Added Collections
+-----------------
+
+- dellemc.powerflex (version 1.6.0)
+- dellemc.unity (version 1.6.0)
+- grafana.grafana (version 2.0.0)
+- microsoft.ad (version 1.1.0)
+- servicenow.servicenow (version 1.0.6)
 
 Known Issues
 ------------
 
+Ansible-core
+~~~~~~~~~~~~
+
+- ansible-test - Additional configuration may be required for certain container host and container combinations. Further details are available in the testing documentation.
+- ansible-test - Custom containers with ``VOLUME`` instructions may be unable to start, when previously the containers started correctly. Remove the ``VOLUME`` instructions to resolve the issue. Containers with this condition will cause ``ansible-test`` to emit a warning.
+- ansible-test - Systems with Podman networking issues may be unable to run containers, when previously the issue went unreported. Correct the networking issues to continue using ``ansible-test`` with Podman.
+- ansible-test - Unit tests for collections do not support ``pytest`` assertion rewriting on Python 2.7.
+- ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode. Podman should work with SELinux in enforcing mode.
+- dnf5 - The DNF5 package manager currently does not provide all functionality to ensure feature parity between the existing ``dnf`` and the new ``dnf5`` module. As a result the following ``dnf5`` options are effectively a no-op: ``cacheonly``, ``enable_plugin``, ``disable_plugin`` and ``lock_timeout``.
+
+cisco.meraki
+~~~~~~~~~~~~
+
+- meraki_network - Updated documentation for `local_status_page_enabled` and `remote_status_page_enabled` as these no longer work.
+
 community.docker
 ~~~~~~~~~~~~~~~~
 
+- The modules and plugins using the vendored code from Docker SDK for Python currently do not work with requests 2.29.0 and/or urllib3 2.0.0. The same is currently true for the latest version of Docker SDK for Python itself (https://github.com/ansible-collections/community.docker/issues/611, https://github.com/ansible-collections/community.docker/pull/612).
 - docker_api connection plugin - does **not work with TCP TLS sockets**! This is caused by the inability to send an ``close_notify`` TLS alert without closing the connection with Python's ``SSLSocket`` (https://github.com/ansible-collections/community.docker/issues/605, https://github.com/ansible-collections/community.docker/pull/621).
 - docker_container_exec - does **not work with TCP TLS sockets** when the ``stdin`` option is used! This is caused by the inability to send an ``close_notify`` TLS alert without closing the connection with Python's ``SSLSocket`` (https://github.com/ansible-collections/community.docker/issues/605, https://github.com/ansible-collections/community.docker/pull/621).
 
-Porting Guide for v8.0.0b1
-==========================
+community.routeros
+~~~~~~~~~~~~~~~~~~
+
+- api_modify - when limits for entries in ``queue tree`` are defined as human readable - for example ``25M`` -, the configuration will be correctly set in ROS, but the module will indicate the item is changed on every run even when there was no change done. This is caused by the ROS API which returns the number in bytes - for example ``25000000`` (which is inconsistent with the CLI behavior). In order to mitigate that, the limits have to be defined in bytes (those will still appear as human readable in the ROS CLI) (https://github.com/ansible-collections/community.routeros/pull/131).
+- api_modify, api_info - ``routing ospf area``, ``routing ospf area range``, ``routing ospf instance``, ``routing ospf interface-template`` paths are not fully implemeted for ROS6 due to the significat changes between ROS6 and ROS7 (https://github.com/ansible-collections/community.routeros/pull/131).
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_firmware - Issue(249879) - Firmware update of iDRAC9-based Servers fails if SOCKS proxy with authentication is used.
+- idrac_os_deployment- Issue(260496) - OS installation will support only NFS and CIFS share to store the custom ISO in the destination_path, HTTP/HTTPS/FTP not supported
+- idrac_redfish_storage_contoller - Issue(256164) - If incorrect value is provided for one of the attributes in the provided attribute list for controller configuration, then this module does not exit with error.
+- idrac_user - Issue(192043) The module may error out with the message ``Unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- idrac_user - Issue(192043) The module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_application_alerts_syslog - Issue(215374) - The module does not provide a proper error message if the destination_address is more than 255 characters.
+- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the following parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
+- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
+- ome_device_power_settings - Issue(212679) - The module displays the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not exist or is not applicable for the resource URI.``
+- ome_inventory - Issue(256257) - All hosts are not retrieved for ``Modular System`` group and corresponding child groups.
+- ome_inventory - Issue(256589) - All hosts are not retrieved for ``Custom Groups`` group and corresponding child groups.
+- ome_inventory - Issue(256593) - All hosts are not retrieved for ``PLUGIN GROUPS`` group and corresponding child groups.
+- ome_smart_fabric_uplink - Issue(186024) - Despite the module supported by OpenManage Enterprise Modular, it does not allow the creation of multiple uplinks of the same name. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+- ome_smart_fabric_uplink - Issue(186024) - The module does not allow the creation of multiple uplinks of the same name even though it is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
 
 Breaking Changes
 ----------------
+
+Ansible-core
+~~~~~~~~~~~~
+
+- ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated (https://github.com/ansible/ansible/pull/79362).
+- ansible-test - Integration tests which depend on specific file permissions when running in an ansible-test managed host environment may require changes. Tests that require permissions other than ``755`` or ``644`` may need to be updated to set the necessary permissions as part of the test run.
+- ansible-test - The ``vcenter`` test plugin now defaults to using a user-provided static configuration instead of the ``govcsim`` simulator for collections. Set the ``ANSIBLE_VCSIM_CONTAINER`` environment variable to ``govcsim`` to use the simulator. Keep in mind that the simulator is deprecated and will be removed in a future release.
+- ansible-test sanity - previously plugins and modules in collections whose name started with ``_`` were treated as deprecated, even when they were not marked as deprecated in ``meta/runtime.yml``. This is no longer the case (https://github.com/ansible/ansible/pull/79362).
+- ansible-test validate-modules - Removed the ``missing-python-doc`` error code in validate modules, ``missing-documentation`` is used instead for missing PowerShell module documentation.
 
 amazon.aws
 ~~~~~~~~~~
@@ -125,6 +180,14 @@ amazon.aws
 - ec2_vpc_net_info - the ``classic_link_dns_status`` return value has been removed. Support for EC2 Classic networking was dropped by AWS (https://github.com/ansible-collections/amazon.aws/pull/1374).
 - ec2_vpc_net_info - the ``classic_link_enabled`` return value has been removed. Support for EC2 Classic networking was dropped by AWS (https://github.com/ansible-collections/amazon.aws/pull/1374).
 - module_utils.cloud - the previously deprecated ``CloudRetry.backoff`` has been removed. Please use ``CloudRetry.exponential_backoff`` or ``CloudRetry.jittered_backoff`` instead (https://github.com/ansible-collections/amazon.aws/issues/1110).
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- NetworkConnectionBase now inherits from PersistentConnectionBase in ansible.utils. As a result, the minimum ansible.utils version has increased to 2.7.0.
+- NetworkTemplate is no longer importable from ansible_collections.ansible.netcommon.plugins.module_utils.network.common and should now be found at its proper location ansible_collections.ansible.netcommon.plugins.module_utils.network.common.rm_base.network_template
+- ResourceModule is no longer importable from ansible_collections.ansible.netcommon.plugins.module_utils.network.common and should now be found at its proper location ansible_collections.ansible.netcommon.plugins.module_utils.network.common.rm_base.resource_module
+- VALID_MASKS, is_masklen, is_netmask, to_bits, to_ipv6_network, to_masklen, to_netmask, and to_subnet are no longer importable from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.utils and should now be found at their proper location ansible.module_utils.common.network
 
 community.aws
 ~~~~~~~~~~~~~
@@ -181,13 +244,101 @@ community.zabbix
 - zabbix_group_facts module - removed in favour of zabbix_group_info
 - zabbix_host_facts module - removed in favour of zabbix_host_info
 
+hetzner.hcloud
+~~~~~~~~~~~~~~
+
+- inventory plugin - Python v3.5+ is now required.
+
+lowlydba.sqlserver
+~~~~~~~~~~~~~~~~~~
+
+- Updating minimum DBATools version to v2.0.0 to allow for pwsh 7.3+ compatibility. There may also be breaking change behavior in DBATools, see https://blog.netnerds.net/2023/03/whats-new-dbatools-2.0/. (https://github.com/lowlydba/lowlydba.sqlserver/pull/181)
+
 Major Changes
 -------------
+
+Ansible-core
+~~~~~~~~~~~~
+
+- ansible-test - Docker Desktop on WSL2 is now supported (additional configuration required).
+- ansible-test - Docker and Podman are now supported on hosts with cgroup v2 unified. Previously only cgroup v1 and cgroup v2 hybrid were supported.
+- ansible-test - Podman now works on container hosts without systemd. Previously only some containers worked, while others required rootfull or rootless Podman, but would not work with both. Some containers did not work at all.
+- ansible-test - Podman on WSL2 is now supported.
+- ansible-test - When additional cgroup setup is required on the container host, this will be automatically detected. Instructions on how to configure the host will be provided in the error message shown.
+
+ansible.windows
+~~~~~~~~~~~~~~~
+
+- Set the minimum Ansible version supported by this collection to Ansible 2.12
+
+chocolatey.chocolatey
+~~~~~~~~~~~~~~~~~~~~~
+
+- win_chocolatey - Allow users to select the TLS versions used for bootstrapping Chocolatey installation.
+
+cisco.iosxr
+~~~~~~~~~~~
+
+- iosxr_l3_interfaces - fix issue in ipv4 address formatting. (https://github.com/ansible-collections/cisco.iosxr/issues/311).
+
+cisco.meraki
+~~~~~~~~~~~~
+
+- meraki_mr_l7_firewall - New module
+- meraki_webhook_payload_template - New module
+
+community.hrobot
+~~~~~~~~~~~~~~~~
+
+- firewall - Hetzner added output rules support to the firewall. This change unfortunately means that using old versions of the firewall module will always set the output rule list to empty, thus disallowing the server to send out packets (https://github.com/ansible-collections/community.hrobot/issues/75, https://github.com/ansible-collections/community.hrobot/pull/76).
 
 community.postgresql
 ~~~~~~~~~~~~~~~~~~~~
 
 - postgresql_privs - the ``password`` argument is deprecated and will be removed in community.postgresql 4.0.0, use the ``login_password`` argument instead (https://github.com/ansible-collections/community.postgresql/issues/406).
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- Use true/false (lowercase) for boolean values in documentation and examples (https://github.com/ansible-collections/community.vmware/issues/1660).
+
+community.zabbix
+~~~~~~~~~~~~~~~~
+
+- all modules are opting away from zabbix-api and using httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
+- zabbix_agent and zabbix_proxy roles are opting away from zabbix-api and use httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
+
+containers.podman
+~~~~~~~~~~~~~~~~~
+
+- New become plugin - podman_unshare
+- Podman generate systemd module
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- Rebranded from Dell EMC to Dell.
+- Support for IPv6 address for OMSDK dependent iDRAC modules.
+- idrac_firmware - This module is enhanced to support proxy.
+- idrac_redfish_storage_controller - This module is enhanced to configure controller attributes and online capacity expansion.
+- idrac_server_config_profile - This module is enhanced to support proxy settings, import buffer, include in export, and ignore certificate warning.
+- idrac_user_info - This module allows to retrieve iDRAC Local user information details.
+- ome_domian_user_groups - This module allows to import the LDAP directory groups.
+- ome_inventory - This plugin allows to create a inventory from the group on OpenManage Enterprise.
+- ome_inventory - This plugin is enhanced to support inventory retrieval of System and Plugin Groups of OpenManage Enterprise.
+- ome_profile_info - This module allows to retrieve profiles with attributes on OpenManage Enterprise or OpenManage Enterprise Modular.
+- ome_smart_fabric_info - This module retrieves the list of smart fabrics in the inventory of OpenManage Enterprise Modular.
+- ome_smart_fabric_uplink_info - This module retrieve details of fabric uplink on OpenManage Enterprise Modular.
+- ome_template_network_vlan_info - This module allows to retrieve the network configuration of a template on OpenManage Enterprise or OpenManage Enterprise Modular.
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Add annotations of member operation for every module.
+- Support FortiOS v7.0.6, v7.0.7, v7.0.8, v7.2.1, v7.2.2.
+- Update ``fortios.py`` for higher performance;
+- supports temporary session key and pre/post login banner;
+- update the examples on how to use member operation in Q&A.
 
 infoblox.nios_modules
 ~~~~~~~~~~~~~~~~~~~~~
@@ -200,14 +351,56 @@ infoblox.nios_modules
 - Fixes to Update host name of  NIOS member `#176 <https://github.com/infobloxopen/infoblox-ansible/pull/176>`_
 - Updates default WAPI version to 2.9 `#176 <https://github.com/infobloxopen/infoblox-ansible/pull/176>`_
 
+junipernetworks.junos
+~~~~~~~~~~~~~~~~~~~~~
+
+- change gathered key from junos_acls to acls
+
+kubernetes.core
+~~~~~~~~~~~~~~~
+
+- refactor K8sAnsibleMixin into module_utils/k8s/ (https://github.com/ansible-collections/kubernetes.core/pull/481).
+
+purestorage.fusion
+~~~~~~~~~~~~~~~~~~
+
+- Patching of resource properties was brought to parity with underlying Python SDK
+- fusion_volume - fixed and reorganized, arguments changed
+
+Removed Collections
+-------------------
+
+- dellemc.os10 (previously included version: 1.1.1)
+- dellemc.os6 (previously included version: 1.0.7)
+- dellemc.os9 (previously included version: 1.0.4)
+- mellanox.onyx (previously included version: 1.0.0)
+
 Removed Features
 ----------------
+
+- ``dellemc.os10`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install dellemc.os10``.
+- ``dellemc.os6`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install dellemc.os6``.
+- ``dellemc.os9`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install dellemc.os9``.
+- ``mellanox.onyx`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install mellanox.onyx``.
+
+Ansible-core
+~~~~~~~~~~~~
+
+- Remove deprecated ``ANSIBLE_CALLBACK_WHITELIST`` configuration environment variable, use ``ANSIBLE_CALLBACKS_ENABLED`` instead. (https://github.com/ansible/ansible/issues/78821)
+- Remove deprecated ``ANSIBLE_COW_WHITELIST`` configuration environment variable, use ``ANSIBLE_COW_ACCEPTLIST`` instead. (https://github.com/ansible/ansible/issues/78819)
+- Remove deprecated ``callback_whitelist`` configuration option, use ``callbacks_enabled`` instead. (https://github.com/ansible/ansible/issues/78822)
+- Remove deprecated ``cow_whitelist`` configuration option, use ``cowsay_enabled_stencils`` instead. (https://github.com/ansible/ansible/issues/78820)
 
 amazon.aws
 ~~~~~~~~~~
 
 - ec2_vpc_endpoint_info - support for the ``query`` parameter was removed. The ``amazon.aws.ec2_vpc_endpoint_info`` module now only queries for endpoints. Services can be queried using the ``amazon.aws.ec2_vpc_endpoint_service_info`` module (https://github.com/ansible-collections/amazon.aws/pull/1308).
 - s3_object - support for creating and deleting buckets using the ``s3_object`` module has been removed. S3 buckets can be created and deleted using the ``amazon.aws.s3_bucket`` module (https://github.com/ansible-collections/amazon.aws/issues/1112).
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- cli_parse - This plugin was moved to ansible.utils in version 1.0.0, and the redirect to that collection has now been removed.
 
 community.general
 ~~~~~~~~~~~~~~~~~
@@ -234,6 +427,21 @@ community.zabbix
 Deprecated Features
 -------------------
 
+- The cisco.nso collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/155).
+- The community.fortios collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/162).
+- The community.google collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/160).
+- The community.skydive collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/171).
+- The netapp.aws collection is considered unmaintained and will be removed from Ansible 10 if no one starts maintaining it again before Ansible 10. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/223).
+
+Ansible-core
+~~~~~~~~~~~~
+
+- The ``ConnectionBase()._new_stdin`` attribute is deprecated, use ``display.prompt_until(msg)`` instead.
+- ansible-test - The ``foreman`` test plugin is now deprecated. It will be removed in a future release.
+- ansible-test - The ``govcsim`` simulator in the ``vcenter`` test plugin is now deprecated. It will be removed in a future release. Users should switch to providing their own test environment through a static configuration file.
+- password_hash - deprecate using passlib.hash.hashtype if hashtype isn't in the list of documented choices.
+- vars - Specifying a list of dictionaries for ``vars:`` is deprecated in favor of specifying a dictionary.
+
 amazon.aws
 ~~~~~~~~~~
 
@@ -248,12 +456,50 @@ amazon.aws
 - s3_object - Support for passing ``dualstack`` and ``endpoint_url`` at the same time has been deprecated, the ``dualstack`` parameter is ignored when ``endpoint_url`` is passed. Support will be removed in a release after 2024-12-01 (https://github.com/ansible-collections/amazon.aws/pull/1305).
 - s3_object - Support for passing values of ``overwrite`` other than ``always``, ``never``, ``different`` or last ``last`` has been deprecated.  Boolean values should be replaced by the strings ``always`` or ``never`` Support will be removed in a release after 2024-12-01 (https://github.com/ansible-collections/amazon.aws/pull/1305).
 - s3_object_info - Support for passing ``dualstack`` and ``endpoint_url`` at the same time has been deprecated, the ``dualstack`` parameter is ignored when ``endpoint_url`` is passed. Support will be removed in a release after 2024-12-01 (https://github.com/ansible-collections/amazon.aws/pull/1305).
+- support for passing both profile and security tokens through a mix of environment variables and parameters has been deprecated and support will be removed in release 6.0.0. After release 6.0.0 it will only be possible to pass either a profile or security tokens, regardless of mechanism used to pass them.  To explicitly block a parameter coming from an environment variable pass an empty string as the parameter value.  Support for passing profile and security tokens together was originally deprecated in release 1.2.0, however only partially implemented in release 5.0.0 (https://github.com/ansible-collections/amazon.aws/pull/1355).
+
+check_point.mgmt
+~~~~~~~~~~~~~~~~
+
+- add/set/delete nat-rule modules - will be replaced by the single cp_mgmt_nat_rule module.
+- cp_mgmt_show_task/s modules - will be replaced by the by the single cp_mgmt_task_facts module.
+
+chocolatey.chocolatey
+~~~~~~~~~~~~~~~~~~~~~
+
+- win_chocolatey - Deprecate side-by-side installs.
+
+cisco.ios
+~~~~~~~~~
+
+- ios_bgp_address_family - deprecate neighbors.address/tag/ipv6_adddress with neighbor_address which enables common attributes for facts rendering
+- ios_bgp_address_family - deprecate neighbors.password with password_options which allows encryption and password
+- ios_bgp_address_family - deprecate redistribute.ospf.match.external with redistribute.ospf.match.externals which enables attributes for OSPF type E1 and E2 routes
+- ios_bgp_address_family - deprecate redistribute.ospf.match.nssa_external with redistribute.ospf.match.nssa_externals which enables attributes for OSPF type N1 and N2 routes
+- ios_bgp_address_family - deprecate redistribute.ospf.match.type_1 with redistribute.ospf.match.nssa_externals.type_1
+- ios_bgp_address_family - deprecate redistribute.ospf.match.type_2 with redistribute.ospf.match.nssa_externals.type_2
+- ios_bgp_address_family - deprecate slow_peer with slow_peer_options which supports a dict attribute
 
 community.aws
 ~~~~~~~~~~~~~
 
 - community.aws collection - due to the AWS SDKs Python support policies (https://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/) support for Python less than 3.8 by this collection is expected to be removed in a release after 2024-12-01 (https://github.com/ansible-collections/community.aws/pull/1743).
 - community.aws collection - due to the AWS SDKs announcing the end of support for Python less than 3.7 (https://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/) support for Python less than 3.7 by this collection has been deprecated and will be removed in release 7.0.0. (https://github.com/ansible-collections/community.aws/pull/1743).
+- ecs_service -  In a release after 2024-06-01, tha default value of ``purge_placement_constraints`` will be change from ``false`` to ``true`` (https://github.com/ansible-collections/community.aws/pull/1716).
+- ecs_service -  In a release after 2024-06-01, tha default value of ``purge_placement_strategy`` will be change from ``false`` to ``true`` (https://github.com/ansible-collections/community.aws/pull/1716).
+- iam_role - All top level return values other than ``iam_role`` and ``changed`` have been deprecated and will be removed in a release after 2023-12-01 (https://github.com/ansible-collections/community.aws/issues/551).
+- iam_role - In a release after 2023-12-01 the contents of ``assume_role_policy_document`` will no longer be converted from CamelCase to snake_case.  The ``assume_role_policy_document_raw`` return value already returns the policy document in this future format (https://github.com/ansible-collections/community.aws/issues/551).
+- iam_role_info - In a release after 2023-12-01 the contents of ``assume_role_policy_document`` will no longer be converted from CamelCase to snake_case.  The ``assume_role_policy_document_raw`` return value already returns the policy document in this future format (https://github.com/ansible-collections/community.aws/issues/551).
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- x509_crl - the ``mode`` option is deprecated; use ``crl_mode`` instead. The ``mode`` option will change its meaning in community.crypto 3.0.0, and will refer to the CRL file's mode instead (https://github.com/ansible-collections/community.crypto/issues/596).
+
+community.dns
+~~~~~~~~~~~~~
+
+- The default of the newly added option ``txt_character_encoding`` will change from ``octal`` to ``decimal`` in community.dns 3.0.0. The new default will be compatible with `RFC 1035 <https://www.ietf.org/rfc/rfc1035.txt>`__ (https://github.com/ansible-collections/community.dns/pull/134).
 
 community.general
 ~~~~~~~~~~~~~~~~~
@@ -299,320 +545,6 @@ community.general
   in case there are no reports about being still useful, and potentially
   noone that steps up to maintain them
   (https://github.com/ansible-collections/community.general/pull/6493).
-
-Porting Guide for v8.0.0a3
-==========================
-
-Known Issues
-------------
-
-community.docker
-~~~~~~~~~~~~~~~~
-
-- The modules and plugins using the vendored code from Docker SDK for Python currently do not work with requests 2.29.0 and/or urllib3 2.0.0. The same is currently true for the latest version of Docker SDK for Python itself (https://github.com/ansible-collections/community.docker/issues/611, https://github.com/ansible-collections/community.docker/pull/612).
-
-Breaking Changes
-----------------
-
-lowlydba.sqlserver
-~~~~~~~~~~~~~~~~~~
-
-- Updating minimum DBATools version to v2.0.0 to allow for pwsh 7.3+ compatibility. There may also be breaking change behavior in DBATools, see https://blog.netnerds.net/2023/03/whats-new-dbatools-2.0/. (https://github.com/lowlydba/lowlydba.sqlserver/pull/181)
-
-Deprecated Features
--------------------
-
-community.crypto
-~~~~~~~~~~~~~~~~
-
-- x509_crl - the ``mode`` option is deprecated; use ``crl_mode`` instead. The ``mode`` option will change its meaning in community.crypto 3.0.0, and will refer to the CRL file's mode instead (https://github.com/ansible-collections/community.crypto/issues/596).
-
-Porting Guide for v8.0.0a2
-==========================
-
-Known Issues
-------------
-
-dellemc.openmanage
-~~~~~~~~~~~~~~~~~~
-
-- idrac_os_deployment- Issue(260496) - OS installation will support only NFS and CIFS share to store the custom ISO in the destination_path, HTTP/HTTPS/FTP not supported
-- idrac_redfish_storage_contoller - Issue(256164) - If incorrect value is provided for one of the attributes in the provided attribute list for controller configuration, then this module does not exit with error.
-- idrac_user - Issue(192043) The module may error out with the message ``Unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
-- ome_application_alerts_syslog - Issue(215374) - The module does not provide a proper error message if the destination_address is more than 255 characters.
-- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the following parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
-- ome_device_power_settings - Issue(212679) - The module displays the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not exist or is not applicable for the resource URI.``
-- ome_smart_fabric_uplink - Issue(186024) - Despite the module supported by OpenManage Enterprise Modular, it does not allow the creation of multiple uplinks of the same name. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
-
-Deprecated Features
--------------------
-
-check_point.mgmt
-~~~~~~~~~~~~~~~~
-
-- add/set/delete nat-rule modules - will be replaced by the single cp_mgmt_nat_rule module.
-- cp_mgmt_show_task/s modules - will be replaced by the by the single cp_mgmt_task_facts module.
-
-cisco.ios
-~~~~~~~~~
-
-- ios_bgp_address_family - deprecate redistribute.ospf.match.external with redistribute.ospf.match.externals which enables attributes for OSPF type E1 and E2 routes
-- ios_bgp_address_family - deprecate redistribute.ospf.match.nssa_external with redistribute.ospf.match.nssa_externals which enables attributes for OSPF type N1 and N2 routes
-- ios_bgp_address_family - deprecate redistribute.ospf.match.type_1 with redistribute.ospf.match.nssa_externals.type_1
-- ios_bgp_address_family - deprecate redistribute.ospf.match.type_2 with redistribute.ospf.match.nssa_externals.type_2
-
-Porting Guide for v8.0.0a1
-==========================
-
-Added Collections
------------------
-
-- dellemc.powerflex (version 1.6.0)
-- dellemc.unity (version 1.6.0)
-- grafana.grafana (version 2.0.0)
-- microsoft.ad (version 1.0.0)
-- servicenow.servicenow (version 1.0.6)
-
-Known Issues
-------------
-
-Ansible-core
-~~~~~~~~~~~~
-
-- ansible-test - Additional configuration may be required for certain container host and container combinations. Further details are available in the testing documentation.
-- ansible-test - Custom containers with ``VOLUME`` instructions may be unable to start, when previously the containers started correctly. Remove the ``VOLUME`` instructions to resolve the issue. Containers with this condition will cause ``ansible-test`` to emit a warning.
-- ansible-test - Systems with Podman networking issues may be unable to run containers, when previously the issue went unreported. Correct the networking issues to continue using ``ansible-test`` with Podman.
-- ansible-test - Unit tests for collections do not support ``pytest`` assertion rewriting on Python 2.7.
-- ansible-test - Using Docker on systems with SELinux may require setting SELinux to permissive mode. Podman should work with SELinux in enforcing mode.
-- dnf5 - The DNF5 package manager currently does not provide all functionality to ensure feature parity between the existing ``dnf`` and the new ``dnf5`` module. As a result the following ``dnf5`` options are effectively a no-op: ``cacheonly``, ``enable_plugin``, ``disable_plugin`` and ``lock_timeout``.
-
-cisco.meraki
-~~~~~~~~~~~~
-
-- meraki_network - Updated documentation for `local_status_page_enabled` and `remote_status_page_enabled` as these no longer work.
-
-community.routeros
-~~~~~~~~~~~~~~~~~~
-
-- api_modify - when limits for entries in ``queue tree`` are defined as human readable - for example ``25M`` -, the configuration will be correctly set in ROS, but the module will indicate the item is changed on every run even when there was no change done. This is caused by the ROS API which returns the number in bytes - for example ``25000000`` (which is inconsistent with the CLI behavior). In order to mitigate that, the limits have to be defined in bytes (those will still appear as human readable in the ROS CLI) (https://github.com/ansible-collections/community.routeros/pull/131).
-- api_modify, api_info - ``routing ospf area``, ``routing ospf area range``, ``routing ospf instance``, ``routing ospf interface-template`` paths are not fully implemeted for ROS6 due to the significat changes between ROS6 and ROS7 (https://github.com/ansible-collections/community.routeros/pull/131).
-
-dellemc.openmanage
-~~~~~~~~~~~~~~~~~~
-
-- idrac_firmware - Issue(249879) - Firmware update of iDRAC9-based Servers fails if SOCKS proxy with authentication is used.
-- idrac_os_deployment- Issue(260496) - OS installation will support only NFS and CIFS share to store the custom ISO in the destination_path, HTTP/HTTPS/FTP not supported
-- idrac_redfish_storage_contoller - Issue(256164) - If incorrect value is provided for one of the attributes in the provided attribute list for controller configuration, then this module does not exit with error.
-- idrac_user - Issue(192043) The module may error out with the message ``Unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
-- idrac_user - Issue(192043) The module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
-- ome_application_alerts_syslog - Issue(215374) - The module does not provide a proper error message if the destination_address is more than 255 characters.
-- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the following parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
-- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
-- ome_device_power_settings - Issue(212679) - The module displays the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not exist or is not applicable for the resource URI.``
-- ome_inventory - Issue(256257) - All hosts are not retrieved for ``Modular System`` group and corresponding child groups.
-- ome_inventory - Issue(256589) - All hosts are not retrieved for ``Custom Groups`` group and corresponding child groups.
-- ome_inventory - Issue(256593) - All hosts are not retrieved for ``PLUGIN GROUPS`` group and corresponding child groups.
-- ome_smart_fabric_uplink - Issue(186024) - Despite the module supported by OpenManage Enterprise Modular, it does not allow the creation of multiple uplinks of the same name. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
-- ome_smart_fabric_uplink - Issue(186024) - The module does not allow the creation of multiple uplinks of the same name even though it is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
-
-Breaking Changes
-----------------
-
-Ansible-core
-~~~~~~~~~~~~
-
-- ansible-doc - no longer treat plugins in collections whose name starts with ``_`` as deprecated (https://github.com/ansible/ansible/pull/79362).
-- ansible-test - Integration tests which depend on specific file permissions when running in an ansible-test managed host environment may require changes. Tests that require permissions other than ``755`` or ``644`` may need to be updated to set the necessary permissions as part of the test run.
-- ansible-test - The ``vcenter`` test plugin now defaults to using a user-provided static configuration instead of the ``govcsim`` simulator for collections. Set the ``ANSIBLE_VCSIM_CONTAINER`` environment variable to ``govcsim`` to use the simulator. Keep in mind that the simulator is deprecated and will be removed in a future release.
-- ansible-test sanity - previously plugins and modules in collections whose name started with ``_`` were treated as deprecated, even when they were not marked as deprecated in ``meta/runtime.yml``. This is no longer the case (https://github.com/ansible/ansible/pull/79362).
-- ansible-test validate-modules - Removed the ``missing-python-doc`` error code in validate modules, ``missing-documentation`` is used instead for missing PowerShell module documentation.
-
-ansible.netcommon
-~~~~~~~~~~~~~~~~~
-
-- NetworkConnectionBase now inherits from PersistentConnectionBase in ansible.utils. As a result, the minimum ansible.utils version has increased to 2.7.0.
-- NetworkTemplate is no longer importable from ansible_collections.ansible.netcommon.plugins.module_utils.network.common and should now be found at its proper location ansible_collections.ansible.netcommon.plugins.module_utils.network.common.rm_base.network_template
-- ResourceModule is no longer importable from ansible_collections.ansible.netcommon.plugins.module_utils.network.common and should now be found at its proper location ansible_collections.ansible.netcommon.plugins.module_utils.network.common.rm_base.resource_module
-- VALID_MASKS, is_masklen, is_netmask, to_bits, to_ipv6_network, to_masklen, to_netmask, and to_subnet are no longer importable from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.utils and should now be found at their proper location ansible.module_utils.common.network
-
-hetzner.hcloud
-~~~~~~~~~~~~~~
-
-- inventory plugin - Python v3.5+ is now required.
-
-Major Changes
--------------
-
-Ansible-core
-~~~~~~~~~~~~
-
-- ansible-test - Docker Desktop on WSL2 is now supported (additional configuration required).
-- ansible-test - Docker and Podman are now supported on hosts with cgroup v2 unified. Previously only cgroup v1 and cgroup v2 hybrid were supported.
-- ansible-test - Podman now works on container hosts without systemd. Previously only some containers worked, while others required rootfull or rootless Podman, but would not work with both. Some containers did not work at all.
-- ansible-test - Podman on WSL2 is now supported.
-- ansible-test - When additional cgroup setup is required on the container host, this will be automatically detected. Instructions on how to configure the host will be provided in the error message shown.
-
-ansible.windows
-~~~~~~~~~~~~~~~
-
-- Set the minimum Ansible version supported by this collection to Ansible 2.12
-
-chocolatey.chocolatey
-~~~~~~~~~~~~~~~~~~~~~
-
-- win_chocolatey - Allow users to select the TLS versions used for bootstrapping Chocolatey installation.
-
-cisco.iosxr
-~~~~~~~~~~~
-
-- iosxr_l3_interfaces - fix issue in ipv4 address formatting. (https://github.com/ansible-collections/cisco.iosxr/issues/311).
-
-cisco.meraki
-~~~~~~~~~~~~
-
-- meraki_mr_l7_firewall - New module
-- meraki_webhook_payload_template - New module
-
-community.hrobot
-~~~~~~~~~~~~~~~~
-
-- firewall - Hetzner added output rules support to the firewall. This change unfortunately means that using old versions of the firewall module will always set the output rule list to empty, thus disallowing the server to send out packets (https://github.com/ansible-collections/community.hrobot/issues/75, https://github.com/ansible-collections/community.hrobot/pull/76).
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- Use true/false (lowercase) for boolean values in documentation and examples (https://github.com/ansible-collections/community.vmware/issues/1660).
-
-community.zabbix
-~~~~~~~~~~~~~~~~
-
-- all modules are opting away from zabbix-api and using httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
-- zabbix_agent and zabbix_proxy roles are opting away from zabbix-api and use httpapi ansible.netcommon plugin. We will support zabbix-api for backwards compatibility until next major release. See our README.md for more information about how to migrate
-
-containers.podman
-~~~~~~~~~~~~~~~~~
-
-- New become plugin - podman_unshare
-- Podman generate systemd module
-
-dellemc.openmanage
-~~~~~~~~~~~~~~~~~~
-
-- Rebranded from Dell EMC to Dell.
-- Support for IPv6 address for OMSDK dependent iDRAC modules.
-- idrac_firmware - This module is enhanced to support proxy.
-- idrac_redfish_storage_controller - This module is enhanced to configure controller attributes and online capacity expansion.
-- idrac_server_config_profile - This module is enhanced to support proxy settings, import buffer, include in export, and ignore certificate warning.
-- idrac_user_info - This module allows to retrieve iDRAC Local user information details.
-- ome_domian_user_groups - This module allows to import the LDAP directory groups.
-- ome_inventory - This plugin allows to create a inventory from the group on OpenManage Enterprise.
-- ome_inventory - This plugin is enhanced to support inventory retrieval of System and Plugin Groups of OpenManage Enterprise.
-- ome_profile_info - This module allows to retrieve profiles with attributes on OpenManage Enterprise or OpenManage Enterprise Modular.
-- ome_smart_fabric_info - This module retrieves the list of smart fabrics in the inventory of OpenManage Enterprise Modular.
-- ome_smart_fabric_uplink_info - This module retrieve details of fabric uplink on OpenManage Enterprise Modular.
-- ome_template_network_vlan_info - This module allows to retrieve the network configuration of a template on OpenManage Enterprise or OpenManage Enterprise Modular.
-
-fortinet.fortios
-~~~~~~~~~~~~~~~~
-
-- Add annotations of member operation for every module.
-- Support FortiOS v7.0.6, v7.0.7, v7.0.8, v7.2.1, v7.2.2.
-- Update ``fortios.py`` for higher performance;
-- supports temporary session key and pre/post login banner;
-- update the examples on how to use member operation in Q&A.
-
-junipernetworks.junos
-~~~~~~~~~~~~~~~~~~~~~
-
-- change gathered key from junos_acls to acls
-
-kubernetes.core
-~~~~~~~~~~~~~~~
-
-- refactor K8sAnsibleMixin into module_utils/k8s/ (https://github.com/ansible-collections/kubernetes.core/pull/481).
-
-purestorage.fusion
-~~~~~~~~~~~~~~~~~~
-
-- Patching of resource properties was brought to parity with underlying Python SDK
-- fusion_volume - fixed and reorganized, arguments changed
-
-Removed Collections
--------------------
-
-- dellemc.os10 (previously included version: 1.1.1)
-- dellemc.os6 (previously included version: 1.0.7)
-- dellemc.os9 (previously included version: 1.0.4)
-- mellanox.onyx (previously included version: 1.0.0)
-
-Removed Features
-----------------
-
-- ``dellemc.os10`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install dellemc.os10``.
-- ``dellemc.os6`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install dellemc.os6``.
-- ``dellemc.os9`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install dellemc.os9``.
-- ``mellanox.onyx`` was considered unmaintained and removed from Ansible 8 as per the `removal from Ansible process <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#unmaintained-collections>`_. Users can still install this collection with ``ansible-galaxy collection install mellanox.onyx``.
-
-Ansible-core
-~~~~~~~~~~~~
-
-- Remove deprecated ``ANSIBLE_CALLBACK_WHITELIST`` configuration environment variable, use ``ANSIBLE_CALLBACKS_ENABLED`` instead. (https://github.com/ansible/ansible/issues/78821)
-- Remove deprecated ``ANSIBLE_COW_WHITELIST`` configuration environment variable, use ``ANSIBLE_COW_ACCEPTLIST`` instead. (https://github.com/ansible/ansible/issues/78819)
-- Remove deprecated ``callback_whitelist`` configuration option, use ``callbacks_enabled`` instead. (https://github.com/ansible/ansible/issues/78822)
-- Remove deprecated ``cow_whitelist`` configuration option, use ``cowsay_enabled_stencils`` instead. (https://github.com/ansible/ansible/issues/78820)
-
-ansible.netcommon
-~~~~~~~~~~~~~~~~~
-
-- cli_parse - This plugin was moved to ansible.utils in version 1.0.0, and the redirect to that collection has now been removed.
-
-Deprecated Features
--------------------
-
-- The cisco.nso collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/155).
-- The community.fortios collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/162).
-- The community.google collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/160).
-- The community.skydive collection is considered unmaintained and will be removed from Ansible 9 if no one starts maintaining it again before Ansible 9. See `the removal process for details on how this works <https://github.com/ansible-collections/overview/blob/main/removal_from_ansible.rst#cancelling-removal-of-an-unmaintained-collection>`__ (https://github.com/ansible-community/community-topics/issues/171).
-
-Ansible-core
-~~~~~~~~~~~~
-
-- The ``ConnectionBase()._new_stdin`` attribute is deprecated, use ``display.prompt_until(msg)`` instead.
-- ansible-test - The ``foreman`` test plugin is now deprecated. It will be removed in a future release.
-- ansible-test - The ``govcsim`` simulator in the ``vcenter`` test plugin is now deprecated. It will be removed in a future release. Users should switch to providing their own test environment through a static configuration file.
-- password_hash - deprecate using passlib.hash.hashtype if hashtype isn't in the list of documented choices.
-- vars - Specifying a list of dictionaries for ``vars:`` is deprecated in favor of specifying a dictionary.
-
-amazon.aws
-~~~~~~~~~~
-
-- support for passing both profile and security tokens through a mix of environment variables and parameters has been deprecated and support will be removed in release 6.0.0. After release 6.0.0 it will only be possible to pass either a profile or security tokens, regardless of mechanism used to pass them.  To explicitly block a parameter coming from an environment variable pass an empty string as the parameter value.  Support for passing profile and security tokens together was originally deprecated in release 1.2.0, however only partially implemented in release 5.0.0 (https://github.com/ansible-collections/amazon.aws/pull/1355).
-
-chocolatey.chocolatey
-~~~~~~~~~~~~~~~~~~~~~
-
-- win_chocolatey - Deprecate side-by-side installs.
-
-cisco.ios
-~~~~~~~~~
-
-- ios_bgp_address_family - deprecate neighbors.address/tag/ipv6_adddress with neighbor_address which enables common attributes for facts rendering
-- ios_bgp_address_family - deprecate neighbors.password with password_options which allows encryption and password
-- ios_bgp_address_family - deprecate slow_peer with slow_peer_options which supports a dict attribute
-
-community.aws
-~~~~~~~~~~~~~
-
-- ecs_service -  In a release after 2024-06-01, tha default value of ``purge_placement_constraints`` will be change from ``false`` to ``true`` (https://github.com/ansible-collections/community.aws/pull/1716).
-- ecs_service -  In a release after 2024-06-01, tha default value of ``purge_placement_strategy`` will be change from ``false`` to ``true`` (https://github.com/ansible-collections/community.aws/pull/1716).
-- iam_role - All top level return values other than ``iam_role`` and ``changed`` have been deprecated and will be removed in a release after 2023-12-01 (https://github.com/ansible-collections/community.aws/issues/551).
-- iam_role - In a release after 2023-12-01 the contents of ``assume_role_policy_document`` will no longer be converted from CamelCase to snake_case.  The ``assume_role_policy_document_raw`` return value already returns the policy document in this future format (https://github.com/ansible-collections/community.aws/issues/551).
-- iam_role_info - In a release after 2023-12-01 the contents of ``assume_role_policy_document`` will no longer be converted from CamelCase to snake_case.  The ``assume_role_policy_document_raw`` return value already returns the policy document in this future format (https://github.com/ansible-collections/community.aws/issues/551).
-
-community.dns
-~~~~~~~~~~~~~
-
-- The default of the newly added option ``txt_character_encoding`` will change from ``octal`` to ``decimal`` in community.dns 3.0.0. The new default will be compatible with `RFC 1035 <https://www.ietf.org/rfc/rfc1035.txt>`__ (https://github.com/ansible-collections/community.dns/pull/134).
 
 community.hashi_vault
 ~~~~~~~~~~~~~~~~~~~~~
