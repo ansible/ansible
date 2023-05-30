@@ -510,12 +510,12 @@ def _ssh_retry(
     * retries limit reached
     """
     @wraps(func)
-    def wrapped(self: Connection, *args: t.Any, **kwargs: t.Any) -> tuple[int, bytes, bytes]:
+    def wrapped(self: Connection, *args: P.args, **kwargs: P.kwargs) -> tuple[int, bytes, bytes]:
         remaining_tries = int(self.get_option('reconnection_retries')) + 1
         cmd_summary = u"%s..." % to_text(args[0])
         conn_password = self.get_option('password') or self._play_context.password
         for attempt in range(remaining_tries):
-            cmd = args[0]
+            cmd = t.cast(list[bytes], args[0])
             if attempt != 0 and conn_password and isinstance(cmd, list):
                 # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
                 self.sshpass_pipe = os.pipe()
@@ -534,7 +534,7 @@ def _ssh_retry(
                     # 255 could be a failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
-                    cmd = args[0]
+                    cmd = t.cast(list[bytes], args[0])
                     if conn_password and isinstance(cmd, list):
                         # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
                         self.sshpass_pipe = os.pipe()
