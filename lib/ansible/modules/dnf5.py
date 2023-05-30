@@ -676,6 +676,7 @@ class Dnf5Module(YumDnf):
         else:
             download_args = []
             if libdnf5_version < (5, 0, 12):
+                # 5.0.12 moved specifying the download dir to conf.destdir
                 download_args.append(self.download_dir or "")
             transaction.download(*download_args)
             if not self.download_only:
