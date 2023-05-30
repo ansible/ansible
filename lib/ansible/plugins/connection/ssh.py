@@ -413,6 +413,8 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 
 display = Display()
 
+P = t.ParamSpec('P')
+
 # error messages that indicate 255 return code is not from ssh itself.
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
                                                             #   while invoking a script via -m
@@ -493,7 +495,9 @@ def _handle_error(
         display.vvv(msg, host=host)
 
 
-def _ssh_retry(func: c.Callable[..., tuple[int, bytes, bytes]]) -> c.Callable[..., tuple[int, bytes, bytes]]:
+def _ssh_retry(
+    func: c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]],
+) -> c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]]:
     """
     Decorator to retry ssh/scp/sftp in the case of a connection failure
 

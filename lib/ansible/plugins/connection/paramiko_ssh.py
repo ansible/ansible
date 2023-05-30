@@ -612,7 +612,7 @@ class Connection(ConnectionBase):
                     no_prompt_out += become_output
                     no_prompt_err += become_output
         except socket.timeout:
-            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + to_native(become_output))
+            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + to_text(become_output))
 
         stdout = b''.join(chan.makefile('rb', bufsize))
         stderr = b''.join(chan.makefile_stderr('rb', bufsize))

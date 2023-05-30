@@ -32,12 +32,15 @@ __all__ = ['ConnectionBase', 'ensure_connect']
 
 BUFSIZE = 65536
 
+P = t.ParamSpec('P')
 T = t.TypeVar('T')
 
 
-def ensure_connect(func: c.Callable[..., T]) -> c.Callable[..., T]:
+def ensure_connect(
+    func: c.Callable[t.Concatenate[ConnectionBase, P], T],
+) -> c.Callable[t.Concatenate[ConnectionBase, P], T]:
     @wraps(func)
-    def wrapped(self: ConnectionBase, *args: t.Any, **kwargs: t.Any) -> T:
+    def wrapped(self: ConnectionBase, *args: P.args, **kwargs: P.kwargs) -> T:
         if not self._connected:
             self._connect()
         return func(self, *args, **kwargs)
@@ -142,7 +145,7 @@ class ConnectionBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def _connect(self) -> ConnectionBase:
+    def _connect(self: T) -> T:
         """Connect to the host we've been initialized with"""
 
     @ensure_connect
