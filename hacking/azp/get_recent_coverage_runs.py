@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # (c) 2020 Red Hat, Inc.
 #

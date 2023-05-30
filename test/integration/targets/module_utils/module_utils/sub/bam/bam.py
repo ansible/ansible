@@ -1,3 +1,3 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 bam = "BAM FROM sub/bam/bam.py"

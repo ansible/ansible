@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Return target Python options for use with ansible-test."""
 
 import argparse

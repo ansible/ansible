@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 """Create GitHub issues for deprecated features."""
 

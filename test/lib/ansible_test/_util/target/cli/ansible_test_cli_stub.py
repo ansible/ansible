@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 """Command line entry point for ansible-test."""
 

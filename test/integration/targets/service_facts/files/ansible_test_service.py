@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # this is mostly based off of the code found here:
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/

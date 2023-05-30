@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Prepends a relative timestamp to each input line from stdin and writes it to stdout."""
 
 from __future__ import (absolute_import, division, print_function)

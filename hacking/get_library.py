@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # (c) 2014, Will Thames <will@thames.id.au>
 #
