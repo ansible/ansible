@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: split a string into a list
   description:
-    - Using Python's text object method C(split) we turn strings into lists via a 'spliting character'.
+    - Using Python's text object method C(split) we turn strings into lists via a 'splitting character'.
   notes:
     - This is a passthrough to Python's C(str.split).
   positional: _input, _split_string
