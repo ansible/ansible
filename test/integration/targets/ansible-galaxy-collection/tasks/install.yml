@@ -331,7 +331,7 @@
 - when: v2|default(false)
   block:
     - name: install a collection with an empty server list - {{ test_id }}
-      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' --api-version 2 {{ galaxy_verbosity }} -vvv
+      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' --api-version 2 {{ galaxy_verbosity }}
       register: install_empty_server_list
       environment:
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
