@@ -203,12 +203,9 @@
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   vars:
-    # FIXME: I don't think this is the right thing
-    # once we get pulp_v2 support back, switch this out
-    test_api_fallback: 'secondary'
+    test_api_fallback: 'galaxy_ng'
     test_api_fallback_versions: 'v3, pulp-v3, v1'
-    test_name: 'galaxy_ng'
-    test_server: '{{ galaxy_ng_server }}'
+    test_name: 'pulp_v2'
 
 - name: run ansible-galaxy collection list tests
   include_tasks: list.yml
