@@ -79,7 +79,6 @@ class GalaxyProvider(CloudProvider):
                 name,
             ],
             start=True,
-            allow_existing=True,
             options=[
                 '--env-file',
                 os.path.join(
