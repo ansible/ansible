@@ -72,17 +72,12 @@
   vars:
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
-    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    test_api_server: '{{ item.api_server|default(item.server) }}'
   loop:
-  # FIXME: Re-enable pulp_v2 once https://github.com/pulp/pulp_ansible/pull/1432 is resolved
-  # pulp_v3 is redundant, and should really just be removed
-  # - name: pulp_v2
-  #   server: '{{ pulp_server }}published/api/'
-  #   # FIXME: figure out how to handle this use
-  #   v2: true
-  # - name: pulp_v3
-  #   server: '{{ pulp_server }}published/api/'
-  #   v3: true
+  - name: pulp_v2
+    api_server: '{{ galaxy_ng_server }}'
+    server: '{{ pulp_server }}primary/api/'
+    v2: true
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
     v3: true
@@ -112,8 +107,9 @@
     test_id: '{{ item.name }}'
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
-    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    test_api_server: '{{ item.api_server|default(item.server) }}'
     requires_auth: '{{ item.requires_auth|default(false) }}'
+    v2: '{{ item.v2|default(false) }}'
   args:
     apply:
       environment:
@@ -123,15 +119,10 @@
     server: '{{ galaxy_ng_server }}'
     v3: true
     requires_auth: true
-  # FIXME: Re-enable pulp_v2 once https://github.com/pulp/pulp_ansible/pull/1432 is resolved
-  # pulp_v3 is redundant, and should really just be removed
-  # - name: pulp_v2
-  #   server: '{{ pulp_server }}published/api/'
-  #   # FIXME: figure out how to handle this use
-  #   v2: true
-  # - name: pulp_v3
-  #   server: '{{ pulp_server }}published/api/'
-  #   v3: true
+  - name: pulp_v2
+    server: '{{ pulp_server }}primary/api/'
+    api_server: '{{ galaxy_ng_server }}'
+    v2: true
 
 - name: test installing and downloading collections with the range of supported resolvelib versions
   include_tasks: supported_resolvelib.yml

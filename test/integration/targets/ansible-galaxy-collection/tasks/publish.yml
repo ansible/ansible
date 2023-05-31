@@ -10,7 +10,7 @@
 
 - name: get result of publish collection - {{ test_name }}
   uri:
-    url: '{{ test_server }}{{ vX }}plugin/ansible/content/primary/collections/index/ansible_test/my_collection/versions/1.0.0/'
+    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/ansible_test/my_collection/versions/1.0.0/'
     return_content: yes
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'

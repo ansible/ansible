@@ -91,7 +91,7 @@ from multiprocessing import dummy as threading
 from multiprocessing import TimeoutError
 
 
-COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 300
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 120
 
 
 def publish_collection(module, collection):
@@ -248,10 +248,7 @@ def run_module():
     start = datetime.datetime.now()
     result = dict(changed=True, results=[], start=str(start))
 
-    # Increase back to 4 after concurrency issues in galaxy_ng are resolved
-    # See https://issues.redhat.com/browse/AAH-2332
-    # Also timeout constant was changed
-    pool = threading.Pool(1)
+    pool = threading.Pool(4)
     publish_func = partial(publish_collection, module)
     try:
         result['results'] = pool.map_async(

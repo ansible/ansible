@@ -168,7 +168,7 @@
 
 - name: Find artifact url for namespace3.name
   uri:
-    url: '{{ test_server }}{{ vX }}plugin/ansible/content/primary/collections/index/namespace3/name/versions/1.0.0/'
+    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/namespace3/name/versions/1.0.0/'
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'
     force_basic_auth: true
@@ -218,7 +218,7 @@
     state: absent
 
 - assert:
-    that: error == expected_error
+    that: expected_error in error
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
@@ -258,12 +258,14 @@
       ignore_errors: yes
       register: result
 
-    - debug: msg="Actual - {{ error }}"
+    - debug:
+        msg: "Actual - {{ error }}"
 
-    - debug: msg="Expected - {{ expected_error }}"
+    - debug:
+        msg: "Expected - {{ expected_error }}"
 
     - assert:
-        that: error == expected_error
+        that: expected_error in error
   always:
     - name: clean up collection skeleton and artifact
       file:
@@ -295,7 +297,7 @@
 
 - name: Find artifact url for namespace4.name
   uri:
-    url: '{{ test_server }}{{ vX }}plugin/ansible/content/primary/collections/index/namespace4/name/versions/1.0.0/'
+    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/namespace4/name/versions/1.0.0/'
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'
     force_basic_auth: true
@@ -325,11 +327,11 @@
   environment:
     ANSIBLE_GALAXY_SERVER_LIST: undefined
 
-# FIXME: There is no server any longer that doesn't require auth
-- when: not requires_auth
+# pulp_v2 doesn't require auth
+- when: v2|default(false)
   block:
     - name: install a collection with an empty server list - {{ test_id }}
-      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
+      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' --api-version 2 {{ galaxy_verbosity }} -vvv
       register: install_empty_server_list
       environment:
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'

@@ -23,7 +23,7 @@
         test_name: galaxy_ng
         test_id: '{{ test_name }} (resolvelib {{ resolvelib_version }})'
         test_server: '{{ galaxy_ng_server }}'
-        vX: "v3/"
+        test_api_server: '{{ galaxy_ng_server }}'
         requires_auth: true
       args:
         apply:

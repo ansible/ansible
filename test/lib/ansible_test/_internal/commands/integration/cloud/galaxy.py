@@ -51,10 +51,9 @@ class GalaxyProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        # TODO: Add sha or tag
         self.image = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'quay.io/pulp/galaxy'
+            'quay.io/pulp/galaxy:4.7.1'
         )
 
         self.uses_docker = True
@@ -119,7 +118,6 @@ class GalaxyEnvironment(CloudEnvironment):
         pulp_host = self._get_cloud_config('PULP_HOST')
         galaxy_port = self._get_cloud_config('GALAXY_PORT')
 
-        # TODO: These vars might need re-naming, pulp_api specifically, as it's more base url now
         return CloudEnvironmentConfig(
             ansible_vars=dict(
                 pulp_user=pulp_user,
