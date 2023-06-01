@@ -459,24 +459,25 @@
     name: '{{ test_choco_package1 }}'
     state: present
 
-- name: install older package with allow_multiple
-  win_chocolatey:
-    name: '{{ test_choco_package1 }}'
-    state: present
-    allow_multiple: True
-    version: '0.0.1'
-  register: allow_multiple
+# Chocolatey 2.0.0 removed support for allow_multiple so we can no longer test this.
+# - name: install older package with allow_multiple
+#   win_chocolatey:
+#     name: '{{ test_choco_package1 }}'
+#     state: present
+#     allow_multiple: True
+#     version: '0.0.1'
+#   register: allow_multiple
 
-- name: get result of install older package with allow_multiple
-  win_command: choco.exe list --local-only --limit-output --all-versions
-  register: allow_multiple_actual
+# - name: get result of install older package with allow_multiple
+#   win_command: choco.exe list --local-only --limit-output --all-versions
+#   register: allow_multiple_actual
 
-- name: assert install older package with allow_multiple
-  assert:
-    that:
-    - allow_multiple is changed
-    - '"ansible|0.1.0" in allow_multiple_actual.stdout_lines'
-    - '"ansible|0.0.1" in allow_multiple_actual.stdout_lines'
+# - name: assert install older package with allow_multiple
+#   assert:
+#     that:
+#     - allow_multiple is changed
+#     - '"ansible|0.1.0" in allow_multiple_actual.stdout_lines'
+#     - '"ansible|0.0.1" in allow_multiple_actual.stdout_lines'
 
 - name: pin 2 packages (check mode)
   win_chocolatey:
@@ -531,23 +532,24 @@
     that:
     - not pin_multiple_again is changed
 
-- name: pin specific older version
-  win_chocolatey:
-    name: '{{ test_choco_package1 }}'
-    state: present
-    pinned: yes
-    version: '0.0.1'
-  register: pin_older
+# Chocolatey 2.0.0 removed support for allow_multiple so we can no longer test this.
+# - name: pin specific older version
+#   win_chocolatey:
+#     name: '{{ test_choco_package1 }}'
+#     state: present
+#     pinned: yes
+#     version: '0.0.1'
+#   register: pin_older
 
-- name: get result of pin specific older version
-  win_command: choco.exe pin list --limit-output
-  register: pin_older_actual
+# - name: get result of pin specific older version
+#   win_command: choco.exe pin list --limit-output
+#   register: pin_older_actual
 
-- name: assert pin specific older version
-  assert:
-    that:
-    - pin_older is changed
-    - pin_older_actual.stdout_lines == ["ansible|0.1.0", "ansible|0.0.1", "ansible-test|1.0.1-beta1"]
+# - name: assert pin specific older version
+#   assert:
+#     that:
+#     - pin_older is changed
+#     - pin_older_actual.stdout_lines == ["ansible|0.1.0", "ansible|0.0.1", "ansible-test|1.0.1-beta1"]
 
 - name: unpin package at version
   win_chocolatey:
@@ -565,7 +567,7 @@
   assert:
     that:
     - unpin_version is changed
-    - unpin_version_actual.stdout_lines == ["ansible|0.0.1", "ansible-test|1.0.1-beta1"]
+    - unpin_version_actual.stdout_lines == ["ansible-test|1.0.1-beta1"]
 
 - name: unpin multiple packages without a version
   win_chocolatey:
@@ -586,20 +588,21 @@
     - unpin_multiple is changed
     - unpin_multiple_actual.stdout == ""
 
-- name: uninstall specific version installed with allow_multiple
-  win_chocolatey:
-    name: '{{ test_choco_package1 }}'
-    state: absent
-    version: '0.0.1'
-  register: remove_multiple
+# Chocolatey 2.0.0 removed support for allow_multiple so we can no longer test this.
+# - name: uninstall specific version installed with allow_multiple
+#   win_chocolatey:
+#     name: '{{ test_choco_package1 }}'
+#     state: absent
+#     version: '0.0.1'
+#   register: remove_multiple
 
-- name: get result of uninstall specific version installed with allow_multiple
-  win_command: choco.exe list --local-only --limit-output --all-versions
-  register: remove_multiple_actual
+# - name: get result of uninstall specific version installed with allow_multiple
+#   win_command: choco.exe list --local-only --limit-output --all-versions
+#   register: remove_multiple_actual
 
-- name: assert uninstall specific version installed with allow_multiple
-  assert:
-    that:
-    - remove_multiple is changed
-    - '"ansible|0.0.1" not in remove_multiple_actual.stdout_lines'
-    - '"ansible|0.1.0" in remove_multiple_actual.stdout_lines'
+# - name: assert uninstall specific version installed with allow_multiple
+#   assert:
+#     that:
+#     - remove_multiple is changed
+#     - '"ansible|0.0.1" not in remove_multiple_actual.stdout_lines'
+#     - '"ansible|0.1.0" in remove_multiple_actual.stdout_lines'
