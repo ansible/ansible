@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-galaxy - Fix variable type error when installing subdir collections
+  (https://github.com/ansible/ansible/issues/80943)
