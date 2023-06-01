@@ -34,24 +34,24 @@ class ShellModule(PSShellModule):
     # Used by various parts of Ansible to do Windows specific changes
     _IS_WINDOWS = True
 
-    def quote(self, s):
+    def quote(self, cmd):
         # cmd does not support single quotes that the shlex_quote uses. We need to override the quoting behaviour to
         # better match cmd.exe.
         # https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
 
         # Return an empty argument
-        if not s:
+        if not cmd:
             return '""'
 
-        if _find_unsafe(s) is None:
-            return s
+        if _find_unsafe(cmd) is None:
+            return cmd
 
         # Escape the metachars as we are quoting the string to stop cmd from interpreting that metachar. For example
         # 'file &whoami.exe' would result in 'file $(whoami.exe)' instead of the literal string
         # https://stackoverflow.com/questions/3411771/multiple-character-replace-with-python
         for c in '^()%!"<>&|':  # '^' must be the first char that we scan and replace
-            if c in s:
+            if c in cmd:
                 # I can't find any docs that explicitly say this but to escape ", it needs to be prefixed with \^.
-                s = s.replace(c, ("\\^" if c == '"' else "^") + c)
+                cmd = cmd.replace(c, ("\\^" if c == '"' else "^") + c)
 
-        return '^"' + s + '^"'
+        return '^"' + cmd + '^"'

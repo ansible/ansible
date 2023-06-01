@@ -593,7 +593,7 @@ def remove_empties(cfg_dict):
         elif (
             isinstance(val, list)
             and val
-            and all([isinstance(x, dict) for x in val])
+            and all(isinstance(x, dict) for x in val)
         ):
             child_val = [remove_empties(x) for x in val]
             if child_val:
