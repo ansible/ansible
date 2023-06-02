@@ -93,8 +93,9 @@ options:
             - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
             - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
             - B(OS X/macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
-            - On macOS, when using the `user` module, the password specified in the `password` option will always be set, regardless of whether the user account already exists or not.
-            - When the password is set or changed, the `user` module will always return `changed: true` for macOS systems.
+            - On macOS, the password specified in the C(password) option will always be set, regardless of whether the user account already exists or not.
+            - When the password is passed as an argument, the C(user) module will always return changed to C(true) for macOS systems.
+              Since macOS no longer provides access to the hashed passwords directly.
         type: str
     state:
         description:
