@@ -1,10 +1,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
-import ssl
 import http.server
 import socketserver
+import ssl
 
 if __name__ == '__main__':
     Handler = http.server.SimpleHTTPRequestHandler
