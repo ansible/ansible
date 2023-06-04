@@ -131,6 +131,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
             service_mgr_name = 'smf'
         elif collected_facts.get('ansible_distribution') == 'OpenWrt':
             service_mgr_name = 'openwrt_init'
+        elif collected_facts.get('ansible_distribution') == 'SMGL':
+            service_mgr_name = 'simpleinit_msb'
         elif collected_facts.get('ansible_system') == 'Linux':
             # FIXME: mv is_systemd_managed
             if self.is_systemd_managed(module=module):
