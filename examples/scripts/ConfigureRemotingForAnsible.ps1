@@ -166,9 +166,7 @@ Function New-LegacySelfSignedCert {
     $enrollment.InstallResponse(2, $certdata, 0, "")
 
     # extract/return the thumbprint from the generated cert
-    $parsed_cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-    $parsed_cert.Import([System.Text.Encoding]::UTF8.GetBytes($certdata))
-
+    $parsed_cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new([System.Text.Encoding]::UTF8.GetBytes($certdata))
     return $parsed_cert.Thumbprint
 }
 
