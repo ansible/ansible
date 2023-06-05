@@ -40,20 +40,28 @@
         name: ../setup_remote_tmp_dir
 
     - file:
-        state: touch
-        path: "{{ remote_tmp_dir }}/65393"
+        state: directory
+        path: "{{ remote_tmp_dir }}/remote_tmp"
 
-    - copy:
-        src: "{{ remote_tmp_dir }}/65393"
-        dest: "{{ remote_tmp_dir }}/65393.2"
-        remote_src: true
+    - vars:
+        # Isolate the remote_tmp used by these tests
+        ansible_remote_tmp: "{{ remote_tmp_dir }}/remote_tmp"
+      block:
+        - file:
+            state: touch
+            path: "{{ remote_tmp_dir }}/65393"
 
-    - find:
-        path: "~/.ansible/tmp"
-        use_regex: yes
-        patterns: 'AnsiballZ_.+\.py'
-        recurse: true
-      register: result
+        - copy:
+            src: "{{ remote_tmp_dir }}/65393"
+            dest: "{{ remote_tmp_dir }}/65393.2"
+            remote_src: true
+
+        - find:
+            path: "{{ remote_tmp_dir }}/remote_tmp"
+            use_regex: yes
+            patterns: 'AnsiballZ_.+\.py'
+            recurse: true
+          register: result
 
     - debug:
         var: result
