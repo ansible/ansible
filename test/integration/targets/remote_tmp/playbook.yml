@@ -35,13 +35,12 @@
     # ensuring remote_tmp is cleaned up. Pipelining is enabled in the test
     # inventory
     ansible_pipelining: false
+    # Ensure that the remote_tmp_dir we create allows the unpriv connection user
+    # to create the remote_tmp
+    ansible_become: false
   tasks:
     - import_role:
         name: ../setup_remote_tmp_dir
-
-    - file:
-        state: directory
-        path: "{{ remote_tmp_dir }}/remote_tmp"
 
     - vars:
         # Isolate the remote_tmp used by these tests
@@ -57,7 +56,7 @@
             remote_src: true
 
         - find:
-            path: "{{ remote_tmp_dir }}/remote_tmp"
+            path: "{{ ansible_remote_tmp }}"
             use_regex: yes
             patterns: 'AnsiballZ_.+\.py'
             recurse: true
