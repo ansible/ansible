@@ -26,7 +26,7 @@ from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.common.text.converters import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
@@ -144,7 +144,7 @@ class Conditional:
                         inside_call = True
                     elif isinstance(node, ast.Yield):
                         inside_yield = True
-                    elif isinstance(node, ast.Constant):
+                    elif isinstance(node, ast.Constant) and isinstance(node.value, string_types):
                         if disable_lookups:
                             if inside_call and node.value.startswith("__"):
                                 # calling things with a dunder is generally bad at this point...
