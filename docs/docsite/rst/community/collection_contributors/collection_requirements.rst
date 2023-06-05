@@ -84,12 +84,12 @@ One example scenario where the "even if" clause comes into play is when using cl
 Controller environment
 ~~~~~~~~~~~~~~~~~~~~~~
 
-In the controller environment, collections MUST support Python 2 (version 2.7) and Python 3 (Version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v3.5 if all required libraries support this version.
+Review the :ref:`support_life` for the versions of ``ansible-core`` that the collection supports. Collections MUST document the supported Python versions for plugins which can't support all controller Python versions (for example, if required libraries do not support them).
 
 Other environment
 ~~~~~~~~~~~~~~~~~
 
-In the other environment, collections MUST support Python 2 (version 2.7) and Python 3 (Version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v2.6 and v3.5 if all required libraries support this version.
+Review the :ref:`support_life` for the versions of ``ansible-core`` that the collection supports. Collections MUST document the supported Python versions for modules which can't support all target Python versions (for example, if required libraries do not support them).
 
 .. note::
 
