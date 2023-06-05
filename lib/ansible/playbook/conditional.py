@@ -144,7 +144,7 @@ class Conditional:
                         inside_call = True
                     elif isinstance(node, ast.Yield):
                         inside_yield = True
-                    elif isinstance(node, ast.Str):
+                    elif isinstance(node, ast.Constant):
                         if disable_lookups:
                             if inside_call and node.value.startswith("__"):
                                 # calling things with a dunder is generally bad at this point...
