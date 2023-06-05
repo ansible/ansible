@@ -61,20 +61,20 @@ class VaultCLI(CLI):
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         opt_help.add_vault_options(common)
         opt_help.add_verbosity_options(common)
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
-        output = opt_help.argparse.ArgumentParser(add_help=False)
+        output = opt_help.ArgumentParser(add_help=False)
         output.add_argument('--output', default=None, dest='output_file',
                             help='output file name for encrypt or decrypt; use - for stdout',
                             type=opt_help.unfrack_path())
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
-        vault_id = opt_help.argparse.ArgumentParser(add_help=False)
+        vault_id = opt_help.ArgumentParser(add_help=False)
         vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
