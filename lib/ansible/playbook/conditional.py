@@ -146,7 +146,7 @@ class Conditional:
                         inside_yield = True
                     elif isinstance(node, ast.Str):
                         if disable_lookups:
-                            if inside_call and node.s.startswith("__"):
+                            if inside_call and node.value.startswith("__"):
                                 # calling things with a dunder is generally bad at this point...
                                 raise AnsibleError(
                                     "Invalid access found in the conditional: '%s'" % conditional
@@ -154,7 +154,7 @@ class Conditional:
                             elif inside_yield:
                                 # we're inside a yield, so recursively parse and traverse the AST
                                 # of the result to catch forbidden syntax from executing
-                                parsed = ast.parse(node.s, mode='exec')
+                                parsed = ast.parse(node.value, mode='exec')
                                 cnv = CleansingNodeVisitor()
                                 cnv.visit(parsed)
                     # iterate over all child nodes
