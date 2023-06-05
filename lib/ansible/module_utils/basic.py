@@ -1722,7 +1722,7 @@ class AnsibleModule(object):
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
                     error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
-                                 'Please use Python2.x or Python3.5 or greater.')
+                                 'Please use Python2.x or Python3.6 or greater.')
                 finally:
                     if error_msg:
                         if unsafe_writes:
