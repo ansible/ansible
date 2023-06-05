@@ -652,9 +652,9 @@ class StrategyBase:
                         # only ensure that notified handlers exist, if so save the notifications for when
                         # handlers are actually flushed so the last defined handlers are exexcuted,
                         # otherwise depending on the setting either error or warn
+                        host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
                             for handler in self.search_handlers_by_notification(notification, iterator):
-                                host_state = iterator.get_state_for_host(original_host.name)
                                 if host_state.run_state == IteratingStates.HANDLERS:
                                     # we're currently iterating handlers, so we need to expand this now
                                     if handler.notify_host(original_host):
