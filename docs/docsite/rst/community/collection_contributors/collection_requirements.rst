@@ -84,12 +84,12 @@ One example scenario where the "even if" clause comes into play is when using cl
 Controller environment
 ~~~~~~~~~~~~~~~~~~~~~~
 
-In the controller environment, collections MUST support Python 3 (Version 3.8 and higher), unless required libraries do not support these versions.
+In the controller environment, collections MUST support Python 2 (version 2.7) and Python 3 (Version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v3.5 if all required libraries support this version.
 
 Other environment
 ~~~~~~~~~~~~~~~~~
 
-In the other environment, collections MUST support Python 2 (version 2.7) and Python 3 (version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v2.6 and v3.5 if all required libraries support this version.
+In the other environment, collections MUST support Python 2 (version 2.7) and Python 3 (Version 3.6 and higher), unless required libraries do not support these versions. Collections SHOULD also support Python v2.6 and v3.5 if all required libraries support this version.
 
 .. note::
 
@@ -110,7 +110,7 @@ Python documentation requirements
 * If your collection does not support those Python versions, you MUST document which versions it supports in the README.
 * If most of your collection supports the same Python versions as ansible-core, but some modules and plugins do not, you MUST include the supported Python versions in the documentation for those modules and plugins.
 
-For example, if your collection supports ansible-core 2.12 to ansible-core 2.15, the Python versions supported for modules are 2.6, 2.7, and 3.5 and newer (until at least 3.11), while the Python versions supported for plugins is 3.8 and newer (until at least 3.11). So if the modules in your collection do not support Python 2.6, you have to document this in the README, for example ``The content in this collection supports Python 2.7, Python 3.5 and newer.``.
+For example, if your collection supports Ansible 2.9 to ansible-core 2.13, the Python versions supported for modules are 2.6, 2.7, and 3.5 and newer (until at least 3.10), while the Python versions supported for plugins are 2.7 and 3.5 and newer (until at least 3.10). So if the modules in your collection do not support Python 2.6, you have to document this in the README, for example ``The content in this collection supports Python 2.7, Python 3.5 and newer.``.
 
 .. _coll_plugin_standards:
 
