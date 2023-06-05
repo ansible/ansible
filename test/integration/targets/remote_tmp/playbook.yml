@@ -30,6 +30,11 @@
 - name: Test tempdir is removed
   hosts: testhost
   gather_facts: false
+  vars:
+    # These tests cannot be run with pipelining as it defeats the purpose of
+    # ensuring remote_tmp is cleaned up. Pipelining is enabled in the test
+    # inventory
+    ansible_pipelining: false
   tasks:
     - import_role:
         name: ../setup_remote_tmp_dir
@@ -55,5 +60,6 @@
 
     - assert:
         that:
-          # Should find nothing since pipelining is used
-          - result.files|length == 0
+          # Should only be AnsiballZ_find.py because find is actively running
+          - result.files|length == 1
+          - result.files[0].path.endswith('/AnsiballZ_find.py')
