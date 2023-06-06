@@ -46,7 +46,7 @@ options:
     type: int
     description:
       - Amount of time in seconds to wait for the expected strings. Use
-        C(null) to disable timeout.
+        C(0) to disable timeout.
     default: 30
   echo:
     description:
@@ -163,6 +163,10 @@ def main():
     responses = module.params['responses']
     timeout = module.params['timeout']
     echo = module.params['echo']
+
+    if timeout == 0:
+      # None disables timeout in pexpect.run, but Ansible only allows int
+      timeout = None
 
     events = dict()
     for key, value in responses.items():
