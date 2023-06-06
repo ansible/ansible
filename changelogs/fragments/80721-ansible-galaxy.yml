@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-galaxy - Remove internal configuration argument ``v3`` (https://github.com/ansible/ansible/pull/80721)
