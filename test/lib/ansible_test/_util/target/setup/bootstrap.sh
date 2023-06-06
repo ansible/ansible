@@ -53,7 +53,7 @@ install_pip() {
                 pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-20.3.4.py"
                 ;;
             *)
-                pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-21.3.1.py"
+                pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-23.1.2.py"
                 ;;
         esac
 
