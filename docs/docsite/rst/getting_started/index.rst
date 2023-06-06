@@ -1,99 +1,94 @@
-.. _getting_started_index:
+Getting Started with Ansible in a Self-Contained Project Structure
+==================================================================
 
-############################
-Getting started with Ansible
-############################
+Introduction
+------------
+This guide will walk you through setting up a self-contained project structure for working with Ansible. The goal is to create a single directory that can easily be committed to a GitHub repository and used with tools like AWX and Navigator. Additionally, we will integrate Visual Studio Code (VSCode) and Ansible Lint for an improved development experience.
 
-Ansible automates the management of remote systems and controls their desired state.
-A basic Ansible environment has three main components:
+Step 1: Create a Project Directory
+----------------------------------
+Start by creating a new directory in your home directory. This will serve as the root directory for your Ansible project.
 
+.. code-block:: shell
 
-Control node
-   A system on which Ansible is installed.
-   You run Ansible commands such as ``ansible`` or ``ansible-inventory`` on a control node.
+   $ mkdir ansible-project
+   $ cd ansible-project
 
-Managed node
-   A remote system, or host, that Ansible controls.
+Step 2: Set up the Inventory
+---------------------------
+Next, let's create the inventory file for your Ansible project. This file will contain the list of hosts or groups of hosts that Ansible will manage. Create a file named ``inventory`` in the project directory.
 
-Inventory
-   A list of managed nodes that are logically organized.
-   You create an inventory on the control node to describe host deployments to Ansible.
+.. code-block:: shell
 
-.. image:: ../images/ansible_basic.svg
-   :width: 400px
-   :align: center
-   :height: 200px
-   :alt: Basic components of an Ansible environment include a control node, an inventory of managed nodes, and a module copied to each managed node.
+   $ touch inventory
 
-Ready to start using Ansible?
-Complete the following steps to get up and running:
+You can now add the necessary hosts and groups to the ``inventory`` file using your preferred text editor. Make sure to follow the correct INI file format.
 
-#. Install Ansible. Visit the :ref:`installation guide<installation_guide>` for complete details.
-   
-   .. code-block:: bash 
-      
-      python3 -m pip install --user ansible
+Step 3: Organize Playbooks
+--------------------------
+Now, let's create a directory to store your Ansible playbooks and place them adjacent to the inventory file. This will keep all your playbooks in one place, making it easier to manage and version control.
 
-#. Create an inventory by adding the IP address or fully qualified domain name (FQDN) of one or more remote systems to ``/etc/ansible/hosts``.
-   The following example adds the IP addresses of three virtual machines in KVM:
+.. code-block:: shell
 
-   .. code-block:: ini
+   $ mkdir playbooks
 
-      [myvirtualmachines]
-      192.0.2.50
-      192.0.2.51
-      192.0.2.52
+You can now start adding your Ansible playbooks to the ``playbooks`` directory. For example, you could create a playbook named ``setup.yml``:
 
-#. Verify the hosts in your inventory.
-   
-   .. code-block:: bash 
+.. code-block:: shell
 
-      ansible all --list-hosts
+   $ touch playbooks/setup.yml
 
-   .. code-block:: ansible-output
+Step 4: Manage Collections
+--------------------------
+To manage Ansible collections used in your project, create a directory called ``collections`` within the project directory.
 
-      hosts (1):
-        192.0.2.50
-        192.0.2.51
-        192.0.2.52
+.. code-block:: shell
 
-#. Set up SSH connections so Ansible can connect to the managed nodes.
+   $ mkdir collections
 
-   a. Add your public SSH key to the ``authorized_keys`` file on each remote system.
-   b. Test the SSH connections, for example:
+You can now add the necessary collections to a ``requirements.yml`` file inside the ``collections`` directory. This file will serve as a manifest for the collections your project depends on.
 
-   .. code-block:: bash
+.. code-block:: shell
 
-      ssh username@192.0.2.50
-    
-   If the username on the control node is different on the host, you need to pass the ``-u`` option with the ``ansible`` command.
+   $ touch collections/requirements.yml
 
-#. Ping the managed nodes.
+Inside the ``requirements.yml`` file, list the collections you need, specifying the name and version. For example:
 
-   .. code-block:: bash 
+.. code-block:: yaml
 
-      ansible all -m ping
+   ---
+   collections:
+     - name: ansible.posix
+       version: 1.3.0
+     - name: community.general
+       version: 3.8.0
 
-   .. literalinclude:: ansible_output/ping_output.txt
-      :language: text
+Step 5: Configure VSCode and Lint
+---------------------------------
+To enhance your development experience, we will set up Visual Studio Code (VSCode) as your development environment and incorporate linting for Ansible.
 
-Congratulations! You are now using Ansible.
-Continue by :ref:`learning how to build an inventory<get_started_inventory>`.
+1. Install the "Ansible" extension for VSCode.
+2. Open the project directory in VSCode: ``$ code .``
+3. Install the "ansible-lint" Python package globally or in a virtual environment: ``$ pip install ansible-lint``
 
-.. seealso::
+VSCode should now provide syntax highlighting, linting, and other useful features for Ansible development.
 
-   `Ansible Demos <https://github.com/ansible/product-demos>`_
-       Demonstrations of different Ansible usecases
-   `Ansible Labs <https://www.ansible.com/products/ansible-training>`_
-       Labs to provide further knowledge on different topics
-   `Mailing List <https://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
-   :ref:`communication_irc`
-       How to join Ansible chat channels
+Step 6: Commit to GitHub
+------------------------
+You now have a self-contained Ansible project structure that can be easily committed to a GitHub repository. Initialize a new Git repository and add all the files:
 
-.. toctree::
-   :maxdepth: 1
+.. code-block:: shell
 
-   get_started_inventory
-   get_started_playbook
-   basic_concepts
+   $ git init
+   $ git add .
+   $ git commit -m "Initial commit"
+
+You can now push your project to GitHub or any other version control system of your choice.
+
+Conclusion
+----------
+By following this guide, you have successfully set up a self-contained Ansible project structure. Your project directory now includes an organized inventory file, playbooks directory, and collections directory. This structure allows for easy management, version control, and integration with tools like AWX and Navigator.
+
+Additionally, you have configured Visual Studio Code (VSCode) as your development environment and incorporated Ansible Lint for an improved development experience. With syntax highlighting, linting, and other features provided by VSCode, you can write and manage your Ansible code more efficiently.
+
+You are now ready to commit your project to a GitHub repository or any other version control system of your choice. Enjoy working on your Ansible projects with this streamlined and self-contained project structure!
