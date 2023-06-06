@@ -1,0 +1,9 @@
+minor_changes:
+  - Removed ``exclude`` and ``recursive-exclude`` commands for generated files from the ``MANIFEST.in`` file.
+    These excludes were unnecessary since releases are expected to be built with a clean worktree.
+  - Removed ``exclude`` commands for sanity test files from the ``MANIFEST.in`` file.
+    These tests were previously excluded because they did not pass when run from an sdist.
+    However, sanity tests are not expected to pass from an sdist, so excluding some (but not all) of the failing tests makes little sense.
+  - Removed redundant ``include`` commands from the ``MANIFEST.in`` file.
+    These includes either duplicated default behavior or another command.
+  - Use ``include`` where ``recursive-include`` is unnecessary in the ``MANIFEST.in`` file.

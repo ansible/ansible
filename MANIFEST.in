@@ -1,18 +1,13 @@
 include COPYING
-include requirements.txt
-recursive-include licenses *.txt
-recursive-include packaging *.py *.j2
-recursive-include test/integration *
-recursive-include test/sanity *.in *.json *.py *.txt
-recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
-exclude test/sanity/code-smell/botmeta.*
-exclude test/sanity/code-smell/release-names.*
-exclude test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py
-exclude test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py
-recursive-include test/units *
-include MANIFEST.in
+include bin/*
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py
-include bin/*
+include licenses/*.txt
+include requirements.txt
+recursive-include packaging *.py *.j2
+recursive-include test/integration *
+recursive-include test/sanity *.in *.json *.py *.txt
+recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
+recursive-include test/units *
