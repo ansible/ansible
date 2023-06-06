@@ -1202,6 +1202,19 @@ class ActionBase(ABC):
                 data['deprecations'] = []
             data['deprecations'].extend(self._discovery_deprecation_warnings)
 
+        # Module execution failure
+        if res['rc']:
+            data |= {
+                'failed': True,
+                'module_rc': res['rc'],
+                'msg': 'The module exited with a non-zero rc. This indicates a module execution failure.'
+            }
+            if 'module_stdout' not in data:
+                data |= {
+                    'module_stdout': res.get('stdout', ''),
+                    'module_stderr': res.get('stderr', ''),
+                }
+
         # mark the entire module results untrusted as a template right here, since the current action could
         # possibly template one of these values.
         data = wrap_var(data)
@@ -1242,8 +1255,11 @@ class ActionBase(ABC):
             if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
                 data['exception'] = data['module_stdout']
 
-            # The default
-            data['msg'] = "MODULE FAILURE"
+            if not data['module_stdout'].strip() and res.get('rc') == 0:
+                data['msg'] = "The module returned an empty response to stdout but exited with rc=0, this may indicate a misbehaving module."
+            else:
+                # The default
+                data['msg'] = "MODULE FAILURE"
 
             # try to figure out if we are missing interpreter
             if self._used_interpreter is not None:
