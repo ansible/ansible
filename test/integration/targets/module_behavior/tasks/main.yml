@@ -35,6 +35,6 @@
       - non_zero_rc.module_stderr is defined
 
       - traceback is failed
-      - traceback.module_rc == 1
+      - traceback.module_rc is not defined
   vars:
     empty_stdout: The module returned an empty response to stdout but exited with rc=0, this may indicate a misbehaving module.

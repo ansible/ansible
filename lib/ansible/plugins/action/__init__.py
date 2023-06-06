@@ -1202,12 +1202,11 @@ class ActionBase(ABC):
                 data['deprecations'] = []
             data['deprecations'].extend(self._discovery_deprecation_warnings)
 
-        # Module execution failure
-        if res['rc']:
+        if res['rc'] and data.get('_ansible_parsed') and not data.get('failed'):
             data |= {
                 'failed': True,
                 'module_rc': res['rc'],
-                'msg': 'The module exited with a non-zero rc. This indicates a module execution failure.'
+                'msg': 'The module exited with a non-zero rc but was not marked as failed. This indicates a module execution failure.'
             }
             if 'module_stdout' not in data:
                 data |= {
