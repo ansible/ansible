@@ -238,7 +238,7 @@ class GalaxyCLI(CLI):
         )
 
         # Common arguments that apply to more than 1 action
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
         common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
@@ -249,33 +249,33 @@ class GalaxyCLI(CLI):
 
         opt_help.add_verbosity_options(common)
 
-        force = opt_help.argparse.ArgumentParser(add_help=False)
+        force = opt_help.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                            help='Force overwriting an existing role or collection')
 
-        github = opt_help.argparse.ArgumentParser(add_help=False)
+        github = opt_help.ArgumentParser(add_help=False)
         github.add_argument('github_user', help='GitHub username')
         github.add_argument('github_repo', help='GitHub repository')
 
-        offline = opt_help.argparse.ArgumentParser(add_help=False)
+        offline = opt_help.ArgumentParser(add_help=False)
         offline.add_argument('--offline', dest='offline', default=False, action='store_true',
                              help="Don't query the galaxy API when creating roles")
 
         default_roles_path = C.config.get_configuration_definition('DEFAULT_ROLES_PATH').get('default', '')
-        roles_path = opt_help.argparse.ArgumentParser(add_help=False)
+        roles_path = opt_help.ArgumentParser(add_help=False)
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles. The default is the first '
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
-        collections_path = opt_help.argparse.ArgumentParser(add_help=False)
+        collections_path = opt_help.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
                                       action=opt_help.PrependListAction,
                                       help="One or more directories to search for collections in addition "
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
 
-        cache_options = opt_help.argparse.ArgumentParser(add_help=False)
+        cache_options = opt_help.ArgumentParser(add_help=False)
         cache_options.add_argument('--clear-response-cache', dest='clear_response_cache', action='store_true',
                                    default=False, help='Clear the existing server response cache.')
         cache_options.add_argument('--no-cache', dest='no_cache', action='store_true', default=False,

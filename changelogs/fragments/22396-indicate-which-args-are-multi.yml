@@ -1,0 +1,3 @@
+minor_changes:
+- CLI argument parsing - Automatically prepend to the help of CLI arguments that support being specified multiple times.
+  (https://github.com/ansible/ansible/issues/22396)
