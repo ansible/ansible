@@ -14,7 +14,7 @@ DOCUMENTATION:
       required: True
 EXAMPLES: |
   # test 'status' to know how to respond
-  {{ (taskresults is changed }}
+  {{ taskresults is changed }}
 
 RETURN:
   _value:
