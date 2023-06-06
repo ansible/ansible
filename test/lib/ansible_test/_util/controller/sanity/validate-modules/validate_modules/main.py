@@ -808,22 +808,22 @@ class ModuleValidator(Validator):
                         continue
 
                     if grandchild.id == 'DOCUMENTATION':
-                        docs['DOCUMENTATION']['value'] = child.value.s
+                        docs['DOCUMENTATION']['value'] = child.value.value
                         docs['DOCUMENTATION']['lineno'] = child.lineno
                         docs['DOCUMENTATION']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
                     elif grandchild.id == 'EXAMPLES':
-                        docs['EXAMPLES']['value'] = child.value.s
+                        docs['EXAMPLES']['value'] = child.value.value
                         docs['EXAMPLES']['lineno'] = child.lineno
                         docs['EXAMPLES']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
                     elif grandchild.id == 'RETURN':
-                        docs['RETURN']['value'] = child.value.s
+                        docs['RETURN']['value'] = child.value.value
                         docs['RETURN']['lineno'] = child.lineno
                         docs['RETURN']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
 
         return docs

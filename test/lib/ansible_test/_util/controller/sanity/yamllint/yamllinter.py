@@ -181,15 +181,15 @@ class YamlChecker:
                 if doc_types and target.id not in doc_types:
                     continue
 
-                fmt_match = fmt_re.match(statement.value.s.lstrip())
+                fmt_match = fmt_re.match(statement.value.value.lstrip())
                 fmt = 'yaml'
                 if fmt_match:
                     fmt = fmt_match.group(1)
 
                 docs[target.id] = dict(
-                    yaml=statement.value.s,
+                    yaml=statement.value.value,
                     lineno=statement.lineno,
-                    end_lineno=statement.lineno + len(statement.value.s.splitlines()),
+                    end_lineno=statement.lineno + len(statement.value.value.splitlines()),
                     fmt=fmt.lower(),
                 )
 
