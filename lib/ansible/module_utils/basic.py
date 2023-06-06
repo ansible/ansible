@@ -1715,14 +1715,6 @@ class AnsibleModule(object):
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-                except TypeError:
-                    # We expect that this is happening because python3.4.x and
-                    # below can't handle byte strings in mkstemp().
-                    # Traceback would end in something like:
-                    #     file = _os.path.join(dir, pre + name + suf)
-                    # TypeError: can't concat bytes to str
-                    error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
-                                 'Please use Python2.x or Python3.6 or greater.')
                 finally:
                     if error_msg:
                         if unsafe_writes:
