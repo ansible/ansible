@@ -1203,16 +1203,21 @@ class ActionBase(ABC):
             data['deprecations'].extend(self._discovery_deprecation_warnings)
 
         if res['rc'] and data.get('_ansible_parsed') and not data.get('failed'):
-            data |= {
-                'failed': True,
-                'module_rc': res['rc'],
-                'msg': 'The module exited with a non-zero rc but was not marked as failed. This indicates a module execution failure.'
-            }
-            if 'module_stdout' not in data:
-                data |= {
-                    'module_stdout': res.get('stdout', ''),
-                    'module_stderr': res.get('stderr', ''),
-                }
+            data.setdefault('warnings', []).append(
+                f'The module ({self._task.resolved_action}) exited with a non-zero rc but was not marked as failed. '
+                'This may indicate a module execution failure or other module execution related issue. '
+                'Running with ANSIBLE_DEBUG=1 may provide more information.'
+            )
+            # data |= {
+            #     'failed': True,
+            #     'module_rc': res['rc'],
+            #     'msg': 'The module exited with a non-zero rc but was not marked as failed. This indicates a module execution failure.'
+            # }
+            # if 'module_stdout' not in data:
+            #     data |= {
+            #         'module_stdout': res.get('stdout', ''),
+            #         'module_stderr': res.get('stderr', ''),
+            #     }
 
         # mark the entire module results untrusted as a template right here, since the current action could
         # possibly template one of these values.

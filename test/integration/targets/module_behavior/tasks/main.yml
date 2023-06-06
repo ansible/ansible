@@ -29,10 +29,12 @@
       - missing_stdout is failed
       - missing_stdout.msg.splitlines()|first == empty_stdout
 
-      - non_zero_rc is failed
-      - non_zero_rc.module_rc == 2
-      - non_zero_rc.module_stdout is defined
-      - non_zero_rc.module_stderr is defined
+      - non_zero_rc is successful
+      - non_zero_rc.warnings is defined
+      - non_zero_rc.warnings|select('search', 'exited with a non-zero rc') != []
+      # - non_zero_rc.module_rc == 2
+      # - non_zero_rc.module_stdout is defined
+      # - non_zero_rc.module_stderr is defined
 
       - traceback is failed
       - traceback.module_rc is not defined
