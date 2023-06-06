@@ -660,7 +660,7 @@ class StrategyBase:
                                     if handler.notify_host(original_host):
                                         # NOTE even with notifications deduplicated this can still happen in case of handlers being
                                         # notified multiple times using different names, like role name or fqcn
-                                        self._tqm.send_callback('v2_playbook_on_notify', handler, original_host.name)
+                                        self._tqm.send_callback('v2_playbook_on_notify', handler, original_host)
                                 else:
                                     iterator.add_notification(original_host.name, notification)
                                     display.vv(f"Notification for handler {notification} has been saved.")
