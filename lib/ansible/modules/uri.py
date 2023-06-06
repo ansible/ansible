@@ -614,7 +614,7 @@ def main():
         removes=dict(type='path'),
         status_code=dict(type='list', elements='int', default=[200]),
         timeout=dict(type='int', default=30),
-        headers=dict(type='dict', default={}),
+        headers=dict(type='dict', default={}, no_log=True),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
         ca_path=dict(type='path', default=None),
