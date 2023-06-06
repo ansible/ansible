@@ -35,7 +35,7 @@ def main():
     )
 
     if module.params['traceback']:
-        1/0
+        raise Exception('boom')
 
     stdout = module.params['stdout']
     stderr = module.params['stderr']

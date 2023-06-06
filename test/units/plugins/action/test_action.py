@@ -714,7 +714,7 @@ class TestActionBase(unittest.TestCase):
         action_base._compute_environment_string.return_value = ''
         action_base._connection.has_pipelining = False
         action_base._make_tmp_path.return_value = '/the/tmp/path'
-        action_base._low_level_execute_command.return_value = dict(stdout='{"rc": 0, "stdout": "ok"}')
+        action_base._low_level_execute_command.return_value = dict(rc=0, stdout='{"rc": 0, "stdout": "ok"}')
         self.assertEqual(action_base._execute_module(module_name=None, module_args=None), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
         self.assertEqual(
             action_base._execute_module(
