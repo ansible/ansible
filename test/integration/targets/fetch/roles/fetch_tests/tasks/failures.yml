@@ -28,6 +28,15 @@
   register: failed_fetch_dest_dir
   ignore_errors: true
 
+- name: Test unreachable
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+  register: unreachable_fetch
+  ignore_unreachable: true
+  vars:
+    ansible_user: wrong
+
 - name: Ensure fetch failed
   assert:
     that:
@@ -39,3 +48,4 @@
       - failed_fetch_no_access.msg is search('file is not readable')
       - failed_fetch_dest_dir is failed
       - failed_fetch_dest_dir.msg is search('dest is an existing directory')
+      - unreachable_fetch is unreachable

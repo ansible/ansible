@@ -1,0 +1,2 @@
+bugfixes:
+- fetch - Handle unreachable errors properly (https://github.com/ansible/ansible/issues/27816)
