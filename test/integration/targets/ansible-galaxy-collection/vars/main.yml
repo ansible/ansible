@@ -17,11 +17,12 @@ unsupported_resolvelib_versions:
   - "0.5.1"
 
 pulp_repositories:
-  - published
+  - primary
   - secondary
 
 publish_namespaces:
   - ansible_test
+  - secondary
 
 collection_list:
   # Scenario to test out pre-release being ignored unless explicitly set and version pagination.
