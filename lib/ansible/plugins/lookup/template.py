@@ -54,6 +54,9 @@ DOCUMENTATION = """
         description: The string marking the end of a comment statement.
         version_added: '2.12'
         type: str
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative templates.
 """
 
 EXAMPLES = """
