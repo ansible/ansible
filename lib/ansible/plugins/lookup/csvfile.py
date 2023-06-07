@@ -35,6 +35,9 @@ DOCUMENTATION = r"""
       - For historical reasons, in the search keyname, quotes are treated
         literally and cannot be used around the string unless they appear
         (escaped as required) in the first column of the file you are parsing.
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
