@@ -334,13 +334,13 @@ autoclass_content = 'both'
 #
 # The update script depends on this format so deviating from this (for instance, adding a third
 # location for the mappning to live) will confuse it.
-intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
-                       'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
-                       'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
-                       'ansible_7': ('https://docs.ansible.com/ansible/7/', (None, '../ansible_7.inv')),
-                       'ansible_6': ('https://docs.ansible.com/ansible/6/', (None, '../ansible_6.inv')),
-                       'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
+intersphinx_mapping = {'python': ('https://docs.python.org/2/', None, None),
+                       'python3': ('https://docs.python.org/3/', None, None),
+                       'jinja2': ('http://jinja.palletsprojects.com/', None, None),
+                       'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', None, None),
+                       'ansible_8': ('https://docs.ansible.com/ansible/8/', None, None),
                        }
+
 
 # linckchecker settings
 linkcheck_ignore = [
