@@ -216,12 +216,15 @@ class _ComputedReqKindsMixin:
             return cls.from_dir_path_implicit(dir_path)
 
     @classmethod
-    def from_dir_path(cls, dir_path, art_mgr):
+    def from_dir_path(  # type: ignore[misc]
+            cls,  # type: t.Type[Collection]
+            dir_path,  # type: bytes
+            art_mgr,  # type: ConcreteArtifactsManager
+    ):  # type: (...)  -> Collection
         """Make collection from an directory with metadata."""
         if dir_path.endswith(to_bytes(os.path.sep)):
             dir_path = dir_path.rstrip(to_bytes(os.path.sep))
-        b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
-        if not _is_collection_dir(b_dir_path):
+        if not _is_collection_dir(dir_path):
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.

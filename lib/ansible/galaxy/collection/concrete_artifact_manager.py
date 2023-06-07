@@ -21,7 +21,7 @@ from tempfile import mkdtemp
 
 if t.TYPE_CHECKING:
     from ansible.galaxy.dependency_resolution.dataclasses import (
-        Candidate, Requirement,
+        Candidate, Collection, Requirement,
     )
     from ansible.galaxy.token import GalaxyToken
 
@@ -190,7 +190,7 @@ class ConcreteArtifactsManager:
         return b_artifact_path
 
     def get_artifact_path(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> bytes
+        # type: (Collection) -> bytes
         """Given a concrete collection pointer, return a cached path.
 
         If it's not yet on disk, this method downloads the artifact first.
@@ -251,16 +251,22 @@ class ConcreteArtifactsManager:
         self._artifact_cache[collection.src] = b_artifact_path
         return b_artifact_path
 
+    def get_artifact_path_from_unknown(self, collection):
+        # type: (Candidate) -> bytes
+        if collection.is_concrete_artifact:
+            return self.get_artifact_path(collection)
+        return self.get_galaxy_artifact_path(collection)
+
     def _get_direct_collection_namespace(self, collection):
         # type: (Candidate) -> t.Optional[str]
         return self.get_direct_collection_meta(collection)['namespace']  # type: ignore[return-value]
 
     def _get_direct_collection_name(self, collection):
-        # type: (Candidate) -> t.Optional[str]
+        # type: (Collection) -> t.Optional[str]
         return self.get_direct_collection_meta(collection)['name']  # type: ignore[return-value]
 
     def get_direct_collection_fqcn(self, collection):
-        # type: (Candidate) -> t.Optional[str]
+        # type: (Collection) -> t.Optional[str]
         """Extract FQCN from the given on-disk collection artifact.
 
         If the collection is virtual, ``None`` is returned instead
@@ -276,7 +282,7 @@ class ConcreteArtifactsManager:
         ))
 
     def get_direct_collection_version(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> str
+        # type: (Collection) -> str
         """Extract version from the given on-disk collection artifact."""
         return self.get_direct_collection_meta(collection)['version']  # type: ignore[return-value]
 
@@ -289,7 +295,7 @@ class ConcreteArtifactsManager:
         return collection_dependencies  # type: ignore[return-value]
 
     def get_direct_collection_meta(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
+        # type: (Collection) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
         """Extract meta from the given on-disk collection artifact."""
         try:  # FIXME: use unique collection identifier as a cache key?
             return self._artifact_meta_cache[collection.src]
