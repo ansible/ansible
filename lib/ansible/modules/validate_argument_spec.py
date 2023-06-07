@@ -17,7 +17,7 @@ version_added: "2.11"
 options:
   argument_spec:
     description:
-        - A dictionary like AnsibleModule argument_spec
+        - A dictionary like AnsibleModule argument_spec. See R(argument spec definition,argument_spec)
     required: true
   provided_arguments:
     description:
