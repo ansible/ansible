@@ -1,0 +1,2 @@
+minor_changes:
+  - Remove the ``CleansingNodeVisitor`` class and its usage due to the templating changes that made it superfluous. Also simplify the ``Conditional`` class.
