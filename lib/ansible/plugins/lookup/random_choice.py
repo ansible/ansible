@@ -41,7 +41,7 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = terms
         if terms:
