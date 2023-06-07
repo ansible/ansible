@@ -325,7 +325,7 @@ def write_signed_by_key(module, v, slug):
     parts = generic_urlparse(urlparse(v))
     if parts.scheme:
         try:
-            r = open_url(v)
+            r = open_url(v, http_agent='ansible-httpget')
         except Exception as exc:
             raise_from(RuntimeError(to_native(exc)), exc)
         else:
