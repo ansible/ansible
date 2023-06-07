@@ -124,8 +124,7 @@ def main():
     async_dir = module.params['_async_dir']
 
     # setup logging directory
-    logdir = os.path.expanduser(async_dir)
-    log_path = os.path.join(logdir, jid)
+    log_path = os.path.join(async_dir, jid)
 
     if not os.path.exists(log_path):
         module.fail_json(msg="could not find job", ansible_job_id=jid, started=1, finished=1)
