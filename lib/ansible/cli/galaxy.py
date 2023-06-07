@@ -10,6 +10,7 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import argparse
 import json
 import os.path
 import pathlib
@@ -71,7 +72,7 @@ SERVER_DEF = [
     ('password', False, 'str'),
     ('token', False, 'str'),
     ('auth_url', False, 'str'),
-    ('v3', False, 'bool'),
+    ('api_version', False, 'int'),
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
     ('timeout', False, 'int'),
@@ -79,7 +80,7 @@ SERVER_DEF = [
 
 # config definition fields
 SERVER_ADDITIONAL = {
-    'v3': {'default': 'False'},
+    'api_version': {'default': None, 'choices': [2, 3]},
     'validate_certs': {'cli': [{'name': 'validate_certs'}]},
     'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
@@ -240,6 +241,7 @@ class GalaxyCLI(CLI):
         # Common arguments that apply to more than 1 action
         common = opt_help.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
+        common.add_argument('--api-version', type=int, choices=[2, 3], help=argparse.SUPPRESS)  # Hidden argument that should only be used in our tests
         common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
@@ -644,17 +646,22 @@ class GalaxyCLI(CLI):
             client_id = server_options.pop('client_id')
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
-            v3 = server_options.pop('v3')
+            api_version = server_options.pop('api_version')
             if server_options['validate_certs'] is None:
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
-            if v3:
-                # This allows a user to explicitly indicate the server uses the /v3 API
-                # This was added for testing against pulp_ansible and I'm not sure it has
-                # a practical purpose outside of this use case. As such, this option is not
-                # documented as of now
-                server_options['available_api_versions'] = {'v3': '/v3'}
+            # This allows a user to explicitly force use of an API version when
+            # multiple versions are supported. This was added for testing
+            # against pulp_ansible and I'm not sure it has a practical purpose
+            # outside of this use case. As such, this option is not documented
+            # as of now
+            if api_version:
+                display.warning(
+                    f'The specified "api_version" configuration for the galaxy server "{server_key}" is '
+                    'not a public configuration, and may be removed at any time without warning.'
+                )
+                server_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
 
             # default case if no auth info is provided.
             server_options['token'] = None
@@ -680,6 +687,13 @@ class GalaxyCLI(CLI):
             ))
 
         cmd_server = context.CLIARGS['api_server']
+        if context.CLIARGS['api_version']:
+            api_version = context.CLIARGS['api_version']
+            display.warning(
+                'The --api-version is not a public argument, and may be removed at any time without warning.'
+            )
+            galaxy_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
+
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
         validate_certs = context.CLIARGS['resolved_validate_certs']

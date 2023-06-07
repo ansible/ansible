@@ -223,23 +223,19 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
             {
                 'url': 'https://galaxy.ansible.com',
                 'validate_certs': 'False',
-                'v3': 'False',
             },
             # Expected server attributes
             {
                 'validate_certs': False,
-                '_available_api_versions': {},
             },
         ),
         (
             {
                 'url': 'https://galaxy.ansible.com',
                 'validate_certs': 'True',
-                'v3': 'True',
             },
             {
                 'validate_certs': True,
-                '_available_api_versions': {'v3': '/v3'},
             },
         ),
     ],
@@ -257,7 +253,6 @@ def test_bool_type_server_config_options(config, server, monkeypatch):
         "server_list=server1\n",
         "[galaxy_server.server1]",
         "url=%s" % config['url'],
-        "v3=%s" % config['v3'],
         "validate_certs=%s\n" % config['validate_certs'],
     ]
 
@@ -277,7 +272,6 @@ def test_bool_type_server_config_options(config, server, monkeypatch):
 
     assert galaxy_cli.api_servers[0].name == 'server1'
     assert galaxy_cli.api_servers[0].validate_certs == server['validate_certs']
-    assert galaxy_cli.api_servers[0]._available_api_versions == server['_available_api_versions']
 
 
 @pytest.mark.parametrize('global_ignore_certs', [True, False])

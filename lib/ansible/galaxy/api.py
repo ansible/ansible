@@ -923,10 +923,7 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
-        try:
-            signatures = data["signatures"]
-        except KeyError:
+        signatures = [signature_info["signature"] for signature_info in data.get("signatures") or []]
+        if not signatures:
             display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
-            return []
-        else:
-            return [signature_info["signature"] for signature_info in signatures]
+        return signatures

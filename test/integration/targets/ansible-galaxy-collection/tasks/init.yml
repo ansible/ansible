@@ -5,6 +5,12 @@
     chdir: '{{ galaxy_dir }}/scratch'
   register: init_relative
 
+- name: create required runtime.yml
+  copy:
+    content: |
+      requires_ansible: '>=1.0.0'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/meta/runtime.yml'
+
 - name: get result of create default skeleton
   find:
     path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
