@@ -106,3 +106,4 @@ Other tools
 - `Awesome Ansible <https://github.com/ansible-community/awesome-ansible>`_ - a collaboratively curated list of awesome Ansible resources.
 - `nanvault <https://github.com/marcobellaccini/nanvault>`_ - a standalone tool to encrypt and decrypt files in the Ansible Vault format, featuring UNIX-style composability.
 - `OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - uses Ansible to configure an environment that provides the support of `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_, namely centralized logging and analysis, availability monitoring, and performance monitoring.
+- `ansibledb <https://github.com/nbentoumi/ansibledb>`_ - Flask API server that uses MongoDB to store Ansible reports and facts. Along with different query capabilities, this tool provides a web UI for viewing Ansible reports, facts, and logs.
