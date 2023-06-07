@@ -56,7 +56,7 @@ For a list of all available modules, see the :ref:`Collection docs <list_of_coll
        How to write your own modules
    :ref:`developing_api`
        Examples of using modules with the Python API
-   :ref:`Mailing List <https://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    :ref:`communication_irc`
        How to join Ansible chat channels
