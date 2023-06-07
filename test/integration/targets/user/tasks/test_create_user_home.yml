@@ -134,3 +134,21 @@
     name: randomuser
     state: absent
     remove: yes
+
+- name: Create user home directory with /dev/null as skeleton, https://github.com/ansible/ansible/issues/75063
+  # create_homedir is mostly used by linux, rest of OSs take care of it themselves via -k option (which fails this task)
+  when: ansible_system == 'Linux'  
+  block:
+    - name: "Create user home directory with /dev/null as skeleton"
+      user:
+        name: withskeleton
+        state: present
+        skeleton: "/dev/null"
+        createhome: yes
+      register: create_user_with_skeleton_dev_null
+  always:
+    - name: "Remove test user"
+      user:
+        name: withskeleton
+        state: absent
+        remove: yes
