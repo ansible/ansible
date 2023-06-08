@@ -7,6 +7,7 @@ include examples/hosts
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
 include hacking/build-ansible.py
+include hacking/templates/*.j2
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py
 include licenses/*.txt
