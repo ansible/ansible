@@ -21,7 +21,7 @@ from ..change_detection import update_file_if_different  # pylint: disable=relat
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
-DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'docs/templates/man.j2'
+DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'hacking/templates/man.j2'
 
 
 # from https://www.python.org/dev/peps/pep-0257/
