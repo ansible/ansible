@@ -1,0 +1,493 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/user_guide/basic_concepts.rst:5
+msgid "Ansible concepts"
+msgstr ""
+
+#: ../../rst/user_guide/basic_concepts.rst:7
+msgid "This page has moved to :ref:`Getting started with Ansible<basic_concepts>`."
+msgstr ""
+
+#: ../../rst/user_guide/become.rst:5
+msgid "Understanding privilege escalation: become"
+msgstr ""
+
+#: ../../rst/user_guide/become.rst:7
+msgid "This page has moved to :ref:`playbooks_privilege_escalation`."
+msgstr ""
+
+#: ../../rst/user_guide/cheatsheet.rst:5
+msgid "Ansible CLI cheatsheet"
+msgstr ""
+
+#: ../../rst/user_guide/cheatsheet.rst:7
+msgid "This page has moved to :ref:`cheatsheet`."
+msgstr ""
+
+#: ../../rst/user_guide/collections_using.rst:6
+msgid "Using collections"
+msgstr ""
+
+#: ../../rst/user_guide/collections_using.rst:8
+msgid "This page has moved to :ref:`collections_index`."
+msgstr ""
+
+#: ../../rst/user_guide/command_line_tools.rst:4
+msgid "Working with command line tools"
+msgstr ""
+
+#: ../../rst/user_guide/command_line_tools.rst:6
+msgid "This page has moved to :ref:`command_line_tools`."
+msgstr ""
+
+#: ../../rst/user_guide/complex_data_manipulation.rst:4
+msgid "Data manipulation"
+msgstr ""
+
+#: ../../rst/user_guide/complex_data_manipulation.rst:6
+msgid "This page has moved to :ref:`complex_data_manipulation`."
+msgstr ""
+
+#: ../../rst/user_guide/connection_details.rst:5
+msgid "Connection methods and details"
+msgstr ""
+
+#: ../../rst/user_guide/connection_details.rst:7
+msgid "This page has moved to :ref:`connections`."
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:7
+msgid "User Guide"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:11
+msgid "**Making Open Source More Inclusive**"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:13
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:15
+msgid "Welcome to the Ansible User Guide! This guide is now deprecated to improve navigation and organization. You can find all the user guide content in the following sections:"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:19
+msgid ":ref:`inventory_guide_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:20
+msgid ":ref:`command_guide_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:21
+msgid ":ref:`playbook_guide_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:22
+msgid ":ref:`vault_guide_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:23
+msgid ":ref:`modules_plugins_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:24
+msgid ":ref:`collections_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:25
+msgid ":ref:`os_guide_index`"
+msgstr ""
+
+#: ../../rst/user_guide/index.rst:26
+msgid ":ref:`tips_tricks_index`"
+msgstr ""
+
+#: ../../rst/user_guide/intro.rst:4
+msgid "Introduction"
+msgstr ""
+
+#: ../../rst/user_guide/intro.rst:6
+msgid "Before we start exploring the main components of Ansible -- playbooks, configuration management, deployment, and orchestration -- we'll learn how to get Ansible installed and cover some basic concepts.  We'll also go over how to execute ad hoc commands in parallel across your nodes using /usr/bin/ansible, and see what modules are available in Ansible's core (you can also write your own, which is covered later)."
+msgstr ""
+
+#: ../../rst/user_guide/intro_adhoc.rst:5
+msgid "Introduction to ad hoc commands"
+msgstr ""
+
+#: ../../rst/user_guide/intro_adhoc.rst:7
+msgid "This page has moved to :ref:`intro_adhoc`."
+msgstr ""
+
+#: ../../rst/user_guide/intro_bsd.rst:4
+msgid "Ansible and BSD"
+msgstr ""
+
+#: ../../rst/user_guide/intro_bsd.rst:6
+msgid "This page has moved to :ref:`working_with_bsd`."
+msgstr ""
+
+#: ../../rst/user_guide/intro_dynamic_inventory.rst:5
+msgid "Working with dynamic inventory"
+msgstr ""
+
+#: ../../rst/user_guide/intro_dynamic_inventory.rst:7
+msgid "This page has moved to :ref:`intro_dynamic_inventory`."
+msgstr ""
+
+#: ../../rst/user_guide/intro_inventory.rst:5
+msgid "How to build your inventory"
+msgstr ""
+
+#: ../../rst/user_guide/intro_inventory.rst:7
+msgid "This page has moved to :ref:`intro_inventory`."
+msgstr ""
+
+#: ../../rst/user_guide/intro_patterns.rst:4
+msgid "Patterns: targeting hosts and groups"
+msgstr ""
+
+#: ../../rst/user_guide/intro_patterns.rst:6
+msgid "This page has moved to :ref:`intro_patterns`."
+msgstr ""
+
+#: ../../rst/user_guide/intro_windows.rst:2
+msgid "Windows Support"
+msgstr ""
+
+#: ../../rst/user_guide/intro_windows.rst:4 ../../rst/user_guide/windows.rst:6
+msgid "You can find documentation for using Ansible on Windows at :ref:`os_guide_index`."
+msgstr ""
+
+#: ../../rst/user_guide/modules.rst:4
+msgid "Working With Modules"
+msgstr ""
+
+#: ../../rst/user_guide/modules.rst:6 ../../rst/user_guide/modules_intro.rst:6
+#: ../../rst/user_guide/modules_support.rst:7
+#: ../../rst/user_guide/plugin_filtering_config.rst:6
+msgid "This page has moved to :ref:`modules_plugins_index`."
+msgstr ""
+
+#: ../../rst/user_guide/modules_intro.rst:4
+msgid "Introduction to modules"
+msgstr ""
+
+#: ../../rst/user_guide/modules_support.rst:5
+msgid "Module Maintenance & Support"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks.rst:4
+msgid "Working with playbooks"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks.rst:6
+msgid "This page has moved to :ref:`working_with_playbooks`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_advanced_syntax.rst:5
+msgid "Advanced Syntax"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_advanced_syntax.rst:7
+msgid "This page has moved to :ref:`playbooks_advanced_syntax`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_async.rst:4
+msgid "Asynchronous actions and polling"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_async.rst:6
+msgid "This page has moved to :ref:`playbooks_async`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_best_practices.rst:5
+msgid "Tips and tricks"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_best_practices.rst:7
+msgid "This page has moved to :ref:`tips_and_tricks`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_blocks.rst:5
+msgid "Blocks"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_blocks.rst:7
+msgid "This page has moved to :ref:`playbooks_blocks`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_checkmode.rst:5
+msgid "Validating tasks: check mode and diff mode"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_checkmode.rst:7
+msgid "This page has moved to :ref:`check_mode_dry`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_conditionals.rst:5
+msgid "Conditionals"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_conditionals.rst:7
+msgid "This page has moved to :ref:`playbooks_conditionals`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_debugger.rst:5
+msgid "Debugging tasks"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_debugger.rst:7
+msgid "This page has moved to :ref:`playbook_debugger`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_delegation.rst:4
+msgid "Controlling where tasks run: delegation and local actions"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_delegation.rst:6
+msgid "This page has moved to :ref:`playbooks_delegation`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_environment.rst:4
+msgid "Setting the remote environment"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_environment.rst:6
+msgid "This page has moved to :ref:`playbooks_environment`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_error_handling.rst:5
+msgid "Error handling in playbooks"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_error_handling.rst:7
+msgid "This page has moved to :ref:`playbooks_error_handling`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_filters.rst:5
+msgid "Using filters to manipulate data"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_filters.rst:7
+msgid "This page has moved to :ref:`playbooks_filters`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_filters_ipaddr.rst:6
+msgid "ipaddr filter"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_filters_ipaddr.rst:8
+msgid "This document has moved to :ref:`plugins_in_ansible.utils`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_handlers.rst:4
+msgid "Handlers: running operations on change"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_handlers.rst:6
+msgid "This page has moved to :ref:`handlers`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_intro.rst:5
+msgid "Intro to playbooks"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_intro.rst:7
+msgid "This page has moved to :ref:`playbooks_intro`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_lookups.rst:5
+msgid "Lookups"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_lookups.rst:7
+msgid "This page has moved to :ref:`playbooks_lookups`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_loops.rst:5
+msgid "Loops"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_loops.rst:7
+msgid "This page has moved to :ref:`playbooks_loops`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_module_defaults.rst:4
+msgid "Module defaults"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_module_defaults.rst:6
+msgid "This page has moved to :ref:`module_defaults`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_prompts.rst:5
+msgid "Interactive input: prompts"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_prompts.rst:7
+msgid "This page has moved to :ref:`playbooks_prompts`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_reuse.rst:5
+msgid "Re-using Ansible artifacts"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_reuse.rst:7
+msgid "This page has moved to :ref:`playbooks_reuse`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_reuse_includes.rst:4
+msgid "Including and importing"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_reuse_includes.rst:6
+msgid "The content on this page has been moved to :ref:`playbooks_reuse`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_reuse_roles.rst:5
+msgid "Roles"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_reuse_roles.rst:7
+msgid "This page has moved to :ref:`playbooks_reuse_roles`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_startnstep.rst:5
+msgid "Executing playbooks for troubleshooting"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_startnstep.rst:7
+msgid "This page has moved to :ref:`playbooks_start_and_step`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_strategies.rst:4
+msgid "Controlling playbook execution: strategies and more"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_strategies.rst:6
+msgid "This page has moved to :ref:`playbooks_strategies`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_tags.rst:5
+msgid "Tags"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_tags.rst:7
+msgid "This page has moved to :ref:`tags`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_tests.rst:5
+msgid "Tests"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_tests.rst:7
+msgid "This page has moved to :ref:`playbooks_tests`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_variables.rst:5
+msgid "Using Variables"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_variables.rst:7
+msgid "This page has moved to :ref:`playbooks_variables`."
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_vars_facts.rst:5
+msgid "Discovering variables: facts and magic variables"
+msgstr ""
+
+#: ../../rst/user_guide/playbooks_vars_facts.rst:7
+msgid "This page has moved to :ref:`vars_and_facts`."
+msgstr ""
+
+#: ../../rst/user_guide/plugin_filtering_config.rst:4
+msgid "Rejecting modules"
+msgstr ""
+
+#: ../../rst/user_guide/sample_setup.rst:5
+msgid "Sample Ansible setup"
+msgstr ""
+
+#: ../../rst/user_guide/sample_setup.rst:7
+msgid "This page has moved to :ref:`sample_setup`."
+msgstr ""
+
+#: ../../rst/user_guide/vault.rst:5
+msgid "Encrypting content with Ansible Vault"
+msgstr ""
+
+#: ../../rst/user_guide/vault.rst:7
+msgid "This page has moved to :ref:`vault_guide_index`."
+msgstr ""
+
+#: ../../rst/user_guide/windows.rst:4
+msgid "Windows Guides"
+msgstr ""
+
+#: ../../rst/user_guide/windows_dsc.rst:4
+msgid "Desired State Configuration"
+msgstr ""
+
+#: ../../rst/user_guide/windows_dsc.rst:6
+msgid "This page has moved to :ref:`windows_dsc`."
+msgstr ""
+
+#: ../../rst/user_guide/windows_faq.rst:4
+msgid "Windows Frequently Asked Questions"
+msgstr ""
+
+#: ../../rst/user_guide/windows_faq.rst:6
+msgid "This page has moved to :ref:`windows_faq`."
+msgstr ""
+
+#: ../../rst/user_guide/windows_performance.rst:4
+msgid "Windows performance"
+msgstr ""
+
+#: ../../rst/user_guide/windows_performance.rst:6
+msgid "This page has moved to :ref:`windows_performance`."
+msgstr ""
+
+#: ../../rst/user_guide/windows_setup.rst:4
+msgid "Setting up a Windows Host"
+msgstr ""
+
+#: ../../rst/user_guide/windows_setup.rst:6
+msgid "This page has moved to :ref:`windows_setup`."
+msgstr ""
+
+#: ../../rst/user_guide/windows_usage.rst:4
+msgid "Using Ansible and Windows"
+msgstr ""
+
+#: ../../rst/user_guide/windows_usage.rst:6
+msgid "This page has moved to :ref:`windows_usage`."
+msgstr ""
+
+#: ../../rst/user_guide/windows_winrm.rst:4
+msgid "Windows Remote Management"
+msgstr ""
+
+#: ../../rst/user_guide/windows_winrm.rst:6
+msgid "This page has moved to :ref:`windows_winrm`."
+msgstr ""
+

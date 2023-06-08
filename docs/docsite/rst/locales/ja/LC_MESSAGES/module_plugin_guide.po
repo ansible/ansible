@@ -1,0 +1,289 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-05 09:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/module_plugin_guide/index.rst:5
+msgid "Using Ansible modules and plugins"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/index.rst:9
+msgid "**Making Open Source More Inclusive**"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/index.rst:11
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/index.rst:13
+msgid "Welcome to the Ansible guide for working with modules, plugins, and collections."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/index.rst:15
+msgid "Ansible modules are units of code that can control system resources or execute system commands. Ansible provides a module library that you can execute directly on remote hosts or through playbooks. You can also write custom modules."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/index.rst:19
+msgid "Similar to modules are plugins, which are pieces of code that extend core Ansible functionality. Ansible uses a plugin architecture to enable a rich, flexible, and expandable feature set. Ansible ships with several plugins and lets you easily use your own plugins."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:4
+msgid "Introduction to modules"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:6
+msgid "Modules (also referred to as \"task plugins\" or \"library plugins\") are discrete units of code that can be used from the command line or in a playbook task. Ansible executes each module, usually on the remote managed node, and collects return values. In Ansible 2.10 and later, most modules are hosted in collections."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:8
+msgid "You can execute modules from the command line."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:16
+msgid "Each module supports taking arguments.  Nearly all modules take ``key=value`` arguments, space delimited.  Some modules take no arguments, and the command/shell modules simply take the string of the command you want to run."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:18
+msgid "From playbooks, Ansible modules are executed in a very similar way."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:25
+msgid "Another way to pass arguments to a module is using YAML syntax, also called 'complex args'."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:34
+msgid "All modules return JSON format data. This means modules can be written in any programming language. Modules should be idempotent, and should avoid making any changes if they detect that the current state matches the desired final state. When used in an Ansible playbook, modules can trigger 'change events' in the form of notifying :ref:`handlers <handlers>` to run additional tasks."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:36
+msgid "You can access the documentation for each module from the command line with the ansible-doc tool."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:42
+msgid "For a list of all available modules, see the :ref:`Collection docs <list_of_collections>`, or run the following at a command prompt."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:51
+#: ../../rst/module_plugin_guide/modules_support.rst:63
+msgid ":ref:`intro_adhoc`"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:52
+#: ../../rst/module_plugin_guide/modules_support.rst:64
+msgid "Examples of using modules in /usr/bin/ansible"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:53
+#: ../../rst/module_plugin_guide/modules_support.rst:65
+msgid ":ref:`working_with_playbooks`"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:54
+#: ../../rst/module_plugin_guide/modules_support.rst:66
+msgid "Examples of using modules with /usr/bin/ansible-playbook"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:55
+msgid ":ref:`developing_modules`"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:56
+msgid "How to write your own modules"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:57
+msgid ":ref:`developing_api`"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:58
+msgid "Examples of using modules with the Python API"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:59
+#: ../../rst/module_plugin_guide/modules_support.rst:67
+msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:60
+#: ../../rst/module_plugin_guide/modules_support.rst:68
+msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:61
+#: ../../rst/module_plugin_guide/modules_support.rst:69
+msgid ":ref:`communication_irc`"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_intro.rst:62
+#: ../../rst/module_plugin_guide/modules_support.rst:70
+msgid "How to join Ansible chat channels"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_plugins_index.rst:4
+msgid "Modules and plugins index"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_plugins_index.rst:6
+msgid "You can find an index of modules and plugins at :ref:`all_modules_and_plugins`."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:5
+msgid "Module maintenance and support"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:7
+msgid "If you are using a module and you discover a bug, you may want to know where to report that bug, who is responsible for fixing it, and how you can track changes to the module. If you are a Red Hat subscriber, you may want to know whether you can get support for the issue you are facing."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:9
+msgid "Starting in Ansible 2.10, most modules live in collections. The distribution method for each collection reflects the maintenance and support for the modules in that collection."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:15
+msgid "Maintenance"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:21
+msgid "Collection"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:21
+msgid "Code location"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:21
+msgid "Maintained by"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:23
+msgid "ansible.builtin"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:23
+msgid "`ansible/ansible repo`_ on GitHub"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:23
+msgid "core team"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:25
+msgid "distributed on Galaxy"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:25
+#: ../../rst/module_plugin_guide/modules_support.rst:27
+msgid "various; follow ``repo`` link"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:25
+msgid "community or partners"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:27
+msgid "distributed on Automation Hub"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:27
+msgid "content team or partners"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:33
+msgid "Issue Reporting"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:35
+msgid "If you find a bug that affects a plugin in the main Ansible repo, also known as ``ansible-core``:"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:37
+msgid "Confirm that you are running the latest stable version of Ansible or the devel branch."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:38
+msgid "Look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:39
+#: ../../rst/module_plugin_guide/modules_support.rst:46
+msgid "Create an issue if one does not already exist. Include as much detail as you can about the behavior you discovered."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:41
+msgid "If you find a bug that affects a plugin in a Galaxy collection:"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:43
+msgid "Find the collection on Galaxy."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:44
+msgid "Find the issue tracker for the collection."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:45
+msgid "Look there to see if an issue has already been filed."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:48
+msgid "Some partner collections may be hosted in private repositories."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:50
+msgid "If you are not sure whether the behavior you see is a bug, if you have questions, if you want to discuss development-oriented topics, or if you just want to get in touch, use one of our Google mailing lists or chat channels (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) to :ref:`communicate with Ansiblers <communication>`."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:52
+msgid "If you find a bug that affects a module in an Automation Hub collection:"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:54
+msgid "If the collection offers an Issue Tracker link on Automation Hub, click there and open an issue on the collection repository. If it does not, follow the standard process for reporting issues on the `Red Hat Customer Portal <https://access.redhat.com/>`_. You must have a subscription to the Red Hat Ansible Automation Platform to create an issue on the portal."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:57
+msgid "Support"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/modules_support.rst:59
+msgid "All plugins that remain in ``ansible-core`` and all collections hosted in Automation Hub are supported by Red Hat. No other plugins or collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:4
+msgid "Rejecting modules"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:6
+msgid "If you want to avoid using certain modules, you can add them to a reject list to prevent Ansible from loading them. To reject plugins, create a yaml configuration file. The default location for this file is :file:`/etc/ansible/plugin_filters.yml`. You can select a different path for the reject list using the :ref:`PLUGIN_FILTERS_CFG` setting in the ``defaults`` section of your ansible.cfg. Here is an example reject list:"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:18
+msgid "The file contains two fields:"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:20
+msgid "A file version so that you can update the format while keeping backwards compatibility in the future. The present version should be the string, ``\"1.0\"``"
+msgstr ""
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:22
+msgid "A list of modules to reject. Ansible will not load any module in this list when it searches for a module to invoke for a task."
+msgstr ""
+
+#: ../../rst/module_plugin_guide/plugin_filtering_config.rst:26
+msgid "The ``stat`` module is required for Ansible to run. Do not add this module to your reject list."
+msgstr ""
+
