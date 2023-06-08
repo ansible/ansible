@@ -199,6 +199,14 @@ options:
     type: bool
     default: true
     version_added: '2.14'
+  resolve:
+    description:
+      - A custom mapping to hit a particular endpoint for a specific host.
+      - The mapping is a dictionary of which each key represents a source and each value represents a destination.
+        Use C(host), C(host:port) or C(:port) in the both source and destination.
+      - If a host or a port is not specified for a destination it will be taken from the source.
+    type: dict
+    version_added: '2.16'
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -271,6 +279,12 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     username: bar
     password: '{{ mysecret }}'
+
+- name: Provide custom address resolution rules.
+  ansible.builtin.get_url:
+    url: https://example.org
+    resolve:
+      example.org: 127.0.0.1:8443
 '''
 
 RETURN = r'''
@@ -390,7 +404,7 @@ def url_filename(url):
 
 
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
-            decompress=True, ciphers=None, use_netrc=True):
+            decompress=True, ciphers=None, use_netrc=True, resolve=None):
     """
     Download data from the url and store in a temporary file.
 
@@ -399,7 +413,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     start = datetime.datetime.utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc, resolve=resolve)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
@@ -487,6 +501,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        resolve=dict(type='dict'),
     )
 
     module = AnsibleModule(
@@ -509,6 +524,7 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
+    resolve = module.params['resolve']
 
     result = dict(
         changed=False,
@@ -533,7 +549,8 @@ def main():
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
             checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                                     unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
+                                                     unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc,
+                                                     resolve=resolve)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
@@ -611,7 +628,8 @@ def main():
     start = datetime.datetime.utcnow()
     method = 'HEAD' if module.check_mode else 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
-                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc,
+                           resolve=resolve)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
 

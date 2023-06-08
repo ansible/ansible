@@ -107,3 +107,22 @@ def test_unix_socket_patch_httpconnection_connect(mocker):
     with urls.unix_socket_patch_httpconnection_connect():
         conn.connect()
     assert unix_conn.call_count == 1
+
+
+@pytest.mark.parametrize(
+    ('rules', 'address', 'expected'),
+    [
+        [{"host": "newhost"}, ('host', None), ('newhost', None)],
+        [{"host:123": "newhost"}, ('host', None), ('host', None)],
+        [{"host:123": "newhost"}, ('host', 123), ('newhost', 123)],
+        [{"host": "newhost:123"}, ('host', None), ('newhost', '123')],
+        [{"host": "newhost:123"}, ('host', 80), ('newhost', '123')],
+    ]
+)
+def test_address_mapper(rules, address, expected):
+    host, port = address
+    mapper = urls.AddressMapper(rules)
+
+    new_address = mapper.translate(host, port)
+
+    assert new_address == expected

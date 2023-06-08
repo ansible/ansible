@@ -1659,20 +1659,26 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
+             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True, resolve=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
     Does not require the module environment
     '''
+    open = Request().open
+
+    if resolve is not None:
+        mapper = AddressMapper(rules=resolve)
+        open = with_address_mapper(mapper)(open)
+
     method = method or ('POST' if data else 'GET')
-    return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
-                          force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                          url_username=url_username, url_password=url_password, http_agent=http_agent,
-                          force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
-                          client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+    return open(method, url, data=data, headers=headers, use_proxy=use_proxy,
+                force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
+                url_username=url_username, url_password=url_password, http_agent=http_agent,
+                force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
+                client_cert=client_cert, client_key=client_key, cookies=cookies,
+                use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
+                unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
 
 
 def prepare_multipart(fields):
@@ -1825,7 +1831,7 @@ def url_argument_spec():
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
-              decompress=True, ciphers=None, use_netrc=True):
+              decompress=True, ciphers=None, use_netrc=True, resolve=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1847,6 +1853,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
     :kwarg cipher: (optional) List of ciphers to use
     :kwarg boolean use_netrc: (optional) If False: Ignores login and password in ~/.netrc file (Default: True)
+    :kwarg resolve: (optional) Custom name resolution map
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status >= 400)
@@ -1906,7 +1913,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
-                     decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                     decompress=decompress, ciphers=ciphers, use_netrc=use_netrc, resolve=resolve)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
@@ -2029,7 +2036,7 @@ def _split_multiext(name, min=3, max=4, count=2):
 
 def fetch_file(module, url, data=None, headers=None, method=None,
                use_proxy=True, force=False, last_mod_time=None, timeout=10,
-               unredirected_headers=None, decompress=True, ciphers=None):
+               unredirected_headers=None, decompress=True, ciphers=None, resolve=None):
     '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
@@ -2046,6 +2053,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
     :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
     :kwarg ciphers: (optional) List of ciphers to use
+    :kwarg resolve: (optional) Custom name resolution map
 
     :returns: A string, the path to the downloaded file.
     '''
@@ -2057,7 +2065,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
-                              unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
+                              unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, resolve=resolve)
         if not rsp:
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
         data = rsp.read(bufsize)
@@ -2073,3 +2081,50 @@ def fetch_file(module, url, data=None, headers=None, method=None,
 def get_user_agent():
     """Returns a user agent used by open_url"""
     return u"ansible-httpget"
+
+
+class AddressMapper:
+    '''Substiture host and port according to the rules.
+
+    "host:port": "newhost"
+    "host": "newhost"
+    '''
+    SEP = ':'
+    PATTERNS = ["{host}" + SEP + "{port}", "{host}", SEP + "{port}"]
+
+    def __init__(self, rules):
+        self.rules = rules
+
+    def translate(self, host, port):
+        terms = (p.format(host=host, port=port) for p in self.PATTERNS)
+        results = (self.rules.get(term) for term in terms)
+        addr = next((res for res in results if res is not None), '')
+        t_host, _, t_port = addr.partition(self.SEP)
+        return (t_host or host, t_port or port)
+
+
+def with_address_mapper(mapper):
+    '''Decorator to use custom host and port resolver.
+
+    The function decorator patches socket.getaddrinfo upon a decorated function call.
+
+    :arg resolver: A HostResolver object to translate the addresses
+
+    :returns: A decorated function.
+    '''
+    socket_getaddrinfo = socket.getaddrinfo
+
+    def getaddrinfo(host, port=None, *args, **kw):
+        host, port = mapper.translate(host, port)
+        return socket_getaddrinfo(host, port, *args, **kw)
+
+    def deco(fn):
+        @functools.wraps(fn)
+        def wrap(*args, **kw):
+            try:
+                socket.getaddrinfo = getaddrinfo
+                return fn(*args, **kw)
+            finally:
+                socket.getaddrinfo = socket_getaddrinfo
+        return wrap
+    return deco

@@ -231,6 +231,14 @@ options:
     type: bool
     default: true
     version_added: '2.14'
+  resolve:
+    description:
+      - A custom mapping to hit a particular endpoint for a specific host.
+      - The mapping is a dictionary of which each key represents a source and each value represents a destination.
+        Use C(host), C(host:port) or C(:port) in the both source and destination.
+      - If a host or a port is not specified for a destination it will be taken from the source.
+    type: dict
+    version_added: '2.16'
 extends_documentation_fragment:
   - action_common_attributes
   - files
@@ -387,6 +395,12 @@ EXAMPLES = r'''
   uri:
     url: https://example.org
     ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
+
+- name: Provide custom address resolution rules.
+  ansible.builtin.get_url:
+    url: https://example.org
+    resolve:
+      example.org: 127.0.0.1:8443
 '''
 
 RETURN = r'''
@@ -561,7 +575,7 @@ def form_urlencoded(body):
 
 
 def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress,
-        ciphers, use_netrc):
+        ciphers, use_netrc, resolve):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
 
@@ -586,7 +600,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           ciphers=ciphers, use_netrc=use_netrc, **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, resolve=resolve, **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -622,6 +636,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        resolve=dict(type='dict', default={}),
     )
 
     module = AnsibleModule(
@@ -646,6 +661,7 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
+    resolve = module.params['resolve']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -689,7 +705,7 @@ def main():
     start = datetime.datetime.utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
-                  decompress, ciphers, use_netrc)
+                  decompress, ciphers, use_netrc, resolve)
 
     elapsed = (datetime.datetime.utcnow() - start).seconds
 

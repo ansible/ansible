@@ -798,3 +798,6 @@
 
 - name: Test use_netrc.yml
   import_tasks: use_netrc.yml
+
+- name: Test resolve
+  import_tasks: resolve.yml
