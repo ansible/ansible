@@ -915,7 +915,7 @@ class Templar:
             # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
             # This is historic behavior that is kept for backwards compatibility.
             if overrides:
-                myenv = self.environment.overlay(overrides)
+                myenv = self.environment.overlay(**overrides)
             elif has_template_overrides:
                 myenv = self.environment.overlay()
             else:
