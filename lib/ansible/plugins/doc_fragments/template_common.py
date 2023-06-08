@@ -48,35 +48,41 @@ options:
   block_start_string:
     description:
     - The string marking the beginning of a block.
+    - This will affect evaluation of templated variables in the same step.
     type: str
     default: '{%'
     version_added: '2.4'
   block_end_string:
     description:
     - The string marking the end of a block.
+    - This will affect evaluation of templated variables in the same step.
     type: str
     default: '%}'
     version_added: '2.4'
   variable_start_string:
     description:
     - The string marking the beginning of a print statement.
+    - This will affect evaluation of templated variables in the same step.
     type: str
     default: '{{'
     version_added: '2.4'
   variable_end_string:
     description:
     - The string marking the end of a print statement.
+    - This will affect evaluation of templated variables in the same step.
     type: str
     default: '}}'
     version_added: '2.4'
   comment_start_string:
     description:
     - The string marking the beginning of a comment statement.
+    - This will affect evaluation of templated variables in the same step.
     type: str
     version_added: '2.12'
   comment_end_string:
     description:
     - The string marking the end of a comment statement.
+    - This will affect evaluation of templated variables in the same step.
     type: str
     version_added: '2.12'
   trim_blocks:

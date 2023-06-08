@@ -18,26 +18,30 @@ DOCUMENTATION = """
       convert_data:
         type: bool
         description:
-            - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
-            - Mutually exclusive with the jinja2_native option.
+          - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
+          - Mutually exclusive with the jinja2_native option.
         default: true
       variable_start_string:
-        description: The string marking the beginning of a print statement.
+        description:
+          - The string marking the beginning of a print statement.
+          - This will affect evaluation of templated variables in the same step.
         default: '{{'
         version_added: '2.8'
         type: str
       variable_end_string:
-        description: The string marking the end of a print statement.
+        description:
+          - The string marking the end of a print statement.
+          - This will affect evaluation of templated variables in the same step.
         default: '}}'
         version_added: '2.8'
         type: str
       jinja2_native:
         description:
-            - Controls whether to use Jinja2 native types.
-            - It is off by default even if global jinja2_native is True.
-            - Has no effect if global jinja2_native is False.
-            - This offers more flexibility than the template module which does not use Jinja2 native types at all.
-            - Mutually exclusive with the convert_data option.
+          - Controls whether to use Jinja2 native types.
+          - It is off by default even if global jinja2_native is True.
+          - Has no effect if global jinja2_native is False.
+          - This offers more flexibility than the template module which does not use Jinja2 native types at all.
+          - Mutually exclusive with the convert_data option.
         default: False
         version_added: '2.11'
         type: bool
@@ -47,11 +51,15 @@ DOCUMENTATION = """
         version_added: '2.3'
         type: dict
       comment_start_string:
-        description: The string marking the beginning of a comment statement.
+        description:
+          - The string marking the beginning of a comment statement.
+          - This will affect evaluation of templated variables in the same step.
         version_added: '2.12'
         type: str
       comment_end_string:
-        description: The string marking the end of a comment statement.
+        description:
+          - The string marking the end of a comment statement.
+          - This will affect evaluation of templated variables in the same step.
         version_added: '2.12'
         type: str
     seealso:

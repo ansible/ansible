@@ -79,6 +79,17 @@ EXAMPLES = r'''
     group: wheel
     mode: u=rw,g=r,o=r
 
+- name: Template a file using different marker strings
+  ansible.builtin.template:
+    src: globals.yml.j2
+    dest: /etc/kolla/globals.yml
+    block_start_string: "<%"
+    block_end_string: "%>"
+    variable_start_string: "<<"
+    variable_end_string: ">>"
+  vars:
+    vip_address: "<< hostvars['controller-00']['ansible_host'] >>"
+
 - name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
   ansible.builtin.template:
     src: named.conf_{{ ansible_os_family }}.j2
