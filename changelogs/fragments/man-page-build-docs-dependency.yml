@@ -1,0 +1,2 @@
+bugfixes:
+  - man page build - Remove the dependency on the ``docs`` directory for building man pages.
