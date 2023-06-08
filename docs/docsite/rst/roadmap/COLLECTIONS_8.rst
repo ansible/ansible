@@ -49,7 +49,7 @@ Ansible 8.x minor releases will occur approximately every four weeks if changes 
 
 .. note::
 
-    Minor releases will stop when Ansible-9 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
+    Minor and patch releases will stop when Ansible-9 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
 For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
