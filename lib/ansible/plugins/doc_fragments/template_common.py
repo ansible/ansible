@@ -77,12 +77,14 @@ options:
     description:
     - The string marking the beginning of a comment statement.
     - This will affect evaluation of templated variables in the same step.
+    default: '{#'
     type: str
     version_added: '2.12'
   comment_end_string:
     description:
     - The string marking the end of a comment statement.
     - This will affect evaluation of templated variables in the same step.
+    default: '#}'
     type: str
     version_added: '2.12'
   trim_blocks:
