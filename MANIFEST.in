@@ -26,7 +26,7 @@ recursive-include lib/ansible/modules/windows *.ps1
 recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep
 recursive-include lib/ansible/config *.yml
 recursive-include licenses *.txt
-recursive-include packaging Makefile *.py
+recursive-include packaging Makefile *.py *.j2
 recursive-include test/ansible_test *.py Makefile
 recursive-include test/integration *
 recursive-include test/lib/ansible_test/config *.yml *.template
