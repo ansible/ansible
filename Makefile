@@ -27,7 +27,7 @@ ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is 
 endif
 
 PYTHON ?= python
-GENERATE_CLI = hacking/build-ansible.py generate-man
+GENERATE_CLI = packaging/pep517_backend/_generate_man.py
 
 # fetch version from project release.py as single source-of-truth
 VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --raw || echo error)
@@ -146,7 +146,7 @@ changelog:
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
-	$(PYTHON) $(GENERATE_CLI) --template-file=hacking/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
+	$(PYTHON) $(GENERATE_CLI) --template-file=packaging/pep517_backend/_templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 .PHONY: docs
 docs: generate_rst
