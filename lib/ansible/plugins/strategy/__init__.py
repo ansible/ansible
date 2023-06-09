@@ -43,7 +43,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
@@ -598,7 +598,7 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    state, _ = iterator.get_next_task_for_host(original_host, peek=True)
+                    state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
 
                     if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True

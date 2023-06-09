@@ -1,0 +1,2 @@
+bugfixes:
+  - setup module (fact gathering) will now try to be smarter about different versions of facter emitting error when --puppet flag is used w/o puppet.

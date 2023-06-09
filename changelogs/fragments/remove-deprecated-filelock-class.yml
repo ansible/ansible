@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated ``FileLock`` class

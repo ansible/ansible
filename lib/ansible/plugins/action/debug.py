@@ -20,7 +20,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.action import ActionBase
 
 
@@ -29,6 +29,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:

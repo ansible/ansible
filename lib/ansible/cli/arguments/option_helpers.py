@@ -16,7 +16,7 @@ from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
@@ -29,6 +29,16 @@ class SortingHelpFormatter(argparse.HelpFormatter):
     def add_arguments(self, actions):
         actions = sorted(actions, key=operator.attrgetter('option_strings'))
         super(SortingHelpFormatter, self).add_arguments(actions)
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    def add_argument(self, *args, **kwargs):
+        action = kwargs.get('action')
+        help = kwargs.get('help')
+        if help and action in {'append', 'append_const', 'count', 'extend', PrependListAction}:
+            help = f'{help.rstrip(".")}. This argument may be specified multiple times.'
+        kwargs['help'] = help
+        return super().add_argument(*args, **kwargs)
 
 
 class AnsibleVersion(argparse.Action):
@@ -192,7 +202,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,
@@ -250,8 +260,8 @@ def add_connect_options(parser):
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
-                               help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+    connect_group.add_argument('-T', '--timeout', default=None, type=int, dest='timeout',
+                               help="override the connection timeout in seconds (default depends on connection)")
 
     # ssh only
     connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',

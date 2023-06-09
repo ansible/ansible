@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Fix a traceback that occurs when attempting to test Ansible source using a different ansible-test.
+                   A clear error message is now given when this scenario occurs.

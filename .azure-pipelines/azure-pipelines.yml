@@ -47,8 +47,6 @@ stages:
             - test: 1
             - test: 2
             - test: 3
-            - test: 4
-            - test: 5
   - stage: Units
     dependsOn: []
     jobs:
@@ -73,8 +71,6 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - test: 2012
-            - test: 2012-R2
             - test: 2016
             - test: 2019
             - test: 2022
@@ -92,12 +88,14 @@ stages:
               test: rhel/8.7@3.6
             - name: RHEL 8.7 py39
               test: rhel/8.7@3.9
-            - name: RHEL 9.1
-              test: rhel/9.1
+            - name: RHEL 9.2
+              test: rhel/9.2
             - name: FreeBSD 12.4
               test: freebsd/12.4
             - name: FreeBSD 13.1
               test: freebsd/13.1
+            - name: FreeBSD 13.2
+              test: freebsd/13.2
           groups:
             - 1
             - 2
@@ -108,10 +106,12 @@ stages:
               test: macos/13.2
             - name: RHEL 8.7
               test: rhel/8.7
-            - name: RHEL 9.1
-              test: rhel/9.1
+            - name: RHEL 9.2
+              test: rhel/9.2
             - name: FreeBSD 13.1
               test: freebsd/13.1
+            - name: FreeBSD 13.2
+              test: freebsd/13.2
           groups:
             - 3
             - 4
@@ -125,8 +125,8 @@ stages:
               test: fedora/37
             - name: RHEL 8.7
               test: rhel/8.7
-            - name: RHEL 9.1
-              test: rhel/9.1
+            - name: RHEL 9.2
+              test: rhel/9.2
             - name: Ubuntu 20.04
               test: ubuntu/20.04
             - name: Ubuntu 22.04
@@ -200,8 +200,6 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - test: 2012
-            - test: 2012-R2
             - test: 2016
             - test: 2019
             - test: 2022

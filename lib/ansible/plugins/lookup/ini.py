@@ -50,6 +50,9 @@ DOCUMENTATION = """
         default: False
         aliases: ['allow_none']
         version_added: '2.12'
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
@@ -85,7 +88,7 @@ from collections import defaultdict
 from collections.abc import MutableSequence
 
 from ansible.errors import AnsibleLookupError, AnsibleOptionsError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.plugins.lookup import LookupBase
 
 

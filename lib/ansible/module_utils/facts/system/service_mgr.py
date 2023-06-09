@@ -24,7 +24,7 @@ import re
 
 import ansible.module_utils.compat.typing as t
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -47,7 +47,7 @@ class ServiceMgrFactCollector(BaseFactCollector):
         # tools must be installed
         if module.get_bin_path('systemctl'):
 
-            # this should show if systemd is the boot init system, if checking init faild to mark as systemd
+            # this should show if systemd is the boot init system, if checking init failed to mark as systemd
             # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
@@ -131,6 +131,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
             service_mgr_name = 'smf'
         elif collected_facts.get('ansible_distribution') == 'OpenWrt':
             service_mgr_name = 'openwrt_init'
+        elif collected_facts.get('ansible_distribution') == 'SMGL':
+            service_mgr_name = 'simpleinit_msb'
         elif collected_facts.get('ansible_system') == 'Linux':
             # FIXME: mv is_systemd_managed
             if self.is_systemd_managed(module=module):

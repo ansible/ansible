@@ -46,7 +46,7 @@ from ansible.errors import (
     AnsibleUndefinedVariable,
 )
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
@@ -545,14 +545,7 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, shared_loader_obj=None, variables=None):
-        if shared_loader_obj is not None:
-            display.deprecated(
-                "The `shared_loader_obj` option to `Templar` is no longer functional, "
-                "ansible.plugins.loader is used directly instead.",
-                version='2.16',
-            )
-
+    def __init__(self, loader, variables=None):
         self._loader = loader
         self._available_variables = {} if variables is None else variables
 
@@ -939,7 +932,10 @@ class Templar:
                                            " Did you use something different from colon as key-value separator?" % pair.strip())
                     (key, val) = pair.split(':', 1)
                     key = key.strip()
-                    setattr(myenv, key, ast.literal_eval(val.strip()))
+                    if hasattr(myenv, key):
+                        setattr(myenv, key, ast.literal_eval(val.strip()))
+                    else:
+                        display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
@@ -967,7 +963,7 @@ class Templar:
             # In case this is a recursive call and we set different concat
             # function up the stack, reset it in case the value of convert_data
             # changed in this call
-            self.environment.concat = self.environment.__class__.concat
+            myenv.concat = myenv.__class__.concat
             # the concat function is set for each Ansible environment,
             # however for convert_data=False we need to use the concat
             # function that avoids any evaluation and set it temporarily
@@ -975,13 +971,13 @@ class Templar:
             # the concat function is called internally in Jinja,
             # most notably for macro execution
             if not self.jinja2_native and not convert_data:
-                self.environment.concat = ansible_concat
+                myenv.concat = ansible_concat
 
             self.cur_context = t.new_context(jvars, shared=True)
             rf = t.root_render_func(self.cur_context)
 
             try:
-                res = self.environment.concat(rf)
+                res = myenv.concat(rf)
                 unsafe = getattr(self.cur_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
@@ -1009,7 +1005,7 @@ class Templar:
                 # "Hello world\n!\n" instead of "Hello world!\n".
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
-                    res += self.environment.newline_sequence * (data_newlines - res_newlines)
+                    res += myenv.newline_sequence * (data_newlines - res_newlines)
                     if unsafe:
                         res = wrap_var(res)
             return res

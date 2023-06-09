@@ -20,7 +20,7 @@ from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import binary_type
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
@@ -514,7 +514,7 @@ class TaskExecutor:
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
+        if self._task.action in C._ACTION_INCLUDE_TASKS:
             include_args = self._task.args.copy()
             include_file = include_args.pop('_raw_params', None)
             if not include_file:
@@ -598,17 +598,6 @@ class TaskExecutor:
         # feed back into pc to ensure plugins not using get_option can get correct value
         self._connection._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=vars_copy, templar=templar)
 
-        # for persistent connections, initialize socket path and start connection manager
-        if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
-            self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
-            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
-            display.vvvv('using connection plugin %s' % self._connection.transport, host=self._play_context.remote_addr)
-
-            options = self._connection.get_options()
-            socket_path = start_connection(self._play_context, options, self._task._uuid)
-            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
-            setattr(self._connection, '_socket_path', socket_path)
-
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overridden
         if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
@@ -616,7 +605,7 @@ class TaskExecutor:
             cvars['ansible_python_interpreter'] = sys.executable
 
         # get handler
-        self._handler, module_context = self._get_action_handler_with_module_context(connection=self._connection, templar=templar)
+        self._handler, module_context = self._get_action_handler_with_module_context(templar=templar)
 
         if module_context is not None:
             module_defaults_fqcn = module_context.resolved_fqcn
@@ -801,7 +790,7 @@ class TaskExecutor:
                             )
                         )
                         time.sleep(delay)
-                        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
+                        self._handler = self._get_action_handler(templar=templar)
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
@@ -1119,13 +1108,13 @@ class TaskExecutor:
 
         return varnames
 
-    def _get_action_handler(self, connection, templar):
+    def _get_action_handler(self, templar):
         '''
         Returns the correct action plugin to handle the requestion task action
         '''
-        return self._get_action_handler_with_module_context(connection, templar)[0]
+        return self._get_action_handler_with_module_context(templar)[0]
 
-    def _get_action_handler_with_module_context(self, connection, templar):
+    def _get_action_handler_with_module_context(self, templar):
         '''
         Returns the correct action plugin to handle the requestion task action and the module context
         '''
@@ -1162,10 +1151,29 @@ class TaskExecutor:
             handler_name = 'ansible.legacy.normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
+        # networking/psersistent connections handling
+        if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
+
+            # check handler in case we dont need to do all the work to setup persistent connection
+            handler_class = self._shared_loader_obj.action_loader.get(handler_name, class_only=True)
+            if getattr(handler_class, '_requires_connection', True):
+                # for persistent connections, initialize socket path and start connection manager
+                self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
+                display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
+                display.vvvv('using connection plugin %s' % self._connection.transport, host=self._play_context.remote_addr)
+
+                options = self._connection.get_options()
+                socket_path = start_connection(self._play_context, options, self._task._uuid)
+                display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+                setattr(self._connection, '_socket_path', socket_path)
+            else:
+                # TODO: set self._connection to dummy/noop connection, using local for now
+                self._connection = self._get_connection({}, templar, 'local')
+
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
             task=self._task,
-            connection=connection,
+            connection=self._connection,
             play_context=self._play_context,
             loader=self._loader,
             templar=templar,

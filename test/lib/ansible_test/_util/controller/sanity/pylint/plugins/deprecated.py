@@ -129,7 +129,7 @@ def parse_isodate(value):
     try:
         return datetime.datetime.strptime(value, '%Y-%m-%d').date()
     except ValueError:
-        raise ValueError(msg)
+        raise ValueError(msg) from None
 
 
 class AnsibleDeprecatedChecker(BaseChecker):

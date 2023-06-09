@@ -76,7 +76,7 @@ def run_pypi_proxy(args: EnvironmentConfig, targets_use_pypi: bool) -> None:
         args=args,
         context='__pypi_proxy__',
         image=image,
-        name=f'pypi-test-container-{args.session_name}',
+        name='pypi-test-container',
         ports=[port],
     )
 

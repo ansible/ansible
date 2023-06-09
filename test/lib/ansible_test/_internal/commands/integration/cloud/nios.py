@@ -8,7 +8,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
 )
 
@@ -22,8 +21,6 @@ from . import (
 class NiosProvider(CloudProvider):
     """Nios plugin. Sets up NIOS mock server for tests."""
 
-    DOCKER_SIMULATOR_NAME = 'nios-simulator'
-
     # Default image to run the nios simulator.
     #
     # The simulator must be pinned to a specific version
@@ -31,7 +28,7 @@ class NiosProvider(CloudProvider):
     #
     # It's source source itself resides at:
     # https://github.com/ansible/nios-test-container
-    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.5.0'
+    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:2.0.0'
 
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
@@ -65,17 +62,18 @@ class NiosProvider(CloudProvider):
             nios_port,
         ]
 
-        run_support_container(
+        descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
-            self.DOCKER_SIMULATOR_NAME,
+            'nios-simulator',
             ports,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
         )
 
-        self._set_cloud_config('NIOS_HOST', self.DOCKER_SIMULATOR_NAME)
+        if not descriptor:
+            return
+
+        self._set_cloud_config('NIOS_HOST', descriptor.name)
 
     def _setup_static(self) -> None:
         raise NotImplementedError()

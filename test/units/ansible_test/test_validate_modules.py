@@ -57,7 +57,7 @@ def test_type_regex(cstring, cexpected):  # type: (str, str) -> None
 
     match = TYPE_REGEX.match(cstring)
 
-    if cexpected and not match:
-        assert False, "%s should have matched" % cstring
-    elif not cexpected and match:
-        assert False, "%s should not have matched" % cstring
+    if cexpected:
+        assert match, f"should have matched: {cstring}"
+    else:
+        assert not match, f"should not have matched: {cstring}"

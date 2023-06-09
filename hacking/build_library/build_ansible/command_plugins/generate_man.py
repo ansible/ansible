@@ -14,14 +14,14 @@ import sys
 
 from jinja2 import Environment, FileSystemLoader
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
-DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'docs/templates/man.j2'
+DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'hacking/templates/man.j2'
 
 
 # from https://www.python.org/dev/peps/pep-0257/

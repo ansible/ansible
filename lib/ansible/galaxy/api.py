@@ -28,7 +28,7 @@ from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
@@ -923,10 +923,7 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
-        try:
-            signatures = data["signatures"]
-        except KeyError:
+        signatures = [signature_info["signature"] for signature_info in data.get("signatures") or []]
+        if not signatures:
             display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
-            return []
-        else:
-            return [signature_info["signature"] for signature_info in signatures]
+        return signatures

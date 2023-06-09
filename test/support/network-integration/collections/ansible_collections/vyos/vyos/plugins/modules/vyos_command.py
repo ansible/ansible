@@ -133,7 +133,7 @@ warnings:
 """
 import time
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.parsing import (
     Conditional,
@@ -192,7 +192,7 @@ def main():
     interval = module.params["interval"]
     match = module.params["match"]
 
-    for _ in range(retries):
+    for dummy in range(retries):
         responses = run_commands(module, commands)
 
         for item in list(conditionals):
@@ -213,7 +213,7 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update(
-        {"stdout": responses, "stdout_lines": list(to_lines(responses)),}
+        {"stdout": responses, "stdout_lines": list(to_lines(responses)), }
     )
 
     module.exit_json(**result)

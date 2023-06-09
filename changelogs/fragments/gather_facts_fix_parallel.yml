@@ -1,0 +1,4 @@
+bugfixes:
+  - gather_facts parallel option was doing the reverse of what was stated, now it does run modules in parallel when True and serially when False.
+minor_changes:
+  - gather_facts now will use gather_timeout setting to limit parallel execution of modules that do not themselves use gather_timeout.

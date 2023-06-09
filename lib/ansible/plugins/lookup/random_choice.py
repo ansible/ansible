@@ -35,13 +35,13 @@ RETURN = """
 import random
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = terms
         if terms:

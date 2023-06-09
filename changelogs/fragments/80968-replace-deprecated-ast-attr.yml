@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix ``ast`` deprecation warnings for ``Str`` and ``value.s`` when using Python 3.12.

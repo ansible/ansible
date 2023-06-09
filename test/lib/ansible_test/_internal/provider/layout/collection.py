@@ -53,6 +53,14 @@ class CollectionLayout(LayoutProvider):
         integration_targets_path = self.__check_integration_path(paths, integration_messages)
         self.__check_unit_path(paths, unit_messages)
 
+        errors: list[str] = []
+
+        if not is_valid_identifier(collection_namespace):
+            errors.append(f'The namespace "{collection_namespace}" is an invalid identifier or a reserved keyword.')
+
+        if not is_valid_identifier(collection_name):
+            errors.append(f'The name "{collection_name}" is an invalid identifier or a reserved keyword.')
+
         return ContentLayout(
             root,
             paths,
@@ -74,7 +82,7 @@ class CollectionLayout(LayoutProvider):
             unit_module_path='tests/unit/plugins/modules',
             unit_module_utils_path='tests/unit/plugins/module_utils',
             unit_messages=unit_messages,
-            unsupported=not (is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
+            unsupported=errors,
         )
 
     @staticmethod

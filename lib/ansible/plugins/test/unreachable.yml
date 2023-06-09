@@ -13,7 +13,7 @@ DOCUMENTATION:
       required: True
 EXAMPLES: |
   # test 'status' to know how to respond
-  {{ (taskresults is unreachable }}
+  {{ taskresults is unreachable }}
 
 RETURN:
   _value:

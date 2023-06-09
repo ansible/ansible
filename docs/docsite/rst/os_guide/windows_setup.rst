@@ -12,9 +12,9 @@ Host Requirements
 For Ansible to communicate to a Windows host and use Windows modules, the
 Windows host must meet these base requirements for connectivity:
 
-* With Ansible you can generally manage Windows versions under the current and extended support from Microsoft. You can also manage desktop OSs including Windows 8.1, and 10, and server OSs including Windows Server 2012, 2012 R2, 2016, 2019, and 2022.
+* With Ansible you can generally manage Windows versions under the current and extended support from Microsoft. You can also manage desktop OSs including Windows 10 and 11, and server OSs including Windows Server 2016, 2019, and 2022.
 
-* You need to install PowerShell 3.0 or newer and at least .NET 4.0 on the Windows host.
+* You need to install PowerShell 5.1 or newer and at least .NET 4.0 on the Windows host.
 
 * You need to create and activate a WinRM listener. More details, see `WinRM Setup <https://docs.ansible.com/ansible/latest//user_guide/windows_setup.html#winrm-listener>`_.
 
@@ -22,7 +22,7 @@ Windows host must meet these base requirements for connectivity:
 
 Upgrading PowerShell and .NET Framework
 ---------------------------------------
-Ansible requires PowerShell version 3.0 and .NET Framework 4.0 or newer to function on older operating systems like Server 2008 and Windows 7. The base image does not meet this
+Ansible requires PowerShell version 5.1 and .NET Framework 4.6 or newer to function. The base image for older unsupported OS' do not meet these
 requirement. You can use the `Upgrade-PowerShell.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Upgrade-PowerShell.ps1>`_ script to update these.
 
 This is an example of how to run this script from PowerShell:

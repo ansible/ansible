@@ -79,7 +79,6 @@ def _generate_rst_in_templates() -> t.Iterable[Path]:
         sys.executable,
         'hacking/build-ansible.py',
         'generate-man',
-        '--template-file=docs/templates/man.j2',
         '--output-dir=docs/man/man1/',
         '--output-format=man',
         *Path('lib/ansible/cli/').glob('*.py'),
@@ -118,7 +117,7 @@ def build_sdist(  # noqa: WPS210, WPS430
     original_src_dir = Path.cwd().resolve()
     with _run_in_temporary_directory() as tmp_dir:
         tmp_src_dir = Path(tmp_dir) / 'src'
-        copytree(original_src_dir, tmp_src_dir)
+        copytree(original_src_dir, tmp_src_dir, symlinks=True)
         os.chdir(tmp_src_dir)
 
         if build_manpages_requested:

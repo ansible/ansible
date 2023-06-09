@@ -12,7 +12,7 @@ import pytest
 
 import ansible.module_utils.basic
 from ansible.module_utils.six import PY3, string_types
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.six.moves.collections_abc import MutableMapping
 
 

@@ -1,0 +1,3 @@
+bugfixes:
+- Switch result queue from a ``multiprocessing.queues.Queue` to ``multiprocessing.queues.SimpleQueue``, primarily to allow properly handling
+  pickling errors, to prevent an infinite hang waiting for task results

@@ -242,6 +242,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
 from ansible.module_utils.urls import generic_urlparse
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import get_user_agent
 from ansible.module_utils.urls import urlparse
 
 HAS_DEBIAN = True
@@ -325,7 +326,7 @@ def write_signed_by_key(module, v, slug):
     parts = generic_urlparse(urlparse(v))
     if parts.scheme:
         try:
-            r = open_url(v)
+            r = open_url(v, http_agent=get_user_agent())
         except Exception as exc:
             raise_from(RuntimeError(to_native(exc)), exc)
         else:

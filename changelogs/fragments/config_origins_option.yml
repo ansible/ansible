@@ -1,0 +1,2 @@
+minor_changes:
+  - config lookup new option show_origin to also return the origin of a configuration value.

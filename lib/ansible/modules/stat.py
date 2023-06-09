@@ -307,13 +307,6 @@ stat:
             type: str
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
-        md5:
-            description: md5 hash of the file; this will be removed in Ansible 2.9 in
-                favor of the checksum return value
-            returned: success, path exists and user can read stats and path
-                supports hashing and md5 is supported
-            type: str
-            sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
             description: hash of the file
             returned: success, path exists, user can read stats, path supports
@@ -384,7 +377,7 @@ import stat
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def format_output(module, path, st):
@@ -454,7 +447,6 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest', 'name']),
             follow=dict(type='bool', default=False),
-            get_md5=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
@@ -472,10 +464,6 @@ def main():
     get_attr = module.params.get('get_attributes')
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
-
-    # NOTE: undocumented option since 2.9 to be removed at a later date if possible (3.0+)
-    # no real reason for keeping other than fear we may break older content.
-    get_md5 = module.params.get('get_md5')
 
     # main stat data
     try:
@@ -516,15 +504,6 @@ def main():
 
     # checksums
     if output.get('isreg') and output.get('readable'):
-
-        # NOTE: see above about get_md5
-        if get_md5:
-            # Will fail on FIPS-140 compliant systems
-            try:
-                output['md5'] = module.md5(b_path)
-            except ValueError:
-                output['md5'] = None
-
         if get_checksum:
             output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
 

@@ -1,0 +1,2 @@
+minor_changes:
+  - Record ``removal_date`` in runtime metadata as a string instead of a date.

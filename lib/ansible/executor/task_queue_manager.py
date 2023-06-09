@@ -34,7 +34,7 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
@@ -76,15 +76,14 @@ class PromptSend:
     complete_input: t.Iterable[bytes] = None
 
 
-class FinalQueue(multiprocessing.queues.Queue):
+class FinalQueue(multiprocessing.queues.SimpleQueue):
     def __init__(self, *args, **kwargs):
         kwargs['ctx'] = multiprocessing_context
-        super(FinalQueue, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def send_callback(self, method_name, *args, **kwargs):
         self.put(
             CallbackSend(method_name, *args, **kwargs),
-            block=False
         )
 
     def send_task_result(self, *args, **kwargs):
@@ -94,19 +93,16 @@ class FinalQueue(multiprocessing.queues.Queue):
             tr = TaskResult(*args, **kwargs)
         self.put(
             tr,
-            block=False
         )
 
     def send_display(self, *args, **kwargs):
         self.put(
             DisplaySend(*args, **kwargs),
-            block=False
         )
 
     def send_prompt(self, **kwargs):
         self.put(
             PromptSend(**kwargs),
-            block=False
         )
 
 
@@ -235,7 +231,7 @@ class TaskQueueManager:
                 callback_name = cnames[0]
             else:
                 # fallback to 'old loader name'
-                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+                (callback_name, ext) = os.path.splitext(os.path.basename(callback_plugin._original_path))
 
             display.vvvvv("Attempting to use '%s' callback." % (callback_name))
             if callback_type == 'stdout':

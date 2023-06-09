@@ -35,7 +35,7 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.urls import open_url

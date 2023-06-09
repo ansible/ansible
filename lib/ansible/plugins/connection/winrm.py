@@ -186,7 +186,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _parse_clixml
@@ -714,7 +714,7 @@ class Connection(ConnectionBase):
                 try:
                     script = '''
                         $path = '%(path)s'
-                        If (Test-Path -Path $path -PathType Leaf)
+                        If (Test-Path -LiteralPath $path -PathType Leaf)
                         {
                             $buffer_size = %(buffer_size)d
                             $offset = %(offset)d
@@ -729,7 +729,7 @@ class Connection(ConnectionBase):
                             }
                             $stream.Close() > $null
                         }
-                        ElseIf (Test-Path -Path $path -PathType Container)
+                        ElseIf (Test-Path -LiteralPath $path -PathType Container)
                         {
                             Write-Host "[DIR]";
                         }

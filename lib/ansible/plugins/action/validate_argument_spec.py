@@ -14,6 +14,7 @@ class ActionModule(ActionBase):
     ''' Validate an arg spec'''
 
     TRANSFERS_FILES = False
+    _requires_connection = False
 
     def get_args_from_task_vars(self, argument_spec, task_vars):
         '''

@@ -39,7 +39,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.galaxy import collection
 from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from units.compat import unittest
@@ -72,8 +72,7 @@ class TestGalaxy(unittest.TestCase):
 
         # making a temp dir for role installation
         cls.role_path = os.path.join(tempfile.mkdtemp(), "roles")
-        if not os.path.isdir(cls.role_path):
-            os.makedirs(cls.role_path)
+        os.makedirs(cls.role_path)
 
         # creating a tar file name for class data
         cls.role_tar = './delete_me.tar.gz'
@@ -291,7 +290,7 @@ class ValidRoleTests(object):
             cls.role_skeleton_path = gc.galaxy.default_role_skeleton_path
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownRole(cls):
         shutil.rmtree(cls.test_dir, ignore_errors=True)
 
     def test_metadata(self):
@@ -342,6 +341,10 @@ class TestGalaxyInitDefault(unittest.TestCase, ValidRoleTests):
     def setUpClass(cls):
         cls.setUpRole(role_name='delete_me')
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
+
     def test_metadata_contents(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
             metadata = yaml.safe_load(mf)
@@ -353,6 +356,10 @@ class TestGalaxyInitAPB(unittest.TestCase, ValidRoleTests):
     @classmethod
     def setUpClass(cls):
         cls.setUpRole('delete_me_apb', galaxy_args=['--type=apb'])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
 
     def test_metadata_apb_tag(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
@@ -384,6 +391,10 @@ class TestGalaxyInitContainer(unittest.TestCase, ValidRoleTests):
     def setUpClass(cls):
         cls.setUpRole('delete_me_container', galaxy_args=['--type=container'])
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
+
     def test_metadata_container_tag(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
             metadata = yaml.safe_load(mf)
@@ -414,6 +425,10 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
     def setUpClass(cls):
         role_skeleton_path = os.path.join(os.path.split(__file__)[0], 'test_data', 'role_skeleton')
         cls.setUpRole('delete_me_skeleton', skeleton_path=role_skeleton_path, use_explicit_type=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDownRole()
 
     def test_empty_files_dir(self):
         files_dir = os.path.join(self.role_dir, 'files')
@@ -1235,12 +1250,7 @@ def test_install_implicit_role_with_collections(requirements_file, monkeypatch):
     assert len(mock_role_install.call_args[0][0]) == 1
     assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains collections which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert not found
+    assert not any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1267,12 +1277,7 @@ def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
     assert len(mock_role_install.call_args[0][0]) == 1
     assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains collections which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert found
+    assert any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1299,12 +1304,7 @@ def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
     assert len(mock_role_install.call_args[0][0]) == 1
     assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains collections which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert found
+    assert any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1331,9 +1331,4 @@ def test_install_collection_with_roles(requirements_file, monkeypatch):
 
     assert mock_role_install.call_count == 0
 
-    found = False
-    for mock_call in mock_display.mock_calls:
-        if 'contains roles which will be ignored' in mock_call[1][0]:
-            found = True
-            break
-    assert found
+    assert any(list('contains roles which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))

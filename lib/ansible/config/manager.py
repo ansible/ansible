@@ -17,7 +17,7 @@ from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -63,7 +63,7 @@ def ensure_type(value, value_type, origin=None):
         :temppath: Same as 'tmppath'
         :tmp: Same as 'tmppath'
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
-            means colon separated strings.)  Split the value and then expand
+            means comma separated strings.)  Split the value and then expand
             each part for environment variables and tildes.
         :pathspec: Treat the value as a PATH string. Expands any environment variables
             tildes's in the value.

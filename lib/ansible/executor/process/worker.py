@@ -28,7 +28,7 @@ from multiprocessing.queues import Queue
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
@@ -194,12 +194,27 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
             # put the result on the result queue
             display.debug("sending task result for task %s" % self._task._uuid)
-            self._final_q.send_task_result(
-                self._host.name,
-                self._task._uuid,
-                executor_result,
-                task_fields=self._task.dump_attrs(),
-            )
+            try:
+                self._final_q.send_task_result(
+                    self._host.name,
+                    self._task._uuid,
+                    executor_result,
+                    task_fields=self._task.dump_attrs(),
+                )
+            except Exception as e:
+                display.debug(f'failed to send task result ({e}), sending surrogate result')
+                self._final_q.send_task_result(
+                    self._host.name,
+                    self._task._uuid,
+                    # Overriding the task result, to represent the failure
+                    {
+                        'failed': True,
+                        'msg': f'{e}',
+                        'exception': traceback.format_exc(),
+                    },
+                    # The failure pickling may have been caused by the task attrs, omit for safety
+                    {},
+                )
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:

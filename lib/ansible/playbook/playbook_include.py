@@ -23,7 +23,7 @@ import os
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import split_args
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -48,7 +48,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
     def load(data, basedir, variable_manager=None, loader=None):
         return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, ds, basedir, variable_manager=None, loader=None):
+    def load_data(self, ds, variable_manager=None, loader=None, basedir=None):
         '''
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object

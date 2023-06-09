@@ -9,29 +9,56 @@ import tempfile
 
 
 def main():
+    base_dir = os.getcwd()
+
+    keep_dirs = [
+        'bin',
+        'docs',
+        'examples',
+        'hacking',
+        'lib',
+        'packaging',
+        'test/lib',
+        'test/sanity',
+    ]
+
+    keep_files = [
+        'MANIFEST.in',
+        'pyproject.toml',
+        'requirements.txt',
+        'setup.cfg',
+        'setup.py',
+    ]
+
+    # The tests write to the source tree, which isn't permitted for sanity tests.
+    # To work around this a temporary copy is used.
+
+    current_dir = os.getcwd()
+
+    with tempfile.TemporaryDirectory(prefix='docs-build-', suffix='-sanity') as temp_dir:
+        for keep_dir in keep_dirs:
+            shutil.copytree(os.path.join(base_dir, keep_dir), os.path.join(temp_dir, keep_dir), symlinks=True)
+
+        for keep_file in keep_files:
+            shutil.copy2(os.path.join(base_dir, keep_file), os.path.join(temp_dir, keep_file))
+
+        paths = os.environ['PATH'].split(os.pathsep)
+        paths = [f'{temp_dir}/bin' if path == f'{current_dir}/bin' else path for path in paths]
+
+        # Fix up the environment so everything runs from the temporary copy.
+        os.environ['PATH'] = os.pathsep.join(paths)
+        os.environ['PYTHONPATH'] = f'{temp_dir}/lib'
+        os.chdir(temp_dir)
+
+        run_test()
+
+
+def run_test():
     base_dir = os.getcwd() + os.path.sep
     docs_dir = os.path.abspath('docs/docsite')
 
-    # TODO: Remove this temporary hack to constrain 'cryptography' when we have
-    # a better story for dealing with it.
-    tmpfd, tmp = tempfile.mkstemp()
-    requirements_txt = os.path.join(base_dir, 'requirements.txt')
-    shutil.copy2(requirements_txt, tmp)
-    lines = []
-    with open(requirements_txt, 'r') as f:
-        for line in f.readlines():
-            if line.strip() == 'cryptography':
-                line = 'cryptography < 3.4\n'
-            lines.append(line)
-
-    with open(requirements_txt, 'w') as f:
-        f.writelines(lines)
-
-    try:
-        cmd = ['make', 'core_singlehtmldocs']
-        sphinx = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, cwd=docs_dir, check=False, text=True)
-    finally:
-        shutil.move(tmp, requirements_txt)
+    cmd = ['make', 'core_singlehtmldocs']
+    sphinx = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, cwd=docs_dir, check=False, text=True)
 
     stdout = sphinx.stdout
     stderr = sphinx.stderr

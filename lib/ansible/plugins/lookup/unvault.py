@@ -16,6 +16,9 @@ DOCUMENTATION = """
         required: True
     notes:
       - This lookup does not understand 'globbing' nor shell environment variables.
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
@@ -32,7 +35,7 @@ RETURN = """
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 display = Display()

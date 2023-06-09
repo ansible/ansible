@@ -28,6 +28,9 @@ DOCUMENTATION = """
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globbing', use the fileglob lookup instead.
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
@@ -52,7 +55,7 @@ RETURN = """
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleLookupError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 display = Display()

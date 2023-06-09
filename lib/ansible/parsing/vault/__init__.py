@@ -55,7 +55,7 @@ except ImportError:
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
 from ansible.module_utils.six import binary_type
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
@@ -787,13 +787,13 @@ class VaultEditor:
 
             passes = 3
             with open(tmp_path, "wb") as fh:
-                for _ in range(passes):
+                for dummy in range(passes):
                     fh.seek(0, 0)
                     # get a random chunk of data, each pass with other length
                     chunk_len = random.randint(max_chunk_len // 2, max_chunk_len)
                     data = os.urandom(chunk_len)
 
-                    for _ in range(0, file_len // chunk_len):
+                    for dummy in range(0, file_len // chunk_len):
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 

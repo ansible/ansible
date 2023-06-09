@@ -338,7 +338,7 @@ import shutil
 import tempfile
 from ansible.module_utils.compat.version import LooseVersion
 
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
@@ -1124,7 +1124,7 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
     """ Helper function for creating archive using git_archive """
     all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
                        '.tgz': 'tgz'}
-    _, archive_ext = os.path.splitext(archive)
+    dummy, archive_ext = os.path.splitext(archive)
     archive_fmt = all_archive_fmt.get(archive_ext, None)
     if archive_fmt is None:
         module.fail_json(msg="Unable to get file extension from "

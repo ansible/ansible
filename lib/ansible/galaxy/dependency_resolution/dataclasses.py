@@ -30,7 +30,7 @@ if t.TYPE_CHECKING:
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
@@ -167,6 +167,7 @@ def _is_concrete_artifact_pointer(tested_str):
 
 
 class _ComputedReqKindsMixin:
+    UNIQUE_ATTRS = ('fqcn', 'ver', 'src', 'type')
 
     def __init__(self, *args, **kwargs):
         if not self.may_have_offline_galaxy_info:
@@ -180,6 +181,12 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
+
+    def __hash__(self):
+        return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
+
+    def __eq__(self, candidate):
+        return hash(self) == hash(candidate)
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
@@ -209,12 +216,15 @@ class _ComputedReqKindsMixin:
             return cls.from_dir_path_implicit(dir_path)
 
     @classmethod
-    def from_dir_path(cls, dir_path, art_mgr):
+    def from_dir_path(  # type: ignore[misc]
+            cls,  # type: t.Type[Collection]
+            dir_path,  # type: bytes
+            art_mgr,  # type: ConcreteArtifactsManager
+    ):  # type: (...)  -> Collection
         """Make collection from an directory with metadata."""
         if dir_path.endswith(to_bytes(os.path.sep)):
             dir_path = dir_path.rstrip(to_bytes(os.path.sep))
-        b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
-        if not _is_collection_dir(b_dir_path):
+        if not _is_collection_dir(dir_path):
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.

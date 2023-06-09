@@ -30,7 +30,7 @@ Ansible expects to find certain files in certain places. As you expand your inve
    ├── second_playbook.yml
    └── third_playbook.yml
 
-The ``backup`` directory and the files in it get created when you run modules like ``vyos_config`` with the ``backup: yes`` parameter.
+The ``backup`` directory and the files in it get created when you run modules like ``vyos_config`` with the ``backup: true`` parameter.
 
 
 Tracking changes to inventory and playbooks: source control with git

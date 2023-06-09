@@ -1,1 +1,1 @@
-- include: more_handlers.yml
+- import_tasks: more_handlers.yml

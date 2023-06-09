@@ -34,8 +34,8 @@ class TerminalBase(ABC):
         :class:`TerminalBase` plugins are byte strings.  This is because of
         how close to the underlying platform these plugins operate.  Remember
         to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
+        :func:`~ansible.module_utils.common.text.converters.to_bytes` and
+        :func:`~ansible.module_utils.common.text.converters.to_text` to avoid unexpected
         problems.
     '''
 

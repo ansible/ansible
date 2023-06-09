@@ -74,8 +74,9 @@ Platform versions, as specified using the ``--remote`` option with ``/`` removed
 
 Windows versions, as specified using the ``--windows`` option can also be skipped:
 
-- ``skip/windows/2012`` - Skip tests on Windows Server 2012.
-- ``skip/windows/2012-R2`` - Skip tests on Windows Server 2012 R2.
+- ``skip/windows/2016`` - Skip tests on Windows Server 2016.
+- ``skip/windows/2019`` - Skip tests on Windows Server 2019.
+- ``skip/windows/2022`` - Skip tests on Windows Server 2022.
 
 Aliases can be used to skip Python major versions using one of the following:
 

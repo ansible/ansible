@@ -30,7 +30,7 @@ except ImportError:
     _md5 = None
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def secure_hash_s(data, hash_func=sha1):

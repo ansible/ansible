@@ -19,7 +19,7 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute, ConnectionFieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
@@ -637,7 +637,7 @@ class FieldAttributeBase:
         else:
             combined = value + new_value
 
-        return [i for i, _ in itertools.groupby(combined) if i is not None]
+        return [i for i, dummy in itertools.groupby(combined) if i is not None]
 
     def dump_attrs(self):
         '''

@@ -35,6 +35,9 @@ DOCUMENTATION = r"""
       - For historical reasons, in the search keyname, quotes are treated
         literally and cannot be used around the string unless they appear
         (escaped as required) in the first column of the file you are parsing.
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
@@ -75,7 +78,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.six import PY2
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
 class CSVRecoder:

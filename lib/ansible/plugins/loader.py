@@ -21,7 +21,7 @@ import ansible.module_utils.compat.typing as t
 from ansible import __version__ as ansible_version
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml

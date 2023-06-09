@@ -18,6 +18,7 @@ from .constants import (
 from .util import (
     ApplicationError,
     HostConnectionError,
+    TimeoutExpiredError,
     display,
     report_locale,
 )
@@ -107,6 +108,9 @@ def main(cli_args: t.Optional[list[str]] = None) -> None:
         display.warning('%s' % ex)
         sys.exit(0)
     except ApplicationError as ex:
+        display.fatal('%s' % ex)
+        sys.exit(1)
+    except TimeoutExpiredError as ex:
         display.fatal('%s' % ex)
         sys.exit(1)
     except KeyboardInterrupt:

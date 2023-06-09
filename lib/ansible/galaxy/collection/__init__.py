@@ -124,7 +124,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -283,11 +283,8 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
         # fetch remote
-        b_temp_tar_path = (  # NOTE: AnsibleError is raised on URLError
-            artifacts_manager.get_artifact_path
-            if remote_collection.is_concrete_artifact
-            else artifacts_manager.get_galaxy_artifact_path
-        )(remote_collection)
+        # NOTE: AnsibleError is raised on URLError
+        b_temp_tar_path = artifacts_manager.get_artifact_path_from_unknown(remote_collection)
 
         display.vvv(
             u"Remote collection cached as '{path!s}'".format(path=to_text(b_temp_tar_path))
@@ -557,11 +554,7 @@ def download_collections(
                 format(coll=to_text(concrete_coll_pin), path=to_text(b_output_path)),
             )
 
-            b_src_path = (
-                artifacts_manager.get_artifact_path
-                if concrete_coll_pin.is_concrete_artifact
-                else artifacts_manager.get_galaxy_artifact_path
-            )(concrete_coll_pin)
+            b_src_path = artifacts_manager.get_artifact_path_from_unknown(concrete_coll_pin)
 
             b_dest_path = os.path.join(
                 b_output_path,
@@ -681,7 +674,7 @@ def install_collections(
     unsatisfied_requirements = set(
         chain.from_iterable(
             (
-                Requirement.from_dir_path(sub_coll, artifacts_manager)
+                Requirement.from_dir_path(to_bytes(sub_coll), artifacts_manager)
                 for sub_coll in (
                     artifacts_manager.
                     get_direct_collection_dependencies(install_req).
@@ -916,7 +909,7 @@ def verify_collections(
                         # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
                         # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                         # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
-                        if not signatures and not collection.signature_sources:
+                        if artifacts_manager.keyring is None or not signatures:
                             api_proxy.get_collection_version_metadata(
                                 remote_collection,
                             )
@@ -1485,10 +1478,7 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     :param path: Collection dirs layout path.
     :param artifacts_manager: Artifacts manager.
     """
-    b_artifact_path = (
-        artifacts_manager.get_artifact_path if collection.is_concrete_artifact
-        else artifacts_manager.get_galaxy_artifact_path
-    )(collection)
+    b_artifact_path = artifacts_manager.get_artifact_path_from_unknown(collection)
 
     collection_path = os.path.join(path, collection.namespace, collection.name)
     b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')

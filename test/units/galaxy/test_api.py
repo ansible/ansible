@@ -24,7 +24,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.six.moves.urllib import error as urllib_error
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
@@ -463,10 +463,9 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
 def test_wait_import_task(server_url, api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
     api = get_test_galaxy_api(server_url, api_version, token_ins=token_ins)
 
-    if token_ins:
-        mock_token_get = MagicMock()
-        mock_token_get.return_value = 'my token'
-        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+    mock_token_get = MagicMock()
+    mock_token_get.return_value = 'my token'
+    monkeypatch.setattr(token_ins, 'get', mock_token_get)
 
     mock_open = MagicMock()
     mock_open.return_value = StringIO(u'{"state":"success","finished_at":"time"}')
@@ -496,10 +495,9 @@ def test_wait_import_task(server_url, api_version, token_type, token_ins, import
 def test_wait_import_task_multiple_requests(server_url, api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
     api = get_test_galaxy_api(server_url, api_version, token_ins=token_ins)
 
-    if token_ins:
-        mock_token_get = MagicMock()
-        mock_token_get.return_value = 'my token'
-        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+    mock_token_get = MagicMock()
+    mock_token_get.return_value = 'my token'
+    monkeypatch.setattr(token_ins, 'get', mock_token_get)
 
     mock_open = MagicMock()
     mock_open.side_effect = [
@@ -543,10 +541,9 @@ def test_wait_import_task_multiple_requests(server_url, api_version, token_type,
 def test_wait_import_task_with_failure(server_url, api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
     api = get_test_galaxy_api(server_url, api_version, token_ins=token_ins)
 
-    if token_ins:
-        mock_token_get = MagicMock()
-        mock_token_get.return_value = 'my token'
-        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+    mock_token_get = MagicMock()
+    mock_token_get.return_value = 'my token'
+    monkeypatch.setattr(token_ins, 'get', mock_token_get)
 
     mock_open = MagicMock()
     mock_open.side_effect = [
@@ -620,10 +617,9 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
 def test_wait_import_task_with_failure_no_error(server_url, api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
     api = get_test_galaxy_api(server_url, api_version, token_ins=token_ins)
 
-    if token_ins:
-        mock_token_get = MagicMock()
-        mock_token_get.return_value = 'my token'
-        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+    mock_token_get = MagicMock()
+    mock_token_get.return_value = 'my token'
+    monkeypatch.setattr(token_ins, 'get', mock_token_get)
 
     mock_open = MagicMock()
     mock_open.side_effect = [
@@ -693,10 +689,9 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
 def test_wait_import_task_timeout(server_url, api_version, token_type, token_ins, import_uri, full_import_uri, monkeypatch):
     api = get_test_galaxy_api(server_url, api_version, token_ins=token_ins)
 
-    if token_ins:
-        mock_token_get = MagicMock()
-        mock_token_get.return_value = 'my token'
-        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+    mock_token_get = MagicMock()
+    mock_token_get.return_value = 'my token'
+    monkeypatch.setattr(token_ins, 'get', mock_token_get)
 
     def return_response(*args, **kwargs):
         return StringIO(u'{"state":"waiting"}')

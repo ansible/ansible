@@ -27,7 +27,7 @@ attributes:
     platform:
         platforms: debian
 notes:
-    - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
+    - The apt-key command used by this module has been deprecated. See the L(Debian wiki,https://wiki.debian.org/DebianRepository/UseThirdParty) for details.
       This module is kept for backwards compatibility for systems that still use apt-key as the main way to manage apt repository keys.
     - As a sanity check, downloaded key id must match the one specified.
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
@@ -36,6 +36,8 @@ notes:
     - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's update_cache option).
 requirements:
     - gpg
+seealso:
+  - module: ansible.builtin.deb822_repository
 options:
     id:
         description:
@@ -81,12 +83,12 @@ options:
 '''
 
 EXAMPLES = '''
-- name: One way to avoid apt_key once it is removed from your distro
+- name: One way to avoid apt_key once it is removed from your distro, armored keys should use .asc extension, binary should use .gpg
   block:
-    - name: somerepo |no apt key
+    - name: somerepo | no apt key
       ansible.builtin.get_url:
-        url: https://download.example.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/somerepo.asc
+        url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x36a1d7869245c8950f966e92d8576a8ba88d21e9
+        dest: /etc/apt/keyrings/myrepo.asc
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:
@@ -171,7 +173,7 @@ import os
 # FIXME: standardize into module_common
 from traceback import format_exc
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_url

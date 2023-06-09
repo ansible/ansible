@@ -10,7 +10,7 @@ import re
 from string import ascii_letters, digits
 
 from ansible.config.manager import ConfigManager
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.release import __version__
@@ -64,7 +64,6 @@ _ACTION_DEBUG = add_internal_fqcns(('debug', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
 _ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
 _ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
-_ACTION_INCLUDE = add_internal_fqcns(('include', ))
 _ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
 _ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
 _ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
@@ -74,12 +73,11 @@ _ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
 _ACTION_SETUP = add_internal_fqcns(('setup', ))
 _ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
 _ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
-_ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
-_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_INCLUDES = _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
 _ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
 _ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
 _ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
-_ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
 _ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
 _ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
 

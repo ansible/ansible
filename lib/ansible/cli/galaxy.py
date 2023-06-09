@@ -10,6 +10,7 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import argparse
 import json
 import os.path
 import pathlib
@@ -51,7 +52,7 @@ from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoT
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils import six
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -71,7 +72,7 @@ SERVER_DEF = [
     ('password', False, 'str'),
     ('token', False, 'str'),
     ('auth_url', False, 'str'),
-    ('v3', False, 'bool'),
+    ('api_version', False, 'int'),
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
     ('timeout', False, 'int'),
@@ -79,7 +80,7 @@ SERVER_DEF = [
 
 # config definition fields
 SERVER_ADDITIONAL = {
-    'v3': {'default': 'False'},
+    'api_version': {'default': None, 'choices': [2, 3]},
     'validate_certs': {'cli': [{'name': 'validate_certs'}]},
     'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
@@ -238,8 +239,9 @@ class GalaxyCLI(CLI):
         )
 
         # Common arguments that apply to more than 1 action
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
+        common.add_argument('--api-version', type=int, choices=[2, 3], help=argparse.SUPPRESS)  # Hidden argument that should only be used in our tests
         common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
@@ -249,33 +251,33 @@ class GalaxyCLI(CLI):
 
         opt_help.add_verbosity_options(common)
 
-        force = opt_help.argparse.ArgumentParser(add_help=False)
+        force = opt_help.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                            help='Force overwriting an existing role or collection')
 
-        github = opt_help.argparse.ArgumentParser(add_help=False)
+        github = opt_help.ArgumentParser(add_help=False)
         github.add_argument('github_user', help='GitHub username')
         github.add_argument('github_repo', help='GitHub repository')
 
-        offline = opt_help.argparse.ArgumentParser(add_help=False)
+        offline = opt_help.ArgumentParser(add_help=False)
         offline.add_argument('--offline', dest='offline', default=False, action='store_true',
                              help="Don't query the galaxy API when creating roles")
 
         default_roles_path = C.config.get_configuration_definition('DEFAULT_ROLES_PATH').get('default', '')
-        roles_path = opt_help.argparse.ArgumentParser(add_help=False)
+        roles_path = opt_help.ArgumentParser(add_help=False)
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles. The default is the first '
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
-        collections_path = opt_help.argparse.ArgumentParser(add_help=False)
+        collections_path = opt_help.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
                                       action=opt_help.PrependListAction,
                                       help="One or more directories to search for collections in addition "
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
 
-        cache_options = opt_help.argparse.ArgumentParser(add_help=False)
+        cache_options = opt_help.ArgumentParser(add_help=False)
         cache_options.add_argument('--clear-response-cache', dest='clear_response_cache', action='store_true',
                                    default=False, help='Clear the existing server response cache.')
         cache_options.add_argument('--no-cache', dest='no_cache', action='store_true', default=False,
@@ -644,17 +646,22 @@ class GalaxyCLI(CLI):
             client_id = server_options.pop('client_id')
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
-            v3 = server_options.pop('v3')
+            api_version = server_options.pop('api_version')
             if server_options['validate_certs'] is None:
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
-            if v3:
-                # This allows a user to explicitly indicate the server uses the /v3 API
-                # This was added for testing against pulp_ansible and I'm not sure it has
-                # a practical purpose outside of this use case. As such, this option is not
-                # documented as of now
-                server_options['available_api_versions'] = {'v3': '/v3'}
+            # This allows a user to explicitly force use of an API version when
+            # multiple versions are supported. This was added for testing
+            # against pulp_ansible and I'm not sure it has a practical purpose
+            # outside of this use case. As such, this option is not documented
+            # as of now
+            if api_version:
+                display.warning(
+                    f'The specified "api_version" configuration for the galaxy server "{server_key}" is '
+                    'not a public configuration, and may be removed at any time without warning.'
+                )
+                server_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
 
             # default case if no auth info is provided.
             server_options['token'] = None
@@ -680,6 +687,13 @@ class GalaxyCLI(CLI):
             ))
 
         cmd_server = context.CLIARGS['api_server']
+        if context.CLIARGS['api_version']:
+            api_version = context.CLIARGS['api_version']
+            display.warning(
+                'The --api-version is not a public argument, and may be removed at any time without warning.'
+            )
+            galaxy_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
+
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
         validate_certs = context.CLIARGS['resolved_validate_certs']

@@ -114,7 +114,7 @@ class TestResult:
                 junit_xml.TestSuite(
                     name='ansible-test',
                     cases=[test_case],
-                    timestamp=datetime.datetime.utcnow(),
+                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                 ),
             ],
         )
@@ -130,7 +130,7 @@ class TestResult:
 class TestTimeout(TestResult):
     """Test timeout."""
 
-    def __init__(self, timeout_duration: int) -> None:
+    def __init__(self, timeout_duration: int | float) -> None:
         super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
@@ -153,13 +153,11 @@ One or more of the following situations may be responsible:
 
         output += '\n\nConsult the console log for additional details on where the timeout occurred.'
 
-        timestamp = datetime.datetime.utcnow()
-
         suites = junit_xml.TestSuites(
             suites=[
                 junit_xml.TestSuite(
                     name='ansible-test',
-                    timestamp=timestamp,
+                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                     cases=[
                         junit_xml.TestCase(
                             name='timeout',

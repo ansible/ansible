@@ -168,7 +168,7 @@
 
 - name: Find artifact url for namespace3.name
   uri:
-    url: '{{ test_server }}{{ vX }}collections/namespace3/name/versions/1.0.0/'
+    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/namespace3/name/versions/1.0.0/'
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'
     force_basic_auth: true
@@ -218,7 +218,7 @@
     state: absent
 
 - assert:
-    that: error == expected_error
+    that: expected_error in error
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
@@ -258,12 +258,14 @@
       ignore_errors: yes
       register: result
 
-    - debug: msg="Actual - {{ error }}"
+    - debug:
+        msg: "Actual - {{ error }}"
 
-    - debug: msg="Expected - {{ expected_error }}"
+    - debug:
+        msg: "Expected - {{ expected_error }}"
 
     - assert:
-        that: error == expected_error
+        that: expected_error in error
   always:
     - name: clean up collection skeleton and artifact
       file:
@@ -295,7 +297,7 @@
 
 - name: Find artifact url for namespace4.name
   uri:
-    url: '{{ test_server }}{{ vX }}collections/namespace4/name/versions/1.0.0/'
+    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/namespace4/name/versions/1.0.0/'
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'
     force_basic_auth: true
@@ -325,10 +327,11 @@
   environment:
     ANSIBLE_GALAXY_SERVER_LIST: undefined
 
-- when: not requires_auth
+# pulp_v2 doesn't require auth
+- when: v2|default(false)
   block:
     - name: install a collection with an empty server list - {{ test_id }}
-      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
+      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' --api-version 2 {{ galaxy_verbosity }}
       register: install_empty_server_list
       environment:
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
@@ -571,7 +574,6 @@
   - namespace8
   - namespace9
 
-# SIVEL
 - name: assert invalid signature is not fatal with ansible-galaxy install --ignore-errors - {{ test_id }}
   assert:
     that:
@@ -697,39 +699,40 @@
     - namespace8
     - namespace9
 
-# Uncomment once pulp container is at pulp>=0.5.0
-#- name: install cache.cache at the current latest version
-#  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' -vvv
-#  environment:
-#    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-#
-#- set_fact:
-#    cache_version_build: '{{ (cache_version_build | int) + 1 }}'
-#
-#- name: publish update for cache.cache test
-#  setup_collections:
-#    server: galaxy_ng
-#    collections:
-#    - namespace: cache
-#      name: cache
-#      version: 1.0.{{ cache_version_build }}
-#
-#- name: make sure the cache version list is ignored on a collection version change - {{ test_id }}
-#  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
-#  register: install_cached_update
-#  environment:
-#    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-#
-#- name: get result of cache version list is ignored on a collection version change - {{ test_id }}
-#  slurp:
-#    path: '{{ galaxy_dir }}/ansible_collections/cache/cache/MANIFEST.json'
-#  register: install_cached_update_actual
-#
-#- name: assert cache version list is ignored on a collection version change - {{ test_id }}
-#  assert:
-#    that:
-#    - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
-#    - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
+- when: not v2|default(false)
+  block:
+    - name: install cache.cache at the current latest version
+      command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' -vvv
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+    - set_fact:
+        cache_version_build: '{{ (cache_version_build | int) + 1 }}'
+
+    - name: publish update for cache.cache test
+      setup_collections:
+        server: galaxy_ng
+        collections:
+        - namespace: cache
+          name: cache
+          version: 1.0.{{ cache_version_build }}
+
+    - name: make sure the cache version list is ignored on a collection version change - {{ test_id }}
+      command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
+      register: install_cached_update
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+    - name: get result of cache version list is ignored on a collection version change - {{ test_id }}
+      slurp:
+        path: '{{ galaxy_dir }}/ansible_collections/cache/cache/MANIFEST.json'
+      register: install_cached_update_actual
+
+    - name: assert cache version list is ignored on a collection version change - {{ test_id }}
+      assert:
+        that:
+        - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
+        - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
 
 - name: install collection with symlink - {{ test_id }}
   command: ansible-galaxy collection install symlink.symlink -s '{{ test_name }}' {{ galaxy_verbosity }}
