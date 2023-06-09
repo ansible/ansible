@@ -27,6 +27,12 @@ EXAMPLES: |
   # all_pirates => ['CAR', 'tar', 'bar']
   all_pirates: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True, ignorecase=True) }}"
 
+  # Using inline regex flags instead of passing options to filter
+  # Please see https://docs.python.org/3/library/re.html for more information
+  # on inline regex flags
+  # all_pirates => ['CAR', 'tar', 'bar']
+  all_pirates: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('(?im)^.ar$') }}"
+
   # get_ips => ['8.8.8.8', '8.8.4.4']
   get_ips: "{{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}"
 
