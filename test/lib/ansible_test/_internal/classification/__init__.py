@@ -721,9 +721,6 @@ class PathMapper:
         if path.startswith('changelogs/'):
             return minimal
 
-        if path.startswith('docs/'):
-            return minimal
-
         if path.startswith('examples/'):
             if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
                 return {
