@@ -1,6 +1,7 @@
 # coding: utf-8
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""Generate cli documentation from cli docstrings."""
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -14,14 +15,8 @@ import sys
 
 from jinja2 import Environment, FileSystemLoader
 
-from ansible.module_utils.common.text.converters import to_bytes
 
-# Pylint doesn't understand Python3 namespace modules.
-from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
-from ..commands import Command  # pylint: disable=relative-beyond-top-level
-
-
-DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'hacking/templates/man.j2'
+DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parent / '_templates/man.j2'
 
 
 # from https://www.python.org/dev/peps/pep-0257/
@@ -211,14 +206,11 @@ def opts_docs(cli_class_name, cli_module_name):
     return docs
 
 
-class GenerateMan(Command):
+class GenerateMan:
     name = 'generate-man'
 
     @classmethod
-    def init_parser(cls, add_parser):
-        parser = add_parser(name=cls.name,
-                            description='Generate cli documentation from cli docstrings')
-
+    def init_parser(cls, parser: argparse.ArgumentParser):
         parser.add_argument("-t", "--template-file", action="store", dest="template_file",
                             default=DEFAULT_TEMPLATE_FILE, help="path to jinja2 template")
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
@@ -299,4 +291,20 @@ class GenerateMan(Command):
 
             manpage = template.render(tvars)
             filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
-            update_file_if_different(filename, to_bytes(manpage))
+            pathlib.Path(filename).write_text(manpage)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+
+    GenerateMan.init_parser(parser)
+
+    args = parser.parse_args()
+
+    sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent / 'lib'))
+
+    GenerateMan.main(args)
+
+
+if __name__ == '__main__':
+    main()
