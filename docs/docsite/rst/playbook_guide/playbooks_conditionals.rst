@@ -569,7 +569,7 @@ Possible values (sample, not complete list):
     HP-UX
     Mandrake
     RedHat
-    SGML
+    SMGL
     Slackware
     Solaris
     Suse
