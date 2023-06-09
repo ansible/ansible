@@ -524,7 +524,7 @@ class Distribution(object):
                      'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
                      'Slackware': ['Slackware'],
                      'Altlinux': ['Altlinux'],
-                     'SGML': ['SGML'],
+                     'SMGL': ['SMGL'],
                      'Gentoo': ['Gentoo', 'Funtoo'],
                      'Alpine': ['Alpine'],
                      'AIX': ['AIX'],
