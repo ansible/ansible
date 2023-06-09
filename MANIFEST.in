@@ -1,6 +1,6 @@
 include COPYING
 include bin/*
-include changelogs/CHANGELOG*.rst
+include changelogs/CHANGELOG.md changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
 include examples/ansible.cfg
 include examples/hosts
