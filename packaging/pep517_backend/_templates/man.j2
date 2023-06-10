@@ -1,0 +1,128 @@
+{% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
+{{name}}
+{{ '=' * ( name|length|int ) }}
+
+{{ '-' * ( short_desc|default('')|string|length|int ) }}
+{{short_desc|default('')}}
+{{ '-' * ( short_desc|default('')|string|length|int ) }}
+
+:Version:        Ansible %VERSION%
+:Manual section: 1
+:Manual group:   System administration commands
+
+
+
+SYNOPSIS
+--------
+{{ usage|replace('%prog', name) }}
+
+
+DESCRIPTION
+-----------
+{{ long_desc|default('', True)|wordwrap }}
+
+{% if options %}
+COMMON OPTIONS
+--------------
+{% for option in options|sort(attribute='options') %}
+{% for switch in option['options'] %}**{{switch}}**{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+  {{ option['desc'] }}
+{% endfor %}
+{% endif %}
+
+{% if arguments %}
+ARGUMENTS
+---------
+
+{% for arg in arguments %}
+{{ arg }}
+
+{{ (arguments[arg]|default(' '))|wordwrap }}
+
+{% endfor %}
+{% endif %}
+
+{% if actions %}
+ACTIONS
+-------
+{% for action in actions %}
+**{{ action }}**
+  {{ (actions[action]['desc']|default(' ')) |replace('\n', ' ')}}
+
+{% if actions[action]['options'] %}
+{% for option in actions[action]['options']|sort(attribute='options') %}
+{% for switch in option['options'] if switch in actions[action]['option_names'] %}  **{{switch}}**{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+        {{ (option['desc']) }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+
+{% if inventory %}
+INVENTORY
+---------
+
+Ansible stores the hosts it can potentially operate on in an inventory.
+This can be an YAML file, ini-like file, a script, directory, list, etc.
+For additional options, see the documentation on https://docs.ansible.com/.
+
+{% endif %}
+ENVIRONMENT
+-----------
+
+The following environment variables may be specified.
+
+{% if inventory %}
+ANSIBLE_INVENTORY  -- Override the default ansible inventory sources
+
+{% endif %}
+{% if library %}
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+{% endif %}
+ANSIBLE_CONFIG -- Specify override location for the ansible config file
+
+Many more are available for most options in ansible.cfg
+
+For a full list check https://docs.ansible.com/. or use the `ansible-config` command.
+
+FILES
+-----
+
+{% if inventory %}
+/etc/ansible/hosts -- Default inventory file
+
+{% endif %}
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
+
+./ansible.cfg -- Local config file (in current working directory) assumed to be 'project specific' and overrides the rest if present.
+
+As mentioned above, the ANSIBLE_CONFIG environment variable will override all others.
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan.
+
+
+COPYRIGHT
+---------
+
+Copyright © 2018 Red Hat, Inc | Ansible.
+Ansible is released under the terms of the GPLv3 license.
+
+
+SEE ALSO
+--------
+
+{% for other in cli_list|sort %}{% if other != cli %}**ansible{% if other != 'adhoc' %}-{{other}}{% endif %}** (1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+
+Extensive documentation is available in the documentation site:
+<https://docs.ansible.com>.
+IRC and mailing list info can be found in file CONTRIBUTING.md,
+available in: <https://github.com/ansible/ansible>
