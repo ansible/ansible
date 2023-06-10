@@ -29,7 +29,7 @@ recursive-include lib/ansible/modules *.yml
 recursive-include lib/ansible/plugins/test *.yml
 recursive-include lib/ansible/plugins/filter *.yml
 recursive-include licenses *.txt
-recursive-include packaging Makefile *.py
+recursive-include packaging Makefile *.py *.j2
 recursive-include test/ansible_test *.py Makefile
 recursive-include test/integration *
 recursive-include test/lib/ansible_test/config *.yml *.template
