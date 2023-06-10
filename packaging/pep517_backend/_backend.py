@@ -79,7 +79,6 @@ def _generate_rst_in_templates() -> t.Iterable[Path]:
         sys.executable,
         'hacking/build-ansible.py',
         'generate-man',
-        '--template-file=docs/templates/man.j2',
         '--output-dir=docs/man/man1/',
         '--output-format=man',
         *Path('lib/ansible/cli/').glob('*.py'),
