@@ -34,4 +34,5 @@ recursive-include hacking/build_library *.py
 include hacking/build-ansible.py
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py
+include hacking/templates/*.j2
 include bin/*
