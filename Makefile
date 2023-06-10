@@ -146,7 +146,7 @@ changelog:
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
-	$(PYTHON) $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
+	$(PYTHON) $(GENERATE_CLI) --template-file=hacking/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 .PHONY: docs
 docs: generate_rst
