@@ -183,7 +183,7 @@ def _create_overlay(data, overrides, jinja_env):
             else:
                 display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
 
-    return overlay
+    return data, overlay
 
 
 def is_possibly_template(data, jinja_env):
@@ -800,7 +800,7 @@ class Templar:
     templatable = is_template
 
     def is_possibly_template(self, data, overrides=None):
-        env = _create_overlay(data, overrides, self.environment)
+        data, env = _create_overlay(data, overrides, self.environment)
         return is_possibly_template(data, env)
 
     def _convert_bare_variable(self, variable):
@@ -946,7 +946,7 @@ class Templar:
             # NOTE Creating an overlay that lives only inside do_template means that overrides are not applied
             # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
             # This is historic behavior that is kept for backwards compatibility.
-            myenv = _create_overlay(data, overrides, self.environment)
+            data, myenv = _create_overlay(data, overrides, self.environment)
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
