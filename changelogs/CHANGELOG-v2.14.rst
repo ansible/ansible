@@ -5,6 +5,29 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-06-12
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- Removed ``straight.plugin`` from the build and packaging requirements.
+
+Bugfixes
+--------
+
+- ansible-test - Fix a traceback that occurs when attempting to test Ansible source using a different ansible-test. A clear error message is now given when this scenario occurs.
+- ansible-test local change detection - use ``git merge-base <branch> HEAD`` instead of ``git merge-base --fork-point <branch>`` (https://github.com/ansible/ansible/pull/79734).
+- man page build - Remove the dependency on the ``docs`` directory for building man pages.
+- uri - fix search for JSON type to include complex strings containing '+'
+
 v2.14.6
 =======
 
