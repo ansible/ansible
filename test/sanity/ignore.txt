@@ -1,7 +1,4 @@
 .azure-pipelines/scripts/publish-codecov.py replace-urlopen
-examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
-examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
-examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
