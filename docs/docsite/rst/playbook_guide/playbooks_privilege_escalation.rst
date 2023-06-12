@@ -167,18 +167,17 @@ importantly, does not check) that the new group ownership is enough and does not
 fall back further. That is, Ansible **does not check** that the ``become_user``
 does in fact share a group with the ``remote_user``; so long as the command
 exits successfully, Ansible considers the result successful and does not proceed
-to check ``allow_world_readable_tmpfiles`` per below.
+to check ``world_readable_temp`` per below.
 
 If ``ansible_common_remote_group`` is **not** set and the chown above it failed,
 or if ``ansible_common_remote_group`` *is* set but the :command:`chgrp` (or
 following group-permissions :command:`chmod`) returned a non-successful exit
-code, Ansible will lastly check the value of
-``allow_world_readable_tmpfiles``. If this is set, Ansible will place the module
-file in a world-readable temporary directory, with world-readable permissions to
-allow the ``become_user`` (and incidentally any other user on the system) to
-read the contents of the file. **If any of the parameters passed to the module
-are sensitive in nature, and you do not trust the remote machines, then this is
-a potential security risk.**
+code, Ansible will lastly check `the ``world_readable_temp`` option`_. If this is
+set, Ansible will place the module file in a world-readable temporary directory,
+with world-readable permissions to allow the ``become_user`` (and incidentally
+any other user on the system) to read the contents of the file. **If any of the
+parameters passed to the module are sensitive in nature, and you do not trust
+the remote machines, then this is a potential security risk.**
 
 Once the module is done executing, Ansible deletes the temporary file.
 
@@ -199,7 +198,8 @@ Several ways exist to avoid the above logic flow entirely:
 .. warning:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
     are not POSIX.1e filesystem acls (they are NFSv4 ACLs instead).  Ansible
     cannot use these ACLs to manage its temp file permissions so you may have
-    to resort to ``allow_world_readable_tmpfiles`` if the remote machines use ZFS.
+    to resort to `the ``world_readable_temp`` option`_ if the remote machines
+    use ZFS.
 
 .. versionchanged:: 2.1
 
@@ -208,12 +208,13 @@ Ansible defaults to issuing an error if it cannot execute securely with ``become
 If you cannot use pipelining or POSIX ACLs, must connect as an unprivileged user,
 must use ``become`` to execute as a different unprivileged user,
 and decide that your managed nodes are secure enough for the
-modules you want to run there to be world readable, you can turn on
-``allow_world_readable_tmpfiles`` in the :file:`ansible.cfg` file.  Setting
-``allow_world_readable_tmpfiles`` will change this from an error into
+modules you want to run there to be world readable, you can turn on `the
+``world_readable_temp`` option`_, which will change this from an error into
 a warning and allow the task to run as it did prior to 2.1.
 
 .. versionchanged:: 2.10
+
+.. _the ``world_readable_temp`` option: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-world_readable_temp
 
 Ansible 2.10 introduces the above-mentioned ``ansible_common_remote_group``
 fallback. As mentioned above, if enabled, it is used when ``remote_user`` and
@@ -221,7 +222,7 @@ fallback. As mentioned above, if enabled, it is used when ``remote_user`` and
 on when this fallback happens.
 
 .. warning:: As mentioned above, if ``ansible_common_remote_group`` and
-   ``allow_world_readable_tmpfiles`` are both enabled, it is unlikely that the
+   ``world_readable_temp`` are both enabled, it is unlikely that the
    world-readable fallback will ever trigger, and yet Ansible might still be
    unable to access the module file. This is because after the group ownership
    change is successful, Ansible does not fall back any further, and also does
