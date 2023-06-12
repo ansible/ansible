@@ -31,7 +31,7 @@ variables:
   - name: fetchDepth
     value: 500
   - name: defaultContainer
-    value: quay.io/ansible/azure-pipelines-test-container:3.0.0
+    value: quay.io/ansible/azure-pipelines-test-container:4.0.1
 
 pool: Standard
 
