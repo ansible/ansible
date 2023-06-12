@@ -5,6 +5,38 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-06-12
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Allow float values for the ``--timeout`` option to the ``env`` command. This simplifies testing.
+- ansible-test - Refactored ``env`` command logic and timeout handling.
+- ansible-test - Use ``datetime.datetime.now`` with ``tz`` specified instead of ``datetime.datetime.utcnow``.
+
+Bugfixes
+--------
+
+- Properly disable ``jinja2_native`` in the template module when jinja2 override is used in the template (https://github.com/ansible/ansible/issues/80605)
+- ansible-galaxy - Fix variable type error when installing subdir collections (https://github.com/ansible/ansible/issues/80943)
+- ansible-test - Fix a traceback that occurs when attempting to test Ansible source using a different ansible-test. A clear error message is now given when this scenario occurs.
+- ansible-test - Fix handling of timeouts exceeding one day.
+- ansible-test - Fix various cases where the test timeout could expire without terminating the tests.
+- ansible-test local change detection - use ``git merge-base <branch> HEAD`` instead of ``git merge-base --fork-point <branch>`` (https://github.com/ansible/ansible/pull/79734).
+- deb822_repository - use http-agent for receiving content (https://github.com/ansible/ansible/issues/80809).
+- dnf5 - Update dnf5 module to handle API change for setting the download directory (https://github.com/ansible/ansible/issues/80887)
+- man page build - Remove the dependency on the ``docs`` directory for building man pages.
+- pep517 build backend - Copy symlinks when copying the source tree. This avoids tracebacks in various scenarios, such as when a venv is present in the source tree.
+- uri - fix search for JSON type to include complex strings containing '+'
+
 v2.15.0
 =======
 
