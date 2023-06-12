@@ -2,14 +2,12 @@ include COPYING
 include bin/*
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
-include hacking/build-ansible.py
 include hacking/templates/*.j2
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py
 include licenses/*.txt
 include requirements.txt
 recursive-include docs *
-recursive-include hacking/build_library *.py
 recursive-include packaging *.py *.j2
 recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.txt
