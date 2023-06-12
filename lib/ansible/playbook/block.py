@@ -31,6 +31,7 @@ from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
+from ansible.template import Templar
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatable):
@@ -361,6 +362,19 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                     pass
         except KeyError:
             pass
+
+        if attr=='tags':
+            all_vars=self._variable_manager.get_vars(play=self.play,task=self)
+            templar=Templar(loader=self._loader,variables=all_vars)
+            value = templar.template(value)
+            _temp_tags = set()
+            if isinstance(value,list):
+                for tag in value:
+                    if isinstance(tag, list):
+                        _temp_tags.update(tag)
+                    else:
+                        _temp_tags.add(tag)
+                value=list(_temp_tags)
 
         return value
 
