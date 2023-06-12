@@ -695,7 +695,7 @@ class Templar:
             variable = self._convert_bare_variable(variable)
 
         if isinstance(variable, string_types):
-            if not self.is_possibly_template(variable):
+            if not self.is_possibly_template(variable, overrides):
                 return variable
 
             # Check to see if the string we are trying to render is just referencing a single
@@ -766,8 +766,12 @@ class Templar:
 
     templatable = is_template
 
-    def is_possibly_template(self, data):
-        return is_possibly_template(data, self.environment)
+    def is_possibly_template(self, data, overrides=None):
+        if overrides:
+            env = self.environment.overlay(**overrides)
+        else:
+            env = self.environment
+        return is_possibly_template(data, env)
 
     def _convert_bare_variable(self, variable):
         '''
