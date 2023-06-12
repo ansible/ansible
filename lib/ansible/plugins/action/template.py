@@ -140,14 +140,14 @@ class ActionModule(ActionBase):
                                                           newline_sequence=newline_sequence,
                                                           available_variables=temp_vars)
                 overrides = dict(
-                      block_start_string=block_start_string,
-                      block_end_string=block_end_string,
-                      variable_start_string=variable_start_string,
-                      variable_end_string=variable_end_string,
-                      comment_start_string=comment_start_string,
-                      comment_end_string=comment_end_string,
-                      trim_blocks=trim_blocks,
-                      lstrip_blocks=lstrip_blocks
+                    block_start_string=block_start_string,
+                    block_end_string=block_end_string,
+                    variable_start_string=variable_start_string,
+                    variable_end_string=variable_end_string,
+                    comment_start_string=comment_start_string,
+                    comment_end_string=comment_end_string,
+                    trim_blocks=trim_blocks,
+                    lstrip_blocks=lstrip_blocks
                 )
                 resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, overrides=overrides)
             except AnsibleAction:
