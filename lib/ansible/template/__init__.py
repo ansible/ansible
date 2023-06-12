@@ -153,6 +153,39 @@ def _escape_backslashes(data, jinja_env):
     return data
 
 
+def _create_overlay(data, overrides, jinja_env):
+    if overrides is None:
+        overrides = {}
+
+    try:
+        has_override_header = data.startswith(JINJA2_OVERRIDE)
+    except (TypeError, AttributeError):
+        has_override_header = False
+
+    # Get jinja env overrides from template
+    if has_override_header:
+        eol = data.find('\n')
+        line = data[len(JINJA2_OVERRIDE):eol]
+        data = data[eol + 1:]
+        for pair in line.split(','):
+            if ':' not in pair:
+                raise AnsibleError("failed to parse jinja2 override '%s'."
+                                   " Did you use something different from colon as key-value separator?" % pair.strip())
+            (key, val) = pair.split(':', 1)
+            key = key.strip()
+            if hasattr(myenv, key):
+                overrides[key] = ast.literal_eval(val.strip())
+            else:
+                display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
+
+    if overrides:
+        overlay = jinja_env.overlay(**overrides)
+    else:
+        overlay = jinja_env
+
+    return overlay
+
+
 def is_possibly_template(data, jinja_env):
     """Determines if a string looks like a template, by seeing if it
     contains a jinja2 start delimiter. Does not guarantee that the string
@@ -767,10 +800,7 @@ class Templar:
     templatable = is_template
 
     def is_possibly_template(self, data, overrides=None):
-        if overrides:
-            env = self.environment.overlay(**overrides)
-        else:
-            env = self.environment
+        env = _create_overlay(data, overrides, self.environment)
         return is_possibly_template(data, env)
 
     def _convert_bare_variable(self, variable):
@@ -912,34 +942,11 @@ class Templar:
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
-        has_template_overrides = data.startswith(JINJA2_OVERRIDE)
-
         try:
             # NOTE Creating an overlay that lives only inside do_template means that overrides are not applied
             # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
             # This is historic behavior that is kept for backwards compatibility.
-            if overrides:
-                myenv = self.environment.overlay(**overrides)
-            elif has_template_overrides:
-                myenv = self.environment.overlay()
-            else:
-                myenv = self.environment
-
-            # Get jinja env overrides from template
-            if has_template_overrides:
-                eol = data.find('\n')
-                line = data[len(JINJA2_OVERRIDE):eol]
-                data = data[eol + 1:]
-                for pair in line.split(','):
-                    if ':' not in pair:
-                        raise AnsibleError("failed to parse jinja2 override '%s'."
-                                           " Did you use something different from colon as key-value separator?" % pair.strip())
-                    (key, val) = pair.split(':', 1)
-                    key = key.strip()
-                    if hasattr(myenv, key):
-                        setattr(myenv, key, ast.literal_eval(val.strip()))
-                    else:
-                        display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
+            myenv = _create_overlay(data, overrides, self.environment)
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
