@@ -162,6 +162,11 @@ def _create_overlay(data, overrides, jinja_env):
     except (TypeError, AttributeError):
         has_override_header = False
 
+    if overrides or has_override_header:
+        overlay = jinja_env.overlay(**overrides)
+    else:
+        overlay = jinja_env
+
     # Get jinja env overrides from template
     if has_override_header:
         eol = data.find('\n')
@@ -173,15 +178,10 @@ def _create_overlay(data, overrides, jinja_env):
                                    " Did you use something different from colon as key-value separator?" % pair.strip())
             (key, val) = pair.split(':', 1)
             key = key.strip()
-            if hasattr(jinja_env, key):
-                overrides[key] = ast.literal_eval(val.strip())
+            if hasattr(overlay, key):
+                setattr(overlay, key, ast.literal_eval(val.strip()))
             else:
                 display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
-
-    if overrides:
-        overlay = jinja_env.overlay(**overrides)
-    else:
-        overlay = jinja_env
 
     return overlay
 
