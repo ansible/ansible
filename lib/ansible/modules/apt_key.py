@@ -89,6 +89,7 @@ EXAMPLES = '''
       ansible.builtin.get_url:
         url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x36a1d7869245c8950f966e92d8576a8ba88d21e9
         dest: /etc/apt/keyrings/myrepo.asc
+        checksum: sha256:bb42f0db45d46bab5f9ec619e1a47360b94c27142e57aa71f7050d08672309e0
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:
