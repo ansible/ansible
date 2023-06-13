@@ -22,6 +22,7 @@ DOCUMENTATION = """
         description:
             - Address of the remote target
         default: inventory_hostname
+        type: string
         vars:
             - name: inventory_hostname
             - name: ansible_host
@@ -52,6 +53,7 @@ DOCUMENTATION = """
         description:
             - User to login/authenticate as
             - Can be set from the CLI via the C(--user) or C(-u) options.
+        type: string
         vars:
             - name: ansible_user
             - name: ansible_ssh_user
@@ -72,6 +74,7 @@ DOCUMENTATION = """
         description:
           - Secret used to either login the ssh server or as a passphrase for ssh keys that require it
           - Can be set from the CLI via the C(--ask-pass) option.
+        type: string
         vars:
             - name: ansible_password
             - name: ansible_ssh_pass
@@ -111,6 +114,7 @@ DOCUMENTATION = """
         description:
             - Proxy information for running the connection via a jumphost
             - Also this plugin will scan 'ssh_args', 'ssh_extra_args' and 'ssh_common_args' from the 'ssh' plugin settings for proxy information if set.
+        type: string
         env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
         ini:
           - {key: proxy_command, section: paramiko_connection}
@@ -120,6 +124,7 @@ DOCUMENTATION = """
       ssh_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
           default: ''
+          type: string
           ini:
               - section: 'ssh_connection'
                 key: 'ssh_args'
@@ -134,6 +139,7 @@ DOCUMENTATION = """
               alternatives: proxy_command
       ssh_common_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
+          type: string
           ini:
               - section: 'ssh_connection'
                 key: 'ssh_common_args'
@@ -152,6 +158,7 @@ DOCUMENTATION = """
               alternatives: proxy_command
       ssh_extra_args:
           description: Only used in parsing ProxyCommand for use in this plugin.
+          type: string
           vars:
               - name: ansible_ssh_extra_args
           env:
@@ -259,6 +266,7 @@ DOCUMENTATION = """
       private_key_file:
           description:
               - Path to private key file to use for authentication.
+          type: string
           ini:
             - section: defaults
               key: private_key_file

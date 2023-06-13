@@ -28,6 +28,7 @@ DOCUMENTATION = '''
       host:
           description: Hostname/IP to connect to.
           default: inventory_hostname
+          type: string
           vars:
                - name: inventory_hostname
                - name: ansible_host
@@ -55,6 +56,7 @@ DOCUMENTATION = '''
                 version_added: '2.5'
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+          type: string
           vars:
               - name: ansible_password
               - name: ansible_ssh_pass
@@ -64,6 +66,7 @@ DOCUMENTATION = '''
               - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
               - Defaults to C(Enter PIN for) when pkcs11_provider is set.
           default: ''
+          type: string
           ini:
               - section: 'ssh_connection'
                 key: 'sshpass_prompt'
@@ -75,6 +78,7 @@ DOCUMENTATION = '''
       ssh_args:
           description: Arguments to pass to all SSH CLI tools.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
+          type: string
           ini:
               - section: 'ssh_connection'
                 key: 'ssh_args'
@@ -85,6 +89,7 @@ DOCUMENTATION = '''
                 version_added: '2.7'
       ssh_common_args:
           description: Common extra args for all SSH CLI tools.
+          type: string
           ini:
               - section: 'ssh_connection'
                 key: 'ssh_common_args'
@@ -103,6 +108,7 @@ DOCUMENTATION = '''
             - This defines the location of the SSH binary. It defaults to C(ssh) which will use the first SSH binary available in $PATH.
             - This option is usually not required, it might be useful when access to system SSH is restricted,
               or when using SSH wrappers to connect to remote hosts.
+          type: string
           env: [{name: ANSIBLE_SSH_EXECUTABLE}]
           ini:
           - {key: ssh_executable, section: ssh_connection}
@@ -115,6 +121,7 @@ DOCUMENTATION = '''
           default: sftp
           description:
             - This defines the location of the sftp binary. It defaults to C(sftp) which will use the first binary available in $PATH.
+          type: string
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
           - {key: sftp_executable, section: ssh_connection}
@@ -126,6 +133,7 @@ DOCUMENTATION = '''
           default: scp
           description:
             - This defines the location of the scp binary. It defaults to C(scp) which will use the first binary available in $PATH.
+          type: string
           env: [{name: ANSIBLE_SCP_EXECUTABLE}]
           ini:
           - {key: scp_executable, section: ssh_connection}
@@ -135,6 +143,7 @@ DOCUMENTATION = '''
                 version_added: '2.7'
       scp_extra_args:
           description: Extra exclusive to the C(scp) CLI
+          type: string
           vars:
               - name: ansible_scp_extra_args
           env:
@@ -149,6 +158,7 @@ DOCUMENTATION = '''
           default: ''
       sftp_extra_args:
           description: Extra exclusive to the C(sftp) CLI
+          type: string
           vars:
               - name: ansible_sftp_extra_args
           env:
@@ -163,6 +173,7 @@ DOCUMENTATION = '''
           default: ''
       ssh_extra_args:
           description: Extra exclusive to the SSH CLI.
+          type: string
           vars:
               - name: ansible_ssh_extra_args
           env:
@@ -209,6 +220,7 @@ DOCUMENTATION = '''
           description:
               - User name with which to login to the remote server, normally set by the remote_user keyword.
               - If no user is supplied, Ansible will let the SSH client binary choose the user as it normally.
+          type: string
           ini:
             - section: defaults
               key: remote_user
@@ -239,6 +251,7 @@ DOCUMENTATION = '''
       private_key_file:
           description:
               - Path to private key file to use for authentication.
+          type: string
           ini:
             - section: defaults
               key: private_key_file
@@ -257,6 +270,7 @@ DOCUMENTATION = '''
           - Since 2.3, if null (default), ansible will generate a unique hash. Use ``%(directory)s`` to indicate where to use the control dir path setting.
           - Before 2.3 it defaulted to ``control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r``.
           - Be aware that this setting is ignored if C(-o ControlPath) is set in ssh args.
+        type: string
         env:
           - name: ANSIBLE_SSH_CONTROL_PATH
         ini:
@@ -270,6 +284,7 @@ DOCUMENTATION = '''
         description:
           - This sets the directory to use for ssh control path if the control path setting is null.
           - Also, provides the ``%(directory)s`` variable for the control path setting.
+        type: string
         env:
           - name: ANSIBLE_SSH_CONTROL_PATH_DIR
         ini:
@@ -279,7 +294,7 @@ DOCUMENTATION = '''
           - name: ansible_control_path_dir
             version_added: '2.7'
       sftp_batch_mode:
-        default: 'yes'
+        default: true
         description: 'TODO: write it'
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
@@ -295,6 +310,7 @@ DOCUMENTATION = '''
             - For OpenSSH >=9.0 you must add an additional option to enable scp (scp_extra_args="-O")
             - Using 'piped' creates an ssh pipe with C(dd) on either side to copy the data
         choices: ['sftp', 'scp', 'piped', 'smart']
+        type: string
         env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
         ini:
             - {key: transfer_method, section: ssh_connection}
@@ -321,7 +337,7 @@ DOCUMENTATION = '''
             version_added: '2.7'
       use_tty:
         version_added: '2.5'
-        default: 'yes'
+        default: true
         description: add -tt to ssh commands to force tty allocation.
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
@@ -354,6 +370,7 @@ DOCUMENTATION = '''
       pkcs11_provider:
         version_added: '2.12'
         default: ""
+        type: string
         description:
           - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
           - Requires sshpass version 1.06+, sshpass must support the -P option.
