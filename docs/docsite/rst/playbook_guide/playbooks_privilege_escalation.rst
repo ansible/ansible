@@ -172,7 +172,7 @@ to check ``world_readable_temp`` per below.
 If ``ansible_common_remote_group`` is **not** set and the chown above it failed,
 or if ``ansible_common_remote_group`` *is* set but the :command:`chgrp` (or
 following group-permissions :command:`chmod`) returned a non-successful exit
-code, Ansible will lastly check `the ``world_readable_temp`` option`_. If this is
+code, Ansible will lastly check `the world_readable_temp option`_. If this is
 set, Ansible will place the module file in a world-readable temporary directory,
 with world-readable permissions to allow the ``become_user`` (and incidentally
 any other user on the system) to read the contents of the file. **If any of the
@@ -198,7 +198,7 @@ Several ways exist to avoid the above logic flow entirely:
 .. warning:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
     are not POSIX.1e filesystem acls (they are NFSv4 ACLs instead).  Ansible
     cannot use these ACLs to manage its temp file permissions so you may have
-    to resort to `the ``world_readable_temp`` option`_ if the remote machines
+    to resort to `the world_readable_temp option`_ if the remote machines
     use ZFS.
 
 .. versionchanged:: 2.1
@@ -214,7 +214,7 @@ a warning and allow the task to run as it did prior to 2.1.
 
 .. versionchanged:: 2.10
 
-.. _the ``world_readable_temp`` option: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-world_readable_temp
+.. _the world_readable_temp option: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/sh_shell.html#parameter-world_readable_temp
 
 Ansible 2.10 introduces the above-mentioned ``ansible_common_remote_group``
 fallback. As mentioned above, if enabled, it is used when ``remote_user`` and
