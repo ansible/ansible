@@ -1,0 +1,2 @@
+bugfixes:
+  - "paramiko_ssh, psrp, and ssh connection plugins - ensure that all values for options that should be strings are actually converted to strings (https://github.com/ansible/ansible/pull/81029)."
