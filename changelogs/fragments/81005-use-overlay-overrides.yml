@@ -1,0 +1,2 @@
+bugfixes:
+- templating - In the template action and lookup, use local jinja2 environment overlay overrides instead of mutating the templars environment

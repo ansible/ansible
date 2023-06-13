@@ -39,7 +39,7 @@ ansible-playbook 72262.yml -v "$@"
 ansible-playbook unsafe.yml -v "$@"
 
 # ensure Jinja2 overrides from a template are used
-ansible-playbook in_template_overrides.yml -v "$@"
+ansible-playbook template_overrides.yml -v "$@"
 
 ansible-playbook lazy_eval.yml -i ../../inventory -v "$@"
 
