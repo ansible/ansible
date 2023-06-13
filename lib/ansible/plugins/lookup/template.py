@@ -50,10 +50,12 @@ DOCUMENTATION = """
         description: The string marking the beginning of a comment statement.
         version_added: '2.12'
         type: str
+        default: '{#'
       comment_end_string:
         description: The string marking the end of a comment statement.
         version_added: '2.12'
         type: str
+        default: '#}'
 """
 
 EXAMPLES = """
@@ -145,13 +147,16 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
-                with templar.set_temporary_context(variable_start_string=variable_start_string,
-                                                   variable_end_string=variable_end_string,
-                                                   comment_start_string=comment_start_string,
-                                                   comment_end_string=comment_end_string,
-                                                   available_variables=vars, searchpath=searchpath):
+                with templar.set_temporary_context(available_variables=vars, searchpath=searchpath):
+                    overrides = dict(
+                        variable_start_string=variable_start_string,
+                        variable_end_string=variable_end_string,
+                        comment_start_string=comment_start_string,
+                        comment_end_string=comment_end_string
+                    )
                     res = templar.template(template_data, preserve_trailing_newlines=True,
-                                           convert_data=convert_data_p, escape_backslashes=False)
+                                           convert_data=convert_data_p, escape_backslashes=False,
+                                           overrides=overrides)
 
                 if (C.DEFAULT_JINJA2_NATIVE and not jinja2_native) or not convert_data_p:
                     # jinja2_native is true globally but off for the lookup, we need this text
