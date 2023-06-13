@@ -12,22 +12,6 @@ Code of Conduct
 
 All communication and interactions in the Ansible Community are governed by our :ref:`code_of_conduct`. Please read and understand it!
 
-Asking questions over email
-===========================
-
-If you want to keep up with Ansible news, need help, or have a question, you can use one of the Ansible mailing lists. Each list covers a particular topic. Read the descriptions here to find the best list for your question.
-
-Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear.
-
-* `Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_ is a read-only list that shares information about new releases of Ansible, and also rare infrequent event information, such as announcements about an upcoming AnsibleFest, which is our official conference series. Worth subscribing to!
-* `Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_
-* `Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for questions about developing Ansible modules (mostly in Python), fixing bugs in the Ansible core code, asking about prospective feature design, or discussions about extending Ansible or features in progress.
-* `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://www.meetup.com/topics/ansible/>`_
-* `Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions about playbooks and roles, and general user discussion.
-* `Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
-
-The Ansible mailing lists are hosted on Google, but you do not need a Google account to subscribe. To subscribe to a group from a non-Google account, send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``.
-
 .. _communication_irc:
 
 Real-time chat
@@ -178,3 +162,19 @@ If you have any content you would like to share, please `contribute/suggest it <
 If you have any questions, please reach out to us at ``the-bullhorn@redhat.com``.
 
 Read past issues on the official Bullhorn's `wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
+
+Asking questions over email
+===========================
+
+If you want to keep up with Ansible news, need help, or have a question, you can use one of the Ansible mailing lists. Each list covers a particular topic. Read the descriptions here to find the best list for your question.
+
+Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear.
+
+* `Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_ is a read-only list that shares information about new releases of Ansible, and also rare infrequent event information, such as announcements about an upcoming AnsibleFest, which is our official conference series. Worth subscribing to!
+* `Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_
+* `Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for questions about developing Ansible modules (mostly in Python), fixing bugs in the Ansible core code, asking about prospective feature design, or discussions about extending Ansible or features in progress.
+* `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://www.meetup.com/topics/ansible/>`_
+* `Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions about playbooks and roles, and general user discussion.
+* `Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
+
+The Ansible mailing lists are hosted on Google, but you do not need a Google account to subscribe. To subscribe to a group from a non-Google account, send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``.
