@@ -151,7 +151,7 @@ RETURN = '''
 status:
     description: A dictionary with the key=value pairs returned from C(systemctl show).
     returned: success
-    type: complex
+    type: dict
     sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
