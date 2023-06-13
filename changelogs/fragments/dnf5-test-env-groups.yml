@@ -1,0 +1,2 @@
+minor_changes:
+  - dnf5 - enable environment groups installation testing in CI as its support was added.

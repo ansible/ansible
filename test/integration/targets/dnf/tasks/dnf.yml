@@ -530,7 +530,6 @@
     - dnf_result is changed
     - "'results' in dnf_result"
     - landsidescalping_result.rc == 0
-  when: not dnf5|default('false')
 
 # Fedora 28 (DNF 2) does not support this, just remove the package itself
 - name: remove landsidescalping package on Fedora 28
