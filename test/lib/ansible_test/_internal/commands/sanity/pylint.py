@@ -18,6 +18,11 @@ from . import (
     SANITY_ROOT,
 )
 
+from ...constants import (
+    CONTROLLER_PYTHON_VERSIONS,
+    REMOTE_ONLY_PYTHON_VERSIONS,
+)
+
 from ...io import (
     make_dirs,
 )
@@ -234,6 +239,8 @@ class PylintTest(SanitySingleVersion):
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(sorted(load_plugins)),
+            '--min-controller-python', CONTROLLER_PYTHON_VERSIONS[0],
+            '--min-target-python', REMOTE_ONLY_PYTHON_VERSIONS[0],
         ] + paths  # fmt: skip
 
         if data_context().content.collection:

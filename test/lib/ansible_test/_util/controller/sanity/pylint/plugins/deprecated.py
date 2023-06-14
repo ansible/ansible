@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import datetime
 import re
+import shlex
 import typing as t
+from tokenize import COMMENT, TokenInfo
 
 import astroid
 
-from pylint.interfaces import IAstroidChecker
-from pylint.checkers import BaseChecker
+from pylint.interfaces import IAstroidChecker, ITokenChecker
+from pylint.checkers import BaseChecker, BaseTokenChecker
 from pylint.checkers.utils import check_messages
 
 from ansible.module_utils.compat.version import LooseVersion
@@ -277,6 +279,113 @@ class AnsibleDeprecatedChecker(BaseChecker):
             pass
 
 
+class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
+    """Checks for ``# deprecated:`` comments to ensure that the ``version``
+    has not passed or met the time for removal
+    """
+
+    __implements__ = (ITokenChecker,)
+
+    name = 'deprecated-comment'
+    msgs = {
+        'E9601': ("Deprecated core version (%r) found: %s",
+                  "ansible-deprecated-version-comment",
+                  "Used when a '# deprecated:' comment specifies a version "
+                  "less than or equal to the current version of Ansible",
+                  {'minversion': (2, 6)}),
+        'E9602': ("Deprecated comment contains invalid keys %r",
+                  "ansible-deprecated-version-comment-invalid-key",
+                  "Used when a '#deprecated:' comment specifies invalid data",
+                  {'minversion': (2, 6)}),
+        'E9603': ("Deprecated comment missing version",
+                  "ansible-deprecated-version-comment-missing-version",
+                  "Used when a '#deprecated:' comment specifies invalid data",
+                  {'minversion': (2, 6)}),
+        'E9604': ("Deprecated python version (%r) found: %s",
+                  "ansible-deprecated-python-version-comment",
+                  "Used when a '#deprecated:' comment specifies a python version "
+                  "less than or qeual to the minimum python version",
+                  {'minversion': (2, 6)}),
+    }
+
+    options = (
+        ('min-controller-python', {
+            'default': None,
+            'type': 'string',
+            'metavar': '<name>',
+            'help': 'The minimum python version for controller.',
+        }),
+        ('min-target-python', {
+            'default': None,
+            'type': 'string',
+            'metavar': '<version>',
+            'help': 'The minimum python version for targets.',
+        }),
+    )
+
+    def process_tokens(self, tokens: list[TokenInfo]) -> None:
+        for token in tokens:
+            if token.type == COMMENT:
+                self._process_comment(token)
+
+    def _deprecated_string_to_dict(self, token: TokenInfo, string: str) -> dict[str, str]:
+        valid_keys = {'description', 'core_version', 'python_version'}
+        data = dict.fromkeys(valid_keys)
+        for opt in shlex.split(string):
+            key, _sep, value = opt.partition('=')
+            data[key] = value
+        if not any((data['core_version'], data['python_version'])):
+            self.add_message(
+                'ansible-deprecated-version-comment-missing-version',
+                line=token.start[0],
+                col_offset=token.start[1],
+            )
+        bad = set(data).difference(valid_keys)
+        if bad:
+            self.add_message(
+                'ansible-deprecated-version-comment-invalid-key',
+                line=token.start[0],
+                col_offset=token.start[1],
+                args=(','.join(bad),)
+            )
+        return data
+
+    def _process_python_version(self, token: TokenInfo, data: dict[str, str]) -> None:
+        current_file = self.linter.current_file
+        if '/modules/' in current_file or '/module_utils/' in current_file:
+            check_version = self.config.min_target_python
+        else:
+            check_version = self.config.min_controller_python
+
+        if LooseVersion(data['python_version']) < LooseVersion(check_version):
+            self.add_message(
+                'ansible-deprecated-python-version-comment',
+                line=token.start[0],
+                col_offset=token.start[1],
+                args=(
+                    data['python_version'],
+                    data['description'] or 'description not provided',
+                ),
+            )
+
+    def _process_comment(self, token: TokenInfo) -> None:
+        if token.string.startswith('# deprecated:'):
+            data = self._deprecated_string_to_dict(token, token.string[13:].strip())
+            if data['core_version'] and ANSIBLE_VERSION >= LooseVersion(data['core_version']):
+                self.add_message(
+                    'ansible-deprecated-version-comment',
+                    line=token.start[0],
+                    col_offset=token.start[1],
+                    args=(
+                        data['core_version'],
+                        data['description'] or 'description not provided',
+                    )
+                )
+            if data['python_version']:
+                self._process_python_version(token, data)
+
+
 def register(linter):
     """required method to auto register this checker """
     linter.register_checker(AnsibleDeprecatedChecker(linter))
+    linter.register_checker(AnsibleDeprecatedCommentChecker(linter))
