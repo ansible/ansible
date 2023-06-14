@@ -602,12 +602,12 @@ class Templar:
         self.cur_context = None
 
         # this regex is re-compiled each time variable_start_string and variable_end_string are possibly changed
-        self._compile_single_var()
+        self._compile_single_var(self.environment)
 
         self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
 
-    def _compile_single_var(self):
-        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
+    def _compile_single_var(self, env):
+        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (env.variable_start_string, env.variable_end_string))
 
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
         r"""Creates a new copy of Templar with a new environment.
@@ -756,6 +756,7 @@ class Templar:
                 disable_lookups=disable_lookups,
                 convert_data=convert_data,
             )
+            self._compile_single_var(self.environment)
 
             return result
 
@@ -950,7 +951,7 @@ class Templar:
             # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
             data, myenv = _create_overlay(data, overrides, self.environment)
             # in case delimiters change
-            self._compile_single_var()
+            self._compile_single_var(myenv)
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
