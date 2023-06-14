@@ -9,14 +9,14 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY3_MIN = sys.version_info >= (3, 5)
+_PY3_MIN = sys.version_info >= (3, 6)
 _PY2_MIN = (2, 7) <= sys.version_info < (3,)
 _PY_MIN = _PY3_MIN or _PY2_MIN
 
 if not _PY_MIN:
     print(
         '\n{"failed": true, '
-        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
+        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.6. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
 
@@ -1715,14 +1715,6 @@ class AnsibleModule(object):
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-                except TypeError:
-                    # We expect that this is happening because python3.4.x and
-                    # below can't handle byte strings in mkstemp().
-                    # Traceback would end in something like:
-                    #     file = _os.path.join(dir, pre + name + suf)
-                    # TypeError: can't concat bytes to str
-                    error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
-                                 'Please use Python2.x or Python3.5 or greater.')
                 finally:
                     if error_msg:
                         if unsafe_writes:

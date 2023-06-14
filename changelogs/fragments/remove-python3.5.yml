@@ -1,0 +1,2 @@
+removed_features:
+  - module_utils/basic.py - Removed Python 3.5 as a supported remote version. Python 2.7 or Python 3.6+ is now required.

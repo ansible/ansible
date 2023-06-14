@@ -61,7 +61,7 @@ options:
   virtualenv_python:
     description:
       - The Python executable used for creating the virtual environment.
-        For example C(python3.5), C(python2.7). When not specified, the
+        For example C(python3.12), C(python2.7). When not specified, the
         Python version used to run the ansible module is used. This parameter
         should not be used when C(virtualenv_command) is using C(pyvenv) or
         the C(-m venv) module.

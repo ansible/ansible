@@ -1249,8 +1249,7 @@ def start_connection(play_context, options, task_uuid):
     else:
         try:
             result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
-        except getattr(json.decoder, 'JSONDecodeError', ValueError):
-            # JSONDecodeError only available on Python 3.5+
+        except json.decoder.JSONDecodeError:
             result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
     if 'messages' in result:
