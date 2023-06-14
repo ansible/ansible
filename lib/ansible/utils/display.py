@@ -319,8 +319,6 @@ class Display(metaclass=Singleton):
 
         self.setup_curses = False
 
-    def __call__(self, method, *args, **kwargs):
-
     def _replacing_warning_handler(self, exception):
         # TODO: This should probably be deferred until after the current display is completed
         #       this will require some amount of new functionality
