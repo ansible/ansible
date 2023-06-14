@@ -66,6 +66,7 @@ class DisplaySend:
         self.args = args
         self.kwargs = kwargs
 
+
 @dataclass
 class PromptSend:
     worker_id: int
