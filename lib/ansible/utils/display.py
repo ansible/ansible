@@ -479,6 +479,10 @@ class Display(metaclass=Singleton):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
+        if self._final_q:
+            # see display method
+            return self._final_q.send_deprecated(msg, version=version, removed=removed, date=date collection_name=collection_name):
+
         message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
         if removed:
@@ -492,6 +496,10 @@ class Display(metaclass=Singleton):
             self._deprecations[message_text] = 1
 
     def warning(self, msg, formatted=False):
+
+        if self._final_q:
+            # see display method
+            return self._final_q.send_warning(msg, formatted=formatted)
 
         if not formatted:
             new_msg = "[WARNING]: %s" % msg

@@ -41,7 +41,7 @@ from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, DisplayWarningSend, DisplayDeprecatedSend, PromptSend
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -118,6 +118,10 @@ def results_thread_main(strategy):
                 break
             elif isinstance(result, DisplaySend):
                 display.display(*result.args, **result.kwargs)
+            elif isinstance(result, DisplayWarningSend):
+                display.warning(*result.args, **result.kwargs)
+            elif isinstance(result, DisplayDeprecatedSend):
+                display.deprecated(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):
