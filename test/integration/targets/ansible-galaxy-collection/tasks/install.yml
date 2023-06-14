@@ -737,7 +737,7 @@
 - name: install collection with symlink - {{ test_id }}
   command: ansible-galaxy collection install symlink.symlink -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_symlink
 
 - find:
@@ -799,7 +799,7 @@
     - name: install symlink_dirs collection from source
       command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/
       environment:
-        ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
       register: install_symlink_dirs
 
     - name: get result of install collection with symlink_dirs - {{ test_id }}
@@ -833,7 +833,7 @@
 - name: install collection and dep compatible with multiple requirements - {{ test_id }}
   command: ansible-galaxy collection install parent_dep.parent_collection parent_dep2.parent_collection
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_req
 
 - name: assert install collections with ansible-galaxy install - {{ test_id }}
@@ -855,7 +855,7 @@
     - name: install a collection to the same installation directory - {{ test_id }}
       command: ansible-galaxy collection install namespace1.name1
       environment:
-        ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
       register: install_req
 
     - name: assert installed collections with ansible-galaxy install - {{ test_id }}
@@ -1062,7 +1062,7 @@
   args:
     chdir: '{{ galaxy_dir }}/scratch'
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_concrete_pre
 
 - name: get result of install collections with concrete pre-release dep - {{ test_id }}
