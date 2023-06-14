@@ -1,0 +1,34 @@
+---
+- name: Test notification of handlers from other handlers
+  hosts: localhost
+  gather_facts: no
+  handlers:
+    - name: Handler 1
+      debug:
+        msg: Handler 1
+      changed_when: true
+      notify: Handler 2
+      register: handler1_res
+    - name: Handler 2
+      debug:
+        msg: Handler 2
+      changed_when: true
+      notify: Handler 3
+      register: handler2_res
+    - name: Handler 3
+      debug:
+        msg: Handler 3
+      register: handler3_res
+  tasks:
+    - name: Trigger handlers
+      ansible.builtin.debug:
+        msg: Task 1
+      changed_when: true
+      notify: Handler 1
+  post_tasks:
+    - name: Assert results
+      ansible.builtin.assert:
+        that:
+        - "handler1_res is defined and handler1_res is success"
+        - "handler2_res is defined and handler2_res is success"
+        - "handler3_res is defined and handler3_res is success"

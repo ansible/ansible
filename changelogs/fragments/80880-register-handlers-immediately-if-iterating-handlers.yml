@@ -1,0 +1,4 @@
+bugfixes:
+- "From issue https://github.com/ansible/ansible/issues/80880, when notifying a
+  handler from another handler, handler notifications must be registered
+  immediately as the flush_handler call is not recursive."
