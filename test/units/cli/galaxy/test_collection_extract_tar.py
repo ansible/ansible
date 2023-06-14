@@ -14,6 +14,7 @@ from ansible.galaxy.collection import _extract_tar_dir
 @pytest.fixture
 def fake_tar_obj(mocker):
     m_tarfile = mocker.Mock()
+    m_tarfile._ansible_normalized_cache = {'/some/dir': mocker.Mock()}
     m_tarfile.type = mocker.Mock(return_value=b'99')
     m_tarfile.SYMTYPE = mocker.Mock(return_value=b'22')
 
@@ -22,22 +23,10 @@ def fake_tar_obj(mocker):
 
 def test_extract_tar_member_trailing_sep(mocker):
     m_tarfile = mocker.Mock()
-    m_tarfile.getmember = mocker.Mock(side_effect=KeyError)
+    m_tarfile._ansible_normalized_cache = {}
 
     with pytest.raises(AnsibleError, match='Unable to extract'):
         _extract_tar_dir(m_tarfile, '/some/dir/', b'/some/dest')
-
-    assert m_tarfile.getmember.call_count == 1
-
-
-def test_extract_tar_member_no_trailing_sep(mocker):
-    m_tarfile = mocker.Mock()
-    m_tarfile.getmember = mocker.Mock(side_effect=KeyError)
-
-    with pytest.raises(AnsibleError, match='Unable to extract'):
-        _extract_tar_dir(m_tarfile, '/some/dir', b'/some/dest')
-
-    assert m_tarfile.getmember.call_count == 2
 
 
 def test_extract_tar_dir_exists(mocker, fake_tar_obj):
