@@ -350,6 +350,7 @@ class Display(metaclass=Singleton):
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
+
     @proxy_display
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
