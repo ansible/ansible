@@ -118,6 +118,18 @@ def get_text_width(text):
     return width if width >= 0 else 0
 
 
+def proxy_display(method):
+
+    def proxyit(self, *args, **kwargs):
+        if self._final_q:
+            # If _final_q is set, that means we are in a WorkerProcess
+            # and instead of displaying messages directly from the fork
+            # we will proxy them through the queue
+            return self._final_q.send_display(method.__name__, *args, **kwargs)
+        else:
+            return method(*args, **kwargs)
+
+
 class FilterBlackList(logging.Filter):
     def __init__(self, blacklist):
         self.blacklist = [logging.Filter(name) for name in blacklist]
@@ -307,6 +319,8 @@ class Display(metaclass=Singleton):
 
         self.setup_curses = False
 
+    def __call__(self, method, *args, **kwargs):
+
     def _replacing_warning_handler(self, exception):
         # TODO: This should probably be deferred until after the current display is completed
         #       this will require some amount of new functionality
@@ -336,7 +350,7 @@ class Display(metaclass=Singleton):
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
-
+    @proxy_display
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
@@ -345,13 +359,6 @@ class Display(metaclass=Singleton):
 
         if not isinstance(msg, str):
             raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
-
-        if self._final_q:
-            # If _final_q is set, that means we are in a WorkerProcess
-            # and instead of displaying messages directly from the fork
-            # we will proxy them through the queue
-            return self._final_q.send_display(msg, color=color, stderr=stderr,
-                                              screen_only=screen_only, log_only=log_only, newline=newline)
 
         nocolor = msg
 
@@ -475,13 +482,10 @@ class Display(metaclass=Singleton):
 
         return message_text
 
+    @proxy_display
     def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
-
-        if self._final_q:
-            # see display method
-            return self._final_q.send_deprecated(msg, version=version, removed=removed, date=date collection_name=collection_name):
 
         message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
@@ -495,11 +499,8 @@ class Display(metaclass=Singleton):
             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
 
+    @proxy_display
     def warning(self, msg, formatted=False):
-
-        if self._final_q:
-            # see display method
-            return self._final_q.send_warning(msg, formatted=formatted)
 
         if not formatted:
             new_msg = "[WARNING]: %s" % msg

@@ -62,22 +62,9 @@ class CallbackSend:
 
 class DisplaySend:
     def __init__(self, method, *args, **kwargs):
-        self.method
+        self.method = method
         self.args = args
         self.kwargs = kwargs
-
-class DisplayWarningSend:
-    def __init__(self, method, *args, **kwargs):
-        self.method
-        self.args = args
-        self.kwargs = kwargs
-
-class DisplayDeprecatedSend:
-    def __init__(self, method, *args, **kwargs):
-        self.method
-        self.args = args
-        self.kwargs = kwargs
-
 
 @dataclass
 class PromptSend:
@@ -108,19 +95,9 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
             tr,
         )
 
-    def send_display(self, *args, **kwargs):
+    def send_display(self, method, *args, **kwargs):
         self.put(
-            DisplaySend(*args, **kwargs),
-        )
-
-    def send_warning(self, *args, **kwargs):
-        self.put(
-            DisplayWarningSend(*args, **kwargs),
-        )
-
-    def send_deprecated(self, *args, **kwargs):
-        self.put(
-            DisplayDeprecatedSend(*args, **kwargs),
+            DisplaySend(method, *args, **kwargs),
         )
 
     def send_prompt(self, **kwargs):

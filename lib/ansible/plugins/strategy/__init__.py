@@ -41,7 +41,7 @@ from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, DisplayWarningSend, DisplayDeprecatedSend, PromptSend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -54,7 +54,6 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
-from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
@@ -117,11 +116,8 @@ def results_thread_main(strategy):
             if isinstance(result, StrategySentinel):
                 break
             elif isinstance(result, DisplaySend):
-                display.display(*result.args, **result.kwargs)
-            elif isinstance(result, DisplayWarningSend):
-                display.warning(*result.args, **result.kwargs)
-            elif isinstance(result, DisplayDeprecatedSend):
-                display.deprecated(*result.args, **result.kwargs)
+                dmethod = getattr(display, result.method)
+                dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):
