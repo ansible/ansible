@@ -127,7 +127,9 @@ def proxy_display(method):
             # we will proxy them through the queue
             return self._final_q.send_display(method.__name__, *args, **kwargs)
         else:
-            return method(*args, **kwargs)
+            return method(self, *args, **kwargs)
+
+    return proxyit
 
 
 class FilterBlackList(logging.Filter):
