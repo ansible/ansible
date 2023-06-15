@@ -1,2 +1,2 @@
 minor_changes:
-  - freebsd 13.1 removed from CI test matrix
+  - ansible-test - Removed `freebsd/13.1` remote.
