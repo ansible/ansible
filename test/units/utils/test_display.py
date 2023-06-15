@@ -115,6 +115,7 @@ def test_Display_display_fork():
     p.join()
     assert p.exitcode == 0
 
+
 def test_Display_display_warn_fork():
     def test():
         queue = MagicMock()
@@ -127,6 +128,7 @@ def test_Display_display_warn_fork():
     p.start()
     p.join()
     assert p.exitcode == 0
+
 
 def test_Display_display_lock(monkeypatch):
     lock = MagicMock()
