@@ -24,9 +24,15 @@
     args:
       name: "{{ rpm_repo_packages }}"
 
-  - name: Install rpmfluff via pip
-    pip:
-      name: rpmfluff
+  - name: Install rpmfluff via pip, ensure it is installed with default python as python3-rpm may not exist for other versions
+    block:
+      - action: "{{ ansible_facts.pkg_mgr }}"
+        args:
+           name: "python3-pip"
+
+      - pip:
+          name: rpmfluff
+          executable: pip3
     when: ansible_facts.os_family == 'RedHat' and ansible_distribution_major_version is version('9', '==')
 
   - set_fact:

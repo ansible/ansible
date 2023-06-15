@@ -83,12 +83,14 @@ stages:
               test: macos/13.2
             - name: RHEL 7.9
               test: rhel/7.9
-            - name: RHEL 8.7 py36
-              test: rhel/8.7@3.6
-            - name: RHEL 8.7 py39
-              test: rhel/8.7@3.9
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 8.8 py36
+              test: rhel/8.8@3.6
+            - name: RHEL 8.8 py311
+              test: rhel/8.8@3.11
+            - name: RHEL 9.2 py39
+              test: rhel/9.2@3.9
+            - name: RHEL 9.2 py311
+              test: rhel/9.2@3.11
             - name: FreeBSD 12.4
               test: freebsd/12.4
             - name: FreeBSD 13.1
@@ -103,8 +105,8 @@ stages:
           targets:
             - name: macOS 13.2
               test: macos/13.2
-            - name: RHEL 8.7
-              test: rhel/8.7
+            - name: RHEL 8.8
+              test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
             - name: FreeBSD 13.1
@@ -122,8 +124,8 @@ stages:
               test: alpine/3.17
             - name: Fedora 37
               test: fedora/37
-            - name: RHEL 8.7
-              test: rhel/8.7
+            - name: RHEL 8.8
+              test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
             - name: Ubuntu 20.04

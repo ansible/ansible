@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Add support for RHEL 8.8 remotes.
+  - ansible-test - RHEL 8.8 provisioning can now be used with the ``--python 3.11`` option.
+  - ansible-test - RHEL 9.2 provisioning can now be used with the ``--python 3.11`` option.
+  - ansible-test - Remove Python 3.8 and 3.9 from RHEL 8.8.
