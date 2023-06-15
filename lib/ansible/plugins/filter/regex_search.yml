@@ -30,7 +30,7 @@ EXAMPLES: |
   db: "{{ 'server1/database42' | regex_search('database[0-9]+') }}"
 
   # Using inline regex flags instead of passing options to filter
-  # Please see https://docs.python.org/3/library/re.html for more information
+  # See https://docs.python.org/3/library/re.html for more information
   # on inline regex flags
   # server => 'sErver1'
   db: "{{ 'sErver1/database42' | regex_search('(?i)server([0-9]+)') }}"
