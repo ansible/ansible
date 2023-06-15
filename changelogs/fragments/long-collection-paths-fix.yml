@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Fix issue installing collections containing directories with more than 100 characters on python versions before 3.10.6
