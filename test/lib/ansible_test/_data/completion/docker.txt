@@ -5,5 +5,4 @@ alpine3 image=quay.io/ansible/alpine3-test-container:5.0.0 python=3.10 cgroup=no
 centos7 image=quay.io/ansible/centos7-test-container:5.0.0 python=2.7 cgroup=v1-only
 fedora37 image=quay.io/ansible/fedora37-test-container:5.0.0 python=3.11
 opensuse15 image=quay.io/ansible/opensuse15-test-container:6.0.0 python=3.6
-ubuntu2004 image=quay.io/ansible/ubuntu2004-test-container:5.0.0 python=3.8
 ubuntu2204 image=quay.io/ansible/ubuntu2204-test-container:5.0.0 python=3.10
