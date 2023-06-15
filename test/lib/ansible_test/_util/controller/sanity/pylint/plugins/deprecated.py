@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import datetime
+import functools
+import json
 import re
 import shlex
 import typing as t
@@ -304,22 +306,16 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
         'E9604': ("Deprecated python version (%r) found: %s",
                   "ansible-deprecated-python-version-comment",
                   "Used when a '#deprecated:' comment specifies a python version "
-                  "less than or qeual to the minimum python version",
+                  "less than or equal to the minimum python version",
                   {'minversion': (2, 6)}),
     }
 
     options = (
-        ('min-controller-python', {
+        ('min-python-version-db', {
             'default': None,
             'type': 'string',
-            'metavar': '<name>',
-            'help': 'The minimum python version for controller.',
-        }),
-        ('min-target-python', {
-            'default': None,
-            'type': 'string',
-            'metavar': '<version>',
-            'help': 'The minimum python version for targets.',
+            'metavar': '<path>',
+            'help': 'The path to the DB mapping paths to minimum Python versions.',
         }),
     )
 
@@ -350,12 +346,15 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
             )
         return data
 
+    @functools.cached_property
+    def _min_python_version_db(self) -> dict[str, str]:
+        """A dictionary of absolute file paths and their minimum required Python version."""
+        with open(self.linter.config.min_python_version_db) as db_file:
+            return json.load(db_file)
+
     def _process_python_version(self, token: TokenInfo, data: dict[str, str]) -> None:
         current_file = self.linter.current_file
-        if '/modules/' in current_file or '/module_utils/' in current_file:
-            check_version = self.config.min_target_python
-        else:
-            check_version = self.config.min_controller_python
+        check_version = self._min_python_version_db[current_file]
 
         if LooseVersion(data['python_version']) < LooseVersion(check_version):
             self.add_message(
