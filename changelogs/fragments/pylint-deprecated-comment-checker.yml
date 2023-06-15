@@ -1,0 +1,3 @@
+minor_changes:
+- ansible-test - Add new pylint checker for new ``# deprecated:`` comments within code to trigger errors when time to remove code
+  that has no user facing deprecation message
