@@ -1561,6 +1561,13 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
     """
     try:
         with tarfile.open(b_coll_targz_path, mode='r') as collection_tar:
+            # Remove this once py3.11 is our controller minimum
+            # Workaround for https://bugs.python.org/issue47231
+            # See _extract_tar_dir
+            collection_tar._ansible_normalized_cache = {
+                m.name.removesuffix(os.path.sep): m for m in collection_tar.getmembers()
+            }  # deprecated: description='TarFile member index' core_version='2.18' python_version='3.11'
+
             # Verify the signature on the MANIFEST.json before extracting anything else
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
@@ -1641,22 +1648,12 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
 
 def _extract_tar_dir(tar, dirname, b_dest):
     """ Extracts a directory from a collection tar. """
-    member_names = [to_native(dirname, errors='surrogate_or_strict')]
+    dirname = to_native(dirname, errors='surrogate_or_strict').removesuffix(os.path.sep)
 
-    # Create list of members with and without trailing separator
-    if not member_names[-1].endswith(os.path.sep):
-        member_names.append(member_names[-1] + os.path.sep)
-
-    # Try all of the member names and stop on the first one that are able to successfully get
-    for member in member_names:
-        try:
-            tar_member = tar.getmember(member)
-        except KeyError:
-            continue
-        break
-    else:
-        # If we still can't find the member, raise a nice error.
-        raise AnsibleError("Unable to extract '%s' from collection" % to_native(member, errors='surrogate_or_strict'))
+    try:
+        tar_member = tar._ansible_normalized_cache[dirname]
+    except KeyError:
+        raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 
     b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
 
