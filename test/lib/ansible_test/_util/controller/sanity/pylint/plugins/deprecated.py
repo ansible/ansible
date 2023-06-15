@@ -308,6 +308,10 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
                   "Used when a '#deprecated:' comment specifies a python version "
                   "less than or equal to the minimum python version",
                   {'minversion': (2, 6)}),
+        'E9605': ("Deprecated comment contains invalid version %r: %s",
+                  "ansible-deprecated-version-comment-invalid-version",
+                  "Used when a '#deprecated:' comment specifies an invalid version",
+                  {'minversion': (2, 6)}),
     }
 
     options = (
@@ -328,6 +332,9 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
         valid_keys = {'description', 'core_version', 'python_version'}
         data = dict.fromkeys(valid_keys)
         for opt in shlex.split(string):
+            if '=' not in opt:
+                data[opt] = None
+                continue
             key, _sep, value = opt.partition('=')
             data[key] = value
         if not any((data['core_version'], data['python_version'])):
@@ -356,21 +363,28 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
         current_file = self.linter.current_file
         check_version = self._min_python_version_db[current_file]
 
-        if LooseVersion(data['python_version']) < LooseVersion(check_version):
+        try:
+            if LooseVersion(data['python_version']) < LooseVersion(check_version):
+                self.add_message(
+                    'ansible-deprecated-python-version-comment',
+                    line=token.start[0],
+                    col_offset=token.start[1],
+                    args=(
+                        data['python_version'],
+                        data['description'] or 'description not provided',
+                    ),
+                )
+        except (ValueError, TypeError) as exc:
             self.add_message(
-                'ansible-deprecated-python-version-comment',
+                'ansible-deprecated-version-comment-invalid-version',
                 line=token.start[0],
                 col_offset=token.start[1],
-                args=(
-                    data['python_version'],
-                    data['description'] or 'description not provided',
-                ),
+                args=(data['python_version'], exc)
             )
 
-    def _process_comment(self, token: TokenInfo) -> None:
-        if token.string.startswith('# deprecated:'):
-            data = self._deprecated_string_to_dict(token, token.string[13:].strip())
-            if data['core_version'] and ANSIBLE_VERSION >= LooseVersion(data['core_version']):
+    def _process_core_version(self, token: TokenInfo, data: dict[str, str]) -> None:
+        try:
+            if ANSIBLE_VERSION >= LooseVersion(data['core_version']):
                 self.add_message(
                     'ansible-deprecated-version-comment',
                     line=token.start[0],
@@ -380,6 +394,19 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
                         data['description'] or 'description not provided',
                     )
                 )
+        except (ValueError, TypeError) as exc:
+            self.add_message(
+                'ansible-deprecated-version-comment-invalid-version',
+                line=token.start[0],
+                col_offset=token.start[1],
+                args=(data['core_version'], exc)
+            )
+
+    def _process_comment(self, token: TokenInfo) -> None:
+        if token.string.startswith('# deprecated:'):
+            data = self._deprecated_string_to_dict(token, token.string[13:].strip())
+            if data['core_version']:
+                self._process_core_version(token, data)
             if data['python_version']:
                 self._process_python_version(token, data)
 
