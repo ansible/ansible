@@ -69,7 +69,8 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('6.5.0', 7, (3, 7), (3, 12)),
+    CoverageVersion('7.3.0', 7, (3, 8), (3, 12)),
+    CoverageVersion('6.5.0', 7, (3, 7), (3, 7)),
     CoverageVersion('4.5.4', 0, (2, 6), (3, 6)),
 )
 """
