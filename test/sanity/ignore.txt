@@ -50,8 +50,6 @@ lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
-lib/ansible/modules/systemd_service.py validate-modules:return-syntax-error
-lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
@@ -60,7 +58,6 @@ lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution t
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
-lib/ansible/module_utils/compat/selinux.py import-3.5!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so

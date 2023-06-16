@@ -20,7 +20,7 @@ mock_ubuntu_platform_res = to_text(
 
 
 def test_discovery_interpreter_linux_auto_legacy():
-    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3.5\n/usr/bin/python3\nENDFOUND'
+    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3\nENDFOUND'
 
     mock_action = MagicMock()
     mock_action._low_level_execute_command.side_effect = [{'stdout': res1}, {'stdout': mock_ubuntu_platform_res}]
@@ -35,7 +35,7 @@ def test_discovery_interpreter_linux_auto_legacy():
 
 
 def test_discovery_interpreter_linux_auto_legacy_silent():
-    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3.5\n/usr/bin/python3\nENDFOUND'
+    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3\nENDFOUND'
 
     mock_action = MagicMock()
     mock_action._low_level_execute_command.side_effect = [{'stdout': res1}, {'stdout': mock_ubuntu_platform_res}]
@@ -47,7 +47,7 @@ def test_discovery_interpreter_linux_auto_legacy_silent():
 
 
 def test_discovery_interpreter_linux_auto():
-    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3.5\n/usr/bin/python3\nENDFOUND'
+    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3\nENDFOUND'
 
     mock_action = MagicMock()
     mock_action._low_level_execute_command.side_effect = [{'stdout': res1}, {'stdout': mock_ubuntu_platform_res}]

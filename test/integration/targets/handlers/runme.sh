@@ -50,6 +50,9 @@ for strategy in linear free; do
   [ "$(ansible-playbook test_force_handlers.yml -i inventory.handlers -v "$@" --tags force_false_in_play --force-handlers \
   | grep -E -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 
+  # https://github.com/ansible/ansible/pull/80898
+  [ "$(ansible-playbook 80880.yml -i inventory.handlers -vv "$@" 2>&1)" ]
+
   unset ANSIBLE_STRATEGY
 
 done
