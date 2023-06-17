@@ -106,6 +106,34 @@ EXAMPLES = r'''
         - response1
         - response2
         - response3
+
+- name: Example to password string match
+hosts: linuxservers
+tasks:
+- name: Example of the Expect module to change the password of the user.
+expect:
+command: passwd testusr
+responses:
+(?i)password: "P@$$w0rd"
+
+- name: Example to the multiple different responses
+  hosts: winservers
+  tasks:
+    - name: Perform Expect example
+      expect:
+        echo: yes
+        chdir: "{{ installdir }}"
+        command: "./{{ executable_filename }}"
+        timeout: "300"
+        responses:
+          - "(.*)Please provide your name(.*): Jack"
+          - "(.*)Please enter your age(>*): 25"
+          - "(.*)Database port(.*): {{ db_port }}"
+          - "(.*)Database user(.*): {{ db_username }}"
+          - "(.*)Database password(.*): {{ db_password }}"
+      register: expect_example_result
+      failed_when: "expect_example_result.rc != 0 and 'Success' not in expect_example_result.stdout"
+
 '''
 
 import datetime
