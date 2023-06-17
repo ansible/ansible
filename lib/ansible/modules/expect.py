@@ -106,6 +106,25 @@ EXAMPLES = r'''
         - response1
         - response2
         - response3
+
+ - name: Example of the password string match
+ expect:
+ command: passwd testusr
+ responses:
+ (?i)password: "P@$$w0rd"
+ 
+- name: Example of the multipe responses
+ expect:
+ echo: yes
+ chdir: "{{ installdir }}"
+ command: "./{{ executable_filename }}"
+      responses:
+        - "(.*)Please provide your name(.*): Jack"
+        - "(.*)Please enter your age(>*): 25"
+        - "(.*)Database port(.*): {{ db_port }}"
+        - "(.*)Database user(.*): {{ db_username }}"
+        - "(.*)Database password(.*): {{ db_password }}"
+
 '''
 
 import datetime
