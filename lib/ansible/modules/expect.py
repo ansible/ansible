@@ -106,6 +106,16 @@ EXAMPLES = r'''
         - response1
         - response2
         - response3
+
+- name: Example for the multiple different responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    responses:
+        - "(.*)Please provide your name(.*): Jack"
+        - "(.*)Please enter your age(>*): 25"
+        - "(.*)Database port(.*): {{ db_port }}"
+        - "(.*)Database user(.*): {{ db_username }}"
+        - "(.*)Database password(.*): {{ db_password }}"
 '''
 
 import datetime
