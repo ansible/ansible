@@ -1,0 +1,2 @@
+minor_changes:
+  - blockinfile - add wrap_with_blank_lines to wrap inserted block with blank lines (https://github.com/ansible/ansible/issues/80835).
