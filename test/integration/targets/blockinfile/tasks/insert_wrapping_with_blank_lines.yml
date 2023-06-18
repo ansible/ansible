@@ -1,0 +1,53 @@
+- name: add content to file without blank lines
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
+    create: true
+    block: |
+      Content from block (without blank lines wrapping)
+
+- name: get file content after inserting without blank lines
+  stat:
+    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
+  register: file_no_blank_lines
+
+- name: check content is the expected one
+  assert:
+    that:
+      - file_no_blank_lines.stat.checksum == "66ca3e896cae76e64e3fe4f03b42fb0e7a8093be"
+
+- name: check that removing a block does not consider the wrap_with_blank_lines attributes
+  blockinfile:
+    state: absent
+    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
+    wrap_with_blank_lines: true
+    block: |
+      Content from block (without blank lines wrapping)
+  
+- name: get file content after removing content
+  stat:
+    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
+  register: file_no_blank_lines_after_removal
+
+- name: check content is the expected one after removal
+  assert:
+    that:
+      - file_no_blank_lines_after_removal.stat.checksum == "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+
+- name: add content to file with blank lines
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/file_with_blank_lines_wrapping.txt"
+    create: true
+    wrap_with_blank_lines: true
+    insertafter: "Some content"
+    block: |
+      Content from block (with blank lines wrapping)
+
+- name: get file content after removing content
+  stat:
+    path: "{{ remote_tmp_dir_test }}/file_with_blank_lines_wrapping.txt"
+  register: file_with_blank_lines
+
+- name: check content is the expected one after inserting with blank lines wrapping
+  assert:
+    that:
+      - file_with_blank_lines.stat.checksum == "d42fa3473b9f1609821b5989b4cb41af38823e72"

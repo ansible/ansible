@@ -90,6 +90,14 @@ options:
     type: str
     default: END
     version_added: '2.5'
+  wrap_with_blank_lines:
+    required: false
+    description:
+    - Wrap the entire inserted block with blank lines.
+    - Note that this attribute is not considered when C(state) is set to C(absent)
+    type: bool
+    default: no
+    version_added: '2.16'
 notes:
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
@@ -116,9 +124,10 @@ attributes:
 
 EXAMPLES = r'''
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
-- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
+- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config wrapping it with blank lines
   ansible.builtin.blockinfile:
     path: /etc/ssh/sshd_config
+    wrap_with_blank_lines: true
     block: |
       Match User ansible-agent
       PasswordAuthentication no
@@ -230,6 +239,7 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
+            wrap_with_blank_lines=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -287,12 +297,16 @@ def main():
     else:
         insertre = None
 
+    wrap_empty_line = b("")
+    if module.boolean(params['wrap_with_blank_lines']):
+        wrap_empty_line = b(os.linesep)
+
     marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
     marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     if present and block:
         if not block.endswith(b(os.linesep)):
             block += b(os.linesep)
-        blocklines = [marker0] + block.splitlines(True) + [marker1]
+        blocklines = [wrap_empty_line] + [marker0] + block.splitlines(True) + [marker1] + [wrap_empty_line]
     else:
         blocklines = []
 
