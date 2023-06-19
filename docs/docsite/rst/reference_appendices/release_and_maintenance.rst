@@ -81,15 +81,17 @@ This table links to the changelogs for each major Ansible release. These changel
 ==================================      ==============================================      =========================
 Ansible Community Package Release       Status                                              Core version dependency
 ==================================      ==============================================      =========================
-8.0.0                                   In development (unreleased)                         2.15
-`7.x Changelogs`_                       Current                                             2.14
-`6.x Changelogs`_                       Unmaintained (end of life) after Ansible 6.7.0      2.13
+9.0.0                                   In development (unreleased)                         2.16
+`8.x Changelogs`_                       Current                                             2.15
+`7.x Changelogs`_                       Unmaintained (end of life) after Ansible 7.7.0      2.14
+`6.x Changelogs`_                       Unmaintained (end of life)                          2.13
 `5.x Changelogs`_                       Unmaintained (end of life)                          2.12
 `4.x Changelogs`_                       Unmaintained (end of life)                          2.11
 `3.x Changelogs`_                       Unmaintained (end of life)                          2.10
 `2.10 Changelogs`_                      Unmaintained (end of life)                          2.10
 ==================================      ==============================================      =========================
 
+.. _8.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/8/CHANGELOG-v8.rst
 .. _7.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/7/CHANGELOG-v7.rst
 .. _6.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/6/CHANGELOG-v6.rst
 .. _5.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/5/CHANGELOG-v5.rst
@@ -132,6 +134,15 @@ Dates listed indicate the start date of the maintenance cycle.
      - End Of Life
      - Controller Python
      - Target Python / PowerShell
+   * - `2.16`
+     - | GA: 06 Nov 2023
+       | Critical: 20 May 2024
+       | Security: Nov 2024
+     - May 2025
+     - | Python 3.10 - 3.12
+     - | Python 2.7
+       | Python 3.6 - 3.12
+       | Powershell TBD
    * - `2.15`_
      - | GA: 22 May 2023
        | Critical: 06 Nov 2023
@@ -163,9 +174,10 @@ Dates listed indicate the start date of the maintenance cycle.
      - | GA: 08 Nov 2021
        | Critical: 23 May 2022
        | Security: 07 Nov 2022
-     - 22 May 2023
+     - | **EOL**
+       | 22 May 2023
      - | Python 3.8 - 3.10
-     - | Python 2.6
+     - | Python 2.6 - 2.7
        | Python 3.5 - 3.10
        | PowerShell 3 - 5.1
    * - `2.11`_
@@ -201,14 +213,6 @@ Dates listed indicate the start date of the maintenance cycle.
      - | Python 2.6 - 2.7
        | Python 3.5 - 3.8
        | PowerShell 3 - 5.1
-..    * - 2.16
-..      - 06 Nov 2023
-..      - 20 May 2024
-..      - Nov 2024
-..      - May 2025
-..      - | Python 3.10 - 3.12
-..      - | Python 3.6 - 3.12
-..        | PowerShell TBD
 ..    * - 2.17
 ..      - 20 May 2024
 ..      - Nov 2024

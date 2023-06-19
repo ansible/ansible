@@ -45,6 +45,9 @@ DOCUMENTATION = """
           - When C(True) and C(lookup) or C(query) specifies I(errors='ignore'), no file found will return an empty
             list and other potential errors return an empty string or empty list depending on the template call
             (in other words return values of C(lookup) v C(query)).
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative paths/files.
 """
 
 EXAMPLES = """

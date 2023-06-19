@@ -77,9 +77,7 @@ def _generate_rst_in_templates() -> t.Iterable[Path]:
     """Create ``*.1.rst.in`` files out of CLI Python modules."""
     generate_man_cmd = (
         sys.executable,
-        'hacking/build-ansible.py',
-        'generate-man',
-        '--template-file=docs/templates/man.j2',
+        Path(__file__).parent / '_generate_man.py',
         '--output-dir=docs/man/man1/',
         '--output-format=man',
         *Path('lib/ansible/cli/').glob('*.py'),
@@ -163,7 +161,7 @@ def get_requires_for_build_sdist(
 
     manpage_build_deps = [
         'docutils',  # provides `rst2man`
-        'jinja2',  # used in `hacking/build-ansible.py generate-man`
+        'jinja2',  # used to generate man pages
         'pyyaml',  # needed for importing in-tree `ansible-core` from `lib/`
     ] if build_manpages_requested else []
 

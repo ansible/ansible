@@ -171,28 +171,6 @@ def manifest_info(manifest_template):
 
 
 @pytest.fixture()
-def files_manifest_info():
-    return {
-        "files": [
-            {
-                "name": ".",
-                "ftype": "dir",
-                "chksum_type": None,
-                "chksum_sha256": None,
-                "format": 1
-            },
-            {
-                "name": "README.md",
-                "ftype": "file",
-                "chksum_type": "sha256",
-                "chksum_sha256": "individual_file_checksum",
-                "format": 1
-            }
-        ],
-        "format": 1}
-
-
-@pytest.fixture()
 def manifest(manifest_info):
     b_data = to_bytes(json.dumps(manifest_info))
 
@@ -245,23 +223,19 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
             {
                 'url': 'https://galaxy.ansible.com',
                 'validate_certs': 'False',
-                'v3': 'False',
             },
             # Expected server attributes
             {
                 'validate_certs': False,
-                '_available_api_versions': {},
             },
         ),
         (
             {
                 'url': 'https://galaxy.ansible.com',
                 'validate_certs': 'True',
-                'v3': 'True',
             },
             {
                 'validate_certs': True,
-                '_available_api_versions': {'v3': '/v3'},
             },
         ),
     ],
@@ -279,7 +253,6 @@ def test_bool_type_server_config_options(config, server, monkeypatch):
         "server_list=server1\n",
         "[galaxy_server.server1]",
         "url=%s" % config['url'],
-        "v3=%s" % config['v3'],
         "validate_certs=%s\n" % config['validate_certs'],
     ]
 
@@ -299,7 +272,6 @@ def test_bool_type_server_config_options(config, server, monkeypatch):
 
     assert galaxy_cli.api_servers[0].name == 'server1'
     assert galaxy_cli.api_servers[0].validate_certs == server['validate_certs']
-    assert galaxy_cli.api_servers[0]._available_api_versions == server['_available_api_versions']
 
 
 @pytest.mark.parametrize('global_ignore_certs', [True, False])
@@ -479,19 +451,19 @@ def test_build_with_existing_files_and_manifest(collection_input):
     with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
-        manifest_file = next(m for m in members if m.path == "MANIFEST.json")
+        manifest_file = [m for m in members if m.path == "MANIFEST.json"][0]
         manifest_file_obj = actual.extractfile(manifest_file.name)
         manifest_file_text = manifest_file_obj.read()
         manifest_file_obj.close()
         assert manifest_file_text != b'{"collection_info": {"version": "6.6.6"}, "version": 1}'
 
-        json_file = next(m for m in members if m.path == "MANIFEST.json")
+        json_file = [m for m in members if m.path == "MANIFEST.json"][0]
         json_file_obj = actual.extractfile(json_file.name)
         json_file_text = json_file_obj.read()
         json_file_obj.close()
         assert json_file_text != b'{"files": [], "format": 1}'
 
-        sub_manifest_file = next(m for m in members if m.path == "plugins/MANIFEST.json")
+        sub_manifest_file = [m for m in members if m.path == "plugins/MANIFEST.json"][0]
         sub_manifest_file_obj = actual.extractfile(sub_manifest_file.name)
         sub_manifest_file_text = sub_manifest_file_obj.read()
         sub_manifest_file_obj.close()
@@ -790,11 +762,11 @@ def test_build_with_symlink_inside_collection(collection_input):
     with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
-        linked_folder = next(m for m in members if m.path == 'playbooks/roles/linked')
+        linked_folder = [m for m in members if m.path == 'playbooks/roles/linked'][0]
         assert linked_folder.type == tarfile.SYMTYPE
         assert linked_folder.linkname == '../../roles/linked'
 
-        linked_file = next(m for m in members if m.path == 'docs/README.md')
+        linked_file = [m for m in members if m.path == 'docs/README.md'][0]
         assert linked_file.type == tarfile.SYMTYPE
         assert linked_file.linkname == '../README.md'
 

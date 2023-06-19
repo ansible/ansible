@@ -793,8 +793,8 @@ class TestVaultLib(unittest.TestCase):
 3138'''
         b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
         b_data = self.v._split_header(b_data)
-        foo = binascii.unhexlify(b_data)
-        lines = foo.splitlines()
+        unhex_data = binascii.unhexlify(b_data)
+        lines = unhex_data.splitlines()
         # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
         b_salt = lines[0]
         b_hmac = lines[1]

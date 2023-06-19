@@ -42,20 +42,6 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils import basic
 from ansible.module_utils.parsing.convert_bool import boolean
 
-# Backwards compatibility for 3rd party modules
-# TODO(pabelanger): With move to ansible.netcommon, we should clean this code
-# up and have modules import directly themself.
-from ansible.module_utils.common.network import (  # noqa: F401
-    to_bits,
-    is_netmask,
-    is_masklen,
-    to_netmask,
-    to_masklen,
-    to_subnet,
-    to_ipv6_network,
-    VALID_MASKS,
-)
-
 try:
     from jinja2 import Environment, StrictUndefined
     from jinja2.exceptions import UndefinedError
@@ -607,7 +593,7 @@ def remove_empties(cfg_dict):
         elif (
             isinstance(val, list)
             and val
-            and all([isinstance(x, dict) for x in val])
+            and all(isinstance(x, dict) for x in val)
         ):
             child_val = [remove_empties(x) for x in val]
             if child_val:

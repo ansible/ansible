@@ -290,7 +290,7 @@ def run_pip(
                 connection.run([python.path], data=script, capture=True)
             except SubprocessError as ex:
                 if 'pip is unavailable:' in ex.stdout + ex.stderr:
-                    raise PipUnavailableError(python)
+                    raise PipUnavailableError(python) from None
 
             raise
 
@@ -443,11 +443,6 @@ def get_venv_packages(python: PythonConfig) -> dict[str, str]:
         '2.7': dict(
             pip='20.3.4',  # 21.0 requires Python 3.6+
             setuptools='44.1.1',  # 45.0.0 requires Python 3.5+
-            wheel=None,
-        ),
-        '3.5': dict(
-            pip='20.3.4',  # 21.0 requires Python 3.6+
-            setuptools='50.3.2',  # 51.0.0 requires Python 3.6+
             wheel=None,
         ),
         '3.6': dict(

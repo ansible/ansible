@@ -9,7 +9,7 @@
       - main
       - restricted
   register: deb822_check_mode_1
-  check_mode: yes
+  check_mode: true
 
 - name: Create deb822 repo
   deb822_repository:
@@ -211,3 +211,19 @@
     that:
       - ansible_test_repo_remove is changed
       - ansible_test_repo_stats.results|map(attribute='stat')|selectattr('exists') == []
+
+- name: Check if http-agent works when using cloudflare repo - check_mode
+  deb822_repository:
+    name: cloudflared
+    types: deb
+    uris: https://pkg.cloudflare.com/cloudflared
+    suites: "bullseye"
+    components: main
+    signed_by: https://pkg.cloudflare.com/cloudflare-main.gpg
+    state: present
+  check_mode: true
+  register: ansible_test_http_agent
+
+- assert:
+    that:
+      - ansible_test_http_agent is changed

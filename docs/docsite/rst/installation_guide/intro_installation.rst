@@ -34,29 +34,7 @@ The managed node also needs a user account that can SSH to the node with an inte
 Node requirement summary
 ========================
 
-The table below lists the current and historical versions of Python
-required on control and managed nodes.
-
-.. list-table::
-   :header-rows: 1
-
-   * - ansible-core Version
-     - Control node Python
-     - Managed node Python
-   * - 2.11
-     - Python 2.7, Python 3.5 - 3.9 `[†]`_
-     - Python 2.6 - 2.7, Python 3.5 - 3.9
-   * - 2.12
-     - Python 3.8 - 3.10
-     - Python 2.6 - 2.7, Python 3.5 - 3.10
-   * - 2.13
-     - Python 3.8 - 3.10
-     - Python 2.7, Python 3.5 - 3.10
-   * - 2.14
-     - Python 3.9 - 3.11
-     - Python 2.7, Python 3.5 - 3.11
-
-_`[†]`: Has a soft requirement of Python 3.8 as not packaged for older versions
+You can find details about control and managed node requirements for each Ansible version in the :ref:`support_life`.
 
 .. _getting_ansible:
 
@@ -69,8 +47,56 @@ Ansible's community packages are distributed in two ways: a minimalist language 
 
 See the :ref:`Ansible package release status table<ansible_changelogs>` for the ``ansible-core`` version included in the package.
 
-Installing and upgrading Ansible
-================================
+Installing and upgrading Ansible with pipx
+==========================================
+
+On some systems, it may not be possible to install Ansible with ``pip``, due to decisions made by the operating system. In such cases, ``pipx`` is a widely available alternative.
+
+These instructions will not go over the steps to install ``pipx``; If those instructions are needed please continue to the `pipx installation instructions`_ for more information.
+
+.. _pipx installation instructions: https://pypa.github.io/pipx/installation/
+
+.. _pipx_install:
+
+Installing Ansible
+------------------
+
+Use ``pipx`` in your environment to install the Ansible package of your choice for the current user:
+
+.. code-block:: console
+
+    $ pipx install ansible
+
+Alternately, you can install a specific version of ``ansible-core``:
+
+.. code-block:: console
+
+    $ pipx install ansible-core==2.12.3
+
+.. _pipx_upgrade:
+
+Upgrading Ansible
+-----------------
+
+To upgrade an existing Ansible installation to the latest released version:
+
+.. code-block:: console
+
+    $ pipx upgrade ansible
+
+.. _pipx_inject:
+
+Installing Extra Python Dependencies
+------------------------------------
+
+To install additional python dependencies that may be needed, with the example of installing the ``argcomplete`` python package as described below:
+
+.. code-block:: console
+
+    $ pipx inject ansible argcomplete
+
+Installing and upgrading Ansible with pip
+=========================================
 
 Locating Python
 ---------------
@@ -133,23 +159,6 @@ To upgrade an existing Ansible installation in this Python environment to the la
 .. code-block:: console
 
     $ python3 -m pip install --upgrade --user ansible
-
-Confirming your installation
-----------------------------
-
-You can test that Ansible is installed correctly by checking the version:
-
-.. code-block:: console
-
-    $ ansible --version
-
-The version displayed by this command is for the associated ``ansible-core`` package that has been installed.
-
-To check the version of the ``ansible`` package that has been installed:
-
-.. code-block:: console
-
-    $ python3 -m pip show ansible
 
 .. _development_install:
 
@@ -227,6 +236,23 @@ Running the ``devel`` branch from a clone
 
 .. _shell_completion:
 
+Confirming your installation
+============================
+
+You can test that Ansible is installed correctly by checking the version:
+
+.. code-block:: console
+
+    $ ansible --version
+
+The version displayed by this command is for the associated ``ansible-core`` package that has been installed.
+
+To check the version of the ``ansible`` package that has been installed:
+
+.. code-block:: console
+
+    $ ansible-community --version
+
 Adding Ansible command shell completion
 =======================================
 
@@ -236,6 +262,14 @@ For more information about installation and configuration, see the `argcomplete 
 
 Installing ``argcomplete``
 --------------------------
+
+If you chose the ``pipx`` install instructions:
+
+.. code-block:: console
+
+    $ pipx inject ansible argcomplete
+
+Or, if you chose the ``pip`` install instructions:
 
 .. code-block:: console
 

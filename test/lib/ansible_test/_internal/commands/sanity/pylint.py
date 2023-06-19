@@ -18,6 +18,11 @@ from . import (
     SANITY_ROOT,
 )
 
+from ...constants import (
+    CONTROLLER_PYTHON_VERSIONS,
+    REMOTE_ONLY_PYTHON_VERSIONS,
+)
+
 from ...io import (
     make_dirs,
 )
@@ -38,6 +43,7 @@ from ...util import (
 
 from ...util_common import (
     run_command,
+    process_scoped_temporary_file,
 )
 
 from ...ansible_util import (
@@ -81,6 +87,8 @@ class PylintTest(SanitySingleVersion):
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        min_python_version_db_path = self.create_min_python_db(args, targets.targets)
+
         plugin_dir = os.path.join(SANITY_ROOT, 'pylint', 'plugins')
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
@@ -163,7 +171,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.now(tz=datetime.timezone.utc)
-            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail, min_python_version_db_path)
             context_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -194,6 +202,22 @@ class PylintTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
+    def create_min_python_db(self, args: SanityConfig, targets: t.Iterable[TestTarget]) -> str:
+        """Create a database of target file paths and their minimum required Python version, returning the path to the database."""
+        target_paths = set(target.path for target in self.filter_remote_targets(list(targets)))
+        controller_min_version = CONTROLLER_PYTHON_VERSIONS[0]
+        target_min_version = REMOTE_ONLY_PYTHON_VERSIONS[0]
+        min_python_versions = {
+            os.path.abspath(target.path): target_min_version if target.path in target_paths else controller_min_version for target in targets
+        }
+
+        min_python_version_db_path = process_scoped_temporary_file(args)
+
+        with open(min_python_version_db_path, 'w') as database_file:
+            json.dump(min_python_versions, database_file)
+
+        return min_python_version_db_path
+
     @staticmethod
     def pylint(
         args: SanityConfig,
@@ -203,6 +227,7 @@ class PylintTest(SanitySingleVersion):
         plugin_names: list[str],
         python: PythonConfig,
         collection_detail: CollectionDetail,
+        min_python_version_db_path: str,
     ) -> list[dict[str, str]]:
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
@@ -234,6 +259,7 @@ class PylintTest(SanitySingleVersion):
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(sorted(load_plugins)),
+            '--min-python-version-db', min_python_version_db_path,
         ] + paths  # fmt: skip
 
         if data_context().content.collection:

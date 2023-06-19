@@ -63,6 +63,13 @@ class ActionBase(ABC):
     # A set of valid arguments
     _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
+    # behavioral attributes
+    BYPASS_HOST_LOOP = False
+    TRANSFERS_FILES = False
+    _requires_connection = True
+    _supports_check_mode = True
+    _supports_async = False
+
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
         self._connection = connection
@@ -72,19 +79,15 @@ class ActionBase(ABC):
         self._shared_loader_obj = shared_loader_obj
         self._cleanup_remote_tmp = False
 
-        self._supports_check_mode = True
-        self._supports_async = False
-
         # interpreter discovery state
         self._discovered_interpreter_key = None
         self._discovered_interpreter = False
         self._discovery_deprecation_warnings = []
         self._discovery_warnings = []
+        self._used_interpreter = None
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
-        self._used_interpreter = None
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):

@@ -11,8 +11,8 @@ import ansible.module_utils.foo0
 results['foo0'] = ansible.module_utils.foo0.data
 
 # Test depthful import with no from
-import ansible.module_utils.bar0.foo
-results['bar0'] = ansible.module_utils.bar0.foo.data
+import ansible.module_utils.bar0.foo3
+results['bar0'] = ansible.module_utils.bar0.foo3.data
 
 # Test import of module_utils/foo1.py
 from ansible.module_utils import foo1

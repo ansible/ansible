@@ -61,7 +61,7 @@ options:
   virtualenv_python:
     description:
       - The Python executable used for creating the virtual environment.
-        For example C(python3.5), C(python2.7). When not specified, the
+        For example C(python3.12), C(python2.7). When not specified, the
         Python version used to run the ansible module is used. This parameter
         should not be used when C(virtualenv_command) is using C(pyvenv) or
         the C(-m venv) module.
@@ -810,7 +810,7 @@ def main():
 
         out_freeze_before = None
         if requirements or has_vcs:
-            _, out_freeze_before, _ = _get_packages(module, pip, chdir)
+            dummy, out_freeze_before, dummy = _get_packages(module, pip, chdir)
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -827,7 +827,7 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                dummy, out_freeze_after, dummy = _get_packages(module, pip, chdir)
                 changed = out_freeze_before != out_freeze_after
 
         changed = changed or venv_created

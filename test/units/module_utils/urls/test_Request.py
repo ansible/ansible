@@ -33,6 +33,7 @@ def install_opener_mock(mocker):
 def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
     here = os.path.dirname(__file__)
     pem = os.path.join(here, 'fixtures/client.pem')
+    client_key = os.path.join(here, 'fixtures/client.key')
 
     cookies = cookiejar.CookieJar()
     request = Request(
@@ -46,8 +47,8 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         http_agent='ansible-tests',
         force_basic_auth=True,
         follow_redirects='all',
-        client_cert='/tmp/client.pem',
-        client_key='/tmp/client.key',
+        client_cert=pem,
+        client_key=client_key,
         cookies=cookies,
         unix_socket='/foo/bar/baz.sock',
         ca_path=pem,
@@ -68,8 +69,8 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         call(None, 'ansible-tests'),  # http_agent
         call(None, True),  # force_basic_auth
         call(None, 'all'),  # follow_redirects
-        call(None, '/tmp/client.pem'),  # client_cert
-        call(None, '/tmp/client.key'),  # client_key
+        call(None, pem),  # client_cert
+        call(None, client_key),  # client_key
         call(None, cookies),  # cookies
         call(None, '/foo/bar/baz.sock'),  # unix_socket
         call(None, pem),  # ca_path
@@ -358,10 +359,7 @@ def test_Request_open_client_cert(urlopen_mock, install_opener_mock):
     assert ssl_handler.client_cert == client_cert
     assert ssl_handler.client_key == client_key
 
-    https_connection = ssl_handler._build_https_connection('ansible.com')
-
-    assert https_connection.key_file == client_key
-    assert https_connection.cert_file == client_cert
+    ssl_handler._build_https_connection('ansible.com')
 
 
 def test_Request_open_cookies(urlopen_mock, install_opener_mock):

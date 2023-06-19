@@ -1,0 +1,2 @@
+bugfixes:
+- uri - fix search for JSON type to include complex strings containing '+'

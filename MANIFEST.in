@@ -1,24 +1,20 @@
-include README.rst
 include COPYING
-include requirements.txt
-recursive-include docs *
-include docs/docsite/rst/collections/all_plugins.rst
-exclude docs/docsite/rst_warnings
-exclude docs/docsite/rst/conf.py
-exclude docs/docsite/rst/index.rst
-exclude docs/docsite/rst/dev_guide/index.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/release-names.rst
-recursive-exclude docs/docsite/_build *
-recursive-exclude docs/docsite/_extensions *.pyc *.pyo
-include examples/hosts
+include bin/*
+include changelogs/CHANGELOG*.rst
+include changelogs/changelog.yaml
 include examples/ansible.cfg
+include examples/hosts
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
-recursive-include licenses *.txt
-recursive-include packaging *.py
+include hacking/build-ansible.py
+include hacking/templates/*.j2
+include hacking/test-module.py
+include hacking/update-sanity-requirements.py
+include licenses/*.txt
+include requirements.txt
+recursive-include docs *
+recursive-include hacking/build_library *.py
+recursive-include packaging *.py *.j2
 recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.txt
 recursive-include test/support *.py *.ps1 *.psm1 *.cs *. *.md
@@ -28,11 +24,3 @@ exclude test/sanity/code-smell/release-names.*
 exclude test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py
 exclude test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py
 recursive-include test/units *
-include MANIFEST.in
-include changelogs/CHANGELOG*.rst
-include changelogs/changelog.yaml
-recursive-include hacking/build_library *.py
-include hacking/build-ansible.py
-include hacking/test-module.py
-include hacking/update-sanity-requirements.py
-include bin/*

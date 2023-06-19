@@ -696,6 +696,18 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Test find JSON as subtype
+  uri:
+    url: "https://{{ httpbin_host }}/response-headers?content-type=application/ld%2Bjson"
+    method: POST
+    return_content: true
+  register: result
+
+- name: Validate JSON as subtype
+  assert:
+    that:
+      - result.json is defined
+
 - name: Make request that includes password in JSON keys
   uri:
     url: "https://{{ httpbin_host}}/get?key-password=value-password"

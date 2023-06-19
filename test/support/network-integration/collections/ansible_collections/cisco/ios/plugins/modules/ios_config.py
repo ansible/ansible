@@ -34,7 +34,8 @@ extends_documentation_fragment:
 - cisco.ios.ios
 notes:
 - Tested against IOS 15.6
-- Abbreviated commands are NOT idempotent, see L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
+- Abbreviated commands are NOT idempotent,
+  see L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -575,6 +576,7 @@ def main():
             )
 
             if running_config.sha1 != base_config.sha1:
+                before, after = "", ""
                 if module.params["diff_against"] == "intended":
                     before = running_config
                     after = base_config

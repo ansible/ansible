@@ -598,7 +598,7 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    state, _ = iterator.get_next_task_for_host(original_host, peek=True)
+                    state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
 
                     if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
@@ -652,20 +652,28 @@ class StrategyBase:
                         # only ensure that notified handlers exist, if so save the notifications for when
                         # handlers are actually flushed so the last defined handlers are exexcuted,
                         # otherwise depending on the setting either error or warn
+                        host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
-                            if any(self.search_handlers_by_notification(notification, iterator)):
-                                iterator.add_notification(original_host.name, notification)
-                                display.vv(f"Notification for handler {notification} has been saved.")
-                                continue
-
-                            msg = (
-                                f"The requested handler '{notification}' was not found in either the main handlers"
-                                " list nor in the listening handlers list"
-                            )
-                            if C.ERROR_ON_MISSING_HANDLER:
-                                raise AnsibleError(msg)
+                            for handler in self.search_handlers_by_notification(notification, iterator):
+                                if host_state.run_state == IteratingStates.HANDLERS:
+                                    # we're currently iterating handlers, so we need to expand this now
+                                    if handler.notify_host(original_host):
+                                        # NOTE even with notifications deduplicated this can still happen in case of handlers being
+                                        # notified multiple times using different names, like role name or fqcn
+                                        self._tqm.send_callback('v2_playbook_on_notify', handler, original_host)
+                                else:
+                                    iterator.add_notification(original_host.name, notification)
+                                    display.vv(f"Notification for handler {notification} has been saved.")
+                                break
                             else:
-                                display.warning(msg)
+                                msg = (
+                                    f"The requested handler '{notification}' was not found in either the main handlers"
+                                    " list nor in the listening handlers list"
+                                )
+                                if C.ERROR_ON_MISSING_HANDLER:
+                                    raise AnsibleError(msg)
+                                else:
+                                    display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)

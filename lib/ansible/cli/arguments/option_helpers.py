@@ -31,6 +31,16 @@ class SortingHelpFormatter(argparse.HelpFormatter):
         super(SortingHelpFormatter, self).add_arguments(actions)
 
 
+class ArgumentParser(argparse.ArgumentParser):
+    def add_argument(self, *args, **kwargs):
+        action = kwargs.get('action')
+        help = kwargs.get('help')
+        if help and action in {'append', 'append_const', 'count', 'extend', PrependListAction}:
+            help = f'{help.rstrip(".")}. This argument may be specified multiple times.'
+        kwargs['help'] = help
+        return super().add_argument(*args, **kwargs)
+
+
 class AnsibleVersion(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         ansible_version = to_native(version(getattr(parser, 'prog')))
@@ -192,7 +202,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,

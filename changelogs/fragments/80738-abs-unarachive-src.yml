@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - fix unarchiving sources that are copied to the remote node using a relative temporory directory path (https://github.com/ansible/ansible/issues/80710).

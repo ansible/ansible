@@ -29,6 +29,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:

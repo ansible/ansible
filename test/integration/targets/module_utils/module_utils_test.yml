@@ -47,7 +47,7 @@
     assert:
       that:
         - result is failed
-        - result['msg'] == "Could not find imported module support code for ansible.modules.test_failure.  Looked for (['ansible.module_utils.zebra.foo', 'ansible.module_utils.zebra'])"
+        - result['msg'] == "Could not find imported module support code for ansible.modules.test_failure.  Looked for (['ansible.module_utils.zebra.foo4', 'ansible.module_utils.zebra'])"
 
   - name: Test that alias deprecation works
     test_alias_deprecation:

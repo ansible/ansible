@@ -194,7 +194,7 @@ class TestRunCommandPrompt:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_prompt_no_match(self, mocker, rc_am):
         rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(b'hello')
-        (rc, _, _) = rc_am.run_command('foo', prompt_regex='[pP]assword:')
+        (rc, stdout, stderr) = rc_am.run_command('foo', prompt_regex='[pP]assword:')
         assert rc == 0
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
@@ -204,7 +204,7 @@ class TestRunCommandPrompt:
                                                     fh=mocker.sentinel.stdout),
                                      mocker.sentinel.stderr:
                                      SpecialBytesIO(b'', fh=mocker.sentinel.stderr)}
-        (rc, _, _) = rc_am.run_command('foo', prompt_regex=r'[pP]assword:', data=None)
+        (rc, stdout, stderr) = rc_am.run_command('foo', prompt_regex=r'[pP]assword:', data=None)
         assert rc == 257
 
 
@@ -212,7 +212,7 @@ class TestRunCommandRc:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_check_rc_false(self, rc_am):
         rc_am._subprocess.Popen.return_value.returncode = 1
-        (rc, _, _) = rc_am.run_command('/bin/false', check_rc=False, prompt_regex='i_dont_exist')
+        (rc, stdout, stderr) = rc_am.run_command('/bin/false', check_rc=False, prompt_regex='i_dont_exist')
         assert rc == 1
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])

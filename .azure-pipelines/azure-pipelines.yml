@@ -31,7 +31,7 @@ variables:
   - name: fetchDepth
     value: 500
   - name: defaultContainer
-    value: quay.io/ansible/azure-pipelines-test-container:3.0.0
+    value: quay.io/ansible/azure-pipelines-test-container:4.0.1
 
 pool: Standard
 
@@ -47,8 +47,6 @@ stages:
             - test: 1
             - test: 2
             - test: 3
-            - test: 4
-            - test: 5
   - stage: Units
     dependsOn: []
     jobs:
@@ -58,7 +56,6 @@ stages:
           testFormat: units/{0}
           targets:
             - test: 2.7
-            - test: 3.5
             - test: 3.6
             - test: 3.7
             - test: 3.8
@@ -73,8 +70,6 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - test: 2012
-            - test: 2012-R2
             - test: 2016
             - test: 2019
             - test: 2022
@@ -88,16 +83,16 @@ stages:
               test: macos/13.2
             - name: RHEL 7.9
               test: rhel/7.9
-            - name: RHEL 8.7 py36
-              test: rhel/8.7@3.6
-            - name: RHEL 8.7 py39
-              test: rhel/8.7@3.9
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 8.8 py36
+              test: rhel/8.8@3.6
+            - name: RHEL 8.8 py311
+              test: rhel/8.8@3.11
+            - name: RHEL 9.2 py39
+              test: rhel/9.2@3.9
+            - name: RHEL 9.2 py311
+              test: rhel/9.2@3.11
             - name: FreeBSD 12.4
               test: freebsd/12.4
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
             - name: FreeBSD 13.2
               test: freebsd/13.2
           groups:
@@ -108,12 +103,10 @@ stages:
           targets:
             - name: macOS 13.2
               test: macos/13.2
-            - name: RHEL 8.7
-              test: rhel/8.7
+            - name: RHEL 8.8
+              test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
             - name: FreeBSD 13.2
               test: freebsd/13.2
           groups:
@@ -127,8 +120,8 @@ stages:
               test: alpine/3.17
             - name: Fedora 37
               test: fedora/37
-            - name: RHEL 8.7
-              test: rhel/8.7
+            - name: RHEL 8.8
+              test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
             - name: Ubuntu 20.04
@@ -204,8 +197,6 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - test: 2012
-            - test: 2012-R2
             - test: 2016
             - test: 2019
             - test: 2022

@@ -23,7 +23,7 @@ Become directives
 You can set the directives that control ``become`` at the play or task level. You can override these by setting connection variables, which often differ from one host to another. These variables and directives are independent. For example, setting ``become_user`` does not set ``become``.
 
 become
-    set to ``yes`` to activate privilege escalation.
+    set to ``true`` to activate privilege escalation.
 
 become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: true``, to allow it to be set at host level. Default value is ``root``.
@@ -91,7 +91,7 @@ For example, if you want to run all tasks as ``root`` on a server named ``webser
 
 .. code-block:: text
 
-    webserver ansible_user=manager ansible_become=yes
+    webserver ansible_user=manager ansible_become=true
 
 .. note::
     The variables defined above are generic for all become plugins but plugin specific ones can also be set instead.

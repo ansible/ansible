@@ -261,13 +261,21 @@ bootstrap_remote_rhel_8()
     if [ "${python_version}" = "3.6" ]; then
         py_pkg_prefix="python3"
     else
-        py_pkg_prefix="python${python_package_version}"
+        py_pkg_prefix="python${python_version}"
     fi
 
     packages="
         gcc
         ${py_pkg_prefix}-devel
         "
+
+    # pip isn't included in the Python devel package under Python 3.11
+    if [ "${python_version}" != "3.6" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-pip
+        "
+    fi
 
     # Jinja2 is not installed with an OS package since the provided version is too old.
     # Instead, ansible-test will install it using pip.
@@ -278,9 +286,19 @@ bootstrap_remote_rhel_8()
             "
     fi
 
+    # Python 3.11 isn't a module like the earlier versions
+    if [ "${python_version}" = "3.6" ]; then
+        while true; do
+            # shellcheck disable=SC2086
+            yum module install -q -y "python${python_package_version}" \
+            && break
+            echo "Failed to install packages. Sleeping before trying again..."
+            sleep 10
+        done
+    fi
+
     while true; do
         # shellcheck disable=SC2086
-        yum module install -q -y "python${python_package_version}" && \
         yum install -q -y ${packages} \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
@@ -292,12 +310,24 @@ bootstrap_remote_rhel_8()
 
 bootstrap_remote_rhel_9()
 {
-    py_pkg_prefix="python3"
+    if [ "${python_version}" = "3.9" ]; then
+        py_pkg_prefix="python3"
+    else
+        py_pkg_prefix="python${python_version}"
+    fi
 
     packages="
         gcc
         ${py_pkg_prefix}-devel
         "
+
+    # pip is not included in the Python devel package under Python 3.11
+    if [ "${python_version}" != "3.9" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-pip
+        "
+    fi
 
     # Jinja2 is not installed with an OS package since the provided version is too old.
     # Instead, ansible-test will install it using pip.
@@ -305,10 +335,18 @@ bootstrap_remote_rhel_9()
         packages="
             ${packages}
             ${py_pkg_prefix}-cryptography
-            ${py_pkg_prefix}-packaging
             ${py_pkg_prefix}-pyyaml
-            ${py_pkg_prefix}-resolvelib
             "
+
+        # The following OS packages are missing for 3.11 (and possibly later) so we just
+        # skip them and let ansible-test install them from PyPI.
+        if [ "${python_version}" = "3.9" ]; then
+            packages="
+                ${packages}
+                ${py_pkg_prefix}-packaging
+                ${py_pkg_prefix}-resolvelib
+            "
+        fi
     fi
 
     while true; do

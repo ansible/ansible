@@ -283,11 +283,8 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
         # fetch remote
-        b_temp_tar_path = (  # NOTE: AnsibleError is raised on URLError
-            artifacts_manager.get_artifact_path
-            if remote_collection.is_concrete_artifact
-            else artifacts_manager.get_galaxy_artifact_path
-        )(remote_collection)
+        # NOTE: AnsibleError is raised on URLError
+        b_temp_tar_path = artifacts_manager.get_artifact_path_from_unknown(remote_collection)
 
         display.vvv(
             u"Remote collection cached as '{path!s}'".format(path=to_text(b_temp_tar_path))
@@ -557,11 +554,7 @@ def download_collections(
                 format(coll=to_text(concrete_coll_pin), path=to_text(b_output_path)),
             )
 
-            b_src_path = (
-                artifacts_manager.get_artifact_path
-                if concrete_coll_pin.is_concrete_artifact
-                else artifacts_manager.get_galaxy_artifact_path
-            )(concrete_coll_pin)
+            b_src_path = artifacts_manager.get_artifact_path_from_unknown(concrete_coll_pin)
 
             b_dest_path = os.path.join(
                 b_output_path,
@@ -681,7 +674,7 @@ def install_collections(
     unsatisfied_requirements = set(
         chain.from_iterable(
             (
-                Requirement.from_dir_path(sub_coll, artifacts_manager)
+                Requirement.from_dir_path(to_bytes(sub_coll), artifacts_manager)
                 for sub_coll in (
                     artifacts_manager.
                     get_direct_collection_dependencies(install_req).
@@ -1485,10 +1478,7 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     :param path: Collection dirs layout path.
     :param artifacts_manager: Artifacts manager.
     """
-    b_artifact_path = (
-        artifacts_manager.get_artifact_path if collection.is_concrete_artifact
-        else artifacts_manager.get_galaxy_artifact_path
-    )(collection)
+    b_artifact_path = artifacts_manager.get_artifact_path_from_unknown(collection)
 
     collection_path = os.path.join(path, collection.namespace, collection.name)
     b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
@@ -1571,6 +1561,13 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
     """
     try:
         with tarfile.open(b_coll_targz_path, mode='r') as collection_tar:
+            # Remove this once py3.11 is our controller minimum
+            # Workaround for https://bugs.python.org/issue47231
+            # See _extract_tar_dir
+            collection_tar._ansible_normalized_cache = {
+                m.name.removesuffix(os.path.sep): m for m in collection_tar.getmembers()
+            }  # deprecated: description='TarFile member index' core_version='2.18' python_version='3.11'
+
             # Verify the signature on the MANIFEST.json before extracting anything else
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
@@ -1651,22 +1648,12 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
 
 def _extract_tar_dir(tar, dirname, b_dest):
     """ Extracts a directory from a collection tar. """
-    member_names = [to_native(dirname, errors='surrogate_or_strict')]
+    dirname = to_native(dirname, errors='surrogate_or_strict').removesuffix(os.path.sep)
 
-    # Create list of members with and without trailing separator
-    if not member_names[-1].endswith(os.path.sep):
-        member_names.append(member_names[-1] + os.path.sep)
-
-    # Try all of the member names and stop on the first one that are able to successfully get
-    for member in member_names:
-        try:
-            tar_member = tar.getmember(member)
-        except KeyError:
-            continue
-        break
-    else:
-        # If we still can't find the member, raise a nice error.
-        raise AnsibleError("Unable to extract '%s' from collection" % to_native(member, errors='surrogate_or_strict'))
+    try:
+        tar_member = tar._ansible_normalized_cache[dirname]
+    except KeyError:
+        raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 
     b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
 
