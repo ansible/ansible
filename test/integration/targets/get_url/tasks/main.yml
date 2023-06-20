@@ -243,6 +243,7 @@
   get_url:
     url: 'https://{{ httpbin_host }}/status/304'
     dest: '{{ remote_tmp_dir }}/test'
+    force: yes
   register: result
 
 - name: Assert that we get the appropriate status_code
@@ -305,12 +306,13 @@
   assert:
     that:
       - result is not changed
-      - "'304' in result.msg"
+      - result.msg == 'file already exists'
 
 - name: get a file that doesn't respond to If-Modified-Since without checksum
   get_url:
     url: 'https://{{ httpbin_host }}/get'
     dest: '{{ remote_tmp_dir }}/test'
+    force: yes
   register: result
 
 - name: Assert that we downloaded the file
