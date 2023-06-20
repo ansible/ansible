@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Use ``importlib.resources.abc.TraversableResources`` instead of deprecated
+    ``importlib.abc.TraversableResources`` where available
+    (https:/github.com/ansible/ansible/pull/81082).
