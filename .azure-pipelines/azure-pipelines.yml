@@ -126,8 +126,6 @@ stages:
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
-            - name: Ubuntu 20.04
-              test: ubuntu/20.04
             - name: Ubuntu 22.04
               test: ubuntu/22.04
           groups:
