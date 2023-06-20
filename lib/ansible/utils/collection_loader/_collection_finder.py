@@ -52,6 +52,7 @@ try:
         from importlib.abc import TraversableResources  # deprecated: description='TraversableResources move' python_version='3.10'
 except ImportError:
     # Python < 3.9
+    # deprecated: description='TraversableResources fallback' python_version='3.8'
     TraversableResources = object  # type: ignore[assignment,misc]
 
 try:
