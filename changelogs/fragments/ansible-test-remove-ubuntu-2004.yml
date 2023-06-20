@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Removed Ubuntu 20.04 LTS image from the `--remote` option.
