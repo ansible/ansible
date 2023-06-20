@@ -1848,8 +1848,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True,
-                    bufsize=-1):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -1914,8 +1913,6 @@ class AnsibleModule(object):
         :kw handle_exceptions: This flag indicates whether an exception will
             be handled inline and issue a failed_json or if the caller should
             handle it.
-        :kw bufsize: The buffer size passed to the open() function when
-            creating the stdin/stdout/stderr pipe file objects.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2013,7 +2010,6 @@ class AnsibleModule(object):
                 os.umask(umask)
 
         kwargs = dict(
-            bufsize=bufsize,
             executable=executable,
             shell=shell,
             close_fds=close_fds,
