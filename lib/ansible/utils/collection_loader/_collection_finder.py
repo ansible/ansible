@@ -49,7 +49,7 @@ try:
         # Used with Python 3.9 and 3.10 only
         # This member is still available as an alias up until Python 3.14 but
         # is deprecated as of Python 3.12.
-        from importlib.abc import TraversableResources
+        from importlib.abc import TraversableResources  # deprecated: description='TraversableResources move' python_version='3.10'
 except ImportError:
     # Python < 3.9
     TraversableResources = object  # type: ignore[assignment,misc]
