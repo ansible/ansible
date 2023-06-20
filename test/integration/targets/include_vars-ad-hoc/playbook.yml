@@ -1,0 +1,19 @@
+- name: Include vars example
+  hosts: localhost
+
+  tasks:
+    - name: Include all yml configuration files from folder "{{ my_config_folder }}"
+      vars:
+        my_config_folder: "dir/"
+      ansible.builtin.include_vars:
+        dir: "{{ my_config_folder }}"
+        extensions:
+          - 'yml'
+          - 'yaml'
+        ignore_unknown_extensions: 'yes'
+        depth: 3
+        name: my_include_vars
+
+    - name: Print included params
+      debug:
+        var: my_include_vars

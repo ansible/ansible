@@ -1,0 +1,2 @@
+bugfixes:
+- include_vars.py - Ensured that all files specified in the directory are included and that we iterate over all files (https://github.com/ansible/ansible/issues/80987).
