@@ -43,6 +43,7 @@ from .data import (
 
 from .util_common import (
     CommonConfig,
+    ExitHandler,
 )
 
 from .cli import (
@@ -59,6 +60,12 @@ from .config import (
 
 
 def main(cli_args: t.Optional[list[str]] = None) -> None:
+    """Wrapper around the main program function to invoke cleanup functions at exit."""
+    with ExitHandler.context():
+        main_internal(cli_args)
+
+
+def main_internal(cli_args: t.Optional[list[str]] = None) -> None:
     """Main program function."""
     try:
         os.chdir(data_context().content.root)

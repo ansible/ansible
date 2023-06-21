@@ -1,7 +1,6 @@
 """Provision hosts for running tests."""
 from __future__ import annotations
 
-import atexit
 import collections.abc as c
 import dataclasses
 import functools
@@ -25,6 +24,10 @@ from .util import (
     verify_sys_executable,
     version_to_str,
     type_guard,
+)
+
+from .util_common import (
+    ExitHandler,
 )
 
 from .thread import (
@@ -124,7 +127,7 @@ def prepare_profiles(
 
             raise PrimeContainers()
 
-        atexit.register(functools.partial(cleanup_profiles, host_state))
+        ExitHandler.register(functools.partial(cleanup_profiles, host_state))
 
         def provision(profile: HostProfile) -> None:
             """Provision the given profile."""
