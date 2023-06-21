@@ -44,7 +44,7 @@ EXAMPLES: |
   {{ github_workflow |to_yaml}}
 
   # same as above but 'prettier' (equivalent to to_nice_yaml filter)
-  {{ docker_config|to_json(indent=4) }}
+  {{ docker_config|to_yaml(indent=4) }}
 
 RETURN:
   _value:
