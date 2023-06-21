@@ -1,7 +1,6 @@
 """Common utility code that depends on CommonConfig."""
 from __future__ import annotations
 
-import atexit
 import collections.abc as c
 import contextlib
 import json
@@ -62,6 +61,39 @@ from .host_configs import (
 )
 
 CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
+
+
+class ExitHandler:
+    """Simple exit handler implementation."""
+    _callbacks: list[tuple[t.Callable, tuple[t.Any, ...], dict[str, t.Any]]] = []
+
+    @staticmethod
+    def register(func: t.Callable, *args, **kwargs) -> None:
+        """Register the given function and args as a callback to execute during program termination."""
+        ExitHandler._callbacks.append((func, args, kwargs))
+
+    @staticmethod
+    @contextlib.contextmanager
+    def context() -> t.Generator[None, None, None]:
+        """Run all registered handlers when the context is exited."""
+        last_exception: BaseException | None = None
+
+        try:
+            yield
+        finally:
+            queue = list(ExitHandler._callbacks)
+
+            while queue:
+                func, args, kwargs = queue.pop()
+
+                try:
+                    func(*args, **kwargs)
+                except BaseException as ex:  # pylint: disable=broad-exception-caught
+                    last_exception = ex
+                    display.fatal(f'Exit handler failed: {ex}')
+
+            if last_exception:
+                raise last_exception
 
 
 class ShellScriptTemplate:
@@ -211,7 +243,7 @@ def process_scoped_temporary_file(args: CommonConfig, prefix: t.Optional[str] = 
     else:
         temp_fd, path = tempfile.mkstemp(prefix=prefix, suffix=suffix)
         os.close(temp_fd)
-        atexit.register(lambda: os.remove(path))
+        ExitHandler.register(lambda: os.remove(path))
 
     return path
 
@@ -222,7 +254,7 @@ def process_scoped_temporary_directory(args: CommonConfig, prefix: t.Optional[st
         path = os.path.join(tempfile.gettempdir(), f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}')
     else:
         path = tempfile.mkdtemp(prefix=prefix, suffix=suffix)
-        atexit.register(lambda: remove_tree(path))
+        ExitHandler.register(lambda: remove_tree(path))
 
     return path
 
@@ -296,7 +328,7 @@ def get_injector_path() -> str:
         """Remove the temporary injector directory."""
         remove_tree(injector_path)
 
-    atexit.register(cleanup_injector)
+    ExitHandler.register(cleanup_injector)
 
     return injector_path
 
@@ -354,7 +386,7 @@ def get_python_path(interpreter: str) -> str:
     verified_chmod(python_path, MODE_DIRECTORY)
 
     if not PYTHON_PATHS:
-        atexit.register(cleanup_python_paths)
+        ExitHandler.register(cleanup_python_paths)
 
     PYTHON_PATHS[interpreter] = python_path
 
@@ -364,7 +396,7 @@ def get_python_path(interpreter: str) -> str:
 def create_temp_dir(prefix: t.Optional[str] = None, suffix: t.Optional[str] = None, base_dir: t.Optional[str] = None) -> str:
     """Create a temporary directory that persists until the current process exits."""
     temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
-    atexit.register(remove_tree, temp_path)
+    ExitHandler.register(remove_tree, temp_path)
     return temp_path
 
 
