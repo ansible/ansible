@@ -334,23 +334,3 @@ def test_parse_semver_invalid_vstring_type(vstring):
     with pytest.raises(AnsibleFilterError) as e:
         parse_semver(vstring)
     assert 'Invalid type' in to_native(e.value)
-
-
-SEMVER_INVALID_KEYS = (
-    ['stuff'],
-    ['another'],
-    ['keys']
-)
-
-
-@pytest.mark.parametrize(
-    'vstring, keys', (
-        (vstring, keys)
-        for vstring in SEMVER_VALID_VSTRINGS
-        for keys in SEMVER_INVALID_KEYS
-    )
-)
-def test_parse_semver_valid_vstring_invalid_key(vstring, keys):
-    with pytest.raises(AnsibleFilterError) as e:
-        parse_semver(vstring, keys=keys)
-    assert 'Invalid key' in to_native(e.value)

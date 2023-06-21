@@ -377,25 +377,17 @@ def parse_semver(
         keys=None
 ):
     ''' Parse a semantic version as a string.
-        Returns the value for each requested key.
-        If no keys are requested, returns all keys that are valid '''
+        Returns the version parts as dictionary'''
 
     if not isinstance(vstring, string_types):
         raise AnsibleFilterError("Invalid type for '%s' for 'vstring'." % (to_native(vstring)))
-
-    if keys is None:
-        keys = SEMVER_VALID_KEYS
-
-    extra_keys = set(keys) - set(SEMVER_VALID_KEYS)
-    if len(extra_keys) > 0:
-        raise AnsibleFilterError("Invalid key(s) '%s' for 'keys'. Valid keys are: %s " % (to_native(extra_keys), to_native(SEMVER_VALID_KEYS)))
 
     try:
         semver = SemanticVersion(vstring=vstring)
     except (ValueError) as e:
         raise AnsibleFilterError("Invalid value '%s' for 'vstring': %s" % (to_native(vstring), to_native(e)))
 
-    return dict((k, getattr(semver, k)) for k in keys)
+    return dict((k, getattr(semver, k)) for k in SEMVER_VALID_KEYS)
 
 
 def comment(text, style='plain', **kw):

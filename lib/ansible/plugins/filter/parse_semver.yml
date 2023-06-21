@@ -5,23 +5,15 @@ DOCUMENTATION:
   short_description: Parse semantic versions
   description:
     - Parse a semantic version as a string.
-  positional: _input, keys
+  positional: _input
   options:
     _input:
       description: semantic version string.
       type: str
       required: true
-    keys:
-      description: Parts of the semantic version to be returned
-      type: list
-      elements: str
 
 
 EXAMPLES: |
-
-  # To get a dictionary of the semantic versions parts from a version_string
-  {{ '2.0.0-rc.1+build.123' | parse_semver(keys=['major']) }}
-  # => '2'
 
   # To get only the `major` version from the version_string::
   {{ '1.25.8' | parse_semver }}
@@ -36,5 +28,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Dictionary containing the requested parts of the semantic version.
+    description: Dictionary containing the semantic version parts.
     type: dict
