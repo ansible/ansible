@@ -1,5 +1,6 @@
 DOCUMENTATION:
   name: parse_semver
+  author: Jens Heinrich (@JensHeinrich)
   version_added: "2.15"
   short_description: Parse semantic versions
   description:
