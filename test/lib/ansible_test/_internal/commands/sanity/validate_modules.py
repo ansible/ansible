@@ -1,7 +1,6 @@
 """Sanity test using validate-modules."""
 from __future__ import annotations
 
-import atexit
 import collections
 import contextlib
 import json
@@ -37,6 +36,7 @@ from ...util import (
 )
 
 from ...util_common import (
+    ExitHandler,
     process_scoped_temporary_directory,
     run_command,
     ResultType,
@@ -237,7 +237,7 @@ class ValidateModulesTest(SanitySingleVersion):
             files = payload_config.files
             files.append((path, os.path.relpath(path, data_context().content.root)))
 
-        atexit.register(cleanup)
+        ExitHandler.register(cleanup)
         data_context().register_payload_callback(git_callback)
 
         make_dirs(os.path.dirname(path))
