@@ -374,7 +374,6 @@ SEMVER_VALID_KEYS = frozenset(['major', 'minor', 'patch', 'prerelease', 'buildme
 
 def parse_semver(
         vstring,
-        keys=None
 ):
     ''' Parse a semantic version as a string.
         Returns the version parts as dictionary'''
