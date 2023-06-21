@@ -1,7 +1,6 @@
 """Utility code for facilitating collection of code coverage when running tests."""
 from __future__ import annotations
 
-import atexit
 import dataclasses
 import os
 import sqlite3
@@ -34,6 +33,7 @@ from .data import (
 )
 
 from .util_common import (
+    ExitHandler,
     intercept_python,
     ResultType,
 )
@@ -223,7 +223,7 @@ def get_coverage_config(args: TestConfig) -> str:
         temp_dir = '/tmp/coverage-temp-dir'
     else:
         temp_dir = tempfile.mkdtemp()
-        atexit.register(lambda: remove_tree(temp_dir))
+        ExitHandler.register(lambda: remove_tree(temp_dir))
 
     path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
 

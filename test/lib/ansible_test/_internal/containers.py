@@ -1,7 +1,6 @@
 """High level functions for working with containers."""
 from __future__ import annotations
 
-import atexit
 import collections.abc as c
 import contextlib
 import json
@@ -19,6 +18,7 @@ from .util import (
 )
 
 from .util_common import (
+    ExitHandler,
     named_temporary_file,
 )
 
@@ -184,7 +184,7 @@ def run_support_container(
             raise Exception(f'Container already defined: {name}')
 
         if not support_containers:
-            atexit.register(cleanup_containers, args)
+            ExitHandler.register(cleanup_containers, args)
 
         support_containers[name] = descriptor
 
