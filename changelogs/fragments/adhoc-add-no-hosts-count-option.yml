@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible adhoc - add ``--no-hosts-count`` (``-n``) option to disable hosts count with ``--list``

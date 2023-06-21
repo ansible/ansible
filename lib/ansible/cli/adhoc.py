@@ -58,6 +58,9 @@ class AdHocCLI(CLI):
         self.parser.add_argument('-m', '--module-name', dest='module_name',
                                  help="Name of the action to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
+        self.parser.add_argument('-n', '--no-hosts-count', dest='hosts_count',
+                                 action='store_false',
+                                 help="Don't print number of hosts with --list")
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
     def post_process_args(self, options):
@@ -128,7 +131,8 @@ class AdHocCLI(CLI):
 
         # just listing hosts?
         if context.CLIARGS['listhosts']:
-            display.display('  hosts (%d):' % len(hosts))
+            if context.CLIARGS['hosts_count']:
+                display.display('  hosts (%d):' % len(hosts))
             for host in hosts:
                 display.display('    %s' % host)
             return 0
