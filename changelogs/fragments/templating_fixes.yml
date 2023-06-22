@@ -1,0 +1,2 @@
+bugfixes:
+  - templating escape and single var optimization now use correct delimiters when custom ones are provided either via task or template header.
