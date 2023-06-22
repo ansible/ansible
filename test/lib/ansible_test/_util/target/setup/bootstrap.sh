@@ -337,16 +337,6 @@ bootstrap_remote_rhel_9()
             ${py_pkg_prefix}-cryptography
             ${py_pkg_prefix}-pyyaml
             "
-
-        # The following OS packages are missing for 3.11 (and possibly later) so we just
-        # skip them and let ansible-test install them from PyPI.
-        if [ "${python_version}" = "3.9" ]; then
-            packages="
-                ${packages}
-                ${py_pkg_prefix}-packaging
-                ${py_pkg_prefix}-resolvelib
-            "
-        fi
     fi
 
     while true; do
@@ -425,14 +415,6 @@ bootstrap_remote_ubuntu()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
-
-    if [ "${controller}" ]; then
-        if [ "${platform_version}/${python_version}" = "20.04/3.9" ]; then
-            # Install pyyaml using pip so libyaml support is available on Python 3.9.
-            # The OS package install (which is installed by default) only has a .so file for Python 3.8.
-            pip_install "--upgrade pyyaml"
-        fi
-    fi
 }
 
 bootstrap_docker()
