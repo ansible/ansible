@@ -130,7 +130,7 @@ def _escape_backslashes(data, jinja_env):
     backslashes inside of a jinja2 expression.
 
     """
-    if '\\' in data and '{{' in data:
+    if '\\' in data and jinja_env.variable_start_string in data:
         new_data = []
         d2 = jinja_env.preprocess(data)
         in_var = False
@@ -601,10 +601,13 @@ class Templar:
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
-        # FIXME this regex should be re-compiled each time variable_start_string and variable_end_string are changed
-        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
+        # this regex is re-compiled each time variable_start_string and variable_end_string are possibly changed
+        self._compile_single_var(self.environment)
 
         self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
+
+    def _compile_single_var(self, env):
+        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (env.variable_start_string, env.variable_end_string))
 
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
         r"""Creates a new copy of Templar with a new environment.
@@ -753,6 +756,7 @@ class Templar:
                 disable_lookups=disable_lookups,
                 convert_data=convert_data,
             )
+            self._compile_single_var(self.environment)
 
             return result
 
@@ -945,8 +949,9 @@ class Templar:
         try:
             # NOTE Creating an overlay that lives only inside do_template means that overrides are not applied
             # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
-            # This is historic behavior that is kept for backwards compatibility.
             data, myenv = _create_overlay(data, overrides, self.environment)
+            # in case delimiters change
+            self._compile_single_var(myenv)
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
