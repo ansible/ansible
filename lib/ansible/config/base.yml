@@ -1336,6 +1336,15 @@ GALAXY_IGNORE_CERTS:
   ini:
   - {key: ignore_certs, section: galaxy}
   type: boolean
+GALAXY_SERVER_TIMEOUT:
+  name: Default timeout to use for API calls
+  description:
+    - The default timeout for Galaxy API calls. Galaxy servers that don't configure a specific timeout will fall back to this value.
+  env: [{name: ANSIBLE_GALAXY_SERVER_TIMEOUT}]
+  default: 60
+  ini:
+  - {key: server_timeout, section: galaxy}
+  type: int
 GALAXY_ROLE_SKELETON:
   name: Galaxy role skeleton directory
   description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``/``ansible-galaxy role``, same as ``--role-skeleton``.
