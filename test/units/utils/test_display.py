@@ -108,9 +108,21 @@ def test_Display_display_fork():
         display = Display()
         display.set_queue(queue)
         display.display('foo')
-        queue.send_display.assert_called_once_with(
-            'foo', color=None, stderr=False, screen_only=False, log_only=False, newline=True
-        )
+        queue.send_display.assert_called_once_with('display', 'foo')
+
+    p = multiprocessing_context.Process(target=test)
+    p.start()
+    p.join()
+    assert p.exitcode == 0
+
+
+def test_Display_display_warn_fork():
+    def test():
+        queue = MagicMock()
+        display = Display()
+        display.set_queue(queue)
+        display.warning('foo')
+        queue.send_display.assert_called_once_with('warning', 'foo')
 
     p = multiprocessing_context.Process(target=test)
     p.start()
