@@ -196,7 +196,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         if sp.returncode != 0:
             raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
-        
+
         if out.strip() == '':
             return {}
         try:
