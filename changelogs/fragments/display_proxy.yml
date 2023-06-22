@@ -1,0 +1,3 @@
+minor_changes:
+  - display methods for warning and deprecation are now proxied to main process when issued from a fork.
+    This allows for the deduplication of warnings and deprecations to work globally.
