@@ -187,7 +187,16 @@ class InventoryModule(BaseInventoryPlugin):
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as e:
             raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
-        (out, err) = sp.communicate()
+        (out, stderr) = sp.communicate()
+
+        err = to_native(stderr or "")
+
+        if err and not err.endswith('\n'):
+            err += '\n'
+
+        if sp.returncode != 0:
+            raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+        
         if out.strip() == '':
             return {}
         try:
