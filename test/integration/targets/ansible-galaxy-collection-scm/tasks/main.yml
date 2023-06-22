@@ -5,7 +5,7 @@
 
 - name: Test installing collections from git repositories
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: "{{ galaxy_dir }}/collections"
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/collections"
   vars:
     cleanup: True
     galaxy_dir: "{{ galaxy_dir }}"
