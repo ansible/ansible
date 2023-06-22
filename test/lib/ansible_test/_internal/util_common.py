@@ -88,7 +88,7 @@ class ExitHandler:
 
                 try:
                     func(*args, **kwargs)
-                except BaseException as ex:  # pylint: disable=broad-exception-caught
+                except BaseException as ex:  # pylint: disable=broad-except
                     last_exception = ex
                     display.fatal(f'Exit handler failed: {ex}')
 
