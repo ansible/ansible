@@ -1,0 +1,3 @@
+deprecated_features:
+- Deprecated the env var ``ANSIBLE_COLLECTIONS_PATHS``, use the singular form ``ANSIBLE_COLLECTIONS_PATH`` instead
+- Deprecated ini config option ``collections_paths``, use the singular form ``collections_path`` instead
