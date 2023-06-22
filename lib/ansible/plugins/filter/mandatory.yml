@@ -10,10 +10,17 @@ DOCUMENTATION:
       description: Mandatory expression.
       type: raw
       required: true
+    msg:
+      description: The customized message that is printed when the given variable is not defined.
+      type: str
+      required: false
 EXAMPLES: |
 
     # results in a Filter Error
     {{ notdefined | mandatory }}
+
+    # print a custom error message
+    {{ notdefined | mandatory(msg='This variable is required.') }}
 
 RETURN:
   _value:
