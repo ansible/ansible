@@ -58,10 +58,10 @@ DOCUMENTATION:
 
 EXAMPLES: |
   # dump variable in a template to create a JSON document
-  {{ docker_config|to_json }}
+  {{ docker_config | to_json }}
 
   # same as above but 'prettier' (equivalent to to_nice_json filter)
-  {{ docker_config|to_json(indent=4, sort_keys=True) }}
+  {{ docker_config | to_json(indent=4, sort_keys=True) }}
 
 RETURN:
   _value:

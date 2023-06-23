@@ -4,8 +4,8 @@ DOCUMENTATION:
   version_added: "1.8"
   short_description: Turn path into real path
   description:
-    - Resolves/follows symliknks to return the 'real path' from a given path.
-    - Filters alwasy run on controller so this path is resolved using the controller's filesystem.
+    - Resolves/follows symlinks to return the 'real path' from a given path.
+    - Filters always run on the controller so this path is resolved using the controller's filesystem.
   options:
     _input:
       description: A path.
@@ -13,6 +13,7 @@ DOCUMENTATION:
       required: true
 EXAMPLES: |
 
+  # realpath => /usr/bin/somebinary
   realpath: {{ '/path/to/synlink' | realpath }}
 
 RETURN:

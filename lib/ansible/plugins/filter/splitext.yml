@@ -21,7 +21,7 @@ EXAMPLES: |
   file_n_ext: "{{ 'ansible.cfg' | splitext }}"
 
   # hoax => ['/etc/hoasdf', '']
-  hoax: '{{ "/etc//hoasdf/"|splitext }}'
+  hoax: '{{ "/etc//hoasdf/" | splitext }}'
 
 RETURN:
   _value:

@@ -21,7 +21,7 @@ EXAMPLES: |
   lola: "{{ 'bG9sYQ==' | b64decode }}"
 
   # b64 decode the content of 'b64stuff' variable
-  stuff: "{{ b64stuff | b64encode }}"
+  stuff: "{{ b64stuff | b64decode }}"
 
 RETURN:
   _value:
