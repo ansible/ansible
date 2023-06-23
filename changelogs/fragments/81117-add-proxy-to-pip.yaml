@@ -1,0 +1,3 @@
+bugfixes:
+  - Allow pip in ansible-test to install modules via proxy (https://github.com/ansible/ansible/pull/81117).
+    The proxy is selected via the os environment vars - first existing var in the order of 'HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy' is used.
