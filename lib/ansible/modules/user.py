@@ -52,7 +52,7 @@ options:
         type: str
     groups:
         description:
-            - List of groups user will be added to.
+            - List of SECONDARY groups user will be added to.
             - By default, the user is removed from all other groups. Configure C(append) to modify this.
             - When set to an empty string C(''),
               the user is removed from all groups except the primary group.
