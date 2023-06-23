@@ -126,11 +126,11 @@ def mock_subprocess(mocker):
 
 
 @pytest.fixture()
-def rc_am(mocker, am, mock_os, mock_subprocess):
-    am.fail_json = mocker.MagicMock(side_effect=SystemExit)
-    am._os = mock_os
-    am._subprocess = mock_subprocess
-    yield am
+def rc_am(mocker, ansible_module, mock_os, mock_subprocess):
+    ansible_module.fail_json = mocker.MagicMock(side_effect=SystemExit)
+    ansible_module._os = mock_os
+    ansible_module._subprocess = mock_subprocess
+    yield ansible_module
 
 
 class TestRunCommandArgs:
@@ -142,10 +142,10 @@ class TestRunCommandArgs:
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
     # pylint: disable=undefined-variable
-    @pytest.mark.parametrize('cmd, expected, shell, stdin',
+    @pytest.mark.parametrize('cmd, expected, shell, ansible_module_args',
                              ((arg, cmd_str if sh else cmd_lst, sh, {})
                               for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
-                             indirect=['stdin'])
+                             indirect=['ansible_module_args'])
     def test_args(self, cmd, expected, shell, rc_am):
         rc_am.run_command(cmd, use_unsafe_shell=shell, prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.called
@@ -153,7 +153,7 @@ class TestRunCommandArgs:
         assert args == (expected, )
         assert kwargs['shell'] == shell
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_tuple_as_args(self, rc_am):
         with pytest.raises(SystemExit):
             rc_am.run_command(('ls', '/'))
@@ -161,22 +161,22 @@ class TestRunCommandArgs:
 
 
 class TestRunCommandCwd:
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_cwd(self, mocker, rc_am):
         rc_am.run_command('/bin/ls', cwd='/new', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/new'
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_cwd_relative_path(self, mocker, rc_am):
         rc_am.run_command('/bin/ls', cwd='sub-dir', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/home/foo/sub-dir'
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_cwd_not_a_dir(self, mocker, rc_am):
         rc_am.run_command('/bin/ls', cwd='/not-a-dir', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/not-a-dir'
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_cwd_not_a_dir_noignore(self, rc_am):
         rc_am._os.path.isdir.side_effect = lambda d: d != b'/not-a-dir'
         with pytest.raises(SystemExit):
@@ -185,19 +185,19 @@ class TestRunCommandCwd:
 
 
 class TestRunCommandPrompt:
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_prompt_bad_regex(self, rc_am):
         with pytest.raises(SystemExit):
             rc_am.run_command('foo', prompt_regex='[pP)assword:')
         assert rc_am.fail_json.called
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_prompt_no_match(self, mocker, rc_am):
         rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(b'hello')
         (rc, stdout, stderr) = rc_am.run_command('foo', prompt_regex='[pP]assword:')
         assert rc == 0
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_prompt_match_wo_data(self, mocker, rc_am):
         rc_am._subprocess._output = {mocker.sentinel.stdout:
                                      SpecialBytesIO(b'Authentication required!\nEnter password: ',
@@ -209,13 +209,13 @@ class TestRunCommandPrompt:
 
 
 class TestRunCommandRc:
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_check_rc_false(self, rc_am):
         rc_am._subprocess.Popen.return_value.returncode = 1
         (rc, stdout, stderr) = rc_am.run_command('/bin/false', check_rc=False, prompt_regex='i_dont_exist')
         assert rc == 1
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_check_rc_true(self, rc_am):
         rc_am._subprocess.Popen.return_value.returncode = 1
         with pytest.raises(SystemExit):
@@ -226,12 +226,12 @@ class TestRunCommandRc:
 
 
 class TestRunCommandOutput:
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_text_stdin(self, rc_am):
         (rc, stdout, stderr) = rc_am.run_command('/bin/foo', data='hello world', prompt_regex='i_dont_exist')
         assert rc_am._subprocess.Popen.return_value.stdin.getvalue() == b'hello world\n'
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_ascii_stdout(self, mocker, rc_am):
         rc_am._subprocess._output = {mocker.sentinel.stdout:
                                      SpecialBytesIO(b'hello', fh=mocker.sentinel.stdout),
@@ -243,7 +243,7 @@ class TestRunCommandOutput:
         # bytes because it's returning native strings
         assert stdout == 'hello'
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_utf8_output(self, mocker, rc_am):
         rc_am._subprocess._output = {mocker.sentinel.stdout:
                                      SpecialBytesIO(u'Žarn§'.encode('utf-8'),
@@ -259,7 +259,7 @@ class TestRunCommandOutput:
         assert stderr == to_native(u'لرئيسية')
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_run_command_fds(mocker, rc_am):
     subprocess_mock = mocker.patch('ansible.module_utils.basic.subprocess')
     subprocess_mock.Popen.side_effect = AssertionError

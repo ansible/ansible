@@ -13,32 +13,32 @@ import pytest
 from ansible.module_utils.common import warnings
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_warn(am, capfd):
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
+def test_warn(ansible_module, capfd):
 
-    am.warn('warning1')
+    ansible_module.warn('warning1')
 
     with pytest.raises(SystemExit):
-        am.exit_json(warnings=['warning2'])
+        ansible_module.exit_json(warnings=['warning2'])
     out, err = capfd.readouterr()
     assert json.loads(out)['warnings'] == ['warning1', 'warning2']
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate(am, capfd, monkeypatch):
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
+def test_deprecate(ansible_module, capfd, monkeypatch):
     monkeypatch.setattr(warnings, '_global_deprecations', [])
 
-    am.deprecate('deprecation1')
-    am.deprecate('deprecation2', '2.3')  # pylint: disable=ansible-deprecated-no-collection-name
-    am.deprecate('deprecation3', version='2.4')  # pylint: disable=ansible-deprecated-no-collection-name
-    am.deprecate('deprecation4', date='2020-03-10')  # pylint: disable=ansible-deprecated-no-collection-name
-    am.deprecate('deprecation5', collection_name='ansible.builtin')
-    am.deprecate('deprecation6', '2.3', collection_name='ansible.builtin')
-    am.deprecate('deprecation7', version='2.4', collection_name='ansible.builtin')
-    am.deprecate('deprecation8', date='2020-03-10', collection_name='ansible.builtin')
+    ansible_module.deprecate('deprecation1')
+    ansible_module.deprecate('deprecation2', '2.3')  # pylint: disable=ansible-deprecated-no-collection-name
+    ansible_module.deprecate('deprecation3', version='2.4')  # pylint: disable=ansible-deprecated-no-collection-name
+    ansible_module.deprecate('deprecation4', date='2020-03-10')  # pylint: disable=ansible-deprecated-no-collection-name
+    ansible_module.deprecate('deprecation5', collection_name='ansible.builtin')
+    ansible_module.deprecate('deprecation6', '2.3', collection_name='ansible.builtin')
+    ansible_module.deprecate('deprecation7', version='2.4', collection_name='ansible.builtin')
+    ansible_module.deprecate('deprecation8', date='2020-03-10', collection_name='ansible.builtin')
 
     with pytest.raises(SystemExit):
-        am.exit_json(deprecations=['deprecation9', ('deprecation10', '2.4')])
+        ansible_module.exit_json(deprecations=['deprecation9', ('deprecation10', '2.4')])
 
     out, err = capfd.readouterr()
     output = json.loads(out)
@@ -57,10 +57,10 @@ def test_deprecate(am, capfd, monkeypatch):
     ]
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate_without_list(am, capfd):
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
+def test_deprecate_without_list(ansible_module, capfd):
     with pytest.raises(SystemExit):
-        am.exit_json(deprecations='Simple deprecation warning')
+        ansible_module.exit_json(deprecations='Simple deprecation warning')
 
     out, err = capfd.readouterr()
     output = json.loads(out)
@@ -70,8 +70,8 @@ def test_deprecate_without_list(am, capfd):
     ]
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate_without_list_version_date_not_set(am, capfd):
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
+def test_deprecate_without_list(ansible_module, capfd):
     with pytest.raises(AssertionError) as ctx:
-        am.deprecate('Simple deprecation warning', date='', version='')
+        ansible_module.deprecate('Simple deprecation warning', date='', version='')
     assert ctx.value.args[0] == "implementation error -- version and date must not both be set"

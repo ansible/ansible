@@ -96,11 +96,18 @@ class TestAnsibleModuleTmpDir:
             assert makedirs['path'] == expected
             assert makedirs['mode'] == 0o700
 
-    @pytest.mark.parametrize('stdin', ({"_ansible_tmpdir": None,
-                                        "_ansible_remote_tmp": "$HOME/.test",
-                                        "_ansible_keep_remote_files": True},),
-                             indirect=['stdin'])
-    def test_tmpdir_makedirs_failure(self, am, monkeypatch):
+    @pytest.mark.parametrize(
+        'ansible_module_args',
+        (
+            {
+                '_ansible_tmpdir': None,
+                '_ansible_remote_tmp': '$HOME/.test',
+                '_ansible_keep_remote_files': True,
+            },
+        ),
+        indirect=['ansible_module_args'],
+    )
+    def test_tmpdir_makedirs_failure(self, ansible_module, monkeypatch):
 
         mock_mkdtemp = MagicMock(return_value="/tmp/path")
         mock_makedirs = MagicMock(side_effect=OSError("Some OS Error here"))
@@ -109,7 +116,7 @@ class TestAnsibleModuleTmpDir:
         monkeypatch.setattr(os.path, 'exists', lambda x: False)
         monkeypatch.setattr(os, 'makedirs', mock_makedirs)
 
-        actual = am.tmpdir
+        actual = ansible_module.tmpdir
         assert actual == "/tmp/path"
         assert mock_makedirs.call_args[0] == (os.path.expanduser(os.path.expandvars("$HOME/.test")),)
         assert mock_makedirs.call_args[1] == {"mode": 0o700}

@@ -544,6 +544,72 @@ creation of module objects for testing.
 
 The same restructuring technique can be valuable for testing other functionality, such as the part of the module which queries the object that the module configures.
 
+What About The Pytest Fixtures?
+===============================
+
+.. versionadded:: 2.15
+
+
+We now have some pytest-native fixture-based helpers that simplify
+calling modules from unit tests using an interface close to the one
+available in playbooks.
+
+
+.. code-block:: python
+   :caption: test_new_mod.py
+
+   import pytest
+
+
+   @pytest.fixture
+   def ansible_global_module_name():
+       return 'my_module'
+
+
+   def test_new_mod_caller(make_ansible_module_caller):
+       run_my_module = make_ansible_module_caller('my_module')
+
+       my_module_args = {'arg1': 'val1', 'arg2': 2, 'arg3': [1, 2, 3]}
+       expected_result = {}
+
+       assert run_my_module(**my_module_args) == expected_result
+
+
+   def test_new_mod_yaml(make_ansible_module_caller):
+       run_my_module = make_ansible_module_caller('my_module')
+
+       assert run_my_module.with_yaml("""
+           arg1: val1
+           arg2: val2
+       """) == {}
+
+
+   def test_new_mod_global(run_ansible_module):
+       my_module_args = {'arg1': 'val1', 'arg2': 2, 'arg3': [1, 2, 3]}
+       expected_result = {}
+
+       assert run_ansible_module(**my_module_args) == expected_result
+
+
+   def test_new_mod_error(run_ansible_module):
+       my_module_args = {'arg1': 'val1'}
+
+       failed_response = run_module(**my_module_args)
+
+       assert failed_response['failed']
+
+
+   @pytest.mark.parametrize(
+       'ansible_module_name',
+       ('my_module2', ),
+       indirect=('ansible_module_name', ),
+   )
+   def test_new_mod2(run_ansible_module):
+       my_module_args = {'arg1': 'val1', 'arg2': 2, 'arg3': [1, 2, 3]}
+       expected_result = {}
+
+       assert run_ansible_module(**my_module_args) == expected_result
+
 Traps for maintaining Python 2 compatibility
 ============================================
 

@@ -24,8 +24,8 @@ for datafile in glob.glob(os.path.join(os.path.dirname(__file__), 'fixtures/*.js
         TESTSETS.append(json.loads(f.read()))
 
 
-@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x.get('name'), indirect=['stdin'])
-def test_distribution_version(am, mocker, testcase):
+@pytest.mark.parametrize("ansible_module_args, testcase", product([{}], TESTSETS), ids=lambda x: x.get('name'), indirect=['ansible_module_args'])
+def test_distribution_version(ansible_module, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 
     testsets have
@@ -146,7 +146,7 @@ def test_distribution_version(am, mocker, testcase):
 
     # run Facts()
     distro_collector = DistributionFactCollector()
-    generated_facts = distro_collector.collect(am)
+    generated_facts = distro_collector.collect(ansible_module)
 
     # compare with the expected output
 

@@ -35,34 +35,34 @@ INVALID_STRINGS = (
 )
 
 
-@pytest.mark.parametrize('code, expected, stdin',
+@pytest.mark.parametrize('code, expected, ansible_module_args',
                          ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
-                         indirect=['stdin'])
-def test_simple_types(am, code, expected):
+                         indirect=['ansible_module_args'])
+def test_simple_types(ansible_module, code, expected):
     # test some basic usage for various types
-    assert am.safe_eval(code) == expected
+    assert ansible_module.safe_eval(code) == expected
 
 
-@pytest.mark.parametrize('code, expected, stdin',
+@pytest.mark.parametrize('code, expected, ansible_module_args',
                          ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
-                         indirect=['stdin'])
-def test_simple_types_with_exceptions(am, code, expected):
+                         indirect=['ansible_module_args'])
+def test_simple_types_with_exceptions(ansible_module, code, expected):
     # Test simple types with exceptions requested
-    assert am.safe_eval(code, include_exceptions=True), (expected, None)
+    assert ansible_module.safe_eval(code, include_exceptions=True), (expected, None)
 
 
-@pytest.mark.parametrize('code, expected, stdin',
+@pytest.mark.parametrize('code, expected, ansible_module_args',
                          ((c, e, {}) for c, e, dummy in INVALID_STRINGS),
-                         indirect=['stdin'])
-def test_invalid_strings(am, code, expected):
-    assert am.safe_eval(code) == expected
+                         indirect=['ansible_module_args'])
+def test_invalid_strings(ansible_module, code, expected):
+    assert ansible_module.safe_eval(code) == expected
 
 
-@pytest.mark.parametrize('code, expected, exception, stdin',
+@pytest.mark.parametrize('code, expected, exception, ansible_module_args',
                          ((c, e, ex, {}) for c, e, ex in INVALID_STRINGS),
-                         indirect=['stdin'])
-def test_invalid_strings_with_exceptions(am, code, expected, exception):
-    res = am.safe_eval(code, include_exceptions=True)
+                         indirect=['ansible_module_args'])
+def test_invalid_strings_with_exceptions(ansible_module, code, expected, exception):
+    res = ansible_module.safe_eval(code, include_exceptions=True)
     assert res[0] == expected
     if exception is None:
         assert res[1] == exception
