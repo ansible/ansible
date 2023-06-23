@@ -21,7 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import binascii
 import io
 import os
 import tempfile
@@ -606,9 +605,6 @@ class TestVaultLib(unittest.TestCase):
                               ('test_id', text_secret)]
         self.v = vault.VaultLib(self.vault_secrets)
 
-    def _vault_secrets(self, vault_id, secret):
-        return [(vault_id, secret)]
-
     def _vault_secrets_from_password(self, vault_id, password):
         return [(vault_id, TextVaultSecret(password))]
 
@@ -778,43 +774,6 @@ class TestVaultLib(unittest.TestCase):
         b_vaulttext = to_bytes(vaulttext, encoding='ascii', errors='strict')
         b_plaintext = self.v.decrypt(b_vaulttext)
         self.assertEqual(b_plaintext, b_orig_plaintext, msg="decryption failed")
-
-    # FIXME This test isn't working quite yet.
-    @pytest.mark.skip(reason='This test is not ready yet')
-    def test_encrypt_decrypt_aes256_bad_hmac(self):
-
-        self.v.cipher_name = 'AES256'
-        # plaintext = "Setec Astronomy"
-        enc_data = '''$ANSIBLE_VAULT;1.1;AES256
-33363965326261303234626463623963633531343539616138316433353830356566396130353436
-3562643163366231316662386565383735653432386435610a306664636137376132643732393835
-63383038383730306639353234326630666539346233376330303938323639306661313032396437
-6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
-        b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
-        b_data = self.v._split_header(b_data)
-        unhex_data = binascii.unhexlify(b_data)
-        lines = unhex_data.splitlines()
-        # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
-        b_salt = lines[0]
-        b_hmac = lines[1]
-        b_ciphertext_data = b'\n'.join(lines[2:])
-
-        b_ciphertext = binascii.unhexlify(b_ciphertext_data)
-        # b_orig_ciphertext = b_ciphertext[:]
-
-        # now muck with the text
-        # b_munged_ciphertext = b_ciphertext[:10] + b'\x00' + b_ciphertext[11:]
-        # b_munged_ciphertext = b_ciphertext
-        # assert b_orig_ciphertext != b_munged_ciphertext
-
-        b_ciphertext_data = binascii.hexlify(b_ciphertext)
-        b_payload = b'\n'.join([b_salt, b_hmac, b_ciphertext_data])
-        # reformat
-        b_invalid_ciphertext = self.v._format_output(b_payload)
-
-        # assert we throw an error
-        self.v.decrypt(b_invalid_ciphertext)
 
     def test_decrypt_and_get_vault_id(self):
         b_expected_plaintext = to_bytes('foo bar\n')
