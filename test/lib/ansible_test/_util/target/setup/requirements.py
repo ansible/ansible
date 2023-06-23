@@ -130,7 +130,7 @@ def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     tempdir = tempfile.mkdtemp(prefix='ansible-test-', suffix='-requirements')
 
     try:
-        options = common_pip_options()
+        options = common_pip_options(True)
         options.extend(packages)
 
         for path, content in requirements:
@@ -190,11 +190,19 @@ def common_pip_environment():  # type: () -> t.Dict[str, str]
     return env
 
 
-def common_pip_options():  # type: () -> t.List[str]
+def common_pip_options(isInstall=False):  # type: () -> t.List[str]
     """Return a list of common pip options."""
-    return [
+    opt = [
         '--disable-pip-version-check',
     ]
+    if not isInstall:
+        return opt
+    for var in ['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy']:
+        if var in os.environ and os.environ[var] is not None:
+            opt.append('--proxy')
+            opt.append(os.environ[var])
+            break
+    return opt
 
 
 def devnull():  # type: () -> t.IO[bytes]

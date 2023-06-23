@@ -659,6 +659,12 @@ def common_environment() -> dict[str, str]:
         # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
         'LDFLAGS',
         'CFLAGS',
+        'http_proxy',
+        'https_proxy',
+        'HTTP_PROXY',
+        'HTTPS_PROXY',
+        'no_proxy',
+        'NO_PROXY',
     )
 
     # FreeBSD Compatibility
