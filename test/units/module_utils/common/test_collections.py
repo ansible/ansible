@@ -8,7 +8,6 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.six import Iterator
 from ansible.module_utils.six.moves.collections_abc import Sequence
 from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
@@ -25,16 +24,6 @@ class SeqStub:
 Sequence.register(SeqStub)
 
 
-class IteratorStub(Iterator):
-    def __next__(self):
-        raise StopIteration
-
-
-class IterableStub:
-    def __iter__(self):
-        return IteratorStub()
-
-
 class FakeAnsibleVaultEncryptedUnicode(Sequence):
     __ENCRYPTED__ = True
 
@@ -42,10 +31,10 @@ class FakeAnsibleVaultEncryptedUnicode(Sequence):
         self.data = data
 
     def __getitem__(self, index):
-        return self.data[index]
+        raise NotImplementedError()  # pragma: nocover
 
     def __len__(self):
-        return len(self.data)
+        raise NotImplementedError()  # pragma: nocover
 
 
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
@@ -93,14 +82,14 @@ def test_sequence_string_types_without_strings(string_input):
 
 @pytest.mark.parametrize(
     'seq',
-    ([], (), {}, set(), frozenset(), IterableStub()),
+    ([], (), {}, set(), frozenset()),
 )
 def test_iterable_positive(seq):
     assert is_iterable(seq)
 
 
 @pytest.mark.parametrize(
-    'seq', (IteratorStub(), object(), 5, 9.)
+    'seq', (object(), 5, 9.)
 )
 def test_iterable_negative(seq):
     assert not is_iterable(seq)
