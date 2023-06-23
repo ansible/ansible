@@ -190,12 +190,12 @@ def common_pip_environment():  # type: () -> t.Dict[str, str]
     return env
 
 
-def common_pip_options(isInstall=False):  # type: () -> t.List[str]
+def common_pip_options(is_install=False):  # type: () -> t.List[str]
     """Return a list of common pip options."""
     opt = [
         '--disable-pip-version-check',
     ]
-    if not isInstall:
+    if not is_install:
         return opt
     for var in ['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy']:
         if var in os.environ and os.environ[var] is not None:
