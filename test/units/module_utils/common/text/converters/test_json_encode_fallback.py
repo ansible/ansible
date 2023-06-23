@@ -20,12 +20,6 @@ class timezone(tzinfo):
     def utcoffset(self, dt):
         return self._offset
 
-    def dst(self, dt):
-        return timedelta(0)
-
-    def tzname(self, dt):
-        return None
-
 
 @pytest.mark.parametrize(
     'test_input,expected',

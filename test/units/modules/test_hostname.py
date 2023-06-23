@@ -43,12 +43,9 @@ class TestHostname(ModuleTestCase):
             classname = "%sStrategy" % prefix
             cls = getattr(hostname, classname, None)
 
-            if cls is None:
-                self.assertFalse(
-                    cls is None, "%s is None, should be a subclass" % classname
-                )
-            else:
-                self.assertTrue(issubclass(cls, hostname.BaseStrategy))
+            assert cls is not None
+
+            self.assertTrue(issubclass(cls, hostname.BaseStrategy))
 
 
 class TestRedhatStrategy(ModuleTestCase):

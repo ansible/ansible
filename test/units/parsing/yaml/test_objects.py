@@ -105,11 +105,6 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         id_secret = vault.match_encrypt_secret(self.good_vault_secrets)
         return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault, secret=id_secret[1])
 
-    def _from_ciphertext(self, ciphertext):
-        avu = objects.AnsibleVaultEncryptedUnicode(ciphertext)
-        avu.vault = self.vault
-        return avu
-
     def test_empty_init(self):
         self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)
 

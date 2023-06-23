@@ -12,11 +12,6 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.validation import check_missing_parameters
 
 
-@pytest.fixture
-def arguments_terms():
-    return {"path": ""}
-
-
 def test_check_missing_parameters():
     assert check_missing_parameters([], {}) == []
 
