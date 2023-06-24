@@ -48,7 +48,6 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/create_deprecated_issues.py',
         'hacking/deprecated_issue_template.md',
         'hacking/create-bulk-issues.py',
-        'hacking/get_library.py',
         'hacking/metadata-tool.py',
         'hacking/report.py',
         'hacking/return_skeleton_generator.py',
