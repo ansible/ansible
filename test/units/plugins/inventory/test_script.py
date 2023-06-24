@@ -110,4 +110,4 @@ class TestInventoryModule(unittest.TestCase):
 
         with pytest.raises(AnsibleError) as e:
             self.inventory_module.get_host_variables('/foo/bar/foobar.py', 'dummy host')
-        assert e.value.message == "Failed to parse (/foo/bar/foobar.py) script plugin: dummy error"
+        assert e.value.message == "Inventory script (/foo/bar/foobar.py) had an execution error: dummy error"
