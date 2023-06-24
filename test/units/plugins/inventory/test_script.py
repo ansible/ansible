@@ -109,5 +109,5 @@ class TestInventoryModule(unittest.TestCase):
         self.popen_result.stderr = to_bytes("dummy error")
 
         with pytest.raises(AnsibleError) as e:
-            self.inventory_module.get_host_variables(self.inventory, '/foo/bar/foobar.py', 'dummy host')
+            self.inventory_module.get_host_variables('/foo/bar/foobar.py', 'dummy host')
         assert e.value.message == "Failed to parse (/foo/bar/foobar.py) script plugin: dummy error"
