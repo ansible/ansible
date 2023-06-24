@@ -31,6 +31,10 @@ from .config import (
     CommonConfig,
 )
 
+from .constants import (
+    PROXY_ENVIRONMENT_VARS
+)
+
 from .thread import (
     mutex,
     named_lock,
@@ -974,6 +978,11 @@ def docker_exec(
 
     if data or stdin or stdout:
         options.append('-i')
+
+    env = docker_environment()
+    for var in PROXY_ENVIRONMENT_VARS:
+        if var in env and env[var] is not None:
+            options.extend(['--env', '{0}={1}'.format(var, env[var])])
 
     return docker_command(
         args,

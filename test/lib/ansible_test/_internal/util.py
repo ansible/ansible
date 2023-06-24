@@ -59,6 +59,7 @@ from .thread import (
 
 from .constants import (
     SUPPORTED_PYTHON_VERSIONS,
+    PROXY_ENVIRONMENT_VARS
 )
 
 C = t.TypeVar('C')
@@ -659,13 +660,7 @@ def common_environment() -> dict[str, str]:
         # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
         'LDFLAGS',
         'CFLAGS',
-        'http_proxy',
-        'https_proxy',
-        'HTTP_PROXY',
-        'HTTPS_PROXY',
-        'no_proxy',
-        'NO_PROXY',
-    )
+    ) + PROXY_ENVIRONMENT_VARS
 
     # FreeBSD Compatibility
     # This is required to include libyaml support in PyYAML.
