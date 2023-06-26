@@ -96,7 +96,6 @@ def test_reboot_command(action_plugin, mocker, monkeypatch):
         _patched_low_level_execute_command,
     )
 
-    action_plugin._low_level_execute_command = _patched_low_level_execute_command
     action_plugin._connection = mocker.Mock()
 
     monkeypatch.setattr(action_plugin, 'check_boot_time', lambda *_a, **_kw: 5)
