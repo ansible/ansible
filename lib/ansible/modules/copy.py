@@ -79,9 +79,11 @@ options:
       See CVE-2020-1736 for further details.
   directory_mode:
     description:
-    - When doing a recursive copy set the mode for the directories.
-    - If this is not set we will use the system defaults.
-    - The mode is only set on directories which are newly created, and will not affect those that already existed.
+    - Set the access permissions of recursively copied directories to the given mode.
+      See C(mode) for the syntax of accepted values.
+    - Only newly created directories have their mode set.
+      Permissions on existing directories are not changed.
+    - The system defaults are used when this parameter is not set.
     type: raw
     version_added: '1.5'
   remote_src:
