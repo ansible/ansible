@@ -103,3 +103,11 @@ class TestInventoryModule(unittest.TestCase):
             self.inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
         assert e.value.message == to_native("failed to parse executable inventory script results from "
                                             "/foo/bar/foobar.py: needs to be a json dict\ndummyédata\n")
+
+    def test_get_host_variables_subprocess_script_raises_error(self):
+        self.popen_result.returncode = 1
+        self.popen_result.stderr = to_bytes("dummyéerror")
+
+        with pytest.raises(AnsibleError) as e:
+            self.inventory_module.get_host_variables('/foo/bar/foobar.py', 'dummy host')
+        assert e.value.message == "Inventory script (/foo/bar/foobar.py) had an execution error: dummyéerror"
