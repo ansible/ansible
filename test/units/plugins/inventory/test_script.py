@@ -106,8 +106,8 @@ class TestInventoryModule(unittest.TestCase):
 
     def test_get_host_variables_subprocess_script_raises_error(self):
         self.popen_result.returncode = 1
-        self.popen_result.stderr = to_bytes("dummy error")
+        self.popen_result.stderr = to_bytes("dummyéerror")
 
         with pytest.raises(AnsibleError) as e:
             self.inventory_module.get_host_variables('/foo/bar/foobar.py', 'dummy host')
-        assert e.value.message == to_native("Inventory script (/foo/bar/foobar.py) had an execution error: dummy error\n")
+        assert e.value.message == "Inventory script (/foo/bar/foobar.py) had an execution error: dummyéerror"

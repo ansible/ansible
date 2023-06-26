@@ -189,13 +189,8 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, stderr) = sp.communicate()
 
-        err = to_native(stderr or "")
-
-        if err and not err.endswith('\n'):
-            err += '\n'
-
         if sp.returncode != 0:
-            raise AnsibleError("Inventory script (%s) had an execution error: %s" % (path, err))
+            raise AnsibleError("Inventory script (%s) had an execution error: %s" % (path, to_native(stderr)))
 
         if out.strip() == '':
             return {}
