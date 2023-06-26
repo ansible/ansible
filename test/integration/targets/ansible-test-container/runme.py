@@ -1050,7 +1050,9 @@ class ApkBootstrapper(Bootstrapper):
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
-        packages = ['docker', 'podman', 'openssl']
+        # crun added as podman won't install it as dep if runc is present
+        # but we don't want runc as it fails
+        packages = ['docker', 'podman', 'openssl', 'crun']
 
         run_command('apk', 'add', *packages)
         run_command('service', 'docker', 'start')
