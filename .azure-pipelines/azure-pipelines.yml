@@ -118,6 +118,8 @@ stages:
           targets:
             - name: Alpine 3.17
               test: alpine/3.17
+            - name: Alpine 3.18
+              test: alpine/3.18
             - name: Fedora 37
               test: fedora/37
             - name: Fedora 38
