@@ -1,0 +1,2 @@
+minor_changes:
+  - Add a general ``GALAXY_SERVER_TIMEOUT`` config option for distribution servers (https://github.com/ansible/ansible/issues/79833).

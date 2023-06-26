@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import ansible.constants as C
 from ansible import context
+from ansible.cli import galaxy
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
@@ -381,6 +382,55 @@ def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, expect
     assert galaxy_cli.api_servers[0].validate_certs is False
     assert galaxy_cli.api_servers[1].validate_certs is expected_server2_validate_certs
     assert galaxy_cli.api_servers[2].validate_certs is expected_server3_validate_certs
+
+
+@pytest.mark.parametrize(
+    ["timeout_cli", "timeout_cfg", "timeout_fallback", "expected_timeout"],
+    [
+        (None, None, None, 60),
+        (None, None, 10, 10),
+        (None, 20, 10, 20),
+        (30, 20, 10, 30),
+    ]
+)
+def test_timeout_server_config(timeout_cli, timeout_cfg, timeout_fallback, expected_timeout, monkeypatch):
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+    ]
+    if timeout_cli is not None:
+        cli_args.extend(["--timeout", f"{timeout_cli}"])
+
+    cfg_lines = ["[galaxy]", "server_list=server1"]
+    if timeout_fallback is not None:
+        cfg_lines.append(f"server_timeout={timeout_fallback}")
+
+        # fix default in server config since C.GALAXY_SERVER_TIMEOUT was already evaluated
+        server_additional = galaxy.SERVER_ADDITIONAL.copy()
+        server_additional['timeout']['default'] = timeout_fallback
+        monkeypatch.setattr(galaxy, 'SERVER_ADDITIONAL', server_additional)
+
+    cfg_lines.extend(["[galaxy_server.server1]", "url=https://galaxy.ansible.com/api/"])
+    if timeout_cfg is not None:
+        cfg_lines.append(f"timeout={timeout_cfg}")
+
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1'])
+
+    with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
+        tmp_file.write(to_bytes('\n'.join(cfg_lines), errors='surrogate_or_strict'))
+        tmp_file.flush()
+
+        monkeypatch.setattr(C.config, '_config_file', tmp_file.name)
+        C.config._parse_config_file()
+
+        galaxy_cli = GalaxyCLI(args=cli_args)
+        mock_execute_install = MagicMock()
+        monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+        galaxy_cli.run()
+
+    assert galaxy_cli.api_servers[0].timeout == expected_timeout
 
 
 def test_build_collection_no_galaxy_yaml():
