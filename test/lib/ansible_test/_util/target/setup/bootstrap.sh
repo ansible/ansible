@@ -163,8 +163,6 @@ bootstrap_remote_freebsd()
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
         case "${platform_version}/${python_version}" in
-            "12.4/3.9")
-                ;;
             *)
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
@@ -331,6 +329,8 @@ bootstrap_remote_rhel_9()
 
     # Jinja2 is not installed with an OS package since the provided version is too old.
     # Instead, ansible-test will install it using pip.
+    # packaging and resolvelib are missing for Python 3.11 (and possible later) so we just
+    # skip them and let ansible-test install them from PyPI.
     if [ "${controller}" ]; then
         packages="
             ${packages}
