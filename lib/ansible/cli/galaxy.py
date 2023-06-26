@@ -82,7 +82,7 @@ SERVER_DEF = [
 SERVER_ADDITIONAL = {
     'api_version': {'default': None, 'choices': [2, 3]},
     'validate_certs': {'cli': [{'name': 'validate_certs'}]},
-    'timeout': {'default': '60', 'cli': [{'name': 'timeout'}]},
+    'timeout': {'default': C.GALAXY_SERVER_TIMEOUT, 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
 }
 
@@ -246,7 +246,11 @@ class GalaxyCLI(CLI):
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
-        common.add_argument('--timeout', dest='timeout', type=int, default=60,
+
+        # --timeout uses the default None to handle two different scenarios.
+        # * --timeout > C.GALAXY_SERVER_TIMEOUT for non-configured servers
+        # * --timeout > server-specific timeout > C.GALAXY_SERVER_TIMEOUT for configured servers.
+        common.add_argument('--timeout', dest='timeout', type=int,
                             help="The time to wait for operations against the galaxy server, defaults to 60s.")
 
         opt_help.add_verbosity_options(common)
@@ -621,7 +625,7 @@ class GalaxyCLI(CLI):
             return config_def
 
         galaxy_options = {}
-        for optional_key in ['clear_response_cache', 'no_cache', 'timeout']:
+        for optional_key in ['clear_response_cache', 'no_cache']:
             if optional_key in context.CLIARGS:
                 galaxy_options[optional_key] = context.CLIARGS[optional_key]
 
@@ -697,6 +701,7 @@ class GalaxyCLI(CLI):
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
         validate_certs = context.CLIARGS['resolved_validate_certs']
+        default_server_timeout = context.CLIARGS['timeout'] if context.CLIARGS['timeout'] is not None else C.GALAXY_SERVER_TIMEOUT
         if cmd_server:
             # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
             # entry, otherwise create a new API entry for the server specified.
@@ -708,6 +713,7 @@ class GalaxyCLI(CLI):
                     self.galaxy, 'cmd_arg', cmd_server, token=cmd_token,
                     priority=len(config_servers) + 1,
                     validate_certs=validate_certs,
+                    timeout=default_server_timeout,
                     **galaxy_options
                 ))
         else:
@@ -719,6 +725,7 @@ class GalaxyCLI(CLI):
                 self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token,
                 priority=0,
                 validate_certs=validate_certs,
+                timeout=default_server_timeout,
                 **galaxy_options
             ))
 
