@@ -20,6 +20,7 @@ docker ps
 
 export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
+export S=dev
 
 if [ -n "${COVERAGE:-}" ]; then
     # on-demand coverage reporting triggered by setting the COVERAGE environment variable to a non-empty value
