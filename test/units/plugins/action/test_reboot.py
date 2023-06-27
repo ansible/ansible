@@ -71,21 +71,18 @@ _SENTINEL_TEST_COMMAND = 'cmd-stub'
 def test_reboot_command(action_plugin, mocker, monkeypatch):
     """Check that the reboot command gets called and reboot verified."""
     def _patched_low_level_execute_command(cmd, *args, **kwargs):
-        if cmd == _SENTINEL_TEST_COMMAND:
-            return {
+        return {
+            _SENTINEL_TEST_COMMAND: {
                 'rc': 0,
                 'stderr': '<test command stub-stderr>',
                 'stdout': '<test command stub-stdout>',
-            }
-
-        if cmd == _SENTINEL_REBOOT_COMMAND:
-            return {
+            },
+            _SENTINEL_REBOOT_COMMAND: {
                 'rc': 0,
                 'stderr': '<reboot command stub-stderr>',
                 'stdout': '<reboot command stub-stdout>',
-            }
-
-        raise RuntimeError(cmd)  # This should never be hit in the test
+            },
+        }[cmd]
 
     monkeypatch.setattr(
         action_plugin,
