@@ -124,10 +124,11 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Sleep for 300 seconds and continue with play
+- name: Sleep for 300 seconds once and continue with play
   ansible.builtin.wait_for:
     timeout: 300
   delegate_to: localhost
+  run_once: yes
 
 - name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
   ansible.builtin.wait_for:
