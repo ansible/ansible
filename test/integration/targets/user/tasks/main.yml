@@ -32,6 +32,7 @@
 - import_tasks: test_expires_new_account.yml
 - import_tasks: test_expires_new_account_epoch_negative.yml
 - import_tasks: test_expires_min_max.yml
+- import_tasks: test_expires_warn.yml
 - import_tasks: test_shadow_backup.yml
 - import_tasks: test_ssh_key_passphrase.yml
 - import_tasks: test_password_lock.yml
