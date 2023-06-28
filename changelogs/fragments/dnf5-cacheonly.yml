@@ -1,0 +1,2 @@
+minor_changes:
+  - dnf5 - enable now implemented ``cacheonly`` functionality
