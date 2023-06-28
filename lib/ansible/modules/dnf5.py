@@ -215,7 +215,6 @@ options:
     default: "no"
   cacheonly:
     description:
-      - This is currently no-op as dnf5 does not implement the feature.
       - Tells dnf to run entirely from system cache; does not download or update metadata.
     type: bool
     default: "no"
