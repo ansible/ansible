@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleParserError
 from ansible.parsing.dataloader import DataLoader
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 

@@ -7,8 +7,6 @@ __metaclass__ = type
 
 from ansible.vars.clean import module_response_deepcopy
 
-import pytest
-
 
 def test_module_response_deepcopy_basic():
     x = 42
