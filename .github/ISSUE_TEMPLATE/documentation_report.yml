@@ -64,7 +64,7 @@ body:
           <em>Why?</em>
         </summary>
 
-        We would do it by ourselves but unfortunatelly, the curent
+        We would do it by ourselves but unfortunately, the current
         edition of GitHub Issue Forms Alpha does not support this yet 🤷
 
 
@@ -86,18 +86,23 @@ body:
       feature below, *use your best guess if unsure*.
 
 
-      **Tip:** Be advised that the source for some parts of the
-      documentation are hosted outside of this repository. If the page
-      you are reporting describes modules/plugins/etc that are not
-      officially supported by the Ansible Core Engineering team, there
-      is a good chance that it is coming from one of the [Ansible
-      Collections maintained by the community][collections org]. If this
-      is the case, please make sure to file an issue under the
-      appropriate project there instead.
+      **Tip:** Source files for Ansible community documentation is
+      hosted in different repositories. Please make sure to file an
+      issue in the correct project.
+      Documentation for modules/plugins/etc that are officially
+      supported by the Ansible Core Engineering team is available
+      in this (`ansible/ansible`) repository.
+      User documentation pages such as the Playbook Guide,
+      Developer Guide, and so on is available in the
+      [`ansible/ansible-documentation`][ansible-documentation] repository.
+      Documentation for other modules/plugins/etc is likely to be
+      available in one of the [Ansible Collections maintained by
+      the community][collections org].
 
 
+      [ansible-documentation]: https://github.com/ansible/ansible-documentation/issues
       [collections org]: /ansible-collections
-    placeholder: docs/docsite/rst/dev_guide/debugging.rst
+    placeholder: lib/ansible/modules/copy.py
   validations:
     required: true
 
