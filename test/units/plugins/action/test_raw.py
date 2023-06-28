@@ -20,7 +20,6 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleActionFail
 from units.compat import unittest
 from unittest.mock import MagicMock, Mock
 from ansible.plugins.action.raw import ActionModule
@@ -68,10 +67,7 @@ class TestCopyResultExclude(unittest.TestCase):
         task.args = {'_raw_params': 'Args1'}
         self.play_context.check_mode = True
 
-        try:
-            self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
-        except AnsibleActionFail:
-            pass
+        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
 
     def test_raw_test_environment_is_None(self):
 

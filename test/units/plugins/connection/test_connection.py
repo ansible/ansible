@@ -27,6 +27,28 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader
 
 
+class NoOpConnection(ConnectionBase):
+
+    @property
+    def transport(self):
+        """This method is never called by unit tests."""
+
+    def _connect(self):
+        """This method is never called by unit tests."""
+
+    def exec_command(self):
+        """This method is never called by unit tests."""
+
+    def put_file(self):
+        """This method is never called by unit tests."""
+
+    def fetch_file(self):
+        """This method is never called by unit tests."""
+
+    def close(self):
+        """This method is never called by unit tests."""
+
+
 class TestConnectionBaseClass(unittest.TestCase):
 
     def setUp(self):
@@ -45,36 +67,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         with self.assertRaises(TypeError):
             ConnectionModule1()  # pylint: disable=abstract-class-instantiated
 
-        class ConnectionModule2(ConnectionBase):
-            def get(self, key):
-                super(ConnectionModule2, self).get(key)
-
-        with self.assertRaises(TypeError):
-            ConnectionModule2()  # pylint: disable=abstract-class-instantiated
-
     def test_subclass_success(self):
-        class ConnectionModule3(ConnectionBase):
-
-            @property
-            def transport(self):
-                pass
-
-            def _connect(self):
-                pass
-
-            def exec_command(self):
-                pass
-
-            def put_file(self):
-                pass
-
-            def fetch_file(self):
-                pass
-
-            def close(self):
-                pass
-
-        self.assertIsInstance(ConnectionModule3(self.play_context, self.in_stream), ConnectionModule3)
+        self.assertIsInstance(NoOpConnection(self.play_context, self.in_stream), NoOpConnection)
 
     def test_check_password_prompt(self):
         local = (
@@ -129,28 +123,7 @@ debug3: receive packet: type 98
 debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo
 '''
 
-        class ConnectionFoo(ConnectionBase):
-
-            @property
-            def transport(self):
-                pass
-
-            def _connect(self):
-                pass
-
-            def exec_command(self):
-                pass
-
-            def put_file(self):
-                pass
-
-            def fetch_file(self):
-                pass
-
-            def close(self):
-                pass
-
-        c = ConnectionFoo(self.play_context, self.in_stream)
+        c = NoOpConnection(self.play_context, self.in_stream)
         c.set_become_plugin(become_loader.get('sudo'))
         c.become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
 
