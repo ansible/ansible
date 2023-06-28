@@ -215,7 +215,6 @@ options:
     default: "no"
   cacheonly:
     description:
-      - This is currently no-op as dnf5 does not implement the feature.
       - Tells dnf to run entirely from system cache; does not download or update metadata.
     type: bool
     default: "no"
@@ -512,7 +511,7 @@ class Dnf5Module(YumDnf):
         conf.clean_requirements_on_remove = self.autoremove
         conf.installroot = self.installroot
         conf.use_host_config = True  # needed for installroot
-        conf.cacheonly = self.cacheonly
+        conf.cacheonly = "all" if self.cacheonly else "none"
         if self.download_dir:
             conf.destdir = self.download_dir
 
