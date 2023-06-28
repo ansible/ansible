@@ -257,7 +257,7 @@ options:
             - Number of days of warning before password expires.
             - Supported on Linux only.
         type: int
-        version_added: "2.15"
+        version_added: "2.16"
     umask:
         description:
             - Sets the umask of the user.
