@@ -141,9 +141,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.become.check_missing_password = MagicMock(side_effect=_check_missing_password)
 
         def get_option(option):
-            if option == 'become_pass':
-                return 'password'
-            return None
+            assert option == 'become_pass'
+            return 'password'
 
         conn.become.get_option = get_option
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
@@ -350,7 +349,7 @@ class MockSelector(object):
         self.register = MagicMock(side_effect=self._register)
         self.unregister = MagicMock(side_effect=self._unregister)
         self.close = MagicMock()
-        self.get_map = MagicMock(side_effect=self._get_map)
+        self.get_map = MagicMock()
         self.select = MagicMock()
 
     def _register(self, *args, **kwargs):
@@ -358,9 +357,6 @@ class MockSelector(object):
 
     def _unregister(self, *args, **kwargs):
         self.files_watched -= 1
-
-    def _get_map(self, *args, **kwargs):
-        return self.files_watched
 
 
 @pytest.fixture
@@ -456,7 +452,8 @@ class TestSSHConnectionRun(object):
     def _password_with_prompt_examine_output(self, sourice, state, b_chunk, sudoable):
         if state == 'awaiting_prompt':
             self.conn._flags['become_prompt'] = True
-        elif state == 'awaiting_escalation':
+        else:
+            assert state == 'awaiting_escalation'
             self.conn._flags['become_success'] = True
         return (b'', b'')
 
@@ -545,7 +542,6 @@ class TestSSHConnectionRetries(object):
     def test_incorrect_password(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
         self.conn.set_option('reconnection_retries', 5)
-        monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.mock_popen_res.stdout.read.side_effect = [b'']
         self.mock_popen_res.stderr.read.side_effect = [b'Permission denied, please try again.\r\n']
@@ -668,7 +664,6 @@ class TestSSHConnectionRetries(object):
         self.conn.set_option('reconnection_retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
-        monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
