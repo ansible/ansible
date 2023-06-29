@@ -12,11 +12,11 @@ class ModuleDocFragment(object):
 options:
   strict:
     description:
-        - If C(yes) make invalid entries a fatal error, otherwise skip and continue.
+        - If V(true) make invalid entries a fatal error, otherwise skip and continue.
         - Since it is possible to use facts in the expressions they might not always be available
           and we ignore those errors by default.
     type: bool
-    default: no
+    default: false
   compose:
     description: Create vars from jinja2 expressions.
     type: dict
@@ -49,13 +49,13 @@ options:
       default_value:
         description:
         - The default value when the host variable's value is an empty string.
-        - This option is mutually exclusive with C(trailing_separator).
+        - This option is mutually exclusive with O(keyed_groups[].trailing_separator).
         type: str
         version_added: '2.12'
       trailing_separator:
         description:
-        - Set this option to I(False) to omit the C(separator) after the host variable when the value is an empty string.
-        - This option is mutually exclusive with C(default_value).
+        - Set this option to V(false) to omit the O(keyed_groups[].separator) after the host variable when the value is an empty string.
+        - This option is mutually exclusive with O(keyed_groups[].default_value).
         type: bool
         default: True
         version_added: '2.12'

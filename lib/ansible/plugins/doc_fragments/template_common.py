@@ -29,15 +29,15 @@ options:
     description:
     - Path of a Jinja2 formatted template on the Ansible controller.
     - This can be a relative or an absolute path.
-    - The file must be encoded with C(utf-8) but I(output_encoding) can be used to control the encoding of the output
+    - The file must be encoded with C(utf-8) but O(output_encoding) can be used to control the encoding of the output
       template.
     type: path
-    required: yes
+    required: true
   dest:
     description:
     - Location to render the template to on the remote machine.
     type: path
-    required: yes
+    required: true
   newline_sequence:
     description:
     - Specify the newline sequence to use for templating files.
@@ -82,27 +82,27 @@ options:
   trim_blocks:
     description:
     - Determine when newlines should be removed from blocks.
-    - When set to C(yes) the first newline after a block is removed (block, not variable tag!).
+    - When set to C(true) the first newline after a block is removed (block, not variable tag!).
     type: bool
-    default: yes
+    default: true
     version_added: '2.4'
   lstrip_blocks:
     description:
     - Determine when leading spaces and tabs should be stripped.
-    - When set to C(yes) leading spaces and tabs are stripped from the start of a line to a block.
+    - When set to C(true) leading spaces and tabs are stripped from the start of a line to a block.
     type: bool
-    default: no
+    default: false
     version_added: '2.6'
   force:
     description:
     - Determine when the file is being transferred if the destination already exists.
-    - When set to C(yes), replace the remote file when contents are different than the source.
-    - When set to C(no), the file will only be transferred if the destination does not exist.
+    - When set to C(true), replace the remote file when contents are different than the source.
+    - When set to C(false), the file will only be transferred if the destination does not exist.
     type: bool
-    default: yes
+    default: true
   output_encoding:
     description:
-    - Overrides the encoding used to write the template file defined by C(dest).
+    - Overrides the encoding used to write the template file defined by O(dest).
     - It defaults to C(utf-8), but any encoding supported by python can be used.
     - The source template file must always be encoded using C(utf-8), for homogeneity.
     type: str
@@ -110,10 +110,10 @@ options:
     version_added: '2.7'
 notes:
 - Including a string that uses a date in the template will result in the template being marked 'changed' each time.
-- Since Ansible 0.9, templates are loaded with C(trim_blocks=True).
+- Since Ansible 0.9, templates are loaded with O(trim_blocks=true).
 - >
   Also, you can override jinja2 settings by adding a special header to template file.
-  i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
+  that is C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: false)
   which changes the variable interpolation markers to C([% var %]) instead of C({{ var }}).
   This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
 - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>)
