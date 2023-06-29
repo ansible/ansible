@@ -86,7 +86,7 @@ body:
       feature below, *use your best guess if unsure*.
 
 
-      **Tip:** Source files for Ansible community documentation is
+      **Tip:** Source files for Ansible community documentation are
       hosted in different repositories. Please make sure to file an
       issue in the correct project.
       Documentation for modules/plugins/etc that are officially
