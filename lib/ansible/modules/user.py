@@ -589,9 +589,9 @@ class User(object):
             module.warn("'append' is set, but no 'groups' are specified. Use 'groups' for appending new groups."
                         "This will change to an error in Ansible 2.14.")
 
-        self.groups_diff = {'before': [], 'after': []}
+        self.groups_diff = {'before': set(), 'after': set()}
         if self.groups is not None:
-            self.groups_diff['after'] = module.params['groups'] or []
+            self.groups_diff['after'] = set(module.params['groups'] or [])
 
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
@@ -854,7 +854,7 @@ class User(object):
         if self.groups is not None:
             # get a list of all groups for the user, including the primary
             current_groups = self.user_group_membership(exclude_primary=False)
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups_need_mod = False
             groups = []
 
@@ -873,10 +873,10 @@ class User(object):
                                     cmd.append('-a')
                                 groups_need_mod = True
                                 break
-                        self.groups_diff['after'] = list(set(current_groups) | groups)
+                        self.groups_diff['after'] = set(current_groups) | groups
                     else:
                         groups_need_mod = True
-                        self.groups_diff['after'] = list(groups)
+                        self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 if self.local:
@@ -1526,7 +1526,7 @@ class FreeBsdUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups = self.get_groups_set(names_only=True)
 
             group_diff = set(current_groups).symmetric_difference(groups)
@@ -1538,10 +1538,10 @@ class FreeBsdUser(User):
                         if g in group_diff:
                             groups_need_mod = True
                             break
-                    self.groups_diff['after'] = list(set(current_groups) | groups)
+                    self.groups_diff['after'] = set(current_groups) | groups
                 else:
                     groups_need_mod = True
-                    self.groups_diff['after'] = list(groups)
+                    self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -1715,7 +1715,7 @@ class OpenBSDUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups_need_mod = False
             groups_option = '-S'
             groups = []
@@ -1734,10 +1734,10 @@ class OpenBSDUser(User):
                                 groups_option = '-G'
                                 groups_need_mod = True
                                 break
-                        self.groups_diff['after'] = list(set(current_groups) | groups)
+                        self.groups_diff['after'] = set(current_groups) | groups
                     else:
                         groups_need_mod = True
-                        self.groups_diff['after'] = list(groups)
+                        self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 cmd.append(groups_option)
@@ -1895,7 +1895,7 @@ class NetBSDUser(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups_need_mod = False
             groups = []
 
@@ -1913,10 +1913,10 @@ class NetBSDUser(User):
                                 groups = set(current_groups).union(groups)
                                 groups_need_mod = True
                                 break
-                        self.groups_diff['after'] = list(set(current_groups) | groups)
+                        self.groups_diff['after'] = set(current_groups) | groups
                     else:
                         groups_need_mod = True
-                        self.groups_diff['after'] = list(groups)
+                        self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 if len(groups) > 16:
@@ -2139,7 +2139,7 @@ class SunOS(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups = self.get_groups_set(names_only=True)
             group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
@@ -2150,10 +2150,10 @@ class SunOS(User):
                         if g in group_diff:
                             groups_need_mod = True
                             break
-                    self.groups_diff['after'] = list(set(current_groups) | groups)
+                    self.groups_diff['after'] = set(current_groups) | groups
                 else:
                     groups_need_mod = True
-                    self.groups_diff['after'] = list(groups)
+                    self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -2417,15 +2417,15 @@ class DarwinUser(User):
         err = ''
         changed = False
 
-        self.groups_diff['before'] = self._list_user_groups()
-        current = set(self.groups_diff['before'])
+        current = set(self._list_user_groups())
+        self.groups_diff['before'] =  current
         if self.groups is not None:
             target = self.get_groups_set(names_only=True)
         else:
             target = set([])
 
         if self.append is False:
-            self.groups_diff['after'] = list(target)
+            self.groups_diff['after'] = target
             for remove in current - target:
                 (_rc, _out, _err) = self.__modify_group(remove, 'delete')
                 rc += rc
@@ -2433,7 +2433,7 @@ class DarwinUser(User):
                 err += _err
                 changed = True
         else:
-            self.groups_diff['after'] = list(current | target)
+            self.groups_diff['after'] = current | target
 
         for add in target - current:
             (_rc, _out, _err) = self.__modify_group(add, 'add')
@@ -2700,7 +2700,7 @@ class AIX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups_need_mod = False
             groups = []
 
@@ -2717,10 +2717,10 @@ class AIX(User):
                             if g in group_diff:
                                 groups_need_mod = True
                                 break
-                        self.groups_diff['after'] = list(set(current_groups) | groups)
+                        self.groups_diff['after'] = set(current_groups) | groups
                     else:
                         groups_need_mod = True
-                        self.groups_diff['after'] = list(groups)
+                        self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -2901,7 +2901,7 @@ class HPUX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            self.groups_diff['before'] = current_groups
+            self.groups_diff['before'] = set(current_groups)
             groups_need_mod = False
             groups = []
 
@@ -2918,10 +2918,10 @@ class HPUX(User):
                             if g in group_diff:
                                 groups_need_mod = True
                                 break
-                        self.groups_diff['after'] = list(set(current_groups) | groups)
+                        self.groups_diff['after'] = set(current_groups) | groups
                     else:
                         groups_need_mod = True
-                        self.groups_diff['after'] = list(groups)
+                        self.groups_diff['after'] = groups
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -3049,7 +3049,7 @@ class BusyBox(User):
 
     def modify_user(self):
         current_groups = self.user_group_membership()
-        self.groups_diff['before'] = current_groups
+        self.groups_diff['before'] = set(current_groups)
         groups = []
         rc = None
         out = ''
@@ -3079,9 +3079,9 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
             if self.append:
-                self.groups_diff['after'] = list(set(current_groups) | groups)
+                self.groups_diff['after'] = set(current_groups) | groups
             else:
-                self.groups_diff['after'] = list(groups)
+                self.groups_diff['after'] = groups
 
         # Manage password
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
