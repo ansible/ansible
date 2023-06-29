@@ -369,7 +369,7 @@ group:
   type: int
   sample: 1001
 groups:
-  description: List of groups of which the user is a member.
+  description: Comma-separated list of alphabetically sorted groups of which the user is a member.
   returned: When I(groups) is not empty and I(state) is C(present)
   type: str
   sample: 'chrony,apache'
@@ -591,6 +591,7 @@ class User(object):
 
         self.groups_diff = {'before': set(), 'after': set()}
         if self.groups is not None:
+            # Note: initial value, but user-modification may overwrite (as opposed to operated on) in order deduplicate using group names
             self.groups_diff['after'] = set(module.params['groups'] or [])
 
     def check_password_encrypted(self):
@@ -2418,7 +2419,7 @@ class DarwinUser(User):
         changed = False
 
         current = set(self._list_user_groups())
-        self.groups_diff['before'] =  current
+        self.groups_diff['before'] = current
         if self.groups is not None:
             target = self.get_groups_set(names_only=True)
         else:
