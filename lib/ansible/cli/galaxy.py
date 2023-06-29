@@ -277,7 +277,7 @@ class GalaxyCLI(CLI):
         collections_path = opt_help.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
                                       action=opt_help.PrependListAction,
-                                      help="One or more directories to search for collections in addition "
+                                      help="One or more directories to search for collections (or install to) in addition "
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
 
@@ -485,9 +485,23 @@ class GalaxyCLI(CLI):
             args_kwargs['help'] = 'Role name, URL or tar file'
             ignore_errors_help = 'Ignore errors and continue with the next specified role.'
 
+        if self._implicit_role:
+            # installing both roles and collections
+            description_text = (
+                'Install roles and collections from file(s), URL(s) or Ansible '
+                'Galaxy to the first entry in the config COLLECTIONS_PATH for collections '
+                'and first entry in the config ROLES_PATH for roles.'
+            )
+        else:
+            description_text = (
+                'Install {0}(s) from file(s), URL(s) or Ansible '
+                'Galaxy to the first entry in the config {1}S_PATH '
+                'unless overriden by --{0}s-path'.format(galaxy_type, galaxy_type.upper())
+            )
         install_parser = parser.add_parser('install', parents=parents,
                                            help='Install {0}(s) from file(s), URL(s) or Ansible '
-                                                'Galaxy'.format(galaxy_type))
+                                                'Galaxy'.format(galaxy_type),
+                                           description=description_text)
         install_parser.set_defaults(func=self.execute_install)
 
         install_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', **args_kwargs)
