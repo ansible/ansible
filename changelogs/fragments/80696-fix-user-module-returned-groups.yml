@@ -1,4 +1,4 @@
 bugfixes:
-  - user - include pre-existing groups associated with the user in the ``groups`` return value when ``append`` is True (https://github.com/ansible/ansible/issues/80669).
+  - user - include pre-existing groups associated with the user in the ``groups`` return value when ``append`` is ``True`` (https://github.com/ansible/ansible/issues/80669).
 minor_changes:
   - user - return groups in alphabetical order.
