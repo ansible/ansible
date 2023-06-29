@@ -121,8 +121,8 @@ stages:
           targets:
             - name: Alpine 3.17
               test: alpine/3.17
-            - name: Fedora 37
-              test: fedora/37
+            - name: Fedora 38
+              test: fedora/38
             - name: RHEL 8.7
               test: rhel/8.7
             - name: RHEL 9.1
