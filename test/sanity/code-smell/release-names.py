@@ -22,7 +22,7 @@ Test that the release name is present in the list of used up release names
 
 from __future__ import annotations
 
-from yaml import safe_load
+import pathlib
 
 from ansible.release import __codename__
 
@@ -30,8 +30,7 @@ from ansible.release import __codename__
 def main():
     """Entrypoint to the script"""
 
-    with open('.github/RELEASE_NAMES.yml') as f:
-        releases = safe_load(f.read())
+    releases = pathlib.Path('.github/RELEASE_NAMES.txt').read_text().splitlines()
 
     # Why this format?  The file's sole purpose is to be read by a human when they need to know
     # which release names have already been used.  So:
@@ -41,7 +40,7 @@ def main():
         if __codename__ == name:
             break
     else:
-        print('.github/RELEASE_NAMES.yml: Current codename was not present in the file')
+        print(f'.github/RELEASE_NAMES.txt: Current codename {__codename__!r} not present in the file')
 
 
 if __name__ == '__main__':
