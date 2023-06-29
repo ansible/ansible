@@ -1,0 +1,6 @@
+minor_changes:
+  - ansible-test - Add Fedora 38 remote.
+known_issues:
+  - ansible-test - The Fedora 37 remote is known to occasionally hang during boot.
+                   It is no longer routinely tested as a result.
+                   If possible, use the Fedora 38 remote instead.
