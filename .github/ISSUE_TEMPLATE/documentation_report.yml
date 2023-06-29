@@ -93,7 +93,7 @@ body:
       supported by the Ansible Core Engineering team is available
       in this (`ansible/ansible`) repository.
       Documentation guides such as the Playbook Guide,
-      Developer Guide, and so on is available in the
+      Developer Guide, and so on are available in the
       [`ansible/ansible-documentation`][ansible-documentation] repository.
       Documentation for other modules/plugins/etc is likely to be
       available in one of the [Ansible Collections maintained by
