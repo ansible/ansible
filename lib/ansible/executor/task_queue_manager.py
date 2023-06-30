@@ -362,8 +362,8 @@ class TaskQueueManager:
         self.terminate()
         self._final_q.close()
         self._cleanup_processes()
-        # We no longer flush on every write in ``Display.display``
-        # just ensure we've flushed during cleanup
+        # We no longer flush on every write in ``Display.display`` by default.
+        # Ensure we've flushed during cleanup
         sys.stdout.flush()
         sys.stderr.flush()
 
