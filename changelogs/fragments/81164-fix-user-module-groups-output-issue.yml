@@ -1,0 +1,2 @@
+bugfixes:
+  - - The `user` module now outputs the exhaustive list of groups a user belongs to. Previously, only specified groups to which the user is to be added were displayed. ([#80669](https://github.com/ansible/ansible/issues/80669)) 
