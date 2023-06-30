@@ -54,6 +54,7 @@ def action_plugin(play_context, module_task):
 
 
 _SENTINEL_REBOOT_COMMAND = '/reboot-command-mock --arg'
+_SENTINEL_SHORT_REBOOT_COMMAND = '/reboot-command-mock'
 _SENTINEL_TEST_COMMAND = 'cmd-stub'
 
 
@@ -65,10 +66,16 @@ _SENTINEL_TEST_COMMAND = 'cmd-stub'
             'reboot_command': _SENTINEL_REBOOT_COMMAND,
             'test_command': _SENTINEL_TEST_COMMAND,
         },
+        {
+            'reboot_timeout': 5,
+            'reboot_command': _SENTINEL_SHORT_REBOOT_COMMAND,
+            'test_command': _SENTINEL_TEST_COMMAND,
+        },
     ),
+    ids=('reboot command with spaces', 'reboot command without spaces'),
     indirect=('task_args', ),
 )
-def test_reboot_command(action_plugin, mocker, monkeypatch):
+def test_reboot_command(action_plugin, mocker, monkeypatch, task_args):
     """Check that the reboot command gets called and reboot verified."""
     def _patched_low_level_execute_command(cmd, *args, **kwargs):
         return {
@@ -81,6 +88,11 @@ def test_reboot_command(action_plugin, mocker, monkeypatch):
                 'rc': 0,
                 'stderr': '<reboot command stub-stderr>',
                 'stdout': '<reboot command stub-stdout>',
+            },
+            f'{_SENTINEL_SHORT_REBOOT_COMMAND} ': {  # no args is concatenated
+                'rc': 0,
+                'stderr': '<short reboot command stub-stderr>',
+                'stdout': '<short reboot command stub-stdout>',
             },
         }[cmd]
 
@@ -102,8 +114,12 @@ def test_reboot_command(action_plugin, mocker, monkeypatch):
 
     assert low_level_cmd_spy.called
 
-    low_level_cmd_spy.assert_any_call(_SENTINEL_REBOOT_COMMAND, sudoable=True)
-    low_level_cmd_spy.assert_any_call(_SENTINEL_TEST_COMMAND, sudoable=True)
+    expected_reboot_command = (
+        task_args['reboot_command'] if ' ' in task_args['reboot_command']
+        else f'{task_args["reboot_command"] !s} '
+    )
+    low_level_cmd_spy.assert_any_call(expected_reboot_command, sudoable=True)
+    low_level_cmd_spy.assert_any_call(task_args['test_command'], sudoable=True)
 
     assert low_level_cmd_spy.call_count == 2
     assert low_level_cmd_spy.spy_return == {
