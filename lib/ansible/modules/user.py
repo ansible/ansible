@@ -3220,8 +3220,9 @@ def main():
         result['comment'] = info[4]
         result['home'] = info[5]
         result['shell'] = info[6]
-        if user.groups is not None:
-            result['groups'] = user.groups
+
+        # Get the list of groups the user is a member of
+        result['groups'] = ','.join(sorted(user.user_group_membership(exclude_primary=False)))
 
         # handle missing homedirs
         info = user.user_info()
