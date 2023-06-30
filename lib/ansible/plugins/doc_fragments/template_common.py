@@ -32,12 +32,12 @@ options:
     - The file must be encoded with C(utf-8) but O(output_encoding) can be used to control the encoding of the output
       template.
     type: path
-    required: true
+    required: yes
   dest:
     description:
     - Location to render the template to on the remote machine.
     type: path
-    required: true
+    required: yes
   newline_sequence:
     description:
     - Specify the newline sequence to use for templating files.
@@ -84,14 +84,14 @@ options:
     - Determine when newlines should be removed from blocks.
     - When set to C(true) the first newline after a block is removed (block, not variable tag!).
     type: bool
-    default: true
+    default: yes
     version_added: '2.4'
   lstrip_blocks:
     description:
     - Determine when leading spaces and tabs should be stripped.
     - When set to C(true) leading spaces and tabs are stripped from the start of a line to a block.
     type: bool
-    default: false
+    default: no
     version_added: '2.6'
   force:
     description:
@@ -99,7 +99,7 @@ options:
     - When set to C(true), replace the remote file when contents are different than the source.
     - When set to C(false), the file will only be transferred if the destination does not exist.
     type: bool
-    default: true
+    default: yes
   output_encoding:
     description:
     - Overrides the encoding used to write the template file defined by O(dest).

@@ -16,7 +16,7 @@ options:
         - Since it is possible to use facts in the expressions they might not always be available
           and we ignore those errors by default.
     type: bool
-    default: false
+    default: no
   compose:
     description: Create vars from jinja2 expressions.
     type: dict

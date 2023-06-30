@@ -15,7 +15,7 @@ options:
     description:
       - Toggle to enable/disable the caching of the inventory's source data, requires a cache plugin setup to work.
     type: bool
-    default: false
+    default: no
     env:
       - name: ANSIBLE_INVENTORY_CACHE
     ini:

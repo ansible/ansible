@@ -78,7 +78,7 @@ options:
       (however, it doesn't force Ansible to perform unsafe writes).
     - IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
     type: bool
-    default: false
+    default: no
     version_added: '2.2'
   attributes:
     description:

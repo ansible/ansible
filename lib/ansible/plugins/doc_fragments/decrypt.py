@@ -15,6 +15,6 @@ options:
     description:
       - This option controls the autodecryption of source files using vault.
     type: bool
-    default: true
+    default: yes
     version_added: '2.4'
 '''

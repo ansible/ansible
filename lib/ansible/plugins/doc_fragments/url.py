@@ -19,7 +19,7 @@ options:
     description:
       - If V(true) do not get a cached copy.
     type: bool
-    default: false
+    default: no
   http_agent:
     description:
       - Header to identify as, generally appears in web server logs.
@@ -29,13 +29,13 @@ options:
     description:
       - If V(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
-    default: true
+    default: yes
   validate_certs:
     description:
       - If V(false), SSL certificates will not be validated.
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
-    default: true
+    default: yes
   url_username:
     description:
       - The username for use in HTTP basic authentication.
@@ -50,7 +50,7 @@ options:
     description:
       - Credentials specified with O(url_username) and O(url_password) should be passed in HTTP Header.
     type: bool
-    default: false
+    default: no
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
@@ -70,6 +70,6 @@ options:
         C(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is B(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
-    default: false
+    default: no
     version_added: '2.11'
 '''
