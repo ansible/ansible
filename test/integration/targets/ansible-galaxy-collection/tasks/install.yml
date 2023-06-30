@@ -165,6 +165,9 @@
   failed_when:
   - '"Could not satisfy the following requirements" not in fail_dep_mismatch.stderr'
   - '" fail_dep2.name:<0.0.5 (dependency of fail_namespace.fail_collection:2.1.2)" not in fail_dep_mismatch.stderr'
+  - 'pre_release_hint not in fail_dep_mismatch.stderr'
+  vars:
+    pre_release_hint: 'Hint: Pre-releases are not installed by default unless the specific version is given. To enable pre-releases, use --pre.'
 
 - name: Find artifact url for namespace3.name
   uri:
