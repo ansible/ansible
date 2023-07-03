@@ -102,7 +102,7 @@ body:
       community collection.
 
 
-      [ansible-documentation]: https://github.com/ansible/ansible-documentation/issues
+      [`ansible/ansible-documentation`]: /ansible/ansible-documentation
       [collections org]: /ansible-collections
     placeholder: lib/ansible/modules/copy.py
   validations:
