@@ -82,22 +82,22 @@ options:
   trim_blocks:
     description:
     - Determine when newlines should be removed from blocks.
-    - When set to C(true) the first newline after a block is removed (block, not variable tag!).
+    - When set to V(yes) the first newline after a block is removed (block, not variable tag!).
     type: bool
     default: yes
     version_added: '2.4'
   lstrip_blocks:
     description:
     - Determine when leading spaces and tabs should be stripped.
-    - When set to C(true) leading spaces and tabs are stripped from the start of a line to a block.
+    - When set to V(yes) leading spaces and tabs are stripped from the start of a line to a block.
     type: bool
     default: no
     version_added: '2.6'
   force:
     description:
     - Determine when the file is being transferred if the destination already exists.
-    - When set to C(true), replace the remote file when contents are different than the source.
-    - When set to C(false), the file will only be transferred if the destination does not exist.
+    - When set to C(yes), replace the remote file when contents are different than the source.
+    - When set to C(no), the file will only be transferred if the destination does not exist.
     type: bool
     default: yes
   output_encoding:
@@ -110,10 +110,10 @@ options:
     version_added: '2.7'
 notes:
 - Including a string that uses a date in the template will result in the template being marked 'changed' each time.
-- Since Ansible 0.9, templates are loaded with O(trim_blocks=true).
+- Since Ansible 0.9, templates are loaded with O(trim_blocks=True).
 - >
   Also, you can override jinja2 settings by adding a special header to template file.
-  that is C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: false)
+  that is C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
   which changes the variable interpolation markers to C([% var %]) instead of C({{ var }}).
   This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
 - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>)

@@ -12,7 +12,7 @@ class ModuleDocFragment(object):
 options:
   strict:
     description:
-        - If V(true) make invalid entries a fatal error, otherwise skip and continue.
+        - If V(yes) make invalid entries a fatal error, otherwise skip and continue.
         - Since it is possible to use facts in the expressions they might not always be available
           and we ignore those errors by default.
     type: bool
@@ -54,7 +54,7 @@ options:
         version_added: '2.12'
       trailing_separator:
         description:
-        - Set this option to V(false) to omit the O(keyed_groups[].separator) after the host variable when the value is an empty string.
+        - Set this option to V(False) to omit the O(keyed_groups[].separator) after the host variable when the value is an empty string.
         - This option is mutually exclusive with O(keyed_groups[].default_value).
         type: bool
         default: True

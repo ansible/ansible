@@ -17,7 +17,7 @@ options:
     type: str
   force:
     description:
-      - If V(true) do not get a cached copy.
+      - If V(yes) do not get a cached copy.
     type: bool
     default: no
   http_agent:
@@ -27,12 +27,12 @@ options:
     default: ansible-httpget
   use_proxy:
     description:
-      - If V(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+      - If V(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
     default: yes
   validate_certs:
     description:
-      - If V(false), SSL certificates will not be validated.
+      - If V(no), SSL certificates will not be validated.
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
     default: yes

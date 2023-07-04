@@ -61,7 +61,7 @@ options:
     type: int
   validate_certs:
     description:
-    - If V(false), SSL certificates will not be validated.
+    - If V(no), SSL certificates will not be validated.
     - This should only be used on personally controlled sites using self-signed
       certificates.
     default: yes
@@ -114,14 +114,14 @@ options:
     type: bool
   use_proxy:
     description:
-    - If V(false), it will not use the proxy defined in IE for the current user.
+    - If V(no), it will not use the proxy defined in IE for the current user.
     default: yes
     type: bool
   proxy_url:
     description:
     - An explicit proxy to use for the request.
     - By default, the request will use the IE defined proxy unless O(use_proxy)
-      is set to V(false).
+      is set to V(no).
     type: str
   proxy_username:
     description:
