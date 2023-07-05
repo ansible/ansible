@@ -113,13 +113,13 @@ Function New-LegacySelfSignedCert {
 }
 
 ################################################################################
-
 # Setup error handling
 Trap {
     $_
     Exit 1
 }
 $ErrorActionPreference = "Stop"
+################################################################################
 
 # Get the ID and security principal of the current user account
 $myWindowsID = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -240,29 +240,29 @@ Else {
 }
 
 # Remove listeners that run over HTTP
-Get-ChildItem -Path WSMan:\localhost\Listener | Where-Object { $_.Keys -contains "Transport=HTTP" } | Remove-Item -Recurse -Force
+# Get-ChildItem -Path WSMan:\localhost\Listener | Where-Object { $_.Keys -contains "Transport=HTTP" } | Remove-Item -Recurse -Force
 
 # Disable basic auth
-$basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Basic" }
-If (($basicAuthSetting.Value) -eq $true) {
-    Write-Verbose "Disabling basic auth support."
-    Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
-    Write-ProgressLog "Disabled basic auth support."
-}
-Else {
-    Write-Verbose "Basic auth is already disabled."
-}
+# $basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Basic" }
+# If (($basicAuthSetting.Value) -eq $true) {
+#     Write-Verbose "Disabling basic auth support."
+#     Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
+#     Write-ProgressLog "Disabled basic auth support."
+# }
+# Else {
+#     Write-Verbose "Basic auth is already disabled."
+# }
 
 # Disable Kerberos auth
-$kerberosAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Kerberos" }
-If (($kerberosAuthSetting.Value) -eq $true) {
-    Write-Verbose "Disabling Kerberos auth support."
-    Set-Item -Path "WSMan:\localhost\Service\Auth\Kerberos" -Value $false
-    Write-ProgressLog "Disabled Kerberos auth support."
-}
-Else {
-    Write-Verbose "Kerberos auth is already disabled."
-}
+# $kerberosAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Kerberos" }
+# If (($kerberosAuthSetting.Value) -eq $true) {
+#     Write-Verbose "Disabling Kerberos auth support."
+#     Set-Item -Path "WSMan:\localhost\Service\Auth\Kerberos" -Value $false
+#     Write-ProgressLog "Disabled Kerberos auth support."
+# }
+# Else {
+#     Write-Verbose "Kerberos auth is already disabled."
+# }
 
 # Enable Negotiate auth
 $negotiateAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Negotiate" }
@@ -276,61 +276,61 @@ Else {
 }
 
 # Disable Certificate auth
-$certificateAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Certificate" }
-If (($certificateAuthSetting.Value) -eq $true) {
-    Write-Verbose "Disabling Certificate auth support."
-    Set-Item -Path "WSMan:\localhost\Service\Auth\Certificate" -Value $false
-    Write-ProgressLog "Disabled Certificate auth support."
-}
-Else {
-    Write-Verbose "Certificate auth is already disabled."
-}
+# $certificateAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "Certificate" }
+# If (($certificateAuthSetting.Value) -eq $true) {
+#     Write-Verbose "Disabling Certificate auth support."
+#     Set-Item -Path "WSMan:\localhost\Service\Auth\Certificate" -Value $false
+#     Write-ProgressLog "Disabled Certificate auth support."
+# }
+# Else {
+#     Write-Verbose "Certificate auth is already disabled."
+# }
 
 # Disable AllowUnencrypted
-$allowUnencryptedSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "AllowUnencrypted" }
-If (($allowUnencryptedSetting.Value) -eq $true) {
-    If (Get-NetConnectionProfile -NetworkCategory "Public") {
-        Write-Verbose "Switching Firewall Profile from Public to Private."
-        Set-NetConnectionProfile -NetworkCategory Private
-        Write-ProgressLog "Switching Firewall Profile from Public to Private."
-        Write-Verbose "Disabling AllowUnencrypted support."
-        Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
-        Write-ProgressLog "Disabled AllowUnencrypted support."
-        Write-Verbose "Switching Firewall Profile from Private to Public."
-        Set-NetConnectionProfile -NetworkCategory Public
-        Write-ProgressLog "Switching Firewall Profile from Private to Public."
-    }
-    Else {
-        Write-Verbose "Disabling AllowUnencrypted support."
-        Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
-        Write-ProgressLog "Disabled AllowUnencrypted support."
-    }
-}
-Else {
-    Write-Verbose "AllowUnencrypted is already disabled."
-}
+# $allowUnencryptedSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "AllowUnencrypted" }
+# If (($allowUnencryptedSetting.Value) -eq $true) {
+#     If (Get-NetConnectionProfile -NetworkCategory "Public") {
+#         Write-Verbose "Switching Firewall Profile from Public to Private."
+#         Set-NetConnectionProfile -NetworkCategory Private
+#         Write-ProgressLog "Switching Firewall Profile from Public to Private."
+#         Write-Verbose "Disabling AllowUnencrypted support."
+#         Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
+#         Write-ProgressLog "Disabled AllowUnencrypted support."
+#         Write-Verbose "Switching Firewall Profile from Private to Public."
+#         Set-NetConnectionProfile -NetworkCategory Public
+#         Write-ProgressLog "Switching Firewall Profile from Private to Public."
+#     }
+#     Else {
+#         Write-Verbose "Disabling AllowUnencrypted support."
+#         Set-Item -Path "WSMan:\localhost\Service\AllowUnencrypted" -Value $false
+#         Write-ProgressLog "Disabled AllowUnencrypted support."
+#     }
+# }
+# Else {
+#     Write-Verbose "AllowUnencrypted is already disabled."
+# }
 
 # Disable EnableCompatibilityHttpListener
-$enableCompatibilityHttpListenerSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "EnableCompatibilityHttpListener" }
-If (($enableCompatibilityHttpListenerSetting.Value) -eq $true) {
-    Write-Verbose "Disabling EnableCompatibilityHttpListener support."
-    Set-Item -Path "WSMan:\localhost\Service\EnableCompatibilityHttpListener" -Value $false
-    Write-ProgressLog "Disabled EnableCompatibilityHttpListener support."
-}
-Else {
-    Write-Verbose "EnableCompatibilityHttpListener is already disabled."
-}
+# $enableCompatibilityHttpListenerSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "EnableCompatibilityHttpListener" }
+# If (($enableCompatibilityHttpListenerSetting.Value) -eq $true) {
+#     Write-Verbose "Disabling EnableCompatibilityHttpListener support."
+#     Set-Item -Path "WSMan:\localhost\Service\EnableCompatibilityHttpListener" -Value $false
+#     Write-ProgressLog "Disabled EnableCompatibilityHttpListener support."
+# }
+# Else {
+#     Write-Verbose "EnableCompatibilityHttpListener is already disabled."
+# }
 
 # Disable EnableCompatibilityHttpsListener
-$enableCompatibilityHttpsListenerSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "EnableCompatibilityHttpsListener" }
-If (($enableCompatibilityHttpsListenerSetting.Value) -eq $true) {
-    Write-Verbose "Disabling EnableCompatibilityHttpsListener support."
-    Set-Item -Path "WSMan:\localhost\Service\EnableCompatibilityHttpsListener" -Value $false
-    Write-ProgressLog "Disabled EnableCompatibilityHttpsListener support."
-}
-Else {
-    Write-Verbose "EnableCompatibilityHttpsListener is already disabled."
-}
+# $enableCompatibilityHttpsListenerSetting = Get-ChildItem WSMan:\localhost\Service | Where-Object { $_.Name -eq "EnableCompatibilityHttpsListener" }
+# If (($enableCompatibilityHttpsListenerSetting.Value) -eq $true) {
+#     Write-Verbose "Disabling EnableCompatibilityHttpsListener support."
+#     Set-Item -Path "WSMan:\localhost\Service\EnableCompatibilityHttpsListener" -Value $false
+#     Write-ProgressLog "Disabled EnableCompatibilityHttpsListener support."
+# }
+# Else {
+#     Write-Verbose "EnableCompatibilityHttpsListener is already disabled."
+# }
 
 # Enable CredSSP auth
 $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object { $_.Name -eq "CredSSP" }
