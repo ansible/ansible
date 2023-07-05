@@ -1,0 +1,2 @@
+bugfixes:
+  - first_found lookup now gets 'untemplated' loop entries and handles templating itself as task_executor was removing even 'templatable' entries and breaking functionality. https://github.com/ansible/ansible/issues/70772

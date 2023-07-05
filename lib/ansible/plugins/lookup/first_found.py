@@ -226,6 +226,8 @@ class LookupModule(LookupBase):
             try:
                 fn = self._templar.template(fn)
             except (AnsibleUndefinedVariable, UndefinedError):
+                # NOTE: backwards compat ff behaviour is to ignore errors when vars are undefined.
+                #       moved here from task_executor.
                 continue
 
             # get subdir if set by task executor, default to files otherwise
