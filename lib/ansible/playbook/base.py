@@ -10,6 +10,7 @@ import operator
 import os
 
 from copy import copy as shallowcopy
+from functools import cache
 
 from jinja2.exceptions import UndefinedError
 
@@ -69,12 +70,21 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
+class _ClassProperty:
+    def __set_name__(self, owner, name):
+        self.name = name
+
+    def __get__(self, obj, objtype=None):
+        return getattr(objtype, f'_{self.name}')()
+
+
 class FieldAttributeBase:
 
+    fattributes = _ClassProperty()
+
     @classmethod
-    @property
-    def fattributes(cls):
-        # FIXME is this worth caching?
+    @cache
+    def _fattributes(cls):
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
