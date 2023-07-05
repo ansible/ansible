@@ -225,7 +225,7 @@ class TaskExecutor:
         if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
 
-                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, fail_on_undefined=fail, convert_bare=False)
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, fail_on_undefined=False, convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
