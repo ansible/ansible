@@ -81,7 +81,7 @@ EXAMPLES = r'''
 
 - name: Add host to multiple groups
   ansible.builtin.add_host:
-    hostname: '{{ new_ip }}'
+    name: '{{ new_ip }}'
     groups:
     - group1
     - group2
@@ -92,19 +92,19 @@ EXAMPLES = r'''
 
 - name: Add a host alias that we reach through a tunnel (Ansible 1.9 and older)
   ansible.builtin.add_host:
-    hostname: '{{ new_ip }}'
+    name: '{{ new_ip }}'
     ansible_ssh_host: '{{ inventory_hostname }}'
     ansible_ssh_port: '{{ new_port }}'
 
 - name: Add a host alias that we reach through a tunnel (Ansible 2.0 and newer)
   ansible.builtin.add_host:
-    hostname: '{{ new_ip }}'
+    name: '{{ new_ip }}'
     ansible_host: '{{ inventory_hostname }}'
     ansible_port: '{{ new_port }}'
 
 - name: Ensure inventory vars are set to the same value as the inventory_hostname has (close to pre Ansible 2.4 behaviour)
   ansible.builtin.add_host:
-    hostname: charlie
+    name: charlie
     inventory_dir: '{{ inventory_dir }}'
 
 - name: Add all hosts running this playbook to the done group
