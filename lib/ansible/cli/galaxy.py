@@ -106,8 +106,8 @@ def with_collection_artifacts_manager(wrapped_method):
         if keyring is not None:
             artifacts_manager_kwargs.update({
                 'keyring': GalaxyCLI._resolve_path(keyring),
-                'required_signature_count': context.CLIARGS.get('required_valid_signature_count', None),
-                'ignore_signature_errors': context.CLIARGS.get('ignore_gpg_errors', None),
+                'required_signature_count': context.CLIARGS['required_valid_signature_count'],
+                'ignore_signature_errors': context.CLIARGS['ignore_gpg_errors'],
             })
 
         with ConcreteArtifactsManager.under_tmpdir(
@@ -235,7 +235,13 @@ class GalaxyCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         super(GalaxyCLI, self).init_parser(
-            desc="Perform various Role and Collection related operations.",
+            desc=(
+                'Perform various Role and Collection related operations. '
+                'The subcommands for the role positional argument are also supported as top level commands. '
+                'With the exception of install, these are aliases for the role subcommands. '
+                'Install supports installing roles and collections from the same --role-file and allows collection CLI options, '
+                'see "ansible-galaxy install --role-file requirements.yml --help".'
+            ),
         )
 
         # Common arguments that apply to more than 1 action
@@ -485,9 +491,12 @@ class GalaxyCLI(CLI):
             args_kwargs['help'] = 'Role name, URL or tar file'
             ignore_errors_help = 'Ignore errors and continue with the next specified role.'
 
-        install_parser = parser.add_parser('install', parents=parents,
-                                           help='Install {0}(s) from file(s), URL(s) or Ansible '
-                                                'Galaxy'.format(galaxy_type))
+        install_description = 'Install {0}(s) from file(s), URL(s) or Ansible Galaxy'.format(galaxy_type)
+        if self._implicit_role:
+            install_description += (
+                '. Roles and collections can be installed together using a --role-file.'
+            )
+        install_parser = parser.add_parser('install', parents=parents, description=install_description)
         install_parser.set_defaults(func=self.execute_install)
 
         install_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', **args_kwargs)
@@ -508,58 +517,60 @@ class GalaxyCLI(CLI):
                                  'Provide this option multiple times to ignore a list of status codes. ' \
                                  'Descriptions for the choices can be seen at L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes).'
 
-        if galaxy_type == 'collection':
-            install_parser.add_argument('-p', '--collections-path', dest='collections_path',
-                                        default=self._get_default_collection_path(),
-                                        help='The path to the directory containing your collections.')
-            install_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                                        help='A file containing a list of collections to be installed.')
-            install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
-                                        help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
-            install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
-                                        help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
-            install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
-                                        help='The keyring used during signature verification')  # Eventually default to ~/.ansible/pubring.kbx?
-            install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
-                                        default=C.GALAXY_DISABLE_GPG_VERIFY,
-                                        help='Disable GPG signature verification when installing collections from a Galaxy server')
-            install_parser.add_argument('--signature', dest='signatures', action='append',
-                                        help='An additional signature source to verify the authenticity of the MANIFEST.json before '
-                                             'installing the collection from a Galaxy server. Use in conjunction with a positional '
-                                             'collection name (mutually exclusive with --requirements-file).')
-            install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
-                                        help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
-            install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
-                                        help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
-                                        choices=list(GPG_ERROR_MAP.keys()))
-            install_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
-                                        help='Install collection artifacts (tarballs) without contacting any distribution servers. '
-                                             'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
-                                        )
-        else:
+        install_collections_with_roles = False
+        if galaxy_type != 'collection':
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
 
             r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
             contains_r = bool([a for a in self._raw_args if r_re.match(a)])
+
             role_file_re = re.compile(r'--role-file($|=)')  # --role-file foo, --role-file=foo
             contains_role_file = bool([a for a in self._raw_args if role_file_re.match(a)])
             if self._implicit_role and (contains_r or contains_role_file):
-                # Any collections in the requirements files will also be installed
-                install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
-                                            help='The keyring used during collection signature verification')
-                install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
-                                            default=C.GALAXY_DISABLE_GPG_VERIFY,
-                                            help='Disable GPG signature verification when installing collections from a Galaxy server')
-                install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
-                                            help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
-                install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
-                                            help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
-                                            choices=list(GPG_ERROR_MAP.keys()))
+                install_collections_with_roles = True
 
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                         default=False,
                                         help='Use tar instead of the scm archive option when packaging the role.')
+
+        if galaxy_type == 'collection':
+            collection_path_args = ('-p', '--collections-path')
+            install_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                        help='A file containing a list of collections to be installed.')
+        elif install_collections_with_roles:
+            collection_path_args = ('--collections-path',)
+
+        if galaxy_type == 'collection' or install_collections_with_roles:
+            context = ''
+            if install_collections_with_roles:
+                context = '(collections only) '
+            install_parser.add_argument(*collection_path_args, dest='collections_path',
+                                        default=self._get_default_collection_path(),
+                                        help='The path to the directory containing your collections.')
+            install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                        help=f'{context}Include pre-release versions. Semantic versioning pre-releases are ignored by default')
+            install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
+                                        help=f'{context}Upgrade installed collection artifacts. '
+                                             'This will also update dependencies unless --no-deps is provided')
+            install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
+                                        help=f'{context}The keyring used during signature verification')  # Eventually default to ~/.ansible/pubring.kbx?
+            install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
+                                        default=C.GALAXY_DISABLE_GPG_VERIFY,
+                                        help=f'{context}Disable GPG signature verification when installing collections from a Galaxy server')
+            install_parser.add_argument('--signature', dest='signatures', action='append',
+                                        help=f'{context}An additional signature source to verify the authenticity of the MANIFEST.json before '
+                                             'installing the collection from a Galaxy server. Use in conjunction with a positional '
+                                             'collection name (mutually exclusive with --requirements-file).')
+            install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
+                                        help=context + valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
+            install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+                                        help=context + ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
+                                        choices=list(GPG_ERROR_MAP.keys()))
+            install_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
+                                        help=f'{context}Install collection artifacts (tarballs) without contacting any distribution servers. '
+                                             'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
+                                        )
 
     def add_build_options(self, parser, parents=None):
         build_parser = parser.add_parser('build', parents=parents,
@@ -1348,6 +1359,15 @@ class GalaxyCLI(CLI):
 
                 galaxy_args = self._raw_args
                 will_install_collections = self._implicit_role and '-p' not in galaxy_args and '--roles-path' not in galaxy_args
+                if self._implicit_role and '-p' in galaxy_args and '--roles-path' not in galaxy_args:
+                    ambiguous_path_type = (
+                        "Using the --roles-path shorthand -p without the positional argument role or collection is deprecated. "
+                        "Use -p with one of the positional arguments to install requirements of a specific type to the path, "
+                        "or to install collections and roles together use --collections-path or --roles-path to remove ambiguity."
+                    )
+                    display.deprecated(ambiguous_path_type, version='2.19',)
+                else:
+                    ambiguous_path_type = None
 
                 requirements = self._parse_requirements_file(
                     requirements_file,
@@ -1358,15 +1378,13 @@ class GalaxyCLI(CLI):
 
                 # We can only install collections and roles at the same time if the type wasn't specified and the -p
                 # argument was not used. If collections are present in the requirements then at least display a msg.
-                if requirements['collections'] and (not self._implicit_role or '-p' in galaxy_args or
-                                                    '--roles-path' in galaxy_args):
-
+                if requirements['collections'] and (not self._implicit_role or ambiguous_path_type):
                     # We only want to display a warning if 'ansible-galaxy install -r ... -p ...'. Other cases the user
                     # was explicit about the type and shouldn't care that collections were skipped.
                     display_func = display.warning if self._implicit_role else display.vvv
                     display_func(two_type_warning.format('collection'))
                 else:
-                    collection_path = self._get_default_collection_path()
+                    collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
                     collection_requirements = requirements['collections']
             else:
                 # roles were specified directly, so we'll just go out grab them
@@ -1409,9 +1427,8 @@ class GalaxyCLI(CLI):
                 )
             raise
 
-        # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
-        allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
-        upgrade = context.CLIARGS.get('upgrade', False)
+        allow_pre_release = context.CLIARGS['allow_pre_release']
+        upgrade = context.CLIARGS['upgrade']
 
         collections_path = C.COLLECTIONS_PATHS
         if (
@@ -1433,7 +1450,7 @@ class GalaxyCLI(CLI):
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
             disable_gpg_verify=disable_gpg_verify,
-            offline=context.CLIARGS.get('offline', False),
+            offline=context.CLIARGS['offline'],
         )
 
         return 0
