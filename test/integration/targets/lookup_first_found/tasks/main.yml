@@ -102,3 +102,41 @@
 
 - assert:
     that: "no_terms|first == '/etc/hosts'"
+
+- name: handle templatable dictionary entries
+  block:
+
+  - name: Load variables specific for OS family
+    assert:
+      that:
+        - "{{item}} is file"
+    with_first_found:
+      - files:
+          - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalid var, should be skipped
+          - "{{ansible_lsb.id}}-{{ansible_lsb.major_release}}.yml"
+          - "{{ansible_distribution}}-{{ansible_distribution_major_version}}.yml"
+          - itworks.yml
+        paths:
+          - "{{role_path}}/vars"
+
+  - name: Load variables specific for OS family, but now as list of dicts
+    assert:
+      that:
+        - "{{item}} is file"
+    with_first_found:
+      - files:
+          - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalidvar, should be skipped
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - "{{ansible_lsb.id}}-{{ansible_lsb.major_release}}.yml"
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - "{{ansible_distribution}}-{{ansible_distribution_major_version}}.yml"
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - itworks.yml
+        paths:
+          - "{{role_path}}/vars"
