@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test - Removed test remotes: rhel/8.7, rhel/9.1"
