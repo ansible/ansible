@@ -33,7 +33,7 @@ class ModuleDocFragment(object):
           - Configure the result format to be more readable
           - When O(result_format) is set to V(yaml) this option defaults to V(True), and defaults
             to V(False) when configured to V(json).
-          - Setting this option to V(true) will force V(json) and V(yaml) results to always be pretty
+          - Setting this option to V(True) will force V(json) and V(yaml) results to always be pretty
             printed regardless of verbosity.
           - When set to V(True) and used with the V(yaml) result format, this option will
             modify module responses in an attempt to produce a more human friendly output at the expense
