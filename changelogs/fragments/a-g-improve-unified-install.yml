@@ -1,7 +1,6 @@
 minor_changes:
 - >-
-  ``ansible-galaxy install`` - when installing roles and collections from a ``-r``/``--role-file``,
-  allow all collection command line options except ``--requirements-file``.
+  ``ansible-galaxy install`` - allow all collection command line options when installing roles and collections from a requirements file.
 deprecated_features:
 - >-
   ``ansible-galaxy install`` - deprecate the ``--roles-path`` alias ``-p`` since the path type may be ambiguous.

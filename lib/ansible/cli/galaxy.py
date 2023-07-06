@@ -519,8 +519,11 @@ class GalaxyCLI(CLI):
 
         install_collections_with_roles = False
         if galaxy_type != 'collection':
-            install_parser.add_argument('-r', '--role-file', dest='requirements',
-                                        help='A file containing a list of roles to be installed.')
+            if self._implicit_role:
+                req_help = 'A file containing a list of collections or roles (or both) to be installed.'
+            else:
+                req_help = 'A file containing a list of roles to be installed.'
+            install_parser.add_argument('-r', '--role-file', '--requirements-file', dest='requirements', help=req_help)
 
             r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
             contains_r = bool([a for a in self._raw_args if r_re.match(a)])
@@ -544,7 +547,7 @@ class GalaxyCLI(CLI):
         if galaxy_type == 'collection' or install_collections_with_roles:
             context = ''
             if install_collections_with_roles:
-                context = '(collections only) '
+                context = '(collection option) '
             install_parser.add_argument(*collection_path_args, dest='collections_path',
                                         default=self._get_default_collection_path(),
                                         help='The path to the directory containing your collections.')
