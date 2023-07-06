@@ -31,11 +31,6 @@ from termios import TIOCGWINSZ
 # CAUTION: Avoid third-party imports in this module whenever possible.
 #          Any third-party imports occurring here will result in an error if they are vendored by ansible-core.
 
-try:
-    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.10
-except ImportError:
-    TypeGuard = None
-
 from .locale_util import (
     LOCALE_WARNING,
     CONFIGURED_LOCALE,
@@ -1157,7 +1152,7 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     return expected_executable
 
 
-def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[c.Sequence[C]]:
+def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
     """
     Raises an exception if any item in the given sequence does not match the specified guard type.
     Use with assert so that type checkers are aware of the type guard.

@@ -33,27 +33,18 @@ except ImportError:
         __import__(name)
         return sys.modules[name]
 
-try:
-    from importlib import reload as reload_module
-except ImportError:
-    # 2.7 has a global reload function instead...
-    reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
+from importlib import reload as reload_module
 
 try:
-    try:
-        # Available on Python >= 3.11
-        # We ignore the import error that will trigger when running mypy with
-        # older Python versions.
-        from importlib.resources.abc import TraversableResources  # type: ignore[import]
-    except ImportError:
-        # Used with Python 3.9 and 3.10 only
-        # This member is still available as an alias up until Python 3.14 but
-        # is deprecated as of Python 3.12.
-        from importlib.abc import TraversableResources  # deprecated: description='TraversableResources move' python_version='3.10'
+    # Available on Python >= 3.11
+    # We ignore the import error that will trigger when running mypy with
+    # older Python versions.
+    from importlib.resources.abc import TraversableResources  # type: ignore[import]
 except ImportError:
-    # Python < 3.9
-    # deprecated: description='TraversableResources fallback' python_version='3.8'
-    TraversableResources = object  # type: ignore[assignment,misc]
+    # Used with Python 3.10 only
+    # This member is still available as an alias up until Python 3.14 but
+    # is deprecated as of Python 3.12.
+    from importlib.abc import TraversableResources  # deprecated: description='TraversableResources move' python_version='3.10'
 
 try:
     from importlib.util import find_spec, spec_from_loader
@@ -79,24 +70,12 @@ except ImportError:
     _meta_yml_to_dict = None
 
 
-if not hasattr(__builtins__, 'ModuleNotFoundError'):
-    # this was introduced in Python 3.6
-    ModuleNotFoundError = ImportError
-
-
 _VALID_IDENTIFIER_STRING_REGEX = re.compile(
     ''.join((_VALID_IDENTIFIER_REGEX, r'\Z')),
 )
 
 
-try:  # NOTE: py3/py2 compat
-    # py2 mypy can't deal with try/excepts
-    is_python_identifier = str.isidentifier  # type: ignore[attr-defined]
-except AttributeError:  # Python 2
-    def is_python_identifier(self):  # type: (str) -> bool
-        """Determine whether the given string is a Python identifier."""
-        # Ref: https://stackoverflow.com/a/55802320/595220
-        return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, self))
+is_python_identifier = str.isidentifier  # type: ignore[attr-defined]
 
 
 PB_EXTENSIONS = ('.yml', '.yaml')
