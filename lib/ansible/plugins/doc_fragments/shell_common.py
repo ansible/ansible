@@ -35,11 +35,11 @@ options:
   system_tmpdirs:
     description:
        - "List of valid system temporary directories on the managed machine for Ansible to validate
-         C(remote_tmp) against, when specific permissions are needed.  These must be world
+         O(remote_tmp) against, when specific permissions are needed.  These must be world
          readable, writable, and executable. This list should only contain directories which the
          system administrator has pre-created with the proper ownership and permissions otherwise
          security issues can arise."
-       - When C(remote_tmp) is required to be a system temp dir and it does not match any in the list,
+       - When O(remote_tmp) is required to be a system temp dir and it does not match any in the list,
          the first one from the list will be used instead.
     default: [ /var/tmp, /tmp ]
     type: list

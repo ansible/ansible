@@ -29,7 +29,7 @@ options:
     description:
     - Path of a Jinja2 formatted template on the Ansible controller.
     - This can be a relative or an absolute path.
-    - The file must be encoded with C(utf-8) but I(output_encoding) can be used to control the encoding of the output
+    - The file must be encoded with C(utf-8) but O(output_encoding) can be used to control the encoding of the output
       template.
     type: path
     required: yes
@@ -82,14 +82,14 @@ options:
   trim_blocks:
     description:
     - Determine when newlines should be removed from blocks.
-    - When set to C(yes) the first newline after a block is removed (block, not variable tag!).
+    - When set to V(yes) the first newline after a block is removed (block, not variable tag!).
     type: bool
     default: yes
     version_added: '2.4'
   lstrip_blocks:
     description:
     - Determine when leading spaces and tabs should be stripped.
-    - When set to C(yes) leading spaces and tabs are stripped from the start of a line to a block.
+    - When set to V(yes) leading spaces and tabs are stripped from the start of a line to a block.
     type: bool
     default: no
     version_added: '2.6'
@@ -102,7 +102,7 @@ options:
     default: yes
   output_encoding:
     description:
-    - Overrides the encoding used to write the template file defined by C(dest).
+    - Overrides the encoding used to write the template file defined by O(dest).
     - It defaults to C(utf-8), but any encoding supported by python can be used.
     - The source template file must always be encoded using C(utf-8), for homogeneity.
     type: str
@@ -110,10 +110,10 @@ options:
     version_added: '2.7'
 notes:
 - Including a string that uses a date in the template will result in the template being marked 'changed' each time.
-- Since Ansible 0.9, templates are loaded with C(trim_blocks=True).
+- Since Ansible 0.9, templates are loaded with O(trim_blocks=True).
 - >
   Also, you can override jinja2 settings by adding a special header to template file.
-  i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
+  that is C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
   which changes the variable interpolation markers to C([% var %]) instead of C({{ var }}).
   This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
 - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>)

@@ -19,17 +19,17 @@ options:
     - The permissions the resulting filesystem object should have.
     - For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must give Ansible enough information to parse them correctly.
-      For consistent results, quote octal numbers (for example, C('644') or C('1777')) so Ansible receives
+      For consistent results, quote octal numbers (for example, V('644') or V('1777')) so Ansible receives
       a string and can do its own conversion from string into number.
-      Adding a leading zero (for example, C(0755)) works sometimes, but can fail in loops and some other circumstances.
+      Adding a leading zero (for example, V(0755)) works sometimes, but can fail in loops and some other circumstances.
     - Giving Ansible a number without following either of these rules will end up with a decimal
       number which will have unexpected results.
-    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
-      C(u=rw,g=r,o=r)).
-    - If C(mode) is not specified and the destination filesystem object B(does not) exist, the default C(umask) on the system will be used
+    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, V(u+rwx) or
+      V(u=rw,g=r,o=r)).
+    - If O(mode) is not specified and the destination filesystem object B(does not) exist, the default C(umask) on the system will be used
       when setting the mode for the newly created filesystem object.
-    - If C(mode) is not specified and the destination filesystem object B(does) exist, the mode of the existing filesystem object will be used.
-    - Specifying C(mode) is the best way to ensure filesystem objects are created with the correct permissions.
+    - If O(mode) is not specified and the destination filesystem object B(does) exist, the mode of the existing filesystem object will be used.
+    - Specifying O(mode) is the best way to ensure filesystem objects are created with the correct permissions.
       See CVE-2020-1736 for further details.
     type: raw
   owner:
@@ -49,24 +49,24 @@ options:
   seuser:
     description:
     - The user part of the SELinux filesystem object context.
-    - By default it uses the C(system) policy, where applicable.
-    - When set to C(_default), it will use the C(user) portion of the policy if available.
+    - By default it uses the V(system) policy, where applicable.
+    - When set to V(_default), it will use the C(user) portion of the policy if available.
     type: str
   serole:
     description:
     - The role part of the SELinux filesystem object context.
-    - When set to C(_default), it will use the C(role) portion of the policy if available.
+    - When set to V(_default), it will use the C(role) portion of the policy if available.
     type: str
   setype:
     description:
     - The type part of the SELinux filesystem object context.
-    - When set to C(_default), it will use the C(type) portion of the policy if available.
+    - When set to V(_default), it will use the C(type) portion of the policy if available.
     type: str
   selevel:
     description:
     - The level part of the SELinux filesystem object context.
     - This is the MLS/MCS attribute, sometimes known as the C(range).
-    - When set to C(_default), it will use the C(level) portion of the policy if available.
+    - When set to V(_default), it will use the C(level) portion of the policy if available.
     type: str
   unsafe_writes:
     description:
