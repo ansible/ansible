@@ -11,7 +11,6 @@ import functools
 import hashlib
 import json
 import os
-import socket
 import stat
 import tarfile
 import time
