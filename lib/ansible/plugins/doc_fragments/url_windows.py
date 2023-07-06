@@ -19,9 +19,9 @@ options:
   follow_redirects:
     description:
     - Whether or the module should follow redirects.
-    - C(all) will follow all redirect.
-    - C(none) will not follow any redirect.
-    - C(safe) will follow only "safe" redirects, where "safe" means that the
+    - V(all) will follow all redirect.
+    - V(none) will not follow any redirect.
+    - V(safe) will follow only "safe" redirects, where "safe" means that the
       client is only doing a C(GET) or C(HEAD) on the URI to which it is being
       redirected.
     - When following a redirected URL, the C(Authorization) header and any
@@ -48,7 +48,7 @@ options:
     description:
     - Specify how many times the module will redirect a connection to an
       alternative URI before the connection fails.
-    - If set to C(0) or I(follow_redirects) is set to C(none), or C(safe) when
+    - If set to V(0) or O(follow_redirects) is set to V(none), or V(safe) when
       not doing a C(GET) or C(HEAD) it prevents all redirection.
     default: 50
     type: int
@@ -56,12 +56,12 @@ options:
     description:
     - Specifies how long the request can be pending before it times out (in
       seconds).
-    - Set to C(0) to specify an infinite timeout.
+    - Set to V(0) to specify an infinite timeout.
     default: 30
     type: int
   validate_certs:
     description:
-    - If C(no), SSL certificates will not be validated.
+    - If V(no), SSL certificates will not be validated.
     - This should only be used on personally controlled sites using self-signed
       certificates.
     default: yes
@@ -74,12 +74,12 @@ options:
       C(Cert:\CurrentUser\My\<thumbprint>).
     - The WinRM connection must be authenticated with C(CredSSP) or C(become)
       is used on the task if the certificate file is not password protected.
-    - Other authentication types can set I(client_cert_password) when the cert
+    - Other authentication types can set O(client_cert_password) when the cert
       is password protected.
     type: str
   client_cert_password:
     description:
-    - The password for I(client_cert) if the cert is password protected.
+    - The password for O(client_cert) if the cert is password protected.
     type: str
   force_basic_auth:
     description:
@@ -96,14 +96,14 @@ options:
     type: str
   url_password:
     description:
-    - The password for I(url_username).
+    - The password for O(url_username).
     type: str
   use_default_credential:
     description:
     - Uses the current user's credentials when authenticating with a server
       protected with C(NTLM), C(Kerberos), or C(Negotiate) authentication.
     - Sites that use C(Basic) auth will still require explicit credentials
-      through the I(url_username) and I(url_password) options.
+      through the O(url_username) and O(url_password) options.
     - The module will only have access to the user's credentials if using
       C(become) with a password, you are connecting with SSH using a password,
       or connecting with WinRM using C(CredSSP) or C(Kerberos with delegation).
@@ -114,14 +114,14 @@ options:
     type: bool
   use_proxy:
     description:
-    - If C(no), it will not use the proxy defined in IE for the current user.
+    - If V(no), it will not use the proxy defined in IE for the current user.
     default: yes
     type: bool
   proxy_url:
     description:
     - An explicit proxy to use for the request.
-    - By default, the request will use the IE defined proxy unless I(use_proxy)
-      is set to C(no).
+    - By default, the request will use the IE defined proxy unless O(use_proxy)
+      is set to V(no).
     type: str
   proxy_username:
     description:
@@ -129,14 +129,14 @@ options:
     type: str
   proxy_password:
     description:
-    - The password for I(proxy_username).
+    - The password for O(proxy_username).
     type: str
   proxy_use_default_credential:
     description:
     - Uses the current user's credentials when authenticating with a proxy host
       protected with C(NTLM), C(Kerberos), or C(Negotiate) authentication.
     - Proxies that use C(Basic) auth will still require explicit credentials
-      through the I(proxy_username) and I(proxy_password) options.
+      through the O(proxy_username) and O(proxy_password) options.
     - The module will only have access to the user's credentials if using
       C(become) with a password, you are connecting with SSH using a password,
       or connecting with WinRM using C(CredSSP) or C(Kerberos with delegation).
