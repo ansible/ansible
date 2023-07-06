@@ -494,7 +494,8 @@ class GalaxyCLI(CLI):
         install_description = 'Install {0}(s) from file(s), URL(s) or Ansible Galaxy'.format(galaxy_type)
         if self._implicit_role:
             install_description += (
-                '. Roles and collections can be installed together using a --role-file.'
+                '. Roles and collections can be installed together using a --role-file. '
+                'See collection specific options with "ansible-galaxy install -r requirements.yml --help".'
             )
         install_parser = parser.add_parser('install', parents=parents, description=install_description)
         install_parser.set_defaults(func=self.execute_install)
