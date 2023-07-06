@@ -551,7 +551,7 @@ class GalaxyCLI(CLI):
                 context = '(collection option) '
             install_parser.add_argument(*collection_path_args, dest='collections_path',
                                         default=self._get_default_collection_path(),
-                                        help='The path to the directory containing your collections.')
+                                        help=f'{context}The path to the directory containing your collections.')
             install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
                                         help=f'{context}Include pre-release versions. Semantic versioning pre-releases are ignored by default')
             install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
