@@ -109,7 +109,7 @@
   - name: Load variables specific for OS family
     assert:
       that:
-        - "{{item}} is file"
+        - "{{item|quote}} is file"
     with_first_found:
       - files:
           - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalid var, should be skipped
@@ -122,7 +122,7 @@
   - name: Load variables specific for OS family, but now as list of dicts
     assert:
       that:
-        - "{{item}} is file"
+        - "{{item|quote}} is file"
     with_first_found:
       - files:
           - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalidvar, should be skipped
