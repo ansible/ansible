@@ -127,14 +127,20 @@ class ImportTest(SanityMultipleVersion):
             ('plugin', _get_module_test(False)),
         ):
             if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
-                continue
+                # Plugins are not supported on remote-only Python versions.
+                # However, the collection loader is used by the import sanity test and unit tests on remote-only Python versions.
+                # To support this, it is tested as a plugin, but using a venv which installs no requirements.
+                # Filtering of paths relevant to the Python version tested has already been performed by filter_remote_targets.
+                venv_type = 'empty'
+            else:
+                venv_type = import_type
 
             data = '\n'.join([path for path in paths if test(path)])
 
             if not data and not args.prime_venvs:
                 continue
 
-            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{import_type}', coverage=args.coverage, minimize=True)
+            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{venv_type}', coverage=args.coverage, minimize=True)
 
             if not virtualenv_python:
                 display.warning(f'Skipping sanity test "{self.name}" on Python {python.version} due to missing virtual environment support.')
