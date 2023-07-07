@@ -95,6 +95,18 @@ class PkgMgrFactCollector(BaseFactCollector):
                         pkg_mgr_name = 'dnf'
             except ValueError:
                 pkg_mgr_name = 'dnf'
+        elif collected_facts['ansible_distribution'] == 'Kylin Linux Advanced Server':
+            try:
+                major_version = collected_facts['ansible_distribution_major_version']
+                major_version = major_version[1:] if major_version[0] == 'V' else major_version
+                if int(major_version) < 10:
+                    if self._pkg_mgr_exists('yum'):
+                        pkg_mgr_name = 'yum'
+                else:
+                    if self._pkg_mgr_exists('dnf'):
+                        pkg_mgr_name = 'dnf'
+            except ValueError:
+                pkg_mgr_name = 'dnf'
         else:
             # If it's not one of the above and it's Red Hat family of distros, assume
             # RHEL or a clone. For versions of RHEL < 8 that Ansible supports, the
