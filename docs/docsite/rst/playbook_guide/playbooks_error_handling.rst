@@ -116,13 +116,13 @@ You can also combine multiple conditions for failure. This task will fail if bot
       register: result
       failed_when:
         - result.rc == 0
-        - '"No such" not in result.stdout'
+        - '"No such" not in result.stderr'
 
 If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to
 
 .. code-block:: yaml
 
-      failed_when: result.rc == 0 or "No such" not in result.stdout
+      failed_when: result.rc == 0 or "No such" not in result.stderr
 
 If you have too many conditions to fit neatly into one line, you can split it into a multi-line YAML value with ``>``.
 
@@ -132,7 +132,7 @@ If you have too many conditions to fit neatly into one line, you can split it in
       ansible.builtin.shell: "./myBinary"
       register: ret
       failed_when: >
-        ("No such file or directory" in ret.stdout) or
+        ("No such file or directory" in ret.stderr) or
         (ret.stderr != '') or
         (ret.rc == 10)
 
