@@ -1,53 +1,80 @@
-- name: add content to file without blank lines
+- name: Create insert_wrapping_with_blank_lines test file
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: add content to file with blank lines wrapping
   blockinfile:
-    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
-    create: true
-    block: |
-      Content from block (without blank lines wrapping)
-
-- name: get file content after inserting without blank lines
-  stat:
-    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
-  register: file_no_blank_lines
-
-- name: check content is the expected one
-  assert:
-    that:
-      - file_no_blank_lines.stat.checksum == "66ca3e896cae76e64e3fe4f03b42fb0e7a8093be"
-
-- name: check that removing a block does not consider the wrap_with_blank_lines attributes
-  blockinfile:
-    state: absent
-    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
     wrap_with_blank_lines: true
+    insertafter: "line1"
     block: |
-      Content from block (without blank lines wrapping)
-  
-- name: get file content after removing content
-  stat:
-    path: "{{ remote_tmp_dir_test }}/file_no_blank_lines_wrapping.txt"
-  register: file_no_blank_lines_after_removal
+      line1.5
+  register: insert_wrapped_by_blank_lines
 
-- name: check content is the expected one after removal
-  assert:
-    that:
-      - file_no_blank_lines_after_removal.stat.checksum == "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-
-- name: add content to file with blank lines
+- name: add content to file with blank lines wrapping (again)
   blockinfile:
-    path: "{{ remote_tmp_dir_test }}/file_with_blank_lines_wrapping.txt"
-    create: true
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
     wrap_with_blank_lines: true
-    insertafter: "Some content"
+    insertafter: "line1"
     block: |
-      Content from block (with blank lines wrapping)
+      line1.5
+  register: insert_wrapped_by_blank_lines_again
 
-- name: get file content after removing content
+- name: get file content after adding content with blank lines
   stat:
-    path: "{{ remote_tmp_dir_test }}/file_with_blank_lines_wrapping.txt"
-  register: file_with_blank_lines
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
+  register: wrapped_by_blank_lines
 
 - name: check content is the expected one after inserting with blank lines wrapping
   assert:
     that:
-      - file_with_blank_lines.stat.checksum == "d42fa3473b9f1609821b5989b4cb41af38823e72"
+      - insert_wrapped_by_blank_lines is changed
+      - insert_wrapped_by_blank_lines_again is not changed
+      - wrapped_by_blank_lines.stat.checksum == "043193159b0f2821bd0ca48322721f49f45ff24a"
+
+- name: add content to file without blank lines wrapping
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
+    wrap_with_blank_lines: false
+    marker: "{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: insert_unwrapped_by_blank_lines
+
+- name: get file content after adding content without blank lines
+  stat:
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
+  register: unwrapped_by_blank_lines
+
+- name: check content is the expected one after inserting without blank lines wrapping
+  assert:
+    that:
+      - insert_unwrapped_by_blank_lines is changed
+      - unwrapped_by_blank_lines.stat.checksum == "2eb09ca625bfa4a05859b7cb8708069cbdaf0110"
+
+- name: add blank line wrapping to existing block
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
+    wrap_with_blank_lines: true
+    marker: "{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: add_blank_lines_wrapping_to_existing_block
+
+
+- name: get file content after wrapping existing block with blank lines
+  stat:
+    path: "{{ remote_tmp_dir_test }}/wrap_blank_lines.txt"
+  register: blank_lines_wrap_added
+
+- name: check content is the expected one after wrapping existing block with blank lines
+  assert:
+    that:
+      - add_blank_lines_wrapping_to_existing_block is changed
+      - blank_lines_wrap_added.stat.checksum == "6548c6c54a8b63671a09ac1cbd8f0c93ca3a58a6"

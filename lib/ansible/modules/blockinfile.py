@@ -298,7 +298,6 @@ def main():
     else:
         insertre = None
 
-
     marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
     marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     if present and block:
@@ -356,7 +355,7 @@ def main():
         if n0 == 0 or lines[n0 - 1] != b(os.linesep):
             lines[n0:n0] = wrap_blank_line
             n0 += 1
-    
+
     # Insert the block
     lines[n0:n0] = blocklines
 
@@ -365,7 +364,6 @@ def main():
     # or if the line right after is not a blank line
     if params['wrap_with_blank_lines']:
         line_after_block = n0 + len(blocklines)
-
         if line_after_block >= len(lines) or lines[line_after_block] != b(os.linesep):
             lines[line_after_block:line_after_block] = wrap_blank_line
 
