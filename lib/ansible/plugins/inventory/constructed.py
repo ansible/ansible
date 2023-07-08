@@ -13,7 +13,7 @@ DOCUMENTATION = '''
         - The Jinja2 conditionals that qualify a host for membership.
         - The Jinja2 expressions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
-        - When I(strict) is False, failed expressions will be ignored (assumes vars were missing).
+        - When O(strict) is False, failed expressions will be ignored (assumes vars were missing).
     options:
         plugin:
             description: token that ensures this is a source file for the 'constructed' plugin.

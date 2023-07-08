@@ -16,7 +16,7 @@ DOCUMENTATION:
       elements: dictionary
       required: true
     recursive:
-      description: If C(True), merge elements recursively.
+      description: If V(True), merge elements recursively.
       type: bool
       default: false
     list_merge:

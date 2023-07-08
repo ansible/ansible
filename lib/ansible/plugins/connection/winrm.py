@@ -39,7 +39,7 @@ DOCUMENTATION = """
             - name: remote_user
         type: str
       remote_password:
-        description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+        description: Authentication password for the O(remote_user). Can be supplied as CLI option.
         vars:
             - name: ansible_password
             - name: ansible_winrm_pass
@@ -61,8 +61,8 @@ DOCUMENTATION = """
       scheme:
         description:
             - URI scheme to use
-            - If not set, then will default to C(https) or C(http) if I(port) is
-              C(5985).
+            - If not set, then will default to V(https) or V(http) if O(port) is
+              V(5985).
         choices: [http, https]
         vars:
           - name: ansible_winrm_scheme
@@ -119,7 +119,7 @@ DOCUMENTATION = """
             - The managed option means Ansible will obtain kerberos ticket.
             - While the manual one means a ticket must already have been obtained by the user.
             - If having issues with Ansible freezing when trying to obtain the
-              Kerberos ticket, you can either set this to C(manual) and obtain
+              Kerberos ticket, you can either set this to V(manual) and obtain
               it outside Ansible or install C(pexpect) through pip and try
               again.
         choices: [managed, manual]
