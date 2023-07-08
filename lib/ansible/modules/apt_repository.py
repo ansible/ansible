@@ -54,19 +54,19 @@ options:
         aliases: [ update-cache ]
     update_cache_retries:
         description:
-        - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+        - Amount of retries if the cache update fails. Also see O(update_cache_retry_max_delay).
         type: int
         default: 5
         version_added: '2.10'
     update_cache_retry_max_delay:
         description:
-        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+        - Use an exponential backoff delay for each retry (see O(update_cache_retries)) up to this max delay in seconds.
         type: int
         default: 12
         version_added: '2.10'
     validate_certs:
         description:
-            - If C(false), SSL certificates for the target repo will not be validated. This should only be used
+            - If V(false), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
@@ -91,7 +91,7 @@ options:
               Without this library, the module does not work.
             - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
             - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
-               the system Python, set I(install_python_apt=false) and ensure that the Python apt library
+               the system Python, set O(install_python_apt=false) and ensure that the Python apt library
                for your Python version is installed some other way.
         type: bool
         default: true

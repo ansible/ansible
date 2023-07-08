@@ -30,7 +30,7 @@ options:
     patterns:
         default: []
         description:
-            - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
+            - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
             - The pattern is matched against the file base name, excluding the directory.
@@ -40,14 +40,14 @@ options:
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
-            - Defaults to C(*) when I(use_regex=False), or C(.*) when I(use_regex=True).
+            - Defaults to V(*) when O(use_regex=False), or V(.*) when O(use_regex=True).
         type: list
         aliases: [ pattern ]
         elements: str
     excludes:
         description:
-            - One or more (shell or regex) patterns, which type is controlled by I(use_regex) option.
-            - Items whose basenames match an I(excludes) pattern are culled from I(patterns) matches.
+            - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
+            - Items whose basenames match an O(excludes) pattern are culled from O(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
         aliases: [ exclude ]
@@ -56,17 +56,17 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
-            - If I(read_whole_file) is C(true) it matches against the beginning of the line (uses
-              C(re.match())). If I(read_whole_file) is C(false), it searches anywhere for that pattern
-              (uses C(re.search())).
-            - Works only when I(file_type) is C(file).
+            - If O(read_whole_file) is V(true) it matches against the beginning of the line (uses
+              V(re.match(\))). If O(read_whole_file) is V(false), it searches anywhere for that pattern
+              (uses V(re.search(\))).
+            - Works only when O(file_type) is V(file).
         type: str
     read_whole_file:
         description:
             - When doing a C(contains) search, determines whether the whole file should be read into
               memory or if the regex should be applied to the file line-by-line.
             - Setting this to C(true) can have performance and memory implications for large files.
-            - This uses C(re.search()) instead of C(re.match()).
+            - This uses V(re.search(\)) instead of V(re.match(\)).
         type: bool
         default: false
         version_added: "2.11"
@@ -105,29 +105,29 @@ options:
         default: mtime
     hidden:
         description:
-            - Set this to C(true) to include hidden files, otherwise they will be ignored.
+            - Set this to V(true) to include hidden files, otherwise they will be ignored.
         type: bool
         default: no
     follow:
         description:
-            - Set this to C(true) to follow symlinks in path for systems with python 2.6+.
+            - Set this to V(true) to follow symlinks in path for systems with python 2.6+.
         type: bool
         default: no
     get_checksum:
         description:
-            - Set this to C(true) to retrieve a file's SHA1 checksum.
+            - Set this to V(true) to retrieve a file's SHA1 checksum.
         type: bool
         default: no
     use_regex:
         description:
-            - If C(false), the patterns are file globs (shell).
-            - If C(true), they are python regexes.
+            - If V(false), the patterns are file globs (shell).
+            - If V(true), they are python regexes.
         type: bool
         default: no
     depth:
         description:
             - Set the maximum number of levels to descend into.
-            - Setting recurse to C(false) will override this value, which is effectively depth 1.
+            - Setting recurse to V(false) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
         version_added: "2.6"

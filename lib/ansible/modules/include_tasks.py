@@ -23,14 +23,14 @@ options:
     version_added: '2.7'
   apply:
     description:
-      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+      - Accepts a hash of task keywords (for example C(tags), C(become)) that will be applied to the tasks within the include.
     type: str
     version_added: '2.7'
   free-form:
     description:
       - |
         Specifies the name of the imported file directly without any other option C(- include_tasks: file.yml).
-      - Is the equivalent of specifying an argument for the I(file) parameter.
+      - Is the equivalent of specifying an argument for the O(file) parameter.
       - Most keywords, including loop, with_items, and conditionals, apply to this statement unlike M(ansible.builtin.import_tasks).
       - The do-until loop is not supported.
 extends_documentation_fragment:

@@ -44,7 +44,7 @@ options:
     description:
       - The command to execute or, if env is set, the value of environment variable.
       - The command should not contain line breaks.
-      - Required if I(state=present).
+      - Required if O(state=present).
     type: str
     aliases: [ value ]
   state:
@@ -58,42 +58,42 @@ options:
       - If specified, uses this file instead of an individual user's crontab.
         The assumption is that this file is exclusively managed by the module,
         do not use if the file contains multiple entries, NEVER use for /etc/crontab.
-      - If this is a relative path, it is interpreted with respect to I(/etc/cron.d).
+      - If this is a relative path, it is interpreted with respect to C(/etc/cron.d).
       - Many linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-      - Using this parameter requires you to specify the I(user) as well, unless I(state) is not I(present).
-      - Either this parameter or I(name) is required
+      - Using this parameter requires you to specify the O(user) as well, unless O(state) is not V(present).
+      - Either this parameter or O(name) is required
     type: path
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
-        The location of the backup is returned in the C(backup_file) variable by this module.
+        The location of the backup is returned in the RV(ignore:backup_file) variable by this module.
     type: bool
     default: no
   minute:
     description:
-      - Minute when the job should run (C(0-59), C(*), C(*/2), and so on).
+      - Minute when the job should run (V(0-59), V(*), V(*/2), and so on).
     type: str
     default: "*"
   hour:
     description:
-      - Hour when the job should run (C(0-23), C(*), C(*/2), and so on).
+      - Hour when the job should run (V(0-23), V(*), V(*/2), and so on).
     type: str
     default: "*"
   day:
     description:
-      - Day of the month the job should run (C(1-31), C(*), C(*/2), and so on).
+      - Day of the month the job should run (V(1-31), V(*), V(*/2), and so on).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run (C(1-12), C(*), C(*/2), and so on).
+      - Month of the year the job should run (V(1-12), V(*), V(*/2), and so on).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run (C(0-6) for Sunday-Saturday, C(*), and so on).
+      - Day of the week that the job should run (V(0-6) for Sunday-Saturday, V(*), and so on).
     type: str
     default: "*"
     aliases: [ dow ]
@@ -106,7 +106,7 @@ options:
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab.
-      - Only has effect if I(state=present).
+      - Only has effect if O(state=present).
     type: bool
     default: no
     version_added: "2.0"
@@ -114,19 +114,19 @@ options:
     description:
       - If set, manages a crontab's environment variable.
       - New variables are added on top of crontab.
-      - I(name) and I(value) parameters are the name and the value of environment variable.
+      - O(name) and O(value) parameters are the name and the value of environment variable.
     type: bool
     default: false
     version_added: "2.1"
   insertafter:
     description:
-      - Used with I(state=present) and I(env).
+      - Used with O(state=present) and O(env).
       - If specified, the environment variable will be inserted after the declaration of specified environment variable.
     type: str
     version_added: "2.1"
   insertbefore:
     description:
-      - Used with I(state=present) and I(env).
+      - Used with O(state=present) and O(env).
       - If specified, the environment variable will be inserted before the declaration of specified environment variable.
     type: str
     version_added: "2.1"

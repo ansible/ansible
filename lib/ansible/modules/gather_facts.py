@@ -33,7 +33,7 @@ attributes:
     action:
         support: full
     async:
-        details: while this action does not support the task 'async' keywords it can do its own parallel processing using the C(parallel) option.
+        details: while this action does not support the task 'async' keywords it can do its own parallel processing using the O(parallel) option.
         support: none
     bypass_host_loop:
         support: none

@@ -17,17 +17,17 @@ module: unarchive
 version_added: '1.4'
 short_description: Unpacks an archive after (optionally) copying it from the local machine
 description:
-     - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
+     - The M(ansible.builtin.unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
-     - Set C(remote_src=yes) to unpack an archive which already exists on the target.
-     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set C(remote_src=yes).
+     - Set O(remote_src=yes) to unpack an archive which already exists on the target.
+     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set O(remote_src=yes).
      - For Windows targets, use the M(community.windows.win_unzip) module instead.
 options:
   src:
     description:
-      - If C(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If C(remote_src=yes), path on the
+      - If O(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If O(remote_src=yes), path on the
         target server to existing archive file to unpack.
-      - If C(remote_src=yes) and C(src) contains C(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
+      - If O(remote_src=yes) and O(src) contains V(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
         simple cases, for full download support use the M(ansible.builtin.get_url) module.
     type: path
     required: true
@@ -40,14 +40,14 @@ options:
   copy:
     description:
       - If true, the file is copied from local controller to the managed (remote) node, otherwise, the plugin will look for src archive on the managed machine.
-      - This option has been deprecated in favor of C(remote_src).
-      - This option is mutually exclusive with C(remote_src).
+      - This option has been deprecated in favor of O(remote_src).
+      - This option is mutually exclusive with O(remote_src).
     type: bool
     default: yes
   creates:
     description:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
-      - The specified absolute path (file or directory) must be below the base path given with C(dest:).
+      - The specified absolute path (file or directory) must be below the base path given with O(dest).
     type: path
     version_added: "1.6"
   io_buffer_size:
@@ -65,16 +65,16 @@ options:
   exclude:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
-      - Mutually exclusive with C(include).
+      - Mutually exclusive with O(include).
     type: list
     default: []
     elements: str
     version_added: "2.1"
   include:
     description:
-      - List of directory and file entries that you would like to extract from the archive. If C(include)
+      - List of directory and file entries that you would like to extract from the archive. If O(include)
         is not empty, only files listed here will be extracted.
-      - Mutually exclusive with C(exclude).
+      - Mutually exclusive with O(exclude).
     type: list
     default: []
     elements: str
@@ -96,16 +96,16 @@ options:
     version_added: "2.1"
   remote_src:
     description:
-      - Set to C(true) to indicate the archived file is already on the remote system and not local to the Ansible controller.
-      - This option is mutually exclusive with C(copy).
+      - Set to V(true) to indicate the archived file is already on the remote system and not local to the Ansible controller.
+      - This option is mutually exclusive with O(copy).
     type: bool
     default: no
     version_added: "2.2"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
-      - This should only set to C(false) used on personally controlled sites using self-signed certificate.
-      - Prior to 2.2 the code worked as if this was set to C(true).
+      - This should only set to V(false) used on personally controlled sites using self-signed certificate.
+      - Prior to 2.2 the code worked as if this was set to V(true).
     type: bool
     default: yes
     version_added: "2.2"
@@ -188,7 +188,7 @@ dest:
   sample: /opt/software
 files:
   description: List of all the files in the archive.
-  returned: When I(list_files) is True
+  returned: When O(list_files) is V(True)
   type: list
   sample: '["file1", "file2"]'
 gid:
@@ -224,7 +224,7 @@ size:
 src:
   description:
     - The source archive's path.
-    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+    - If O(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
   returned: always
   type: str
   sample: "/home/paul/test.tar.gz"

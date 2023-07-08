@@ -17,7 +17,7 @@ description:
 - Assembles a configuration file from fragments.
 - Often a particular program will take a single configuration file and does not support a
   C(conf.d) style structure where it is easy to build up the configuration
-  from multiple sources. C(assemble) will take a directory of files that can be
+  from multiple sources. M(ansible.builtin.assemble) will take a directory of files that can be
   local or have already been transferred to the system, and concatenate them
   together to produce a destination file.
 - Files are assembled in string sorting order.
@@ -36,7 +36,7 @@ options:
     required: true
   backup:
     description:
-    - Create a backup file (if C(true)), including the timestamp information so
+    - Create a backup file (if V(true)), including the timestamp information so
       you can get the original file back if you somehow clobbered it
       incorrectly.
     type: bool
@@ -48,16 +48,16 @@ options:
     version_added: '1.4'
   remote_src:
     description:
-    - If C(false), it will search for src at originating/master machine.
-    - If C(true), it will go to the remote/target machine for the src.
+    - If V(false), it will search for src at originating/master machine.
+    - If V(true), it will go to the remote/target machine for the src.
     type: bool
     default: yes
     version_added: '1.4'
   regexp:
     description:
-    - Assemble files only if C(regex) matches the filename.
+    - Assemble files only if the given regular expression matches the filename.
     - If not set, all files are assembled.
-    - Every C(\) (backslash) must be escaped as C(\\) to comply to YAML syntax.
+    - Every V(\\) (backslash) must be escaped as V(\\\\) to comply to YAML syntax.
     - Uses L(Python regular expressions,https://docs.python.org/3/library/re.html).
     type: str
   ignore_hidden:
