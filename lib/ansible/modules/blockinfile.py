@@ -283,6 +283,7 @@ def main():
     block = to_bytes(params['block'])
     marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
+    wrap_blank_line = [b(os.linesep)]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
@@ -297,16 +298,13 @@ def main():
     else:
         insertre = None
 
-    wrap_empty_line = b("")
-    if module.boolean(params['wrap_with_blank_lines']):
-        wrap_empty_line = b(os.linesep)
 
     marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
     marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     if present and block:
         if not block.endswith(b(os.linesep)):
             block += b(os.linesep)
-        blocklines = [wrap_empty_line] + [marker0] + block.splitlines(True) + [marker1] + [wrap_empty_line]
+        blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
 
@@ -350,7 +348,27 @@ def main():
         if not lines[n0 - 1].endswith(b(os.linesep)):
             lines[n0 - 1] += b(os.linesep)
 
+    # Before the block: check if the block needs to be padded with blank lines
+    # If yes, we need to add the blank line if we are at the beginning of the file
+    # or if the previous line is not a blank line
+    # In both cases, we need to shift by one on the right the inserting position of the block
+    if params['wrap_with_blank_lines']:
+        if n0 == 0 or lines[n0 - 1] != b(os.linesep):
+            lines[n0:n0] = wrap_blank_line
+            n0 += 1
+    
+    # Insert the block
     lines[n0:n0] = blocklines
+
+    # After the block: check if the block needs to be padded with blank lines
+    # If yes, we need to add the blank line if we are at the end of the file
+    # or if the line right after is not a blank line
+    if params['wrap_with_blank_lines']:
+        line_after_block = n0 + len(blocklines)
+
+        if line_after_block >= len(lines) or lines[line_after_block] != b(os.linesep):
+            lines[line_after_block:line_after_block] = wrap_blank_line
+
     if lines:
         result = b''.join(lines)
     else:
