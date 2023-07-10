@@ -62,7 +62,7 @@
     - astream_name is defined
     - (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('29', '>=')) or
       (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
-    - not dnf5|default('false')
+    - not dnf5|default(false)
   tags:
     - dnf_modularity
 
