@@ -5,6 +5,28 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-07-10
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- Cache field attributes list on the playbook classes
+- Playbook objects - Replace deprecated stacked ``@classmethod`` and ``@property``
+- ansible-test - Use a context manager to perform cleanup at exit instead of using the built-in ``atexit`` module.
+
+Bugfixes
+--------
+
+- ansible-galaxy - Fix issue installing collections containing directories with more than 100 characters on python versions before 3.10.6
+
 v2.14.7
 =======
 
