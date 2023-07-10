@@ -1,0 +1,97 @@
+- name: Create prepend_newline test file
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: add content to file prepending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_prepending_a_new_line
+
+- name: add content to file prepending a new line (again)
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_prepending_a_new_line_again
+
+- name: get file content after adding content prepending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: prepended_a_new_line
+
+- name: check content is the expected one after inserting content prepending a new line
+  assert:
+    that:
+      - insert_prepending_a_new_line is changed
+      - insert_prepending_a_new_line_again is not changed
+      - prepended_a_new_line.stat.checksum == "402d5756fecefe4299f347349743421b8777f242"
+
+- name: add content to file without prepending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: insert_without_prepending_new_line
+
+- name: get file content after adding content without prepending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: without_prepending_new_line
+
+- name: check content is the expected one after inserting without prepending a new line
+  assert:
+    that:
+      - insert_without_prepending_new_line is changed
+      - without_prepending_new_line.stat.checksum == "7a3bcc642c5395cf7c975812a4a12f47ab8685ac"
+
+- name: prepend a new line to existing block
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: prepend_new_line_to_existing_block
+
+- name: get file content after prepending a new line to an existing block
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: new_line_prepended
+
+- name: check content is the expected one after prepending a new line to an existing block
+  assert:
+    that:
+      - prepend_new_line_to_existing_block is changed
+      - new_line_prepended.stat.checksum == "b3efd208419b23f4fb97f06ade18b91947dd0435"
+
+- name: Removing a block with prepend_newline set to true does not prepend another line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    state: absent
+  register: remove_block_prepending_new_line
+
+- name: get file content after removing existing block prepending new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: removed_block_prepending_new_line
+
+- name: check content is the expected one after removing a block prepending a new line
+  assert:
+    that:
+      - remove_block_prepending_new_line is changed
+      - removed_block_prepending_new_line.stat.checksum == "b5d2845087bb9305062ac254260819e25b96529b"

@@ -90,10 +90,18 @@ options:
     type: str
     default: END
     version_added: '2.5'
-  wrap_with_blank_lines:
+  append_newline:
     required: false
     description:
-    - Wrap the entire inserted block with blank lines.
+    - Append a blank line to the inserted block.
+    - Note that this attribute is not considered when C(state) is set to C(absent)
+    type: bool
+    default: no
+    version_added: '2.16'
+  prepend_newline:
+    required: false
+    description:
+    - Prepend a blank line to the inserted block.
     - Note that this attribute is not considered when C(state) is set to C(absent)
     type: bool
     default: no
@@ -124,10 +132,11 @@ attributes:
 
 EXAMPLES = r'''
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
-- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config wrapping it with blank lines
+- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config prepending and appending a new line
   ansible.builtin.blockinfile:
     path: /etc/ssh/sshd_config
-    wrap_with_blank_lines: true
+    append_newline: true
+    prepend_newline: true
     block: |
       Match User ansible-agent
       PasswordAuthentication no
@@ -239,7 +248,8 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
-            wrap_with_blank_lines=dict(type='bool', default=False),
+            append_newline=dict(type='bool', default=False),
+            prepend_newline=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -283,7 +293,7 @@ def main():
     block = to_bytes(params['block'])
     marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
-    wrap_blank_line = [b(os.linesep)]
+    blank_line = [b(os.linesep)]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
@@ -347,25 +357,25 @@ def main():
         if not lines[n0 - 1].endswith(b(os.linesep)):
             lines[n0 - 1] += b(os.linesep)
 
-    # Before the block: check if the block needs to be padded with blank lines
+    # Before the block: check if we need to prepend a blank line
     # If yes, we need to add the blank line if we are at the beginning of the file
     # or if the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
-    if params['wrap_with_blank_lines']:
+    if params['prepend_newline'] and present:
         if n0 == 0 or lines[n0 - 1] != b(os.linesep):
-            lines[n0:n0] = wrap_blank_line
+            lines[n0:n0] = blank_line
             n0 += 1
 
     # Insert the block
     lines[n0:n0] = blocklines
 
-    # After the block: check if the block needs to be padded with blank lines
+    # After the block: check if we need to append a blank line
     # If yes, we need to add the blank line if we are at the end of the file
     # or if the line right after is not a blank line
-    if params['wrap_with_blank_lines']:
+    if params['append_newline'] and present:
         line_after_block = n0 + len(blocklines)
         if line_after_block >= len(lines) or lines[line_after_block] != b(os.linesep):
-            lines[line_after_block:line_after_block] = wrap_blank_line
+            lines[line_after_block:line_after_block] = blank_line
 
     if lines:
         result = b''.join(lines)

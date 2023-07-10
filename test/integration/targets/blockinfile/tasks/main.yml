@@ -39,4 +39,5 @@
 - import_tasks: insertafter.yml
 - import_tasks: insertbefore.yml
 - import_tasks: multiline_search.yml
-- import_tasks: insert_wrapping_with_blank_lines.yml
+- import_tasks: append_newline.yml
+- import_tasks: prepend_newline.yml

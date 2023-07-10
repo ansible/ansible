@@ -1,0 +1,98 @@
+- name: Create append_newline test file
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: add content to file appending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_appending_a_new_line
+
+- name: add content to file appending a new line (again)
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_appending_a_new_line_again
+
+- name: get file content after adding content appending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: appended_a_new_line
+
+- name: check content is the expected one after inserting content appending a new line
+  assert:
+    that:
+      - insert_appending_a_new_line is changed
+      - insert_appending_a_new_line_again is not changed
+      - appended_a_new_line.stat.checksum == "525ffd613a0b0eb6675e506226dc2adedf621f34"
+
+- name: add content to file without appending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: insert_without_appending_new_line
+
+- name: get file content after adding content without appending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: without_appending_new_line
+
+- name: check content is the expected one after inserting without appending a new line
+  assert:
+    that:
+      - insert_without_appending_new_line is changed
+      - without_appending_new_line.stat.checksum == "abebf8fdfa73c128a698cf6462b1c4a5b14e32d9"
+
+- name: append a new line to existing block
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: append_new_line_to_existing_block
+
+- name: get file content after appending a line to existing block
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: new_line_appended
+
+- name: check content is the expected one after appending a new line to an existing block
+  assert:
+    that:
+      - append_new_line_to_existing_block is changed
+      - new_line_appended.stat.checksum == "4a9f737d9d3928166fd16398543d3c4246f313e6"
+
+- name: Removing a block with append_newline set to true does not append another line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    state: absent
+  register: remove_block_appending_new_line
+
+- name: get file content after removing existing block appending new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: removed_block_appending_new_line
+
+
+- name: check content is the expected one after removing a block appending a new line
+  assert:
+    that:
+      - remove_block_appending_new_line is changed
+      - removed_block_appending_new_line.stat.checksum == "5519a6510425ded08a3294972d7797d9e6667bf9"
