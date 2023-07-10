@@ -102,6 +102,9 @@ class BecomeModule(BecomeBase):
 
     name = 'su'
 
+    pipelining = False
+    require_tty = True
+
     # messages for detecting prompted password issues
     fail = ('Authentication failure',)
 

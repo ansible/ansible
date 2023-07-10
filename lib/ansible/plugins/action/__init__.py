@@ -377,31 +377,9 @@ class ActionBase(ABC):
         '''
         Determines if we are required and can do pipelining
         '''
-
-        try:
-            is_enabled = self._connection.get_option('pipelining')
-        except (KeyError, AttributeError, ValueError):
-            is_enabled = self._play_context.pipelining
-
-        # winrm supports async pipeline
-        # TODO: make other class property 'has_async_pipelining' to separate cases
-        always_pipeline = self._connection.always_pipeline_modules
-
-        # su does not work with pipelining
-        # TODO: add has_pipelining class prop to become plugins
-        become_exception = (self._connection.become.name if self._connection.become else '') != 'su'
-
-        # any of these require a true
-        conditions = [
-            self._connection.has_pipelining,    # connection class supports it
-            is_enabled or always_pipeline,      # enabled via config or forced via connection (eg winrm)
-            module_style == "new",              # old style modules do not support pipelining
-            not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
-            not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
-            become_exception,
-        ]
-
-        return all(conditions)
+        # ask connection plugin if it is supported and enabled
+        # only 'new style modules support pipelining'
+        return self._connection.is_pipelining_enabled(wrap_async) and module_style == 'new'
 
     def _get_admin_users(self):
         '''

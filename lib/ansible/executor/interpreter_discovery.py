@@ -97,7 +97,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         platform_script = pkgutil.get_data('ansible.executor.discovery', 'python_target.py')
 
         # FUTURE: respect pipelining setting instead of just if the connection supports it?
-        if action._connection.has_pipelining:
+        if action._connection.is_pipelining_enabled():
             res = action._low_level_execute_command(found_interpreters[0], sudoable=False, in_data=platform_script)
         else:
             # FUTURE: implement on-disk case (via script action or ?)

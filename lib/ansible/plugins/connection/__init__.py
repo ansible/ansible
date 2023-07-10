@@ -269,6 +269,25 @@ class ConnectionBase(AnsiblePlugin):
                 display.debug('Set connection var {0} to {1}'.format(varname, value))
                 variables[varname] = value
 
+    def is_pipelining_enabled(self, wrap_async=False):
+
+        is_enabled = False
+        if self.has_pipelining and (not self.become or self.become.pipelining):
+            try:
+                is_enabled = self.get_option('pipelining')
+            except KeyError:
+                is_enabled = getattr(self._play_context, 'pipelining', False)
+
+        # TODO: deprecate always_pipeline_modules and has_native_async in favor for each plugin overriding this function
+        # any of these require a true
+        conditions = [
+            is_enabled or self.always_pipeline_modules,       # enabled via config or forced via connection (eg winrm)
+            not C.DEFAULT_KEEP_REMOTE_FILES,                  # user wants remote files
+            not wrap_async or self.has_native_async,          # async does not normally support pipelining unless it does (eg winrm)
+        ]
+
+        return all(conditions)
+
 
 class NetworkConnectionBase(ConnectionBase):
     """

@@ -28,10 +28,10 @@ def test_discovery_interpreter_linux_auto_legacy():
     actual = discover_interpreter(mock_action, 'python', 'auto_legacy', {'inventory_hostname': u'host-fóöbär'})
 
     assert actual == u'/usr/bin/python'
-    assert len(mock_action.method_calls) == 3
-    assert mock_action.method_calls[2][0] == '_discovery_warnings.append'
+    assert len(mock_action.method_calls) == 4
+    assert mock_action.method_calls[3][0] == '_discovery_warnings.append'
     assert u'Distribution Ubuntu 16.04 on host host-fóöbär should use /usr/bin/python3, but is using /usr/bin/python' \
-           u' for backward compatibility' in mock_action.method_calls[2][1][0]
+           u' for backward compatibility' in mock_action.method_calls[3][1][0]
 
 
 def test_discovery_interpreter_linux_auto_legacy_silent():
@@ -43,7 +43,7 @@ def test_discovery_interpreter_linux_auto_legacy_silent():
     actual = discover_interpreter(mock_action, 'python', 'auto_legacy_silent', {'inventory_hostname': u'host-fóöbär'})
 
     assert actual == u'/usr/bin/python'
-    assert len(mock_action.method_calls) == 2
+    assert len(mock_action.method_calls) == 3
 
 
 def test_discovery_interpreter_linux_auto():
@@ -55,7 +55,7 @@ def test_discovery_interpreter_linux_auto():
     actual = discover_interpreter(mock_action, 'python', 'auto', {'inventory_hostname': u'host-fóöbär'})
 
     assert actual == u'/usr/bin/python3'
-    assert len(mock_action.method_calls) == 2
+    assert len(mock_action.method_calls) == 3
 
 
 def test_discovery_interpreter_non_linux():
