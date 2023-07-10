@@ -269,6 +269,9 @@ class ConnectionBase(AnsiblePlugin):
                 display.debug('Set connection var {0} to {1}'.format(varname, value))
                 variables[varname] = value
 
+    def disallow_pipelining(self):
+        return False
+
 
 class NetworkConnectionBase(ConnectionBase):
     """

@@ -307,11 +307,16 @@ class ActionBase(ABC):
                                                                             **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
-                self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
-                    action=self,
-                    interpreter_name=idre.interpreter_name,
-                    discovery_mode=idre.discovery_mode,
-                    task_vars=use_vars))
+                if self._connection.disallow_pipelining():
+                    display.vvv(msg=f'Connection plugin {self._connection._load_name} cannot support pipelining', host=self._connection.host)
+                    self._discovered_interpreter = '/usr/bin/python'
+
+                else:
+                    self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
+                        action=self,
+                        interpreter_name=idre.interpreter_name,
+                        discovery_mode=idre.discovery_mode,
+                        task_vars=use_vars))
 
                 # update the local task_vars with the discovered interpreter (which might be None);
                 # we'll propagate back to the controller in the task result
@@ -377,6 +382,10 @@ class ActionBase(ABC):
         '''
         Determines if we are required and can do pipelining
         '''
+
+        if self._connection.disallow_pipelining():
+            display.vvv(msg=f'Connection plugin {self._connection._load_name} cannot support pipelining', host=self._connection.host)
+            return False
 
         try:
             is_enabled = self._connection.get_option('pipelining')
