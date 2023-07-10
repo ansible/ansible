@@ -670,16 +670,15 @@ class Dnf5Module(YumDnf):
         else:
             transaction.download()
             if not self.download_only:
-                if not self.disable_gpg_check and not transaction.check_gpg_signatures():
+                transaction.set_description("ansible dnf5 module")
+                result = transaction.run()
+                if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_GPG_CHECK:
                     self.module.fail_json(
                         msg="Failed to validate GPG signatures: {}".format(",".join(transaction.get_gpg_signature_problems())),
                         failures=[],
                         rc=1,
                     )
-
-                transaction.set_description("ansible dnf5 module")
-                result = transaction.run()
-                if result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
+                elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
                         failures=["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()],
