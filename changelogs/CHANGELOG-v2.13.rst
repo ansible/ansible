@@ -5,6 +5,28 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2023-07-10
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+
+Minor Changes
+-------------
+
+- Removed ``straight.plugin`` from the build and packaging requirements.
+
+Bugfixes
+--------
+
+- ansible-test - Fix a traceback that occurs when attempting to test Ansible source using a different ansible-test. A clear error message is now given when this scenario occurs.
+- ansible-test local change detection - use ``git merge-base <branch> HEAD`` instead of ``git merge-base --fork-point <branch>`` (https://github.com/ansible/ansible/pull/79734).
+- man page build - Remove the dependency on the ``docs`` directory for building man pages.
+
 v2.13.10
 ========
 
