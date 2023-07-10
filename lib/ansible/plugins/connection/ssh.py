@@ -20,7 +20,7 @@ DOCUMENTATION = '''
         - connection_pipelining
     version_added: historical
     notes:
-        - Many options default to C(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
+        - Many options default to V(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
           For example, if you specify the port in this plugin it will override any C(Port) entry in your C(.ssh/config).
         - The ssh CLI tool uses return code 255 as a 'connection error', this can conflict with commands/tools that
           also return 255 as an error code and will look like an 'unreachable' condition or 'connection error' to this plugin.
@@ -55,7 +55,7 @@ DOCUMENTATION = '''
               - name: ansible_ssh_host_key_checking
                 version_added: '2.5'
       password:
-          description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+          description: Authentication password for the O(remote_user). Can be supplied as CLI option.
           type: string
           vars:
               - name: ansible_password
@@ -105,7 +105,7 @@ DOCUMENTATION = '''
       ssh_executable:
           default: ssh
           description:
-            - This defines the location of the SSH binary. It defaults to C(ssh) which will use the first SSH binary available in $PATH.
+            - This defines the location of the SSH binary. It defaults to V(ssh) which will use the first SSH binary available in $PATH.
             - This option is usually not required, it might be useful when access to system SSH is restricted,
               or when using SSH wrappers to connect to remote hosts.
           type: string
@@ -120,7 +120,7 @@ DOCUMENTATION = '''
       sftp_executable:
           default: sftp
           description:
-            - This defines the location of the sftp binary. It defaults to C(sftp) which will use the first binary available in $PATH.
+            - This defines the location of the sftp binary. It defaults to V(sftp) which will use the first binary available in $PATH.
           type: string
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
@@ -132,7 +132,7 @@ DOCUMENTATION = '''
       scp_executable:
           default: scp
           description:
-            - This defines the location of the scp binary. It defaults to C(scp) which will use the first binary available in $PATH.
+            - This defines the location of the scp binary. It defaults to V(scp) which will use the first binary available in $PATH.
           type: string
           env: [{name: ANSIBLE_SCP_EXECUTABLE}]
           ini:
@@ -319,16 +319,16 @@ DOCUMENTATION = '''
               version_added: '2.12'
       scp_if_ssh:
         deprecated:
-              why: In favor of the "ssh_transfer_method" option.
+              why: In favor of the O(ssh_transfer_method) option.
               version: "2.17"
-              alternatives: ssh_transfer_method
+              alternatives: O(ssh_transfer_method)
         default: smart
         description:
           - "Preferred method to use when transferring files over SSH."
-          - When set to I(smart), Ansible will try them until one succeeds or they all fail.
-          - If set to I(True), it will force 'scp', if I(False) it will use 'sftp'.
-          - For OpenSSH >=9.0 you must add an additional option to enable scp (scp_extra_args="-O")
-          - This setting will overridden by ssh_transfer_method if set.
+          - When set to V(smart), Ansible will try them until one succeeds or they all fail.
+          - If set to V(True), it will force 'scp', if V(False) it will use 'sftp'.
+          - For OpenSSH >=9.0 you must add an additional option to enable scp (C(scp_extra_args="-O"))
+          - This setting will overridden by O(ssh_transfer_method) if set.
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}

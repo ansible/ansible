@@ -7,9 +7,9 @@ __metaclass__ = type
 DOCUMENTATION = """
     author: Ansible Core Team
     name: paramiko
-    short_description: Run tasks via python ssh (paramiko)
+    short_description: Run tasks via Python SSH (paramiko)
     description:
-        - Use the python ssh implementation (Paramiko) to connect to targets
+        - Use the Python SSH implementation (Paramiko) to connect to targets
         - The paramiko transport is provided because many distributions, in particular EL6 and before do not support ControlPersist
           in their SSH implementations.
         - This is needed on the Ansible control machine to be reasonably efficient with connections.
@@ -86,7 +86,7 @@ DOCUMENTATION = """
         description:
             - Whether or not to enable RSA SHA2 algorithms for pubkeys and hostkeys
             - On paramiko versions older than 2.9, this only affects hostkeys
-            - For behavior matching paramiko<2.9 set this to C(False)
+            - For behavior matching paramiko<2.9 set this to V(False)
         vars:
             - name: ansible_paramiko_use_rsa_sha2_algorithms
         ini:

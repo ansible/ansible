@@ -15,7 +15,7 @@ DOCUMENTATION:
       type: str
       choices: ['Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'K', 'B']
     isbits:
-      description: If C(True), force to interpret only bit input; if C(False), force bytes. Otherwise use the notation to guess.
+      description: If V(True), force to interpret only bit input; if V(False), force bytes. Otherwise use the notation to guess.
       type: bool
 EXAMPLES: |
 
