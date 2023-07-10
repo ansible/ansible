@@ -152,8 +152,7 @@ class CryptHash(BaseHash):
 
         saltstring += "$%s" % salt
 
-        # crypt.crypt on Python < 3.9 returns None if it cannot parse saltstring
-        # On Python >= 3.9, it throws OSError.
+        # crypt.crypt throws OSError on Python >= 3.9 if it cannot parse saltstring.
         try:
             result = crypt.crypt(secret, saltstring)
             orig_exc = None

@@ -29,7 +29,7 @@ from json import dumps
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import string_types, PY3
+from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 
@@ -241,13 +241,7 @@ def _isidentifier_PY3(ident):
     if not isinstance(ident, string_types):
         return False
 
-    # NOTE Python 3.7 offers str.isascii() so switch over to using it once
-    # we stop supporting 3.5 and 3.6 on the controller
-    try:
-        # Python 2 does not allow non-ascii characters in identifiers so unify
-        # the behavior for Python 3
-        ident.encode('ascii')
-    except UnicodeEncodeError:
+    if not ident.isascii():
         return False
 
     if not ident.isidentifier():
@@ -259,26 +253,7 @@ def _isidentifier_PY3(ident):
     return True
 
 
-def _isidentifier_PY2(ident):
-    if not isinstance(ident, string_types):
-        return False
-
-    if not ident:
-        return False
-
-    if C.INVALID_VARIABLE_NAMES.search(ident):
-        return False
-
-    if keyword.iskeyword(ident) or ident in ADDITIONAL_PY2_KEYWORDS:
-        return False
-
-    return True
-
-
-if PY3:
-    isidentifier = _isidentifier_PY3
-else:
-    isidentifier = _isidentifier_PY2
+isidentifier = _isidentifier_PY3
 
 
 isidentifier.__doc__ = """Determine if string is valid identifier.
