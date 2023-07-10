@@ -110,7 +110,7 @@
     assert:
       that:
         - "{{item|quote}} is file"
-        - "{{(item|quote).endswith('itworks.yml')"
+        - "{{(item|quote).endswith('itworks.yml')}}"
     with_first_found:
       - files:
           - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalid var, should be skipped
@@ -125,7 +125,7 @@
     assert:
       that:
         - "{{item|quote}} is file"
-        - "{{(item|quote).endswith('itworks.yml')"
+        - "{{(item|quote).endswith('itworks.yml')}}"
     with_first_found:
       - files:
           - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"
