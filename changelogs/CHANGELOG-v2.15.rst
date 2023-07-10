@@ -5,6 +5,38 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-07-10
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Minor Changes
+-------------
+
+- Utilize gpg check provided internally by the ``transaction.run`` method as oppose to calling it manually.
+- ansible-test - Add Fedora 38 remote.
+- ansible-test - Use a context manager to perform cleanup at exit instead of using the built-in ``atexit`` module.
+- dnf5 - enable environment groups installation testing in CI as its support was added.
+- dnf5 - enable now implemented ``cacheonly`` functionality
+
+Bugfixes
+--------
+
+- From issue https://github.com/ansible/ansible/issues/80880, when notifying a handler from another handler, handler notifications must be registered immediately as the flush_handler call is not recursive.
+- ansible-galaxy - Fix issue installing collections containing directories with more than 100 characters on python versions before 3.10.6
+- paramiko_ssh, psrp, and ssh connection plugins - ensure that all values for options that should be strings are actually converted to strings (https://github.com/ansible/ansible/pull/81029).
+- templating - In the template action and lookup, use local jinja2 environment overlay overrides instead of mutating the templars environment
+
+Known Issues
+------------
+
+- ansible-test - The Fedora 37 remote is known to occasionally hang during boot. It is no longer routinely tested as a result. If possible, use the Fedora 38 remote instead.
+
 v2.15.1
 =======
 

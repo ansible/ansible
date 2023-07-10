@@ -919,3 +919,46 @@ releases:
     - pep517-backend-traceback-fix.yml
     - update-maybe-json-uri.yml
     release_date: '2023-06-12'
+  2.15.2rc1:
+    changes:
+      bugfixes:
+      - From issue https://github.com/ansible/ansible/issues/80880, when notifying
+        a handler from another handler, handler notifications must be registered immediately
+        as the flush_handler call is not recursive.
+      - ansible-galaxy - Fix issue installing collections containing directories with
+        more than 100 characters on python versions before 3.10.6
+      - paramiko_ssh, psrp, and ssh connection plugins - ensure that all values for
+        options that should be strings are actually converted to strings (https://github.com/ansible/ansible/pull/81029).
+      - templating - In the template action and lookup, use local jinja2 environment
+        overlay overrides instead of mutating the templars environment
+      known_issues:
+      - ansible-test - The Fedora 37 remote is known to occasionally hang during boot.
+        It is no longer routinely tested as a result. If possible, use the Fedora
+        38 remote instead.
+      minor_changes:
+      - Utilize gpg check provided internally by the ``transaction.run`` method as
+        oppose to calling it manually.
+      - ansible-test - Add Fedora 38 remote.
+      - ansible-test - Use a context manager to perform cleanup at exit instead of
+        using the built-in ``atexit`` module.
+      - dnf5 - enable environment groups installation testing in CI as its support
+        was added.
+      - dnf5 - enable now implemented ``cacheonly`` functionality
+      release_summary: '| Release Date: 2023-07-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.2rc1_summary.yaml
+    - 80880-register-handlers-immediately-if-iterating-handlers.yml
+    - 81005-use-overlay-overrides.yml
+    - 81029-connection-types.yml
+    - ansible-test-atexit.yml
+    - ansible-test-fedora-38.yml
+    - dnf5-cacheonly.yml
+    - dnf5-gpg-check-builtin.yml
+    - dnf5-test-env-groups.yml
+    - long-collection-paths-fix.yml
+    release_date: '2023-07-10'
