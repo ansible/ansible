@@ -19,19 +19,21 @@ Popular editors
 Emacs
 -----
 
-A free, open-source text editor and IDE that supports auto-indentation, syntax highlighting and built in terminal shell(among other things).
+A free, open-source text editor and IDE that supports auto-indentation, syntax highlighting and a built in terminal shell (among other things).
 
 * `yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML highlighting and syntax checking.
 * `jinja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking.
-* `magit-mode <https://github.com/magit/magit>`_ -  Git porcelain within Emacs.
+* `magit-mode <https://github.com/magit/magit>`_ - Git porcelain within Emacs.
 * `lsp-mode <https://emacs-lsp.github.io/lsp-mode/page/lsp-ansible/>`_ - Ansible syntax highlighting, auto-completion and diagnostics.
 
 
 PyCharm
 -------
 
-A full IDE (integrated development environment) for Python software development. It ships with everything you need to write python scripts and complete software, including support for YAML syntax highlighting. It's a little overkill for writing roles/playbooks, but it can be a very useful tool if you write modules and submit code for Ansible. Can be used to debug ``ansible-core``. For more information, see `PyCharm <https://www.jetbrains.com/pycharm/>`_
+A full IDE for Python software development. It ships with everything you need to write Python scripts and applications, including support for YAML syntax highlighting. It can be a very useful tool if you write modules and submit code for Ansible. Can be used to debug ``ansible-core``. For more information, see `PyCharm <https://www.jetbrains.com/pycharm/>`_. Useful plugins include:
 
+* `Ansible Lint <https://plugins.jetbrains.com/plugin/20905-ansible-lint>`_ - Ansible Lint integration with automatic/continuous annotation of errors, warnings, and info while editing.
+* `Ansible Vault Integration <https://plugins.jetbrains.com/plugin/14353-ansible-vault-integration>`_ - Integrate the ansible vault directly into IntelliJ IDEA with context actions for vaulting and unvaulting secrets.
 
 Sublime
 -------
@@ -50,8 +52,8 @@ vim
 
 An open-source, free command-line text editor. Useful vim plugins include:
 
-* `Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
-* `Ansible vim and neovim plugin <https://www.npmjs.com/package/@yaegassy/coc-ansible>`_  - vim plugin (lsp client) for Ansible, it supports autocompletion, syntax highlighting, hover, diagnostics, and goto support.
+* `Ansible vim <https://github.com/pearofducks/ansible-vim>`_ - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
+* `Ansible vim and neovim plugin <https://www.npmjs.com/package/@yaegassy/coc-ansible>`_ - vim plugin (lsp client) for Ansible, it supports autocompletion, syntax highlighting, hover, diagnostics, and goto support.
 
 
 Visual studio code
@@ -86,7 +88,7 @@ There are various ways to find existing issues and pull requests (PRs)
 Tools for validating playbooks
 ==============================
 
-- `Ansible Lint <https://docs.ansible.com/ansible-lint/index.html>`_ - a highly configurable linter for Ansible playbooks.
+- `Ansible Lint <https://docs.ansible.com/ansible-lint/index.html>`__ - a highly configurable linter for Ansible playbooks.
 - `Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review.
 - `Molecule <https://molecule.readthedocs.io/en/latest/>`_ - a testing framework for Ansible plays and roles.
 - `yamllint <https://yamllint.readthedocs.io/en/stable/>`__ - a command-line utility to check syntax validity including key repetition and indentation issues.
