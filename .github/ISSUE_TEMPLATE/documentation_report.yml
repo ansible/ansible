@@ -53,7 +53,7 @@ body:
       Documentation for other modules/plugins/etc is likely to be
       available in one of the [Ansible Collections][collections index].
       If available in the collection documentation, select the
-      *Issue Tracker** button to go directly to the GitHub issues.
+      **Issue Tracker** button to go directly to the GitHub issues.
 
 
       [ansible/ansible-documentation]: /ansible/ansible-documentation
