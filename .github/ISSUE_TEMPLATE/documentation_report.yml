@@ -34,6 +34,32 @@ body:
       [submit a pull request]:
       https://docs.ansible.com/ansible-core/devel/community/documentation_contributions.html
 
+- type: markdown
+  attributes:
+    value: >
+      **Check the repository for your issue.**
+
+      Source files for Ansible community documentation are
+      hosted in different repositories. Please make sure to file an
+      issue in the correct project.
+
+      Documentation for modules/plugins/etc that are officially
+      supported by the Ansible Core Engineering team is available
+      in this (`ansible/ansible`) repository.
+
+      The Installation Guide, Playbook Guide, Developer Guide,
+      and other documentation is available in the
+      [ansible/ansible-documentation] repository.
+      Documentation for other modules/plugins/etc is likely to be
+      available in one of the [Ansible Collections][collections index].
+      If available in the collection documentation, select the
+      *Issue Tracker** button to go directly to the GitHub issues.
+
+
+      [ansible/ansible-documentation]: /ansible/ansible-documentation
+
+      [collections index]:
+      https://docs.ansible.com/ansible/latest/collections/index.html
 
 - type: textarea
   attributes:
@@ -82,23 +108,6 @@ body:
       Write the short name of the rst file, module, plugin, task or
       feature below, *use your best guess if unsure*.
 
-
-      **Tip:** Source files for Ansible community documentation are
-      hosted in different repositories. Please make sure to file an
-      issue in the correct project.
-      Documentation for modules/plugins/etc that are officially
-      supported by the Ansible Core Engineering team is available
-      in this (`ansible/ansible`) repository.
-      The Installation Guide, Playbook Guide, Developer Guide,
-      and other documentation is available in the
-      [`ansible/ansible-documentation`] repository.
-      Documentation for other modules/plugins/etc is likely to be
-      available in one of the [Ansible Collections][collections-index].
-      If available in the collection documentation, select the
-      *Issue Tracker** button to go directly to the GitHub issues.
-
-      [`ansible/ansible-documentation`]: /ansible/ansible-documentation
-      [collections-index]: https://docs.ansible.com/ansible/latest/collections/index.html
     placeholder: lib/ansible/modules/copy.py
   validations:
     required: true
