@@ -18,7 +18,7 @@ DOCUMENTATION:
       elements: any
       required: yes
     strict:
-      description: If C(True) return an error on mismatching list length, otherwise shortest list determines output.
+      description: If V(True) return an error on mismatching list length, otherwise shortest list determines output.
       type: bool
       default: no
 

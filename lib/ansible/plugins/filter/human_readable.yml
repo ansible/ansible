@@ -7,7 +7,7 @@ DOCUMENTATION:
   positional: _input, isbits, unit
   options:
     _input:
-      description: Number of bytes, or bits. Depends on I(isbits).
+      description: Number of bytes, or bits. Depends on O(isbits).
       type: int
       required: true
     isbits:

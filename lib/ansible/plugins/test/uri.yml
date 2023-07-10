@@ -26,5 +26,5 @@ EXAMPLES: |
   {{ 'http://nobody:secret@example.com' is uri(['ftp', 'ftps', 'http', 'https', 'ws', 'wss']) }}
 RETURN:
   _value:
-    description: Returns C(false) if the string is not a URI or the schema extracted does not match the supplied list.
+    description: Returns V(false) if the string is not a URI or the schema extracted does not match the supplied list.
     type: boolean

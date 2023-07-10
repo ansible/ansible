@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     short_description: oneline Ansible screen output
     version_added: historical
     description:
-        - This is the output callback used by the -o/--one-line command line option.
+        - This is the output callback used by the C(-o)/C(--one-line) command line option.
 '''
 
 from ansible.plugins.callback import CallbackBase

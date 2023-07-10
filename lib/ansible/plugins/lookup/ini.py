@@ -39,7 +39,7 @@ DOCUMENTATION = """
         default: ''
       case_sensitive:
         description:
-          Whether key names read from C(file) should be case sensitive. This prevents
+          Whether key names read from O(file) should be case sensitive. This prevents
           duplicate key errors if keys only differ in case.
         default: False
         version_added: '2.12'

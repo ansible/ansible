@@ -18,5 +18,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) if the path corresponds to a mount point on the controller, C(False) if otherwise.
+    description: Returns V(True) if the path corresponds to a mount point on the controller, V(False) if otherwise.
     type: boolean

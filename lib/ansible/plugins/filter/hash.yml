@@ -24,5 +24,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The checksum of the input, as configured in I(hashtype).
+    description: The checksum of the input, as configured in O(hashtype).
     type: string

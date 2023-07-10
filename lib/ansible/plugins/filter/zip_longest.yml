@@ -5,7 +5,7 @@ DOCUMENTATION:
   positional: _input, _additional_lists
   description:
       - Make an iterator that aggregates elements from each of the iterables.
-        If the iterables are of uneven length, missing values are filled-in with I(fillvalue).
+        If the iterables are of uneven length, missing values are filled-in with O(fillvalue).
         Iteration continues until the longest iterable is exhausted.
   notes:
     - This is mostly a passhtrough to Python's C(itertools.zip_longest) function

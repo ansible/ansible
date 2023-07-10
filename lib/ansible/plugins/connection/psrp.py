@@ -10,7 +10,7 @@ name: psrp
 short_description: Run tasks over Microsoft PowerShell Remoting Protocol
 description:
 - Run commands or put/fetch on a target via PSRP (WinRM plugin)
-- This is similar to the I(winrm) connection plugin which uses the same
+- This is similar to the P(ansible.builtin.winrm#connection) connection plugin which uses the same
   underlying transport but instead runs in a PowerShell interpreter.
 version_added: "2.7"
 requirements:
@@ -38,7 +38,7 @@ options:
     keyword:
     - name: remote_user
   remote_password:
-    description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+    description: Authentication password for the O(remote_user). Can be supplied as CLI option.
     type: str
     vars:
     - name: ansible_password
@@ -49,8 +49,8 @@ options:
   port:
     description:
     - The port for PSRP to connect on the remote target.
-    - Default is C(5986) if I(protocol) is not defined or is C(https),
-      otherwise the port is C(5985).
+    - Default is V(5986) if O(protocol) is not defined or is V(https),
+      otherwise the port is V(5985).
     type: int
     vars:
     - name: ansible_port
@@ -60,7 +60,7 @@ options:
   protocol:
     description:
     - Set the protocol to use for the connection.
-    - Default is C(https) if I(port) is not defined or I(port) is not C(5985).
+    - Default is V(https) if O(port) is not defined or O(port) is not V(5985).
     choices:
     - http
     - https
@@ -77,8 +77,8 @@ options:
   auth:
     description:
     - The authentication protocol to use when authenticating the remote user.
-    - The default, C(negotiate), will attempt to use C(Kerberos) if it is
-      available and fall back to C(NTLM) if it isn't.
+    - The default, V(negotiate), will attempt to use Kerberos (V(kerberos)) if it is
+      available and fall back to NTLM (V(ntlm)) if it isn't.
     type: str
     vars:
     - name: ansible_psrp_auth
@@ -93,8 +93,8 @@ options:
   cert_validation:
     description:
     - Whether to validate the remote server's certificate or not.
-    - Set to C(ignore) to not validate any certificates.
-    - I(ca_cert) can be set to the path of a PEM certificate chain to
+    - Set to V(ignore) to not validate any certificates.
+    - O(ca_cert) can be set to the path of a PEM certificate chain to
       use in the validation.
     choices:
     - validate
@@ -107,7 +107,7 @@ options:
     description:
     - The path to a PEM certificate chain to use when validating the server's
       certificate.
-    - This value is ignored if I(cert_validation) is set to C(ignore).
+    - This value is ignored if O(cert_validation) is set to V(ignore).
     type: path
     vars:
     - name: ansible_psrp_cert_trust_path
@@ -124,7 +124,7 @@ options:
   read_timeout:
     description:
     - The read timeout for receiving data from the remote host.
-    - This value must always be greater than I(operation_timeout).
+    - This value must always be greater than O(operation_timeout).
     - This option requires pypsrp >= 0.3.
     - This is measured in seconds.
     type: int
@@ -156,15 +156,15 @@ options:
   message_encryption:
     description:
     - Controls the message encryption settings, this is different from TLS
-      encryption when I(ansible_psrp_protocol) is C(https).
-    - Only the auth protocols C(negotiate), C(kerberos), C(ntlm), and
-      C(credssp) can do message encryption. The other authentication protocols
-      only support encryption when C(protocol) is set to C(https).
-    - C(auto) means means message encryption is only used when not using
+      encryption when O(protocol) is V(https).
+    - Only the auth protocols V(negotiate), V(kerberos), V(ntlm), and
+      V(credssp) can do message encryption. The other authentication protocols
+      only support encryption when V(protocol) is set to V(https).
+    - V(auto) means means message encryption is only used when not using
       TLS/HTTPS.
-    - C(always) is the same as C(auto) but message encryption is always used
+    - V(always) is the same as V(auto) but message encryption is always used
       even when running over TLS/HTTPS.
-    - C(never) disables any encryption checks that are in place when running
+    - V(never) disables any encryption checks that are in place when running
       over HTTP and disables any authentication encryption processes.
     type: str
     vars:
@@ -184,7 +184,7 @@ options:
     description:
     - Will disable any environment proxy settings and connect directly to the
       remote host.
-    - This option is ignored if C(proxy) is set.
+    - This option is ignored if O(proxy) is set.
     vars:
     - name: ansible_psrp_ignore_proxy
     type: bool
@@ -206,7 +206,7 @@ options:
   credssp_auth_mechanism:
     description:
     - The sub authentication mechanism to use with CredSSP auth.
-    - When C(auto), both Kerberos and NTLM is attempted with kerberos being
+    - When V(auto), both Kerberos and NTLM is attempted with kerberos being
       preferred.
     type: str
     choices:
@@ -219,7 +219,7 @@ options:
   credssp_disable_tlsv1_2:
     description:
     - Disables the use of TLSv1.2 on the CredSSP authentication channel.
-    - This should not be set to C(yes) unless dealing with a host that does not
+    - This should not be set to V(yes) unless dealing with a host that does not
       have TLSv1.2.
     default: false
     type: bool
@@ -228,7 +228,7 @@ options:
   credssp_minimum_version:
     description:
     - The minimum CredSSP server authentication version that will be accepted.
-    - Set to C(5) to ensure the server has been patched and is not vulnerable
+    - Set to V(5) to ensure the server has been patched and is not vulnerable
       to CVE 2018-0886.
     default: 2
     type: int
@@ -282,7 +282,7 @@ options:
     description:
     - Sets the WSMan timeout for each operation.
     - This is measured in seconds.
-    - This should not exceed the value for C(connection_timeout).
+    - This should not exceed the value for O(connection_timeout).
     type: int
     vars:
     - name: ansible_psrp_operation_timeout

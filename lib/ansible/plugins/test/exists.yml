@@ -5,7 +5,8 @@ DOCUMENTATION:
   short_description: does the path exist, follow symlinks
   description:
     - Check if the provided path maps to an existing filesystem object on the controller (localhost).
-    - Follows symlinks and checks the target of the symlink instead of the link itself, use the C(link) or C(link_exists) tests to check on the link.
+    - Follows symlinks and checks the target of the symlink instead of the link itself, use the P(ansible.builtin.link#test)
+      or P(ansible.builtin.link_exists#test) tests to check on the link.
   options:
     _input:
       description: a path
@@ -18,5 +19,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) if the path corresponds to an existing filesystem object on the controller (after following symlinks), C(False) if otherwise.
+    description: Returns V(True) if the path corresponds to an existing filesystem object on the controller (after following symlinks), V(False) if otherwise.
     type: boolean

@@ -6,7 +6,6 @@ DOCUMENTATION:
   aliases: [issuperset]
   description:
     - Validate if the first list is a super set (includes) the second list.
-    - Same as the C(all) Python function.
   options:
     _input:
       description: List.
@@ -24,5 +23,5 @@ EXAMPLES: |
   issmallinbig: '{{ big is superset(small) }}'
 RETURN:
   _value:
-    description: Returns C(True) if the specified list is a superset of the provided list, C(False) otherwise.
+    description: Returns V(True) if the specified list is a superset of the provided list, V(False) otherwise.
     type: boolean

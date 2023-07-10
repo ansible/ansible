@@ -16,5 +16,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) if the input is NaN, C(False) if otherwise.
+    description: Returns V(True) if the input is NaN, V(False) if otherwise.
     type: boolean

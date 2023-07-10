@@ -23,8 +23,8 @@ DOCUMENTATION:
       default: True
       version_added: '2.9'
     allow_nan:
-      description: When C(False), strict adherence to float value limits of the JSON specifications, so C(nan), C(inf) and C(-inf) values will produce errors.
-                   When C(True), JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
+      description: When V(False), strict adherence to float value limits of the JSON specifications, so C(nan), C(inf) and C(-inf) values will produce errors.
+                   When V(True), JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
       default: True
       type: bool
     check_circular:
@@ -41,11 +41,11 @@ DOCUMENTATION:
       type: integer
     separators:
       description: The C(item) and C(key) separator to be used in the serialized output,
-                   default may change depending on I(indent) and Python version.
+                   default may change depending on O(indent) and Python version.
       default: "(', ', ': ')"
       type: tuple
     skipkeys:
-      description: If C(True), keys that are not basic Python types will be skipped.
+      description: If V(True), keys that are not basic Python types will be skipped.
       default: False
       type: bool
     sort_keys:
@@ -53,7 +53,7 @@ DOCUMENTATION:
       default: False
       type: bool
   notes:
-    - Both I(vault_to_text) and I(preprocess_unsafe) defaulted to C(False) between Ansible 2.9 and 2.12.
+    - Both O(vault_to_text) and O(preprocess_unsafe) defaulted to V(False) between Ansible 2.9 and 2.12.
     - 'These parameters to C(json.dumps) will be ignored, as they are overridden internally: I(cls), I(default)'
 
 EXAMPLES: |

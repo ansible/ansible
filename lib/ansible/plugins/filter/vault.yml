@@ -26,7 +26,7 @@ DOCUMENTATION:
       default: 'filter_default'
     wrap_object:
       description:
-        - This toggle can force the return of an C(AnsibleVaultEncryptedUnicode) string object, when C(False), you get a simple string.
+        - This toggle can force the return of an C(AnsibleVaultEncryptedUnicode) string object, when V(False), you get a simple string.
         - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
       type: bool
       default: False

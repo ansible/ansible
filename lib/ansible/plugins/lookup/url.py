@@ -64,7 +64,7 @@ options:
         - section: url_lookup
           key: timeout
   http_agent:
-    description: User-Agent to use in the request. The default was changed in 2.11 to C(ansible-httpget).
+    description: User-Agent to use in the request. The default was changed in 2.11 to V(ansible-httpget).
     type: string
     version_added: "2.10"
     default: ansible-httpget
@@ -102,7 +102,7 @@ options:
   use_gssapi:
     description:
     - Use GSSAPI handler of requests
-    - As of Ansible 2.11, GSSAPI credentials can be specified with I(username) and I(password).
+    - As of Ansible 2.11, GSSAPI credentials can be specified with O(username) and O(password).
     type: boolean
     version_added: "2.10"
     default: False

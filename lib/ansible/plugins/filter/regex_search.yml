@@ -16,11 +16,11 @@ DOCUMENTATION:
       description: Regular expression string that defines the match.
       type: str
     multiline:
-      description: Search across line endings if C(True), do not if otherwise.
+      description: Search across line endings if V(True), do not if otherwise.
       type: bool
       default: no
     ignorecase:
-      description: Force the search to be case insensitive if C(True), case sensitive otherwise.
+      description: Force the search to be case insensitive if V(True), case sensitive otherwise.
       type: bool
       default: no
 

@@ -28,17 +28,18 @@ DOCUMENTATION = """
          required: True
       encrypt:
         description:
-           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash; md5_crypt, bcrypt, sha256_crypt, sha512_crypt).
+           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash);
+             V(md5_crypt), V(bcrypt), V(sha256_crypt), V(sha512_crypt).
            - If not provided, the password will be returned in plain text.
            - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
            - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
       ident:
         description:
-          - Specify version of Bcrypt algorithm to be used while using C(encrypt) as C(bcrypt).
-          - The parameter is only available for C(bcrypt) - U(https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#passlib.hash.bcrypt).
+          - Specify version of Bcrypt algorithm to be used while using O(encrypt) as V(bcrypt).
+          - The parameter is only available for V(bcrypt) - U(https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#passlib.hash.bcrypt).
           - Other hash types will simply ignore this parameter.
-          - 'Valid values for this parameter are: C(2), C(2a), C(2y), C(2b).'
+          - 'Valid values for this parameter are: V(2), V(2a), V(2y), V(2b).'
         type: string
         version_added: "2.12"
       chars:
@@ -46,8 +47,7 @@ DOCUMENTATION = """
         description:
           - A list of names that compose a custom character set in the generated passwords.
           - This parameter defines the possible character sets in the resulting password, not the required character sets.
-            If you want to require certain character sets for passwords, you can use the C(community.general.random_string lookup) plugin -
-            P(community.general.random_string#lookup).
+            If you want to require certain character sets for passwords, you can use the P(community.general.random_string#lookup) lookup plugin.
           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9, and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes or represented literally ( :, -)."
           - "Though string modules can vary by Python version, valid values for both major releases include:

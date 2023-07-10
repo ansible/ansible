@@ -25,5 +25,5 @@ EXAMPLES: |
   {{ 'ftp://admin:secret@example.com/path/to/myfile.yml' is url }}
 RETURN:
   _value:
-    description: Returns C(false) if the string is not a URL, C(true) otherwise.
+    description: Returns V(false) if the string is not a URL, V(true) otherwise.
     type: boolean

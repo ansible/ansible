@@ -14,7 +14,7 @@ DOCUMENTATION:
       description: Number of recursive list depths to flatten.
       type: int
     skip_nulls:
-      description: Skip C(null)/C(None) elements when inserting into the top list.
+      description: Skip V(null)/V(None) elements when inserting into the top list.
       type: bool
       default: true
 

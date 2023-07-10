@@ -19,8 +19,8 @@ DOCUMENTATION = """
         default: False
         description:
           - Lookup accepts this flag from a dictionary as optional. See Example section for more information.
-          - If set to C(True), the lookup plugin will skip the lists items that do not contain the given subkey.
-          - If set to C(False), the plugin will yield an error and complain about the missing subkey.
+          - If set to V(True), the lookup plugin will skip the lists items that do not contain the given subkey.
+          - If set to V(False), the plugin will yield an error and complain about the missing subkey.
 """
 
 EXAMPLES = """
