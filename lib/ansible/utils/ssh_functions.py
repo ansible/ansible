@@ -25,6 +25,9 @@ import subprocess
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.compat.paramiko import paramiko
+from ansible.utils.display import Display
+
+display = Display()
 
 
 _HAS_CONTROLPERSIST = {}  # type: dict[str, bool]
@@ -51,13 +54,11 @@ def check_for_controlpersist(ssh_executable):
     return has_cp
 
 
-# TODO: move to 'smart' connection plugin that subclasses to ssh/paramiko as needed.
 def set_default_transport():
 
     # deal with 'smart' connection .. one time ..
     if C.DEFAULT_TRANSPORT == 'smart':
-        # TODO: check if we can deprecate this as ssh w/o control persist should
-        # not be as common anymore.
+        display.deprecated("The 'smart' option for connections is deprecated. Set the connection plugin directly instead.", version=2.19)
 
         # see if SSH can support ControlPersist if not use paramiko
         if not check_for_controlpersist('ssh') and paramiko is not None:

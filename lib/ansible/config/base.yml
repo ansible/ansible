@@ -1102,10 +1102,11 @@ DEFAULT_TIMEOUT:
   - {key: timeout, section: defaults}
   type: integer
 DEFAULT_TRANSPORT:
-  # note that ssh_utils refs this and needs to be updated if removed
   name: Connection plugin
-  default: smart
-  description: "Default connection plugin to use, the 'smart' option will toggle between 'ssh' and 'paramiko' depending on controller OS and ssh versions"
+  default: ssh
+  description:
+    - Can be any connection plugin available to your ansible installation.
+    - There is also a (DEPRECATED) special 'smart' option, that will toggle between 'ssh' and 'paramiko' depending on controller OS and ssh versions.
   env: [{name: ANSIBLE_TRANSPORT}]
   ini:
   - {key: transport, section: defaults}
