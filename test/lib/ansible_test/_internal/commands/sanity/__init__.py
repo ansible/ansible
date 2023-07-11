@@ -878,6 +878,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__include_directories: bool = self.config.get('include_directories')
             self.__include_symlinks: bool = self.config.get('include_symlinks')
             self.__py2_compat: bool = self.config.get('py2_compat', False)
+            self.__error_code: str | None = self.config.get('error_code', None)
         else:
             self.output = None
             self.extensions = []
@@ -893,6 +894,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__include_directories = False
             self.__include_symlinks = False
             self.__py2_compat = False
+            self.__error_code = None
 
         if self.no_targets:
             mutually_exclusive = (
@@ -910,6 +912,11 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
             if problems:
                 raise ApplicationError('Sanity test "%s" option "no_targets" is mutually exclusive with options: %s' % (self.name, ', '.join(problems)))
+
+    @property
+    def error_code(self) -> t.Optional[str]:
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return self.__error_code
 
     @property
     def all_targets(self) -> bool:
@@ -995,6 +1002,8 @@ class SanityCodeSmellTest(SanitySingleVersion):
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
             elif self.output == 'path-message':
                 pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
+            elif self.output == 'path-line-column-code-message':
+                pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[^:]*): (?P<message>.*)$'
             else:
                 raise ApplicationError('Unsupported output type: %s' % self.output)
 
@@ -1024,6 +1033,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
                     path=m['path'],
                     line=int(m.get('line', 0)),
                     column=int(m.get('column', 0)),
+                    code=m.get('code'),
                 ) for m in matches]
 
                 messages = settings.process_errors(messages, paths)

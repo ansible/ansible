@@ -1,0 +1,11 @@
+{
+    "plugins": {
+        "line-length": {
+            "line_length": 160,
+            "code_block_line_length": 160
+        },
+        "first-line-heading": {
+            "enabled": false
+        }
+    }
+}

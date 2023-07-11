@@ -178,3 +178,26 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
+.github/CONTRIBUTING.md pymarkdown:line-length
+hacking/backport/README.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/bug_internal_api.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/bug_wrong_repo.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/collections.md pymarkdown:line-length
+hacking/ticket_stubs/collections.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/guide_newbie_about_gh_and_contributing_to_ansible.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/no_thanks.md pymarkdown:line-length
+hacking/ticket_stubs/no_thanks.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/pr_duplicate.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/pr_merged.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/proposal.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/question_not_bug.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/resolved.md pymarkdown:no-bare-urls
+hacking/ticket_stubs/wider_discussion.md pymarkdown:no-bare-urls
+lib/ansible/galaxy/data/apb/README.md pymarkdown:line-length
+lib/ansible/galaxy/data/container/README.md pymarkdown:line-length
+lib/ansible/galaxy/data/default/role/README.md pymarkdown:line-length
+lib/ansible/galaxy/data/network/README.md pymarkdown:line-length
+README.md pymarkdown:line-length
+test/integration/targets/ansible-vault/invalid_format/README.md pymarkdown:no-bare-urls
+test/support/README.md pymarkdown:no-bare-urls
+test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length

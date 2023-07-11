@@ -824,7 +824,7 @@ def test_build_with_symlink_inside_collection(collection_input):
         actual_file = secure_hash_s(linked_file_obj.read())
         linked_file_obj.close()
 
-        assert actual_file == '63444bfc766154e1bc7557ef6280de20d03fcd81'
+        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
 
 
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
