@@ -1,102 +1,91 @@
 #!/usr/bin/env fish
-# usage: . ./hacking/env-setup [-q]
-#    modifies environment for running Ansible from checkout
+# Script: env-setup.fish
+# Description: Modifies the environment for running Ansible from a checkout
+# Usage: . ./hacking/env-setup [-q]
+
+# Retrieve the path of the current directory where the script resides
 set HACKING_DIR (dirname (status -f))
 set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
-set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
-set ANSIBLE_TEST_PREFIX_PYTHONPATH $ANSIBLE_HOME/test/lib
-set PREFIX_PATH $ANSIBLE_HOME/bin
-set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
-# set quiet flag
-if test (count $argv) -ge 1
-    switch $argv
-        case '-q' '--quiet'
-            set QUIET "true"
-        case '*'
-    end
+# Set quiet flag
+set QUIET ""
+if contains -- (string split -m 1 " " $argv) -q --quiet
+    set QUIET "true"
 end
+
+# Set environment variables
+set -gx PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
+set -gx ANSIBLE_TEST_PREFIX_PYTHONPATH $ANSIBLE_HOME/test/lib
+set -gx PREFIX_PATH $ANSIBLE_HOME/bin
+set -gx PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
 # Set PYTHONPATH
 if not set -q PYTHONPATH
     set -gx PYTHONPATH $PREFIX_PYTHONPATH
-else
-    switch PYTHONPATH
-        case "$PREFIX_PYTHONPATH*"
-        case "*"
-            if not [ $QUIET ]
-                echo "Appending PYTHONPATH"
-            end
-            set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
+else if not string match -qr "$PREFIX_PYTHONPATH($|:)" $PYTHONPATH
+    if not $QUIET
+        echo "Appending PYTHONPATH"
     end
+    set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
 end
 
 # Set ansible_test PYTHONPATH
-switch PYTHONPATH
-    case "$ANSIBLE_TEST_PREFIX_PYTHONPATH*"
-    case "*"
-        if not [ $QUIET ]
-            echo "Appending PYTHONPATH"
-        end
-        set -gx PYTHONPATH "$ANSIBLE_TEST_PREFIX_PYTHONPATH:$PYTHONPATH"
+if not string match -qr "$ANSIBLE_TEST_PREFIX_PYTHONPATH($|:)" $PYTHONPATH
+    if not $QUIET
+        echo "Appending PYTHONPATH"
+    end
+    set -gx PYTHONPATH "$ANSIBLE_TEST_PREFIX_PYTHONPATH:$PYTHONPATH"
 end
 
 # Set PATH
-if not contains $PREFIX_PATH $PATH
+if not contains -- $PREFIX_PATH $PATH
     set -gx PATH $PREFIX_PATH $PATH
 end
 
 # Set MANPATH
-if not contains $PREFIX_MANPATH $MANPATH
-    if not set -q MANPATH
-        set -gx MANPATH $PREFIX_MANPATH:
-    else
-        set -gx MANPATH $PREFIX_MANPATH $MANPATH
-    end
+if not set -q MANPATH
+    set -gx MANPATH $PREFIX_MANPATH
+else if not string match -qr "$PREFIX_MANPATH($|:)" $MANPATH
+    set -gx MANPATH "$PREFIX_MANPATH:$MANPATH"
 end
 
 # Set PYTHON_BIN
 if not set -q PYTHON_BIN
-    if test (which python3)
-        set -gx PYTHON_BIN (which python3)
-    else if test (which python)
-        set -gx PYTHON_BIN (which python)
-    else
+    for exe in python3 python
+        if command -v $exe > /dev/null
+            set -gx PYTHON_BIN (command -v $exe)
+            break
+        end
+    end
+    if not set -q PYTHON_BIN
         echo "No valid Python found"
         exit 1
     end
 end
 
-#
 # Generate egg_info so that pkg_resources works
-#
-
-# Do the work in a fuction
 function gen_egg_info
-    # Cannot use `test` on wildcards.
-    # @see https://github.com/fish-shell/fish-shell/issues/5960
-    if count $PREFIX_PYTHONPATH/ansible*.egg-info > /dev/null
+    # Check if ansible*.egg-info directory exists and remove if found
+    if test -d $PREFIX_PYTHONPATH/ansible*.egg-info
         rm -rf $PREFIX_PYTHONPATH/ansible*.egg-info
     end
-
-    eval $PYTHON_BIN setup.py egg_info
+    # Execute setup.py egg_info using the chosen Python interpreter
+    (eval $PYTHON_BIN setup.py egg_info)
 end
-
 
 pushd $ANSIBLE_HOME
-
-if [ $QUIET ]
+if $QUIET
+    # Run gen_egg_info in the background and redirect output to /dev/null
     gen_egg_info &> /dev/null
+    # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';' &> /dev/null
 else
+    # Run gen_egg_info
     gen_egg_info
+    # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';'
-end
-
-popd
-
-if not [ $QUIET ]
+    # Display setup details
     echo ""
     echo "Setting up Ansible to run out of checkout..."
     echo ""
@@ -111,5 +100,7 @@ if not [ $QUIET ]
     echo "Done!"
     echo ""
 end
+popd
 
+# Unset QUIET variable
 set -e QUIET
