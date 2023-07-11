@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -309,6 +309,7 @@ import base64
 import json
 import logging
 import os
+import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
@@ -316,6 +317,7 @@ from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.shell.powershell import ShellModule as PowerShellPlugin
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
 from ansible.utils.hashing import sha1
@@ -345,13 +347,16 @@ class Connection(ConnectionBase):
     has_pipelining = True
     allow_extras = True
 
-    def __init__(self, *args, **kwargs):
+    # Satifies mypy as this connection only ever runs with this plugin
+    _shell: PowerShellPlugin
+
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         self.always_pipeline_modules = True
         self.has_native_async = True
 
-        self.runspace = None
-        self.host = None
-        self._last_pipeline = False
+        self.runspace: RunspacePool | None = None
+        self.host: PSHost | None = None
+        self._last_pipeline: PowerShell | None = None
 
         self._shell_type = 'powershell'
         super(Connection, self).__init__(*args, **kwargs)
@@ -361,7 +366,7 @@ class Connection(ConnectionBase):
             logging.getLogger('requests_credssp').setLevel(logging.INFO)
             logging.getLogger('urllib3').setLevel(logging.INFO)
 
-    def _connect(self):
+    def _connect(self) -> Connection:
         if not HAS_PYPSRP:
             raise AnsibleError("pypsrp or dependencies are not installed: %s"
                                % to_native(PYPSRP_IMP_ERR))
@@ -408,7 +413,7 @@ class Connection(ConnectionBase):
             self._last_pipeline = None
         return self
 
-    def reset(self):
+    def reset(self) -> None:
         if not self._connected:
             self.runspace = None
             return
@@ -424,9 +429,11 @@ class Connection(ConnectionBase):
         self.runspace = None
         self._connect()
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data,
                                              sudoable=sudoable)
+
+        pwsh_in_data: bytes | str | None = None
 
         if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
@@ -434,16 +441,15 @@ class Connection(ConnectionBase):
             # starting a new interpreter to save on time
             b_command = base64.b64decode(cmd.split(" ")[-1])
             script = to_text(b_command, 'utf-16-le')
-            in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
+            pwsh_in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
 
-            if in_data and in_data.startswith(u"#!"):
+            if pwsh_in_data and isinstance(pwsh_in_data, str) and pwsh_in_data.startswith("#!"):
                 # ANSIBALLZ wrapper, we need to get the interpreter and execute
                 # that as the script - note this won't work as basic.py relies
                 # on packages not available on Windows, once fixed we can enable
                 # this path
-                interpreter = to_native(in_data.splitlines()[0][2:])
+                interpreter = to_native(pwsh_in_data.splitlines()[0][2:])
                 # script = "$input | &'%s' -" % interpreter
-                # in_data = to_text(in_data)
                 raise AnsibleError("cannot run the interpreter '%s' on the psrp "
                                    "connection plugin" % interpreter)
 
@@ -458,12 +464,13 @@ class Connection(ConnectionBase):
             # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
             # rc is propagated back to the connection plugin.
             script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
+            pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(script, in_data)
+        rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data)
         return rc, stdout, stderr
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).put_file(in_path, out_path)
 
         out_path = self._shell._unquote(out_path)
@@ -611,7 +618,7 @@ end {
             raise AnsibleError("Remote sha1 hash %s does not match local hash %s"
                                % (to_native(remote_sha1), to_native(local_sha1)))
 
-    def fetch_file(self, in_path, out_path):
+    def fetch_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path),
                     host=self._psrp_host)
@@ -689,7 +696,7 @@ if ($bytes_read -gt 0) {
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
 
-    def close(self):
+    def close(self) -> None:
         if self.runspace and self.runspace.state == RunspacePoolState.OPENED:
             display.vvvvv("PSRP CLOSE RUNSPACE: %s" % (self.runspace.id),
                           host=self._psrp_host)
@@ -698,7 +705,7 @@ if ($bytes_read -gt 0) {
         self._connected = False
         self._last_pipeline = None
 
-    def _build_kwargs(self):
+    def _build_kwargs(self) -> None:
         self._psrp_host = self.get_option('remote_addr')
         self._psrp_user = self.get_option('remote_user')
         self._psrp_pass = self.get_option('remote_password')
@@ -802,7 +809,13 @@ if ($bytes_read -gt 0) {
             option = self.get_option('_extras')['ansible_psrp_%s' % arg]
             self._psrp_conn_kwargs[arg] = option
 
-    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, arguments=None):
+    def _exec_psrp_script(
+        self,
+        script: str,
+        input_data: bytes | str | t.Iterable | None = None,
+        use_local_scope: bool = True,
+        arguments: t.Iterable[str] | None = None,
+    ) -> tuple[int, bytes, bytes]:
         # Check if there's a command on the current pipeline that still needs to be closed.
         if self._last_pipeline:
             # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
@@ -828,7 +841,7 @@ if ($bytes_read -gt 0) {
 
         return rc, stdout, stderr
 
-    def _parse_pipeline_result(self, pipeline):
+    def _parse_pipeline_result(self, pipeline: PowerShell) -> tuple[int, bytes, bytes]:
         """
         PSRP doesn't have the same concept as other protocols with its output.
         We need some extra logic to convert the pipeline streams and host
