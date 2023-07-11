@@ -102,3 +102,48 @@
 
 - assert:
     that: "no_terms|first == '/etc/hosts'"
+
+- name: handle templatable dictionary entries
+  block:
+
+  - name: Load variables specific for OS family
+    assert:
+      that:
+        - "{{item|quote}} is file"
+        - "{{item|basename == 'itworks.yml'}}"
+    with_first_found:
+      - files:
+          - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalid var, should be skipped
+          - "{{ansible_lsb.id}}-{{ansible_lsb.major_release}}.yml"  # does not exist, but should try
+          - "{{ansible_distribution}}-{{ansible_distribution_major_version}}.yml"  # does not exist, but should try
+          - itworks.yml
+          - ishouldnotbefound.yml  # this exist, but should not be found
+        paths:
+          - "{{role_path}}/vars"
+
+  - name: Load variables specific for OS family, but now as list of dicts, same options as above
+    assert:
+      that:
+        - "{{item|quote}} is file"
+        - "{{item|basename == 'itworks.yml'}}"
+    with_first_found:
+      - files:
+          - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - "{{ansible_lsb.id}}-{{ansible_lsb.major_release}}.yml"
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - "{{ansible_distribution}}-{{ansible_distribution_major_version}}.yml"
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - itworks.yml
+        paths:
+          - "{{role_path}}/vars"
+      - files:
+          - ishouldnotbefound.yml
+        paths:
+          - "{{role_path}}/vars"
