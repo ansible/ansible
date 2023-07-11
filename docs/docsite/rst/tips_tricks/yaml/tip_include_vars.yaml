@@ -1,6 +1,0 @@
-- hosts: all
-  tasks:
-    - name: Set OS distribution dependent variables
-      include_vars: "os_{{ ansible_facts['distribution'] }}.yml"
-    - debug:
-        var: asdf

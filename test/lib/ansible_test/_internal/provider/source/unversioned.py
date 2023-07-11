@@ -48,9 +48,6 @@ class UnversionedSource(SourceProvider):
             'tests': (
                 'output',
             ),
-            'docs/docsite': (
-                '_build',
-            ),
         }
 
         kill_sub_file = {

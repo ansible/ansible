@@ -16,14 +16,8 @@ group2_include=(
     validate-modules
 )
 
-group3_include=(
-    docs-build
-    sanity-docs
-)
-
 group1_exclude=(
     "${group2_include[@]}"
-    "${group3_include[@]}"
 )
 
 options=()
@@ -36,11 +30,6 @@ case "${group}" in
         ;;
     2)
         for name in "${group2_include[@]}"; do
-            options+=(--test "${name}")
-        done
-        ;;
-    3)
-        for name in "${group3_include[@]}"; do
             options+=(--test "${name}")
         done
         ;;
