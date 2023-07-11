@@ -337,6 +337,9 @@ def test_dist_rebuilds_with_manpages_premutations(
     assert rebuilt_sdist_path.exists()
     assert rebuilt_sdist_path.is_dir()
     normalize_unpacked_rebuilt_sdist(rebuilt_sdist_path)
+    # Ensure the man page directory exists to ease diff comparison.
+    for dir_path in (rebuilt_sdist_path, sdist_with_manpages_path):
+        (dir_path / 'docs/man/man1').mkdir(parents=True, exist_ok=True)
     assert_dirs_equal(rebuilt_sdist_path, sdist_with_manpages_path)
 
     # Test building a wheel from the rebuilt sdist with manpages contents

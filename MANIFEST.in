@@ -1,22 +1,6 @@
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
-recursive-include docs *
-include docs/docsite/rst/collections/all_plugins.rst
-exclude docs/docsite/rst_warnings
-exclude docs/docsite/rst/conf.py
-exclude docs/docsite/rst/index.rst
-exclude docs/docsite/rst/dev_guide/index.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst
-exclude docs/docsite/rst/dev_guide/testing/sanity/release-names.rst
-recursive-exclude docs/docsite/_build *
-recursive-exclude docs/docsite/_extensions *.pyc *.pyo
-include examples/hosts
-include examples/ansible.cfg
-include examples/scripts/ConfigureRemotingForAnsible.ps1
-include examples/scripts/upgrade_to_ps3.ps1
 recursive-include licenses *.txt
 recursive-include packaging *.py *.j2
 recursive-include test/ansible_test *.py Makefile
@@ -31,9 +15,6 @@ recursive-include test/units *
 include MANIFEST.in
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
-recursive-include hacking/build_library *.py
-include hacking/build-ansible.py
-include hacking/templates/*.j2
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py
 include bin/*
