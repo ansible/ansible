@@ -1,6 +1,0 @@
-- hosts: os_CentOS
-  gather_facts: False
-  tasks:
-    # Tasks for CentOS hosts only go in this play.
-    - name: Ping my CentOS hosts
-      ansible.builtin.ping:
