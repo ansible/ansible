@@ -114,7 +114,7 @@ author:
 '''
 
 EXAMPLES = r"""
-# Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+# Display facts from all hosts and store them indexed by `hostname` at `/tmp/facts`.
 # ansible all -m ansible.builtin.setup --tree /tmp/facts
 
 # Display only facts regarding memory found by ansible on all hosts and output them.

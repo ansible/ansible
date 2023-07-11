@@ -45,7 +45,7 @@ options:
         description:
             - Will ensure or not that "-o StrictHostKeyChecking=no" is present as an ssh option.
             - Be aware that this disables a protection against MITM attacks.
-            - Those using OpenSSH >= 7.5 might want to set I(ssh_opt) to 'StrictHostKeyChecking=accept-new'
+            - Those using OpenSSH >= 7.5 might want to set I(ssh_opts) to 'StrictHostKeyChecking=accept-new'
               instead, it does not remove the MITM issue but it does restrict it to the first attempt.
         type: bool
         default: 'no'
