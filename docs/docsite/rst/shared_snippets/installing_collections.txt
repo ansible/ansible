@@ -1,8 +1,9 @@
 
 
 By default, ``ansible-galaxy collection install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the
-:file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any
-further configuration.
+:file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any further configuration.
+
+By default, Ansible installs the collection in `~/.ansible/collections` under the `ansible_collections` directory.
 
 See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub.
 
@@ -37,8 +38,8 @@ You can also install multiple collections in a namespace directory.
 
    ns/
    ├── collection1/
-   │   ├── MANIFEST.json
-   │   └── plugins/
+   │   ├── MANIFEST.json
+   │   └── plugins/
    └── collection2/
        ├── galaxy.yml
        └── plugins/
