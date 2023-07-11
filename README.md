@@ -16,18 +16,18 @@ changes like zero-downtime rolling updates with load balancers easy. More inform
 
 ## Design Principles
 
-*  Have an extremely simple setup process with a minimal learning curve.
-*  Manage machines quickly and in parallel.
-*  Avoid custom-agents and additional open ports, be agentless by
-   leveraging the existing SSH daemon.
-*  Describe infrastructure in a language that is both machine and human
-   friendly.
-*  Focus on security and easy auditability/review/rewriting of content.
-*  Manage new remote machines instantly, without bootstrapping any
-   software.
-*  Allow module development in any dynamic language, not just Python.
-*  Be usable as non-root.
-*  Be the easiest IT automation system to use, ever.
+* Have an extremely simple setup process with a minimal learning curve.
+* Manage machines quickly and in parallel.
+* Avoid custom-agents and additional open ports, be agentless by
+  leveraging the existing SSH daemon.
+* Describe infrastructure in a language that is both machine and human
+  friendly.
+* Focus on security and easy auditability/review/rewriting of content.
+* Manage new remote machines instantly, without bootstrapping any
+  software.
+* Allow module development in any dynamic language, not just Python.
+* Be usable as non-root.
+* Be the easiest IT automation system to use, ever.
 
 ## Use Ansible
 
@@ -42,19 +42,19 @@ in the Ansible community if you want to run the `devel` branch.
 
 ## Get Involved
 
-*  Read [Community Information](https://docs.ansible.com/ansible/latest/community) for all
-   kinds of ways to contribute to and interact with the project,
-   including mailing list information and how to submit bug reports and
-   code to Ansible.
-*  Join a [Working Group](https://github.com/ansible/community/wiki),
-   an organized community devoted to a specific technology domain or platform.
-*  Submit a proposed code update through a pull request to the `devel` branch.
-*  Talk to us before making larger changes
-   to avoid duplicate efforts. This not only helps everyone
-   know what is going on, but it also helps save time and effort if we decide
-   some changes are needed.
-*  For a list of email lists, IRC channels and Working Groups, see the
-   [Communication page](https://docs.ansible.com/ansible/latest/community/communication.html)
+* Read [Community Information](https://docs.ansible.com/ansible/latest/community) for all
+  kinds of ways to contribute to and interact with the project,
+  including mailing list information and how to submit bug reports and
+  code to Ansible.
+* Join a [Working Group](https://github.com/ansible/community/wiki),
+  an organized community devoted to a specific technology domain or platform.
+* Submit a proposed code update through a pull request to the `devel` branch.
+* Talk to us before making larger changes
+  to avoid duplicate efforts. This not only helps everyone
+  know what is going on, but it also helps save time and effort if we decide
+  some changes are needed.
+* For a list of email lists, IRC channels and Working Groups, see the
+  [Communication page](https://docs.ansible.com/ansible/latest/community/communication.html)
 
 ## Coding Guidelines
 
@@ -65,10 +65,10 @@ We document our Coding Guidelines in the [Developer Guide](https://docs.ansible.
 
 ## Branch Info
 
-*  The `devel` branch corresponds to the release actively under development.
-*  The `stable-2.X` branches correspond to stable releases.
-*  Create a branch based on `devel` and set up a [dev environment](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#common-environment-setup) if you want to open a PR.
-*  See the [Ansible release and maintenance](https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html) page for information about active branches.
+* The `devel` branch corresponds to the release actively under development.
+* The `stable-2.X` branches correspond to stable releases.
+* Create a branch based on `devel` and set up a [dev environment](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#common-environment-setup) if you want to open a PR.
+* See the [Ansible release and maintenance](https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html) page for information about active branches.
 
 ## Roadmap
 
