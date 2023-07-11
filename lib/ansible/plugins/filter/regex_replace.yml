@@ -44,7 +44,7 @@ EXAMPLES: |
   # See https://docs.python.org/3/library/re.html for more information
   # on inline regex flags
   # piratecomment => '#CAR\n#tar\nfoo\n#bar\n'
-  piratecomment: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_replace('^(.ar)$', '#\\1', multiline=True, ignorecase=True) }}"
+  piratecomment: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_replace('(?im)^(.ar)$', '#\\1') }}"
 
 RETURN:
   _value:
