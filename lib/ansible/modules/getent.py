@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 module: getent
 short_description: A wrapper to the unix getent utility
 description:
-     - Runs getent against one of it's various databases and returns information into
+     - Runs getent against one of its various databases and returns information into
        the host's facts, in a getent_<database> prefixed variable.
 version_added: "1.8"
 options:
