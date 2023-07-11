@@ -46,3 +46,12 @@ ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible-test': '../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py',
     'ansible-vault': '../lib/ansible/cli/vault.py',
 }
+
+PROXY_ENVIRONMENT_VARS = (
+    'http_proxy',
+    'https_proxy',
+    'HTTP_PROXY',
+    'HTTPS_PROXY',
+    'no_proxy',
+    'NO_PROXY',
+)
