@@ -55,6 +55,9 @@ class AnsiblePlugin(ABC):
     # allow extra passthrough parameters
     allow_extras = False
 
+    # Set by plugin loader
+    _load_name: str
+
     def __init__(self):
         self._options = {}
         self._defs = None

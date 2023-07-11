@@ -4,7 +4,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -381,15 +381,18 @@ DOCUMENTATION = '''
           - name: ansible_ssh_pkcs11_provider
 '''
 
+import collections.abc as c
 import errno
 import fcntl
 import hashlib
+import io
 import os
 import pty
 import re
 import shlex
 import subprocess
 import time
+import typing as t
 
 from functools import wraps
 from ansible.errors import (
@@ -410,6 +413,8 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 
 display = Display()
 
+P = t.ParamSpec('P')
+
 # error messages that indicate 255 return code is not from ssh itself.
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
                                                             #   while invoking a script via -m
@@ -427,7 +432,14 @@ class AnsibleControlPersistBrokenPipeError(AnsibleError):
     pass
 
 
-def _handle_error(remaining_retries, command, return_tuple, no_log, host, display=display):
+def _handle_error(
+    remaining_retries: int,
+    command: bytes,
+    return_tuple: tuple[int, bytes, bytes],
+    no_log: bool,
+    host: str,
+    display: Display = display,
+) -> None:
 
     # sshpass errors
     if command == b'sshpass':
@@ -483,7 +495,9 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
         display.vvv(msg, host=host)
 
 
-def _ssh_retry(func):
+def _ssh_retry(
+    func: c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]],
+) -> c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]]:
     """
     Decorator to retry ssh/scp/sftp in the case of a connection failure
 
@@ -496,12 +510,12 @@ def _ssh_retry(func):
     * retries limit reached
     """
     @wraps(func)
-    def wrapped(self, *args, **kwargs):
+    def wrapped(self: Connection, *args: P.args, **kwargs: P.kwargs) -> tuple[int, bytes, bytes]:
         remaining_tries = int(self.get_option('reconnection_retries')) + 1
         cmd_summary = u"%s..." % to_text(args[0])
         conn_password = self.get_option('password') or self._play_context.password
         for attempt in range(remaining_tries):
-            cmd = args[0]
+            cmd = t.cast(list[bytes], args[0])
             if attempt != 0 and conn_password and isinstance(cmd, list):
                 # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
                 self.sshpass_pipe = os.pipe()
@@ -520,7 +534,7 @@ def _ssh_retry(func):
                     # 255 could be a failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
-                    cmd = args[0]
+                    cmd = t.cast(list[bytes], args[0])
                     if conn_password and isinstance(cmd, list):
                         # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
                         self.sshpass_pipe = os.pipe()
@@ -568,15 +582,15 @@ class Connection(ConnectionBase):
     transport = 'ssh'
     has_pipelining = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super(Connection, self).__init__(*args, **kwargs)
 
         # TODO: all should come from get_option(), but not might be set at this point yet
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
-        self.control_path = None
-        self.control_path_dir = None
+        self.control_path: str | None = None
+        self.control_path_dir: str | None = None
 
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
@@ -591,11 +605,17 @@ class Connection(ConnectionBase):
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
 
-    def _connect(self):
+    def _connect(self) -> Connection:
         return self
 
     @staticmethod
-    def _create_control_path(host, port, user, connection=None, pid=None):
+    def _create_control_path(
+        host: str | None,
+        port: int | None,
+        user: str | None,
+        connection: ConnectionBase | None = None,
+        pid: int | None = None,
+    ) -> str:
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
         if connection:
@@ -609,7 +629,7 @@ class Connection(ConnectionBase):
         return cpath
 
     @staticmethod
-    def _sshpass_available():
+    def _sshpass_available() -> bool:
         global SSHPASS_AVAILABLE
 
         # We test once if sshpass is available, and remember the result. It
@@ -627,7 +647,7 @@ class Connection(ConnectionBase):
         return SSHPASS_AVAILABLE
 
     @staticmethod
-    def _persistence_controls(b_command):
+    def _persistence_controls(b_command: list[bytes]) -> tuple[bool, bool]:
         '''
         Takes a command array and scans it for ControlPersist and ControlPath
         settings and returns two booleans indicating whether either was found.
@@ -646,7 +666,7 @@ class Connection(ConnectionBase):
 
         return controlpersist, controlpath
 
-    def _add_args(self, b_command, b_args, explanation):
+    def _add_args(self, b_command: list[bytes], b_args: t.Iterable[bytes], explanation: str) -> None:
         """
         Adds arguments to the ssh command and displays a caller-supplied explanation of why.
 
@@ -662,7 +682,7 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
 
-    def _build_command(self, binary, subsystem, *other_args):
+    def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         '''
         Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
         wrapped in local ssh shell commands and ready for execution.
@@ -719,6 +739,7 @@ class Connection(ConnectionBase):
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
+        b_args: t.Iterable[bytes]
         if subsystem == 'sftp' and self.get_option('sftp_batch_mode'):
             if conn_password:
                 b_args = [b'-o', b'BatchMode=no']
@@ -818,7 +839,7 @@ class Connection(ConnectionBase):
 
         return b_command
 
-    def _send_initial_data(self, fh, in_data, ssh_process):
+    def _send_initial_data(self, fh: io.IOBase, in_data: bytes, ssh_process: subprocess.Popen) -> None:
         '''
         Writes initial data to the stdin filehandle of the subprocess and closes
         it. (The handle must be closed; otherwise, for example, "sftp -b -" will
@@ -845,7 +866,7 @@ class Connection(ConnectionBase):
 
     # Used by _run() to kill processes on failures
     @staticmethod
-    def _terminate_process(p):
+    def _terminate_process(p: subprocess.Popen) -> None:
         """ Terminate a process, ignoring errors """
         try:
             p.terminate()
@@ -854,7 +875,7 @@ class Connection(ConnectionBase):
 
     # This is separate from _run() because we need to do the same thing for stdout
     # and stderr.
-    def _examine_output(self, source, state, b_chunk, sudoable):
+    def _examine_output(self, source: str, state: str, b_chunk: bytes, sudoable: bool) -> tuple[bytes, bytes]:
         '''
         Takes a string, extracts complete lines from it, tests to see if they
         are a prompt, error message, etc., and sets appropriate flags in self.
@@ -903,7 +924,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _bare_run(self, cmd, in_data, sudoable=True, checkrc=True):
+    def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -949,7 +970,7 @@ class Connection(ConnectionBase):
                 else:
                     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
-                stdin = p.stdin
+                stdin = p.stdin  # type: ignore[assignment] # stdin will be set and not None due to the calls above
             except (OSError, IOError) as e:
                 raise AnsibleError('Unable to execute ssh command line on a controller due to: %s' % to_native(e))
 
@@ -1199,13 +1220,13 @@ class Connection(ConnectionBase):
         return (p.returncode, b_stdout, b_stderr)
 
     @_ssh_retry
-    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
+    def _run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         """Wrapper around _bare_run that retries the connection
         """
         return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
 
     @_ssh_retry
-    def _file_transport_command(self, in_path, out_path, sftp_action):
+    def _file_transport_command(self, in_path: str, out_path: str, sftp_action: str) -> tuple[int, bytes, bytes]:
         # scp and sftp require square brackets for IPv6 addresses, but
         # accept them for hostnames and IPv4 addresses too.
         host = '[%s]' % self.host
@@ -1293,7 +1314,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
                                (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
-    def _escape_win_path(self, path):
+    def _escape_win_path(self, path: str) -> str:
         """ converts a Windows path to one that's supported by SFTP and SCP """
         # If using a root path then we need to start with /
         prefix = ""
@@ -1306,7 +1327,7 @@ class Connection(ConnectionBase):
     #
     # Main public methods
     #
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -1323,8 +1344,10 @@ class Connection(ConnectionBase):
 
             # Make sure our first command is to set the console encoding to
             # utf-8, this must be done via chcp to get utf-8 (65001)
-            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]
-            cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))
+            # union-attr ignores rely on internal powershell shell plugin details,
+            # this should be fixed at a future point in time.
+            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]  # type: ignore[union-attr]
+            cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))  # type: ignore[union-attr]
             cmd = ' '.join(cmd_parts)
 
         # we can only use tty when we are not pipelining the modules. piping
@@ -1338,6 +1361,7 @@ class Connection(ConnectionBase):
         # to disable it as a troubleshooting method.
         use_tty = self.get_option('use_tty')
 
+        args: tuple[str, ...]
         if not in_data and sudoable and use_tty:
             args = ('-tt', self.host, cmd)
         else:
@@ -1352,7 +1376,7 @@ class Connection(ConnectionBase):
 
         return (returncode, stdout, stderr)
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> tuple[int, bytes, bytes]:  # type: ignore[override]  # Used by tests and would break API
         ''' transfer a file from local to remote '''
 
         super(Connection, self).put_file(in_path, out_path)
@@ -1368,7 +1392,7 @@ class Connection(ConnectionBase):
 
         return self._file_transport_command(in_path, out_path, 'put')
 
-    def fetch_file(self, in_path, out_path):
+    def fetch_file(self, in_path: str, out_path: str) -> tuple[int, bytes, bytes]:  # type: ignore[override]  # Used by tests and would break API
         ''' fetch a file from remote to local '''
 
         super(Connection, self).fetch_file(in_path, out_path)
@@ -1383,7 +1407,7 @@ class Connection(ConnectionBase):
 
         return self._file_transport_command(in_path, out_path, 'get')
 
-    def reset(self):
+    def reset(self) -> None:
 
         run_reset = False
         self.host = self.get_option('host') or self._play_context.remote_addr
@@ -1412,5 +1436,5 @@ class Connection(ConnectionBase):
 
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         self._connected = False

@@ -2,7 +2,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -170,6 +170,7 @@ import json
 import tempfile
 import shlex
 import subprocess
+import typing as t
 
 from inspect import getfullargspec
 from urllib.parse import urlunsplit
@@ -190,6 +191,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _parse_clixml
+from ansible.plugins.shell.powershell import ShellBase as PowerShellBase
 from ansible.utils.hashing import secure_hash
 from ansible.utils.display import Display
 
@@ -245,14 +247,15 @@ class Connection(ConnectionBase):
     has_pipelining = True
     allow_extras = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
         self.always_pipeline_modules = True
         self.has_native_async = True
 
-        self.protocol = None
-        self.shell_id = None
+        self.protocol: winrm.Protocol | None = None
+        self.shell_id: str | None = None
         self.delegate = None
+        self._shell: PowerShellBase
         self._shell_type = 'powershell'
 
         super(Connection, self).__init__(*args, **kwargs)
@@ -262,7 +265,7 @@ class Connection(ConnectionBase):
             logging.getLogger('requests_kerberos').setLevel(logging.INFO)
             logging.getLogger('urllib3').setLevel(logging.INFO)
 
-    def _build_winrm_kwargs(self):
+    def _build_winrm_kwargs(self) -> None:
         # this used to be in set_options, as win_reboot needs to be able to
         # override the conn timeout, we need to be able to build the args
         # after setting individual options. This is called by _connect before
@@ -336,7 +339,7 @@ class Connection(ConnectionBase):
 
     # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
     # auth itself with a private CCACHE.
-    def _kerb_auth(self, principal, password):
+    def _kerb_auth(self, principal: str, password: str) -> None:
         if password is None:
             password = ""
 
@@ -401,8 +404,8 @@ class Connection(ConnectionBase):
             rc = child.exitstatus
         else:
             proc_mechanism = "subprocess"
-            password = to_bytes(password, encoding='utf-8',
-                                errors='surrogate_or_strict')
+            b_password = to_bytes(password, encoding='utf-8',
+                                  errors='surrogate_or_strict')
 
             display.vvvv("calling kinit with subprocess for principal %s"
                          % principal)
@@ -417,7 +420,7 @@ class Connection(ConnectionBase):
                           "'%s': %s" % (self._kinit_cmd, to_native(err))
                 raise AnsibleConnectionFailure(err_msg)
 
-            stdout, stderr = p.communicate(password + b'\n')
+            stdout, stderr = p.communicate(b_password + b'\n')
             rc = p.returncode != 0
 
         if rc != 0:
@@ -432,7 +435,7 @@ class Connection(ConnectionBase):
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
-    def _winrm_connect(self):
+    def _winrm_connect(self) -> winrm.Protocol:
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
@@ -491,7 +494,7 @@ class Connection(ConnectionBase):
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
-    def _winrm_send_input(self, protocol, shell_id, command_id, stdin, eof=False):
+    def _winrm_send_input(self, protocol: winrm.Protocol, shell_id: str, command_id: str, stdin: bytes, eof: bool = False) -> None:
         rq = {'env:Envelope': protocol._get_soap_header(
             resource_uri='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd',
             action='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/Send',
@@ -505,7 +508,13 @@ class Connection(ConnectionBase):
             stream['@End'] = 'true'
         protocol.send_message(xmltodict.unparse(rq))
 
-    def _winrm_exec(self, command, args=(), from_exec=False, stdin_iterator=None):
+    def _winrm_exec(
+        self,
+        command: str,
+        args: t.Iterable[bytes] = (),
+        from_exec: bool = False,
+        stdin_iterator: t.Iterable[tuple[bytes, bool]] = None,
+    ) -> winrm.Response:
         if not self.protocol:
             self.protocol = self._winrm_connect()
             self._connected = True
@@ -567,7 +576,7 @@ class Connection(ConnectionBase):
             if command_id:
                 self.protocol.cleanup_command(self.shell_id, command_id)
 
-    def _connect(self):
+    def _connect(self) -> Connection:
 
         if not HAS_WINRM:
             raise AnsibleError("winrm or requests is not installed: %s" % to_native(WINRM_IMPORT_ERR))
@@ -581,20 +590,20 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def reset(self):
+    def reset(self) -> None:
         if not self._connected:
             return
         self.protocol = None
         self.shell_id = None
         self._connect()
 
-    def _wrapper_payload_stream(self, payload, buffer_size=200000):
+    def _wrapper_payload_stream(self, payload: bytes, buffer_size: int = 200000) -> t.Iterable[tuple[bytes, bool]]:
         payload_bytes = to_bytes(payload)
         byte_count = len(payload_bytes)
         for i in range(0, byte_count, buffer_size):
             yield payload_bytes[i:i + buffer_size], i + buffer_size >= byte_count
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
 
@@ -622,7 +631,7 @@ class Connection(ConnectionBase):
         return (result.status_code, result.std_out, result.std_err)
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
-    def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
+    def _put_file_stdin_iterator(self, in_path: str, out_path: str, buffer_size: int = 250000) -> t.Iterable[tuple[bytes, bool]]:
         in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
@@ -635,9 +644,9 @@ class Connection(ConnectionBase):
                 yield b64_data, (in_file.tell() == in_size)
 
             if offset == 0:  # empty file, return an empty buffer + eof to close it
-                yield "", True
+                yield b"", True
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
@@ -700,7 +709,7 @@ class Connection(ConnectionBase):
         if not remote_sha1 == local_sha1:
             raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_native(remote_sha1), to_native(local_sha1)))
 
-    def fetch_file(self, in_path, out_path):
+    def fetch_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
@@ -767,7 +776,7 @@ class Connection(ConnectionBase):
             if out_file:
                 out_file.close()
 
-    def close(self):
+    def close(self) -> None:
         if self.protocol and self.shell_id:
             display.vvvvv('WINRM CLOSE SHELL: %s' % self.shell_id, host=self._winrm_host)
             self.protocol.close_shell(self.shell_id)
