@@ -1,0 +1,25 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug:
+        var: item
+      with_fileglob:
+        - '{{ playbook_dir }}/*.yml'
+      register: with_fileglob
+
+    - debug:
+        var: item
+      loop: '{{ q("fileglob", "{{ playbook_dir }}/*.yml") }}'
+      register: loop_q
+
+    - debug:
+        var: item
+      loop:
+        - '{{ playbook_dir }}/*.yml'
+      loop_control:
+        lookup: fileglob
+      register: loop_control_lookup
+
+    - assert:
+        that:
+          - with_fileglob == loop_q == loop_control_lookup
