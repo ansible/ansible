@@ -2,7 +2,6 @@ include COPYING
 include bin/*
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
-include hacking/templates/*.j2
 include hacking/test-module.py
 include hacking/update-sanity-requirements.py
 include licenses/*.txt
