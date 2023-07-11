@@ -1,5 +1,0 @@
-# edit "rstcheck.requirements.in" and generate with: hacking/update-sanity-requirements.py --test rstcheck
-docutils==0.18.1
-rstcheck==5.0.0
-types-docutils==0.18.3
-typing_extensions==4.5.0
