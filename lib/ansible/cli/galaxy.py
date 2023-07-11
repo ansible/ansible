@@ -302,6 +302,7 @@ class GalaxyCLI(CLI):
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
+        self.add_refresh_token_options(collection_parser, parents=[common])
 
         # Add sub parser for the Galaxy role actions
         role = type_parser.add_parser('role', help='Manage an Ansible Galaxy role.')
@@ -471,6 +472,12 @@ class GalaxyCLI(CLI):
         verify_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
                                    help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                    choices=list(GPG_ERROR_MAP.keys()))
+
+    def add_refresh_token_options(self, parser, parents=None):
+        galaxy_type = 'collection'
+        refresh_parser = parser.add_parser('refresh-token', parents=parents,
+                                           help='Refresh the Automation Hub access tokens for all servers')
+        refresh_parser.set_defaults(func=self.execute_refresh_token)
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -1299,6 +1306,11 @@ class GalaxyCLI(CLI):
             return 1
 
         return 0
+
+    def execute_refresh_token(self):
+        for server in self.api_servers:
+            if isinstance(server.token, KeycloakToken):
+                display.display('Refreshing access token for %s' % server)
 
     @with_collection_artifacts_manager
     def execute_install(self, artifacts_manager=None):
