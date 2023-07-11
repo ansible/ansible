@@ -13,11 +13,11 @@ but this does not seem to match that case.
 
 If you really need a stable API target to use Ansible, consider using ansible-runner:
 
-   * https://github.com/ansible/ansible-runner
+* https://github.com/ansible/ansible-runner
 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
 If you or anyone else has any further questions, please let us know by using any of the communication methods listed in the page below:
 
-   * https://docs.ansible.com/ansible/latest/community/communication.html
+* https://docs.ansible.com/ansible/latest/community/communication.html
 
 Thank you once again for this and your interest in Ansible!
