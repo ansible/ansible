@@ -28,21 +28,16 @@ cfg_in_homedir = os.path.expanduser('~/.ansible.cfg')
 
 
 @pytest.fixture
-def setup_env(request):
+def setup_env(request, monkeypatch):
     cur_config = os.environ.get('ANSIBLE_CONFIG', None)
     cfg_path = request.param[0]
 
     if cfg_path is None and cur_config:
-        del os.environ['ANSIBLE_CONFIG']
+        monkeypatch.delenv('ANSIBLE_CONFIG')
     else:
-        os.environ['ANSIBLE_CONFIG'] = request.param[0]
+        monkeypatch.setenv('ANSIBLE_CONFIG', request.param[0])
 
     yield
-
-    if cur_config is None and cfg_path:
-        del os.environ['ANSIBLE_CONFIG']
-    else:
-        os.environ['ANSIBLE_CONFIG'] = cur_config
 
 
 @pytest.fixture
@@ -54,10 +49,8 @@ def setup_existing_files(request, monkeypatch):
             return False
 
     def _os_access(path, access):
-        if to_text(path) in (request.param[0]):
-            return True
-        else:
-            return False
+        assert to_text(path) in (request.param[0])
+        return True
 
     # Enable user and system dirs so that we know cwd takes precedence
     monkeypatch.setattr("os.path.exists", _os_path_exists)
@@ -162,13 +155,11 @@ class TestFindIniFile:
         real_stat = os.stat
 
         def _os_stat(path):
-            if path == working_dir:
-                from posix import stat_result
-                stat_info = list(real_stat(path))
-                stat_info[stat.ST_MODE] |= stat.S_IWOTH
-                return stat_result(stat_info)
-            else:
-                return real_stat(path)
+            assert path == working_dir
+            from posix import stat_result
+            stat_info = list(real_stat(path))
+            stat_info[stat.ST_MODE] |= stat.S_IWOTH
+            return stat_result(stat_info)
 
         monkeypatch.setattr('os.stat', _os_stat)
 
@@ -187,13 +178,11 @@ class TestFindIniFile:
         real_stat = os.stat
 
         def _os_stat(path):
-            if path == working_dir:
-                from posix import stat_result
-                stat_info = list(real_stat(path))
-                stat_info[stat.ST_MODE] |= stat.S_IWOTH
-                return stat_result(stat_info)
-            else:
-                return real_stat(path)
+            assert path == working_dir
+            from posix import stat_result
+            stat_info = list(real_stat(path))
+            stat_info[stat.ST_MODE] |= stat.S_IWOTH
+            return stat_result(stat_info)
 
         monkeypatch.setattr('os.stat', _os_stat)
 
@@ -215,13 +204,13 @@ class TestFindIniFile:
         real_stat = os.stat
 
         def _os_stat(path):
-            if path == working_dir:
-                from posix import stat_result
-                stat_info = list(real_stat(path))
-                stat_info[stat.ST_MODE] |= stat.S_IWOTH
-                return stat_result(stat_info)
-            else:
+            if path != working_dir:
                 return real_stat(path)
+
+            from posix import stat_result
+            stat_info = list(real_stat(path))
+            stat_info[stat.ST_MODE] |= stat.S_IWOTH
+            return stat_result(stat_info)
 
         monkeypatch.setattr('os.stat', _os_stat)
 
@@ -240,13 +229,11 @@ class TestFindIniFile:
         real_stat = os.stat
 
         def _os_stat(path):
-            if path == working_dir:
-                from posix import stat_result
-                stat_info = list(real_stat(path))
-                stat_info[stat.ST_MODE] |= stat.S_IWOTH
-                return stat_result(stat_info)
-            else:
-                return real_stat(path)
+            assert path == working_dir
+            from posix import stat_result
+            stat_info = list(real_stat(path))
+            stat_info[stat.ST_MODE] |= stat.S_IWOTH
+            return stat_result(stat_info)
 
         monkeypatch.setattr('os.stat', _os_stat)
 

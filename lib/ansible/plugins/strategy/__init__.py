@@ -54,7 +54,6 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
-from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
@@ -117,7 +116,8 @@ def results_thread_main(strategy):
             if isinstance(result, StrategySentinel):
                 break
             elif isinstance(result, DisplaySend):
-                display.display(*result.args, **result.kwargs)
+                dmethod = getattr(display, result.method)
+                dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):

@@ -11,12 +11,10 @@ import io
 import pytest
 import sys
 
-from ansible.plugins.action import pause  # pylint: disable=unused-import
-from ansible.module_utils.six import PY2
+import ansible.utils.display  # make available for monkeypatch
+assert ansible.utils.display  # avoid reporting as unused
 
 builtin_import = 'builtins.__import__'
-if PY2:
-    builtin_import = '__builtin__.__import__'
 
 
 def test_pause_curses_tigetstr_none(mocker, monkeypatch):
@@ -36,8 +34,10 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
     mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.utils.display')
-    if mod.HAS_CURSES:
-        mod.setupterm()
+
+    assert mod.HAS_CURSES is True
+
+    mod.setupterm()
 
     assert mod.HAS_CURSES is True
     assert mod.MOVE_TO_BOL == b'\r'
@@ -58,11 +58,11 @@ def test_pause_missing_curses(mocker, monkeypatch):
     mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.utils.display')
-    if mod.HAS_CURSES:
-        mod.setupterm()
+
+    assert mod.HAS_CURSES is False
 
     with pytest.raises(AttributeError):
-        mod.curses  # pylint: disable=pointless-statement
+        assert mod.curses
 
     assert mod.HAS_CURSES is False
     assert mod.MOVE_TO_BOL == b'\r'
@@ -87,8 +87,10 @@ def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
     mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.utils.display')
-    if mod.HAS_CURSES:
-        mod.setupterm()
+
+    assert mod.HAS_CURSES is True
+
+    mod.setupterm()
 
     assert mod.HAS_CURSES is False
     assert mod.MOVE_TO_BOL == b'\r'

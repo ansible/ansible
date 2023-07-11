@@ -31,14 +31,14 @@ class ModuleDocFragment(object):
         name: Configure output for readability
         description:
           - Configure the result format to be more readable
-          - When the result format is set to C(yaml) this option defaults to C(True), and defaults
-            to C(False) when configured to C(json).
-          - Setting this option to C(True) will force C(json) and C(yaml) results to always be pretty
+          - When O(result_format) is set to V(yaml) this option defaults to V(True), and defaults
+            to V(False) when configured to V(json).
+          - Setting this option to V(True) will force V(json) and V(yaml) results to always be pretty
             printed regardless of verbosity.
-          - When set to C(True) and used with the C(yaml) result format, this option will
+          - When set to V(True) and used with the V(yaml) result format, this option will
             modify module responses in an attempt to produce a more human friendly output at the expense
             of correctness, and should not be relied upon to aid in writing variable manipulations
-            or conditionals. For correctness, set this option to C(False) or set the result format to C(json).
+            or conditionals. For correctness, set this option to V(False) or set O(result_format) to V(json).
         type: bool
         default: null
         env:

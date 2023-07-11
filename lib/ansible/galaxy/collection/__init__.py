@@ -1809,6 +1809,11 @@ def _resolve_depenency_map(
         elif not req.specifier.contains(RESOLVELIB_VERSION.vstring):
             raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
+    if allow_pre_release:
+        pre_release_hint = ''
+    else:
+        pre_release_hint = 'Hint: Pre-releases are not installed by default unless the specific version is given. To enable pre-releases, use --pre.'
+
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
         concrete_artifacts_manager=concrete_artifacts_manager,
@@ -1844,6 +1849,7 @@ def _resolve_depenency_map(
             ),
             conflict_causes,
         ))
+        error_msg_lines.append(pre_release_hint)
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:
         parents = [
@@ -1870,6 +1876,7 @@ def _resolve_depenency_map(
             error_msg_lines.append(
                 '* {req.fqcn!s}:{req.ver!s}'.format(req=req)
             )
+        error_msg_lines.append(pre_release_hint)
 
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except ValueError as exc:

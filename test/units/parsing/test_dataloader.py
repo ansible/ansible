@@ -26,7 +26,6 @@ from unittest.mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import PY3
 
 from units.mock.vault_helper import TextVaultSecret
 from ansible.parsing.dataloader import DataLoader
@@ -229,11 +228,7 @@ class TestDataLoaderWithVault(unittest.TestCase):
 3135306561356164310a343937653834643433343734653137383339323330626437313562306630
 3035
 """
-        if PY3:
-            builtins_name = 'builtins'
-        else:
-            builtins_name = '__builtin__'
 
-        with patch(builtins_name + '.open', mock_open(read_data=vaulted_data.encode('utf-8'))):
+        with patch('builtins.open', mock_open(read_data=vaulted_data.encode('utf-8'))):
             output = self._loader.load_from_file('dummy_vault.txt')
             self.assertEqual(output, dict(foo='bar'))

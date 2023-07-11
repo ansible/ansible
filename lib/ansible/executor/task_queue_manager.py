@@ -61,7 +61,8 @@ class CallbackSend:
 
 
 class DisplaySend:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, method, *args, **kwargs):
+        self.method = method
         self.args = args
         self.kwargs = kwargs
 
@@ -95,9 +96,9 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
             tr,
         )
 
-    def send_display(self, *args, **kwargs):
+    def send_display(self, method, *args, **kwargs):
         self.put(
-            DisplaySend(*args, **kwargs),
+            DisplaySend(method, *args, **kwargs),
         )
 
     def send_prompt(self, **kwargs):

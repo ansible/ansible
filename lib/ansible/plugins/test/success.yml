@@ -6,7 +6,7 @@ DOCUMENTATION:
   aliases: [succeeded, successful]
   description:
     - Tests if task finished successfully, opposite of C(failed).
-    - This test checks for the existance of a C(failed) key in the input dictionary and that it is C(False) if present
+    - This test checks for the existance of a C(failed) key in the input dictionary and that it is V(False) if present
   options:
     _input:
       description: registered result from an Ansible task
@@ -18,5 +18,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) if the task was successfully completed, C(False) otherwise.
+    description: Returns V(True) if the task was successfully completed, V(False) otherwise.
     type: boolean

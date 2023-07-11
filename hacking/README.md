@@ -5,7 +5,7 @@ env-setup
 ---------
 
 The 'env-setup' script modifies your environment to allow you to run
-ansible from a git checkout using python >= 3.8. 
+ansible from a git checkout using python >= 3.10.
 
 First, set up your environment to run from the checkout:
 
@@ -53,8 +53,3 @@ return_skeleton_generator.py
 
 return_skeleton_generator.py helps in generating the RETURNS section of a module. It takes
 JSON output of a module provided either as a file argument or via stdin.
-
-fix_test_syntax.py
-------------------
-
-A script to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format for the 2.5 release. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks.

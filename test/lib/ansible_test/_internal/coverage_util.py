@@ -1,7 +1,6 @@
 """Utility code for facilitating collection of code coverage when running tests."""
 from __future__ import annotations
 
-import atexit
 import dataclasses
 import os
 import sqlite3
@@ -34,6 +33,7 @@ from .data import (
 )
 
 from .util_common import (
+    ExitHandler,
     intercept_python,
     ResultType,
 )
@@ -69,7 +69,7 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('6.5.0', 7, (3, 7), (3, 11)),
+    CoverageVersion('6.5.0', 7, (3, 7), (3, 12)),
     CoverageVersion('4.5.4', 0, (2, 6), (3, 6)),
 )
 """
@@ -223,7 +223,7 @@ def get_coverage_config(args: TestConfig) -> str:
         temp_dir = '/tmp/coverage-temp-dir'
     else:
         temp_dir = tempfile.mkdtemp()
-        atexit.register(lambda: remove_tree(temp_dir))
+        ExitHandler.register(lambda: remove_tree(temp_dir))
 
     path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
 

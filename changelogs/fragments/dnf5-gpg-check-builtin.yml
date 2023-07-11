@@ -1,0 +1,2 @@
+minor_changes:
+  - Utilize gpg check provided internally by the ``transaction.run`` method as oppose to calling it manually.

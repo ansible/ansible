@@ -118,14 +118,16 @@ stages:
           targets:
             - name: Alpine 3.17
               test: alpine/3.17
+            - name: Alpine 3.18
+              test: alpine/3.18
             - name: Fedora 37
               test: fedora/37
+            - name: Fedora 38
+              test: fedora/38
             - name: RHEL 8.8
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
-            - name: Ubuntu 20.04
-              test: ubuntu/20.04
             - name: Ubuntu 22.04
               test: ubuntu/22.04
           groups:
@@ -143,6 +145,8 @@ stages:
               test: centos7
             - name: Fedora 37
               test: fedora37
+            - name: Fedora 38
+              test: fedora38
             - name: openSUSE 15
               test: opensuse15
             - name: Ubuntu 20.04
@@ -160,6 +164,8 @@ stages:
               test: alpine3
             - name: Fedora 37
               test: fedora37
+            - name: Fedora 38
+              test: fedora38
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:
@@ -174,7 +180,6 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.9
             - test: '3.10'
             - test: 3.11
   - stage: Generic
@@ -185,7 +190,6 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.9
             - test: '3.10'
             - test: 3.11
   - stage: Incidental_Windows

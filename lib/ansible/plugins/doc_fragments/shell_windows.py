@@ -35,7 +35,7 @@ options:
     description:
     - Controls if we set the locale for modules when executing on the
       target.
-    - Windows only supports C(no) as an option.
+    - Windows only supports V(no) as an option.
     type: bool
     default: 'no'
     choices: ['no', False]

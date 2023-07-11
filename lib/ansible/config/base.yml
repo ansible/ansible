@@ -200,12 +200,18 @@ COLLECTIONS_PATHS:
   default: '{{ ANSIBLE_HOME ~ "/collections:/usr/share/ansible/collections" }}'
   type: pathspec
   env:
-  - name: ANSIBLE_COLLECTIONS_PATHS  # TODO: Deprecate this and ini once PATH has been in a few releases.
+  - name: ANSIBLE_COLLECTIONS_PATHS
+    deprecated:
+      why: does not fit var naming standard, use the singular form ANSIBLE_COLLECTIONS_PATH instead
+      version: "2.19"
   - name: ANSIBLE_COLLECTIONS_PATH
     version_added: '2.10'
   ini:
   - key: collections_paths
     section: defaults
+    deprecated:
+      why: does not fit var naming standard, use the singular form collections_path instead
+      version: "2.19"
   - key: collections_path
     section: defaults
     version_added: '2.10'
@@ -1336,6 +1342,15 @@ GALAXY_IGNORE_CERTS:
   ini:
   - {key: ignore_certs, section: galaxy}
   type: boolean
+GALAXY_SERVER_TIMEOUT:
+  name: Default timeout to use for API calls
+  description:
+    - The default timeout for Galaxy API calls. Galaxy servers that don't configure a specific timeout will fall back to this value.
+  env: [{name: ANSIBLE_GALAXY_SERVER_TIMEOUT}]
+  default: 60
+  ini:
+  - {key: server_timeout, section: galaxy}
+  type: int
 GALAXY_ROLE_SKELETON:
   name: Galaxy role skeleton directory
   description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``/``ansible-galaxy role``, same as ``--role-skeleton``.

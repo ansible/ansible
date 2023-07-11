@@ -109,7 +109,11 @@ class TestAnsibleJSONEncoder:
             def __len__(self):
                 return len(self.__dict__)
 
-        return M(request.param)
+        mapping = M(request.param)
+
+        assert isinstance(len(mapping), int)   # ensure coverage of __len__
+
+        return mapping
 
     @pytest.fixture
     def ansible_json_encoder(self):

@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - add note to the collection dependency resolver error message about pre-releases if ``--pre`` was not provided (https://github.com/ansible/ansible/issues/80048).

@@ -1,5 +1,5 @@
 # resolvelib>=0.6.0 added an 'incompatibilities' parameter to find_matches
-# If incompatibilities aren't removed from the viable candidates, this example causes infinite resursion
+# If incompatibilities aren't removed from the viable candidates, this example causes infinite recursion
 - name: test resolvelib removes incompatibilites in find_matches and errors quickly (prevent infinite recursion)
   block:
     - name: create collection dir
