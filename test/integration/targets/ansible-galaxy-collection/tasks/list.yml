@@ -180,3 +180,36 @@
     that:
       - list_result is failed
       - "'is expected to have a valid SemVer version value but got None' in list_result.stderr"
+
+- name: Initialize the same FQCN in two collection paths
+  command: ansible-galaxy collection init {{ item.fqcn }} --init-path "{{ galaxy_dir }}/{{ item.path }}/ansible_collections" {{ galaxy_verbosity }}
+  loop:
+    - fqcn: common.collection1
+      path: dev
+    - fqcn: common.collection1
+      path: prod
+
+- name: Update version in one of the paths
+  lineinfile:
+    path: "{{ galaxy_dir }}/prod/ansible_collections/common/collection1/galaxy.yml"
+    line: "version: 2.0.0"
+    regexp: "version: .*"
+
+- name: Test listing collection in multiple paths
+  command: ansible-galaxy collection list common.collection1
+  register: list_common_1
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+
+- name: Test listing collection in multiple paths with -p
+  command: ansible-galaxy collection list common.collection1 -p {{ galaxy_dir }}/prod
+  register: list_common_2
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev"
+
+- assert:
+    that:
+      - '"common.collection1 1.0.0   *        " in list_common_1.stdout_lines'
+      - '"common.collection1 2.0.0            " in list_common_1.stdout_lines'
+      - '"common.collection1 1.0.0            " in list_common_2.stdout_lines'
+      - '"common.collection1 2.0.0   *        " in list_common_2.stdout_lines'

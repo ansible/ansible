@@ -119,16 +119,18 @@ def with_collection_artifacts_manager(wrapped_method):
     return method_wrapper
 
 
-def _display_header(path, h1, h2, w1=10, w2=7):
-    display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
-        path,
-        h1,
-        h2,
-        '-' * max([len(h1), w1]),  # Make sure that the number of dashes is at least the width of the header
-        '-' * max([len(h2), w2]),
-        cwidth=w1,
-        vwidth=w2,
-    ))
+def _display_header(path, h1, h2, w1=10, w2=7, h3=''):
+    optional_column = ' ' if h3 else ''
+    w3 = len(h3)
+
+    # Make sure that the number of dashes is at least the width of the header
+    h1_sep = '-' * max([len(h1), w1])
+    h2_sep = '-' * max([len(h2), w2])
+    h3_sep = '-' * max([len(h3), w3])
+
+    display.display(
+        f"\n# {path}\n{h1:{w1}} {h2:{w2}}{optional_column}{h3}\n{h1_sep} {h2_sep}{optional_column}{h3_sep}\n"
+    )
 
 
 def _display_role(gr):
@@ -141,12 +143,15 @@ def _display_role(gr):
     display.display("- %s, %s" % (gr.name, version))
 
 
-def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
-    display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7, pwidth=0, preferred=False):
+    display.display('{fqcn:{cwidth}} {version:{vwidth}}{optional_column}{preference_marker:{pwidth}}'.format(
         fqcn=to_text(collection.fqcn),
         version=collection.ver,
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
-        vwidth=max(vwidth, min_vwidth)
+        vwidth=max(vwidth, min_vwidth),
+        pwidth=pwidth,
+        optional_column = ' ' if pwidth != 0 else '',
+        preference_marker = '*' if preferred else ''
     ))
 
 
@@ -1638,23 +1643,30 @@ class GalaxyCLI(CLI):
             validate_collection_name(collection_name)
             namespace_filter, collection_filter = collection_name.split('.')
 
-        collections = list(find_existing_collections(
+        collections = []
+        fqcn_precedence = {}
+        for collection in find_existing_collections(
             list(collections_search_paths),
             artifacts_manager,
             namespace_filter=namespace_filter,
             collection_filter=collection_filter,
             dedupe=False
-        ))
+        ):
+            collections.append(collection)
+            fqcn_precedence.setdefault(collection.fqcn, []).append(collection.src)
 
         seen = set()
         fqcn_width, version_width = _get_collection_widths(collections)
+        preferred_header = 'Preferred' if any(len(matches) > 1 for matches in fqcn_precedence.values()) else ''
+
         for collection in sorted(collections, key=lambda c: c.src):
             collection_found = True
             collection_path = pathlib.Path(to_text(collection.src)).parent.parent.as_posix()
+            preferred = preferred_header and fqcn_precedence[collection.fqcn].index(collection.src) == 0
 
             if output_format in {'yaml', 'json'}:
                 collections_in_paths.setdefault(collection_path, {})
-                collections_in_paths[collection_path][collection.fqcn] = {'version': collection.ver}
+                collections_in_paths[collection_path][collection.fqcn] = {'version': collection.ver, 'preferred': preferred}
             else:
                 if collection_path not in seen:
                     _display_header(
@@ -1662,10 +1674,11 @@ class GalaxyCLI(CLI):
                         'Collection',
                         'Version',
                         fqcn_width,
-                        version_width
+                        version_width,
+                        h3=preferred_header,
                     )
                     seen.add(collection_path)
-                _display_collection(collection, fqcn_width, version_width)
+                _display_collection(collection, fqcn_width, version_width, pwidth=len(preferred_header), preferred=preferred)
 
         path_found = False
         for path in collections_search_paths:
