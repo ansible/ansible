@@ -6,7 +6,6 @@ include hacking/test-module.py
 include hacking/update-sanity-requirements.py
 include licenses/*.txt
 include requirements.txt
-recursive-include docs *
 recursive-include packaging *.py *.j2
 recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.txt
