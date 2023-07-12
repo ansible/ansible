@@ -150,8 +150,8 @@ def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwid
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
         vwidth=max(vwidth, min_vwidth),
         pwidth=pwidth,
-        optional_column = ' ' if pwidth != 0 else '',
-        preference_marker = '*' if preferred else ''
+        optional_column=' ' if pwidth != 0 else '',
+        preference_marker='*' if preferred else ''
     ))
 
 
