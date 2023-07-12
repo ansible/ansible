@@ -13,7 +13,7 @@ module: getent
 short_description: A wrapper to the unix getent utility
 description:
      - Runs getent against one of its various databases and returns information into
-       the host's facts, in a getent_<database> prefixed variable.
+       the host's facts, in a C(getent_<database>) prefixed variable.
 version_added: "1.8"
 options:
     database:
@@ -35,12 +35,12 @@ options:
         version_added: "2.9"
     split:
         description:
-            - Character used to split the database values into lists/arrays such as C(:) or C(\t),
+            - Character used to split the database values into lists/arrays such as V(:) or V(\\t),
               otherwise it will try to pick one depending on the database.
         type: str
     fail_key:
         description:
-            - If a supplied key is missing this will make the task fail if C(true).
+            - If a supplied key is missing this will make the task fail if V(true).
         type: bool
         default: 'yes'
 extends_documentation_fragment:

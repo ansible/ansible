@@ -32,7 +32,7 @@ options:
     hidden:
         description:
             - macOS only, optionally hide the user from the login window and system preferences.
-            - The default will be C(true) if the I(system) option is used.
+            - The default will be V(true) if the O(system) option is used.
         type: bool
         version_added: "2.6"
     non_unique:
@@ -53,24 +53,24 @@ options:
     groups:
         description:
             - A list of supplementary groups which the user is also a member of.
-            - By default, the user is removed from all other groups. Configure C(append) to modify this.
-            - When set to an empty string C(''),
+            - By default, the user is removed from all other groups. Configure O(append) to modify this.
+            - When set to an empty string V(''),
               the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
         type: list
         elements: str
     append:
         description:
-            - If C(true), add the user to the groups specified in C(groups).
-            - If C(false), user will only be added to the groups specified in C(groups),
+            - If V(true), add the user to the groups specified in O(groups).
+            - If V(false), user will only be added to the groups specified in O(groups),
               removing them from all other groups.
         type: bool
         default: no
     shell:
         description:
             - Optionally set the user's shell.
-            - On macOS, before Ansible 2.5, the default shell for non-system users was C(/usr/bin/false).
-              Since Ansible 2.5, the default shell for non-system users on macOS is C(/bin/bash).
+            - On macOS, before Ansible 2.5, the default shell for non-system users was V(/usr/bin/false).
+              Since Ansible 2.5, the default shell for non-system users on macOS is V(/bin/bash).
             - See notes for details on how other operating systems determine the default shell by
               the underlying tool.
         type: str
@@ -81,7 +81,7 @@ options:
     skeleton:
         description:
             - Optionally set a home skeleton directory.
-            - Requires C(create_home) option!
+            - Requires O(create_home) option!
         type: str
         version_added: "2.0"
     password:
@@ -90,8 +90,8 @@ options:
             - B(Linux/Unix/POSIX:) Enter the hashed password as the value.
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate the hash of a password.
-            - To create an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
-            - To create an account with a locked/disabled password on OpenBSD, set this to C('*************').
+            - To create an account with a locked/disabled password on Linux systems, set this to V('!') or V('*').
+            - To create an account with a locked/disabled password on OpenBSD, set this to V('*************').
             - B(OS X/macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
         type: str
     state:
@@ -104,34 +104,34 @@ options:
         default: present
     create_home:
         description:
-            - Unless set to C(false), a home directory will be made for the user
+            - Unless set to V(false), a home directory will be made for the user
               when the account is created or if the home directory does not exist.
-            - Changed from C(createhome) to C(create_home) in Ansible 2.5.
+            - Changed from O(createhome) to O(create_home) in Ansible 2.5.
         type: bool
         default: yes
         aliases: [ createhome ]
     move_home:
         description:
-            - "If set to C(true) when used with C(home: ), attempt to move the user's old home
+            - "If set to V(true) when used with O(home), attempt to move the user's old home
               directory to the specified directory if it isn't there already and the old home exists."
         type: bool
         default: no
     system:
         description:
-            - When creating an account C(state=present), setting this to C(true) makes the user a system account.
+            - When creating an account O(state=present), setting this to V(true) makes the user a system account.
             - This setting cannot be changed on existing users.
         type: bool
         default: no
     force:
         description:
-            - This only affects C(state=absent), it forces removal of the user and associated directories on supported platforms.
+            - This only affects O(state=absent), it forces removal of the user and associated directories on supported platforms.
             - The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support.
-            - When used with C(generate_ssh_key=yes) this forces an existing key to be overwritten.
+            - When used with O(generate_ssh_key=yes) this forces an existing key to be overwritten.
         type: bool
         default: no
     remove:
         description:
-            - This only affects C(state=absent), it attempts to remove directories associated with the user.
+            - This only affects O(state=absent), it attempts to remove directories associated with the user.
             - The behavior is the same as C(userdel --remove), check the man page for details and support.
         type: bool
         default: no
@@ -142,7 +142,7 @@ options:
     generate_ssh_key:
         description:
             - Whether to generate a SSH key for the user in question.
-            - This will B(not) overwrite an existing SSH key unless used with C(force=yes).
+            - This will B(not) overwrite an existing SSH key unless used with O(force=yes).
         type: bool
         default: no
         version_added: "0.9"
@@ -164,7 +164,7 @@ options:
         description:
             - Optionally specify the SSH key filename.
             - If this is a relative filename then it will be relative to the user's home directory.
-            - This parameter defaults to I(.ssh/id_rsa).
+            - This parameter defaults to V(.ssh/id_rsa).
         type: path
         version_added: "0.9"
     ssh_key_comment:
@@ -181,8 +181,8 @@ options:
         version_added: "0.9"
     update_password:
         description:
-            - C(always) will update passwords if they differ.
-            - C(on_create) will only set the password for newly created users.
+            - V(always) will update passwords if they differ.
+            - V(on_create) will only set the password for newly created users.
         type: str
         choices: [ always, on_create ]
         default: always
@@ -200,7 +200,7 @@ options:
             - Lock the password (C(usermod -L), C(usermod -U), C(pw lock)).
             - Implementation differs by platform. This option does not always mean the user cannot login using other methods.
             - This option does not disable the user, only lock the password.
-            - This must be set to C(False) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
+            - This must be set to V(False) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
             - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
         type: bool
         version_added: "2.6"
@@ -220,7 +220,7 @@ options:
             - Sets the profile of the user.
             - Does nothing when used with other platforms.
             - Can set multiple profiles using comma separation.
-            - To delete all the profiles, use C(profile='').
+            - To delete all the profiles, use O(profile='').
             - Currently supported on Illumos/Solaris.
         type: str
         version_added: "2.8"
@@ -229,7 +229,7 @@ options:
             - Sets the authorization of the user.
             - Does nothing when used with other platforms.
             - Can set multiple authorizations using comma separation.
-            - To delete all authorizations, use C(authorization='').
+            - To delete all authorizations, use O(authorization='').
             - Currently supported on Illumos/Solaris.
         type: str
         version_added: "2.8"
@@ -238,7 +238,7 @@ options:
             - Sets the role of the user.
             - Does nothing when used with other platforms.
             - Can set multiple roles using comma separation.
-            - To delete all roles, use C(role='').
+            - To delete all roles, use O(role='').
             - Currently supported on Illumos/Solaris.
         type: str
         version_added: "2.8"
@@ -265,7 +265,7 @@ options:
             - Sets the umask of the user.
             - Does nothing when used with other platforms.
             - Currently supported on Linux.
-            - Requires C(local) is omitted or False.
+            - Requires O(local) is omitted or V(False).
         type: str
         version_added: "2.12"
 extends_documentation_fragment: action_common_attributes
@@ -356,7 +356,7 @@ EXAMPLES = r'''
 RETURN = r'''
 append:
   description: Whether or not to append the user to groups.
-  returned: When state is C(present) and the user exists
+  returned: When O(state) is V(present) and the user exists
   type: bool
   sample: True
 comment:
@@ -371,7 +371,7 @@ create_home:
   sample: True
 force:
   description: Whether or not a user account was forcibly deleted.
-  returned: When I(state) is C(absent) and user exists
+  returned: When O(state) is V(absent) and user exists
   type: bool
   sample: False
 group:
@@ -381,17 +381,17 @@ group:
   sample: 1001
 groups:
   description: List of groups of which the user is a member.
-  returned: When I(groups) is not empty and I(state) is C(present)
+  returned: When O(groups) is not empty and O(state) is V(present)
   type: str
   sample: 'chrony,apache'
 home:
   description: "Path to user's home directory."
-  returned: When I(state) is C(present)
+  returned: When O(state) is V(present)
   type: str
   sample: '/home/asmith'
 move_home:
   description: Whether or not to move an existing home directory.
-  returned: When I(state) is C(present) and user exists
+  returned: When O(state) is V(present) and user exists
   type: bool
   sample: False
 name:
@@ -401,32 +401,32 @@ name:
   sample: asmith
 password:
   description: Masked value of the password.
-  returned: When I(state) is C(present) and I(password) is not empty
+  returned: When O(state) is V(present) and O(password) is not empty
   type: str
   sample: 'NOT_LOGGING_PASSWORD'
 remove:
   description: Whether or not to remove the user account.
-  returned: When I(state) is C(absent) and user exists
+  returned: When O(state) is V(absent) and user exists
   type: bool
   sample: True
 shell:
   description: User login shell.
-  returned: When I(state) is C(present)
+  returned: When O(state) is V(present)
   type: str
   sample: '/bin/bash'
 ssh_fingerprint:
   description: Fingerprint of generated SSH key.
-  returned: When I(generate_ssh_key) is C(True)
+  returned: When O(generate_ssh_key) is V(True)
   type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
   description: Path to generated SSH private key file.
-  returned: When I(generate_ssh_key) is C(True)
+  returned: When O(generate_ssh_key) is V(True)
   type: str
   sample: /home/asmith/.ssh/id_rsa
 ssh_public_key:
   description: Generated SSH public key file.
-  returned: When I(generate_ssh_key) is C(True)
+  returned: When O(generate_ssh_key) is V(True)
   type: str
   sample: >
     'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
@@ -444,12 +444,12 @@ stdout:
   sample:
 system:
   description: Whether or not the account is a system account.
-  returned: When I(system) is passed to the module and the account does not exist
+  returned: When O(system) is passed to the module and the account does not exist
   type: bool
   sample: True
 uid:
   description: User ID of the user account.
-  returned: When I(uid) is passed to the module
+  returned: When O(uid) is passed to the module
   type: int
   sample: 1044
 '''

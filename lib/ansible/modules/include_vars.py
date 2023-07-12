@@ -40,7 +40,7 @@ options:
     version_added: "2.2"
   depth:
     description:
-      - When using C(dir), this module will, by default, recursively go through each sub directory and load up the
+      - When using O(dir), this module will, by default, recursively go through each sub directory and load up the
         variables. By explicitly setting the depth, this module will only go as deep as the depth.
     type: int
     default: 0
@@ -58,7 +58,7 @@ options:
     version_added: "2.2"
   extensions:
     description:
-      - List of file extensions to read when using C(dir).
+      - List of file extensions to read when using O(dir).
     type: list
     elements: str
     default: [ json, yaml, yml ]
@@ -73,9 +73,9 @@ options:
     version_added: "2.7"
   hash_behaviour:
     description:
-      - If set to C(merge), merges existing hash variables instead of overwriting them.
-      - If omitted C(null), the behavior falls back to the global I(hash_behaviour) configuration.
-      - This option is self-contained and does not apply to individual files in C(dir). You can use a loop to apply C(hash_behaviour) per file.
+      - If set to V(merge), merges existing hash variables instead of overwriting them.
+      - If omitted (V(null)), the behavior falls back to the global C(hash_behaviour) configuration.
+      - This option is self-contained and does not apply to individual files in O(dir). You can use a loop to apply O(hash_behaviour) per file.
     default: null
     type: str
     choices: ["replace", "merge"]

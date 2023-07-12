@@ -20,15 +20,15 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0) or C(foo>=1.0).
-        Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
+      - A list of package names, like V(foo), or package specifier with version, like V(foo=1.0) or V(foo>=1.0).
+        Name wildcards (fnmatch) like V(apt*) and version wildcards like V(foo=1.0*) are also supported.
     aliases: [ package, pkg ]
     type: list
     elements: str
   state:
     description:
-      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
-        are installed. C(fixed) attempt to correct a system with broken dependencies in place.
+      - Indicates the desired package state. V(latest) ensures that the latest version is installed. V(build-dep) ensures the package build dependencies
+        are installed. V(fixed) attempt to correct a system with broken dependencies in place.
     type: str
     default: present
     choices: [ absent, build-dep, latest, present, fixed ]
@@ -40,25 +40,25 @@ options:
     type: bool
   update_cache_retries:
     description:
-      - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+      - Amount of retries if the cache update fails. Also see O(update_cache_retry_max_delay).
     type: int
     default: 5
     version_added: '2.10'
   update_cache_retry_max_delay:
     description:
-      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+      - Use an exponential backoff delay for each retry (see O(update_cache_retries)) up to this max delay in seconds.
     type: int
     default: 12
     version_added: '2.10'
   cache_valid_time:
     description:
-      - Update the apt cache if it is older than the I(cache_valid_time). This option is set in seconds.
-      - As of Ansible 2.4, if explicitly set, this sets I(update_cache=yes).
+      - Update the apt cache if it is older than the O(cache_valid_time). This option is set in seconds.
+      - As of Ansible 2.4, if explicitly set, this sets O(update_cache=yes).
     type: int
     default: 0
   purge:
     description:
-     - Will force purging of configuration files if the module state is set to I(absent).
+     - Will force purging of configuration files if the module O(state) is set to V(absent).
     type: bool
     default: 'no'
   default_release:
@@ -68,13 +68,13 @@ options:
     type: str
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). C(true) installs recommended packages.  C(false) does not install
+      - Corresponds to the C(--no-install-recommends) option for I(apt). V(true) installs recommended packages.  V(false) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     aliases: [ install-recommends ]
     type: bool
   force:
     description:
-      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes) and C(allow_downgrade: yes)'
+      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes)'
       - "This option will disable checking both the packages' signatures and the certificates of the
         web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
@@ -93,7 +93,7 @@ options:
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
-      - 'C(allow_unauthenticated) is only supported with state: I(install)/I(present)'
+      - 'O(allow_unauthenticated) is only supported with O(state): V(install)/V(present)'
     aliases: [ allow-unauthenticated ]
     type: bool
     default: 'no'
@@ -102,7 +102,7 @@ options:
     description:
       - Corresponds to the C(--allow-downgrades) option for I(apt).
       - This option enables the named package and version to replace an already installed higher version of that package.
-      - Note that setting I(allow_downgrade=true) can make this module behave in a non-idempotent way.
+      - Note that setting O(allow_downgrade=true) can make this module behave in a non-idempotent way.
       - (The task could end up with a set of packages that does not match the complete list of specified packages to install).
     aliases: [ allow-downgrade, allow_downgrades, allow-downgrades ]
     type: bool
@@ -141,14 +141,14 @@ options:
      version_added: "1.6"
   autoremove:
     description:
-      - If C(true), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
+      - If V(true), remove unused dependency packages for all module states except V(build-dep). It can also be used as the only option.
       - Previous to version 2.4, autoclean was also an alias for autoremove, now it is its own separate command. See documentation for further information.
     type: bool
     default: 'no'
     version_added: "2.1"
   autoclean:
     description:
-      - If C(true), cleans the local repository of retrieved package files that can no longer be downloaded.
+      - If V(true), cleans the local repository of retrieved package files that can no longer be downloaded.
     type: bool
     default: 'no'
     version_added: "2.4"
@@ -157,7 +157,7 @@ options:
       - Force the exit code of /usr/sbin/policy-rc.d.
       - For example, if I(policy_rc_d=101) the installed package will not trigger a service start.
       - If /usr/sbin/policy-rc.d already exists, it is backed up and restored after the package installation.
-      - If C(null), the /usr/sbin/policy-rc.d isn't created/changed.
+      - If V(null), the /usr/sbin/policy-rc.d isn't created/changed.
     type: int
     default: null
     version_added: "2.8"
@@ -170,8 +170,8 @@ options:
   fail_on_autoremove:
     description:
       - 'Corresponds to the C(--no-remove) option for C(apt).'
-      - 'If C(true), it is ensured that no packages will be removed or the task will fail.'
-      - 'C(fail_on_autoremove) is only supported with state except C(absent)'
+      - 'If V(true), it is ensured that no packages will be removed or the task will fail.'
+      - 'O(fail_on_autoremove) is only supported with O(state) except V(absent)'
     type: bool
     default: 'no'
     version_added: "2.11"
@@ -202,15 +202,15 @@ attributes:
     platform:
         platforms: debian
 notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(true)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
+   - Three of the upgrade modes (V(full), V(safe) and its alias V(true)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
    - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
      For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws
      a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
-   - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the I(name) option.
-   - When C(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
+   - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
+   - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
    - When an exact version is specified, an implicit priority of 1001 is used.
 '''
 

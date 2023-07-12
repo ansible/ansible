@@ -11,7 +11,7 @@ DOCUMENTATION = r'''
 module: known_hosts
 short_description: Add or remove a host from the C(known_hosts) file
 description:
-   - The C(known_hosts) module lets you add or remove a host keys from the C(known_hosts) file.
+   - The M(ansible.builtin.known_hosts) module lets you add or remove a host keys from the C(known_hosts) file.
    - Starting at Ansible 2.2, multiple entries per host are allowed, but only one for each key type supported by ssh.
      This is useful if you're going to want to use the M(ansible.builtin.git) module over ssh, for example.
    - If you have a very large number of host keys to manage, you will find the M(ansible.builtin.template) module more useful.
@@ -22,19 +22,19 @@ options:
     description:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
       - Must match with <hostname> or <ip> present in key attribute.
-      - For custom SSH port, C(name) needs to specify port as well. See example section.
+      - For custom SSH port, O(name) needs to specify port as well. See example section.
     type: str
     required: true
   key:
     description:
       - The SSH public host key, as a string.
-      - Required if C(state=present), optional when C(state=absent), in which case all keys for the host are removed.
+      - Required if O(state=present), optional when O(state=absent), in which case all keys for the host are removed.
       - The key must be in the right format for SSH (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
       - Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
         line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
         the value of the name parameter.
       - Should be of format C(<hostname[,IP]> ssh-rsa <pubkey>).
-      - For custom SSH port, C(key) needs to specify port as well. See example section.
+      - For custom SSH port, O(key) needs to specify port as well. See example section.
     type: str
   path:
     description:
@@ -50,8 +50,8 @@ options:
     version_added: "2.3"
   state:
     description:
-      - I(present) to add the host key.
-      - I(absent) to remove it.
+      - V(present) to add the host key.
+      - V(absent) to remove it.
     choices: [ "absent", "present" ]
     default: "present"
     type: str
