@@ -1,0 +1,6 @@
+bugfixes:
+- >-
+  Don't install collection requirements which are satisfied by a collection in any of the collection paths.
+  When a collection outside of the install path can't satisfy the requirement,
+  the collection will be added to the install path without removing the existing collection in the other path.
+  (https://github.com/ansible/ansible/issues/79767, https://github.com/ansible/ansible/issues/81163)
