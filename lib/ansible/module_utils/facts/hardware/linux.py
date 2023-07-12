@@ -763,12 +763,12 @@ class LinuxHardware(Hardware):
                         part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start", 0)
-                    part['sectors'] = get_file_content(part_sysdir + "/size", 0)
-
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * float(part['sectorsize'])))
+                    # sysfs sectorcount assumes 512 blocksize. Convert using the correct sectorsize
+                    part['sectors'] = int(get_file_content(part_sysdir + "/size", 0)) * 512 // int(part['sectorsize'])
+                    part['size'] = bytes_to_human(float(part['sectors']) * float(part['sectorsize']))
                     part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
@@ -782,12 +782,13 @@ class LinuxHardware(Hardware):
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
-            d['sectors'] = get_file_content(sysdir + "/size")
-            if not d['sectors']:
-                d['sectors'] = 0
             d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
+            # sysfs sectorcount assumes 512 blocksize. Convert using the correct sectorsize
+            d['sectors'] = int(get_file_content(sysdir + "/size")) * 512 // int(d['sectorsize'])
+            if not d['sectors']:
+                d['sectors'] = 0
             d['size'] = bytes_to_human(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
