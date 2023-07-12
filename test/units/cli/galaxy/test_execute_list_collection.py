@@ -104,16 +104,16 @@ def test_execute_list_collection_all(mocker, capsys, mock_from_path, tmp_path_fa
     assert len(out_lines) == 12
     assert out_lines[0] == ''
     assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
-    assert out_lines[2] == 'Collection        Version'
-    assert out_lines[3] == '----------------- -------'
-    assert out_lines[4] == 'sandwiches.pbj    1.5.0  '
-    assert out_lines[5] == 'sandwiches.reuben 2.5.0  '
+    assert out_lines[2] == 'Collection        Version Preferred'
+    assert out_lines[3] == '----------------- ------- ---------'
+    assert out_lines[4] == 'sandwiches.pbj    1.5.0            '
+    assert out_lines[5] == 'sandwiches.reuben 2.5.0   *        '
     assert out_lines[6] == ''
     assert out_lines[7] == '# /usr/share/ansible/collections/ansible_collections'
-    assert out_lines[8] == 'Collection        Version'
-    assert out_lines[9] == '----------------- -------'
-    assert out_lines[10] == 'sandwiches.ham    1.0.0  '
-    assert out_lines[11] == 'sandwiches.pbj    1.0.0  '
+    assert out_lines[8] == 'Collection        Version Preferred'
+    assert out_lines[9] == '----------------- ------- ---------'
+    assert out_lines[10] == 'sandwiches.ham    1.0.0   *        '
+    assert out_lines[11] == 'sandwiches.pbj    1.0.0   *        '
 
 
 def test_execute_list_collection_specific(mocker, capsys, mock_from_path, tmp_path_factory):
@@ -164,14 +164,14 @@ def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_from_pa
     assert len(out_lines) == 10
     assert out_lines[0] == ''
     assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
-    assert out_lines[2] == 'Collection     Version'
-    assert out_lines[3] == '-------------- -------'
-    assert out_lines[4] == 'sandwiches.pbj 1.5.0  '
+    assert out_lines[2] == 'Collection     Version Preferred'
+    assert out_lines[3] == '-------------- ------- ---------'
+    assert out_lines[4] == 'sandwiches.pbj 1.5.0            '
     assert out_lines[5] == ''
     assert out_lines[6] == '# /usr/share/ansible/collections/ansible_collections'
-    assert out_lines[7] == 'Collection     Version'
-    assert out_lines[8] == '-------------- -------'
-    assert out_lines[9] == 'sandwiches.pbj 1.0.0  '
+    assert out_lines[7] == 'Collection     Version Preferred'
+    assert out_lines[8] == '-------------- ------- ---------'
+    assert out_lines[9] == 'sandwiches.pbj 1.0.0   *        '
 
 
 def test_execute_list_collection_specific_invalid_fqcn(mocker, tmp_path_factory):
@@ -236,9 +236,9 @@ def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_from_path
 
     assert out_lines[0] == ''
     assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
-    assert out_lines[2] == 'Collection        Version'
-    assert out_lines[3] == '----------------- -------'
-    assert out_lines[4] == 'sandwiches.pbj    1.5.0  '
+    assert out_lines[2] == 'Collection        Version Preferred'
+    assert out_lines[3] == '----------------- ------- ---------'
+    assert out_lines[4] == 'sandwiches.pbj    1.5.0            '
     # Only a partial test of the output
 
     assert err == '[WARNING]: - the configured path nope, exists, but it is not a directory.\n'
