@@ -39,7 +39,7 @@ options:
   path:
     description:
       - The file to modify.
-      - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+      - Before Ansible 2.3 this option was only usable as O(dest), O(destfile) and O(name).
     type: path
     required: true
     aliases: [ dest, destfile, name ]
@@ -48,13 +48,13 @@ options:
       - The regular expression to look for in the contents of the file.
       - Uses Python regular expressions; see
         U(https://docs.python.org/3/library/re.html).
-      - Uses MULTILINE mode, which means C(^) and C($) match the beginning
+      - Uses MULTILINE mode, which means V(^) and V($) match the beginning
         and end of the file, as well as the beginning and end respectively
         of I(each line) of the file.
-      - Does not use DOTALL, which means the C(.) special character matches
+      - Does not use DOTALL, which means the V(.) special character matches
         any character I(except newlines). A common mistake is to assume that
-        a negated character set like C([^#]) will also not match newlines.
-      - In order to exclude newlines, they must be added to the set like C([^#\n]).
+        a negated character set like V([^#]) will also not match newlines.
+      - In order to exclude newlines, they must be added to the set like V([^#\\n]).
       - Note that, as of Ansible 2.0, short form tasks should have any escape
         sequences backslash-escaped in order to prevent them being parsed
         as string literal escapes. See the examples.
@@ -65,25 +65,25 @@ options:
       - The string to replace regexp matches.
       - May contain backreferences that will get expanded with the regexp capture groups if the regexp matches.
       - If not set, matches are removed entirely.
-      - Backreferences can be used ambiguously like C(\1), or explicitly like C(\g<1>).
+      - Backreferences can be used ambiguously like V(\\1), or explicitly like V(\\g<1>).
     type: str
     default: ''
   after:
     description:
       - If specified, only content after this match will be replaced/removed.
-      - Can be used in combination with C(before).
+      - Can be used in combination with O(before).
       - Uses Python regular expressions; see
         U(https://docs.python.org/3/library/re.html).
-      - Uses DOTALL, which means the C(.) special character I(can match newlines).
+      - Uses DOTALL, which means the V(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
   before:
     description:
       - If specified, only content before this match will be replaced/removed.
-      - Can be used in combination with C(after).
+      - Can be used in combination with O(after).
       - Uses Python regular expressions; see
         U(https://docs.python.org/3/library/re.html).
-      - Uses DOTALL, which means the C(.) special character I(can match newlines).
+      - Uses DOTALL, which means the V(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
   backup:
@@ -103,11 +103,12 @@ options:
     default: utf-8
     version_added: "2.4"
 notes:
-  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - As of Ansible 2.7.10, the combined use of I(before) and I(after) works properly. If you were relying on the
+  - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
+  - As of Ansible 2.7.10, the combined use of O(before) and O(after) works properly. If you were relying on the
     previous incorrect behavior, you may be need to adjust your tasks.
     See U(https://github.com/ansible/ansible/issues/31354) for details.
-  - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
+  - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
+    so O(ignore:follow=no) does not make sense.
 '''
 
 EXAMPLES = r'''

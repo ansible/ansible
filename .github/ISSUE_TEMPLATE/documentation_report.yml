@@ -34,6 +34,32 @@ body:
       [submit a pull request]:
       https://docs.ansible.com/ansible-core/devel/community/documentation_contributions.html
 
+- type: markdown
+  attributes:
+    value: >
+      **Check the repository for your issue.**
+
+      Source files for Ansible community documentation are
+      hosted in different repositories. Please make sure to file an
+      issue in the correct project.
+
+      Documentation for modules/plugins/etc that are officially
+      supported by the Ansible Core Engineering team is available
+      in this (`ansible/ansible`) repository.
+
+      The Installation Guide, Playbook Guide, Developer Guide,
+      and other documentation is available in the
+      [ansible/ansible-documentation] repository.
+      Documentation for other modules/plugins/etc is likely to be
+      available in one of the [Ansible Collections][collections index].
+      If available in the collection documentation, select the
+      **Issue Tracker** button to go directly to the GitHub issues.
+
+
+      [ansible/ansible-documentation]: /ansible/ansible-documentation
+
+      [collections index]:
+      https://docs.ansible.com/ansible/latest/collections/index.html
 
 - type: textarea
   attributes:
@@ -64,9 +90,6 @@ body:
           <em>Why?</em>
         </summary>
 
-        We would do it by ourselves but unfortunatelly, the curent
-        edition of GitHub Issue Forms Alpha does not support this yet 🤷
-
 
         _We will make it easier in the future, once GitHub
         supports dropdown defaults. Promise!_
@@ -85,19 +108,7 @@ body:
       Write the short name of the rst file, module, plugin, task or
       feature below, *use your best guess if unsure*.
 
-
-      **Tip:** Be advised that the source for some parts of the
-      documentation are hosted outside of this repository. If the page
-      you are reporting describes modules/plugins/etc that are not
-      officially supported by the Ansible Core Engineering team, there
-      is a good chance that it is coming from one of the [Ansible
-      Collections maintained by the community][collections org]. If this
-      is the case, please make sure to file an issue under the
-      appropriate project there instead.
-
-
-      [collections org]: /ansible-collections
-    placeholder: docs/docsite/rst/dev_guide/debugging.rst
+    placeholder: lib/ansible/modules/copy.py
   validations:
     required: true
 

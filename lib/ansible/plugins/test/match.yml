@@ -28,5 +28,5 @@ EXAMPLES: |
   nomatch: url is match("/users/.*/resources")
 RETURN:
   _value:
-    description: Returns C(True) if there is a match, C(False) otherwise.
+    description: Returns V(True) if there is a match, V(False) otherwise.
     type: boolean

@@ -46,7 +46,6 @@ stages:
           targets:
             - test: 1
             - test: 2
-            - test: 3
   - stage: Units
     dependsOn: []
     jobs:
@@ -180,7 +179,6 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.9
             - test: '3.10'
             - test: 3.11
   - stage: Generic
@@ -191,7 +189,6 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.9
             - test: '3.10'
             - test: 3.11
   - stage: Incidental_Windows

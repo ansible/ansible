@@ -16,11 +16,11 @@ DOCUMENTATION:
       description: Regular expression string that defines the match.
       type: str
     multiline:
-      description: Search across line endings if C(True), do not if otherwise.
+      description: Search across line endings if V(True), do not if otherwise.
       type: bool
       default: no
     ignorecase:
-      description: Force the search to be case insensitive if C(True), case sensitive otherwise.
+      description: Force the search to be case insensitive if V(True), case sensitive otherwise.
       type: bool
       default: no
 
@@ -28,6 +28,12 @@ EXAMPLES: |
 
   # db => 'database42'
   db: "{{ 'server1/database42' | regex_search('database[0-9]+') }}"
+
+  # Using inline regex flags instead of passing options to filter
+  # See https://docs.python.org/3/library/re.html for more information
+  # on inline regex flags
+  # server => 'sErver1'
+  db: "{{ 'sErver1/database42' | regex_search('(?i)server([0-9]+)') }}"
 
   # drinkat => 'BAR'
   drinkat: "{{ 'foo\nBAR' | regex_search('^bar', multiline=True, ignorecase=True) }}"

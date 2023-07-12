@@ -36,7 +36,7 @@ options:
     description:
       - Algorithm to determine checksum of file.
       - Will throw an error if the host is unable to use specified algorithm.
-      - The remote host has to support the hashing method specified, C(md5)
+      - The remote host has to support the hashing method specified, V(md5)
         can be unavailable if the host is FIPS-140 compliant.
     type: str
     choices: [ md5, sha1, sha224, sha256, sha384, sha512 ]
@@ -47,8 +47,8 @@ options:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
-      - This will add both C(mime_type) and C(charset) fields to the return, if possible.
-      - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(true).
+      - This will add both RV(stat.mimetype) and RV(stat.charset) fields to the return, if possible.
+      - In Ansible 2.3 this option changed from O(mime) to O(get_mime) and the default changed to V(true).
     type: bool
     default: yes
     aliases: [ mime, mime_type, mime-type ]
@@ -144,7 +144,7 @@ RETURN = r'''
 stat:
     description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
-    type: complex
+    type: dict
     contains:
         exists:
             description: If the destination path actually exists or not
@@ -326,15 +326,15 @@ stat:
         mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
-                installed python supports it and the I(mime) option was true, will
-                return C(unknown) on error.
+                installed python supports it and the O(get_mime) option was V(true), will
+                return V(unknown) on error.
             type: str
             sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and
-                installed python supports it and the I(mime) option was true, will
-                return C(unknown) on error.
+                installed python supports it and the O(get_mime) option was V(true), will
+                return V(unknown) on error.
             type: str
             sample: us-ascii
         readable:

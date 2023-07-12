@@ -16,7 +16,7 @@ description:
   - Dynamically loads and executes a specified role as a task.
   - May be used only where Ansible tasks are allowed - inside C(pre_tasks), C(tasks), or C(post_tasks) play objects, or as a task inside a role.
   - Task-level keywords, loops, and conditionals apply only to the C(include_role) statement itself.
-  - To apply keywords to the tasks within the role, pass them using the C(apply) option or use M(ansible.builtin.import_role) instead.
+  - To apply keywords to the tasks within the role, pass them using the O(apply) option or use M(ansible.builtin.import_role) instead.
   - Ignores some keywords, like C(until) and C(retries).
   - This module is also supported for Windows targets.
   - Does not work in handlers.
@@ -24,7 +24,7 @@ version_added: "2.2"
 options:
   apply:
     description:
-      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to all tasks within the included role.
+      - Accepts a hash of task keywords (for example C(tags), C(become)) that will be applied to all tasks within the included role.
     version_added: '2.7'
   name:
     description:
@@ -53,9 +53,9 @@ options:
     default: yes
   public:
     description:
-      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to C(true)
+      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to V(true)
         the variables will be available to tasks following the C(include_role) task. This functionality differs from
-        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed
+        standard variable exposure for roles listed under the C(roles) header or M(ansible.builtin.import_role) as they are exposed
         to the play at playbook parsing time, and available to earlier roles and tasks as well.
     type: bool
     default: no
@@ -85,7 +85,7 @@ attributes:
         support: none
 notes:
   - Handlers and are made available to the whole play.
-  - After Ansible 2.4, you can use M(ansible.builtin.import_role) for C(static) behaviour and this action for C(dynamic) one.
+  - After Ansible 2.4, you can use M(ansible.builtin.import_role) for B(static) behaviour and this action for B(dynamic) one.
 seealso:
 - module: ansible.builtin.import_playbook
 - module: ansible.builtin.import_role

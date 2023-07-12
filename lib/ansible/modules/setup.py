@@ -17,24 +17,24 @@ options:
         version_added: "2.1"
         description:
             - "If supplied, restrict the additional facts collected to the given subset.
-              Possible values: C(all), C(all_ipv4_addresses), C(all_ipv6_addresses), C(apparmor), C(architecture),
-              C(caps), C(chroot),C(cmdline), C(date_time), C(default_ipv4), C(default_ipv6), C(devices),
-              C(distribution), C(distribution_major_version), C(distribution_release), C(distribution_version),
-              C(dns), C(effective_group_ids), C(effective_user_id), C(env), C(facter), C(fips), C(hardware),
-              C(interfaces), C(is_chroot), C(iscsi), C(kernel), C(local), C(lsb), C(machine), C(machine_id),
-              C(mounts), C(network), C(ohai), C(os_family), C(pkg_mgr), C(platform), C(processor), C(processor_cores),
-              C(processor_count), C(python), C(python_version), C(real_user_id), C(selinux), C(service_mgr),
-              C(ssh_host_key_dsa_public), C(ssh_host_key_ecdsa_public), C(ssh_host_key_ed25519_public),
-              C(ssh_host_key_rsa_public), C(ssh_host_pub_keys), C(ssh_pub_keys), C(system), C(system_capabilities),
-              C(system_capabilities_enforced), C(user), C(user_dir), C(user_gecos), C(user_gid), C(user_id),
-              C(user_shell), C(user_uid), C(virtual), C(virtualization_role), C(virtualization_type).
+              Possible values: V(all), V(all_ipv4_addresses), V(all_ipv6_addresses), V(apparmor), V(architecture),
+              V(caps), V(chroot),V(cmdline), V(date_time), V(default_ipv4), V(default_ipv6), V(devices),
+              V(distribution), V(distribution_major_version), V(distribution_release), V(distribution_version),
+              V(dns), V(effective_group_ids), V(effective_user_id), V(env), V(facter), V(fips), V(hardware),
+              V(interfaces), V(is_chroot), V(iscsi), V(kernel), V(local), V(lsb), V(machine), V(machine_id),
+              V(mounts), V(network), V(ohai), V(os_family), V(pkg_mgr), V(platform), V(processor), V(processor_cores),
+              V(processor_count), V(python), V(python_version), V(real_user_id), V(selinux), V(service_mgr),
+              V(ssh_host_key_dsa_public), V(ssh_host_key_ecdsa_public), V(ssh_host_key_ed25519_public),
+              V(ssh_host_key_rsa_public), V(ssh_host_pub_keys), V(ssh_pub_keys), V(system), V(system_capabilities),
+              V(system_capabilities_enforced), V(user), V(user_dir), V(user_gecos), V(user_gid), V(user_id),
+              V(user_shell), V(user_uid), V(virtual), V(virtualization_role), V(virtualization_type).
              Can specify a list of values to specify a larger subset.
              Values can also be used with an initial C(!) to specify that
               that specific subset should not be collected.  For instance:
-              C(!hardware,!network,!virtual,!ohai,!facter). If C(!all) is specified
+              V(!hardware,!network,!virtual,!ohai,!facter). If V(!all) is specified
               then only the min subset is collected. To avoid collecting even the
-              min subset, specify C(!all,!min). To collect only specific facts,
-              use C(!all,!min), and specify the particular fact subsets.
+              min subset, specify V(!all,!min). To collect only specific facts,
+              use V(!all,!min), and specify the particular fact subsets.
               Use the filter parameter if you do not want to display some collected
               facts."
         type: list
@@ -64,12 +64,12 @@ options:
             - Path used for local ansible facts (C(*.fact)) - files in this dir
               will be run (if executable) and their results be added to C(ansible_local) facts.
               If a file is not executable it is read instead.
-              File/results format can be JSON or INI-format. The default C(fact_path) can be
+              File/results format can be JSON or INI-format. The default O(fact_path) can be
               specified in C(ansible.cfg) for when setup is automatically called as part of
               C(gather_facts).
               NOTE - For windows clients, the results will be added to a variable named after the
               local file (without extension suffix), rather than C(ansible_local).
-            - Since Ansible 2.1, Windows hosts can use C(fact_path). Make sure that this path
+            - Since Ansible 2.1, Windows hosts can use O(fact_path). Make sure that this path
               exists on the target host. Files in this path MUST be PowerShell scripts C(.ps1)
               which outputs an object. This object will be formatted by Ansible as json so the
               script should be outputting a raw hashtable, array, or other primitive object.
@@ -104,7 +104,7 @@ notes:
       remote systems. (See also M(community.general.facter) and M(community.general.ohai).)
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
-      C(filter) as this is provided by a simpler implementation of the module.
+      O(filter) as this is provided by a simpler implementation of the module.
     - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
     - For more information about delegated facts,
       please check U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_delegation.html#delegating-facts).
@@ -114,7 +114,7 @@ author:
 '''
 
 EXAMPLES = r"""
-# Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+# Display facts from all hosts and store them indexed by `hostname` at `/tmp/facts`.
 # ansible all -m ansible.builtin.setup --tree /tmp/facts
 
 # Display only facts regarding memory found by ansible on all hosts and output them.

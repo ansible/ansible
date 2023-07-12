@@ -14,7 +14,7 @@ module: command
 short_description: Execute commands on targets
 version_added: historical
 description:
-     - The C(command) module takes the command name followed by a list of space-delimited arguments.
+     - The M(ansible.builtin.command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes.
      - The command(s) will not be
        processed through the shell, so variables like C($HOSTNAME) and operations
@@ -22,15 +22,15 @@ description:
        Use the M(ansible.builtin.shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
        arguments, pass parameters using the C(args) L(task keyword,https://docs.ansible.com/ansible/latest/reference_appendices/playbooks_keywords.html#task)
-       or use C(cmd) parameter.
-     - Either a free form command or C(cmd) parameter is required, see the examples.
+       or use O(cmd) parameter.
+     - Either a free form command or O(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(ansible.windows.win_command) module instead.
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.raw
 attributes:
     check_mode:
-        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds O(creates)/O(removes) options as a workaround
         support: partial
     diff_mode:
         support: none
@@ -44,7 +44,7 @@ options:
     description:
       - Expands the arguments that are variables, for example C($HOME) will be expanded before being passed to the
         command to run.
-      - Set to C(false) to disable expansion and treat the value as a literal argument.
+      - Set to V(false) to disable expansion and treat the value as a literal argument.
     type: bool
     default: true
     version_added: "2.16"
@@ -61,19 +61,19 @@ options:
     elements: str
     description:
       - Passes the command as a list rather than a string.
-      - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+      - Use O(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
       - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
-      - This is checked before I(removes) is checked.
+      - This is checked before O(removes) is checked.
   removes:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
-      - This is checked after I(creates) is checked.
+      - This is checked after O(creates) is checked.
     version_added: "0.8"
   chdir:
     type: path
@@ -89,7 +89,7 @@ options:
     type: bool
     default: yes
     description:
-      - If set to C(true), append a newline to stdin data.
+      - If set to V(true), append a newline to stdin data.
     version_added: "2.8"
   strip_empty_ends:
     description:
@@ -101,12 +101,12 @@ notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
        you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
-       use the C(command) module when possible.
-    -  C(creates), C(removes), and C(chdir) can be specified after the command.
+       use the M(ansible.builtin.command) module when possible.
+    -  O(creates), O(removes), and O(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this.
-    -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
+    -  Check mode is supported when passing O(creates) or O(removes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
-    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
+    -  The O(ignore:executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
     -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
     -  If the command returns non UTF-8 data, it must be encoded to avoid issues. This may necessitate using M(ansible.builtin.shell) so the output

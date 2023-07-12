@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 module: wait_for
 short_description: Waits for a condition before continuing
 description:
-     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified or just C(timeout) is specified.
+     - You can wait for a set amount of time O(timeout), this is the default if nothing is specified or just O(timeout) is specified.
        This does not produce an error.
      - Waiting for a port to become available is useful for when services are not immediately available after their init scripts return
        which is true of certain Java application servers.
@@ -49,7 +49,7 @@ options:
   port:
     description:
       - Port number to poll.
-      - C(path) and C(port) are mutually exclusive parameters.
+      - O(path) and O(port) are mutually exclusive parameters.
     type: int
   active_connection_states:
     description:
@@ -60,17 +60,17 @@ options:
     version_added: "2.3"
   state:
     description:
-      - Either C(present), C(started), or C(stopped), C(absent), or C(drained).
-      - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections.
-      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing,
-        C(absent) will check that file is absent or removed.
+      - Either V(present), V(started), or V(stopped), V(absent), or V(drained).
+      - When checking a port V(started) will ensure the port is open, V(stopped) will check that it is closed, V(drained) will check for active connections.
+      - When checking for a file or a search string V(present) or V(started) will ensure that the file or string is present before continuing,
+        V(absent) will check that file is absent or removed.
     type: str
     choices: [ absent, drained, present, started, stopped ]
     default: started
   path:
     description:
       - Path to a file on the filesystem that must exist before continuing.
-      - C(path) and C(port) are mutually exclusive parameters.
+      - O(path) and O(port) are mutually exclusive parameters.
     type: path
     version_added: "1.4"
   search_regex:
@@ -81,7 +81,7 @@ options:
     version_added: "1.4"
   exclude_hosts:
     description:
-      - List of hosts or IPs to ignore when looking for active TCP connections for C(drained) state.
+      - List of hosts or IPs to ignore when looking for active TCP connections for V(drained) state.
     type: list
     elements: str
     version_added: "1.8"

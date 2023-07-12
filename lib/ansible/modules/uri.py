@@ -20,7 +20,7 @@ options:
   ciphers:
     description:
       - SSL/TLS Ciphers to use for the request.
-      - 'When a list is provided, all ciphers are joined in order with C(:)'
+      - 'When a list is provided, all ciphers are joined in order with V(:)'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
       - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
@@ -40,7 +40,7 @@ options:
     required: true
   dest:
     description:
-      - A path of where to download the file to (if desired). If I(dest) is a
+      - A path of where to download the file to (if desired). If O(dest) is a
         directory, the basename of the file on the remote server will be used.
     type: path
   url_username:
@@ -55,23 +55,23 @@ options:
     aliases: [ password ]
   body:
     description:
-      - The body of the http request/response to the web service. If C(body_format) is set
-        to 'json' it will take an already formatted JSON string or convert a data structure
+      - The body of the http request/response to the web service. If O(body_format) is set
+        to V(json) it will take an already formatted JSON string or convert a data structure
         into JSON.
-      - If C(body_format) is set to 'form-urlencoded' it will convert a dictionary
+      - If O(body_format) is set to V(form-urlencoded) it will convert a dictionary
         or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
-      - If C(body_format) is set to 'form-multipart' it will convert a dictionary
+      - If O(body_format) is set to V(form-multipart) it will convert a dictionary
         into 'multipart/form-multipart' body. (Added in v2.10)
     type: raw
   body_format:
     description:
-      - The serialization format of the body. When set to C(json), C(form-multipart), or C(form-urlencoded), encodes
+      - The serialization format of the body. When set to V(json), V(form-multipart), or V(form-urlencoded), encodes
         the body argument, if needed, and automatically sets the Content-Type header accordingly.
       - As of v2.3 it is possible to override the C(Content-Type) header, when
-        set to C(json) or C(form-urlencoded) via the I(headers) option.
-      - The 'Content-Type' header cannot be overridden when using C(form-multipart)
-      - C(form-urlencoded) was added in v2.7.
-      - C(form-multipart) was added in v2.10.
+        set to V(json) or V(form-urlencoded) via the O(headers) option.
+      - The 'Content-Type' header cannot be overridden when using V(form-multipart)
+      - V(form-urlencoded) was added in v2.7.
+      - V(form-multipart) was added in v2.10.
     type: str
     choices: [ form-urlencoded, json, raw, form-multipart ]
     default: raw
@@ -88,15 +88,15 @@ options:
       - Whether or not to return the body of the response as a "content" key in
         the dictionary result no matter it succeeded or failed.
       - Independently of this option, if the reported Content-type is "application/json", then the JSON is
-        always loaded into a key called C(json) in the dictionary results.
+        always loaded into a key called RV(ignore:json) in the dictionary results.
     type: bool
     default: no
   force_basic_auth:
     description:
       - Force the sending of the Basic authentication header upon initial request.
-      - When this setting is C(false), this module will first try an unauthenticated request, and when the server replies
+      - When this setting is V(false), this module will first try an unauthenticated request, and when the server replies
         with an C(HTTP 401) error, it will submit the Basic authentication header.
-      - When this setting is C(true), this module will immediately send a Basic authentication header on the first
+      - When this setting is V(true), this module will immediately send a Basic authentication header on the first
         request.
       - "Use this setting in any of the following scenarios:"
       - You know the webservice endpoint always requires HTTP Basic authentication, and you want to speed up your
@@ -108,11 +108,11 @@ options:
     default: no
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
-        C(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(true) and C(false) choices are accepted for backwards compatibility,
-        where C(true) is the equivalent of C(all) and C(false) is the equivalent of C(safe). C(true) and C(false)
+      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
+        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
+        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
+        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
+        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
         are deprecated and will be removed in some future version of Ansible.
     type: str
     choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
@@ -139,29 +139,29 @@ options:
   headers:
     description:
         - Add custom HTTP headers to a request in the format of a YAML hash. As
-          of C(2.3) supplying C(Content-Type) here will override the header
-          generated by supplying C(json) or C(form-urlencoded) for I(body_format).
+          of Ansible 2.3 supplying C(Content-Type) here will override the header
+          generated by supplying V(json) or V(form-urlencoded) for O(body_format).
     type: dict
     default: {}
     version_added: '2.1'
   validate_certs:
     description:
-      - If C(false), SSL certificates will not be validated.
-      - This should only set to C(false) used on personally controlled sites using self-signed certificates.
-      - Prior to 1.9.2 the code defaulted to C(false).
+      - If V(false), SSL certificates will not be validated.
+      - This should only set to V(false) used on personally controlled sites using self-signed certificates.
+      - Prior to 1.9.2 the code defaulted to V(false).
     type: bool
     default: true
     version_added: '1.9.2'
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
-      - This file can also include the key as well, and if the key is included, I(client_key) is not required
+      - This file can also include the key as well, and if the key is included, O(client_key) is not required
     type: path
     version_added: '2.4'
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
-      - If I(client_cert) contains both the certificate and key, this option is not required.
+      - If O(client_cert) contains both the certificate and key, this option is not required.
     type: path
     version_added: '2.4'
   ca_path:
@@ -172,25 +172,25 @@ options:
   src:
     description:
       - Path to file to be submitted to the remote server.
-      - Cannot be used with I(body).
-      - Should be used with I(force_basic_auth) to ensure success when the remote end sends a 401.
+      - Cannot be used with O(body).
+      - Should be used with O(force_basic_auth) to ensure success when the remote end sends a 401.
     type: path
     version_added: '2.7'
   remote_src:
     description:
-      - If C(false), the module will search for the C(src) on the controller node.
-      - If C(true), the module will search for the C(src) on the managed (remote) node.
+      - If V(false), the module will search for the O(src) on the controller node.
+      - If V(true), the module will search for the O(src) on the managed (remote) node.
     type: bool
     default: no
     version_added: '2.7'
   force:
     description:
-      - If C(true) do not get a cached copy.
+      - If V(true) do not get a cached copy.
     type: bool
     default: no
   use_proxy:
     description:
-      - If C(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+      - If V(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
     default: true
   unix_socket:
@@ -217,9 +217,9 @@ options:
       - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
-      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+      - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
         C(KRB5CCNAME) that specified a custom Kerberos credential cache.
-      - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
+      - NTLM authentication is B(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
     default: no
     version_added: '2.11'

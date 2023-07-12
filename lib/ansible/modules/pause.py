@@ -30,11 +30,11 @@ options:
   prompt:
     description:
       - Optional text to use for the prompt message.
-      - User input is only returned if I(seconds=None) and I(minutes=None), otherwise this is just a custom message before playbook execution is paused.
+      - User input is only returned if O(seconds=None) and O(minutes=None), otherwise this is just a custom message before playbook execution is paused.
   echo:
     description:
       - Controls whether or not keyboard input is shown when typing.
-      - Only has effect if I(seconds=None) and I(minutes=None).
+      - Only has effect if O(seconds=None) and O(minutes=None).
     type: bool
     default: 'yes'
     version_added: 2.5

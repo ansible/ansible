@@ -14,11 +14,11 @@ DOCUMENTATION:
       description: Regular expression string that defines the match.
       type: str
     multiline:
-      description: Search across line endings if C(True), do not if otherwise.
+      description: Search across line endings if V(True), do not if otherwise.
       type: bool
       default: no
     ignorecase:
-      description: Force the search to be case insensitive if C(True), case sensitive otherwise.
+      description: Force the search to be case insensitive if V(True), case sensitive otherwise.
       type: bool
       default: no
 
@@ -26,6 +26,12 @@ EXAMPLES: |
 
   # all_pirates => ['CAR', 'tar', 'bar']
   all_pirates: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True, ignorecase=True) }}"
+
+  # Using inline regex flags instead of passing options to filter
+  # See https://docs.python.org/3/library/re.html for more information
+  # on inline regex flags
+  # all_pirates => ['CAR', 'tar', 'bar']
+  all_pirates: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('(?im)^.ar$') }}"
 
   # get_ips => ['8.8.8.8', '8.8.4.4']
   get_ips: "{{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}"

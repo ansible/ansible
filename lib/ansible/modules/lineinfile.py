@@ -25,20 +25,20 @@ options:
   path:
     description:
       - The file to modify.
-      - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+      - Before Ansible 2.3 this option was only usable as O(dest), O(destfile) and O(name).
     type: path
     required: true
     aliases: [ dest, destfile, name ]
   regexp:
     description:
       - The regular expression to look for in every line of the file.
-      - For C(state=present), the pattern to replace if found. Only the last line found will be replaced.
-      - For C(state=absent), the pattern of the line(s) to remove.
+      - For O(state=present), the pattern to replace if found. Only the last line found will be replaced.
+      - For O(state=absent), the pattern of the line(s) to remove.
       - If the regular expression is not matched, the line will be
-        added to the file in keeping with C(insertbefore) or C(insertafter)
+        added to the file in keeping with O(insertbefore) or O(insertafter)
         settings.
       - When modifying a line the regexp should typically match both the initial state of
-        the line as well as its state after replacement by C(line) to ensure idempotence.
+        the line as well as its state after replacement by O(line) to ensure idempotence.
       - Uses Python regular expressions. See U(https://docs.python.org/3/library/re.html).
     type: str
     aliases: [ regex ]
@@ -46,12 +46,12 @@ options:
   search_string:
     description:
       - The literal string to look for in every line of the file. This does not have to match the entire line.
-      - For C(state=present), the line to replace if the string is found in the file. Only the last line found will be replaced.
-      - For C(state=absent), the line(s) to remove if the string is in the line.
+      - For O(state=present), the line to replace if the string is found in the file. Only the last line found will be replaced.
+      - For O(state=absent), the line(s) to remove if the string is in the line.
       - If the literal expression is not matched, the line will be
-        added to the file in keeping with C(insertbefore) or C(insertafter)
+        added to the file in keeping with O(insertbefore) or O(insertafter)
         settings.
-      - Mutually exclusive with C(backrefs) and C(regexp).
+      - Mutually exclusive with O(backrefs) and O(regexp).
     type: str
     version_added: '2.11'
   state:
@@ -63,53 +63,53 @@ options:
   line:
     description:
       - The line to insert/replace into the file.
-      - Required for C(state=present).
-      - If C(backrefs) is set, may contain backreferences that will get
-        expanded with the C(regexp) capture groups if the regexp matches.
+      - Required for O(state=present).
+      - If O(backrefs) is set, may contain backreferences that will get
+        expanded with the O(regexp) capture groups if the regexp matches.
     type: str
     aliases: [ value ]
   backrefs:
     description:
-      - Used with C(state=present).
-      - If set, C(line) can contain backreferences (both positional and named)
-        that will get populated if the C(regexp) matches.
+      - Used with O(state=present).
+      - If set, O(line) can contain backreferences (both positional and named)
+        that will get populated if the O(regexp) matches.
       - This parameter changes the operation of the module slightly;
-        C(insertbefore) and C(insertafter) will be ignored, and if the C(regexp)
+        O(insertbefore) and O(insertafter) will be ignored, and if the O(regexp)
         does not match anywhere in the file, the file will be left unchanged.
-      - If the C(regexp) does match, the last matching line will be replaced by
+      - If the O(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
-      - Mutually exclusive with C(search_string).
+      - Mutually exclusive with O(search_string).
     type: bool
     default: no
     version_added: "1.1"
   insertafter:
     description:
-      - Used with C(state=present).
+      - Used with O(state=present).
       - If specified, the line will be inserted after the last match of specified regular expression.
       - If the first match is required, use(firstmatch=yes).
-      - A special value is available; C(EOF) for inserting the line at the end of the file.
+      - A special value is available; V(EOF) for inserting the line at the end of the file.
       - If specified regular expression has no matches, EOF will be used instead.
-      - If C(insertbefore) is set, default value C(EOF) will be ignored.
-      - If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
-      - May not be used with C(backrefs) or C(insertbefore).
+      - If O(insertbefore) is set, default value V(EOF) will be ignored.
+      - If regular expressions are passed to both O(regexp) and O(insertafter), O(insertafter) is only honored if no match for O(regexp) is found.
+      - May not be used with O(backrefs) or O(insertbefore).
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
   insertbefore:
     description:
-      - Used with C(state=present).
+      - Used with O(state=present).
       - If specified, the line will be inserted before the last match of specified regular expression.
-      - If the first match is required, use C(firstmatch=yes).
-      - A value is available; C(BOF) for inserting the line at the beginning of the file.
+      - If the first match is required, use O(firstmatch=yes).
+      - A value is available; V(BOF) for inserting the line at the beginning of the file.
       - If specified regular expression has no matches, the line will be inserted at the end of the file.
-      - If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
-      - May not be used with C(backrefs) or C(insertafter).
+      - If regular expressions are passed to both O(regexp) and O(insertbefore), O(insertbefore) is only honored if no match for O(regexp) is found.
+      - May not be used with O(backrefs) or O(insertafter).
     type: str
     choices: [ BOF, '*regex*' ]
     version_added: "1.1"
   create:
     description:
-      - Used with C(state=present).
+      - Used with O(state=present).
       - If specified, the file will be created if it does not already exist.
       - By default it will fail if the file is missing.
     type: bool
@@ -122,8 +122,8 @@ options:
     default: no
   firstmatch:
     description:
-      - Used with C(insertafter) or C(insertbefore).
-      - If set, C(insertafter) and C(insertbefore) will work with the first line that matches the given regular expression.
+      - Used with O(insertafter) or O(insertbefore).
+      - If set, O(insertafter) and O(insertbefore) will work with the first line that matches the given regular expression.
     type: bool
     default: no
     version_added: "2.5"
@@ -148,7 +148,7 @@ attributes:
     vault:
         support: none
 notes:
-  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
 seealso:
 - module: ansible.builtin.blockinfile
 - module: ansible.builtin.copy

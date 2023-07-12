@@ -53,7 +53,7 @@ RETURN = r'''
   _value:
     description:
       - A dictionary with components as keyword and their value.
-      - If I(query) is provided, a string or integer will be returned instead, depending on I(query).
+      - If O(query) is provided, a string or integer will be returned instead, depending on O(query).
     type: any
 '''
 

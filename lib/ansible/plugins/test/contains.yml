@@ -45,5 +45,5 @@ EXAMPLES: |
               - em4
 RETURN:
   _value:
-    description: Returns C(True) if the specified element is contained in the supplied sequence, C(False) otherwise.
+    description: Returns V(True) if the specified element is contained in the supplied sequence, V(False) otherwise.
     type: boolean
