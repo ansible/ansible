@@ -29,8 +29,16 @@ def teardown(*args, **kwargs):
 # BEGIN STANDALONE TESTS - these exercise behaviors of the individual components without the import machinery
 
 
-@pytest.mark.skipif(not PY3, reason='Testing Python 2 codepath (find_module) on Python 3')
-def test_find_module_py3():
+@pytest.mark.filterwarnings(
+    'ignore:'
+    r'find_module\(\) is deprecated and slated for removal in Python 3\.12; use find_spec\(\) instead'
+    ':DeprecationWarning',
+    'ignore:'
+    r'FileFinder\.find_loader\(\) is deprecated and slated for removal in Python 3\.12; use find_spec\(\) instead'
+    ':DeprecationWarning',
+)
+@pytest.mark.skipif(not PY3 or sys.version_info >= (3, 12), reason='Testing Python 2 codepath (find_module) on Python 3, <= 3.11')
+def test_find_module_py3_lt_312():
     dir_to_a_file = os.path.dirname(ping_module.__file__)
     path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
 
@@ -38,6 +46,16 @@ def test_find_module_py3():
     # see https://github.com/pypa/setuptools/pull/2918
     assert path_hook_finder.find_spec('missing') is None
     assert path_hook_finder.find_module('missing') is None
+
+
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='Testing Python 2 codepath (find_module) on Python >= 3.12')
+def test_find_module_py3_gt_311():
+    dir_to_a_file = os.path.dirname(ping_module.__file__)
+    path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
+
+    # setuptools may fall back to find_module on Python 3 if find_spec returns None
+    # see https://github.com/pypa/setuptools/pull/2918
+    assert path_hook_finder.find_spec('missing') is None
 
 
 def test_finder_setup():
