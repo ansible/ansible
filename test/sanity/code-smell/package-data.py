@@ -28,10 +28,8 @@ def assemble_files_to_ship(complete_file_list):
         '.github/*',
         '.github/*/*',
         'changelogs/fragments/*',
-        'hacking/backport/*',
-        'hacking/azp/*',
-        'hacking/tests/*',
-        'hacking/ticket_stubs/*',
+        'hacking/*',
+        'hacking/*/*',
         'test/results/.tmp/*',
         'test/results/.tmp/*/*',
         'test/results/.tmp/*/*/*',
@@ -43,25 +41,8 @@ def assemble_files_to_ship(complete_file_list):
         # Developer-only tools
         'changelogs/README.md',
         'changelogs/config.yaml',
-        'hacking/README.md',
-        'hacking/ansible-profile',
-        'hacking/cgroup_perf_recap_graph.py',
-        'hacking/create_deprecated_issues.py',
-        'hacking/deprecated_issue_template.md',
-        'hacking/create_deprecation_bug_reports.py',
-        'hacking/fix_test_syntax.py',
-        'hacking/get_library.py',
-        'hacking/metadata-tool.py',
-        'hacking/report.py',
-        'hacking/return_skeleton_generator.py',
-        'hacking/test-module',
         '.cherry_picker.toml',
         '.mailmap',
-        # Possibly should be included
-        'hacking/env-setup',
-        'hacking/env-setup.fish',
-        'MANIFEST',
-        'setup.cfg',
     ))
 
     # These files are generated and then intentionally added to the sdist
