@@ -292,18 +292,12 @@ class AnsibleCoreCI:
         """Start instance."""
         display.info(f'Initializing new {self.label} instance using: {self._uri}', verbosity=1)
 
-        if self.platform == 'windows':
-            winrm_config = read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'ConfigureRemotingForAnsible.ps1'))
-        else:
-            winrm_config = None
-
         data = dict(
             config=dict(
                 platform=self.platform,
                 version=self.version,
                 architecture=self.arch,
                 public_key=self.ssh_key.pub_contents,
-                winrm_config=winrm_config,
             )
         )
 
