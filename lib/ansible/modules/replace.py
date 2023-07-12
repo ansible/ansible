@@ -285,7 +285,11 @@ def main():
         section = contents
 
     mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], section, 0)
+    try:
+        result = re.subn(mre, params['replace'], section, 0)
+    except re.error as e:
+        module.fail_json(msg="Unable to process replace due to error: %s" % to_text(e),
+                         exception=format_exc())
 
     if result[1] > 0 and section != result[0]:
         if pattern:
