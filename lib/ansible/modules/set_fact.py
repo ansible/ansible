@@ -15,13 +15,13 @@ version_added: "1.2"
 description:
     - This action allows setting variables associated to the current host.
     - These variables will be available to subsequent plays during an ansible-playbook run via the host they were set on.
-    - Set C(cacheable) to C(true) to save variables across executions using a fact cache.
+    - Set O(cacheable) to V(true) to save variables across executions using a fact cache.
       Variables will keep the set_fact precedence for the current run, but will used 'cached fact' precedence for subsequent ones.
     - Per the standard Ansible variable precedence rules, other types of variables have a higher priority, so this value may be overridden.
 options:
   key_value:
     description:
-      - "The C(set_fact) module takes C(key=value) pairs or C(key: value) (YAML notation) as variables to set in the playbook scope.
+      - "The M(ansible.builtin.set_fact) module takes C(key=value) pairs or C(key: value) (YAML notation) as variables to set in the playbook scope.
         The 'key' is the resulting variable name and the value is, of course, the value of said variable."
       - You can create multiple variables at once, by supplying multiple pairs, but do NOT mix notations.
     required: true

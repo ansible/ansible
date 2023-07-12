@@ -21,8 +21,8 @@ description:
     - This module is a proxy for multiple more specific service manager modules
       (such as M(ansible.builtin.systemd) and M(ansible.builtin.sysvinit)).
       This allows management of a heterogeneous environment of machines without creating a specific task for
-      each service manager. The module to be executed is determined by the I(use) option, which defaults to the
-      service manager discovered by M(ansible.builtin.setup).  If C(setup) was not yet run, this module may run it.
+      each service manager. The module to be executed is determined by the O(use) option, which defaults to the
+      service manager discovered by M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, this module may run it.
     - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
@@ -32,10 +32,10 @@ options:
         required: true
     state:
         description:
-          - C(started)/C(stopped) are idempotent actions that will not run
+          - V(started)/V(stopped) are idempotent actions that will not run
             commands unless necessary.
-          - C(restarted) will always bounce the service.
-          - C(reloaded) will always reload.
+          - V(restarted) will always bounce the service.
+          - V(reloaded) will always reload.
           - B(At least one of state and enabled are required.)
           - Note that reloaded will start the service if it is not already started,
             even if your chosen init system wouldn't normally.
@@ -43,7 +43,7 @@ options:
         choices: [ reloaded, restarted, started, stopped ]
     sleep:
         description:
-        - If the service is being C(restarted) then sleep this many seconds
+        - If the service is being V(restarted) then sleep this many seconds
           between the stop and start command.
         - This helps to work around badly-behaving init scripts that exit immediately
           after signaling a process to stop.

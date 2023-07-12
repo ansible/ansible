@@ -12,8 +12,8 @@ DOCUMENTATION = '''
 module: pip
 short_description: Manages Python library dependencies
 description:
-     - "Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
-       or C(requirements)."
+     - "Manage Python library dependencies. To use this module, one of the following keys is required: O(name)
+       or O(requirements)."
 version_added: "0.7"
 options:
   name:
@@ -24,7 +24,7 @@ options:
     elements: str
   version:
     description:
-      - The version number to install of the Python library specified in the I(name) parameter.
+      - The version number to install of the Python library specified in the O(name) parameter.
     type: str
   requirements:
     description:
@@ -53,17 +53,17 @@ options:
   virtualenv_command:
     description:
       - The command or a pathname to the command to create the virtual
-        environment with. For example C(pyvenv), C(virtualenv),
-        C(virtualenv2), C(~/bin/virtualenv), C(/usr/local/bin/virtualenv).
+        environment with. For example V(pyvenv), V(virtualenv),
+        V(virtualenv2), V(~/bin/virtualenv), V(/usr/local/bin/virtualenv).
     type: path
     default: virtualenv
     version_added: "1.1"
   virtualenv_python:
     description:
       - The Python executable used for creating the virtual environment.
-        For example C(python3.12), C(python2.7). When not specified, the
+        For example V(python3.12), V(python2.7). When not specified, the
         Python version used to run the ansible module is used. This parameter
-        should not be used when C(virtualenv_command) is using C(pyvenv) or
+        should not be used when O(virtualenv_command) is using V(pyvenv) or
         the C(-m venv) module.
     type: str
     version_added: "2.0"
@@ -94,9 +94,9 @@ options:
     description:
       - The explicit executable or pathname for the pip executable,
         if different from the Ansible Python interpreter. For
-        example C(pip3.3), if there are both Python 2.7 and 3.3 installations
+        example V(pip3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
-      - Mutually exclusive with I(virtualenv) (added in 2.1).
+      - Mutually exclusive with O(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
       - The setuptools package must be installed for both the Ansible Python interpreter
         and for the version of Python specified by this option.
@@ -125,12 +125,12 @@ notes:
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
    - Although it executes using the Ansible Python interpreter, the pip module shells out to
-     run the actual pip command, so it can use any pip version you specify with I(executable).
+     run the actual pip command, so it can use any pip version you specify with O(executable).
      By default, it uses the pip version for the Ansible Python interpreter. For example, pip3 on python 3, and pip2 or pip on python 2.
    - The interpreter used by Ansible
      (see R(ansible_python_interpreter, ansible_python_interpreter))
      requires the setuptools package, regardless of the version of pip set with
-     the I(executable) option.
+     the O(executable) option.
 requirements:
 - pip
 - virtualenv

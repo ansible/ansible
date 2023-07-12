@@ -44,7 +44,7 @@ options:
         version_added: "2.15"
     system:
         description:
-            - If I(yes), indicates that the group created is a system group.
+            - If V(yes), indicates that the group created is a system group.
         type: bool
         default: no
     local:
@@ -58,7 +58,7 @@ options:
         version_added: "2.6"
     non_unique:
         description:
-            - This option allows to change the group ID to a non-unique value. Requires C(gid).
+            - This option allows to change the group ID to a non-unique value. Requires O(gid).
             - Not supported on macOS or BusyBox distributions.
         type: bool
         default: no
@@ -94,7 +94,7 @@ EXAMPLES = '''
 RETURN = r'''
 gid:
   description: Group ID of the group.
-  returned: When C(state) is 'present'
+  returned: When O(state) is C(present)
   type: int
   sample: 1001
 name:
@@ -109,7 +109,7 @@ state:
   sample: 'absent'
 system:
   description: Whether the group is a system group or not.
-  returned: When C(state) is 'present'
+  returned: When O(state) is C(present)
   type: bool
   sample: False
 '''

@@ -18,16 +18,17 @@ options:
   follow:
     description:
     - Determine whether symbolic links should be followed.
-    - When set to C(true) symbolic links will be followed, if they exist.
-    - When set to C(false) symbolic links will not be followed.
-    - Previous to Ansible 2.4, this was hardcoded as C(true).
+    - When set to V(true) symbolic links will be followed, if they exist.
+    - When set to V(false) symbolic links will not be followed.
+    - Previous to Ansible 2.4, this was hardcoded as V(true).
     type: bool
     default: no
     version_added: '2.4'
 notes:
-- For Windows you can use M(ansible.windows.win_template) which uses C(\r\n) as C(newline_sequence) by default.
-- The C(jinja2_native) setting has no effect. Native types are never used in the C(template) module which is by design used for generating text files.
-  For working with templates and utilizing Jinja2 native types see the C(jinja2_native) parameter of the C(template lookup).
+- For Windows you can use M(ansible.windows.win_template) which uses V(\\r\\n) as O(newline_sequence) by default.
+- The C(jinja2_native) setting has no effect. Native types are never used in the M(ansible.builtin.template) module
+  which is by design used for generating text files. For working with templates and utilizing Jinja2 native types see
+  the O(ansible.builtin.template#lookup:jinja2_native) parameter of the P(ansible.builtin.template#lookup) lookup.
 seealso:
 - module: ansible.builtin.copy
 - module: ansible.windows.win_copy

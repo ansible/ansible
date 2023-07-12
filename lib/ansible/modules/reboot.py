@@ -10,7 +10,7 @@ DOCUMENTATION = r'''
 module: reboot
 short_description: Reboot a machine
 notes:
-  - C(PATH) is ignored on the remote node when searching for the C(shutdown) command. Use C(search_paths)
+  - E(PATH) is ignored on the remote node when searching for the C(shutdown) command. Use O(search_paths)
     to specify locations to search if the default paths do not work.
 description:
     - Reboot a machine, wait for it to go down, come back up, and respond to commands.
@@ -57,7 +57,7 @@ options:
   search_paths:
     description:
       - Paths to search on the remote machine for the C(shutdown) command.
-      - I(Only) these paths will be searched for the C(shutdown) command. C(PATH) is ignored in the remote node when searching for the C(shutdown) command.
+      - I(Only) these paths will be searched for the C(shutdown) command. E(PATH) is ignored in the remote node when searching for the C(shutdown) command.
     type: list
     elements: str
     default: ['/sbin', '/bin', '/usr/sbin', '/usr/bin', '/usr/local/sbin']
@@ -75,8 +75,8 @@ options:
     description:
       - Command to run that reboots the system, including any parameters passed to the command.
       - Can be an absolute path to the command or just the command name. If an absolute path to the
-        command is not given, C(search_paths) on the target system will be searched to find the absolute path.
-      - This will cause C(pre_reboot_delay), C(post_reboot_delay), and C(msg) to be ignored.
+        command is not given, O(search_paths) on the target system will be searched to find the absolute path.
+      - This will cause O(pre_reboot_delay), O(post_reboot_delay), and O(msg) to be ignored.
     type: str
     default: '[determined based on target OS]'
     version_added: '2.11'

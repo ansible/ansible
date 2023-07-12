@@ -26,7 +26,7 @@ options:
   dest:
     description:
       - Absolute path where the repository should be deployed.
-      - The destination directory must be specified unless I(checkout=no), I(update=no), and I(export=no).
+      - The destination directory must be specified unless O(checkout=no), O(update=no), and O(export=no).
     type: path
   revision:
     description:
@@ -36,8 +36,8 @@ options:
     aliases: [ rev, version ]
   force:
     description:
-      - If C(true), modified files will be discarded. If C(false), module will fail if it encounters modified files.
-        Prior to 1.9 the default was C(true).
+      - If V(true), modified files will be discarded. If V(false), module will fail if it encounters modified files.
+        Prior to 1.9 the default was V(true).
     type: bool
     default: "no"
   in_place:
@@ -65,32 +65,32 @@ options:
     version_added: "1.4"
   checkout:
     description:
-     - If C(false), do not check out the repository if it does not exist locally.
+     - If V(false), do not check out the repository if it does not exist locally.
     type: bool
     default: "yes"
     version_added: "2.3"
   update:
     description:
-     - If C(false), do not retrieve new revisions from the origin repository.
+     - If V(false), do not retrieve new revisions from the origin repository.
     type: bool
     default: "yes"
     version_added: "2.3"
   export:
     description:
-      - If C(true), do export instead of checkout/update.
+      - If V(true), do export instead of checkout/update.
     type: bool
     default: "no"
     version_added: "1.6"
   switch:
     description:
-      - If C(false), do not call svn switch before update.
+      - If V(false), do not call svn switch before update.
     default: "yes"
     version_added: "2.0"
     type: bool
   validate_certs:
     description:
-      - If C(false), passes the C(--trust-server-cert) flag to svn.
-      - If C(true), does not pass the flag.
+      - If V(false), passes the C(--trust-server-cert) flag to svn.
+      - If V(true), does not pass the flag.
     default: "no"
     version_added: "2.11"
     type: bool

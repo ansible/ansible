@@ -21,7 +21,7 @@ options:
   path:
     description:
     - The file to modify.
-    - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    - Before Ansible 2.3 this option was only usable as O(dest), O(destfile) and O(name).
     type: path
     required: yes
     aliases: [ dest, destfile, name ]
@@ -34,24 +34,24 @@ options:
   marker:
     description:
     - The marker line template.
-    - C({mark}) will be replaced with the values in C(marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    - C({mark}) will be replaced with the values in O(marker_begin) (default="BEGIN") and O(marker_end) (default="END").
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
     - Multi-line markers are not supported and will result in the block being repeatedly inserted on subsequent playbook runs.
-    - A newline is automatically appended by the module to C(marker_begin) and C(marker_end).
+    - A newline is automatically appended by the module to O(marker_begin) and O(marker_end).
     type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
     - The text to insert inside the marker lines.
-    - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
+    - If it is missing or an empty string, the block will be removed as if O(state) were specified to V(absent).
     type: str
     default: ''
     aliases: [ content ]
   insertafter:
     description:
-    - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
-    - A special value is available; C(EOF) for inserting the block at the end of the file.
-    - If specified regular expression has no matches, C(EOF) will be used instead.
+    - If specified and no begin/ending O(marker) lines are found, the block will be inserted after the last match of specified regular expression.
+    - A special value is available; V(EOF) for inserting the block at the end of the file.
+    - If specified regular expression has no matches, V(EOF) will be used instead.
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
       This behaviour was added in ansible-core 2.14.
     type: str
@@ -59,8 +59,8 @@ options:
     default: EOF
   insertbefore:
     description:
-    - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
-    - A special value is available; C(BOF) for inserting the block at the beginning of the file.
+    - If specified and no begin/ending O(marker) lines are found, the block will be inserted before the last match of specified regular expression.
+    - A special value is available; V(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
       This behaviour was added in ansible-core 2.14.
@@ -79,22 +79,23 @@ options:
     default: no
   marker_begin:
     description:
-    - This will be inserted at C({mark}) in the opening ansible block marker.
+    - This will be inserted at C({mark}) in the opening ansible block O(marker).
     type: str
     default: BEGIN
     version_added: '2.5'
   marker_end:
     required: false
     description:
-    - This will be inserted at C({mark}) in the closing ansible block marker.
+    - This will be inserted at C({mark}) in the closing ansible block O(marker).
     type: str
     default: END
     version_added: '2.5'
 notes:
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
-  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
-  - When more then one block should be handled in one file you must change the I(marker) per task.
+  - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
+  - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
+    so O(ignore:follow=no) does not make sense.
+  - When more then one block should be handled in one file you must change the O(marker) per task.
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files

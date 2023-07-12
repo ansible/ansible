@@ -18,8 +18,8 @@ short_description: Generic OS package manager
 description:
     - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.yum), M(ansible.builtin.apt), ...).
       It is convenient to use in an heterogeneous environment of machines without having to create a specific task for
-      each package manager. C(package) calls behind the module for the package manager used by the operating system
-      discovered by the module M(ansible.builtin.setup).  If C(setup) was not yet run, C(package) will run it.
+      each package manager. M(ansible.builtin.package) calls behind the module for the package manager used by the operating system
+      discovered by the module M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, M(ansible.builtin.package) will run it.
     - This module acts as a proxy to the underlying package manager module. While all arguments will be passed to the
       underlying module, not all modules support the same arguments. This documentation only covers the minimum intersection
       of module arguments that all packaging modules support.
@@ -28,17 +28,17 @@ options:
   name:
     description:
       - Package name, or package specifier with version.
-      - Syntax varies with package manager. For example C(name-1.0) or C(name=1.0).
-      - Package names also vary with package manager; this module will not "translate" them per distro. For example C(libyaml-dev), C(libyaml-devel).
+      - Syntax varies with package manager. For example V(name-1.0) or V(name=1.0).
+      - Package names also vary with package manager; this module will not "translate" them per distro. For example V(libyaml-dev), V(libyaml-devel).
     required: true
   state:
     description:
-      - Whether to install (C(present)), or remove (C(absent)) a package.
-      - You can use other states like C(latest) ONLY if they are supported by the underlying package module(s) executed.
+      - Whether to install (V(present)), or remove (V(absent)) a package.
+      - You can use other states like V(latest) ONLY if they are supported by the underlying package module(s) executed.
     required: true
   use:
     description:
-      - The required package manager module to use (C(yum), C(apt), and so on). The default 'auto' will use existing facts or try to autodetect it.
+      - The required package manager module to use (V(yum), V(apt), and so on). The default V(auto) will use existing facts or try to autodetect it.
       - You should only use this field if the automatic selection is not working for some reason.
     default: auto
 requirements:
@@ -63,7 +63,7 @@ attributes:
         details: The support depends on the availability for the specific plugin for each platform and if fact gathering is able to detect it
         platforms: all
 notes:
-    - While C(package) abstracts package managers to ease dealing with multiple distributions, package name often differs for the same software.
+    - While M(ansible.builtin.package) abstracts package managers to ease dealing with multiple distributions, package name often differs for the same software.
 
 '''
 EXAMPLES = '''

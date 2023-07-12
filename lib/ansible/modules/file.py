@@ -17,7 +17,7 @@ extends_documentation_fragment: [files, action_common_attributes]
 description:
 - Set attributes of files, directories, or symlinks and their targets.
 - Alternatively, remove files, symlinks or directories.
-- Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
+- Many other modules support the same options as the M(ansible.builtin.file) module - including M(ansible.builtin.copy),
   M(ansible.builtin.template), and M(ansible.builtin.assemble).
 - For Windows targets, use the M(ansible.windows.win_file) module instead.
 options:
@@ -29,35 +29,35 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-    - If C(absent), directories will be recursively deleted, and files or symlinks will
+    - If V(absent), directories will be recursively deleted, and files or symlinks will
       be unlinked. In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed
-      under C(path_contents). Note that C(absent) will not cause C(file) to fail if the C(path) does
+      under C(path_contents). Note that V(absent) will not cause M(ansible.builtin.file) to fail if the O(path) does
       not exist as the state did not change.
-    - If C(directory), all intermediate subdirectories will be created if they
+    - If V(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-    - If C(file), with no other options, returns the current state of C(path).
-    - If C(file), even with other options (such as C(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
-      Set to C(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
-    - If C(hard), the hard link will be created or changed.
-    - If C(link), the symbolic link will be created or changed.
-    - If C(touch) (new in 1.4), an empty file will be created if the file does not
+    - If V(file), with no other options, returns the current state of C(path).
+    - If V(file), even with other options (such as O(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
+      Set to V(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
+    - If V(hard), the hard link will be created or changed.
+    - If V(link), the symbolic link will be created or changed.
+    - If V(touch) (new in 1.4), an empty file will be created if the file does not
       exist, while an existing file or directory will receive updated file access and
-      modification times (similar to the way C(touch) works from the command line).
-    - Default is the current state of the file if it exists, C(directory) if C(recurse=yes), or C(file) otherwise.
+      modification times (similar to the way V(touch) works from the command line).
+    - Default is the current state of the file if it exists, V(directory) if O(recurse=yes), or V(file) otherwise.
     type: str
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
     - Path of the file to link to.
-    - This applies only to C(state=link) and C(state=hard).
-    - For C(state=link), this will also accept a non-existing path.
-    - Relative paths are relative to the file being created (C(path)) which is how
+    - This applies only to O(state=link) and O(state=hard).
+    - For O(state=link), this will also accept a non-existing path.
+    - Relative paths are relative to the file being created (O(path)) which is how
       the Unix command C(ln -s SRC DEST) treats relative paths.
     type: path
   recurse:
     description:
     - Recursively set the specified file attributes on directory contents.
-    - This applies only when C(state) is set to C(directory).
+    - This applies only when O(state) is set to V(directory).
     type: bool
     default: no
     version_added: '1.1'
@@ -66,27 +66,27 @@ options:
     - >
       Force the creation of the symlinks in two cases: the source file does
       not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-      C(path) file and create symlink to the C(src) file in place of it).
+      O(path) file and create symlink to the O(src) file in place of it).
     type: bool
     default: no
   follow:
     description:
     - This flag indicates that filesystem links, if they exist, should be followed.
-    - I(follow=yes) and I(state=link) can modify I(src) when combined with parameters such as I(mode).
-    - Previous to Ansible 2.5, this was C(false) by default.
+    - O(follow=yes) and O(state=link) can modify O(src) when combined with parameters such as O(mode).
+    - Previous to Ansible 2.5, this was V(false) by default.
     type: bool
     default: yes
     version_added: '1.8'
   modification_time:
     description:
     - This parameter indicates the time the file's modification time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
-    - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    - Should be V(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or V(now).
+    - Default is None meaning that V(preserve) is the default for O(state=[file,directory,link,hard]) and V(now) is default for O(state=touch).
     type: str
     version_added: "2.7"
   modification_time_format:
     description:
-    - When used with C(modification_time), indicates the time format that must be used.
+    - When used with O(modification_time), indicates the time format that must be used.
     - Based on default Python format (see time.strftime doc).
     type: str
     default: "%Y%m%d%H%M.%S"
@@ -94,13 +94,13 @@ options:
   access_time:
     description:
     - This parameter indicates the time the file's access time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
-    - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    - Should be V(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or V(now).
+    - Default is V(None) meaning that V(preserve) is the default for O(state=[file,directory,link,hard]) and V(now) is default for O(state=touch).
     type: str
     version_added: '2.7'
   access_time_format:
     description:
-    - When used with C(access_time), indicates the time format that must be used.
+    - When used with O(access_time), indicates the time format that must be used.
     - Based on default Python format (see time.strftime doc).
     type: str
     default: "%Y%m%d%H%M.%S"
@@ -216,13 +216,13 @@ EXAMPLES = r'''
 '''
 RETURN = r'''
 dest:
-    description: Destination file/path, equal to the value passed to I(path).
-    returned: state=touch, state=hard, state=link
+    description: Destination file/path, equal to the value passed to O(path).
+    returned: O(state=touch), O(state=hard), O(state=link)
     type: str
     sample: /path/to/file.txt
 path:
-    description: Destination file/path, equal to the value passed to I(path).
-    returned: state=absent, state=directory, state=file
+    description: Destination file/path, equal to the value passed to O(path).
+    returned: O(state=absent), O(state=directory), O(state=file)
     type: str
     sample: /path/to/file.txt
 '''

@@ -39,7 +39,7 @@ attributes:
         support: full
         platforms: debian
 notes:
-    - This module won't cause any packages to be installed/removed/purged, use the C(apt) module for that.
+    - This module will not cause any packages to be installed/removed/purged, use the M(ansible.builtin.apt) module for that.
 '''
 EXAMPLES = '''
 - name: Prevent python from being upgraded

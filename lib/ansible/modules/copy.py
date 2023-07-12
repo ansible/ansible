@@ -14,10 +14,10 @@ module: copy
 version_added: historical
 short_description: Copy files to remote locations
 description:
-    - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
+    - The M(ansible.builtin.copy) module copies a file from the local or remote machine to a location on the remote machine.
     - Use the M(ansible.builtin.fetch) module to copy files from remote locations to the local box.
     - If you need variable interpolation in copied files, use the M(ansible.builtin.template) module.
-      Using a variable in the C(content) field will result in unpredictable output.
+      Using a variable in the O(content) field will result in unpredictable output.
     - For Windows targets, use the M(ansible.windows.win_copy) module instead.
 options:
   src:
@@ -31,19 +31,19 @@ options:
     type: path
   content:
     description:
-    - When used instead of C(src), sets the contents of a file directly to the specified value.
-    - Works only when C(dest) is a file. Creates the file if it does not exist.
-    - For advanced formatting or if C(content) contains a variable, use the
+    - When used instead of O(src), sets the contents of a file directly to the specified value.
+    - Works only when O(dest) is a file. Creates the file if it does not exist.
+    - For advanced formatting or if O(content) contains a variable, use the
       M(ansible.builtin.template) module.
     type: str
     version_added: '1.1'
   dest:
     description:
     - Remote absolute path where the file should be copied to.
-    - If C(src) is a directory, this must be a directory too.
-    - If C(dest) is a non-existent path and if either C(dest) ends with "/" or C(src) is a directory, C(dest) is created.
-    - If I(dest) is a relative path, the starting directory is determined by the remote host.
-    - If C(src) and C(dest) are files, the parent directory of C(dest) is not created and the task fails if it does not already exist.
+    - If O(src) is a directory, this must be a directory too.
+    - If O(dest) is a non-existent path and if either O(dest) ends with "/" or O(src) is a directory, O(dest) is created.
+    - If O(dest) is a relative path, the starting directory is determined by the remote host.
+    - If O(src) and O(dest) are files, the parent directory of O(dest) is not created and the task fails if it does not already exist.
     type: path
     required: yes
   backup:
@@ -55,8 +55,8 @@ options:
   force:
     description:
     - Influence whether the remote file must always be replaced.
-    - If C(true), the remote file will be replaced when contents are different than the source.
-    - If C(false), the file will only be transferred if the destination does not exist.
+    - If V(true), the remote file will be replaced when contents are different than the source.
+    - If V(false), the file will only be transferred if the destination does not exist.
     type: bool
     default: yes
     version_added: '1.1'
@@ -65,17 +65,17 @@ options:
     - The permissions of the destination file or directory.
     - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
-      (like C(0644) or C(01777)) or quote it (like C('644') or C('1777')) so Ansible receives a string
+      (like V(0644) or V(01777)) or quote it (like V('644') or V('1777')) so Ansible receives a string
       and can do its own conversion from string into number. Giving Ansible a number without following
       one of these rules will end up with a decimal number which will have unexpected results.
-    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
-    - As of Ansible 2.3, the mode may also be the special string C(preserve).
-    - C(preserve) means that the file will be given the same permissions as the source file.
-    - When doing a recursive copy, see also C(directory_mode).
-    - If C(mode) is not specified and the destination file B(does not) exist, the default C(umask) on the system will be used
+    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, V(u+rwx) or V(u=rw,g=r,o=r)).
+    - As of Ansible 2.3, the mode may also be the special string V(preserve).
+    - V(preserve) means that the file will be given the same permissions as the source file.
+    - When doing a recursive copy, see also O(directory_mode).
+    - If O(mode) is not specified and the destination file B(does not) exist, the default C(umask) on the system will be used
       when setting the mode for the newly created file.
-    - If C(mode) is not specified and the destination file B(does) exist, the mode of the existing file will be used.
-    - Specifying C(mode) is the best way to ensure files are created with the correct permissions.
+    - If O(mode) is not specified and the destination file B(does) exist, the mode of the existing file will be used.
+    - Specifying O(mode) is the best way to ensure files are created with the correct permissions.
       See CVE-2020-1736 for further details.
   directory_mode:
     description:
@@ -86,12 +86,12 @@ options:
     version_added: '1.5'
   remote_src:
     description:
-    - Influence whether C(src) needs to be transferred or already is present remotely.
-    - If C(false), it will search for C(src) on the controller node.
-    - If C(true) it will search for C(src) on the managed (remote) node.
-    - C(remote_src) supports recursive copying as of version 2.8.
-    - C(remote_src) only works with C(mode=preserve) as of version 2.6.
-    - Autodecryption of files does not work when C(remote_src=yes).
+    - Influence whether O(src) needs to be transferred or already is present remotely.
+    - If V(false), it will search for O(src) on the controller node.
+    - If V(true) it will search for O(src) on the managed (remote) node.
+    - O(remote_src) supports recursive copying as of version 2.8.
+    - O(remote_src) only works with O(mode=preserve) as of version 2.6.
+    - Autodecryption of files does not work when O(remote_src=yes).
     type: bool
     default: no
     version_added: '2.0'

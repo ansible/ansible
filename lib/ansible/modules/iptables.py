@@ -17,7 +17,7 @@ author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 - Sébastien DA ROCHA (@sebastiendarocha)
 description:
-  - C(iptables) is used to set up, maintain, and inspect the tables of IP packet
+  - M(ansible.builtin.iptables) is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
   - This module does not handle the saving and/or loading of rules, but rather
     only manipulates the current rules that are present in memory. This is the
@@ -61,7 +61,7 @@ options:
   rule_num:
     description:
       - Insert the rule as the given rule number.
-      - This works only with C(action=insert).
+      - This works only with O(action=insert).
     type: str
     version_added: "2.5"
   ip_version:
@@ -74,18 +74,18 @@ options:
     description:
       - Specify the iptables chain to modify.
       - This could be a user-defined chain or one of the standard iptables chains, like
-        C(INPUT), C(FORWARD), C(OUTPUT), C(PREROUTING), C(POSTROUTING), C(SECMARK) or C(CONNSECMARK).
+        V(INPUT), V(FORWARD), V(OUTPUT), V(PREROUTING), V(POSTROUTING), V(SECMARK) or V(CONNSECMARK).
     type: str
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
-      - The specified protocol can be one of C(tcp), C(udp), C(udplite), C(icmp), C(ipv6-icmp) or C(icmpv6),
-        C(esp), C(ah), C(sctp) or the special keyword C(all), or it can be a numeric value,
+      - The specified protocol can be one of V(tcp), V(udp), V(udplite), V(icmp), V(ipv6-icmp) or V(icmpv6),
+        V(esp), V(ah), V(sctp) or the special keyword V(all), or it can be a numeric value,
         representing one of these protocols or a different one.
-      - A protocol name from I(/etc/protocols) is also allowed.
-      - A C(!) argument before the protocol inverts the test.
+      - A protocol name from C(/etc/protocols) is also allowed.
+      - A V(!) argument before the protocol inverts the test.
       - The number zero is equivalent to all.
-      - C(all) will match with all protocols and is taken as default when this option is omitted.
+      - V(all) will match with all protocols and is taken as default when this option is omitted.
     type: str
   source:
     description:
@@ -97,7 +97,7 @@ options:
         a remote query such as DNS is a really bad idea.
       - The mask can be either a network mask or a plain number, specifying
         the number of 1's at the left side of the network mask. Thus, a mask
-        of 24 is equivalent to 255.255.255.0. A C(!) argument before the
+        of 24 is equivalent to 255.255.255.0. A V(!) argument before the
         address specification inverts the sense of the address.
     type: str
   destination:
@@ -110,13 +110,13 @@ options:
         a remote query such as DNS is a really bad idea.
       - The mask can be either a network mask or a plain number, specifying
         the number of 1's at the left side of the network mask. Thus, a mask
-        of 24 is equivalent to 255.255.255.0. A C(!) argument before the
+        of 24 is equivalent to 255.255.255.0. A V(!) argument before the
         address specification inverts the sense of the address.
     type: str
   tcp_flags:
     description:
       - TCP flags specification.
-      - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
+      - O(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
     type: dict
     version_added: "2.4"
     suboptions:
@@ -154,7 +154,7 @@ options:
   gateway:
     description:
       - This specifies the IP address of host to send the cloned packets.
-      - This option is only valid when C(jump) is set to C(TEE).
+      - This option is only valid when O(jump) is set to V(TEE).
     type: str
     version_added: "2.8"
   log_prefix:
@@ -166,7 +166,7 @@ options:
     description:
       - Logging level according to the syslogd-defined priorities.
       - The value can be strings or numbers from 1-8.
-      - This parameter is only applicable if C(jump) is set to C(LOG).
+      - This parameter is only applicable if O(jump) is set to V(LOG).
     type: str
     version_added: "2.8"
     choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
@@ -179,18 +179,18 @@ options:
   in_interface:
     description:
       - Name of an interface via which a packet was received (only for packets
-        entering the C(INPUT), C(FORWARD) and C(PREROUTING) chains).
-      - When the C(!) argument is used before the interface name, the sense is inverted.
-      - If the interface name ends in a C(+), then any interface which begins with
+        entering the V(INPUT), V(FORWARD) and V(PREROUTING) chains).
+      - When the V(!) argument is used before the interface name, the sense is inverted.
+      - If the interface name ends in a V(+), then any interface which begins with
         this name will match.
       - If this option is omitted, any interface name will match.
     type: str
   out_interface:
     description:
       - Name of an interface via which a packet is going to be sent (for
-        packets entering the C(FORWARD), C(OUTPUT) and C(POSTROUTING) chains).
-      - When the C(!) argument is used before the interface name, the sense is inverted.
-      - If the interface name ends in a C(+), then any interface which begins
+        packets entering the V(FORWARD), V(OUTPUT) and V(POSTROUTING) chains).
+      - When the V(!) argument is used before the interface name, the sense is inverted.
+      - If the interface name ends in a V(+), then any interface which begins
         with this name will match.
       - If this option is omitted, any interface name will match.
     type: str
@@ -206,14 +206,14 @@ options:
   set_counters:
     description:
       - This enables the administrator to initialize the packet and byte
-        counters of a rule (during C(INSERT), C(APPEND), C(REPLACE) operations).
+        counters of a rule (during V(INSERT), V(APPEND), V(REPLACE) operations).
     type: str
   source_port:
     description:
       - Source port or port range specification.
       - This can either be a service name or a port number.
       - An inclusive range can also be specified, using the format C(first:last).
-      - If the first port is omitted, C(0) is assumed; if the last is omitted, C(65535) is assumed.
+      - If the first port is omitted, V(0) is assumed; if the last is omitted, V(65535) is assumed.
       - If the first port is greater than the second one they will be swapped.
     type: str
   destination_port:
@@ -239,7 +239,7 @@ options:
       - This specifies a destination port or range of ports to use, without
         this, the destination port is never altered.
       - This is only valid if the rule also specifies one of the protocol
-        C(tcp), C(udp), C(dccp) or C(sctp).
+        V(tcp), V(udp), V(dccp) or V(sctp).
     type: str
   to_destination:
     description:
@@ -266,14 +266,14 @@ options:
     description:
       - This allows specifying a DSCP mark to be added to packets.
         It takes either an integer or hex value.
-      - Mutually exclusive with C(set_dscp_mark_class).
+      - Mutually exclusive with O(set_dscp_mark_class).
     type: str
     version_added: "2.1"
   set_dscp_mark_class:
     description:
       - This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark.
-      - Mutually exclusive with C(set_dscp_mark).
+      - Mutually exclusive with O(set_dscp_mark).
     type: str
     version_added: "2.1"
   comment:
@@ -283,7 +283,7 @@ options:
   ctstate:
     description:
       - A list of the connection states to match in the conntrack module.
-      - Possible values are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
+      - Possible values are V(INVALID), V(NEW), V(ESTABLISHED), V(RELATED), V(UNTRACKED), V(SNAT), V(DNAT).
     type: list
     elements: str
     default: []
@@ -301,7 +301,7 @@ options:
     description:
       - Specifies a set name which can be defined by ipset.
       - Must be used together with the match_set_flags parameter.
-      - When the C(!) argument is prepended then it inverts the rule.
+      - When the V(!) argument is prepended then it inverts the rule.
       - Uses the iptables set extension.
     type: str
     version_added: "2.11"
@@ -317,8 +317,8 @@ options:
     description:
       - Specifies the maximum average number of matches to allow per second.
       - The number can specify units explicitly, using C(/second), C(/minute),
-        C(/hour) or C(/day), or parts of them (so C(5/second) is the same as
-        C(5/s)).
+        C(/hour) or C(/day), or parts of them (so V(5/second) is the same as
+        V(5/s)).
     type: str
   limit_burst:
     description:
@@ -362,10 +362,10 @@ options:
     description:
       - Set the policy for the chain to the given target.
       - Only built-in chains can have policies.
-      - This parameter requires the C(chain) parameter.
+      - This parameter requires the O(chain) parameter.
       - If you specify this parameter, all other parameters will be ignored.
-      - This parameter is used to set default policy for the given C(chain).
-        Do not confuse this with C(jump) parameter.
+      - This parameter is used to set default policy for the given O(chain).
+        Do not confuse this with O(jump) parameter.
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
@@ -377,9 +377,9 @@ options:
     version_added: "2.10"
   chain_management:
     description:
-      - If C(true) and C(state) is C(present), the chain will be created if needed.
-      - If C(true) and C(state) is C(absent), the chain will be deleted if the only
-        other parameter passed are C(chain) and optionally C(table).
+      - If V(true) and O(state) is V(present), the chain will be created if needed.
+      - If V(true) and O(state) is V(absent), the chain will be deleted if the only
+        other parameter passed are O(chain) and optionally O(table).
     type: bool
     default: false
     version_added: "2.13"
@@ -387,7 +387,7 @@ options:
     description:
       - This parameter controls the running of the list -action of iptables, which is used internally by the module
       - Does not affect the actual functionality. Use this if iptables hangs when creating chain or altering policy
-      - If C(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
+      - If V(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
       - Listing is used internally for example when setting a policy or creting of a chain
     type: bool
     default: false

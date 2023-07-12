@@ -26,8 +26,8 @@ options:
     state:
         choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
-            - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
+            - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
+              Not all init scripts support V(restarted) nor V(reloaded) natively, so these will both trigger a stop and start as needed.
         type: str
     enabled:
         type: bool
@@ -36,7 +36,7 @@ options:
     sleep:
         default: 1
         description:
-            - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
+            - If the service is being V(restarted) or V(reloaded) then sleep this many seconds between the stop and start command.
               This helps to workaround badly behaving services.
         type: int
     pattern:

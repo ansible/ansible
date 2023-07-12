@@ -13,7 +13,7 @@ module: expect
 version_added: '2.0'
 short_description: Executes a command and responds to prompts
 description:
-     - The C(expect) module executes a command and responds to prompts.
+     - The M(ansible.builtin.expect) module executes a command and responds to prompts.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work.
@@ -46,7 +46,7 @@ options:
     type: int
     description:
       - Amount of time in seconds to wait for the expected strings. Use
-        C(null) to disable timeout.
+        V(null) to disable timeout.
     default: 30
   echo:
     description:
@@ -69,7 +69,7 @@ notes:
   - If you want to run a command through the shell (say you are using C(<),
     C(>), C(|), and so on), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else").
-  - The question, or key, under I(responses) is a python regex match. Case
+  - The question, or key, under O(responses) is a python regex match. Case
     insensitive searches are indicated with a prefix of C(?i).
   - The C(pexpect) library used by this module operates with a search window
     of 2000 bytes, and does not use a multiline regex match. To perform a

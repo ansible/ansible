@@ -23,8 +23,8 @@ options:
     required: true
   mode:
     description:
-    - If C(status), obtain the status.
-    - If C(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job I(jid).
+    - If V(status), obtain the status.
+    - If V(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job O(jid).
     type: str
     choices: [ cleanup, status ]
     default: status
@@ -79,12 +79,12 @@ ansible_job_id:
   type: str
   sample: '360874038559.4169'
 finished:
-  description: Whether the asynchronous job has finished (C(1)) or not (C(0))
+  description: Whether the asynchronous job has finished (V(1)) or not (V(0))
   returned: always
   type: int
   sample: 1
 started:
-  description: Whether the asynchronous job has started (C(1)) or not (C(0))
+  description: Whether the asynchronous job has started (V(1)) or not (V(0))
   returned: always
   type: int
   sample: 1

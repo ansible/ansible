@@ -25,8 +25,8 @@ options:
         aliases: [ service, unit ]
     state:
         description:
-            - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              C(restarted) will always bounce the unit. C(reloaded) will always reload.
+            - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
+              V(restarted) will always bounce the unit. V(reloaded) will always reload.
         type: str
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
@@ -45,7 +45,7 @@ options:
     daemon_reload:
         description:
             - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
-            - When set to C(true), runs daemon-reload even if the module does not start or stop anything.
+            - When set to V(true), runs daemon-reload even if the module does not start or stop anything.
         type: bool
         default: no
         aliases: [ daemon-reload ]
@@ -58,8 +58,8 @@ options:
         version_added: "2.8"
     scope:
         description:
-            - Run systemctl within a given service manager scope, either as the default system scope C(system),
-              the current user's scope C(user), or the scope of all users C(global).
+            - Run systemctl within a given service manager scope, either as the default system scope V(system),
+              the current user's scope V(user), or the scope of all users V(global).
             - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
             - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
@@ -85,9 +85,9 @@ attributes:
     platform:
         platforms: posix
 notes:
-    - Since 2.4, one of the following options is required C(state), C(enabled), C(masked), C(daemon_reload), (C(daemon_reexec) since 2.8),
-      and all except C(daemon_reload) and (C(daemon_reexec) since 2.8) also require C(name).
-    - Before 2.4 you always required C(name).
+    - Since 2.4, one of the following options is required O(state), O(enabled), O(masked), O(daemon_reload), (O(daemon_reexec) since 2.8),
+      and all except O(daemon_reload) and (O(daemon_reexec) since 2.8) also require O(name).
+    - Before 2.4 you always required O(name).
     - Globs are not supported in name, i.e C(postgres*.service).
     - The service names might vary by specific OS/distribution
     - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with service state.

@@ -31,9 +31,9 @@ notes:
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
-    - It is highly recommended to add I(no_log=True) to task while handling sensitive information using this module.
+    - It is highly recommended to add C(no_log=True) to task while handling sensitive information using this module.
     - The debconf module does not reconfigure packages, it just updates the debconf database.
-      An additional step is needed (typically with I(notify) if debconf makes a change)
+      An additional step is needed (typically with C(notify) if debconf makes a change)
       to reconfigure the package and apply the changes.
       debconf is extensively used for pre-seeding configuration prior to installation
       rather than modifying configurations.
@@ -69,8 +69,8 @@ options:
   vtype:
     description:
       - The type of the value supplied.
-      - It is highly recommended to add I(no_log=True) to task while specifying I(vtype=password).
-      - C(seen) was added in Ansible 2.2.
+      - It is highly recommended to add C(no_log=True) to task while specifying O(vtype=password).
+      - V(seen) was added in Ansible 2.2.
     type: str
     choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title ]
   value:
