@@ -1,0 +1,2 @@
+bugfixes:
+- replace - handle exception when bad escape character is provided in replace (https://github.com/ansible/ansible/issues/79364).
