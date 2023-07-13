@@ -28,7 +28,6 @@ from .io import (
 from .util import (
     ApplicationError,
     display,
-    ANSIBLE_TEST_TARGET_ROOT,
     mutex,
 )
 
