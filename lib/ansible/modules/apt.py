@@ -58,7 +58,7 @@ options:
     default: 0
   purge:
     description:
-     - Will force purging of configuration files if the module O(state) is set to V(absent).
+     - Will force purging of configuration files if O(state=absent) or O(autoremove=yes).
     type: bool
     default: 'no'
   default_release:
@@ -313,6 +313,11 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   ansible.builtin.apt:
     autoremove: yes
+
+- name: Remove dependencies that are no longer required and purge their configuration files
+  ansible.builtin.apt:
+    autoremove: yes
+    purge: true
 
 - name: Run the equivalent of "apt-get clean" as a separate step
   apt:
