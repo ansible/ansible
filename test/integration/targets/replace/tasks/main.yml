@@ -263,3 +263,22 @@
       - replace_cat8.stdout_lines[1] == "9.9.9.9"
       - replace_cat8.stdout_lines[7] == "0.0.0.0"
       - replace_cat8.stdout_lines[13] == "0.0.0.0"
+
+# For Python 3.6 or greater - https://github.com/ansible/ansible/issues/79364
+- name: Handle bad escape character in regular expression
+  replace:
+    path: /dev/null
+    after: ^
+    before: $
+    regexp: \.
+    replace: '\D'
+  ignore_errors: true
+  register: replace_test9
+  when: ansible_python.version.major == 3 and ansible_python.version.minor > 6
+
+- name: Validate the failure
+  assert:
+    that:
+      - replace_test9 is failure
+      - replace_test9.msg.startswith("Unable to process replace")
+  when: ansible_python.version.major == 3 and ansible_python.version.minor > 6
