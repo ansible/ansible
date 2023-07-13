@@ -1,6 +1,8 @@
 {
     "include_symlinks": true,
     "prefixes": [
+        "docs/",
+        "examples/",
         "test/runner/",
         "test/sanity/ansible-doc/",
         "test/sanity/compile/",
