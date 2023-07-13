@@ -1,0 +1,4 @@
+minor_changes:
+  - DEFAULT_TRANSPORT now defaults to 'ssh', the old 'smart' option is being deprecated as versions of OpenSSH without control persist are basically not present anymore.
+deprecated_features:
+  - the 'smart' option for setting a connection plugin is being removed as it's main purpose (choosing between ssh and paramiko) is now irrelevant.
