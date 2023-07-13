@@ -119,8 +119,6 @@ stages:
               test: alpine/3.17
             - name: Alpine 3.18
               test: alpine/3.18
-            - name: Fedora 37
-              test: fedora/37
             - name: Fedora 38
               test: fedora/38
             - name: RHEL 8.8
@@ -142,8 +140,6 @@ stages:
               test: alpine3
             - name: CentOS 7
               test: centos7
-            - name: Fedora 37
-              test: fedora37
             - name: Fedora 38
               test: fedora38
             - name: openSUSE 15
@@ -161,8 +157,6 @@ stages:
           targets:
             - name: Alpine 3
               test: alpine3
-            - name: Fedora 37
-              test: fedora37
             - name: Fedora 38
               test: fedora38
             - name: Ubuntu 22.04
