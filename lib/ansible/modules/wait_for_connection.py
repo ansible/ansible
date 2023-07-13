@@ -101,7 +101,7 @@ EXAMPLES = r'''
       customization:
         hostname: '{{ vm_shortname }}'
         runonce:
-        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+        - cmd.exe /c winrm.cmd quickconfig -quiet -force
     delegate_to: localhost
 
   - name: Wait for system to become reachable over WinRM
