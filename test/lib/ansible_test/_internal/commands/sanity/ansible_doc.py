@@ -113,6 +113,9 @@ class AnsibleDocTest(SanitySingleVersion):
                     summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
                     return SanityFailure(self.name, summary=summary)
 
+                if args.explain:
+                    continue
+
                 plugin_list_json = json.loads(stdout)
                 doc_targets[doc_type] = []
                 for plugin_name, plugin_value in sorted(plugin_list_json.items()):

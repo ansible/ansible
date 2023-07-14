@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Fix several possible tracebacks when using the ``-e`` option with sanity tests.
+  - ansible-test - Remove redundant warning about missing programs before attempting to execute them.
