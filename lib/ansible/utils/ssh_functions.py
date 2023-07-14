@@ -58,10 +58,11 @@ def set_default_transport():
 
     # deal with 'smart' connection .. one time ..
     if C.DEFAULT_TRANSPORT == 'smart':
-        display.deprecated("The 'smart' option for connections is deprecated. Set the connection plugin directly instead.", version=2.19)
+        display.deprecated("The 'smart' option for connections is deprecated. Set the connection plugin directly instead.", version='2.20')
 
         # see if SSH can support ControlPersist if not use paramiko
         if not check_for_controlpersist('ssh') and paramiko is not None:
+            # yes, we update 'the constant' ...
             C.DEFAULT_TRANSPORT = "paramiko"
         else:
             C.DEFAULT_TRANSPORT = "ssh"
