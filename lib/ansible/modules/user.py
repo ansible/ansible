@@ -157,7 +157,7 @@ options:
             - Optionally specify the number of KDF (Key Derivation Function) rounds for key generation.
             - The default value depends on ssh-keygen.
         type: int
-        version_added: "next"
+        version_added: "2.16"
     ssh_key_type:
         description:
             - Optionally specify the type of SSH key to generate.
