@@ -62,7 +62,6 @@ def set_default_transport():
 
         # see if SSH can support ControlPersist if not use paramiko
         if not check_for_controlpersist('ssh') and paramiko is not None:
-            # yes, we update 'the constant' ...
             C.DEFAULT_TRANSPORT = "paramiko"
         else:
             C.DEFAULT_TRANSPORT = "ssh"
