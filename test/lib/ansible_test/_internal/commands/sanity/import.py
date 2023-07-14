@@ -140,7 +140,7 @@ class ImportTest(SanityMultipleVersion):
                 display.warning(f'Skipping sanity test "{self.name}" on Python {python.version} due to missing virtual environment support.')
                 return SanitySkipped(self.name, python.version)
 
-            virtualenv_yaml = check_sanity_virtualenv_yaml(virtualenv_python)
+            virtualenv_yaml = args.explain or check_sanity_virtualenv_yaml(virtualenv_python)
 
             if virtualenv_yaml is False:
                 display.warning(f'Sanity test "{self.name}" ({import_type}) on Python {python.version} may be slow due to missing libyaml support in PyYAML.')

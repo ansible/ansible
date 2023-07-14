@@ -168,6 +168,9 @@ class MypyTest(SanityMultipleVersion):
         # However, it will also report issues on those files, which is not the desired behavior.
         messages = [message for message in messages if message.path in paths_set]
 
+        if args.explain:
+            return SanitySuccess(self.name, python_version=python.version)
+
         results = settings.process_errors(messages, paths)
 
         if results:
@@ -250,7 +253,7 @@ class MypyTest(SanityMultipleVersion):
 
         pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):((?P<column>[0-9]+):)? (?P<level>[^:]+): (?P<message>.*)$'
 
-        parsed = parse_to_list_of_dict(pattern, stdout)
+        parsed = parse_to_list_of_dict(pattern, stdout or '')
 
         messages = [SanityMessage(
             level=r['level'],
