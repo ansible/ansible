@@ -433,7 +433,7 @@ def raw_command(
     display.info(f'{description}: {escaped_cmd}', verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
-    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
+    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required=False)
 
     if program:
         display.info('Program found: %s' % program, verbosity=2)

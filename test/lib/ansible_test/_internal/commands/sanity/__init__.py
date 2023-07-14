@@ -263,7 +263,7 @@ def command_sanity(args: SanityConfig) -> None:
                         virtualenv_python = create_sanity_virtualenv(args, test_profile.python, test.name)
 
                         if virtualenv_python:
-                            virtualenv_yaml = check_sanity_virtualenv_yaml(virtualenv_python)
+                            virtualenv_yaml = args.explain or check_sanity_virtualenv_yaml(virtualenv_python)
 
                             if test.require_libyaml and not virtualenv_yaml:
                                 result = SanitySkipped(test.name)
@@ -1179,20 +1179,23 @@ def create_sanity_virtualenv(
 
         run_pip(args, virtualenv_python, commands, None)  # create_sanity_virtualenv()
 
-        write_text_file(meta_install, virtualenv_install)
+        if not args.explain:
+            write_text_file(meta_install, virtualenv_install)
 
         # false positive: pylint: disable=no-member
         if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
-            virtualenv_yaml = yamlcheck(virtualenv_python)
+            virtualenv_yaml = yamlcheck(virtualenv_python, args.explain)
         else:
             virtualenv_yaml = None
 
-        write_json_file(meta_yaml, virtualenv_yaml)
+        if not args.explain:
+            write_json_file(meta_yaml, virtualenv_yaml)
 
         created_venvs.append(f'{label}-{python.version}')
 
-    # touch the marker to keep track of when the virtualenv was last used
-    pathlib.Path(virtualenv_marker).touch()
+    if not args.explain:
+        # touch the marker to keep track of when the virtualenv was last used
+        pathlib.Path(virtualenv_marker).touch()
 
     return virtualenv_python
 
