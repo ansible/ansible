@@ -3144,7 +3144,7 @@ def main():
             # following are specific to ssh key generation
             generate_ssh_key=dict(type='bool'),
             ssh_key_bits=dict(type='int', default=ssh_defaults['bits']),
-            ssh_key_derivation_rounds=dict(type='int', default=ssh_defaults['rounds']),
+            ssh_key_derivation_rounds=dict(type='int', default=ssh_defaults['rounds'], no_log=False),
             ssh_key_type=dict(type='str', default=ssh_defaults['type']),
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
