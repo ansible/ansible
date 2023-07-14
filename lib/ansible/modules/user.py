@@ -152,6 +152,12 @@ options:
             - The default value depends on ssh-keygen.
         type: int
         version_added: "0.9"
+    ssh_key_derivation_rounds:
+        description:
+            - Optionally specify the number of KDF (Key Derivation Function) rounds for key generation.
+            - The default value depends on ssh-keygen.
+        type: int
+        version_added: "next"
     ssh_key_type:
         description:
             - Optionally specify the type of SSH key to generate.
@@ -324,6 +330,13 @@ EXAMPLES = r'''
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
+
+- name: Create an Ed25519 SSH key with specified KDF rounds for user jsmith in ~jsmith/.ssh/id_ed25519
+  ansible.builtin.user:
+    name: jsmith
+    generate_ssh_key: yes
+    ssh_key_derivation_rounds: 24
+    ssh_key_file: .ssh/id_ed25519
 
 - name: Added a consultant whose account you want to expire
   ansible.builtin.user:
@@ -561,6 +574,7 @@ class User(object):
         self.append = module.params['append']
         self.sshkeygen = module.params['generate_ssh_key']
         self.ssh_bits = module.params['ssh_key_bits']
+        self.ssh_derivation_rounds = module.params["ssh_key_derivation_rounds"]
         self.ssh_type = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
@@ -1187,6 +1201,9 @@ class User(object):
         if self.ssh_bits > 0:
             cmd.append('-b')
             cmd.append(self.ssh_bits)
+        if self.ssh_derivation_rounds > 0:
+            cmd.append("-a")
+            cmd.append(self.ssh_derivation_rounds)
         cmd.append('-C')
         cmd.append(self.ssh_comment)
         cmd.append('-f')
@@ -3089,6 +3106,7 @@ class Alpine(BusyBox):
 def main():
     ssh_defaults = dict(
         bits=0,
+        rounds=0,
         type='rsa',
         passphrase=None,
         comment='ansible-generated on %s' % socket.gethostname()
@@ -3126,6 +3144,7 @@ def main():
             # following are specific to ssh key generation
             generate_ssh_key=dict(type='bool'),
             ssh_key_bits=dict(type='int', default=ssh_defaults['bits']),
+            ssh_key_derivation_rounds=dict(type='int', default=ssh_defaults['rounds']),
             ssh_key_type=dict(type='str', default=ssh_defaults['type']),
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
