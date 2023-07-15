@@ -1,0 +1,7 @@
+minor_changes:
+  - ansible-test - The ``replace-urlopen`` sanity test is now limited to plugins in collections.
+                   Previously any Python file in a collection was checked for ``urlopen`` usage.
+  - ansible-test - The ``use-compat-six`` sanity test is now limited to plugins in collections.
+                   Previously any Python file in a collection was checked for ``six`` usage.
+  - ansible-test - The ``no-get-exception`` sanity test is now limited to plugins in collections.
+                   Previously any Python file in a collection was checked for ``get_exception`` usage.

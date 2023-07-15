@@ -1,4 +1,3 @@
-.azure-pipelines/scripts/publish-codecov.py replace-urlopen
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
@@ -138,7 +137,6 @@ test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PS
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
-test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
@@ -167,9 +165,6 @@ test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-v
 test/units/module_utils/common/warnings/test_deprecate.py pylint:ansible-deprecated-no-version  # testing Display.deprecated call without a version or date
 test/units/module_utils/common/warnings/test_deprecate.py pylint:ansible-deprecated-version  # testing Deprecated version found in call to Display.deprecated or AnsibleModule.deprecate
 test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
-test/units/module_utils/urls/test_fetch_url.py replace-urlopen
-test/units/module_utils/urls/test_gzip.py replace-urlopen
-test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits
