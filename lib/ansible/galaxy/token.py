@@ -69,7 +69,7 @@ class KeycloakToken(object):
 
         # - build a request to POST to auth_url
         #  - body is form encoded
-        #    - 'request_token' is the offline token stored in ansible.cfg
+        #    - 'refresh_token' is the offline token stored in ansible.cfg
         #    - 'grant_type' is 'refresh_token'
         #    - 'client_id' is 'cloud-services'
         #       - should probably be based on the contents of the
