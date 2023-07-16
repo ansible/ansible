@@ -27,8 +27,9 @@ options:
         description:
             - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
               V(restarted) will always bounce the unit. V(reloaded) will always reload.
+              V(tried-restart) will restart the unit if it is running and do nothing if the unit is not running. 
         type: str
-        choices: [ reloaded, restarted, started, stopped ]
+        choices: [ reloaded, restarted, started, stopped, tried-restart ]
     enabled:
         description:
             - Whether the unit should start on boot. B(At least one of state and enabled are required.)
@@ -117,6 +118,11 @@ EXAMPLES = '''
   ansible.builtin.systemd:
     name: httpd.service
     state: reloaded
+
+- name: Restart service httpd, if it is running
+  ansible.builtin.systemd:
+    name: httpd
+    state: tried-restart
 
 - name: Enable service httpd and ensure it is not masked
   ansible.builtin.systemd:
@@ -340,7 +346,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped', 'tried-restart']),
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
@@ -550,6 +556,12 @@ def main():
                 elif module.params['state'] == 'stopped':
                     if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
+                elif module.params['state'] == 'tried-restart':
+                    if is_running_service(result['status']):
+                        action = 'restart'
+                        result['state'] = 'started'
+                    else:
+                        result['state'] = 'stopped'
                 else:
                     if not is_running_service(result['status']):
                         action = 'start'
