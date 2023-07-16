@@ -27,7 +27,7 @@ options:
         description:
             - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
               V(restarted) will always bounce the unit. V(reloaded) will always reload.
-              V(tried-restart) will restart the unit if it is running and do nothing if the unit is not running. 
+              V(tried-restart) will restart the unit if it is running and do nothing if the unit is not running.
         type: str
         choices: [ reloaded, restarted, started, stopped, tried-restart ]
     enabled:
