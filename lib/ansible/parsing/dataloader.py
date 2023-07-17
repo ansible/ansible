@@ -129,17 +129,17 @@ class DataLoader:
     def _decrypt_if_vault_data(self, b_vault_data, b_file_name=None):
         '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
 
-        if not is_encrypted(b_vault_data):
+        if is_encrypted(b_vault_data):
+            b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
+            b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
+            show_content = False
+        else:
+            b_data = b_vault_data
             show_content = True
-            return b_vault_data, show_content
 
-        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
-        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
-
-        show_content = False
         return b_data, show_content
 
-    def _get_file_contents(self, file_name):
+    def _get_file_contents(self, file_name, unvault=True):
         '''
         Reads the file contents from the given file name
 
@@ -164,9 +164,15 @@ class DataLoader:
         try:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
-                return self._decrypt_if_vault_data(data, b_file_name)
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)), orig_exc=e)
+
+        show_content = True
+        if unvault:
+            # raises unvault errors, but we let those pass through
+            data, show_content = self._decrypt_if_vault_data(data, b_file_name)
+
+        return data, show_content
 
     def get_basedir(self):
         ''' returns the current basedir '''

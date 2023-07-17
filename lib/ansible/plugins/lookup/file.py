@@ -25,6 +25,12 @@ DOCUMENTATION = """
         type: bool
         required: False
         default: False
+     unvault:
+        description:whether or not to automatically unvault the target file(s).
+        type: bool
+        required: False
+        default: True
+        version_added: '2.16'
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globbing', use the fileglob lookup instead.
@@ -75,7 +81,7 @@ class LookupModule(LookupBase):
                 lookupfile = self.find_file_in_search_path(variables, 'files', term, ignore_missing=True)
                 display.vvvv(u"File lookup using %s as file" % lookupfile)
                 if lookupfile:
-                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                    b_contents, show_data = self._loader._get_file_contents(lookupfile, unvault=self.get_option('unvault'))
                     contents = to_text(b_contents, errors='surrogate_or_strict')
                     if self.get_option('lstrip'):
                         contents = contents.lstrip()
