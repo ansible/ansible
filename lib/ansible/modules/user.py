@@ -310,7 +310,7 @@ EXAMPLES = r'''
     name: james
     shell: /bin/bash
     groups: admins,developers
-    append: yes
+    append: true
 
 - name: Remove the user 'johnd'
   ansible.builtin.user:
