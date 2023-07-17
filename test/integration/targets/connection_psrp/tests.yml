@@ -134,3 +134,37 @@
         path: /tmp/empty.txt
         state: absent
       delegate_to: localhost
+
+
+  # https://github.com/ansible/ansible/issues/81277
+  # First few tests ensure the cd checking doesn't impact raw commands and only
+  # ones added by _low_level_execute_command
+  - name: run raw command with cd command without normal command separator
+    raw: cd C:\Windows; $pwd.Path
+    register: raw_cd1
+
+  - name: run raw command with cd command with normal command separator
+    raw: cd c:\Windows ; $pwd.Path
+    register: raw_cd2
+
+  - name: run raw command with common PowerShell encoded command wrapper
+    raw: cd c:\Windows ; PowerShell -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -EncodedCommand {{ '$pwd.Path' | b64encode(encoding='utf-16-le') }}
+    register: raw_cd3
+
+  - name: assert raw cd commands worked
+    assert:
+      that:
+      - raw_cd1.stdout == 'C:\\Windows'
+      - raw_cd2.stdout == 'C:\\Windows'
+      - raw_cd3.stdout == 'C:\\Windows'
+
+  - name: run script with chdir
+    script: cd_script.ps1
+    args:
+      chdir: C:\Windows
+    register: script_cd
+
+  - name: assert script chdir output
+    assert:
+      that:
+      - script_cd.stdout

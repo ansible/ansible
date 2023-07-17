@@ -435,6 +435,25 @@ class Connection(ConnectionBase):
 
         pwsh_in_data: bytes | str | None = None
 
+        # _low_level_execute_command can prepend a chdir value which would
+        # break the logic here to extract the PowerShell script. Store the
+        # chdir value if it is set and prepend it later on if present and the
+        # script that was extracted is our module payload.
+        original_cmd = cmd
+        change_dir_command = ''
+        shell_append_value = self._shell.append_command('', '')
+
+        if cmd.startswith('cd ') and shell_append_value in cmd:
+            change_dir_command, cmd = cmd.split(shell_append_value, 1)
+
+            # Windows exec wrapper runs in another runspace so we need to
+            # extract the new directory and use a different command than cd.
+            # _low_level_execute_command does not quote the value as well so
+            # we need to do so ourselves.
+            directory = change_dir_command[3:]
+            change_dir_command = f"cd '{directory}'; [System.Environment]::CurrentDirectory = '{directory}'"
+
+        script = None
         if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
             # decode the script and execute it in the runspace instead of
@@ -458,11 +477,21 @@ class Connection(ConnectionBase):
             if bootstrap_wrapper == cmd:
                 # Do not display to the user each invocation of the bootstrap wrapper
                 display.vvv("PSRP: EXEC (via pipeline wrapper)")
+                if change_dir_command:
+                    script = f"{change_dir_command}{shell_append_value}{script}"
+
+            elif change_dir_command:
+                # The cd was not added by _low_level_execute_command for a
+                # module run, fallback to running the orignal cmd.
+                pwsh_in_data = script = None
+
             else:
                 display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
-        else:
+
+        if not script:
             # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
             # rc is propagated back to the connection plugin.
+            cmd = original_cmd  # Make sure we undo all the cd munging done before
             script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)

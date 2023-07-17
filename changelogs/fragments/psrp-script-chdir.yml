@@ -1,0 +1,2 @@
+bugfixes:
+- psrp script - Support setting ``chdir`` with ``script`` when using the ``psrp`` connection plugin - https://github.com/ansible/ansible/issues/81277
