@@ -826,6 +826,17 @@ releases:
     - ansible-test-utcnow.yml
     - pep517-backend-traceback-fix.yml
     release_date: '2023-05-15'
+  2.13.11:
+    changes:
+      release_summary: '| Release Date: 2023-07-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 2.13.11_summary.yaml
+    release_date: '2023-07-17'
   2.13.11rc1:
     changes:
       bugfixes:
