@@ -9,37 +9,44 @@ import os
 from ansible.module_utils.common.file import is_executable
 
 
-def get_bin_path(arg, opt_dirs=None, required=None):
+def get_bin_path(arg, opt_dirs=None):
     '''
     Find system executable in PATH. Raises ValueError if executable is not found.
-    Optional arguments:
-       - required:  [Deprecated] Prior to 2.10, if executable is not found and required is true it raises an Exception.
-                    In 2.10 and later, an Exception is always raised. This parameter will be removed in 2.14.
-       - opt_dirs:  optional list of directories to search in addition to PATH
+    arguments:
+       - arg: the executable to find
+       - opt_dirs: optional list of directories to search in addition to PATH
     In addition to PATH and opt_dirs, this function also looks through /sbin, /usr/sbin and /usr/local/sbin. A lot of
     modules, especially for gathering facts, depend on this behaviour.
     If found return full path, otherwise raise ValueError.
     '''
+    paths = []
+    sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
     opt_dirs = [] if opt_dirs is None else opt_dirs
 
-    sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-    paths = []
+    # construct possible paths with precedence
+    # passed in paths
     for d in opt_dirs:
         if d is not None and os.path.exists(d):
             paths.append(d)
+    # system configured paths
     paths += os.environ.get('PATH', '').split(os.pathsep)
-    bin_path = None
-    # mangle PATH to include /sbin dirs
+
+    # existing /sbin dirs
     for p in sbin_paths:
         if p not in paths and os.path.exists(p):
             paths.append(p)
+
+    # actually search for binary
+    bin_path = None
     for d in paths:
         if not d:
             continue
         path = os.path.join(d, arg)
         if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
+            # fist found wins
             bin_path = path
             break
+
     if bin_path is None:
         raise ValueError('Failed to find required executable "%s" in paths: %s' % (arg, os.pathsep.join(paths)))
 
