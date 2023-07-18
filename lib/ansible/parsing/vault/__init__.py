@@ -681,7 +681,7 @@ class VaultLib:
         b_plaintext = None
 
         if not self.secrets:
-            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found')
+            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found, try adding --ask-vault-pass')
 
         # WARNING: Currently, the vault id is not required to match the vault id in the vault blob to
         #          decrypt a vault properly. The vault id in the vault blob is not part of the encrypted
