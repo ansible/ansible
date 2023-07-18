@@ -22,8 +22,16 @@ class FacterFactCollector(BaseFactCollector):
                                                   namespace=namespace)
 
     def find_facter(self, module):
-        facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
-        cfacter_path = module.get_bin_path('cfacter', opt_dirs=['/opt/puppetlabs/bin'])
+        facter_path = module.get_bin_path(
+            'facter',
+            opt_dirs=['/opt/puppetlabs/bin'],
+            warning="falling back to cfacter to gather facter facts"
+        )
+        cfacter_path = module.get_bin_path(
+            'cfacter',
+            opt_dirs=['/opt/puppetlabs/bin'],
+            warning="skipping facter facts"
+        )
 
         # Prefer to use cfacter if available
         if cfacter_path is not None:
@@ -73,7 +81,6 @@ class FacterFactCollector(BaseFactCollector):
         try:
             facter_dict = json.loads(facter_output)
         except Exception:
-            # FIXME: maybe raise a FactCollectorError with some info attrs?
-            pass
+            module.warn("Failed to parse facter facts")
 
         return facter_dict

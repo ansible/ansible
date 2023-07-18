@@ -12,13 +12,18 @@ from ansible.module_utils.common.warnings import deprecate
 def get_bin_path(arg, opt_dirs=None, required=None):
     '''
     Find system executable in PATH. Raises ValueError if the executable is not found.
-    Optional arguments:
-       - required:  [Deprecated] Before 2.10, if executable is not found and required is true it raises an Exception.
-                    In 2.10 and later, an Exception is always raised. This parameter will be removed in 2.21.
-       - opt_dirs:  optional list of directories to search in addition to PATH
+
+    :param arg: the executable to find
+    :type arg: string
+    :param opt_dirs: optional list of directories to search in addition to PATH
+    :type opt_dirs: list of strings
+    :param required: DEPRECATED. This parameter will be removed in 2.21
+    :type required: boolean
+    :returns: path to arg (should be abs path unless PATH or opt_dirs are relative paths)
+    :raises: ValueError: if arg is not found
+
     In addition to PATH and opt_dirs, this function also looks through /sbin, /usr/sbin and /usr/local/sbin. A lot of
     modules, especially for gathering facts, depend on this behaviour.
-    If found return full path, otherwise raise ValueError.
     '''
     if required is not None:
         deprecate(
@@ -27,26 +32,34 @@ def get_bin_path(arg, opt_dirs=None, required=None):
             collection_name="ansible.builtin",
         )
 
+    paths = []
+    sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
     opt_dirs = [] if opt_dirs is None else opt_dirs
 
-    sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-    paths = []
+    # Construct possible paths with precedence
+    # passed in paths
     for d in opt_dirs:
         if d is not None and os.path.exists(d):
             paths.append(d)
+    # system configured paths
     paths += os.environ.get('PATH', '').split(os.pathsep)
-    bin_path = None
-    # mangle PATH to include /sbin dirs
+
+    # existing /sbin dirs, if not there already
     for p in sbin_paths:
         if p not in paths and os.path.exists(p):
             paths.append(p)
+
+    # Search for binary
+    bin_path = None
     for d in paths:
         if not d:
             continue
         path = os.path.join(d, arg)
         if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
+            # fist found wins
             bin_path = path
             break
+
     if bin_path is None:
         raise ValueError('Failed to find required executable "%s" in paths: %s' % (arg, os.pathsep.join(paths)))
 

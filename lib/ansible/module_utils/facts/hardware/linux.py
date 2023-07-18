@@ -29,7 +29,6 @@ from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
@@ -302,12 +301,13 @@ class LinuxHardware(Hardware):
             )
         except AttributeError:
             # In Python < 3.3, os.sched_getaffinity() is not available
-            try:
-                cmd = get_bin_path('nproc')
-            except ValueError:
-                pass
-            else:
-                rc, out, _err = self.module.run_command(cmd)
+            nproc_cmd = self.module.get_bin_path(
+                'nproc',
+                warning="unable to gather value for processor_nproc"
+            )
+
+            if nproc_cmd is not None:
+                rc, out, _err = self.module.run_command(nproc_cmd)
                 if rc == 0:
                     cpu_facts['processor_nproc'] = int(out)
 
@@ -372,7 +372,6 @@ class LinuxHardware(Hardware):
 
         else:
             # Fall back to using dmidecode, if available
-            dmi_bin = self.module.get_bin_path('dmidecode')
             DMI_DICT = {
                 'bios_date': 'bios-release-date',
                 'bios_vendor': 'bios-vendor',
@@ -393,20 +392,28 @@ class LinuxHardware(Hardware):
                 'product_version': 'system-version',
                 'system_vendor': 'system-manufacturer',
             }
-            for (k, v) in DMI_DICT.items():
-                if dmi_bin is not None:
-                    (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
-                    if rc == 0:
-                        # Strip out commented lines (specific dmidecode output)
-                        thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
-                        try:
-                            json.dumps(thisvalue)
-                        except UnicodeDecodeError:
-                            thisvalue = "NA"
+            dmi_bin = self.module.get_bin_path(
+                'dmidecode',
+                warning="skipping dmi facts"
+            )
+            if dmi_bin is None:
+                dmi_facts = dict.fromkeys(
+                    DMI_DICT.keys(),
+                    'NA'
+                )
+                return dmi_facts
 
-                        dmi_facts[k] = thisvalue
-                    else:
-                        dmi_facts[k] = 'NA'
+            for (k, v) in DMI_DICT.items():
+                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+                if rc == 0:
+                    # Strip out commented lines (specific dmidecode output)
+                    thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    dmi_facts[k] = thisvalue
                 else:
                     dmi_facts[k] = 'NA'
 
@@ -756,10 +763,13 @@ class LinuxHardware(Hardware):
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
-            sg_inq = self.module.get_bin_path('sg_inq')
-
             # we can get NVMe device's serial number from /sys/block/<name>/device/serial
             serial_path = "/sys/block/%s/device/serial" % (block)
+
+            sg_inq = self.module.get_bin_path(
+                'sg_inq',
+                warning="falling back to %s to gather device facts" % serial_path
+            )
 
             if sg_inq:
                 serial = self._get_sg_inq_serial(sg_inq, block)
@@ -859,23 +869,29 @@ class LinuxHardware(Hardware):
         """ Get LVM Facts if running as root and lvm utils are available """
 
         lvm_facts = {'lvm': 'N/A'}
-
-        if os.getuid() == 0 and self.module.get_bin_path('vgs'):
+        vgs_path = self.module.get_bin_path(
+            'vgs',
+            warning="skipping lvm facts"
+        )
+        if os.getuid() == 0 and vgs_path:
             lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
 
-            vgs_path = self.module.get_bin_path('vgs')
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
             vgs = {}
-            if vgs_path:
-                rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
-                for vg_line in vg_lines.splitlines():
-                    items = vg_line.strip().split(',')
-                    vgs[items[0]] = {'size_g': items[-2],
-                                     'free_g': items[-1],
-                                     'num_lvs': items[2],
-                                     'num_pvs': items[1]}
+            rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
+            for vg_line in vg_lines.splitlines():
+                items = vg_line.strip().split(',')
+                vgs[items[0]] = {
+                    'size_g': items[-2],
+                    'free_g': items[-1],
+                    'num_lvs': items[2],
+                    'num_pvs': items[1]
+                }
 
-            lvs_path = self.module.get_bin_path('lvs')
+            lvs_path = self.module.get_bin_path(
+                'lvs',
+                warning="skipping Logical Volume facts"
+            )
             # lvs fields:
             # LV VG Attr LSize Pool Origin Data% Move Log Copy% Convert
             lvs = {}
@@ -885,7 +901,10 @@ class LinuxHardware(Hardware):
                     items = lv_line.strip().split(',')
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
-            pvs_path = self.module.get_bin_path('pvs')
+            pvs_path = self.module.get_bin_path(
+                'pvs',
+                warning="skipping Physical Volume facts"
+            )
             # pvs fields: PV VG #Fmt #Attr PSize PFree
             pvs = {}
             if pvs_path:
@@ -895,7 +914,8 @@ class LinuxHardware(Hardware):
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],
-                        'vg': items[1]}
+                        'vg': items[1]
+                    }
 
             lvm_facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
 
