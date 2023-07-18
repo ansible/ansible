@@ -23,7 +23,7 @@ def get_bin_path(arg, opt_dirs=None):
     sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
     opt_dirs = [] if opt_dirs is None else opt_dirs
 
-    # construct possible paths with precedence
+    ### Construct possible paths with precedence
     # passed in paths
     for d in opt_dirs:
         if d is not None and os.path.exists(d):
@@ -31,12 +31,12 @@ def get_bin_path(arg, opt_dirs=None):
     # system configured paths
     paths += os.environ.get('PATH', '').split(os.pathsep)
 
-    # existing /sbin dirs
+    # existing /sbin dirs, if not there already
     for p in sbin_paths:
         if p not in paths and os.path.exists(p):
             paths.append(p)
 
-    # actually search for binary
+    ### search for binary
     bin_path = None
     for d in paths:
         if not d:
