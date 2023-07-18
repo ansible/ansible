@@ -5,13 +5,13 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
-v2.15.2rc1
-==========
+v2.15.2
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2023-07-10
+| Release Date: 2023-07-18
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
 
 

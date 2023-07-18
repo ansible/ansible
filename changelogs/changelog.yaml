@@ -919,6 +919,17 @@ releases:
     - pep517-backend-traceback-fix.yml
     - update-maybe-json-uri.yml
     release_date: '2023-06-12'
+  2.15.2:
+    changes:
+      release_summary: '| Release Date: 2023-07-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.2_summary.yaml
+    release_date: '2023-07-17'
   2.15.2rc1:
     changes:
       bugfixes:
