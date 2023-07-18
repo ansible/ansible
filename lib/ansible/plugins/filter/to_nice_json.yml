@@ -45,7 +45,7 @@ DOCUMENTATION:
 
 EXAMPLES: |
   # dump variable in a template to create a nicely formatted JSON document
-  {{ docker_config|to_nice_json }}
+  {{ docker_config | to_nice_json }}
 
 
 RETURN:

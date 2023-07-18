@@ -14,7 +14,7 @@ DOCUMENTATION:
       required: true
 EXAMPLES: |
   # variable from string variable containing a YAML document
-  {{ github_workflow | from_yaml}}
+  {{ github_workflow | from_yaml }}
 
   # variable from string JSON document
   {{ '{"a": true, "b": 54, "c": [1,2,3]}' | from_yaml }}
