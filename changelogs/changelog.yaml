@@ -1342,6 +1342,17 @@ releases:
     - man-page-build-docs-dependency.yml
     - update-maybe-json-uri.yml
     release_date: '2023-06-12'
+  2.14.8:
+    changes:
+      release_summary: '| Release Date: 2023-07-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.8_summary.yaml
+    release_date: '2023-07-17'
   2.14.8rc1:
     changes:
       bugfixes:
