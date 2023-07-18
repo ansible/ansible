@@ -15,7 +15,7 @@ DOCUMENTATION:
       plugin_type: filter
 EXAMPLES: |
 
-  # To get a normalized path (ex. '/foo/bar') from the path (ex. '/foo//bar')
+  # To get a normalized path (for example - '/foo/bar') from the path (for example - '/foo//bar')
   {{ path | normpath }}
 
 RETURN:

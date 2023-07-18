@@ -20,7 +20,7 @@ EXAMPLES: |
   {{ multidoc_yaml_string | from_yaml_all }}
 
   # variable from multidocument YAML string
-  {{ '---\n{"a": true, "b": 54, "c": [1,2,3]}\n...\n---{"x": 1}\n...\n' | from_yaml_all}}
+  {{ '---\n{"a": true, "b": 54, "c": [1,2,3]}\n...\n---{"x": 1}\n...\n' | from_yaml_all }}
 
 RETURN:
   _value:

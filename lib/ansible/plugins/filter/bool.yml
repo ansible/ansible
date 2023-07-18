@@ -13,10 +13,10 @@ DOCUMENTATION:
 
 EXAMPLES: |
 
-  # simply encrypt my key in a vault
+  # in vars
   vars:
-    isbool: "{{ (a == b)|bool }} "
-    otherbool: "{{ anothervar|bool }} "
+    isbool: "{{ (a == b) | bool }} "
+    otherbool: "{{ anothervar | bool }} "
 
   # in a task
   ...

@@ -14,10 +14,10 @@ DOCUMENTATION:
 
 EXAMPLES: |
   # b64 encode a string
-  b64lola: "{{ 'lola'|b64encode }}"
+  b64lola: "{{ 'lola'| b64encode }}"
 
   # b64 encode the content of 'stuff' variable
-  b64stuff: "{{ stuff|b64encode }}"
+  b64stuff: "{{ stuff | b64encode }}"
 
 RETURN:
   _value:
