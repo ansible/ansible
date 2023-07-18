@@ -25,7 +25,7 @@ DOCUMENTATION = """
         type: bool
         required: False
         default: False
-     unvault:
+      unvault:
         description:whether or not to automatically unvault the target file(s).
         type: bool
         required: False
