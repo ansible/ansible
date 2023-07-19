@@ -1,2 +1,4 @@
 # edit "release-names.requirements.in" and generate with: hacking/update-sanity-requirements.py --test release-names
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 PyYAML==6.0
