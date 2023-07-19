@@ -25,45 +25,41 @@ from ansible.module_utils.common.process import get_bin_path
 def get_sysctl(module, prefixes):
 
     sysctl = dict()
+    sysctl_cmd = module.get_bin_path('sysctl', 'skipping sysctl based facts')
+    if sysctl_cmd is not None:
 
-    try:
-        sysctl_cmd = get_bin_path('sysctl')
-    except ValueError:
-        module.warn('sysctl not found in expected paths, skipping sysctl based facts')
-        return sysctl
+        cmd = [sysctl_cmd]
+        cmd.extend(prefixes)
 
-    cmd = [sysctl_cmd]
-    cmd.extend(prefixes)
+        try:
+            rc, out, err = module.run_command(cmd)
+        except (IOError, OSError) as e:
+            module.warn('Unable to read sysctl: %s' % to_text(e))
+            rc = 1
 
-    try:
-        rc, out, err = module.run_command(cmd)
-    except (IOError, OSError) as e:
-        module.warn('Unable to read sysctl: %s' % to_text(e))
-        rc = 1
+        if rc == 0:
+            key = ''
+            value = ''
+            for line in out.splitlines():
+                if not line.strip():
+                    continue
 
-    if rc == 0:
-        key = ''
-        value = ''
-        for line in out.splitlines():
-            if not line.strip():
-                continue
+                if line.startswith(' '):
+                    # handle multiline values, they will not have a starting key
+                    # Add the newline back in so people can split on it to parse
+                    # lines if they need to.
+                    value += '\n' + line
+                    continue
 
-            if line.startswith(' '):
-                # handle multiline values, they will not have a starting key
-                # Add the newline back in so people can split on it to parse
-                # lines if they need to.
-                value += '\n' + line
-                continue
+                if key:
+                    sysctl[key] = value.strip()
+
+                try:
+                    (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
+                except Exception as e:
+                    module.warn('Unable to split sysctl line (%s): %s' % (to_text(line), to_text(e)))
 
             if key:
                 sysctl[key] = value.strip()
-
-            try:
-                (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
-            except Exception as e:
-                module.warn('Unable to split sysctl line (%s): %s' % (to_text(line), to_text(e)))
-
-        if key:
-            sysctl[key] = value.strip()
 
     return sysctl
