@@ -1,9 +1,4 @@
 .azure-pipelines/scripts/publish-codecov.py replace-urlopen
-docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
-docs/docsite/rst/locales/ja/LC_MESSAGES/dev_guide.po no-smart-quotes  # Translation of the no-smart-quotes rule
-examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
-examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
-examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/executor/playbook_executor.py pylint:disallowed-name
