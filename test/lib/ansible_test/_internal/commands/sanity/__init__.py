@@ -71,6 +71,7 @@ from ...executor import (
 )
 
 from ...python_requirements import (
+    PipCommand,
     PipInstall,
     collect_requirements,
     run_pip,
@@ -1157,7 +1158,7 @@ def create_sanity_virtualenv(
     # The path to the virtual environment must be kept short to avoid the 127 character shebang length limit on Linux.
     # If the limit is exceeded, generated entry point scripts from pip installed packages will fail with syntax errors.
     virtualenv_install = json.dumps([command.serialize() for command in commands], indent=4)
-    virtualenv_hash = hashlib.sha256(to_bytes(virtualenv_install)).hexdigest()[:8]
+    virtualenv_hash = hash_pip_commands(commands)
     virtualenv_cache = os.path.join(os.path.expanduser('~/.ansible/test/venv'))
     virtualenv_path = os.path.join(virtualenv_cache, label, f'{python.version}', virtualenv_hash)
     virtualenv_marker = os.path.join(virtualenv_path, 'marker.txt')
@@ -1198,6 +1199,39 @@ def create_sanity_virtualenv(
         pathlib.Path(virtualenv_marker).touch()
 
     return virtualenv_python
+
+
+def hash_pip_commands(commands: list[PipCommand]) -> str:
+    """Return a short hash unique to the given list of pip commands, suitable for identifying the resulting sanity test environment."""
+    serialized_commands = json.dumps([make_pip_command_hashable(command) for command in commands], indent=4)
+
+    return hashlib.sha256(to_bytes(serialized_commands)).hexdigest()[:8]
+
+
+def make_pip_command_hashable(command: PipCommand) -> tuple[str, dict[str, t.Any]]:
+    """Return a serialized version of the given pip command that is suitable for hashing."""
+    if isinstance(command, PipInstall):
+        # The pre-build instructions for pip installs must be omitted, so they do not affect the hash.
+        # This is allows the pre-build commands to be added without breaking sanity venv caching.
+        # It is safe to omit these from the hash since they only affect packages used during builds, not what is installed in the venv.
+        command = PipInstall(
+            requirements=[omit_pre_build_from_requirement(*req) for req in command.requirements],
+            constraints=list(command.constraints),
+            packages=list(command.packages),
+        )
+
+    return command.serialize()
+
+
+def omit_pre_build_from_requirement(path: str, requirements: str) -> tuple[str, str]:
+    """Return the given requirements with pre-build instructions omitted."""
+    lines = requirements.splitlines(keepends=True)
+
+    # CAUTION: This code must be kept in sync with the code which processes pre-build instructions in:
+    #          test/lib/ansible_test/_util/target/setup/requirements.py
+    lines = [line for line in lines if not line.startswith('# pre-build ')]
+
+    return path, ''.join(lines)
 
 
 def check_sanity_virtualenv_yaml(python: VirtualPythonConfig) -> t.Optional[bool]:

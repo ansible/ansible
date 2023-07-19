@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Pre-build a PyYAML wheel before installing requirements to avoid a potential Cython build failure.
