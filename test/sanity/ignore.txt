@@ -80,6 +80,8 @@ lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends o
 lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
