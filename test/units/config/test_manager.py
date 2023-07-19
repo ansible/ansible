@@ -18,6 +18,7 @@ from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
 cfg_file2 = os.path.join(curdir, 'test2.cfg')
+cfg_file3 = os.path.join(curdir, 'test3.cfg')
 
 ensure_test_data = [
     ('a,b', 'list', list),
@@ -156,3 +157,16 @@ class TestConfigManager:
 
         actual_value = ensure_type(vault_var, value_type)
         assert actual_value == "vault text"
+
+
+@pytest.mark.parametrize(("key", "expected_value"), (
+    ("COLOR_UNREACHABLE", "bright red"),
+    ("COLOR_VERBOSE", "rgb013"),
+    ("COLOR_DEBUG", "gray10")))
+def test_256color_support(key, expected_value):
+    # GIVEN: a config file containing 256-color values with default definitions
+    manager = ConfigManager(cfg_file3)
+    # WHEN: get config values
+    actual_value = manager.get_config_value(key)
+    # THEN: no error
+    assert actual_value == expected_value
