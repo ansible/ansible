@@ -1,4 +1,6 @@
 # edit "sanity.pylint.in" and generate with: hacking/update-sanity-requirements.py --test pylint
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 astroid==2.6.6
 isort==5.10.1
 lazy-object-proxy==1.6.0

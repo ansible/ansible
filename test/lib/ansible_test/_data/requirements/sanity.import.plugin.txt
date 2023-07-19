@@ -1,4 +1,6 @@
 # edit "sanity.import.plugin.in" and generate with: hacking/update-sanity-requirements.py --test import.plugin
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 Jinja2==3.0.3
 MarkupSafe==2.0.1
 PyYAML==6.0

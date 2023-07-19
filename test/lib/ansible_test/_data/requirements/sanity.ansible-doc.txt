@@ -1,4 +1,6 @@
 # edit "sanity.ansible-doc.in" and generate with: hacking/update-sanity-requirements.py --test ansible-doc
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 Jinja2==3.0.3
 MarkupSafe==2.0.1
 packaging==21.2
