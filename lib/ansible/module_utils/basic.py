@@ -1448,11 +1448,6 @@ class AnsibleModule(object):
                 self.fail_json(msg=to_text(e))
             elif warning is not None:
                 self.mdoule.warn("Unable to find %s, %s" % (arg, warning))
-                bin_path = None
-            else:
-                # this was not documented behaviour but ...
-                # it is how 'it worked'TM so kept as backwards compat
-                bin_path = arg
 
         return bin_path
 
