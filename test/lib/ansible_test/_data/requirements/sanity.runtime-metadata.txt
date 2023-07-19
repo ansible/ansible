@@ -1,2 +1,4 @@
+# pre-build requirement: pyyaml == 5.4.1
+# pre-build constraint: Cython < 3.0
 pyyaml == 5.4.1
 voluptuous == 0.12.1

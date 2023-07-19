@@ -134,6 +134,14 @@ def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
         options.extend(packages)
 
         for path, content in requirements:
+            if path.split(os.sep)[0] in ('test', 'requirements'):
+                # Support for pre-build is currently limited to requirements embedded in ansible-test and those used by ansible-core.
+                # Requirements from ansible-core can be found in the 'test' and 'requirements' directories.
+                # This feature will probably be extended to support collections after further testing.
+                # Requirements from collections can be found in the 'tests' directory.
+                for pre_build in parse_pre_build_instructions(content):
+                    pre_build.execute(pip)
+
             write_text_file(os.path.join(tempdir, path), content, True)
             options.extend(['-r', path])
 
@@ -148,6 +156,61 @@ def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
         execute_command(command, env=env, cwd=tempdir)
     finally:
         remove_tree(tempdir)
+
+
+class PreBuild:
+    """Parsed pre-build instructions."""
+
+    def __init__(self, requirement):  # type: (str) -> None
+        self.requirement = requirement
+        self.constraints = []  # type: list[str]
+
+    def execute(self, pip):  # type: (str) -> None
+        """Execute these pre-build instructions."""
+        tempdir = tempfile.mkdtemp(prefix='ansible-test-', suffix='-pre-build')
+
+        try:
+            options = common_pip_options()
+            options.append(self.requirement)
+
+            constraints = '\n'.join(self.constraints) + '\n'
+            constraints_path = os.path.join(tempdir, 'constraints.txt')
+
+            write_text_file(constraints_path, constraints, True)
+
+            env = common_pip_environment()
+            env.update(PIP_CONSTRAINT=constraints_path)
+
+            command = [sys.executable, pip, 'wheel'] + options
+
+            execute_command(command, env=env, cwd=tempdir)
+        finally:
+            remove_tree(tempdir)
+
+
+def parse_pre_build_instructions(requirements):  # type: (str) -> list[PreBuild]
+    """Parse the given pip requirements and return a list of extracted pre-build instructions."""
+    # CAUTION: This code must be kept in sync with the sanity test hashing code in:
+    #          test/lib/ansible_test/_internal/commands/sanity/__init__.py
+
+    pre_build_prefix = '# pre-build '
+    pre_build_requirement_prefix = pre_build_prefix + 'requirement: '
+    pre_build_constraint_prefix = pre_build_prefix + 'constraint: '
+
+    lines = requirements.splitlines()
+    pre_build_lines = [line for line in lines if line.startswith(pre_build_prefix)]
+
+    instructions = []  # type: list[PreBuild]
+
+    for line in pre_build_lines:
+        if line.startswith(pre_build_requirement_prefix):
+            instructions.append(PreBuild(line[len(pre_build_requirement_prefix):]))
+        elif line.startswith(pre_build_constraint_prefix):
+            instructions[-1].constraints.append(line[len(pre_build_constraint_prefix):])
+        else:
+            raise RuntimeError('Unsupported pre-build comment: ' + line)
+
+    return instructions
 
 
 def uninstall(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
