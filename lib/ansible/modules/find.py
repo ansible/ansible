@@ -19,6 +19,9 @@ short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
     - For Windows targets, use the M(ansible.windows.win_find) module instead.
+    - This module does not use the C(find) command, it a much simpler and slower Python implementation.
+      It is inteded for small and simple uses. Those that need the extra power or speed and have expertise
+      with the Unix command, should use it directly.
 options:
     age:
         description:
