@@ -1,4 +1,6 @@
 # edit "sanity.validate-modules.in" and generate with: hacking/update-sanity-requirements.py --test validate-modules
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 PyYAML==6.0

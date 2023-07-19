@@ -1,4 +1,6 @@
 # edit "package-data.requirements.in" and generate with: hacking/update-sanity-requirements.py --test package-data
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 antsibull-changelog==0.16.0
 docutils==0.17.1
 Jinja2==3.1.2
