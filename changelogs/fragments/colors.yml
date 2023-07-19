@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible terminal color settings were incorrectly limited to 16 options via 'choices', removing so all 256 can be accessed.
