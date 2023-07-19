@@ -68,7 +68,7 @@ class DarwinHardware(Hardware):
     def get_mac_facts(self):
         mac_facts = {}
         if 'hw.model' in self.sysctl:
-            mac_facts['model'] = self.sysctl.['hw.model']
+            mac_facts['model'] = self.sysctl['hw.model']
         mac_facts['osversion'] = self.sysctl['kern.osversion']
         mac_facts['osrevision'] = self.sysctl['kern.osrevision']
 
@@ -149,7 +149,7 @@ class DarwinHardware(Hardware):
 
         (kern_boottime, ) = struct.unpack(struct_format, out[:struct_size])
 
-        return uptime_facts[{
+        return {
             'uptime_seconds': int(time.time() - kern_boottime),
         }
 
