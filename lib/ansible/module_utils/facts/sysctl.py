@@ -19,13 +19,12 @@ __metaclass__ = type
 import re
 
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.common.process import get_bin_path
 
 
 def get_sysctl(module, prefixes):
 
     sysctl = dict()
-    sysctl_cmd = module.get_bin_path('sysctl', 'skipping sysctl based facts')
+    sysctl_cmd = module.get_bin_path('sysctl', warning='skipping sysctl based facts')
     if sysctl_cmd is not None:
 
         cmd = [sysctl_cmd]
