@@ -1,4 +1,6 @@
 # edit "sanity.yamllint.in" and generate with: hacking/update-sanity-requirements.py --test yamllint
+# pre-build requirement: pyyaml == 6.0
+# pre-build constraint: Cython < 3.0
 pathspec==0.10.1
 PyYAML==6.0
 yamllint==1.28.0
