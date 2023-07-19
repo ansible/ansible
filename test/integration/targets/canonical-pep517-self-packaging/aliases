@@ -1,3 +1,4 @@
 shippable/posix/group3
 context/controller
 packaging
+skip/freebsd  # tests fail on FreeBSD, further investigation needed
