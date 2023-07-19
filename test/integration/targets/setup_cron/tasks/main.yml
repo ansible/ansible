@@ -1,3 +1,7 @@
+- name: Alpine is not supported due to lack of libfaketime
+  meta: end_host
+  when: ansible_distribution == 'Alpine'
+
 - name: Include distribution specific variables
   include_vars: "{{ lookup('first_found', search) }}"
   vars:
