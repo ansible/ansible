@@ -12,12 +12,16 @@ from ansible.module_utils.common.file import is_executable
 def get_bin_path(arg, opt_dirs=None):
     '''
     Find system executable in PATH. Raises ValueError if executable is not found.
-    arguments:
-       - arg: the executable to find
-       - opt_dirs: optional list of directories to search in addition to PATH
+
+    :param arg: the executable to find
+    :type arg: string
+    :param opt_dirs: optional list of directories to search in addition to PATH
+    :type opt_dirs: list of strings
+    :returns: path to arg (should be abspath unless PATH or opt_dirs are relative paths)
+    :raises: ValueError: if arg is not found
+
     In addition to PATH and opt_dirs, this function also looks through /sbin, /usr/sbin and /usr/local/sbin. A lot of
     modules, especially for gathering facts, depend on this behaviour.
-    If found return full path, otherwise raise ValueError.
     '''
     paths = []
     sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
