@@ -1,4 +1,3 @@
-include README.rst
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
