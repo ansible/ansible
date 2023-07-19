@@ -498,9 +498,14 @@ def run_command(
     )
 
 
-def yamlcheck(python: PythonConfig) -> t.Optional[bool]:
+def yamlcheck(python: PythonConfig, explain: bool = False) -> t.Optional[bool]:
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
-    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
+    stdout = raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True, explain=explain)[0]
+
+    if explain:
+        return None
+
+    result = json.loads(stdout)
 
     if not result['yaml']:
         return None
