@@ -1436,7 +1436,8 @@ class AnsibleModule(object):
         :param required: if executable is not found and required is ``True``, fail_json
         :param opt_dirs: optional list of directories to search in addition to ``PATH``
         :param warning: optional message when arg not found, only works when required=False
-        :returns: if found return full path; otherwise return None
+        :returns: if found return full path; otherwise return original arg, unless 'warning' then return None
+        :raises: Sysexit: if arg is not found and required=True (via fail_json)
         '''
 
         bin_path = None
@@ -1446,9 +1447,11 @@ class AnsibleModule(object):
             if required:
                 self.fail_json(msg=to_text(e))
             elif warning is not None:
-                self.mdoule.warn("Unable to find %s, %s" $ (arg, warning))
+                self.mdoule.warn("Unable to find %s, %s" % (arg, warning))
                 bin_path = None
             else:
+                # this was not documented behaviour but ...
+                # it is how 'it worked'TM so kept as backwards compat
                 bin_path = arg
 
         return bin_path
