@@ -1,3 +1,2 @@
-rstcheck < 6  # match version used in other sanity tests
+rstcheck < 6  # newer versions have too many dependencies
 antsibull-changelog
-docutils

@@ -1,8 +1,8 @@
 build
-docutils < 0.18  # match version required by sphinx in the docs-build sanity test
+docutils  # required for man page builds by the in-tree PEP 517 backend
 jinja2
-pyyaml  # ansible-core requirement
+pyyaml
 resolvelib < 1.1.0
-rstcheck < 6  # match version used in other sanity tests
+rstcheck < 6  # newer versions have too many dependencies
 antsibull-changelog
 setuptools == 45.2.0  # minimum supported setuptools
