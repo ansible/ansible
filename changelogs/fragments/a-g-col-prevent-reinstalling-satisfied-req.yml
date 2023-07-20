@@ -1,0 +1,7 @@
+bugfixes:
+- >-
+  ``ansible-galaxy`` now considers all collection paths when identifying which collection requirements are already installed.
+  Use the ``COLLECTIONS_PATHS`` and ``COLLECTIONS_SCAN_SYS_PATHS`` config options to modify these.
+  Previously only the install path was considered when resolving the candidates.
+  The install path will remain the only one potentially modified.
+  (https://github.com/ansible/ansible/issues/79767, https://github.com/ansible/ansible/issues/81163)

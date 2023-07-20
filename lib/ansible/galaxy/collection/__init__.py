@@ -654,6 +654,7 @@ def install_collections(
         artifacts_manager,  # type: ConcreteArtifactsManager
         disable_gpg_verify,  # type: bool
         offline,  # type: bool
+        read_requirement_paths,  # type: set[str]
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -668,7 +669,8 @@ def install_collections(
     """
     existing_collections = {
         Requirement(coll.fqcn, coll.ver, coll.src, coll.type, None)
-        for coll in find_existing_collections(output_path, artifacts_manager)
+        for path in {output_path} | read_requirement_paths
+        for coll in find_existing_collections(path, artifacts_manager)
     }
 
     unsatisfied_requirements = set(
