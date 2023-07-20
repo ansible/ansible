@@ -381,8 +381,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
                     shell_plugin=self._connection._shell,
+                # BCS    module_env=self._task.module_environment,
                 )
-
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
@@ -801,7 +801,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             # of the other logic below will get run. This is fairly hacky and a
             # corner case, but probably one that shows up pretty often in
             # Solaris-based environments (and possibly others).
-            pass
+            display.debug(f"Ignoring auth failure on chmod: {e!r}")
         else:
             if res['rc'] == 0:
                 return remote_paths
@@ -1090,6 +1090,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
         module_args['_ansible_inject_invocation'] = C.config.get_config_value('INJECT_INVOCATION', variables=task_vars)
+
+        #BCS module_args['_ansible_module_env'] = getattr(self._task, 'module_environment', {})
 
     def _execute_module(
         self,
