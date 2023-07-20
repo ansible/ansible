@@ -410,16 +410,17 @@ class AnsibleModule(object):
         # Save parameter values that should never be logged
         self.no_log_values = set()
 
-        # setup env based on private env vars
-        for varname in self._private_environment.keys():
-            os.environ[varname] = self._private_environment[varname]
-
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
+        # get input from controller
         self._load_params()
         self._set_internal_properties()
+
+        # setup env based on private env vars
+        for varname in self._private_environment.keys():
+            os.environ[varname] = self._private_environment[varname]
 
         self.validator = ModuleArgumentSpecValidator(self.argument_spec,
                                                      self.mutually_exclusive,
