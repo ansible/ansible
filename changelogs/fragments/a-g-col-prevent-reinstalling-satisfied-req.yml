@@ -1,6 +1,6 @@
 bugfixes:
 - >-
-  Don't install collection requirements which are satisfied by a collection in any of the collection paths.
-  When a collection outside of the install path can't satisfy the requirement,
-  the collection will be added to the install path without removing the existing collection in the other path.
+  ``ansible-galaxy`` now considers all collection paths when identifying which collection requirements are already installed. Use the ``COLLECTIONS_PATHS`` and ``COLLECTIONS_SCAN_SYS_PATHS`` config options to modify these.
+  Previously only the install path was considered when resolving the candidates.
+  The install path will remain the only one potentially modified.
   (https://github.com/ansible/ansible/issues/79767, https://github.com/ansible/ansible/issues/81163)
