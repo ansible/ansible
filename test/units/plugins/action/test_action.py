@@ -684,6 +684,7 @@ class TestActionBase(unittest.TestCase):
         mock_task.diff = False
         mock_task.check_mode = False
         mock_task.no_log = False
+        mock_task.module_environment = {}
 
         # create a mock connection, so we don't actually try and connect to things
         def get_option(option):

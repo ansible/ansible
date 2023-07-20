@@ -320,8 +320,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
+                    module_env=self._task.module_environment,
                 )
-
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
@@ -724,7 +724,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             # of the other logic below will get run. This is fairly hacky and a
             # corner case, but probably one that shows up pretty often in
             # Solaris-based environments (and possibly others).
-            pass
+            display.debug(f"Ignoring auth failure on chmod: {e!r}")
         else:
             if res['rc'] == 0:
                 return remote_paths
@@ -1004,6 +1004,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
+
+        # pass through confidential environment variables
+        module_args['_ansible_module_env'] = getattr(self._task, 'module_environment', {})
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):

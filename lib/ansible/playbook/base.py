@@ -699,6 +699,7 @@ class Base(FieldAttributeBase):
 
     # flags and misc. settings
     environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    module_environment = FieldAttribute(isa='dict')
     no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
     run_once = FieldAttribute(isa='bool')
     ignore_errors = FieldAttribute(isa='bool')
