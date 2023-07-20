@@ -91,6 +91,7 @@ PASS_VARS = {
     'ignore_unknown_opts': ('_ignore_unknown_opts', False),
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
+    'private_env': ('_private_environment', {}),
     'remote_tmp': ('_remote_tmp', None),
     'target_log_info': ('_target_log_info', None),
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
@@ -209,7 +210,7 @@ def _handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprec
     each containing deprecation information for each alias found in argument_spec.
 
     :param argument_spec: Dictionary of parameters, their type, and valid values.
-    :type argument_spec: dict
+    type argument_spec: dict
 
     :param parameters: Dictionary of parameters.
     :type parameters: dict

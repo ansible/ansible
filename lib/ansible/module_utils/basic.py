@@ -400,6 +400,7 @@ class AnsibleModule(object):
         self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
+        self._private_environment = {}
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -408,6 +409,10 @@ class AnsibleModule(object):
 
         # Save parameter values that should never be logged
         self.no_log_values = set()
+
+        # setup env based on private env vars
+        for varname in self._private_environment.keys():
+            os.environ[varname] = self._private_environment[varname]
 
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
