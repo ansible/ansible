@@ -131,7 +131,7 @@ class AIXHardware(Hardware):
         data = out.split()
         dmi_facts['firmware_version'] = data[1].strip('IBM,')
         lsconf_path = self.module.get_bin_path("lsconf", warning="dmi facts skipped")
-        if lsconf_path is not None:
+        if lsconf_path:
             rc, out, err = self.module.run_command(lsconf_path)
             if rc == 0 and out:
                 for line in out.splitlines():
@@ -165,7 +165,7 @@ class AIXHardware(Hardware):
         lsvg_path = self.module.get_bin_path("lsvg", warning=warn)
         xargs_path = self.module.get_bin_path("xargs", warning=warn)
         cmd = "%s -o | %s %s -p" % (lsvg_path, xargs_path, lsvg_path)
-        if lsvg_path is not None and xargs_path is not None:
+        if lsvg_path and xargs_path:
             rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
             if rc == 0 and out:
                 vgs_facts['vgs'] = {}
@@ -197,7 +197,7 @@ class AIXHardware(Hardware):
         # AIX does not have mtab but mount command is only source of info (or to use
         # api calls to get same info)
         mount_path = self.module.get_bin_path('mount', warning="skipping mount facts")
-        if mount_path is not None:
+        if mount_path:
             rc, mount_out, err = self.module.run_command(mount_path)
             if mount_out:
                 for line in mount_out.split('\n'):
@@ -238,7 +238,7 @@ class AIXHardware(Hardware):
         warn = 'device facts are skipped'
         lsdev_cmd = self.module.get_bin_path('lsdev', warning=warn)
         lsattr_cmd = self.module.get_bin_path('lsattr', warning=warn)
-        if lsdev_cmd is not None and lsattr_cmd is not None:
+        if lsdev_cmd and lsattr_cmd:
             rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
 
             for line in out_lsdev.splitlines():

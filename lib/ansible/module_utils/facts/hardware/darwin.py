@@ -97,7 +97,7 @@ class DarwinHardware(Hardware):
         page_size = 4096
         vm_stat_command = self.module.get_bin_path('vm_stat', warning='falling back to sysctl for memtotal_mb, default to 0 for memfree_mb')
 
-        if vm_stat_command is not None:
+        if vm_stat_command:
             rc, out, err = self.module.run_command(vm_stat_command)
             if rc == 0:
                 # Free = Total - (Wired + active + inactive)
@@ -132,7 +132,7 @@ class DarwinHardware(Hardware):
         # On Darwin, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
         sysctl_cmd = self.module.get_bin_path('sysctl', warning='skipping uptime facts')
-        if sysctl_cmd is None:
+        if not sysctl_cmd:
             return {}
 
         cmd = [sysctl_cmd, '-b', 'kern.boottime']

@@ -107,7 +107,7 @@ class FreeBSDHardware(Hardware):
                 memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
 
         swapinfo = self.module.get_bin_path('swapinfo', warning="swap facts skipped")
-        if swapinfo is not None:
+        if swapinfo:
             # Get swapinfo.  swapinfo output looks like:
             # Device          1M-blocks     Used    Avail Capacity
             # /dev/ada0p3        314368        0   314368     0%
@@ -127,7 +127,7 @@ class FreeBSDHardware(Hardware):
         # On FreeBSD, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
         sysctl_cmd = self.module.get_bin_path('sysctl', warning="skpping uptime fact")
-        if sysctl_cmd is None:
+        if not sysctl_cmd:
             return {}
 
         cmd = [sysctl_cmd, '-b', 'kern.boottime']
@@ -197,7 +197,7 @@ class FreeBSDHardware(Hardware):
 
         # Fall back to using dmidecode, if available
         dmi_bin = self.module.get_bin_path('dmidecode', warning="skipping dmi facts")
-        if dmi_bin is None:
+        if not dmi_bin:
             return dmi_facts
 
         DMI_DICT = {
