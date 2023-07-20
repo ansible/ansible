@@ -440,7 +440,6 @@ url:
   sample: https://www.ansible.com/
 '''
 
-import datetime
 import json
 import os
 import re
@@ -452,6 +451,7 @@ from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.six import utcnow, utcfromtimestamp
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
 
@@ -580,7 +580,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     kwargs = {}
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
@@ -686,12 +686,12 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
-    start = datetime.datetime.utcnow()
+    start = utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
                   decompress, ciphers, use_netrc)
 
-    elapsed = (datetime.datetime.utcnow() - start).seconds
+    elapsed = (utcnow() - start).seconds
 
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'

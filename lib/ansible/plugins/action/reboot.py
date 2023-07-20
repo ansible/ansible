@@ -8,7 +8,7 @@ __metaclass__ = type
 import random
 import time
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -280,14 +280,14 @@ class ActionModule(ActionBase):
         display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
-        max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
+        max_end_time = datetime.now(timezone.utc) + timedelta(seconds=reboot_timeout)
         if action_kwargs is None:
             action_kwargs = {}
 
         fail_count = 0
         max_fail_sleep = 12
 
-        while datetime.utcnow() < max_end_time:
+        while datetime.now(timezone.utc) < max_end_time:
             try:
                 action(distribution=distribution, **action_kwargs)
                 if action_desc:
@@ -336,7 +336,7 @@ class ActionModule(ActionBase):
             display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             reboot_result['rc'] = 0
 
-        result['start'] = datetime.utcnow()
+        result['start'] = datetime.now(timezone.utc)
 
         if reboot_result['rc'] != 0:
             result['failed'] = True
@@ -447,7 +447,7 @@ class ActionModule(ActionBase):
 
         if reboot_result['failed']:
             result = reboot_result
-            elapsed = datetime.utcnow() - reboot_result['start']
+            elapsed = datetime.now(timezone.utc) - reboot_result['start']
             result['elapsed'] = elapsed.seconds
             return result
 
@@ -459,7 +459,7 @@ class ActionModule(ActionBase):
         # Make sure reboot was successful
         result = self.validate_reboot(distribution, original_connection_timeout, action_kwargs={'previous_boot_time': previous_boot_time})
 
-        elapsed = datetime.utcnow() - reboot_result['start']
+        elapsed = datetime.now(timezone.utc) - reboot_result['start']
         result['elapsed'] = elapsed.seconds
 
         return result

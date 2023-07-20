@@ -184,7 +184,7 @@ class GalaxyRole(object):
 
         info = dict(
             version=self.version,
-            install_date=datetime.datetime.utcnow().strftime("%c"),
+            install_date=datetime.datetime.now(datetime.timezone.utc).strftime("%c"),
         )
         if not os.path.exists(os.path.join(self.path, 'meta')):
             os.makedirs(os.path.join(self.path, 'meta'))

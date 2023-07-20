@@ -366,7 +366,6 @@ url:
     sample: https://www.ansible.com/
 '''
 
-import datetime
 import os
 import re
 import shutil
@@ -375,6 +374,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.module_utils.six import utcnow, utcfromtimestamp
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -397,10 +397,10 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     Return (tempfile, info about the request)
     """
 
-    start = datetime.datetime.utcnow()
+    start = utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-    elapsed = (datetime.datetime.utcnow() - start).seconds
+    elapsed = (utcnow() - start).seconds
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
@@ -600,7 +600,7 @@ def main():
         # If the file already exists, prepare the last modified time for the
         # request.
         mtime = os.path.getmtime(dest)
-        last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+        last_mod_time = utcfromtimestamp(mtime)
 
         # If the checksum does not match we have to force the download
         # because last_mod_time may be newer than on remote
@@ -608,11 +608,11 @@ def main():
             force = True
 
     # download to tmpsrc
-    start = datetime.datetime.utcnow()
+    start = utcnow()
     method = 'HEAD' if module.check_mode else 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
                            unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-    result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
+    result['elapsed'] = (utcnow() - start).seconds
     result['src'] = tmpsrc
 
     # Now the request has completed, we can finally generate the final
