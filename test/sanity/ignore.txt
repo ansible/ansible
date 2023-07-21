@@ -5,10 +5,13 @@ lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/galaxy/collection/__init__.py mypy-3.10:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/__init__.py mypy-3.11:attr-defined  # inline ignore has no effect
+lib/ansible/galaxy/collection/__init__.py mypy-3.12:attr-defined  # inline ignore has no effect
 lib/ansible/galaxy/collection/gpg.py mypy-3.10:arg-type
 lib/ansible/galaxy/collection/gpg.py mypy-3.11:arg-type
+lib/ansible/galaxy/collection/gpg.py mypy-3.12:arg-type
 lib/ansible/parsing/yaml/constructor.py mypy-3.10:type-var  # too many occurrences to ignore inline
 lib/ansible/parsing/yaml/constructor.py mypy-3.11:type-var  # too many occurrences to ignore inline
+lib/ansible/parsing/yaml/constructor.py mypy-3.12:type-var  # too many occurrences to ignore inline
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
@@ -55,6 +58,7 @@ lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends o
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert

@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-test - Add support for testing with Python 3.12.
+  - ansible-test - Update pip to ``23.1.2`` and setuptools to ``67.7.2``.
+  - Add ``python3.12`` to the default ``INTERPRETER_PYTHON_FALLBACK`` list.
