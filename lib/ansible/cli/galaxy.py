@@ -1397,7 +1397,7 @@ class GalaxyCLI(CLI):
         managed_paths = set(validate_collection_path(p) for p in C.COLLECTIONS_PATHS)
         read_req_paths = set(validate_collection_path(p) for p in AnsibleCollectionConfig.collection_paths)
 
-        unexpected_path = C.GALAXY_COLLECTIONS_PATH_WARNING and not any(p.startswith(path) for p in managed_paths)
+        unexpected_path = not any(p.startswith(path) for p in managed_paths)
         if unexpected_path and any(p.startswith(path) for p in read_req_paths):
             display.warning(
                 f"The specified collections path '{path}' appears to be part of the pip Ansible package. "
