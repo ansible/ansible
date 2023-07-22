@@ -36,10 +36,10 @@
 
 - name: run existing user check tests
   user:
-    name: "{{ user_names.stdout_lines | random }}"
+    name: '{{ user_names.stdout_lines | random }}'
     state: present
     create_home: no
-  loop: "{{ range(1, 5+1) | list }}"
+  loop: '{{ range(1, 5+1) | list }}'
   register: user_test1
 
 - debug:
@@ -55,11 +55,11 @@
 - name: validate changed results for testcase 1
   assert:
     that:
-      - "user_test1.results[0] is not changed"
-      - "user_test1.results[1] is not changed"
-      - "user_test1.results[2] is not changed"
-      - "user_test1.results[3] is not changed"
-      - "user_test1.results[4] is not changed"
+      - 'user_test1.results[0] is not changed'
+      - 'user_test1.results[1] is not changed'
+      - 'user_test1.results[2] is not changed'
+      - 'user_test1.results[3] is not changed'
+      - 'user_test1.results[4] is not changed'
       - "user_test1.results[0]['state'] == 'present'"
       - "user_test1.results[1]['state'] == 'present'"
       - "user_test1.results[2]['state'] == 'present'"
@@ -70,10 +70,6 @@
   when: ansible_facts.system == 'Darwin'
   command: dscl . -read /Users/ansibulluser
   register: user_test2
-
-- debug:
-    var: user_test2
-    verbosity: 2
 
 - name: validate user defaults for MacOS
   when: ansible_facts.system == 'Darwin'
