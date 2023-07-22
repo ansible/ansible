@@ -28,6 +28,7 @@ options:
     comment:
         description:
             - Optionally sets the description (aka I(GECOS)) of user account.
+            - On macOS, this defaults to the O(username) option.
         type: str
     hidden:
         description:
@@ -49,6 +50,7 @@ options:
     group:
         description:
             - Optionally sets the user's primary group (takes a group name).
+            - On macOS, this defaults to V('staff')
         type: str
     groups:
         description:
