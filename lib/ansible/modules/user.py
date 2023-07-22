@@ -28,7 +28,7 @@ options:
     comment:
         description:
             - Optionally sets the description (aka I(GECOS)) of user account.
-            - On macOS, this defaults to the O(username) option.
+            - On macOS, this defaults to the O(name) option.
         type: str
     hidden:
         description:
