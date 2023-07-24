@@ -126,9 +126,7 @@ class TestModArgsDwim:
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith("conflicting action statements: ")
-        actions = set(re.search(r'(\w+), (\w+)', err.value.args[0]).groups())
-        assert actions == set(['ping', 'shell'])
+        assert err.value.args[0] == f'conflicting action statements: {", ".join(args_dict.keys())}'
 
     def test_bogus_action(self):
         init_plugin_loader()
@@ -137,4 +135,4 @@ class TestModArgsDwim:
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith("couldn't resolve module/action 'bogusaction'")
+        assert err.value.args[0].startswith(f"couldn't resolve module/action \'{', '.join(args_dict.keys())}\'")
