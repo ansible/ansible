@@ -12,7 +12,7 @@ PyYAML==6.0
 resolvelib==1.0.1
 rstcheck==5.0.0
 semantic-version==2.10.0
-setuptools==45.2.0
+setuptools==66.1.0
 tomli==2.0.1
 types-docutils==0.18.3
 typing_extensions==4.5.0
