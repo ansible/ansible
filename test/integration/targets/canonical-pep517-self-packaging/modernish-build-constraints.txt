@@ -1,4 +1,4 @@
-setuptools == 67.4.0
+setuptools == 68.0.0  # latest release as of this commit
 
 # Wheel-only build dependency
 wheel == 0.38.4

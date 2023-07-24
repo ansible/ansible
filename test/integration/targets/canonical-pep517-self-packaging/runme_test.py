@@ -96,32 +96,6 @@ def assert_dirs_equal(*dir_paths: t.List[Path]) -> None:
     assert not dir_comparison.funny_files
 
 
-def normalize_unpacked_rebuilt_sdist(sdist_path: Path) -> None:
-    top_pkg_info_path = sdist_path / 'PKG-INFO'
-    nested_pkg_info_path = (
-        sdist_path / 'lib' / f'{DIST_NAME}.egg-info' / 'PKG-INFO'
-    )
-    entry_points_path = nested_pkg_info_path.parent / 'entry_points.txt'
-
-    # setuptools v39 write out two trailing empty lines and an unknown platform
-    # while the recent don't
-    top_pkg_info_path.write_text(
-        top_pkg_info_path.read_text().replace(
-            'Classifier: Development Status :: 5',
-            'Platform: UNKNOWN\nClassifier: Development Status :: 5',
-        ) + '\n\n'
-    )
-    nested_pkg_info_path.write_text(
-        nested_pkg_info_path.read_text().replace(
-            'Classifier: Development Status :: 5',
-            'Platform: UNKNOWN\nClassifier: Development Status :: 5',
-        ) + '\n\n'
-    )
-
-    # setuptools v39 write out one trailing empty line while the recent don't
-    entry_points_path.write_text(entry_points_path.read_text() + '\n')
-
-
 @pytest.fixture
 def venv_python_exe(tmp_path: Path) -> t.Iterator[Path]:
     venv_path = tmp_path / 'pytest-managed-venv'
@@ -336,7 +310,6 @@ def test_dist_rebuilds_with_manpages_premutations(
     )
     assert rebuilt_sdist_path.exists()
     assert rebuilt_sdist_path.is_dir()
-    normalize_unpacked_rebuilt_sdist(rebuilt_sdist_path)
     # Ensure the man page directory exists to ease diff comparison.
     for dir_path in (rebuilt_sdist_path, sdist_with_manpages_path):
         (dir_path / 'docs/man/man1').mkdir(parents=True, exist_ok=True)

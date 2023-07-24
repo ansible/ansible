@@ -1,8 +1,4 @@
-# Lowest supporting Python 3.10:
-setuptools == 57.0.0; python_version == "3.10"
-
-# Lowest supporting Python 3.11:
-setuptools == 60.0.0; python_version >= "3.11"
+setuptools == 66.1.0  # minimum requirement in pyproject.toml
 
 
 # An arbitrary old version that was released before Python 3.10.0:
