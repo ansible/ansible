@@ -597,7 +597,7 @@ class TaskExecutor:
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules, right now rely on remote_is_local connection
         # special handling for python interpreter for network_os, default to ansible python unless overridden
-        if 'ansible_python_interpreter' not in cvars and 'ansible_network_os' in cvars and getattr(self._connection, '_remnote_is_local', False):
+        if 'ansible_python_interpreter' not in cvars and 'ansible_network_os' in cvars and getattr(self._connection, '_remote_is_local', False):
             # this also avoids 'python discovery'
             cvars['ansible_python_interpreter'] = sys.executable
 
