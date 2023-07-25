@@ -134,4 +134,4 @@ class TestModArgsDwim:
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith(f"couldn't resolve module/action \'{', '.join(args_dict.keys())}\'")
+        assert err.value.args[0].startswith(f"couldn't resolve module/action '{next(iter(args_dict))}'")
