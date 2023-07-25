@@ -93,6 +93,7 @@ class PkgMgrFactCollector(BaseFactCollector):
         if (
             (collected_facts['ansible_distribution'] == 'Fedora' and distro_major_ver < 23)
             or (collected_facts['ansible_distribution'] == 'Amazon' and distro_major_ver < 2022)
+            or (collected_facts['ansible_distribution'] == 'TencentOS' and distro_major_ver < 3)
             or distro_major_ver < 8  # assume RHEL or a clone
         ) and any(pm for pm in PKG_MGRS if pm['name'] == 'yum' and os.path.exists(pm['path'])):
             pkg_mgr_name = 'yum'
