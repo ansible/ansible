@@ -125,7 +125,7 @@ class TestModArgsDwim:
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0] == f'conflicting action statements: {", ".join(args_dict.keys())}'
+        assert err.value.args[0] == f'conflicting action statements: {", ".join(args_dict)}'
 
     def test_bogus_action(self):
         init_plugin_loader()
