@@ -239,7 +239,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.six import utcnow
+from ansible.module_utils.compat.datetime import utcnow
 
 
 HAS_PSUTIL = False

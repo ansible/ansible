@@ -23,7 +23,7 @@ import time
 
 import ansible.module_utils.compat.typing as t
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.six import utcfromtimestamp
+from ansible.module_utils.compat.datetime import utcfromtimestamp
 
 
 class DateTimeFactCollector(BaseFactCollector):

@@ -27,7 +27,6 @@
 
 from __future__ import absolute_import
 
-import datetime
 import functools
 import itertools
 import operator
@@ -677,8 +676,6 @@ if PY3:
         _assertRaisesRegex = "assertRaisesRegex"
         _assertRegex = "assertRegex"
         _assertNotRegex = "assertNotRegex"
-    utcfromtimestamp = functools.partial(datetime.datetime.fromtimestamp, tz=datetime.timezone.utc)
-    utcnow = functools.partial(datetime.datetime.now, tz=datetime.timezone.utc)
 else:
     def b(s):
         return s
@@ -701,8 +698,6 @@ else:
     _assertRaisesRegex = "assertRaisesRegexp"
     _assertRegex = "assertRegexpMatches"
     _assertNotRegex = "assertNotRegexpMatches"
-    utcfromtimestamp = datetime.datetime.utcfromtimestamp
-    utcnow = datetime.datetime.utcnow
 _add_doc(b, """Byte literal""")
 _add_doc(u, """Text literal""")
 
