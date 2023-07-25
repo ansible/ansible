@@ -206,8 +206,10 @@ def command_sanity(args: SanityConfig) -> None:
 
             if test.supported_python_versions and version not in test.supported_python_versions:
                 result = SanitySkipped(test.name, version)
-                result.reason = f'Skipping sanity test "{test.name}" on Python {version} because it is unsupported.' \
-                                f' Supported Python versions: {", ".join(test.supported_python_versions)}'
+                result.reason = (
+                    f'Skipping sanity test "{test.name}" on Python {version} because it is unsupported.'
+                    f' Supported Python versions: {", ".join(test.supported_python_versions)}'
+                )
             else:
                 if isinstance(test, SanityCodeSmellTest):
                     settings = test.load_processor(args)

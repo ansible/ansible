@@ -863,8 +863,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             run_utility_container(self.args, f'ansible-test-cgroup-create-{self.label}', cmd, options)
         except SubprocessError as ex:
             if error := self.extract_error(ex.stderr):
-                raise ControlGroupError(self.args, f'Unable to create a v1 cgroup within the systemd hierarchy.\n'
-                                                   f'Reason: {error}') from ex  # cgroup create permission denied
+                raise ControlGroupError(
+                    self.args,
+                    f'Unable to create a v1 cgroup within the systemd hierarchy.\n Reason: {error}'
+                ) from ex  # cgroup create permission denied
 
             raise
 
