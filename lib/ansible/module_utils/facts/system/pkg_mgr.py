@@ -85,13 +85,17 @@ class PkgMgrFactCollector(BaseFactCollector):
                 break
 
         try:
-            distro_major_ver = int(collected_facts['ansible_distribution_major_version'])
+            major_version = collected_facts['ansible_distribution_major_version']
+            if collected_facts['ansible_distribution'] == 'Kylin Linux Advanced Server':
+                major_version = major_version.lstrip('V')
+            distro_major_ver = int(major_version)
         except ValueError:
             # a non integer magical future version
             return self._default_unknown_pkg_mgr
 
         if (
             (collected_facts['ansible_distribution'] == 'Fedora' and distro_major_ver < 23)
+            or (collected_facts['ansible_distribution'] == 'Kylin Linux Advanced Server' and distro_major_ver < 10)
             or (collected_facts['ansible_distribution'] == 'Amazon' and distro_major_ver < 2022)
             or (collected_facts['ansible_distribution'] == 'TencentOS' and distro_major_ver < 3)
             or distro_major_ver < 8  # assume RHEL or a clone
