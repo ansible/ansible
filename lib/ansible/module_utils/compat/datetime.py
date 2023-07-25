@@ -12,10 +12,14 @@ import datetime
 import functools
 
 if PY3:
-    utcfromtimestamp = functools.partial(datetime.datetime.fromtimestamp, tz=datetime.timezone.utc)
-    utcnow = functools.partial(datetime.datetime.now, tz=datetime.timezone.utc)
+    UTC = datetime.timezone.utc
+
+    utcfromtimestamp = functools.partial(datetime.datetime.fromtimestamp, tz=UTC)
+    utcnow = functools.partial(datetime.datetime.now, tz=UTC)
 else:
     class _UTC(datetime.tzinfo):
+        __slots__ = ()
+
         def utcoffset(self, dt):
             return datetime.timedelta(0)
 
@@ -25,15 +29,16 @@ else:
         def tzname(self, dt):
             return "UTC"
 
+    UTC = _UTC()
+
     def _get_offset_aware_utcnow():
         naive_datetime = datetime.datetime.utcnow()
-        utc_tz = _UTC()
-        return naive_datetime.replace(tzinfo=utc_tz)
+        return naive_datetime.replace(tzinfo=UTC)
 
     def _get_offset_aware_utcfromtimestamp(timestamp):
         naive_datetime = datetime.datetime.utcfromtimestamp(timestamp)
         utc_tz = _UTC()
-        return naive_datetime.replace(tzinfo=utc_tz)
+        return naive_datetime.replace(tzinfo=UTC)
 
     utcnow = _get_offset_aware_utcnow
     utcfromtimestamp = _get_offset_aware_utcfromtimestamp
