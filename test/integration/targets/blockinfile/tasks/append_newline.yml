@@ -1,0 +1,119 @@
+- name: Create append_newline test file
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: add content to file appending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_appending_a_new_line
+
+- name: add content to file appending a new line (again)
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_appending_a_new_line_again
+
+- name: get file content after adding content appending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: appended_a_new_line
+
+- name: check content is the expected one after inserting content appending a new line
+  assert:
+    that:
+      - insert_appending_a_new_line is changed
+      - insert_appending_a_new_line_again is not changed
+      - appended_a_new_line.stat.checksum == "525ffd613a0b0eb6675e506226dc2adedf621f34"
+
+- name: add content to file without appending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line2"
+    block: |
+      line2.5
+  register: insert_without_appending_new_line
+
+- name: get file content after adding content without appending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: without_appending_new_line
+
+- name: check content is the expected one after inserting without appending a new line
+  assert:
+    that:
+      - insert_without_appending_new_line is changed
+      - without_appending_new_line.stat.checksum == "d5f5ed1428af50b5484a5184dc7e1afda1736646"
+
+- name: append a new line to existing block
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line2"
+    block: |
+      line2.5
+  register: append_new_line_to_existing_block
+
+- name: get file content after appending a line to existing block
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: new_line_appended
+
+- name: check content is the expected one after appending a new line to an existing block
+  assert:
+    that:
+      - append_new_line_to_existing_block is changed
+      - new_line_appended.stat.checksum == "b09dd16be73a0077027d5a324294db8a75a7b0f9"
+
+- name: add a block appending a new line at the end of the file
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    marker: "#{mark} END OF FILE TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: insert_appending_new_line_at_the_end_of_file
+
+- name: get file content after appending new line at the end of the file
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: inserted_block_appending_new_line_at_the_end_of_the_file
+
+- name: check content is the expected one after adding a block appending a new line at the end of the file
+  assert:
+    that:
+      - insert_appending_new_line_at_the_end_of_file is changed
+      - inserted_block_appending_new_line_at_the_end_of_the_file.stat.checksum == "9b90722b84d9bdda1be781cc4bd44d8979887691"
+
+
+- name: Removing a block with append_newline set to true does not append another line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+    append_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    state: absent
+  register: remove_block_appending_new_line
+
+- name: get file content after removing existing block appending new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/append_newline.txt"
+  register: removed_block_appending_new_line
+
+- name: check content is the expected one after removing a block appending a new line
+  assert:
+    that:
+      - remove_block_appending_new_line is changed
+      - removed_block_appending_new_line.stat.checksum == "9a40d4c0969255cd6147537b38309d69a9b10049"
