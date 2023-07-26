@@ -62,7 +62,7 @@ def _module_setup():
         fn.restype = cfg.get('restype', c_int)
 
         # just patch simple directly callable functions directly onto the module
-        if not fn.argtypes or not any(argtype for argtype in fn.argtypes if isinstance(argtype, base_ptr_type)):
+        if not fn.argtypes or not any(argtype for argtype in fn.argtypes if type(argtype) is base_ptr_type):
             setattr(_thismod, fname, fn)
             continue
 
