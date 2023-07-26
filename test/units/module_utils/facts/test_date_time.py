@@ -29,8 +29,8 @@ def fake_now(monkeypatch):
         @classmethod
         def fromtimestamp(cls, timestamp, tz=None):
             if tz == UTC:
-                return UTC_DT
-            return DT
+                return UTC_DT.replace(tzinfo=tz)
+            return DT.replace(tzinfo=tz)
 
     def _time():
         return EPOCH_TS
