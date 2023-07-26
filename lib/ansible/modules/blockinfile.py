@@ -359,8 +359,8 @@ def main():
             lines[n0 - 1] += b(os.linesep)
 
     # Before the block: check if we need to prepend a blank line
-    # If yes, we need to add the blank line if we are at the beginning of the file
-    # or if the previous line is not a blank line
+    # If yes, we need to add the blank line if we are not at the beginning of the file
+    # and the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
         if n0 != 0 and lines[n0 - 1] != b(os.linesep):
@@ -371,8 +371,8 @@ def main():
     lines[n0:n0] = blocklines
 
     # After the block: check if we need to append a blank line
-    # If yes, we need to add the blank line if we are at the end of the file
-    # or if the line right after is not a blank line
+    # If yes, we need to add the blank line if we are not at the end of the file
+    # and the line right after is not a blank line
     if params['append_newline'] and present:
         line_after_block = n0 + len(blocklines)
         if line_after_block < len(lines) and lines[line_after_block] != b(os.linesep):
