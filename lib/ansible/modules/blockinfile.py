@@ -93,7 +93,7 @@ options:
   append_newline:
     required: false
     description:
-    - Append a blank line to the inserted block.
+    - Append a blank line to the inserted block, if this does not appear at the end of the file.
     - Note that this attribute is not considered when C(state) is set to C(absent)
     type: bool
     default: no
@@ -101,7 +101,7 @@ options:
   prepend_newline:
     required: false
     description:
-    - Prepend a blank line to the inserted block.
+    - Prepend a blank line to the inserted block, if this does not appear at the beginning of the file.
     - Note that this attribute is not considered when C(state) is set to C(absent)
     type: bool
     default: no
@@ -362,7 +362,7 @@ def main():
     # or if the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
-        if n0 == 0 or lines[n0 - 1] != b(os.linesep):
+        if n0 != 0 and lines[n0 - 1] != b(os.linesep):
             lines[n0:n0] = blank_line
             n0 += 1
 
@@ -374,7 +374,7 @@ def main():
     # or if the line right after is not a blank line
     if params['append_newline'] and present:
         line_after_block = n0 + len(blocklines)
-        if line_after_block >= len(lines) or lines[line_after_block] != b(os.linesep):
+        if line_after_block < len(lines) and lines[line_after_block] != b(os.linesep):
             lines[line_after_block:line_after_block] = blank_line
 
     if lines:
