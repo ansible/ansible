@@ -5,40 +5,36 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-
 from ansible.module_utils.six import PY3
 
 import datetime
-import functools
+
 
 if PY3:
     UTC = datetime.timezone.utc
-
-    utcfromtimestamp = functools.partial(datetime.datetime.fromtimestamp, tz=UTC)
-    utcnow = functools.partial(datetime.datetime.now, tz=UTC)
 else:
+    _ZERO =  datetime.timedelta(0)
+
     class _UTC(datetime.tzinfo):
         __slots__ = ()
 
         def utcoffset(self, dt):
-            return datetime.timedelta(0)
+            return _ZERO
 
         def dst(self, dt):
-            return datetime.timedelta(0)
+            return _ZERO
 
         def tzname(self, dt):
             return "UTC"
 
     UTC = _UTC()
 
-    def _get_offset_aware_utcnow():
-        naive_datetime = datetime.datetime.utcnow()
-        return naive_datetime.replace(tzinfo=UTC)
 
-    def _get_offset_aware_utcfromtimestamp(timestamp):
-        naive_datetime = datetime.datetime.utcfromtimestamp(timestamp)
-        utc_tz = _UTC()
-        return naive_datetime.replace(tzinfo=UTC)
+def utcfromtimestamp(timestamp):  # type: (float) -> datetime.datetime
+    """Construct an aware UTC datetime from a POSIX timestamp."""
+    return datetime.datetime.fromtimestamp(timestamp, UTC)
 
-    utcnow = _get_offset_aware_utcnow
-    utcfromtimestamp = _get_offset_aware_utcfromtimestamp
+
+def utcnow():  # type: () -> datetime.datetime
+    """Construct an aware UTC datetime from time.time()."""
+    return datetime.datetime.now(UTC)
