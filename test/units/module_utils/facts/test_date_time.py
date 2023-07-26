@@ -10,10 +10,12 @@ import datetime
 import string
 import time
 
+from ansible.module_utils.compat.datetime import UTC
 from ansible.module_utils.facts.system import date_time
 
 EPOCH_TS = 1594449296.123456
 DT = datetime.datetime(2020, 7, 11, 12, 34, 56, 124356)
+UTC_DT = datetime.datetime(2020, 7, 11, 2, 34, 56, 124356)
 
 
 @pytest.fixture
@@ -25,17 +27,15 @@ def fake_now(monkeypatch):
 
     class FakeNow:
         @classmethod
-        def fromtimestamp(cls, timestamp):
+        def fromtimestamp(cls, timestamp, tz=None):
+            if tz == UTC:
+                return UTC_DT
             return DT
 
     def _time():
         return EPOCH_TS
 
-    def utcfromtimestamp(timestamp):
-        return DT
-
     monkeypatch.setattr(date_time.datetime, 'datetime', FakeNow)
-    monkeypatch.setattr(date_time, 'utcfromtimestamp', utcfromtimestamp)
     monkeypatch.setattr(time, 'time', _time)
 
 
@@ -65,8 +65,8 @@ def fake_date_facts(fake_now):
         ('time', '12:34:56'),
         ('iso8601_basic', '20200711T123456124356'),
         ('iso8601_basic_short', '20200711T123456'),
-        ('iso8601_micro', '2020-07-11T12:34:56.124356Z'),
-        ('iso8601', '2020-07-11T12:34:56Z'),
+        ('iso8601_micro', '2020-07-11T02:34:56.124356Z'),
+        ('iso8601', '2020-07-11T02:34:56Z'),
     ),
 )
 def test_date_time_facts(fake_date_facts, fact_name, fact_value):
