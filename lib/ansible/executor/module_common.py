@@ -1241,7 +1241,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         else:
             coverage = ''
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,

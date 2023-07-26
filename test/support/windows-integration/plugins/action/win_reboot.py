@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
@@ -64,7 +64,7 @@ class ActionModule(RebootActionModule, ActionBase):
 
         result = {}
         reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
-        result['start'] = datetime.utcnow()
+        result['start'] = datetime.now(timezone.utc)
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
         stdout = reboot_result['stdout']

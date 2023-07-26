@@ -359,7 +359,8 @@ class GalaxyAPI:
             valid = False
             if cache_key in server_cache:
                 expires = datetime.datetime.strptime(server_cache[cache_key]['expires'], iso_datetime_format)
-                valid = datetime.datetime.utcnow() < expires
+                expires = expires.replace(tzinfo=datetime.timezone.utc)
+                valid = datetime.datetime.now(datetime.timezone.utc) < expires
 
             is_paginated_url = 'page' in query or 'offset' in query
             if valid and not is_paginated_url:
@@ -384,7 +385,7 @@ class GalaxyAPI:
 
             elif not is_paginated_url:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
-                expires = datetime.datetime.utcnow()
+                expires = datetime.datetime.now(datetime.timezone.utc)
                 expires += datetime.timedelta(days=1)
                 server_cache[cache_key] = {
                     'expires': expires.strftime(iso_datetime_format),
