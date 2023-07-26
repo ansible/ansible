@@ -37,7 +37,7 @@ class DateTimeFactCollector(BaseFactCollector):
         # Store the timestamp once, then get local and UTC versions from that
         epoch_ts = time.time()
         now = datetime.datetime.fromtimestamp(epoch_ts)
-        utcnow = utcfromtimestamp(epoch_ts)
+        utcnow = utcfromtimestamp(epoch_ts).replace(tzinfo=None)
 
         date_time_facts['year'] = now.strftime('%Y')
         date_time_facts['month'] = now.strftime('%m')
