@@ -13,7 +13,7 @@ import datetime
 if PY3:
     UTC = datetime.timezone.utc
 else:
-    _ZERO =  datetime.timedelta(0)
+    _ZERO = datetime.timedelta(0)
 
     class _UTC(datetime.tzinfo):
         __slots__ = ()
