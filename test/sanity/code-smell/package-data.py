@@ -50,14 +50,13 @@ def assemble_files_to_ship(complete_file_list):
     # Manpages
     ignore_script = ('ansible-connection', 'ansible-test')
     script_names = [os.path.basename(path) for path in complete_file_list if path.startswith('bin/')]
-    manpages = [f'docs/man/man1/{name}.1' for name in script_names if name not in ignore_script]
 
     # Misc
     misc_generated_files = [
         'PKG-INFO',
     ]
 
-    shipped_files = manpages + misc_generated_files
+    shipped_files = misc_generated_files
 
     for path in complete_file_list:
         if path not in ignore_files:
@@ -133,7 +132,7 @@ def create_sdist(tmp_dir):
     pathlib.Path(f'changelogs/CHANGELOG-v{version.major}.{version.minor}.rst').touch()
 
     create = subprocess.run(
-        [sys.executable, '-m', 'build', '--sdist', '--no-isolation', '--config-setting=--build-manpages', '--outdir', tmp_dir],
+        [sys.executable, '-m', 'build', '--sdist', '--no-isolation', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
