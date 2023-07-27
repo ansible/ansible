@@ -531,7 +531,7 @@
     directory_mode: 0700
     local_follow: False
   register: recursive_copy_result
-  check: true
+  diff: true
 
 - debug:
     var: recursive_copy_result
