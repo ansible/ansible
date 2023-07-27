@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - unlink namespace and collection directories if they are symlinks when reinstalling collections or cleaning up after a failed install (https://github.com/ansible/ansible/issues/81350).

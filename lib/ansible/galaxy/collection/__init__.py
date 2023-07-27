@@ -1489,8 +1489,9 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
         format(coll=to_text(collection), path=collection_path),
     )
 
+    remove_or_unlink_dir(b_collection_path)
     if os.path.exists(b_collection_path):
-        shutil.rmtree(b_collection_path)
+        raise AnsibleError(f"Unable to install {collection!s}. Remove conflicting file {collection_path}.")
 
     if collection.is_dir:
         install_src(collection, b_artifact_path, b_collection_path, artifacts_manager)
@@ -1525,8 +1526,7 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
     b_info_dest = collection.construct_galaxy_info_path(b_collection_path)
     b_info_dir = os.path.split(b_info_dest)[0]
 
-    if os.path.exists(b_info_dir):
-        shutil.rmtree(b_info_dir)
+    remove_or_unlink_dir(b_info_dir)
 
     try:
         os.mkdir(b_info_dir, mode=0o0755)
@@ -1535,8 +1535,7 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         os.chmod(b_info_dest, 0o0644)
     except Exception:
         # Ensure we don't leave the dir behind in case of a failure.
-        if os.path.isdir(b_info_dir):
-            shutil.rmtree(b_info_dir)
+        remove_or_unlink_dir(b_info_dir)
         raise
 
 
@@ -1597,11 +1596,17 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
 
     except Exception:
         # Ensure we don't leave the dir behind in case of a failure.
-        shutil.rmtree(b_collection_path)
+        remove_or_unlink_dir(b_collection_path)
 
         b_namespace_path = os.path.dirname(b_collection_path)
-        if not os.listdir(b_namespace_path):
-            os.rmdir(b_namespace_path)
+
+        if os.path.islink(b_namespace_path):
+            resolved_path = pathlib.Path(to_text(b_namespace_path)).resolve()
+            empty_namespace = not os.listdir(resolved_path)
+        else:
+            empty_namespace = not os.listdir(b_namespace_path)
+        if empty_namespace:
+            remove_or_unlink_dir(b_namespace_path)
 
         raise
 
@@ -1760,6 +1765,14 @@ def _get_file_hash(b_path, filename):  # type: (bytes, str) -> str
     filepath = os.path.join(b_path, to_bytes(filename, errors='surrogate_or_strict'))
     with open(filepath, 'rb') as fp:
         return _consume_file(fp)
+
+
+def remove_or_unlink_dir(b_path: bytes):
+    if os.path.islink(b_path):
+        if os.path.exists(os.path.realpath(b_path)):
+            os.unlink(b_path)
+    elif os.path.isdir(b_path):
+        shutil.rmtree(b_path)
 
 
 def _is_child_path(path, parent_path, link_name=None):

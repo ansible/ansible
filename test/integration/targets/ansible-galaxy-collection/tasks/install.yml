@@ -778,6 +778,46 @@
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
+- name: remove installed collection previous test
+  file:
+    state: absent
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
+
+- name: test reinstalling a collection that is a symlink
+  vars:
+    symlink_src: "{{ galaxy_dir }}/symlink_src"
+    collections_path: "{{ galaxy_dir }}/linked_collections"
+    extra_args: "-s {{ test_name }} {{ galaxy_verbosity }}"
+  block:
+    - name: setup - install collection to use for creating a symlink
+      command: "ansible-galaxy collection install symlink.symlink -p {{ symlink_src }} {{ extra_args }}"
+
+    - name: setup - create directory for symlink
+      file:
+        path: "{{ collections_path }}/ansible_collections/symlink"
+        state: directory
+
+    - name: setup - create symlink to the collection
+      command: ln -s {{ symlink_src }}/ansible_collections/symlink/symlink symlink
+      become: yes
+      args:
+        chdir: '{{ collections_path }}/ansible_collections/symlink'
+
+    - name: test the collection can be reinstalled
+      command: "ansible-galaxy collection install symlink.symlink -p {{ collections_path }} --force {{ extra_args }}"
+      register: reinstalled_collection
+
+    - assert:
+        that:
+          - '"symlink.symlink:1.0.0 was installed successfully" in reinstalled_collection.stdout'
+  always:
+    - name: clean up test directories from previous test
+      file:
+        state: absent
+        path: "{{ item }}"
+      loop:
+        - "{{ symlink_src }}"
+        - "{{ collections_path }}"
 
 # Testing an install from source to check that symlinks to directories
 # are preserved (see issue https://github.com/ansible/ansible/issues/78442)
