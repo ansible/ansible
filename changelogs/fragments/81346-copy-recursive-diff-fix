@@ -1,0 +1,2 @@
+bugfixes:
+- The builin.copy module now saves the diff for each operation when used recursively
