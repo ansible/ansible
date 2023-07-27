@@ -95,12 +95,11 @@ class BecomeModule(BecomeBase):
         if not cmd:
             return cmd
 
-        becomecmd = self.get_option('become_exe') or self.name
+        command = [self.get_option('become_exe') or self.name]
 
         flags = self.get_option('become_flags') or ''
-        prompt = ''
         if self.get_option('become_pass'):
-            self.prompt = '[sudo via ansible, key=%s] password:' % self._id
+
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
                 reflag = []
                 for flag in shlex.split(flags):
@@ -110,12 +109,19 @@ class BecomeModule(BecomeBase):
                         # handle -XnxxX flags only
                         flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
                     reflag.append(flag)
-                flags = shlex.join(reflag)
+                if reflag:
+                    command.extend(reflag)
 
-            prompt = '-p %s' % shlex.quote(self.prompt)
+            self.prompt = '[sudo via ansible, key=%s] password:' % self._id
+            command.extend(['-p', self.prompt])
+
+        elif flags:
+            command.append(flags)
 
         user = self.get_option('become_user') or ''
         if user:
-            user = '-u %s' % shlex.quote(user)
+            command.extend(['-u', user])
 
-        return ' '.join([becomecmd, flags, prompt, user, shlex.quote(self._build_success_command(cmd, shell))])
+        command.append(self._build_success_command(cmd, shell))
+
+        return shlex.join(command)
