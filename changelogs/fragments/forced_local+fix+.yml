@@ -1,0 +1,2 @@
+bugfixes:
+  - core will now also look at the connection plugin to force 'local' interpreter for networking path compatibility as just ansible_network_os could be misleading.
