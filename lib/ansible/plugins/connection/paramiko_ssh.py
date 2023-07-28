@@ -531,9 +531,7 @@ class Connection(ConnectionBase):
             if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
                 ssh_connect_kwargs['banner_timeout'] = self.get_option('banner_timeout')
 
-            passphrase = None
-            if self.get_option('private_key_file_passphrase'):
-                passphrase = self.get_option('private_key_file_passphrase')
+            passphrase = self.get_option('private_key_file_passphrase') or None
             ssh.connect(
                 self.get_option('remote_addr').lower(),
                 username=self.get_option('remote_user'),
