@@ -256,7 +256,7 @@ def add_connect_options(parser):
 
     connect_group.add_argument('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                                help='use this file to authenticate the connection', type=unfrack_path())
-    connect_group.add_argument('--private-key-file-passphrase', '--key-file-passphrase', default=C.DEFAULT_PRIVATE_KEY_FILE_PASSPHRASE, 
+    connect_group.add_argument('--private-key-file-passphrase', '--key-file-passphrase', default=C.DEFAULT_PRIVATE_KEY_FILE_PASSPHRASE,
                                dest='private_key_file_passphrase', help='use passphrase on private-key to authenticate the connection')
     connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
