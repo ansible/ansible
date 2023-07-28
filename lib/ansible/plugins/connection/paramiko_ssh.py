@@ -306,7 +306,7 @@ DOCUMENTATION = """
               version_added: '2.16'
           cli:
             - name: private_key_file_passphrase
-              option: '--private-key-passphrase'    
+              option: '--private-key-passphrase'
 """
 
 import os
