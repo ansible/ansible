@@ -294,16 +294,16 @@ DOCUMENTATION = """
               key: private_key_file_passphrase
             - section: paramiko_connection
               key: private_key_file_passphrase
-              version_added: '1.0'
+              version_added: '2.16'
           env:
             - name: ANSIBLE_PRIVATE_KEY_FILE_PASSPHRASE
             - name: ANSIBLE_PARAMIKO_PRIVATE_KEY_FILE_PASSPHRASE
-              version_added: '1.0'
+              version_added: '2.16'
           vars:
             - name: ansible_private_key_file_passphrase
             - name: ansible_ssh_private_key_file_passphrase
             - name: ansible_paramiko_private_key_file_passphrase
-              version_added: '1.0'
+              version_added: '2.16'
           cli:
             - name: private_key_file_passphrase
               option: '--private-key-passphrase'    
