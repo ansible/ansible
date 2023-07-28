@@ -86,6 +86,27 @@
     that:
     - '"Installing ''namespace1.name1:1.0.9'' to" in install_existing_force.stdout'
 
+- name: test installing the collection with something in the way (no --force needed)
+  block:
+    - name: setup - put non-collection at the destination path - {{ test_id }}
+      file:
+        state: '{{ item }}'
+        path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+      loop:
+        - absent
+        - touch
+
+    - name: test install with a conflicting a file - {{ test_id }}
+      command: ansible-galaxy collection install namespace1.name1 -s '{{ test_name }}' {{ galaxy_verbosity }}
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+      register: install_existing_force
+
+    - name: assert collection was installed - {{ test_id }}
+      assert:
+        that:
+        - '"Installing ''namespace1.name1:1.0.9'' to" in install_existing_force.stdout'
+
 - name: remove test installed collection - {{ test_id }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections/namespace1'
