@@ -287,6 +287,7 @@ class GalaxyCLI(CLI):
 
         # Add sub parser for the Galaxy collection actions
         collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
+        collection.set_defaults(func=self.execute_collection)  # to satisfy doc build
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
         self.add_download_options(collection_parser, parents=[common, cache_options])
@@ -299,6 +300,7 @@ class GalaxyCLI(CLI):
 
         # Add sub parser for the Galaxy role actions
         role = type_parser.add_parser('role', help='Manage an Ansible Galaxy role.')
+        role.set_defaults(func=self.execute_role)  # to satisfy doc build
         role_parser = role.add_subparsers(metavar='ROLE_ACTION', dest='action')
         role_parser.required = True
         self.add_init_options(role_parser, parents=[common, force, offline])
