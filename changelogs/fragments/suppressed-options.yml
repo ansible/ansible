@@ -1,0 +1,2 @@
+bugfixes:
+  - Exclude internal options from man pages and docs.
