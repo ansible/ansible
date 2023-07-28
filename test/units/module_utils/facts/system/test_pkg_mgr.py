@@ -14,7 +14,19 @@ _FEDORA_FACTS = {
     "ansible_os_family": "RedHat"
 }
 
+_KYLIN_FACTS = {
+    "ansible_distribution": "Kylin Linux Advanced Server",
+    "ansible_distribution_major_version": "V10",
+    "ansible_os_family": "RedHat"
+}
+
 # NOTE pkg_mgr == "dnf" means the dnf module for the dnf 4 or below
+
+
+def test_default_dnf_version_detection_kylin_dnf4(mocker):
+    mocker.patch("os.path.exists", lambda p: p in ("/usr/bin/dnf", "/usr/bin/dnf-3"))
+    mocker.patch("os.path.realpath", lambda p: {"/usr/bin/dnf": "/usr/bin/dnf-3"}.get(p, p))
+    assert PkgMgrFactCollector().collect(collected_facts=_KYLIN_FACTS).get("pkg_mgr") == "dnf"
 
 
 def test_default_dnf_version_detection_fedora_dnf4(mocker):

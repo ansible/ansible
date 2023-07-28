@@ -239,6 +239,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.compat.datetime import utcnow
 
 
 HAS_PSUTIL = False
@@ -532,7 +533,7 @@ def main():
         except Exception:
             module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
-    start = datetime.datetime.utcnow()
+    start = utcnow()
 
     if delay:
         time.sleep(delay)
@@ -543,7 +544,7 @@ def main():
         # first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
-        while datetime.datetime.utcnow() < end:
+        while utcnow() < end:
             if path:
                 try:
                     if not os.access(b_path, os.F_OK):
@@ -560,7 +561,7 @@ def main():
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
         else:
-            elapsed = datetime.datetime.utcnow() - start
+            elapsed = utcnow() - start
             if port:
                 module.fail_json(msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
             elif path:
@@ -569,14 +570,14 @@ def main():
     elif state in ['started', 'present']:
         # wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.utcnow() < end:
+        while utcnow() < end:
             if path:
                 try:
                     os.stat(b_path)
                 except OSError as e:
                     # If anything except file not present, throw an error
                     if e.errno != 2:
-                        elapsed = datetime.datetime.utcnow() - start
+                        elapsed = utcnow() - start
                         module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
                 else:
@@ -598,7 +599,7 @@ def main():
                     except IOError:
                         pass
             elif port:
-                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
+                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
                 try:
                     s = socket.create_connection((host, port), min(connect_timeout, alt_connect_timeout))
                 except Exception:
@@ -609,8 +610,8 @@ def main():
                     if b_compiled_search_re:
                         b_data = b''
                         matched = False
-                        while datetime.datetime.utcnow() < end:
-                            max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
+                        while utcnow() < end:
+                            max_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
                             readable = select.select([s], [], [], max_timeout)[0]
                             if not readable:
                                 # No new data.  Probably means our timeout
@@ -654,7 +655,7 @@ def main():
 
         else:   # while-else
             # Timeout expired
-            elapsed = datetime.datetime.utcnow() - start
+            elapsed = utcnow() - start
             if port:
                 if search_regex:
                     module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
@@ -670,17 +671,17 @@ def main():
         # wait until all active connections are gone
         end = start + datetime.timedelta(seconds=timeout)
         tcpconns = TCPConnectionInfo(module)
-        while datetime.datetime.utcnow() < end:
+        while utcnow() < end:
             if tcpconns.get_active_connections_count() == 0:
                 break
 
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
         else:
-            elapsed = datetime.datetime.utcnow() - start
+            elapsed = utcnow() - start
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
-    elapsed = datetime.datetime.utcnow() - start
+    elapsed = utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, match_groups=match_groups, match_groupdict=match_groupdict, path=path,
                      elapsed=elapsed.seconds)
 

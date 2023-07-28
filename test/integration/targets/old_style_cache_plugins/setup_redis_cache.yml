@@ -20,8 +20,9 @@
 
     - name: get the latest stable redis server release
       get_url:
-        url: http://download.redis.io/redis-stable.tar.gz
+        url: https://download.redis.io/redis-stable.tar.gz
         dest: ./
+        timeout: 60
 
     - name: unzip download
       unarchive:
