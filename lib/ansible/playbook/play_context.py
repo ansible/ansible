@@ -60,6 +60,7 @@ RESET_VARS = (
     'ansible_ssh_port',
     'ansible_ssh_user',
     'ansible_ssh_private_key_file',
+    'ansible_ssh_private_key_file_passphrase',
     'ansible_ssh_pipelining',
     'ansible_ssh_executable',
 )
@@ -85,6 +86,7 @@ class PlayContext(Base):
     timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     connection_user = FieldAttribute(isa='string')
     private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
+    private_key_file_passphrase = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE_PASSPHRASE)
     pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
 
     # networking modules
@@ -187,6 +189,7 @@ class PlayContext(Base):
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
+        self.private_key_file_passphrase = context.CLIARGS.get('private_key_file_passphrase') # Else default
         self._internal_verbosity = context.CLIARGS.get('verbosity')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default

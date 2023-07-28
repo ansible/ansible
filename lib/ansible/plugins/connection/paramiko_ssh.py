@@ -285,6 +285,29 @@ DOCUMENTATION = """
           cli:
             - name: private_key_file
               option: '--private-key'
+      private_key_file_passphrase:
+          description:
+              - Private key passphrase
+          type: string
+          ini:
+            - section: defaults
+              key: private_key_file_passphrase
+            - section: paramiko_connection
+              key: private_key_file_passphrase
+              version_added: '2.15'
+          env:
+            - name: ANSIBLE_PRIVATE_KEY_FILE_PASSPHRASE
+            - name: ANSIBLE_PARAMIKO_PRIVATE_KEY_FILE_PASSPHRASE
+              version_added: '2.15'
+          vars:
+            - name: ansible_private_key_file_passphrase
+            - name: ansible_ssh_private_key_file_passphrase
+            - name: ansible_paramiko_private_key_file_passphrase
+              version_added: '2.15'
+          cli:
+            - name: private_key_file_passphrase
+              option: '--private-key-passphrase'
+              
 """
 
 import os
@@ -509,12 +532,16 @@ class Connection(ConnectionBase):
             if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
                 ssh_connect_kwargs['banner_timeout'] = self.get_option('banner_timeout')
 
+            passphrase = None
+            if self.get_option('private_key_file_passphrase'):
+                passphrase = self.get_option('private_key_file_passphrase')
             ssh.connect(
                 self.get_option('remote_addr').lower(),
                 username=self.get_option('remote_user'),
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
+                passphrase=passphrase,
                 password=conn_password,
                 timeout=self.get_option('timeout'),
                 port=port,

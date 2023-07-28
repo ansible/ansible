@@ -930,6 +930,15 @@ DEFAULT_PRIVATE_KEY_FILE:
   ini:
   - {key: private_key_file, section: defaults}
   type: path
+DEFAULT_PRIVATE_KEY_FILE_PASSPHRASE:
+  name: Private key file passphrase
+  default: ~
+  description:
+    - Private key file passphrase
+  env: [{name: ANSIBLE_PRIVATE_KEY_FILE_PASSPHRASE}]
+  ini:
+  - {key: private_key_file_passphrase, section: defaults}
+  type: string
 DEFAULT_PRIVATE_ROLE_VARS:
   name: Private role variables
   default: False
