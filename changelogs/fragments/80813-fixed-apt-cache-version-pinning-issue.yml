@@ -1,0 +1,2 @@
+bugfixes:
+  - "``ansible.modules.apt`` - fixed apt-cache version pinning issue in ``package_best_match()``"

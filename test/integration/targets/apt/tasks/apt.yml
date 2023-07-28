@@ -395,6 +395,33 @@
     that:
       - apt_result is not changed
 
+# https://github.com/ansible/ansible/issues/80813
+- name: Install a specific package version - "{{ foobar.package_name }}={{ foobar.versions[0] }}"
+  apt:
+    name: "{{ foobar.package_name }}={{ item }}"
+    state: present
+    allow_downgrade: yes
+  with_items: "{{ foobar.versions[0] }}"
+
+- name: Install a specific package version - "{{ foobar.package_name }}={{ foobar.versions[1] }}"
+  apt:
+    name: "{{ foobar.package_name }}={{ item }}"
+    state: present
+    allow_downgrade: yes
+  with_items: "{{ foobar.versions[1] }}"
+
+- name: Install a specific package version - "{{ foobar.package_name }}={{ foobar.versions[2] }}"
+  apt:
+    name: "{{ foobar.package_name }}={{ item }}"
+    state: present
+    allow_downgrade: yes
+  with_items: "{{ foobar.versions[2] }}"
+
+- name: remove package foobar
+  apt:
+    name: foobar
+    state: absent
+
 # check policy_rc_d parameter
 
 - name: Install unscd but forbid service start

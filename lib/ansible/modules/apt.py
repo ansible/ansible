@@ -496,14 +496,19 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
     policy.read_pinfile(apt_pkg.config.find_file("Dir::Etc::preferences"))
     policy.read_pindir(apt_pkg.config.find_file("Dir::Etc::preferencesparts"))
 
+    pkg = cache[pkgname]
     if release:
         # 990 is the priority used in `apt-get -t`
         policy.create_pin('Release', pkgname, release, 990)
     if version_cmp == "=":
         # Installing a specific version from command line overrides all pinning
         # We don't mimmic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
+        try:
+            pkgver = next(v1 for v1 in pkg.version_list if v1.ver_str == version)
+            policy.set_priority(pkgver, 0)
+        except StopIteration:
+            pass
         policy.create_pin('Version', pkgname, version, 1001)
-    pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
         return None
