@@ -51,6 +51,8 @@ def get_options(optlist):
 
     opts = []
     for opt in optlist:
+        if opt.help == argparse.SUPPRESS:
+            continue
         res = {
             'desc': opt.help,
             'options': opt.option_strings
