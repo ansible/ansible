@@ -11,6 +11,7 @@ __metaclass__ = type
 from ansible.cli import CLI
 
 import argparse
+import functools
 import json
 import os.path
 import pathlib
@@ -94,6 +95,7 @@ def with_collection_artifacts_manager(wrapped_method):
     the related temporary directory auto-cleanup around the target
     method invocation.
     """
+    @functools.wraps(wrapped_method)
     def method_wrapper(*args, **kwargs):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
@@ -1039,6 +1041,7 @@ class GalaxyCLI(CLI):
 
     @with_collection_artifacts_manager
     def execute_download(self, artifacts_manager=None):
+        """Download collections and their dependencies as a tarball for an offline install."""
         collections = context.CLIARGS['args']
         no_deps = context.CLIARGS['no_deps']
         download_path = context.CLIARGS['download_path']
@@ -1270,6 +1273,7 @@ class GalaxyCLI(CLI):
 
     @with_collection_artifacts_manager
     def execute_verify(self, artifacts_manager=None):
+        """Compare checksums with the collection(s) found on the server and the installed copy. This does not verify dependencies."""
 
         collections = context.CLIARGS['args']
         search_paths = AnsibleCollectionConfig.collection_paths
@@ -1307,8 +1311,6 @@ class GalaxyCLI(CLI):
         You can pass in a list (roles or collections) or use the file
         option listed below (these are mutually exclusive). If you pass in a list, it
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
-
-        :param artifacts_manager: Artifacts manager.
         """
         install_items = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
