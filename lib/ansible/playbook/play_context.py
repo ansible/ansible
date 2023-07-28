@@ -189,7 +189,7 @@ class PlayContext(Base):
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
-        self.private_key_file_passphrase = context.CLIARGS.get('private_key_file_passphrase') # Else default
+        self.private_key_file_passphrase = context.CLIARGS.get('private_key_file_passphrase')  # Else default
         self._internal_verbosity = context.CLIARGS.get('verbosity')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
