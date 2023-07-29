@@ -52,6 +52,7 @@
     source: 0.0.0.0
     destination: 0.0.0.0
     jump: DROP
+    comment: "FOOBAR-CHAIN RULE"
 
 - name: get the state of the iptable rules after rule is added to foobar chain
   become: true
@@ -62,7 +63,7 @@
   assert:
     that:
       - result is not failed
-      - '"DROP       all  --  0.0.0.0              0.0.0.0" in result.stdout'
+      - '"FOOBAR-CHAIN RULE" in result.stdout'
 
 - name: flush the foobar chain
   become: true
@@ -87,4 +88,3 @@
     that:
       - result is not failed
       - '"FOOBAR-CHAIN" not in result.stdout'
-      - '"FOOBAR-RULE" not in result.stdout'
