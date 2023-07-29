@@ -1,2 +1,2 @@
 bugfixes:
-  - iptables - fix iptables chain creation so it behaves like the command line utility (https://github.com/ansible/ansible/issues/80256).
+  - iptables - remove default rule creation when creating iptables chain to be more similar to the command line utility (https://github.com/ansible/ansible/issues/80256).
