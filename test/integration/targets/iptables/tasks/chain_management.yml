@@ -45,6 +45,31 @@
       - result is not failed
       - '"FOOBAR-CHAIN" in result.stdout'
 
+- name: add rule to foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    source: 0.0.0.0
+    destination: 0.0.0.0
+    jump: DROP
+
+- name: get the state of the iptable rules after rule is added to foobar chain
+  become: true
+  shell: "/usr/sbin/iptables -L"
+  register: result
+
+- name: assert rule is present in foobar chain
+  assert:
+    that:
+      - result is not failed
+      - '"DROP       all  --  0.0.0.0              0.0.0.0" in result.stdout'
+
+- name: flush the foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    flush: true
+
 - name: delete the foobar chain
   become: true
   iptables:
