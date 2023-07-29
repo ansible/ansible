@@ -362,6 +362,7 @@ class ConfigCLI(CLI):
         return sections
 
     def execute_init(self):
+        """Create initial configuration"""
 
         data = []
         config_entries = self._list_entries_from_args()
