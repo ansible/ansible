@@ -65,7 +65,7 @@ class InventoryCLI(CLI):
     def init_parser(self):
         super(InventoryCLI, self).init_parser(
             usage='usage: %prog [options] [host|group]',
-            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format')
+            desc='Show Ansible inventory information, by default it uses the inventory script JSON format')
 
         opt_help.add_inventory_options(self.parser)
         opt_help.add_vault_options(self.parser)
