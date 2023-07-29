@@ -1,0 +1,8 @@
+bugfixes:
+  - The ``ansible-config init`` command now has a documentation description.
+  - The ``ansible-galaxy collection download`` command now has a documentation description.
+  - The ``ansible-galaxy collection verify`` command now has a documentation description.
+  - The ``ansible-inventory`` command command now has a documentation description (previously used as the epilog).
+  - The ``ansible-galaxy collection install`` command documentation is now visible (previously hidden by a decorator).
+  - The ``ansible-galaxy role install`` command documentation is now visible (previously hidden by a decorator).
+  - Fix ``ansible-config init`` man page option indentation.
