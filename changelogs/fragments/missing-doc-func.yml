@@ -1,0 +1,2 @@
+bugfixes:
+  - When generating man pages, use ``func`` to find the command function instead of looking it up by the command name.
