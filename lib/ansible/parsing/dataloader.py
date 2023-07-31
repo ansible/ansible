@@ -72,7 +72,7 @@ class DataLoader:
         self.set_vault_secrets(None)
 
     # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
-    def set_vault_secrets(self, vault_secrets: t.Optional[list[tuple[str, PromptVaultSecret]]]):
+    def set_vault_secrets(self, vault_secrets: list[tuple[str, PromptVaultSecret]] | None) -> None:
         self._vault.secrets = vault_secrets
 
     def load(self, data: str, file_name: str = '<string>', show_content: bool = True, json_only: bool = False) -> t.Any:
@@ -126,7 +126,7 @@ class DataLoader:
         path = self.path_dwim(path)
         return is_executable(path)
 
-    def _decrypt_if_vault_data(self, b_vault_data: bytes, b_file_name: t.Optional[bytes] = None) -> tuple[bytes, bool]:
+    def _decrypt_if_vault_data(self, b_vault_data: bytes, b_file_name: bytes | None = None) -> tuple[bytes, bool]:
         '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
 
         if not is_encrypted(b_vault_data):
@@ -172,7 +172,7 @@ class DataLoader:
         ''' returns the current basedir '''
         return self._basedir
 
-    def set_basedir(self, basedir: str):
+    def set_basedir(self, basedir: str) -> None:
         ''' sets the base directory, used to find files when a relative path is given '''
 
         if basedir is not None:
@@ -342,7 +342,7 @@ class DataLoader:
 
         return result
 
-    def _create_content_tempfile(self, content: t.Union[str, bytes]) -> str:
+    def _create_content_tempfile(self, content: str | bytes) -> str:
         ''' Create a tempfile containing defined content '''
         fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
@@ -396,7 +396,7 @@ class DataLoader:
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_native(real_path), to_native(e)), orig_exc=e)
 
-    def cleanup_tmp_file(self, file_path: str):
+    def cleanup_tmp_file(self, file_path: str) -> None:
         """
         Removes any temporary files created from a previous call to
         get_real_file. file_path must be the path returned from a
@@ -406,7 +406,7 @@ class DataLoader:
             os.unlink(file_path)
             self._tempfiles.remove(file_path)
 
-    def cleanup_all_tmp_files(self):
+    def cleanup_all_tmp_files(self) -> None:
         """
         Removes all temporary files that DataLoader has created
         NOTE: not thread safe, forks also need special handling see __init__ for details.
@@ -417,7 +417,7 @@ class DataLoader:
             except Exception as e:
                 display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
-    def find_vars_files(self, path: str, name: str, extensions: t.Optional[list[str]] = None, allow_dir: bool = True) -> list[str]:
+    def find_vars_files(self, path: str, name: str, extensions: list[str] | None = None, allow_dir: bool = True) -> list[str]:
         """
         Find vars files in a given path with specified name. This will find
         files in a dir named <name>/ or a file called <name> ending in known
