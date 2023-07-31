@@ -1,0 +1,2 @@
+bugfixes:
+  - man page build - Sub commands of ``ansible-galaxy role`` and ``ansible-galaxy collection`` are now documented.
