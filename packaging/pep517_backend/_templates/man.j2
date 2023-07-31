@@ -1,6 +1,5 @@
-{% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
-{{name}}
-{{ '=' * ( name|length|int ) }}
+{{ cli_name }}
+{{ '=' * ( cli_name|length|int ) }}
 
 {{ '-' * ( short_desc|default('')|string|length|int ) }}
 {{short_desc|default('')}}
@@ -14,7 +13,7 @@
 
 SYNOPSIS
 --------
-{{ usage|replace('%prog', name) }}
+{{ usage|replace('%prog', cli_name) }}
 
 
 DESCRIPTION
@@ -120,7 +119,7 @@ Ansible is released under the terms of the GPLv3 license.
 SEE ALSO
 --------
 
-{% for other in cli_list|sort %}{% if other != cli %}**ansible{% if other != 'adhoc' %}-{{other}}{% endif %}** (1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+{% for other in cli_bin_name_list|sort %}{% if other != cli_name %}**{{ other }}** (1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
 
 Extensive documentation is available in the documentation site:
 <https://docs.ansible.com>.
