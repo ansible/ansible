@@ -478,6 +478,13 @@
   vars:
     msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
 
+- name: try to use bcrypt
+  debug:
+    msg: "{{ 'somestring'|password_hash('bcrypt') }}"
+  register: crypt_bcrypt
+  # Some implementations of crypt do not fail outright and return some short value.
+  failed_when: crypt_bcrypt is failed or (crypt_bcrypt.msg|length|int) != 60
+
 - name: Verify to_uuid throws on weird namespace
   set_fact:
     foo: '{{"hey"|to_uuid(namespace=22)}}'

@@ -128,9 +128,10 @@ class CryptHash(BaseHash):
         return ret
 
     def _rounds(self, rounds):
-        if rounds == self.algo_data.implicit_rounds:
+        if rounds == self.algo_data.implicit_rounds and self.algorithm != 'bcrypt':
             # Passlib does not include the rounds if it is the same as implicit_rounds.
             # Make crypt lib behave the same, by not explicitly specifying the rounds in that case.
+            # Exclude bcrypt, which requires 2 digits for the salt.
             return None
         else:
             return rounds
@@ -148,7 +149,10 @@ class CryptHash(BaseHash):
             saltstring = "$%s" % ident
 
         if rounds:
-            saltstring += "$rounds=%d" % rounds
+            if self.algorithm == 'bcrypt':
+                saltstring += "$%d" % rounds
+            else:
+                saltstring += "$rounds=%d" % rounds
 
         saltstring += "$%s" % salt
 
