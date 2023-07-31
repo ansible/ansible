@@ -1026,7 +1026,7 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'onestatus'))
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1046,7 +1046,7 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'rcvar'))
         try:
             rcvars = shlex.split(stdout, comments=True)
         except Exception:
@@ -1111,7 +1111,7 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, self.action))
 
         if self.sleep:
             time.sleep(self.sleep)
