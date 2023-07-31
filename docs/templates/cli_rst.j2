@@ -158,4 +158,4 @@ Ansible is released under the terms of the GPLv3+ License.
 See also
 ========
 
-{% for other in cli_bin_name_list|sort %}:manpage:`{{other}}(1)`,  {% endfor %}
+{% for other in cli_bin_name_list|sort %}{% if other != cli_name %}:manpage:`{{other}}(1)`{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
