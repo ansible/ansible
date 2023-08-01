@@ -1280,7 +1280,7 @@ def build(allow_dirty: bool = False) -> None:
         git("worktree", "add", "-d", temp_dir)
 
         try:
-            run("python", "-m", "build", "--config-setting=--build-manpages", env=env, cwd=temp_dir)
+            run("python", "-m", "build", env=env, cwd=temp_dir)
 
             create_reproducible_sdist(get_sdist_path(version, dist_dir), sdist_file, commit_time)
             get_wheel_path(version, dist_dir).rename(wheel_file)
@@ -1314,19 +1314,11 @@ def test_sdist() -> None:
 
             sdist.extractall(temp_dir)
 
-        man1_dir = temp_dir / sdist_file.with_suffix("").with_suffix("").name / "docs" / "man" / "man1"
-        man1_pages = sorted(man1_dir.glob("*.1"))
-
-        if not man1_pages:
-            raise ApplicationError(f"No man pages found in the sdist at: {man1_dir.relative_to(temp_dir)}")
-
         pyc_glob = "*.pyc*"
         pyc_files = sorted(path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob))
 
         if pyc_files:
             raise ApplicationError(f"Found {len(pyc_files)} '{pyc_glob}' file(s): {', '.join(map(str, pyc_files))}")
-
-        display.show(f"Found man1 pages: {', '.join([path.name for path in man1_pages])}")
 
     test_built_artifact(sdist_file)
 
