@@ -47,10 +47,6 @@ def assemble_files_to_ship(complete_file_list):
 
     # These files are generated and then intentionally added to the sdist
 
-    # Manpages
-    ignore_script = ('ansible-connection', 'ansible-test')
-    script_names = [os.path.basename(path) for path in complete_file_list if path.startswith('bin/')]
-
     # Misc
     misc_generated_files = [
         'PKG-INFO',
