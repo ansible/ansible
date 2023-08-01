@@ -84,6 +84,6 @@ and has contributions from over 5000 users (and growing). Thanks everyone!
 
 ## License
 
-GNU General Public License v3.0 or later
+GNU General Public License v3.0 or later.
 
 See [COPYING](COPYING) to see the full text.
