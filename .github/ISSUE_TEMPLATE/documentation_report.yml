@@ -196,7 +196,7 @@ body:
 
 
       [ansibot help]:
-      /mkrizek/ansibotmini/blob/main/README.md
+      /ansible/ansibotmini#ansibotmini
 
 
 - type: checkboxes
