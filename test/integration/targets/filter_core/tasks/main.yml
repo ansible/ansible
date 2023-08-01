@@ -478,7 +478,7 @@
   vars:
     msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
 
-- name: try to use bcrypt
+- name: test password_hash can work with bcrypt without passlib installed
   debug:
     msg: "{{ 'somestring'|password_hash('bcrypt') }}"
   register: crypt_bcrypt
