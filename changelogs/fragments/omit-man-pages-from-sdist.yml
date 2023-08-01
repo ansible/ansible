@@ -1,0 +1,4 @@
+minor_changes:
+  - The ``ansible-core`` sdist no longer contains pre-generated man pages.
+    Instead, a ``packaging/cli-doc/build.py`` script is included in the sdist.
+    This script can generate man pages and standalone RST documentation for ``ansible-core`` CLI programs.

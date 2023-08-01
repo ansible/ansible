@@ -1,5 +1,4 @@
 build
-docutils  # required for man page builds by the in-tree PEP 517 backend
 jinja2
 pyyaml
 resolvelib < 1.1.0

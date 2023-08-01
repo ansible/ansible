@@ -1,4 +1,3 @@
 [build-system]
 requires = ["setuptools >= 66.1.0"]  # minimum setuptools version supporting Python 3.12
-backend-path = ["packaging"]  # requires 'Pip>=20' or 'pep517>=0.6.0'
-build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
+build-backend = "setuptools.build_meta"

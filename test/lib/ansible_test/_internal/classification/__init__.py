@@ -742,8 +742,12 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
-            if path.startswith('packaging/pep517_backend/'):
-                return packaging
+            packaging_target = f'packaging_{os.path.splitext(path.split(os.path.sep)[1])[0]}'
+
+            if packaging_target in self.integration_targets_by_name:
+                return {
+                    'integration': packaging_target,
+                }
 
             return minimal
 
