@@ -183,6 +183,7 @@ class PasslibHash(BaseHash):
 
         if not PASSLIB_AVAILABLE:
             raise AnsibleError("passlib must be installed and usable to hash with '%s'" % algorithm, orig_exc=PASSLIB_E)
+        display.vv("Using passlib to hash input with '%s'" % algorithm)
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
