@@ -1,6 +1,5 @@
 include COPYING
 include requirements.txt
-recursive-include docs *
 recursive-include licenses *.txt
 recursive-include packaging *.py *.j2
 recursive-include test/integration *
