@@ -11,6 +11,7 @@ resolvelib==1.0.1
 rstcheck==5.0.0
 semantic-version==2.10.0
 setuptools==66.1.0
+tomli==2.0.1
 types-docutils==0.18.3
 typing_extensions==4.7.1
 wheel==0.41.0
