@@ -48,6 +48,7 @@ from struct import unpack, pack
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
+from ansible.executor.task_queue_manager import FinalQueue
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
@@ -269,7 +270,7 @@ def setupterm():
 
 class Display(metaclass=Singleton):
 
-    def __init__(self, verbosity=0):
+    def __init__(self, verbosity: int = 0) -> None:
 
         self._final_q = None
 
@@ -321,7 +322,7 @@ class Display(metaclass=Singleton):
 
         self.setup_curses = False
 
-    def _replacing_warning_handler(self, exception):
+    def _replacing_warning_handler(self, exception: UnicodeEncodeError) -> tuple[str, int]:
         # TODO: This should probably be deferred until after the current display is completed
         #       this will require some amount of new functionality
         self.deprecated(
@@ -330,7 +331,7 @@ class Display(metaclass=Singleton):
         )
         return '?', exception.end
 
-    def set_queue(self, queue):
+    def set_queue(self, queue: FinalQueue) -> None:
         """Set the _final_q on Display, so that we know to proxy display over the queue
         instead of directly writing to stdout/stderr from forks
 
@@ -340,7 +341,7 @@ class Display(metaclass=Singleton):
             raise RuntimeError('queue cannot be set in parent process')
         self._final_q = queue
 
-    def set_cowsay_info(self):
+    def set_cowsay_info(self) -> None:
         if C.ANSIBLE_NOCOWS:
             return
 
@@ -352,7 +353,15 @@ class Display(metaclass=Singleton):
                     self.b_cowsay = b_cow_path
 
     @proxy_display
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
+    def display(
+        self,
+        msg: str,
+        color: str | None = None,
+        stderr: bool = False,
+        screen_only: bool = False,
+        log_only: bool = False,
+        newline: bool = True,
+    ) -> None:
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -414,32 +423,32 @@ class Display(metaclass=Singleton):
             # actually log
             logger.log(lvl, msg2)
 
-    def v(self, msg, host=None):
+    def v(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=0)
 
-    def vv(self, msg, host=None):
+    def vv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=1)
 
-    def vvv(self, msg, host=None):
+    def vvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=2)
 
-    def vvvv(self, msg, host=None):
+    def vvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=3)
 
-    def vvvvv(self, msg, host=None):
+    def vvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=4)
 
-    def vvvvvv(self, msg, host=None):
+    def vvvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=5)
 
-    def debug(self, msg, host=None):
+    def debug(self, msg: str, host: str | None = None) -> None:
         if C.DEFAULT_DEBUG:
             if host is None:
                 self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
             else:
                 self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
-    def verbose(self, msg, host=None, caplevel=2):
+    def verbose(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
 
         to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
@@ -448,7 +457,14 @@ class Display(metaclass=Singleton):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None):
+    def get_deprecation_message(
+        self,
+        msg: str,
+        version: t.Any = None,
+        removed: bool = False,
+        date: t.Any = None,
+        collection_name: str | None = None,
+    ) -> str:
         ''' used to print out a deprecation message.'''
         msg = msg.strip()
         if msg and msg[-1] not in ['!', '?', '.']:
@@ -484,7 +500,13 @@ class Display(metaclass=Singleton):
         return message_text
 
     @proxy_display
-    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
+    def deprecated(self,
+        msg: str,
+        version: t.Any = None,
+        removed: bool = False,
+        date: t.Any = None,
+        collection_name: str | None = None,
+    ) -> None:
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
@@ -501,7 +523,7 @@ class Display(metaclass=Singleton):
             self._deprecations[message_text] = 1
 
     @proxy_display
-    def warning(self, msg, formatted=False):
+    def warning(self, msg: str, formatted: bool = False) -> None:
 
         if not formatted:
             new_msg = "[WARNING]: %s" % msg
@@ -514,11 +536,11 @@ class Display(metaclass=Singleton):
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
-    def system_warning(self, msg):
+    def system_warning(self, msg: str) -> None:
         if C.SYSTEM_WARNINGS:
             self.warning(msg)
 
-    def banner(self, msg, color=None, cows=True):
+    def banner(self, msg: str, color: str | None = None, cows: bool = True) -> None:
         '''
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
         '''
@@ -541,7 +563,7 @@ class Display(metaclass=Singleton):
         stars = u"*" * star_len
         self.display(u"\n%s %s" % (msg, stars), color=color)
 
-    def banner_cowsay(self, msg, color=None):
+    def banner_cowsay(self, msg: str, color: str | None = None) -> None:
         if u": [" in msg:
             msg = msg.replace(u"[", u"")
             if msg.endswith(u"]"):
@@ -558,7 +580,7 @@ class Display(metaclass=Singleton):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
-    def error(self, msg, wrap_text=True):
+    def error(self, msg: str, wrap_text: bool = True) -> None:
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
@@ -570,14 +592,24 @@ class Display(metaclass=Singleton):
             self._errors[new_msg] = 1
 
     @staticmethod
-    def prompt(msg, private=False):
+    def prompt(msg: str, private: bool = False) -> str:
         if private:
             return getpass.getpass(msg)
         else:
             return input(msg)
 
-    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
-
+    def do_var_prompt(
+        self,
+        varname: str,
+        private: bool = True,
+        prompt: str | None = None,
+        encrypt: str | None = None,
+        confirm: bool = False,
+        salt_size: int | None = None,
+        salt: str | None = None,
+        default: t.Any = None,
+        unsafe: bool = False,
+    ):
         result = None
         if sys.__stdin__.isatty():
 
@@ -619,14 +651,21 @@ class Display(metaclass=Singleton):
             result = wrap_var(result)
         return result
 
-    def _set_column_width(self):
+    def _set_column_width(self) -> None:
         if os.isatty(1):
             tty_size = unpack('HHHH', fcntl.ioctl(1, termios.TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
             tty_size = 0
         self.columns = max(79, tty_size - 1)
 
-    def prompt_until(self, msg, private=False, seconds=None, interrupt_input=None, complete_input=None):
+    def prompt_until(
+        self,
+        msg: str,
+        private: bool = False,
+        seconds: int | None = None,
+        interrupt_input: t.Iterable[bytes] | None = None,
+        complete_input: t.Iterable[bytes] | None = None,
+    ) -> bytes | None:
         if self._final_q:
             from ansible.executor.process.worker import current_worker
             self._final_q.send_prompt(
@@ -678,12 +717,11 @@ class Display(metaclass=Singleton):
 
     def _read_non_blocking_stdin(
         self,
-        echo=False,  # type: bool
-        seconds=None,  # type: int
-        interrupt_input=None,  # type: t.Iterable[bytes]
-        complete_input=None,  # type: t.Iterable[bytes]
-    ):  # type: (...) -> bytes
-
+        echo: bool = False,
+        seconds: int | None = None,
+        interrupt_input: t.Iterable[bytes] | None = None,
+        complete_input: t.Iterable[bytes] | None = None,
+    ) -> bytes:
         if self._final_q:
             raise NotImplementedError
 
@@ -730,7 +768,7 @@ class Display(metaclass=Singleton):
         return result_string
 
     @property
-    def _stdin(self):
+    def _stdin(self) -> t.BinaryIO | None:
         if self._final_q:
             raise NotImplementedError
         try:
@@ -739,20 +777,20 @@ class Display(metaclass=Singleton):
             return None
 
     @property
-    def _stdin_fd(self):
+    def _stdin_fd(self) -> int | None:
         try:
             return self._stdin.fileno()
         except (ValueError, AttributeError):
             return None
 
     @property
-    def _stdout(self):
+    def _stdout(self) -> t.BinaryIO:
         if self._final_q:
             raise NotImplementedError
         return sys.stdout.buffer
 
     @property
-    def _stdout_fd(self):
+    def _stdout_fd(self) -> int | None:
         try:
             return self._stdout.fileno()
         except (ValueError, AttributeError):
