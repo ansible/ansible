@@ -281,12 +281,13 @@ class Display(metaclass=Singleton):
         self.verbosity = verbosity
 
         # list of all deprecation messages to prevent duplicate display
-        self._deprecations = {}
-        self._warns = {}
-        self._errors = {}
+        self._deprecations: dict[str, int] = {}
+        self._warns: dict[str, int] = {}
+        self._errors: dict[str, int] = {}
 
-        self.b_cowsay = None
+        self.b_cowsay: bytes | None = None
         self.noncow = C.ANSIBLE_COW_SELECTION
+        self.cows_available: set[str] = set()
 
         self.set_cowsay_info()
 
@@ -301,7 +302,7 @@ class Display(metaclass=Singleton):
                     self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(self.cows_available)
             except Exception:
                 # could not execute cowsay for some reason
-                self.b_cowsay = False
+                self.b_cowsay = None
 
         self._set_column_width()
 
@@ -321,7 +322,7 @@ class Display(metaclass=Singleton):
 
         self.setup_curses = False
 
-    def _replacing_warning_handler(self, exception: UnicodeEncodeError) -> tuple[str, int]:
+    def _replacing_warning_handler(self, exception: UnicodeError) -> tuple[str | bytes, int]:
         # TODO: This should probably be deferred until after the current display is completed
         #       this will require some amount of new functionality
         self.deprecated(
@@ -499,7 +500,8 @@ class Display(metaclass=Singleton):
         return message_text
 
     @proxy_display
-    def deprecated(self,
+    def deprecated(
+        self,
         msg: str,
         version: t.Any = None,
         removed: bool = False,

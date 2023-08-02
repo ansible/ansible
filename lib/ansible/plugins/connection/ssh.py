@@ -528,7 +528,7 @@ def _ssh_retry(
                     if self._play_context.no_log:
                         display.vvv(u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
                     else:
-                        display.vvv(return_tuple, host=self.host)
+                        display.vvv(str(return_tuple), host=self.host)
                     # 0 = success
                     # 1-254 = remote command return code
                     # 255 could be a failure from the ssh command itself
