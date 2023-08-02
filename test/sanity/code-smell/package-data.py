@@ -4,12 +4,17 @@ import contextlib
 import fnmatch
 import glob
 import os
+import pathlib
 import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+
+import packaging.version
+
+from ansible.release import __version__
 
 
 def assemble_files_to_ship(complete_file_list):
@@ -56,21 +61,7 @@ def assemble_files_to_ship(complete_file_list):
         'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
         '.cherry_picker.toml',
         '.mailmap',
-        # Generated as part of a build step
-        'docs/docsite/rst/conf.py',
-        'docs/docsite/rst/index.rst',
-        'docs/docsite/rst/dev_guide/index.rst',
         # Possibly should be included
-        'examples/scripts/uptime.py',
-        'examples/scripts/my_test.py',
-        'examples/scripts/my_test_info.py',
-        'examples/scripts/my_test_facts.py',
-        'examples/DOCUMENTATION.yml',
-        'examples/play.yml',
-        'examples/hosts.yaml',
-        'examples/hosts.yml',
-        'examples/inventory_script_schema.json',
-        'examples/plugin_filters.yml',
         'hacking/env-setup',
         'hacking/env-setup.fish',
         'MANIFEST',
@@ -84,21 +75,12 @@ def assemble_files_to_ship(complete_file_list):
 
     # These files are generated and then intentionally added to the sdist
 
-    # Manpages
-    ignore_script = ('ansible-connection', 'ansible-test')
-    manpages = ['docs/man/man1/ansible.1']
-    for dirname, dummy, files in os.walk('bin'):
-        for filename in files:
-            if filename in ignore_script:
-                continue
-            manpages.append('docs/man/man1/%s.1' % filename)
-
     # Misc
     misc_generated_files = [
         'PKG-INFO',
     ]
 
-    shipped_files = manpages + misc_generated_files
+    shipped_files = misc_generated_files
 
     for path in complete_file_list:
         if path not in ignore_files:
@@ -145,7 +127,7 @@ def clean_repository(file_list):
     """Copy the repository to clean it of artifacts"""
     # Create a tempdir that will be the clean repo
     with tempfile.TemporaryDirectory() as repo_root:
-        directories = set((repo_root + os.path.sep,))
+        directories = {repo_root + os.path.sep}
 
         for filename in file_list:
             # Determine if we need to create the directory
@@ -170,8 +152,13 @@ def clean_repository(file_list):
 
 def create_sdist(tmp_dir):
     """Create an sdist in the repository"""
+    # Make sure a changelog exists for this version when testing from devel.
+    # When testing from a stable branch the changelog will already exist.
+    version = packaging.version.Version(__version__)
+    pathlib.Path(f'changelogs/CHANGELOG-v{version.major}.{version.minor}.rst').touch()
+
     create = subprocess.run(
-        ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
+        [sys.executable, '-m', 'build', '--sdist', '--no-isolation', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
@@ -179,9 +166,10 @@ def create_sdist(tmp_dir):
     )
 
     stderr = create.stderr
+    stdout = create.stdout
 
     if create.returncode != 0:
-        raise Exception('make snapshot failed:\n%s' % stderr)
+        raise Exception('make snapshot failed:\n%s' % stderr + '\n' + stdout)
 
     # Determine path to sdist
     tmp_dir_files = os.listdir(tmp_dir)
@@ -341,33 +329,12 @@ def check_installed_files_are_wanted(install_dir, to_install_files):
     return results
 
 
-def _find_symlinks():
-    symlink_list = []
-    for dirname, directories, filenames in os.walk('.'):
-        for filename in filenames:
-            path = os.path.join(dirname, filename)
-            # Strip off "./" from the front
-            path = path[2:]
-            if os.path.islink(path):
-                symlink_list.append(path)
-
-    return symlink_list
-
-
 def main():
     """All of the files in the repository"""
-    complete_file_list = []
-    for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        complete_file_list.append(path)
+    complete_file_list = sys.argv[1:] or sys.stdin.read().splitlines()
 
-    # ansible-test isn't currently passing symlinks to us so construct those ourselves for now
-    for filename in _find_symlinks():
-        if filename not in complete_file_list:
-            # For some reason ansible-test is passing us lib/ansible/module_utils/ansible_release.py
-            # which is a symlink even though it doesn't pass any others
-            complete_file_list.append(filename)
-
-    # We may run this after docs sanity tests so get a clean repository to run in
+    # Limit visible files to those reported by ansible-test.
+    # This avoids including files which are not committed to git.
     with clean_repository(complete_file_list) as clean_repo_dir:
         os.chdir(clean_repo_dir)
 

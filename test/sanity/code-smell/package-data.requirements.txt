@@ -2,13 +2,16 @@
 # pre-build requirement: pyyaml == 6.0
 # pre-build constraint: Cython < 3.0
 antsibull-changelog==0.16.0
+build==0.10.0
 docutils==0.17.1
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 packaging==21.3
+pyproject_hooks==1.0.0
 pyparsing==3.0.9
 PyYAML==6.0
 resolvelib==0.8.1
 rstcheck==3.5.0
 semantic-version==2.10.0
-straight.plugin==1.5.0
+setuptools==45.2.0
+tomli==2.0.1

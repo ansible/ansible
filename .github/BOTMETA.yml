@@ -59,20 +59,6 @@ files:
   .github/BOTMETA.yml:
     labels: botmeta
     support: core
-  docs/:
-    maintainers:
-    - acozine
-  docs/docsite/rst/community/:
-    maintainers:
-    - gundalow
-  docs/docsite/rst/dev_guide/:
-    maintainers:
-    - gundalow
-  docs/docsite/rst/network/:
-    labels: networking
-    maintainers:
-    - samccann
-  docs/docsite/rst/user_guide/windows: *id001
   hacking/report.py:
     notified: mattclay
   hacking/shippable/:
