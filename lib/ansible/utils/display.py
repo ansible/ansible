@@ -286,7 +286,6 @@ class Display(metaclass=Singleton):
 
         self.b_cowsay: bytes | None = None
         self.noncow = C.ANSIBLE_COW_SELECTION
-        self.cows_available: set[str] = set()
 
         self.set_cowsay_info()
 
@@ -296,7 +295,7 @@ class Display(metaclass=Singleton):
                 (out, err) = cmd.communicate()
                 if cmd.returncode:
                     raise Exception
-                self.cows_available = {to_text(c) for c in out.split()}  # set comprehension
+                self.cows_available: set[str] = {to_text(c) for c in out.split()}
                 if C.ANSIBLE_COW_ACCEPTLIST and any(C.ANSIBLE_COW_ACCEPTLIST):
                     self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(self.cows_available)
             except Exception:
