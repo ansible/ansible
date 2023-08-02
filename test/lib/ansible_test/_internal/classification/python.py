@@ -257,7 +257,6 @@ class ModuleUtilFinder(ast.NodeVisitor):
             # The mapping is a tuple consisting of a path pattern to match and a replacement path.
             # During analyis, any relative imports not covered here will result in warnings, which can be fixed by adding the appropriate entry.
             path_map = (
-                ('^hacking/build_library/build_ansible/', 'build_ansible/'),
                 ('^lib/ansible/', 'ansible/'),
                 ('^test/lib/ansible_test/_util/controller/sanity/validate-modules/', 'validate_modules/'),
                 ('^test/units/', 'test/units/'),

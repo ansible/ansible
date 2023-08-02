@@ -720,17 +720,6 @@ class PathMapper:
         if path.startswith('changelogs/'):
             return minimal
 
-        if path.startswith('docs/'):
-            return minimal
-
-        if path.startswith('examples/'):
-            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
-                return {
-                    'windows-integration': 'connection_winrm',
-                }
-
-            return minimal
-
         if path.startswith('hacking/'):
             return minimal
 
@@ -752,8 +741,12 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
-            if path.startswith('packaging/pep517_backend/'):
-                return packaging
+            packaging_target = f'packaging_{os.path.splitext(path.split(os.path.sep)[1])[0]}'
+
+            if packaging_target in self.integration_targets_by_name:
+                return {
+                    'integration': packaging_target,
+                }
 
             return minimal
 
