@@ -48,7 +48,6 @@ from struct import unpack, pack
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
-from ansible.executor.task_queue_manager import FinalQueue
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
@@ -331,7 +330,7 @@ class Display(metaclass=Singleton):
         )
         return '?', exception.end
 
-    def set_queue(self, queue: FinalQueue) -> None:
+    def set_queue(self, queue: "FinalQueue") -> None:
         """Set the _final_q on Display, so that we know to proxy display over the queue
         instead of directly writing to stdout/stderr from forks
 
