@@ -98,4 +98,4 @@
 - name: Check that module fails for non-existent package
   assert:
     that:
-      - "'Failed to find package' in result.stdout"
+      - "'Failed to find package' in result.msg"
