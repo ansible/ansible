@@ -91,7 +91,7 @@ from multiprocessing import dummy as threading
 from multiprocessing import TimeoutError
 
 
-COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 120
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 180
 
 
 def publish_collection(module, collection):
