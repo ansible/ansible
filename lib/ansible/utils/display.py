@@ -55,6 +55,10 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 
+if t.TYPE_CHECKING:
+    # avoid circular import at runtime
+    from ansible.executor.task_queue_manager import FinalQueue
+
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
 # restype is assumed to be c_int
@@ -270,7 +274,7 @@ class Display(metaclass=Singleton):
 
     def __init__(self, verbosity: int = 0) -> None:
 
-        self._final_q = None
+        self._final_q: "FinalQueue" | None = None
 
         # NB: this lock is used to both prevent intermingled output between threads and to block writes during forks.
         # Do not change the type of this lock or upgrade to a shared lock (eg multiprocessing.RLock).
