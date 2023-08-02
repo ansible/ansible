@@ -1,0 +1,3 @@
+minor_changes:
+  - The ``docs`` and ``examples`` directories are no longer included in the ``ansible-core`` sdist.
+    These directories have been moved to the https://github.com/ansible/ansible-documentation repository.
