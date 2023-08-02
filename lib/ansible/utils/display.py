@@ -67,7 +67,7 @@ MOVE_TO_BOL = b'\r'
 CLEAR_TO_EOL = b'\x1b[K'
 
 
-def get_text_width(text):
+def get_text_width(text: str) -> int:
     """Function that utilizes ``wcswidth`` or ``wcwidth`` to determine the
     number of columns used to display a text string.
 
@@ -192,7 +192,7 @@ b_COW_PATHS = (
 )
 
 
-def _synchronize_textiowrapper(tio, lock):
+def _synchronize_textiowrapper(tio: t.TextIO, lock: threading.RLock):
     # Ensure that a background thread can't hold the internal buffer lock on a file object
     # during a fork, which causes forked children to hang. We're using display's existing lock for
     # convenience (and entering the lock before a fork).
@@ -207,11 +207,11 @@ def _synchronize_textiowrapper(tio, lock):
     buffer = tio.buffer
 
     # monkeypatching the underlying file-like object isn't great, but likely safer than subclassing
-    buffer.write = _wrap_with_lock(buffer.write, lock)
-    buffer.flush = _wrap_with_lock(buffer.flush, lock)
+    setattr(buffer, "write", _wrap_with_lock(buffer.write, lock))
+    setattr(buffer, "flush", _wrap_with_lock(buffer.flush, lock))
 
 
-def setraw(fd, when=termios.TCSAFLUSH):
+def setraw(fd: int, when: int = termios.TCSAFLUSH) -> None:
     """Put terminal into a raw mode.
 
     Copied from ``tty`` from CPython 3.11.0, and modified to not remove OPOST from OFLAG
@@ -232,13 +232,12 @@ def setraw(fd, when=termios.TCSAFLUSH):
     termios.tcsetattr(fd, when, mode)
 
 
-def clear_line(stdout):
+def clear_line(stdout: t.BinaryIO) -> None:
     stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
     stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
 
 
-def setup_prompt(stdin_fd, stdout_fd, seconds, echo):
-    # type: (int, int, int, bool) -> None
+def setup_prompt(stdin_fd: int, stdout_fd: int, seconds: int, echo: bool) -> None:
     setraw(stdin_fd)
 
     # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
@@ -252,7 +251,7 @@ def setup_prompt(stdin_fd, stdout_fd, seconds, echo):
         termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
 
 
-def setupterm():
+def setupterm() -> None:
     # Nest the try except since curses.error is not available if curses did not import
     try:
         curses.setupterm()
