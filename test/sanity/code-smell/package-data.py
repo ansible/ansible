@@ -28,12 +28,8 @@ def assemble_files_to_ship(complete_file_list):
         '.github/*',
         '.github/*/*',
         'changelogs/fragments/*',
-        'hacking/backport/*',
-        'hacking/azp/*',
-        'hacking/tests/*',
-        'hacking/ticket_stubs/*',
-        'test/sanity/code-smell/botmeta.*',
-        'test/sanity/code-smell/release-names.*',
+        'hacking/*',
+        'hacking/*/*',
         'test/results/.tmp/*',
         'test/results/.tmp/*/*',
         'test/results/.tmp/*/*/*',
@@ -45,31 +41,8 @@ def assemble_files_to_ship(complete_file_list):
         # Developer-only tools
         'changelogs/README.md',
         'changelogs/config.yaml',
-        'hacking/README.md',
-        'hacking/ansible-profile',
-        'hacking/cgroup_perf_recap_graph.py',
-        'hacking/create_deprecated_issues.py',
-        'hacking/deprecated_issue_template.md',
-        'hacking/fix_test_syntax.py',
-        'hacking/get_library.py',
-        'hacking/metadata-tool.py',
-        'hacking/report.py',
-        'hacking/return_skeleton_generator.py',
-        'hacking/test-module',
-        'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
-        'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
         '.cherry_picker.toml',
         '.mailmap',
-        # Possibly should be included
-        'hacking/env-setup',
-        'hacking/env-setup.fish',
-        'MANIFEST',
-        'setup.cfg',
-        # docs for test files not included in sdist
-        'docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst',
-        'docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst',
-        'docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst',
-        'docs/docsite/rst/dev_guide/testing/sanity/release-names.rst',
     ))
 
     # These files are generated and then intentionally added to the sdist
@@ -102,8 +75,6 @@ def assemble_files_to_install(complete_file_list):
     """
     ignore_patterns = (
         # Tests excluded from sdist
-        'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
-        'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
     )
 
     pkg_data_files = []
