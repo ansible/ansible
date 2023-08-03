@@ -230,10 +230,9 @@ options:
     authorization:
         description:
             - Sets the authorization of the user.
-            - Does nothing when used with other platforms.
             - Can set multiple authorizations using comma separation.
             - To delete all authorizations, use O(authorization='').
-            - Currently supported on Illumos/Solaris.
+            - Currently supported on Illumos/Solaris. Does nothing when used with other platforms.
         type: str
         version_added: "2.8"
     role:
