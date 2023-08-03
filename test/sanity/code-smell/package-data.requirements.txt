@@ -15,3 +15,4 @@ rstcheck==3.5.0
 semantic-version==2.10.0
 setuptools==45.2.0
 tomli==2.0.1
+wheel==0.41.0
