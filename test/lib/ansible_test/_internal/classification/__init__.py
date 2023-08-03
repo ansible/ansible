@@ -840,7 +840,6 @@ class PathMapper:
                 'pyproject.toml',
                 'requirements.txt',
                 'setup.cfg',
-                'setup.py',
             ):
                 return packaging
 

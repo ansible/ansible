@@ -19,8 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from sys import version_info as _python_version_tuple
+_IS_PY2 = _python_version_tuple[0] == 2
+
 # make vendored top-level modules accessible EARLY
-import ansible._vendor
+if _IS_PY2:
+    import ansible._vendor
+else:
+    from . import _vendor
 
 # Note: Do not add any code to this file.  The ansible module may be
 # a namespace package when using Ansible-2.1+ Anything in this file may not be
@@ -28,4 +34,7 @@ import ansible._vendor
 #
 # This is for backwards compat.  Code should be ported to get these from
 # ansible.release instead of from here.
-from ansible.release import __version__, __author__
+if _IS_PY2:
+    from ansible.release import __version__, __author__
+else:
+    from .release import __version__, __author__

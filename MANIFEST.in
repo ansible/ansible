@@ -1,3 +1,9 @@
+exclude hacking/azp/*
+exclude hacking/backport/*
+exclude hacking/create-bulk-issues.py
+exclude hacking/report.py
+exclude hacking/return_skeleton_generator.py
+exclude hacking/tests/*
 include COPYING
 include bin/*
 include changelogs/CHANGELOG*.rst

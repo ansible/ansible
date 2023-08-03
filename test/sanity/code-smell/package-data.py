@@ -23,6 +23,7 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         '.cherry_picker.toml',
         '.git*',
         '.mailmap',
+        'bin/*',
         'changelogs/README.md',
         'changelogs/config.yaml',
         'changelogs/fragments/*',
@@ -42,7 +43,8 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
     )
 
     sdist_files.append('PKG-INFO')
-    sdist_files.extend(f'lib/ansible_core.egg-info/{name}' for name in egg_info)
+    sdist_files.append('setup.cfg')
+    sdist_files.extend(f'ansible_core.egg-info/{name}' for name in egg_info)
 
     return sdist_files
 
@@ -62,7 +64,6 @@ def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
         wheel_files.append(os.path.relpath(path, prefix))
 
     dist_info = (
-        'COPYING',
         'METADATA',
         'RECORD',
         'WHEEL',
@@ -70,7 +71,6 @@ def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
         'top_level.txt',
     )
 
-    wheel_files.append(f'ansible_core-{__version__}.data/scripts/ansible-test')
     wheel_files.extend(f'ansible_core-{__version__}.dist-info/{name}' for name in dist_info)
 
     return wheel_files
