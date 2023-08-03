@@ -140,7 +140,7 @@ class ConcreteArtifactsManager:
             url, sha256_hash, token = self._galaxy_collection_cache[collection]
         except KeyError as key_err:
             raise RuntimeError(
-                'The is no known source for {coll!s}'.
+                'There is no known source for {coll!s}'.
                 format(coll=collection),
             ) from key_err
 

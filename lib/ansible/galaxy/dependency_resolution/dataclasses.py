@@ -434,6 +434,9 @@ class _ComputedReqKindsMixin:
                 format(not_url=req_source.api_server),
             )
 
+        if _is_http_url(req_source) and req_type != 'url':
+            req_type = 'url'
+
         if req_type == 'dir' and req_source.endswith(os.path.sep):
             req_source = req_source.rstrip(os.path.sep)
 

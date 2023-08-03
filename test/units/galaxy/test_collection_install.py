@@ -297,6 +297,26 @@ def test_build_requirement_from_tar(collection_artifact):
     assert actual.src == to_text(collection_artifact[1])
     assert actual.ver == u'0.1.0'
 
+def test_build_requirement_from_tar_url(tmp_path_factory):
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
+    test_url = 'https://github.com/org/repo/sample.tar.gz'
+    expected = "Failed to download collection tar from '%s'" % to_native(test_url)
+
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': test_url, 'type': 'url'}, concrete_artifact_cm)
+
+
+def test_build_requirement_from_tar_url_wrong_type(tmp_path_factory):
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
+    test_url = 'https://github.com/org/repo/sample.tar.gz'
+    expected = "Failed to download collection tar from '%s'" % to_native(test_url)
+
+    with pytest.raises(AnsibleError, match=expected):
+        # Specified wrong collection type for http URL
+        Requirement.from_requirement_dict({'name': test_url, 'type': 'file'}, concrete_artifact_cm)
+
 
 def test_build_requirement_from_tar_fail_not_tar(tmp_path_factory):
     test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
