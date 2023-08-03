@@ -1,0 +1,2 @@
+bugfixes:
+  - vault and unvault filters now properly take vault_id parameter.
