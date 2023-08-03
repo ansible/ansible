@@ -17,7 +17,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=False):
+def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False):
 
     if not isinstance(secret, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
@@ -29,7 +29,7 @@ def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=Fals
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib()
     try:
-        vault = vl.encrypt(to_bytes(data), vs, vaultid, salt)
+        vault = vl.encrypt(to_bytes(data), vs, vault_id, salt)
     except UndefinedError:
         raise
     except Exception as e:
@@ -43,7 +43,7 @@ def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=Fals
     return vault
 
 
-def do_unvault(vault, secret, vaultid='filter_default'):
+def do_unvault(vault, secret, vault_id='filter_default'):
 
     if not isinstance(secret, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Secret passed is required to be as string, instead we got: %s" % type(secret))
@@ -53,7 +53,7 @@ def do_unvault(vault, secret, vaultid='filter_default'):
 
     data = ''
     vs = VaultSecret(to_bytes(secret))
-    vl = VaultLib([(vaultid, vs)])
+    vl = VaultLib([(vault_id, vs)])
     if isinstance(vault, AnsibleVaultEncryptedUnicode):
         vault.vault = vl
         data = vault.data
