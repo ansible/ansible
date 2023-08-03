@@ -47,4 +47,3 @@
           - vault|unvault(password) == data
           - vaulted_id|unvault('test1@secret', vault_id='test1')
           - vaulted_to_id|unvault('test1@secret', vault_id='test1')
-
