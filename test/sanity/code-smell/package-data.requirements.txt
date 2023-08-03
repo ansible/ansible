@@ -16,3 +16,4 @@ setuptools==66.1.0
 tomli==2.0.1
 types-docutils==0.18.3
 typing_extensions==4.5.0
+wheel==0.41.0
