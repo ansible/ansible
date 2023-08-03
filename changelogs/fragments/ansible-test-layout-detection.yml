@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the logic used to detect when ``ansible-test`` is running from source.
