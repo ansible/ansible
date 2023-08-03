@@ -1,4 +1,5 @@
-build
+build  # required to build sdist
+wheel  # required to build wheel
 jinja2
 pyyaml
 resolvelib < 1.1.0
