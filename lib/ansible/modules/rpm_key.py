@@ -48,6 +48,7 @@ options:
         - Timeout in seconds for URL requests
         type: int
         default: 10
+        version_added: 2.16
 extends_documentation_fragment:
     - action_common_attributes
 attributes:
