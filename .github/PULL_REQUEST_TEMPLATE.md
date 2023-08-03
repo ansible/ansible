@@ -13,10 +13,6 @@
 - Feature Pull Request
 - Test Pull Request
 
-##### COMPONENT NAME
-
-<!--- Write the short name of the module, plugin, task or feature below -->
-
 ##### ADDITIONAL INFORMATION
 
 <!--- Include additional information to help people understand the change here -->
