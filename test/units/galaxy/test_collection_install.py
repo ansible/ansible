@@ -311,7 +311,7 @@ def test_build_requirement_from_tar_url_wrong_type(tmp_path_factory):
     test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
     test_url = 'https://github.com/org/repo/sample.tar.gz'
-    expected = "Failed to download collection tar from '%s'" % to_native(test_url)
+    expected = "Unable to find Collection artifact file at '%s'." % to_native(test_url)
 
     with pytest.raises(AnsibleError, match=expected):
         # Specified wrong collection type for http URL
