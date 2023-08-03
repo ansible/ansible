@@ -128,7 +128,10 @@ class CryptHash(BaseHash):
         return ret
 
     def _rounds(self, rounds):
-        if rounds == self.algo_data.implicit_rounds:
+        if self.algorithm == 'bcrypt':
+            # crypt requires 2 digits for rounds
+            return rounds or self.algo_data.implicit_rounds
+        elif rounds == self.algo_data.implicit_rounds:
             # Passlib does not include the rounds if it is the same as implicit_rounds.
             # Make crypt lib behave the same, by not explicitly specifying the rounds in that case.
             return None
@@ -148,7 +151,10 @@ class CryptHash(BaseHash):
             saltstring = "$%s" % ident
 
         if rounds:
-            saltstring += "$rounds=%d" % rounds
+            if self.algorithm == 'bcrypt':
+                saltstring += "$%d" % rounds
+            else:
+                saltstring += "$rounds=%d" % rounds
 
         saltstring += "$%s" % salt
 
@@ -177,6 +183,7 @@ class PasslibHash(BaseHash):
 
         if not PASSLIB_AVAILABLE:
             raise AnsibleError("passlib must be installed and usable to hash with '%s'" % algorithm, orig_exc=PASSLIB_E)
+        display.vv("Using passlib to hash input with '%s'" % algorithm)
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
