@@ -43,6 +43,11 @@ options:
         - This will be used to verify the specified key.
       type: str
       version_added: 2.9
+    timeout:
+        description:
+        - Timeout in seconds for URL requests
+        type: int
+        default: 10
 extends_documentation_fragment:
     - action_common_attributes
 attributes:
@@ -74,6 +79,12 @@ EXAMPLES = '''
   ansible.builtin.rpm_key:
     key: /path/to/RPM-GPG-KEY.dag.txt
     fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
+
+- name: Import a key from a url with longer timeout
+  ansible.builtin.rpm_key:
+    state: present
+    key: http://apt.sw.be/RPM-GPG-KEY.dag.txt
+    timeout: 30
 '''
 
 RETURN = r'''#'''
@@ -105,6 +116,7 @@ class RpmKey(object):
         self.rpm = self.module.get_bin_path('rpm', True)
         state = module.params['state']
         key = module.params['key']
+        timeout = module.params['timeout']
         fingerprint = module.params['fingerprint']
         if fingerprint:
             fingerprint = fingerprint.replace(' ', '').upper()
@@ -114,7 +126,7 @@ class RpmKey(object):
             self.gpg = self.module.get_bin_path('gpg2', required=True)
 
         if '://' in key:
-            keyfile = self.fetch_key(key)
+            keyfile = self.fetch_key(key, timeout)
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
         elif self.is_keyid(key):
@@ -149,9 +161,9 @@ class RpmKey(object):
             else:
                 module.exit_json(changed=False)
 
-    def fetch_key(self, url):
+    def fetch_key(self, url, timeout=10):
         """Downloads a key from url, returns a valid path to a gpg key"""
-        rsp, info = fetch_url(self.module, url)
+        rsp, info = fetch_url(self.module, url, timeout=timeout)
         if info['status'] != 200:
             self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info['msg']))
 
@@ -242,6 +254,7 @@ def main():
             key=dict(type='str', required=True, no_log=False),
             fingerprint=dict(type='str'),
             validate_certs=dict(type='bool', default=True),
+            timeout=dict(type='int', default=10),
         ),
         supports_check_mode=True,
     )
