@@ -15,6 +15,7 @@ import venv
 
 import packaging.version
 import packaging.specifiers
+import packaging.requirements
 
 try:
     import argcomplete
@@ -34,6 +35,11 @@ class SanityTest:
     source_path: pathlib.Path
 
     def freeze_requirements(self) -> None:
+        source_requirements = [packaging.requirements.Requirement(re.sub(' #.*$', '', line)) for line in self.source_path.read_text().splitlines()]
+
+        install_packages = {requirement.name for requirement in source_requirements}
+        exclude_packages = {'distribute', 'pip', 'setuptools', 'wheel'} - install_packages
+
         with tempfile.TemporaryDirectory() as venv_dir:
             venv.create(venv_dir, with_pip=True)
 
@@ -48,13 +54,6 @@ class SanityTest:
 
             subprocess.run(pip + ['install', 'wheel'], env=env, check=True)  # make bdist_wheel available during pip install
             subprocess.run(pip + ['install', '-r', self.source_path], env=env, check=True)
-
-            keep_setuptools = any(line.startswith('setuptools ') for line in self.source_path.read_text().splitlines())
-
-            exclude_packages = ['pip', 'distribute', 'wheel']
-
-            if not keep_setuptools:
-                exclude_packages.append('setuptools')
 
             freeze_options = ['--all']
 
