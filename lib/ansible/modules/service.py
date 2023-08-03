@@ -107,9 +107,9 @@ attributes:
         platforms: all
 notes:
     - For AIX, group subsystem names can be used.
-    - The C(service) command line utility is not part of any service manager system but a 'convinience'.
-      It does not have a standard implementation across systems and this action has no way of specifying to use it directly.
-      Though it might be used if found in certain circumstances, the detected 'real' service manager is normally preffered.
+    - The C(service) command line utility is not part of any service manager system but a convenience.
+      It does not have a standard implementation across systems, and this action cannot use it directly.
+      Though it might be used if found in certain circumstances, the detected system service manager is normally preferred.
 seealso:
     - module: ansible.windows.win_service
 author:
