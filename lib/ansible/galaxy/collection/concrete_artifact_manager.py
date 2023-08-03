@@ -704,7 +704,7 @@ def _get_meta_from_tar(
 ):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
     if not os.path.exists(b_path):
         raise AnsibleError(
-            f"Unable to find Collection artifact file at '{to_native(b_path)}'."
+            f"Unable to find collection artifact file at '{to_native(b_path)}'."
         )
 
     if not tarfile.is_tarfile(b_path):
