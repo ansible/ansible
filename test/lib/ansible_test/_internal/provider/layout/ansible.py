@@ -20,7 +20,7 @@ class AnsibleLayout(LayoutProvider):
     @staticmethod
     def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
-        return os.path.exists(os.path.join(path, 'setup.py')) and os.path.exists(os.path.join(path, 'bin/ansible-test'))
+        return os.path.isfile(os.path.join(path, 'pyproject.toml')) and os.path.isdir(os.path.join(path, 'test/lib/ansible_test'))
 
     def create(self, root: str, paths: list[str]) -> ContentLayout:
         """Create a Layout using the given root and paths."""
