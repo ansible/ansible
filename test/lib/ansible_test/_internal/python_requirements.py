@@ -245,6 +245,13 @@ def collect_requirements(
             # installed packages may have run-time dependencies on setuptools
             uninstall_packages.remove('setuptools')
 
+        # hack to allow the package-data sanity test to keep wheel in the venv
+        install_commands = [command for command in commands if isinstance(command, PipInstall)]
+        install_wheel = any(install.has_package('wheel') for install in install_commands)
+
+        if install_wheel:
+            uninstall_packages.remove('wheel')
+
         commands.extend(collect_uninstall(packages=uninstall_packages))
 
     return commands
