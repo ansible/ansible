@@ -82,6 +82,7 @@ options:
         description:
         - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
         - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The 'old service module' still uses autodetection and in no way does it correspond to the C(service) command.
         type: str
         default: auto
         version_added: 2.2
@@ -106,6 +107,9 @@ attributes:
         platforms: all
 notes:
     - For AIX, group subsystem names can be used.
+    - The C(service) command line utility is not part of any service manager system but a convenience.
+      It does not have a standard implementation across systems, and this action cannot use it directly.
+      Though it might be used if found in certain circumstances, the detected system service manager is normally preferred.
 seealso:
     - module: ansible.windows.win_service
 author:
