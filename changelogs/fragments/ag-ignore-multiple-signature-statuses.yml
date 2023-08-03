@@ -1,0 +1,6 @@
+minor_changes:
+  - >-
+    ansible-galaxy - Add a plural option to improve ignoring multiple signature error status codes
+    when installing or verifying collections. A space-separated list of error codes can follow
+    --ignore-signature-status-codes in addition to specifying --ignore-signature-status-code
+    multiple times (for example, ``--ignore-signature-status-codes NO_PUBKEY UNEXPECTED``).
