@@ -2,6 +2,7 @@
   gather_facts: true
   vars:
     data: secret
+    data2: 'foo: bar\n'
     dvault: '{{ "secret"|vault("test")}}'
     password: test
     s_32: '{{(2**31-1)}}'
@@ -21,6 +22,14 @@
     is_64: '{{ "64" in ansible_facts["architecture"] }}'
     salt: '{{ is_64|bool|ternary(s_64, s_32)|random(seed=inventory_hostname)}}'
     vaultedstring: '{{ is_64|bool|ternary(vaultedstring_64, vaultedstring_32) }}'
+    vaulted_id: !vault |
+                $ANSIBLE_VAULT;1.2;AES256;test1
+                36383733336533656264393332663131613335333332346439356164383935656234663631356430
+                3533353537343834333538356366376233326364613362640a623832636339363966336238393039
+                35316562626335306534356162623030613566306235623863373036626531346364626166656134
+                3063376436656635330a363636376131663362633731313964353061663661376638326461393736
+                3863
+    vaulted_to_id: "{{data2|vault('test1@secret', vault_id='test1')}}"
 
   tasks:
     - name: check vaulting
@@ -35,3 +44,6 @@
         that:
           - vaultedstring|unvault(password) == data
           - vault|unvault(password) == data
+          - vaulted_id|unvault('test1@secret', vault_id='test1')
+          - vaulted_to_id|unvault('test1@secret', vault_id='test1')
+
