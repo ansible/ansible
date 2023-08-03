@@ -23,7 +23,7 @@ options:
     description:
       - This module supports C(yum) (as it always has), this is known as C(yum3)/C(YUM3)/C(yum-deprecated) by
         upstream yum developers. As of Ansible 2.7+, this module also supports C(YUM4), which is the
-        "new yum" and it has an C(dnf) backend. As of ansible-core 2.15+, C(dnf) will auto select the backend
+        "new yum" and it has an C(dnf) backend. As of ansible-core 2.15+, this module will auto select the backend
         based on the C(ansible_pkg_mgr) fact.
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
