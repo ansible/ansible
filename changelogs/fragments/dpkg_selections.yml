@@ -1,0 +1,3 @@
+---
+bugfixes:
+- dpkg_selections - check if the package exists before performing the selection operation (https://github.com/ansible/ansible/issues/81404).
