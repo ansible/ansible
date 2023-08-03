@@ -1,4 +1,5 @@
 - hosts: localhost
+  gather_facts: false
   tasks:
     - set_fact:
         unvaulted: "{{ lookup('unvault', 'vault') }}"
@@ -7,3 +8,14 @@
     - assert:
         that:
             - "unvaulted == 'foo: bar\n'"
+
+    - name: now with id
+      tags: [use_id, never]
+      block:
+      - set_fact:
+          unvaulted: "{{ lookup('unvault', 'vault_with_id', vault_id='test1') }}"
+      - debug:
+          msg: "{{ unvaulted }}"
+      - assert:
+          that:
+              - "unvaulted == 'foo: bar\n'"
