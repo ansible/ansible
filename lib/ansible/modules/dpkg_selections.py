@@ -54,6 +54,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 
 
 def main():
@@ -67,12 +68,18 @@ def main():
 
     dpkg = module.get_bin_path('dpkg', True)
 
+    locale = get_best_parsable_locale(module)
+    DPKG_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
+    module.run_command_environ_update = DPKG_ENV
+
     name = module.params['name']
     selection = module.params['selection']
 
     # Get current settings.
     rc, out, err = module.run_command([dpkg, '--get-selections', name], check_rc=True)
-    if not out:
+    if 'no packages found matching' in err:
+        module.fail_json(msg="Failed to find package '%s' to perform selection '%s'." % (name, selection))
+    elif not out:
         current = 'not present'
     else:
         current = out.split()[1]
