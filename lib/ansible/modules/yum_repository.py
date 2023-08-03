@@ -169,6 +169,7 @@ options:
     description:
       - Either V(1) or V(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
+      - This parameter is deprecated and will be removed in version 2.20.
     choices: ['0', '1']
     type: str
   metadata_expire:
@@ -527,6 +528,11 @@ class YumRepo(object):
 
             # Set the value only if it was defined (default is None)
             if value is not None and key in self.allowed_params:
+                if key == 'keepcache':
+                    self.module.deprecate(
+                        "'keepcache' parameter is deprecated.",
+                        version='2.20'
+                    )
                 self.repofile.set(self.section, key, value)
 
     def save(self):
