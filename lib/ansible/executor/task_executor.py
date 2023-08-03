@@ -609,9 +609,8 @@ class TaskExecutor:
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(self._connection, '_socket_path', socket_path)
 
-        # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overridden
-        if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
+        if 'ansible_python_interpreter' not in cvars and 'ansible_network_os' in cvars and getattr(self._connection, '_remote_is_local', False):
             # this also avoids 'python discovery'
             cvars['ansible_python_interpreter'] = sys.executable
 
