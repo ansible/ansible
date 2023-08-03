@@ -196,7 +196,7 @@ body:
 
 
       [ansibot help]:
-      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
+      /ansible/ansibotmini#ansibotmini
 
 
 - type: checkboxes
