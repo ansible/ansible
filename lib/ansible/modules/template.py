@@ -132,7 +132,7 @@ gid:
     returned: success
     type: int
     sample: 1003
-user:
+owner:
     description: User name of owner
     returned: success
     type: str
