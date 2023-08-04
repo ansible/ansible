@@ -1090,14 +1090,17 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
-    if fail_on_autoremove:
+    if fail_on_autoremove and apt_cmd == APT_GET_CMD:
         fail_on_autoremove = '--no-remove'
     else:
         fail_on_autoremove = ''
 
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
-    allow_downgrade = '--allow-downgrades' if allow_downgrade else ''
+    if allow_downgrade and apt_cmd == APT_GET_CMD:
+        allow_downgrade = '--allow-downgrades'
+    else:
+        allow_downgrade = ''
 
     if apt_cmd is None:
         if use_apt_get:
