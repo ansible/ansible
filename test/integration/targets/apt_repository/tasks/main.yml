@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: Skip tests on Ubuntu 18.04 due to intermittent failures from attempted use of IPv6 addresses
+  meta: end_play
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '18.04'
+
 - import_tasks: 'apt.yml'
   when: ansible_distribution in ('Ubuntu')
 
