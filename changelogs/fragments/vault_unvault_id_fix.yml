@@ -1,0 +1,4 @@
+bugfixes:
+  - vault and unvault filters now properly take ``vault_id`` parameter.
+deprecated_features:
+  - vault and unfault filters - the undocumented ``vaultid`` parameter is deprecated and will be removed in ansible-core 2.20. Use ``vault_id`` instead.
