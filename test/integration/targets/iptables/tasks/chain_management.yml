@@ -56,7 +56,7 @@
 
 - name: get the state of the iptable rules after rule is added to foobar chain
   become: true
-  shell: "/usr/sbin/iptables -L"
+  shell: "{{ iptables_bin }} -L"
   register: result
 
 - name: assert rule is present in foobar chain
