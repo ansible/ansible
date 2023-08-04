@@ -231,7 +231,7 @@ def generate_egg_info(path):  # type: (str) -> None
     # minimal PKG-INFO stub following the format defined in PEP 241
     # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
     # newer setuptools versions are happy with an empty directory
-    # including a stub here means we don't need to locate the existing file or have setup.py generate it when running from source
+    # including a stub here means we don't need to locate the existing file or run any tools to generate it when running from source
     pkg_info = '''
 Metadata-Version: 1.0
 Name: ansible
