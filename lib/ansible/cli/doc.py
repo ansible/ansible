@@ -163,8 +163,8 @@ class RoleMixin(object):
             might be fully qualified with the collection name (e.g., community.general.roleA)
             or not (e.g., roleA).
 
-        :param collection_filter: A string containing the FQCN of a collection which will be
-            used to limit results. This filter will take precedence over the name_filters.
+        :param collection_filter: A list of strings containing the FQCN of a collection which will
+            be used to limit results. This filter will take precedence over the name_filters.
 
         :returns: A set of tuples consisting of: role name, collection name, collection path
         """
@@ -678,12 +678,11 @@ class DocCLI(CLI, RoleMixin):
     def _get_collection_filter(self):
 
         coll_filter = None
-        if len(context.CLIARGS['args']) == 1:
-            coll_filter = context.CLIARGS['args'][0]
-            if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
-                raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
-            elif len(context.CLIARGS['args']) > 1:
-                raise AnsibleOptionsError("Only a single collection filter is supported.")
+        if len(context.CLIARGS['args']) >= 1:
+            coll_filter = context.CLIARGS['args']
+            for coll_name in coll_filter:
+                if not AnsibleCollectionRef.is_valid_collection_name(coll_name):
+                    raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_name))
 
         return coll_filter
 
