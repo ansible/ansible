@@ -4,7 +4,7 @@ __metaclass__ = type
 
 
 DOCUMENTATION = """
-module: foo
+module: test2
 short_description: Foo module in testcol4
 description:
     - This is a foo module.

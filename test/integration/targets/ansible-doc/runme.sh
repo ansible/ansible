@@ -60,11 +60,11 @@ ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep $GREP_OPTS -v "I
 echo "ensure we dont break on invalid collection name for list"
 ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep $GREP_OPTS "Invalid collection name"
 
-echo "filter list with more than one collection"
+echo "filter list with more than one collection (1/2)"
 output=$(ansible-doc --list testns.testcol3 testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
 test "$output" -eq 2
 
-echo "filter list with more than one collection"
+echo "filter list with more than one collection (2/2)"
 output=$(ansible-doc --list testns.testcol testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
 test "$output" -eq 5
 
