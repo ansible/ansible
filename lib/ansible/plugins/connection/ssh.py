@@ -381,6 +381,7 @@ DOCUMENTATION = '''
           - name: ansible_ssh_pkcs11_provider
 '''
 
+import locale
 import collections.abc as c
 import errno
 import fcntl
@@ -638,7 +639,7 @@ class Connection(ConnectionBase):
 
         if SSHPASS_AVAILABLE is None:
             try:
-                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
                 p.communicate()
                 SSHPASS_AVAILABLE = True
             except OSError:
@@ -839,7 +840,7 @@ class Connection(ConnectionBase):
 
         return b_command
 
-    def _send_initial_data(self, fh: io.IOBase, in_data: bytes, ssh_process: subprocess.Popen) -> None:
+    def _send_initial_data(self, fh: io.IOBase, in_data: str, ssh_process: subprocess.Popen) -> None:
         '''
         Writes initial data to the stdin filehandle of the subprocess and closes
         it. (The handle must be closed; otherwise, for example, "sftp -b -" will
@@ -849,7 +850,7 @@ class Connection(ConnectionBase):
         display.debug(u'Sending initial data')
 
         try:
-            fh.write(to_bytes(in_data))
+            fh.write(in_data)
             fh.close()
         except (OSError, IOError) as e:
             # The ssh connection may have already terminated at this point, with a more useful error
@@ -875,7 +876,7 @@ class Connection(ConnectionBase):
 
     # This is separate from _run() because we need to do the same thing for stdout
     # and stderr.
-    def _examine_output(self, source: str, state: str, b_chunk: bytes, sudoable: bool) -> tuple[bytes, bytes]:
+    def _examine_output(self, source: str, state: str, chunk: str, sudoable: bool) -> tuple[str, str]:
         '''
         Takes a string, extracts complete lines from it, tests to see if they
         are a prompt, error message, etc., and sets appropriate flags in self.
@@ -924,7 +925,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
+    def _bare_run(self, cmd: list[bytes], in_data: str | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -953,9 +954,9 @@ class Connection(ConnectionBase):
                 master, slave = pty.openpty()
                 if PY3 and conn_password:
                     # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe, encoding=locale.getlocale()[1])
                 else:
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
@@ -965,10 +966,10 @@ class Connection(ConnectionBase):
             try:
                 if PY3 and conn_password:
                     # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding=locale.getlocale()[1],
                                          stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
                 else:
-                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding=locale.getlocale()[1],
                                          stderr=subprocess.PIPE)
                 stdin = p.stdin  # type: ignore[assignment] # stdin will be set and not None due to the calls above
             except (OSError, IOError) as e:
@@ -1023,8 +1024,8 @@ class Connection(ConnectionBase):
         # an array, then checked and removed or copied to stdout or stderr. We
         # set any flags based on examining the output in self._flags.
 
-        b_stdout = b_stderr = b''
-        b_tmp_stdout = b_tmp_stderr = b''
+        stdout = stderr = ''
+        tmp_stdout = tmp_stderr = ''
 
         self._flags = dict(
             become_prompt=False, become_success=False,
@@ -1065,15 +1066,15 @@ class Connection(ConnectionBase):
                         if poll is not None:
                             break
                         self._terminate_process(p)
-                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, stdout))
 
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
 
                 for key, event in events:
                     if key.fileobj == p.stdout:
-                        b_chunk = p.stdout.read()
-                        if b_chunk == b'':
+                        chunk = p.stdout.read()
+                        if chunk == '':
                             # stdout has been closed, stop watching it
                             selector.unregister(p.stdout)
                             # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
@@ -1084,34 +1085,34 @@ class Connection(ConnectionBase):
                             # we may spend a long timeout period waiting for an EOF that is
                             # not going to arrive until the persisted connection closes.
                             timeout = 1
-                        b_tmp_stdout += b_chunk
-                        display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
+                        tmp_stdout += chunk
+                        display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
                     elif key.fileobj == p.stderr:
-                        b_chunk = p.stderr.read()
-                        if b_chunk == b'':
+                        chunk = p.stderr.read()
+                        if chunk == '':
                             # stderr has been closed, stop watching it
                             selector.unregister(p.stderr)
-                        b_tmp_stderr += b_chunk
-                        display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
+                        tmp_stderr += chunk
+                        display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
 
                 # We examine the output line-by-line until we have negotiated any
                 # privilege escalation prompt and subsequent success/error message.
                 # Afterwards, we can accumulate output without looking at it.
 
                 if state < states.index('ready_to_send'):
-                    if b_tmp_stdout:
-                        b_output, b_unprocessed = self._examine_output('stdout', states[state], b_tmp_stdout, sudoable)
-                        b_stdout += b_output
-                        b_tmp_stdout = b_unprocessed
+                    if tmp_stdout:
+                        output, unprocessed = self._examine_output('stdout', states[state], tmp_stdout, sudoable)
+                        stdout += output
+                        tmp_stdout = unprocessed
 
-                    if b_tmp_stderr:
-                        b_output, b_unprocessed = self._examine_output('stderr', states[state], b_tmp_stderr, sudoable)
-                        b_stderr += b_output
-                        b_tmp_stderr = b_unprocessed
+                    if tmp_stderr:
+                        output, unprocessed = self._examine_output('stderr', states[state], tmp_stderr, sudoable)
+                        stderr += output
+                        tmp_stderr = unprocessed
                 else:
-                    b_stdout += b_tmp_stdout
-                    b_stderr += b_tmp_stderr
-                    b_tmp_stdout = b_tmp_stderr = b''
+                    stdout += tmp_stdout
+                    stderr += tmp_stderr
+                    tmp_stdout = tmp_stderr = ''
 
                 # If we see a privilege escalation prompt, we send the password.
                 # (If we're expecting a prompt but the escalation succeeds, we
@@ -1199,17 +1200,17 @@ class Connection(ConnectionBase):
                 raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support '
                                    'this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
-        controlpersisterror = b'Bad configuration option: ControlPersist' in b_stderr or b'unknown configuration option: ControlPersist' in b_stderr
+        controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
         if p.returncode != 0 and controlpersisterror:
             raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" '
                                '(or ssh_args in [ssh_connection] section of the config file) before running again')
 
         # If we find a broken pipe because of ControlPersist timeout expiring (see #16731),
         # we raise a special exception so that we can retry a connection.
-        controlpersist_broken_pipe = b'mux_client_hello_exchange: write packet: Broken pipe' in b_stderr
+        controlpersist_broken_pipe = 'mux_client_hello_exchange: write packet: Broken pipe' in stderr
         if p.returncode == 255:
 
-            additional = to_native(b_stderr)
+            additional = stderr
             if controlpersist_broken_pipe:
                 raise AnsibleControlPersistBrokenPipeError('Data could not be sent because of ControlPersist broken pipe: %s' % additional)
 
@@ -1217,10 +1218,10 @@ class Connection(ConnectionBase):
                 raise AnsibleConnectionFailure('Data could not be sent to remote host "%s". Make sure this host can be reached over ssh: %s'
                                                % (self.host, additional))
 
-        return (p.returncode, b_stdout, b_stderr)
+        return (p.returncode, stdout, stderr)
 
     @_ssh_retry
-    def _run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
+    def _run(self, cmd: list[bytes], in_data: str | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         """Wrapper around _bare_run that retries the connection
         """
         return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
@@ -1271,7 +1272,6 @@ class Connection(ConnectionBase):
             if method == 'sftp':
                 cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex.quote(in_path), shlex.quote(out_path))
-                in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
                 scp = self.get_option('scp_executable')
@@ -1417,7 +1417,7 @@ class Connection(ConnectionBase):
         # 'check' will determine this.
         cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
         display.vvv(u'sending connection check: %s' % to_text(cmd))
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
         stdout, stderr = p.communicate()
         status_code = p.wait()
         if status_code != 0:
@@ -1428,7 +1428,7 @@ class Connection(ConnectionBase):
         if run_reset:
             cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
             display.vvv(u'sending connection stop: %s' % to_text(cmd))
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:

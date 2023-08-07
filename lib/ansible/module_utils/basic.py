@@ -2019,7 +2019,7 @@ class AnsibleModule(object):
         try:
             if self._debug:
                 self.log('Executing: ' + self._clean_args(args))
-            cmd = subprocess.Popen(args, **kwargs)
+            cmd = subprocess.Popen(args, encoding=locale.getlocale()[1], **kwargs)
             if before_communicate_callback:
                 before_communicate_callback(cmd)
 

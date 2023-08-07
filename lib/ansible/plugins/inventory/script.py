@@ -32,6 +32,7 @@ DOCUMENTATION = '''
         - To find the scripts that used to be part of the code release, go to U(https://github.com/ansible-community/contrib-scripts/).
 '''
 
+import locale
 import os
 import subprocess
 
@@ -90,7 +91,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         try:
             try:
-                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
             except OSError as e:
                 raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
             (stdout, stderr) = sp.communicate()
@@ -186,7 +187,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         cmd = [path, "--host", host]
         try:
-            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
         except OSError as e:
             raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, stderr) = sp.communicate()

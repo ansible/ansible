@@ -457,6 +457,7 @@ uid:
 '''
 
 
+import locale
 import ctypes.util
 import grp
 import calendar
@@ -1205,6 +1206,7 @@ class User(object):
             env['LC_ALL'] = get_best_parsable_locale(self.module)
             try:
                 p = subprocess.Popen([to_bytes(c) for c in cmd],
+                                     encoding=locale.getlocale()[1],
                                      stdin=slave_in_fd,
                                      stdout=slave_out_fd,
                                      stderr=slave_err_fd,

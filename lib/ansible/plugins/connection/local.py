@@ -18,6 +18,7 @@ DOCUMENTATION = '''
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
 
+import locale
 import fcntl
 import getpass
 import os
@@ -102,6 +103,7 @@ class Connection(ConnectionBase):
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, (text_type, binary_type)),
+            encoding=locale.getlocale()[1],
             executable=executable,
             cwd=self.cwd,
             stdin=stdin,

@@ -31,6 +31,7 @@ RETURN = r'''
 #
 '''
 
+import locale
 import contextlib
 import errno
 import os
@@ -104,7 +105,7 @@ def main():
 
     # Debugging purposes, get the Kerberos version. On platforms like OpenSUSE this may not be on the PATH.
     try:
-        process = subprocess.Popen(['%skrb5-config' % prefix, '--version'], stdout=subprocess.PIPE)
+        process = subprocess.Popen(['%skrb5-config' % prefix, '--version'], stdout=subprocess.PIPE, encoding=locale.getlocale()[1])
         stdout, stderr = process.communicate()
         version = to_text(stdout)
     except OSError as e:
@@ -126,7 +127,7 @@ def main():
         kinit_env = os.environ.copy()
         kinit_env['KRB5_TRACE'] = '/dev/stdout'
 
-        process = subprocess.Popen(kinit_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        process = subprocess.Popen(kinit_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1],
                                    env=kinit_env)
         stdout, stderr = process.communicate(to_bytes(module.params['password'], errors='surrogate_or_strict') + b'\n')
         rc = process.returncode

@@ -6,6 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import json
 import os
 import sys
@@ -24,6 +25,7 @@ TESTDIR = tempfile.mkdtemp()
 def run_command(args, cwd=None):
     p = subprocess.Popen(
         args,
+        encoding=locale.getlocale()[1],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         shell=True,

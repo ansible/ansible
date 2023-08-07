@@ -1,6 +1,7 @@
 """High level functions for working with SSH."""
 from __future__ import annotations
 
+import locale
 import dataclasses
 import itertools
 import json
@@ -229,6 +230,7 @@ def run_ssh_command(
         process = SshProcess(None)
     else:
         process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1,  # pylint: disable=consider-using-with
+                                              encoding=locale.getlocale()[1],
                                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     return process

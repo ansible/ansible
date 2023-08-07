@@ -161,6 +161,7 @@ DOCUMENTATION = """
         type: int
 """
 
+import locale
 import base64
 import logging
 import os
@@ -410,7 +411,7 @@ class Connection(ConnectionBase):
             display.vvvv("calling kinit with subprocess for principal %s"
                          % principal)
             try:
-                p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
+                p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE, encoding=locale.getlocale()[1],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
                                      env=krb5env)

@@ -1,6 +1,7 @@
 """Miscellaneous utility functions and classes."""
 from __future__ import annotations
 
+import locale
 import abc
 import collections.abc as c
 import enum
@@ -476,7 +477,7 @@ def raw_command(
         try:
             cmd_bytes = [to_bytes(arg) for arg in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
+            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, encoding=locale.getlocale()[1])  # pylint: disable=consider-using-with
         except FileNotFoundError as ex:
             raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
 

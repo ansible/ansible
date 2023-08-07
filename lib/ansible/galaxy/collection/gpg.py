@@ -7,6 +7,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.urls import open_url
 
+import locale
 import contextlib
 import os
 import subprocess
@@ -76,7 +77,7 @@ def run_gpg_verify(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             pass_fds=(status_fd_write,),
-            encoding='utf8',
+            encoding=locale.getlocale()[1]
         )
     except (FileNotFoundError, subprocess.SubprocessError) as err:
         raise AnsibleError(

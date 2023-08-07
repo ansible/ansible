@@ -98,6 +98,7 @@ def main():
             try:
                 cmd = [external_python, yaml_to_json_path]
                 proc = subprocess.Popen([to_bytes(c) for c in cmd],  # pylint: disable=consider-using-with
+                                        encoding=locale.getlocale()[1],
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdout_bytes, stderr_bytes = proc.communicate(to_bytes(yaml))
 

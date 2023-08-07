@@ -31,6 +31,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import glob
 import optparse
 import os
@@ -187,7 +188,7 @@ def ansiballz_setup(modfile, modname, interpreters):
         command = []
     command.extend([modfile, 'explode'])
 
-    cmd = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
     out, err = cmd.communicate()
     out, err = to_text(out, errors='surrogate_or_strict'), to_text(err)
     lines = out.splitlines()
@@ -230,7 +231,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
     if argspath is not None:
         invoke = "%s %s" % (invoke, argspath)
 
-    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
     (out, err) = cmd.communicate()
     out, err = to_text(out), to_text(err)
 

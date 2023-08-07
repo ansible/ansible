@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import errno
 import fcntl
 import os
@@ -447,7 +448,7 @@ class ScriptVaultSecret(FileVaultSecret):
     def _run(self, command):
         try:
             # STDERR not captured to make it easier for users to prompt for input in their scripts
-            p = subprocess.Popen(command, stdout=subprocess.PIPE)
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, encoding=locale.getlocale()[1])
         except OSError as e:
             msg_format = "Problem running vault password script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
@@ -479,7 +480,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
 
     def _run(self, command):
         try:
-            p = subprocess.Popen(command,
+            p = subprocess.Popen(command, encoding=locale.getlocale()[1],
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
         except OSError as e:

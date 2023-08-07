@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import os
 import select
 import shlex
@@ -33,7 +34,7 @@ def run_cmd(cmd, live=False, readsize=10):
     # subprocess should be passed byte strings.
     cmdargs = [to_bytes(a, errors='surrogate_or_strict') for a in cmdargs]
 
-    p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
 
     stdout = b''
     stderr = b''

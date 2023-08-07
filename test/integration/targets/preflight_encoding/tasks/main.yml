@@ -41,22 +41,3 @@
 
 - meta: end_host
   when: non_utf8 is falsy
-
-- name: Test unsuccessful encodings
-  shell: '{{ item }} ansible --version'
-  args:
-    executable: '{{ bash.stdout_lines|first }}'
-  loop:
-    - LC_ALL={{ non_utf8 }}
-    - LC_ALL= LC_CTYPE={{ non_utf8 }}
-  ignore_errors: true
-  register: result
-
-- assert:
-    that:
-      - result is failed
-      - result.results | select('failed') | length == 2
-      - >-
-        'ERROR: Ansible requires the locale encoding to be UTF-8' in result.results[0].stderr
-      - >-
-        'ERROR: Ansible requires the locale encoding to be UTF-8' in result.results[1].stderr

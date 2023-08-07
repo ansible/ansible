@@ -77,6 +77,7 @@ RETURN = '''
 #
 '''
 
+import locale
 import datetime
 import os
 import subprocess
@@ -205,7 +206,7 @@ def sign_manifest(signature_path, manifest_path, module, collection_setup_result
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             pass_fds=(status_fd_write,),
-            encoding='utf8',
+            encoding=locale.getlocale()[1]
         )
     except (FileNotFoundError, subprocess.SubprocessError) as err:
         collection_setup_result['gpg_detach_sign']['error'] = "Failed during GnuPG verification with command '{gpg_cmd}': {err}".format(

@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+import locale
 import errno
 import json
 import shlex
@@ -169,7 +170,7 @@ def _run_module(wrapped_cmd, jid):
         interpreter = _get_interpreter(cmd[0])
         if interpreter:
             cmd = interpreter + cmd
-        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding=locale.getlocale()[1],
                                   stderr=subprocess.PIPE)
 
         (outdata, stderr) = script.communicate()

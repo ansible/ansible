@@ -29,6 +29,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import glob
 import os
 import pickle
@@ -204,7 +205,8 @@ def daemonize(module, cmd):
             run_cmd.append(to_bytes(c, errors=errors))
 
         # execute the command in forked process
-        p = subprocess.Popen(run_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+        p = subprocess.Popen(run_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]),
+            encoding=locale.getlocale()[1])
         fds = [p.stdout, p.stderr]
 
         # loop reading output till it is done

@@ -26,6 +26,7 @@ else:
     # this will be set to False if curses.setupterm() fails
     HAS_CURSES = True
 
+import locale
 import codecs
 import ctypes.util
 import fcntl
@@ -292,7 +293,7 @@ class Display(metaclass=Singleton):
 
         if self.b_cowsay:
             try:
-                cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
                 (out, err) = cmd.communicate()
                 if cmd.returncode:
                     raise Exception
@@ -554,7 +555,7 @@ class Display(metaclass=Singleton):
             runcmd.append(b'-f')
             runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
-        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 

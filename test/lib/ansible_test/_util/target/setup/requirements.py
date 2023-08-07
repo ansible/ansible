@@ -4,6 +4,7 @@ __metaclass__ = type
 
 # pylint: disable=wrong-import-position
 
+import locale
 import resource
 
 # Setting a low soft RLIMIT_NOFILE value will improve the performance of subprocess.Popen on Python 2.x when close_fds=True.
@@ -318,7 +319,7 @@ def execute_command(cmd, cwd=None, capture=False, env=None):  # type: (t.List[st
         stderr = None
 
     cwd_bytes = to_optional_bytes(cwd)
-    process = subprocess.Popen(cmd_bytes, cwd=cwd_bytes, stdin=devnull(), stdout=stdout, stderr=stderr, env=env)  # pylint: disable=consider-using-with
+    process = subprocess.Popen(cmd_bytes, cwd=cwd_bytes, stdin=devnull(), stdout=stdout, stderr=stderr, env=env, encoding=locale.getlocale()[1])  # pylint: disable=consider-using-with
     stdout_bytes, stderr_bytes = process.communicate()
     stdout_text = to_optional_text(stdout_bytes) or u''
     stderr_text = to_optional_text(stderr_bytes) or u''

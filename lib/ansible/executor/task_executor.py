@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import os
 import pty
 import time
@@ -1220,7 +1221,7 @@ def start_connection(play_context, options, task_uuid):
     master, slave = pty.openpty()
     p = subprocess.Popen(
         [python, ansible_connection, *verbosity, to_text(os.getppid()), to_text(task_uuid)],
-        stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, encoding = locale.getlocale()[1]
     )
     os.close(slave)
 

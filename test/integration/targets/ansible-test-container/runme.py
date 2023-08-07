@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import locale
 import abc
 import dataclasses
 import datetime
@@ -748,7 +749,7 @@ def run_command(
     display.subsection(f'Run command: {shlex.join(command)}')
 
     try:
-        with subprocess.Popen(args=command, stdin=stdin, stdout=stdout, stderr=stderr, env=env, text=True) as process:
+        with subprocess.Popen(args=command, stdin=stdin, stdout=stdout, stderr=stderr, env=env, text=True, encoding=locale.getlocale()[1]) as process:
             process_stdout, process_stderr = process.communicate(data)
             process_status = process.returncode
     except FileNotFoundError:

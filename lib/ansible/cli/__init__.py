@@ -41,29 +41,18 @@ def check_blocking_io():
 
 check_blocking_io()
 
-
 def initialize_locale():
     """Set the locale to the users default setting and ensure
     the locale and filesystem encoding are UTF-8.
     """
     try:
         locale.setlocale(locale.LC_ALL, '')
-        dummy, encoding = locale.getlocale()
     except (locale.Error, ValueError) as e:
         raise SystemExit(
             'ERROR: Ansible could not initialize the preferred locale: %s' % e
         )
 
-    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
-        raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
-
-    fs_enc = sys.getfilesystemencoding()
-    if fs_enc.lower() != 'utf-8':
-        raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
-
-
 initialize_locale()
-
 
 from importlib.metadata import version
 from ansible.module_utils.compat.version import LooseVersion
@@ -508,7 +497,7 @@ class CLI(ABC):
             else:
                 CLI.pager_pipe(text)
         else:
-            p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
             p.communicate()
             if p.returncode == 0:
                 CLI.pager_pipe(text, 'less')
@@ -521,7 +510,7 @@ class CLI(ABC):
         if 'less' in CLI.PAGER:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
-            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout, encoding=locale.getlocale()[1])
             cmd.communicate(input=to_bytes(text))
         except IOError:
             pass
@@ -604,7 +593,7 @@ class CLI(ABC):
             cmd = [b_pwd_file]
 
             try:
-                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=locale.getlocale()[1])
             except OSError as e:
                 raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
                                    " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
