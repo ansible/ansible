@@ -60,6 +60,14 @@ ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep $GREP_OPTS -v "I
 echo "ensure we dont break on invalid collection name for list"
 ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep $GREP_OPTS "Invalid collection name"
 
+echo "filter list with more than one collection"
+output=$(ansible-doc --list testns.testcol3 testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
+test "$output" -eq 2
+
+echo "filter list with more than one collection"
+output=$(ansible-doc --list testns.testcol testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
+test "$output" -eq 5
+
 echo "testing ansible-doc output for various plugin types"
 for ptype in cache inventory lookup vars filter module
 do
@@ -112,6 +120,11 @@ test "$current_role_out" == "$expected_role_out"
 echo "testing multiple role entrypoints"
 # Two collection roles are defined, but only 1 has a role arg spec with 2 entry points
 output=$(ansible-doc -t role -l --playbook-dir . testns.testcol | wc -l)
+test "$output" -eq 2
+
+echo "test listing roles with multiple collection filters"
+# Two collection roles are defined, but only 1 has a role arg spec with 2 entry points
+output=$(ansible-doc -t role -l --playbook-dir . testns.testcol2 testns.testcol | wc -l)
 test "$output" -eq 2
 
 echo "testing standalone roles"

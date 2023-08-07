@@ -1,0 +1,6 @@
+namespace: testns
+name: testcol4
+version: 1.0.0
+readme: README.md
+authors:
+  - me
