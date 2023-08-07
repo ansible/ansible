@@ -292,6 +292,13 @@ class ActionBase(ABC):
             become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
                                                                                playcontext=self._play_context)
 
+        # set ansiballz temp
+        if self._is_become_unprivileged():
+            # force fallback on remote_tmp as unpriv user cannot normally write to dir
+            module_temp_dir = self.get_shell_option('remote_tmp')
+        else:
+            module_temp_dir = self._connection._shell.tmpdir
+
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
@@ -302,6 +309,7 @@ class ActionBase(ABC):
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
+                                                                            module_temp_dir=module_temp_dir,
                                                                             **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:

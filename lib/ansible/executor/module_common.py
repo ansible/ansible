@@ -306,13 +306,9 @@ def _ansiballz_main():
     if PY3:
         ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
     try:
-        # There's a race condition with the controller removing the
-        # remote_tmpdir and this module executing under async.  So we cannot
-        # store this in remote_tmpdir (use system tempdir instead)
         # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
         # (this helps ansible-test produce coverage stats)
-        temp_path = tempfile.mkdtemp(prefix='ansible_' + %(ansible_module)r + '_payload_')
-
+        temp_path = tempfile.mkdtemp(prefix='ansible_' + %(ansible_module)r + '_payload_', dir=os.path.expanduser('%(module_temp_dir)s'))
         zipped_mod = os.path.join(temp_path, 'ansible_' + %(ansible_module)r + '_payload.zip')
 
         with open(zipped_mod, 'wb') as modlib:
@@ -1069,12 +1065,16 @@ def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
+                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False, module_temp_dir=None):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
     """
     module_substyle = module_style = 'old'
+
+    if module_temp_dir is None:
+        # need one, even if it's ugly hardcoded default, to avoid using remote TEMP env variables
+        module_temp_dir = '~/.ansible/tmp'
 
     # module_style is something important to calling code (ActionBase).  It
     # determines how arguments are formatted (json vs k=v) and whether
@@ -1275,6 +1275,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             date_time=date_time,
             coverage=coverage,
             rlimit=rlimit,
+            module_temp_dir=module_temp_dir,
         )))
         b_module_data = output.getvalue()
 
@@ -1338,7 +1339,7 @@ def _extract_interpreter(b_module_data):
 
 
 def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False, module_temp_dir=None):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1370,8 +1371,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment, remote_is_local=remote_is_local)
-
+                                                                environment=environment, remote_is_local=remote_is_local, module_temp_dir=module_temp_dir)
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
     elif shebang is None:
