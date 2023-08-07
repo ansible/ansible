@@ -57,7 +57,6 @@ def list_collection_dirs(search_paths=None, coll_filter=None, artifacts_manager=
     for req in find_existing_collections(search_paths, artifacts_manager, namespace_filter=namespace_filter,
                                          collection_filter=collection_filter, dedupe=dedupe):
 
-        if not has_pure_namespace_filter and coll_filter is not None:
-            if req.fqcn not in coll_filter:
-                continue
+        if not has_pure_namespace_filter and coll_filter is not None and req.fqcn not in coll_filter:
+            continue
         yield to_bytes(req.src)
