@@ -973,3 +973,88 @@ releases:
     - dnf5-test-env-groups.yml
     - long-collection-paths-fix.yml
     release_date: '2023-07-10'
+  2.15.3rc1:
+    changes:
+      bugfixes:
+      - Exclude internal options from man pages and docs.
+      - Fix ``ansible-config init`` man page option indentation.
+      - The ``ansible-config init`` command now has a documentation description.
+      - The ``ansible-galaxy collection download`` command now has a documentation
+        description.
+      - The ``ansible-galaxy collection install`` command documentation is now visible
+        (previously hidden by a decorator).
+      - The ``ansible-galaxy collection verify`` command now has a documentation description.
+      - The ``ansible-galaxy role install`` command documentation is now visible (previously
+        hidden by a decorator).
+      - The ``ansible-inventory`` command command now has a documentation description
+        (previously used as the epilog).
+      - Update module_utils.urls unit test to work with cryptography >= 41.0.0.
+      - When generating man pages, use ``func`` to find the command function instead
+        of looking it up by the command name.
+      - '``ansible-galaxy`` now considers all collection paths when identifying which
+        collection requirements are already installed. Use the ``COLLECTIONS_PATHS``
+        and ``COLLECTIONS_SCAN_SYS_PATHS`` config options to modify these. Previously
+        only the install path was considered when resolving the candidates. The install
+        path will remain the only one potentially modified. (https://github.com/ansible/ansible/issues/79767,
+        https://github.com/ansible/ansible/issues/81163)'
+      - ansible-test - Fix several possible tracebacks when using the ``-e`` option
+        with sanity tests.
+      - ansible-test - Pre-build a PyYAML wheel before installing requirements to
+        avoid a potential Cython build failure.
+      - ansible-test - Remove redundant warning about missing programs before attempting
+        to execute them.
+      - core will now also look at the connection plugin to force 'local' interpreter
+        for networking path compatibility as just ansible_network_os could be misleading.
+      - man page build - Sub commands of ``ansible-galaxy role`` and ``ansible-galaxy
+        collection`` are now documented.
+      - password_hash - fix salt format for ``crypt``  (only used if ``passlib`` is
+        not installed) for the ``bcrypt`` algorithm.
+      - urls.py - fixed cert_file and key_file parameters when running on Python 3.12
+        - https://github.com/ansible/ansible/issues/80490
+      minor_changes:
+      - Removed ``exclude`` and ``recursive-exclude`` commands for generated files
+        from the ``MANIFEST.in`` file. These excludes were unnecessary since releases
+        are expected to be built with a clean worktree.
+      - Removed ``exclude`` commands for sanity test files from the ``MANIFEST.in``
+        file. These tests were previously excluded because they did not pass when
+        run from an sdist. However, sanity tests are not expected to pass from an
+        sdist, so excluding some (but not all) of the failing tests makes little sense.
+      - Removed redundant ``include`` commands from the ``MANIFEST.in`` file. These
+        includes either duplicated default behavior or another command.
+      - The ``ansible-core`` sdist no longer contains pre-generated man pages. Instead,
+        a ``packaging/cli-doc/build.py`` script is included in the sdist. This script
+        can generate man pages and standalone RST documentation for ``ansible-core``
+        CLI programs.
+      - The ``docs`` and ``examples`` directories are no longer included in the ``ansible-core``
+        sdist. These directories have been moved to the https://github.com/ansible/ansible-documentation
+        repository.
+      - Use ``include`` where ``recursive-include`` is unnecessary in the ``MANIFEST.in``
+        file.
+      - ansible-test - Update the logic used to detect when ``ansible-test`` is running
+        from source.
+      - ansible-test - Updated the CloudStack test container to version 1.6.1.
+      release_summary: '| Release Date: 2023-08-07
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.3rc1_summary.yaml
+    - 81319-cloudstack-test-container-bump-version.yml
+    - a-g-col-prevent-reinstalling-satisfied-req.yml
+    - add-missing-cli-docs.yml
+    - ansible-test-explain-traceback.yml
+    - ansible-test-layout-detection.yml
+    - ansible-test-pyyaml-build.yml
+    - forced_local+fix+.yml
+    - man-page-subcommands.yml
+    - manifest-in-cleanup.yml
+    - missing-doc-func.yml
+    - omit-man-pages-from-sdist.yml
+    - password_hash-fix-crypt-salt-bcrypt.yml
+    - remove-docs-examples.yml
+    - suppressed-options.yml
+    - urls-client-cert-py12.yml
+    - urls-unit-test-latest-cryptography.yml
+    release_date: '2023-08-07'
