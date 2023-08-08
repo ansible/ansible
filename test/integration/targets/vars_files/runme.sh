@@ -9,14 +9,14 @@ set +e
 ansible-playbook unresolvable.yml -i inventory -v "$@"
 unresolvable_rc=$?
 if [ "$unresolvable_rc" == "0" ]; then
-    echo "unresolvable.yml should have expecedtly failed, not succeeded"
+    echo "unresolvable.yml should have expectedly failed, not succeeded"
     exit 1
 fi
 
 ansible-playbook unresolvable2.yml -i inventory -v "$@"
 unresolvable2_rc=$?
 if [ "$unresolvable2_rc" == "0" ]; then
-    echo "unresolvable2.yml should have expecedtly failed, not succeeded"
+    echo "unresolvable2.yml should have expectedly failed, not succeeded"
     exit 1
 fi
 
