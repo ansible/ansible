@@ -1,4 +1,2 @@
 # edit "sanity.integration-aliases.in" and generate with: hacking/update-sanity-requirements.py --test integration-aliases
-# pre-build requirement: pyyaml == 6.0
-# pre-build constraint: Cython < 3.0
-PyYAML==6.0
+PyYAML==6.0.1
