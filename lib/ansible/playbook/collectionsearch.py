@@ -47,7 +47,7 @@ class CollectionSearch:
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)
 
-        # ensure 'current's object collection is here', only playbooks and plays should have this property
+        # ensure 'current's object collection is here', only playbooks, plays and roles should have this property
         if getattr(self, '_collection', False) and self._collection not in ds:
             ds.insert(0, self._collection)
 

@@ -57,7 +57,10 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         self._role_collection = None
         self._role_basedir = role_basedir
         self._role_params = dict()
-        self._collection_list = collection_list
+        if collection_list is None:
+            self._collection_list = []
+        else:
+            self._collection_list = collection_list
 
     # def __repr__(self):
     #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
@@ -154,16 +157,12 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         role_tuple = None
 
-        # ensure play collection context
-        if self._play._collection:
-            if not self._collection_list:
-                self._collection_list = [self._play._collection]
-            elif self._play._collection not in self._collection_list:
-                self._collection_list.insert(0, self._play._collection)
-
         # try to load as a collection-based role first
         if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
             role_tuple = _get_collection_role_path(role_name, self._collection_list)
+        elif self._play._collection:
+            # ensure play collection context when role does not have one
+            role_tuple = _get_collection_role_path(role_name, [self._play._collection])
 
         if role_tuple:
             # we found it, stash collection data and return the name/path tuple
@@ -206,7 +205,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
 
-        searches = (self._collection_list or []) + role_search_paths
+        searches = (self._collection_list) + role_search_paths
         raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):
