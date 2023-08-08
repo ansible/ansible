@@ -50,7 +50,7 @@ notes:
   - It is usually preferable to write Ansible modules rather than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The P(ansible.builtin.ssh#connection) connection plugin will force pseudo-tty allocation via C(-tt) when scripts are executed.
     Pseudo-ttys do not have a stderr channel and all stderr is sent to stdout. If you depend on separated stdout and stderr result keys,
-    please switch to a set of tasks that comprises M(copy) with M(command) instead of using the script.
+    please switch to a set of tasks that comprises M(ansible.builtin.copy) with M(ansible.builtin.command) instead of using M(ansible.builtin.script).
   - If the path to the local script contains spaces, it needs to be quoted.
   - This module is also supported for Windows targets.
   - If the script returns non-UTF-8 data, it must be encoded to avoid issues. One option is to pipe
