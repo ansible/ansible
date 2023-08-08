@@ -280,7 +280,8 @@ notes:
     upstream dnf's API doesn't properly mark groups as installed, therefore upon
     removal the module is unable to detect that the group is installed
     (https://bugzilla.redhat.com/show_bug.cgi?id=1620324)
-  - When using the C(state: present) option with package groups, be aware that
+  - >-
+    When using the C(state: present) option with package groups, be aware that
     the underlying DNF API may upgrade packages within the group to ensure they
     align with the group's current metadata definitions. If you aim to merely
     check for the presence of a group without potentially upgrading its
