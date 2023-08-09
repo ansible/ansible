@@ -583,3 +583,8 @@
     that:
       - shell_expand_failure is failed
       - "shell_expand_failure.msg == 'Unsupported parameters for (shell) module: expand_argument_vars'"
+
+- name: Run command that backgrounds, to ensure no hang
+  shell: '{{ role_path }}/scripts/yoink.sh &'
+  delegate_to: localhost
+  timeout: 5
