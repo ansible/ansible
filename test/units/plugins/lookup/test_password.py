@@ -23,7 +23,7 @@ __metaclass__ = type
 try:
     import passlib
     from passlib.handlers import pbkdf2
-except ImportError:
+except ImportError:  # pragma: nocover
     passlib = None
     pbkdf2 = None
 
@@ -416,8 +416,6 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.open = lambda path, flag: None
         self.os_close = password.os.close
         password.os.close = lambda fd: None
-        self.os_remove = password.os.remove
-        password.os.remove = lambda path: None
         self.makedirs_safe = password.makedirs_safe
         password.makedirs_safe = lambda path, mode: None
 
@@ -425,7 +423,6 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.path.exists = self.os_path_exists
         password.os.open = self.os_open
         password.os.close = self.os_close
-        password.os.remove = self.os_remove
         password.makedirs_safe = self.makedirs_safe
 
 
@@ -467,23 +464,17 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
     def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
         password.os.path.exists = lambda x: True
-        try:
+        with pytest.raises(AnsibleError):
             with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
                 # should timeout here
-                results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
-                self.fail("Lookup didn't timeout when lock already been held")
-        except AnsibleError:
-            pass
+                self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
 
     def test_lock_not_been_held(self):
         # pretend now there is password file but no lock
         password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
-        try:
-            with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
-                # should not timeout here
-                results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
-        except AnsibleError:
-            self.fail('Lookup timeouts when lock is free')
+        with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+            # should not timeout here
+            results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
 
         for result in results:
             self.assertEqual(result, u'hunter42')
