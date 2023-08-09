@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
@@ -26,6 +26,7 @@ else:
     # this will be set to False if curses.setupterm() fails
     HAS_CURSES = True
 
+import collections.abc as c
 import codecs
 import ctypes.util
 import fcntl
@@ -211,8 +212,8 @@ def _synchronize_textiowrapper(tio: t.TextIO, lock: threading.RLock):
     buffer = tio.buffer
 
     # monkeypatching the underlying file-like object isn't great, but likely safer than subclassing
-    setattr(buffer, "write", _wrap_with_lock(buffer.write, lock))
-    setattr(buffer, "flush", _wrap_with_lock(buffer.flush, lock))
+    buffer.write = _wrap_with_lock(buffer.write, lock)  # type: ignore[method-assign]
+    buffer.flush = _wrap_with_lock(buffer.flush, lock)  # type: ignore[method-assign]
 
 
 def setraw(fd: int, when: int = termios.TCSAFLUSH) -> None:
@@ -274,7 +275,7 @@ class Display(metaclass=Singleton):
 
     def __init__(self, verbosity: int = 0) -> None:
 
-        self._final_q: "FinalQueue" | None = None
+        self._final_q: FinalQueue | None = None
 
         # NB: this lock is used to both prevent intermingled output between threads and to block writes during forks.
         # Do not change the type of this lock or upgrade to a shared lock (eg multiprocessing.RLock).
@@ -333,7 +334,7 @@ class Display(metaclass=Singleton):
         )
         return '?', exception.end
 
-    def set_queue(self, queue: "FinalQueue") -> None:
+    def set_queue(self, queue: FinalQueue) -> None:
         """Set the _final_q on Display, so that we know to proxy display over the queue
         instead of directly writing to stdout/stderr from forks
 
@@ -462,9 +463,9 @@ class Display(metaclass=Singleton):
     def get_deprecation_message(
         self,
         msg: str,
-        version: t.Any = None,
+        version: str | None = None,
         removed: bool = False,
-        date: t.Any = None,
+        date: str | None = None,
         collection_name: str | None = None,
     ) -> str:
         ''' used to print out a deprecation message.'''
@@ -507,7 +508,7 @@ class Display(metaclass=Singleton):
         msg: str,
         version: t.Any = None,
         removed: bool = False,
-        date: t.Any = None,
+        date: str | None = None,
         collection_name: str | None = None,
     ) -> None:
         if not removed and not C.DEPRECATION_WARNINGS:
@@ -610,9 +611,9 @@ class Display(metaclass=Singleton):
         confirm: bool = False,
         salt_size: int | None = None,
         salt: str | None = None,
-        default: t.Any = None,
+        default: t.Any | None = None,
         unsafe: bool = False,
-    ):
+    ) -> str:
         result = None
         if sys.__stdin__.isatty():
 
@@ -666,9 +667,9 @@ class Display(metaclass=Singleton):
         msg: str,
         private: bool = False,
         seconds: int | None = None,
-        interrupt_input: t.Iterable[bytes] | None = None,
-        complete_input: t.Iterable[bytes] | None = None,
-    ) -> bytes | None:
+        interrupt_input: c.Container[bytes] | None = None,
+        complete_input: c.Container[bytes] | None = None,
+    ) -> bytes:
         if self._final_q:
             from ansible.executor.process.worker import current_worker
             self._final_q.send_prompt(
@@ -722,8 +723,8 @@ class Display(metaclass=Singleton):
         self,
         echo: bool = False,
         seconds: int | None = None,
-        interrupt_input: t.Iterable[bytes] | None = None,
-        complete_input: t.Iterable[bytes] | None = None,
+        interrupt_input: c.Container[bytes] | None = None,
+        complete_input: c.Container[bytes] | None = None,
     ) -> bytes:
         if self._final_q:
             raise NotImplementedError

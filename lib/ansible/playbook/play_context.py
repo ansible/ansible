@@ -119,7 +119,7 @@ class PlayContext(Base):
     def verbosity(self):
         display.deprecated(
             "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
-            version=2.18
+            version="2.18"
         )
         return self._internal_verbosity
 
@@ -127,7 +127,7 @@ class PlayContext(Base):
     def verbosity(self, value):
         display.deprecated(
             "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
-            version=2.18
+            version="2.18"
         )
         self._internal_verbosity = value
 
