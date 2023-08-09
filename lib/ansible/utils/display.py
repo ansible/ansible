@@ -506,7 +506,7 @@ class Display(metaclass=Singleton):
     def deprecated(
         self,
         msg: str,
-        version: t.Any = None,
+        version: str | None = None,
         removed: bool = False,
         date: str | None = None,
         collection_name: str | None = None,
