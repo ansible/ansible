@@ -611,7 +611,7 @@ class Display(metaclass=Singleton):
         confirm: bool = False,
         salt_size: int | None = None,
         salt: str | None = None,
-        default: t.Any | None = None,
+        default: str | None = None,
         unsafe: bool = False,
     ) -> str:
         result = None
