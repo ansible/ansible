@@ -119,7 +119,7 @@ dest:
     sample: /path/to/file.txt
 checksum:
     description: SHA1 checksum of the rendered file
-    returned: success
+    returned: always
     type: str
     sample: 373296322247ab85d26d5d1257772757e7afd172
 uid:
@@ -142,14 +142,29 @@ group:
     returned: success
     type: str
     sample: www-data
+md5sum:
+    description: MD5 checksum of the rendered file
+    returned: changed
+    type: str
+    sample: d41d8cd98f00b204e9800998ecf8427e
 mode:
     description: Unix permissions of the file in octal representation as a string
     returned: success
     type: str
     sample: 1755
+msg:
+    description: Failure explanation
+    returned: failure
+    type: str
+    sample: Destination directory /some/example/path does not exist
 size:
     description: Size of the rendered file in bytes
     returned: success
     type: int
     sample: 42
+src:
+    description: Source file used for the copy on the target machine.
+    returned: changed
+    type: str
+    sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 '''
