@@ -665,3 +665,29 @@
             - item
         loop:
           - 1 == 1
+
+      - set_fact:
+          sentinel_file: '{{ lookup("env", "OUTPUT_DIR")}}/LOOKUP_SIDE_EFFECT.txt'
+
+      - name: ensure sentinel file is absent
+        file:
+          path: '{{ sentinel_file }}'
+          state: absent
+      - name: get an untrusted var that's a valid Jinja expression with a side-effect
+        shell: |
+          echo "lookup('pipe', 'echo bang > \"$SENTINEL_FILE\" && cat \"$SENTINEL_FILE\"')"
+        environment:
+          SENTINEL_FILE: '{{ sentinel_file }}'
+        register: untrusted_expr
+      - name: use a conditional with an inline template that refers to the untrusted expression
+        debug:
+          msg: look at some seemingly innocuous stuff
+        when: '"foo" in {{ untrusted_expr.stdout }}'
+        ignore_errors: true
+      - name: ensure the untrusted expression side-effect has not executed
+        stat:
+          path: '{{ sentinel_file }}'
+        register: sentinel_stat
+      - assert:
+          that:
+          - not sentinel_stat.stat.exists
