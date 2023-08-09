@@ -26,7 +26,8 @@ options:
     state:
         description:
             - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
-              V(restarted) will always bounce the unit. V(reloaded) will always reload and if the service is not running at the moment of the reload, it is restarted.
+              V(restarted) will always bounce the unit. 
+              V(reloaded) will always reload and if the service is not running at the moment of the reload, it is restarted.
         type: str
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
