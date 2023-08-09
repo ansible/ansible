@@ -2,8 +2,8 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-    - name: Sleep 5 seconds per loop item
-      shell: echo {{ item }} && sleep 5
+    - name: Sleep 2 seconds per loop item
+      shell: echo {{ item }} && sleep 2
       loop:
         - 1
         - 2

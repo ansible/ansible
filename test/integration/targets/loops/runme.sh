@@ -4,33 +4,20 @@ set -eu
 
 ansible-playbook playbook.yml -i ../../inventory "$@"
 
-cleanup() {
-    rm -f out.txt
-    # Background process should stop in a few more seconds
-    sleep 4
-    if ps -p "$bg_pid" > /dev/null; then
-        echo "Terminating background process (PID: $bg_pid)..."
-        kill "$bg_pid"
-    fi
-}
+rm -f out.txt
 
-trap cleanup EXIT
+timeout 10 ansible-playbook test_loop_item_display.yml "$@" > out.txt 2>&1 &
 
-# The presence of the -u option guarantees that unbuffered I/O is available.
-# (https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/utilities/cat.html)
-# This makes it easy to see when explicit flushes occur in Display.
-( ansible-playbook -i ../../inventory test_loop_item_display.yml "$@" | cat -u ) > out.txt &
-bg_pid=$!
+echo "waiting for first loop result..."
+# wait up to 3s for first loop result to appear
+timeout 3 tail -f out.txt | grep item=1 -m 1 || (echo "failed to get first loop result in time" && false)
 
-echo "Sleep > 5s to verify item 1 results have been flushed before the task is complete"
-sleep 8
+echo "checking for absence of second loop result..."
+# fail if the second loop result appeared too early
+grep item=2 out.txt && (echo "found the second loop result early, failing" && false)
 
-if ! grep 'item=1' < out.txt; then
-    echo "Error: Failed to grep 'item=1'"
-    exit 1
-fi
+echo "waiting for second loop result..."
+# wait up to 3s for second loop result to appear
+timeout 3 tail -f out.txt | grep item=2 -m 1 || (echo "failed to get second loop result in time" && false)
 
-if grep 'item=2' < out.txt; then
-    echo "Error: expected bg proc to take at least 10 seconds for 'item=2'"
-    exit 1
-fi
+echo "success"
