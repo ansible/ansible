@@ -82,6 +82,7 @@ options:
     - When doing a recursive copy set the mode for the directories.
     - If this is not set we will use the system defaults.
     - The mode is only set on directories which are newly created, and will not affect those that already existed.
+    - parameter requires a numeric permissions mode in octal format.
     type: raw
     version_added: '1.5'
   remote_src:
