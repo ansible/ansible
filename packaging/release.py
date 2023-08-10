@@ -219,6 +219,9 @@ class CommandFramework:
                 arguments = arguments.copy()
                 exclusive = arguments.pop("exclusive", None)
 
+                # noinspection PyProtectedMember, PyUnresolvedReferences
+                command_parser: argparse._ActionsContainer
+
                 if exclusive:
                     if exclusive not in exclusive_groups:
                         exclusive_groups[exclusive] = func_parser.add_mutually_exclusive_group()
