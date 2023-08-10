@@ -183,7 +183,7 @@ class CommandFramework:
     """
 
     def __init__(self, **kwargs: dict[str, t.Any] | None) -> None:
-        self.commands: list[C] = []
+        self.commands: list[t.Callable[..., None]] = []
         self.arguments = kwargs
         self.parsed_arguments: argparse.Namespace | None = None
 
@@ -192,7 +192,7 @@ class CommandFramework:
         self.commands.append(func)
         return func
 
-    def run(self, *args: C, **kwargs) -> None:
+    def run(self, *args: t.Callable[..., None], **kwargs) -> None:
         """Run the specified command(s), using any provided internal args."""
         for arg in args:
             self._run(arg, **kwargs)
@@ -253,7 +253,7 @@ class CommandFramework:
             display.fatal(ex)
             sys.exit(1)
 
-    def _run(self, func: C, **kwargs) -> None:
+    def _run(self, func: t.Callable[..., None], **kwargs) -> None:
         """Run the specified command, using any provided internal args."""
         signature = inspect.signature(func)
         func_args = {name: getattr(self.parsed_arguments, name) for name in signature.parameters if hasattr(self.parsed_arguments, name)}
@@ -272,7 +272,7 @@ class CommandFramework:
         display.show(f"<== {label}", color=Display.BLUE)
 
     @staticmethod
-    def _format_command_name(func: C) -> str:
+    def _format_command_name(func: t.Callable[..., None]) -> str:
         """Return the friendly name of the given command."""
         return func.__name__.replace("_", "-")
 
