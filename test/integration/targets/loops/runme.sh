@@ -7,10 +7,14 @@ ansible-playbook playbook.yml -i ../../inventory "$@"
 rm -f out.txt
 
 python ../test_utils/scripts/timeout.py -- 10 'ansible-playbook test_loop_item_display.yml "$@" > out.txt' &
+# pause to try to avoid race condition:
+# tail: cannot open 'out.txt' for reading: No such file or directory
+# tail: no files remaining
+sleep 1
 
 echo "waiting for first loop result..."
 # wait up to 3s for first loop result to appear
-python ../test_utils/scripts/timeout.py -- 2 tail -f out.txt | grep item=0 -m 1 || (echo "failed to get first loop result in time" && false)
+python ../test_utils/scripts/timeout.py -- 1 tail -f out.txt | grep item=0 -m 1 || (echo "failed to get first loop result in time" && false)
 
 echo "checking for absence of second loop result..."
 # fail if the second loop result appeared too early
