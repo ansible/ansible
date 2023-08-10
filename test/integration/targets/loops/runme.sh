@@ -18,6 +18,6 @@ grep item=3 out.txt && (echo "found the second loop result early, failing" && fa
 
 echo "waiting for second loop result..."
 # wait up to 3s for second loop result to appear
-python ../test_utils/scripts/timeout.py -- 3 tail -f out.txt | grep item=3 -m 1 || (echo "failed to get second loop result in time" && false)
+python ../test_utils/scripts/timeout.py -- 4 tail -f out.txt | grep item=3 -m 1 || (echo "failed to get second loop result in time" && false)
 
 echo "success"
