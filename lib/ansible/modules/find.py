@@ -564,8 +564,8 @@ def main():
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
-                            agefilter(st, now, age, params['age_stamp']) and
-                            mode_filter(st, params['mode'], params['exact_mode'], module)):
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
