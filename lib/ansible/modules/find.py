@@ -268,6 +268,7 @@ import time
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
 
 
 class _Object:
@@ -463,6 +464,11 @@ def main():
     )
 
     params = module.params
+
+    if params['mode'] and not isinstance(params['mode'], string_types):
+        module.fail_json(
+            msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s" % params['mode'].__class__.__name__
+        )
 
     # Set the default match pattern to either a match-all glob or
     # regex depending on use_regex being set.  This makes sure if you
