@@ -117,11 +117,13 @@ options:
               restricted to modes that can be applied using the python
               C(os.chmod) function.
         type: raw
+        version_added: '2.16'
     exact_mode:
         description:
             - Restrict mode matching to exact matches only.
         type: bool
         default: true
+        version_added: '2.16'
     follow:
         description:
             - Set this to V(true) to follow symlinks in path for systems with python 2.6+.
