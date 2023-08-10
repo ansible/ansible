@@ -113,11 +113,13 @@ options:
         default: no
     mode:
         description:
-            - Choose objects matching a specified permission
+            - Choose objects matching a specified permission. This value is
+              restricted to modes that can be applied using the python
+              C(os.chmod) function.
         type: raw
     exact_mode:
         description:
-            - Restrict mode matching to exact matches only
+            - Restrict mode matching to exact matches only.
         type: bool
         default: true
     follow:
