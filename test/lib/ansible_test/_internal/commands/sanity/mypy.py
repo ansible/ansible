@@ -73,7 +73,7 @@ class MypyTest(SanityMultipleVersion):
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and target.path not in self.vendored_paths and (
                 target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
-                or target.path.startswith('packaging/cli-doc/')
+                or target.path.startswith('packaging/')
                 or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
 
     @property
@@ -117,7 +117,7 @@ class MypyTest(SanityMultipleVersion):
             MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], controller_python_versions),
             MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
-            MyPyContext('packaging', ['packaging/cli-doc/'], controller_python_versions),
+            MyPyContext('packaging', ['packaging/'], controller_python_versions),
         )
 
         unfiltered_messages: list[SanityMessage] = []
