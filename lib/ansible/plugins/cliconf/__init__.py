@@ -276,7 +276,7 @@ class CliconfBase(AnsiblePlugin):
                 'diff_replace': [list of supported replace values],
                 'output': [list of supported command output format]
             }
-        :return: capability as json string
+        :return: capability as dict
         """
         result = {}
         result['rpc'] = self.get_base_rpc()
