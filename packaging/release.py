@@ -42,7 +42,7 @@ from packaging.version import Version, InvalidVersion
 # region CLI Framework
 
 
-C = t.TypeVar("C", bound=t.Callable[[...], None])
+C = t.TypeVar("C", bound=t.Callable[..., None])
 
 
 def path_to_str(value: t.Any) -> str:
