@@ -660,7 +660,7 @@ def get_git_state(version: Version, allow_stale: bool) -> GitState:
 
 
 @functools.cache
-def ensure_venv() -> dict[str, str]:
+def ensure_venv() -> dict[str, t.Any]:
     """Ensure the release venv is ready and return the env vars needed to use it."""
 
     # TODO: consider freezing the ansible and release requirements along with their dependencies
@@ -1305,7 +1305,7 @@ def build(allow_dirty: bool = False) -> None:
         commit_time = int(git("show", "-s", "--format=%ct", capture_output=True).stdout)
 
         env.update(
-            SOURCE_DATE_EPOCH=str(commit_time),
+            SOURCE_DATE_EPOCH=commit_time,
         )
 
         git("worktree", "add", "-d", temp_dir)
