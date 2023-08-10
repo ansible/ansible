@@ -102,7 +102,7 @@ def run(
 
 
 @contextlib.contextmanager
-def suppress_when(error_as_warning: bool) -> None:
+def suppress_when(error_as_warning: bool) -> t.Generator[None, None, None]:
     """Conditionally convert an ApplicationError in the provided context to a warning."""
     if error_as_warning:
         try:
