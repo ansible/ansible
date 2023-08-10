@@ -116,11 +116,14 @@ options:
             - Choose objects matching a specified permission. This value is
               restricted to modes that can be applied using the python
               C(os.chmod) function.
+            - The mode can be provided as an octal such as V("0o0644") or
+              as symbolic such as V(u=rw,g=r,o=r)
         type: raw
         version_added: '2.16'
     exact_mode:
         description:
-            - Restrict mode matching to exact matches only.
+            - Restrict mode matching to exact matches only, and not as a
+              minimum set of permissions to match.
         type: bool
         default: true
         version_added: '2.16'
