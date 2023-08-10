@@ -6,4 +6,4 @@
       shell: sleep {{ item }}
       loop:
         - 0
-        - 2
+        - 3
