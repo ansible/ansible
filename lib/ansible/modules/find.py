@@ -373,11 +373,10 @@ def mode_filter(st, mode, exact, module):
 
     st_mode = stat.S_IMODE(st.st_mode)
 
-    if not isinstance(mode, int):
-        try:
-            mode = int(mode, 8)
-        except ValueError:
-            mode = module._symbolic_mode_to_octal(_Object(st_mode=0), mode)
+    try:
+        mode = int(mode, 8)
+    except ValueError:
+        mode = module._symbolic_mode_to_octal(_Object(st_mode=0), mode)
 
     mode = stat.S_IMODE(mode)
 
