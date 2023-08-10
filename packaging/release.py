@@ -50,12 +50,27 @@ def path_to_str(value: t.Any) -> str:
     return f"{value}/" if isinstance(value, pathlib.Path) and value.is_dir() else str(value)
 
 
+@t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[True]) -> CompletedProcess:
+    ...
+
+
+@t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[False]) -> None:
+    ...
+
+
+@t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str) -> None:
+    ...
+
+
 def run(
     *args: t.Any,
     env: dict[str, t.Any] | None,
     cwd: pathlib.Path | str,
     capture_output: bool = False,
-) -> CompletedProcess:
+) -> CompletedProcess | None:
     """Run the specified command."""
     args = [arg.relative_to(cwd) if isinstance(arg, pathlib.Path) else arg for arg in args]
 
@@ -76,9 +91,11 @@ def run(
             stderr=ex.stderr,
         ) from None
 
+    if not capture_output:
+        return None
+
     # improve type hinting
     return CompletedProcess(
-        args=str_args,
         stdout=p.stdout,
         stderr=p.stderr,
     )
@@ -122,9 +139,8 @@ class CalledProcessError(Exception):
 class CompletedProcess:
     """Results from a completed process."""
 
-    args: tuple[str, ...]
-    stdout: str | None
-    stderr: str | None
+    stdout: str
+    stderr: str
 
 
 class Display:
@@ -441,7 +457,22 @@ class VersionMode(enum.Enum):
         raise NotImplementedError(self)
 
 
-def git(*args: t.Any, capture_output: bool = False) -> CompletedProcess:
+@t.overload
+def git(*args: t.Any, capture_output: t.Literal[True]) -> CompletedProcess:
+    ...
+
+
+@t.overload
+def git(*args: t.Any, capture_output: t.Literal[False]) -> None:
+    ...
+
+
+@t.overload
+def git(*args: t.Any) -> None:
+    ...
+
+
+def git(*args: t.Any, capture_output: t.Literal[True] | t.Literal[False] = False) -> CompletedProcess | None:
     """Run the specified git command."""
     return run("git", *args, env=None, cwd=CHECKOUT_DIR, capture_output=capture_output)
 
