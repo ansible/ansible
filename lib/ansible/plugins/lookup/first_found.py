@@ -165,6 +165,9 @@ class LookupModule(LookupBase):
         total_search = []
         skip = False
 
+        if not terms and kwargs:
+            terms = ['']
+
         # can use a dict instead of list item to pass inline config
         for term in terms:
             if isinstance(term, Mapping):
