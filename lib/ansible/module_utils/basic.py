@@ -149,6 +149,7 @@ from ansible.module_utils.common.file import (
     is_executable,
     format_attributes,
     get_flags_from_attributes,
+    FILE_ATTRIBUTES,
 )
 from ansible.module_utils.common.sys_info import (
     get_distribution,
