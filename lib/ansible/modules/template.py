@@ -110,3 +110,56 @@ EXAMPLES = r'''
     validate: /usr/sbin/sshd -t -f %s
     backup: yes
 '''
+
+RETURN = r'''
+dest:
+    description: Destination file/path, equal to the value passed to I(dest).
+    returned: success
+    type: str
+    sample: /path/to/file.txt
+checksum:
+    description: SHA1 checksum of the rendered file
+    returned: always
+    type: str
+    sample: 373296322247ab85d26d5d1257772757e7afd172
+uid:
+    description: Numeric id representing the file owner
+    returned: success
+    type: int
+    sample: 1003
+gid:
+    description: Numeric id representing the group of the owner
+    returned: success
+    type: int
+    sample: 1003
+owner:
+    description: User name of owner
+    returned: success
+    type: str
+    sample: httpd
+group:
+    description: Group name of owner
+    returned: success
+    type: str
+    sample: www-data
+md5sum:
+    description: MD5 checksum of the rendered file
+    returned: changed
+    type: str
+    sample: d41d8cd98f00b204e9800998ecf8427e
+mode:
+    description: Unix permissions of the file in octal representation as a string
+    returned: success
+    type: str
+    sample: 1755
+size:
+    description: Size of the rendered file in bytes
+    returned: success
+    type: int
+    sample: 42
+src:
+    description: Source file used for the copy on the target machine.
+    returned: changed
+    type: str
+    sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
+'''
