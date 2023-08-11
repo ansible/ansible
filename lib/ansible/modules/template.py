@@ -152,11 +152,6 @@ mode:
     returned: success
     type: str
     sample: 1755
-msg:
-    description: Failure explanation
-    returned: failure
-    type: str
-    sample: Destination directory /some/example/path does not exist
 size:
     description: Size of the rendered file in bytes
     returned: success
