@@ -1,3 +1,3 @@
 ---
 known_issues:
-- ansible-test - The ``pep8`` sanity test may detect issues with f-strings on Python 3.12, such as E201/E202, that are not detected under earlier Python versions. See (https://github.com/PyCQA/pycodestyle/issues/1190).
+- ansible-test - The ``pep8`` sanity test is unable to detect f-string spacing issues (E201, E202) on Python 3.10 and 3.11. They are correctly detected under Python 3.12. See (https://github.com/PyCQA/pycodestyle/issues/1190).
