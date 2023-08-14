@@ -42,6 +42,7 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.hostvars import HostVars
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
 display = Display()
@@ -81,7 +82,11 @@ class VariableManager:
         self._group_vars_files = defaultdict(dict)
         self._inventory = inventory
         self._loader = loader
-        self._hostvars = None
+        self._hostvars = HostVars(
+            inventory=self._inventory,
+            variable_manager=self,
+            loader=self._loader,
+        )
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
         self._options_vars = load_options_vars(version_info)

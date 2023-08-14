@@ -40,7 +40,6 @@ from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
@@ -289,12 +288,6 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
         new_play.handlers = new_play.compile_roles_handlers() + new_play.handlers
-
-        self.hostvars = HostVars(
-            inventory=self._inventory,
-            variable_manager=self._variable_manager,
-            loader=self._loader,
-        )
 
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
         if (self._stdout_callback and

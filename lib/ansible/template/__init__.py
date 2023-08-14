@@ -26,6 +26,7 @@ import pwd
 import re
 import time
 
+from collections import ChainMap
 from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
 from numbers import Number
@@ -50,8 +51,6 @@ from ansible.module_utils.common.text.converters import to_native, to_text, to_b
 from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
-from ansible.template.template import AnsibleJ2Template
-from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.native_jinja import NativeJinjaText
@@ -61,6 +60,25 @@ display = Display()
 
 
 __all__ = ['Templar', 'generate_ansible_template_vars']
+
+STATIC_VARS = frozenset((
+    'ansible_version',
+    'ansible_play_hosts',
+    'ansible_dependent_role_names',
+    'ansible_play_role_names',
+    'ansible_role_names',
+    'inventory_hostname',
+    'inventory_hostname_short',
+    'inventory_file',
+    'inventory_dir',
+    'groups',
+    'group_names',
+    'omit',
+    'playbook_dir',
+    'play_hosts',
+    'role_names',
+    'ungrouped',
+))
 
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = (bool, Number)
@@ -353,10 +371,6 @@ class AnsibleUndefined(StrictUndefined):
             self._undefined_name
         )
 
-    def __contains__(self, item):
-        # Return original Undefined object to preserve the first failure context
-        return self
-
 
 class AnsibleContext(Context):
     '''
@@ -393,42 +407,27 @@ class AnsibleContext(Context):
             self.unsafe = True
 
     def resolve_or_missing(self, key):
-        val = super(AnsibleContext, self).resolve_or_missing(key)
-        self._update_unsafe(val)
-        return val
-
-    def get_all(self):
-        """Return the complete context as a dict including the exported
-        variables. For optimizations reasons this might not return an
-        actual copy so be careful with using it.
-
-        This is to prevent from running ``AnsibleJ2Vars`` through dict():
-
-            ``dict(self.parent, **self.vars)``
-
-        In Ansible this means that ALL variables would be templated in the
-        process of re-creating the parent because ``AnsibleJ2Vars`` templates
-        each variable in its ``__getitem__`` method. Instead we re-create the
-        parent via ``AnsibleJ2Vars.add_locals`` that creates a new
-        ``AnsibleJ2Vars`` copy without templating each variable.
-
-        This will prevent unnecessarily templating unused variables in cases
-        like setting a local variable and passing it to {% include %}
-        in a template.
-
-        Also see ``AnsibleJ2Template``and
-        https://github.com/pallets/jinja/commit/d67f0fd4cc2a4af08f51f4466150d49da7798729
-        """
-        if not self.vars:
-            return self.parent
-        if not self.parent:
-            return self.vars
-
-        if isinstance(self.parent, AnsibleJ2Vars):
-            return self.parent.add_locals(self.vars)
+        rv = super(AnsibleContext, self).resolve_or_missing(key)
+        from ansible.vars.hostvars import HostVars
+        t = Templar(None, self.get_all())
+        if (rv == "vars" and isinstance(rv, dict)) or isinstance(rv, HostVars):
+            ...
         else:
-            # can this happen in Ansible?
-            return dict(self.parent, **self.vars)
+            try:
+                rv = t.template(rv)
+            except AnsibleUndefinedVariable as e:
+                # Instead of failing here prematurely, return an Undefined
+                # object which fails only after its first usage allowing us to
+                # do lazy evaluation and passing it into filters/tests that
+                # operate on such objects.
+                return self.environment.undefined(
+                    hint=f"{rv}: {e.message}",
+                    name=rv,
+                    exc=AnsibleUndefinedVariable,
+                )
+            # except Exception as e:
+        self._update_unsafe(rv)
+        return rv
 
 
 class JinjaPluginIntercept(MutableMapping):
@@ -550,7 +549,6 @@ class AnsibleEnvironment(NativeEnvironment):
     values for the Template and Context classes used by jinja2 internally.
     '''
     context_class = AnsibleContext
-    template_class = AnsibleJ2Template
     concat = staticmethod(ansible_eval_concat)  # type: ignore[assignment]
 
     def __init__(self, *args, **kwargs):
@@ -715,7 +713,7 @@ class Templar:
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
-        static_vars = [] if static_vars is None else static_vars
+        static_vars = STATIC_VARS if static_vars is None else STATIC_VARS.union(set(static_vars or ()))
 
         if cache is not None:
             display.deprecated("The `cache` option to `Templar.template` is no longer functional, and will be removed in a future release.", version='2.18')
@@ -932,7 +930,7 @@ class Templar:
 
         if hint is None or isinstance(hint, Undefined) or hint == '':
             hint = "Mandatory variable has not been overridden"
-        return AnsibleUndefined(hint)
+        return self.environment.undefined(hint)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False,
                     convert_data=False):
@@ -970,11 +968,7 @@ class Templar:
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
 
-            jvars = AnsibleJ2Vars(self, t.globals)
-
-            # In case this is a recursive call to do_template we need to
-            # save/restore cur_context to prevent overriding __UNSAFE__.
-            cached_context = self.cur_context
+            jvars = ChainMap({}, self.available_variables, t.globals)
 
             # In case this is a recursive call and we set different concat
             # function up the stack, reset it in case the value of convert_data
@@ -989,7 +983,7 @@ class Templar:
             if not self.jinja2_native and not convert_data:
                 myenv.concat = ansible_concat
 
-            self.cur_context = t.new_context(jvars, shared=True)
+            self.cur_context = t.new_context(jvars)
             rf = t.root_render_func(self.cur_context)
 
             try:
@@ -1005,8 +999,6 @@ class Templar:
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)), orig_exc=te)
-            finally:
-                self.cur_context = cached_context
 
             if isinstance(res, string_types) and preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline

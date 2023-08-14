@@ -23,59 +23,16 @@ from collections.abc import Mapping
 
 from ansible.template import Templar, AnsibleUndefined
 
-STATIC_VARS = [
-    'ansible_version',
-    'ansible_play_hosts',
-    'ansible_dependent_role_names',
-    'ansible_play_role_names',
-    'ansible_role_names',
-    'inventory_hostname',
-    'inventory_hostname_short',
-    'inventory_file',
-    'inventory_dir',
-    'groups',
-    'group_names',
-    'omit',
-    'playbook_dir',
-    'play_hosts',
-    'role_names',
-    'ungrouped',
-]
-
 __all__ = ['HostVars', 'HostVarsVars']
 
 
-# Note -- this is a Mapping, not a MutableMapping
 class HostVars(Mapping):
-    ''' A special view of vars_cache that adds values from the inventory when needed. '''
+    """A special (read-only) view of vars_cache that adds values from the inventory when needed."""
 
     def __init__(self, inventory, variable_manager, loader):
         self._inventory = inventory
         self._loader = loader
         self._variable_manager = variable_manager
-        variable_manager._hostvars = self
-
-    def set_variable_manager(self, variable_manager):
-        self._variable_manager = variable_manager
-        variable_manager._hostvars = self
-
-    def set_inventory(self, inventory):
-        self._inventory = inventory
-
-    def _find_host(self, host_name):
-        # does not use inventory.hosts so it can create localhost on demand
-        return self._inventory.get_host(host_name)
-
-    def raw_get(self, host_name):
-        '''
-        Similar to __getitem__, however the returned data is not run through
-        the templating engine to expand variables in the hostvars.
-        '''
-        host = self._find_host(host_name)
-        if host is None:
-            return AnsibleUndefined(name="hostvars['%s']" % host_name)
-
-        return self._variable_manager.get_vars(host=host, include_hostvars=False)
 
     def __setstate__(self, state):
         self.__dict__.update(state)
@@ -91,23 +48,19 @@ class HostVars(Mapping):
             self._variable_manager._hostvars = self
 
     def __getitem__(self, host_name):
-        data = self.raw_get(host_name)
-        if isinstance(data, AnsibleUndefined):
-            return data
-        return HostVarsVars(data, loader=self._loader)
+        # does not use inventory.hosts so it can create localhost on demand
+        host = self._inventory.get_host(host_name)
+        if host is None:
+            return AnsibleUndefined(name="hostvars['%s']" % host_name)
 
-    def set_host_variable(self, host, varname, value):
-        self._variable_manager.set_host_variable(host, varname, value)
-
-    def set_nonpersistent_facts(self, host, facts):
-        self._variable_manager.set_nonpersistent_facts(host, facts)
-
-    def set_host_facts(self, host, facts):
-        self._variable_manager.set_host_facts(host, facts)
+        return HostVarsVars(
+            self._variable_manager.get_vars(host=host, include_hostvars=False),
+            loader=self._loader
+        )
 
     def __contains__(self, host_name):
         # does not use inventory.hosts so it can create localhost on demand
-        return self._find_host(host_name) is not None
+        return self._inventory.get_host(host_name) is not None
 
     def __iter__(self):
         for host in self._inventory.hosts:
@@ -117,10 +70,7 @@ class HostVars(Mapping):
         return len(self._inventory.hosts)
 
     def __repr__(self):
-        out = {}
-        for host in self._inventory.hosts:
-            out[host] = self.get(host)
-        return repr(out)
+        return repr({h: self.get(h) for h in self._inventory.hosts})
 
     def __deepcopy__(self, memo):
         # We do not need to deepcopy because HostVars is immutable,
@@ -137,10 +87,10 @@ class HostVarsVars(Mapping):
 
     def __getitem__(self, var):
         templar = Templar(variables=self._vars, loader=self._loader)
-        return templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return templar.template(self._vars[var], fail_on_undefined=False)
 
     def __contains__(self, var):
-        return (var in self._vars)
+        return var in self._vars
 
     def __iter__(self):
         for var in self._vars.keys():
@@ -151,4 +101,4 @@ class HostVarsVars(Mapping):
 
     def __repr__(self):
         templar = Templar(variables=self._vars, loader=self._loader)
-        return repr(templar.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))
+        return repr(templar.template(self._vars, fail_on_undefined=False))
