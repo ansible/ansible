@@ -332,7 +332,7 @@ class GalaxyAPI:
 
         return (
             self._priority > other_galaxy_api._priority or
-            self.name < self.name
+            self.name < other_galaxy_api.name
         )
 
     @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
