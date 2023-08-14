@@ -1376,6 +1376,17 @@ releases:
     - long-collection-paths-fix.yml
     - no-stacked-descriptors.yaml
     release_date: '2023-07-10'
+  2.14.9:
+    changes:
+      release_summary: '| Release Date: 2023-08-14
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.9_summary.yaml
+    release_date: '2023-08-14'
   2.14.9rc1:
     changes:
       bugfixes:
