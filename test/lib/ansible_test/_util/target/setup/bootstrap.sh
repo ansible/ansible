@@ -171,6 +171,8 @@ bootstrap_remote_freebsd()
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
         case "${platform_version}/${python_version}" in
+            "12.4/3.9")
+                ;;
             "13.0/3.8")
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
