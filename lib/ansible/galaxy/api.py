@@ -330,10 +330,7 @@ class GalaxyAPI:
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
 
-        return (
-            self._priority > other_galaxy_api._priority or
-            self.name < self.name
-        )
+        return self._priority > other_galaxy_api._priority
 
     @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
     @g_connect(['v1', 'v2', 'v3'])

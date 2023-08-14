@@ -1,0 +1,2 @@
+bugfixes:
+  - collection dependency resolver - previous code had the same operand on both sides of a logical expression. Fix now updates the operand in the right side of the logical expression (https://github.com/ansible/ansible/pull/81511).
