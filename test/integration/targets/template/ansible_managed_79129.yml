@@ -1,0 +1,29 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+    - name: check strftime
+      block:
+        - template:
+            src: "templates/%necho Onii-chan help Im stuck;exit 1%n.j2"
+            dest: "{{ output_dir }}/79129-strftime.sh"
+            mode: '0755'
+
+        - shell: "exec {{ output_dir | quote }}/79129-strftime.sh"
+
+    - name: check jinja template
+      block:
+        - template:
+            src: !unsafe "templates/completely{{ 1 % 0 }} safe template.j2"
+            dest: "{{ output_dir }}/79129-jinja.sh"
+            mode: '0755'
+
+        - shell: "exec {{ output_dir | quote }}/79129-jinja.sh"
+          register: result
+
+        - assert:
+            that:
+              - "'Hello' in result.stdout"
