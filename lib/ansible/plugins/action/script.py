@@ -43,13 +43,15 @@ class ActionModule(ActionBase):
         validation_result, new_module_args = self.validate_argument_spec(
             argument_spec={
                 '_raw_params': {},
-                'free_form': {'type': 'str'},
                 'cmd': {'type': 'str'},
                 'creates': {'type': 'str'},
                 'removes': {'type': 'str'},
                 'chdir': {'type': 'str'},
                 'executable': {'type': 'str'},
-            }
+            },
+            required_one_of=[
+                ['_raw_params', 'cmd']
+            ]
         )
 
         result = super(ActionModule, self).run(tmp, task_vars)
