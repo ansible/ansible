@@ -1,0 +1,4 @@
+minor_changes:
+  - >-
+    ansible-test — Replaced `freebsd/12.3` remote with `freebsd/12.4`.
+    The former is no longer functional.
