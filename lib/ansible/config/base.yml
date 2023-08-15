@@ -199,6 +199,7 @@ COLLECTIONS_PATHS:
     ``'{{ ANSIBLE_HOME} ~ "/collections/ansible_collections/my/collection" }}'``.
   default: '{{ ANSIBLE_HOME ~ "/collections:/usr/share/ansible/collections" }}'
   type: pathspec
+  template: restricted
   env:
   - name: ANSIBLE_COLLECTIONS_PATHS
     deprecated:
@@ -404,6 +405,7 @@ DOC_FRAGMENT_PLUGIN_PATH:
   ini:
   - {key: doc_fragment_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: '{{ ANSIBLE_HOME ~ "/plugins/action:/usr/share/ansible/plugins/action" }}'
@@ -413,6 +415,7 @@ DEFAULT_ACTION_PLUGIN_PATH:
   - {key: action_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.action.path}
+  template: restricted
 DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   name: Allow unsafe lookups
   default: False
@@ -494,6 +497,7 @@ BECOME_PLUGIN_PATH:
   - {key: become_plugins, section: defaults}
   type: pathspec
   version_added: "2.8"
+  template: restricted
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
@@ -511,6 +515,7 @@ DEFAULT_CACHE_PLUGIN_PATH:
   ini:
   - {key: cache_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_CALLBACK_PLUGIN_PATH:
   name: Callback Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/callback:/usr/share/ansible/plugins/callback" }}'
@@ -520,6 +525,7 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   - {key: callback_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.callback.path}
+  template: restricted
 CALLBACKS_ENABLED:
   name: Enable callback plugins that require it.
   default: []
@@ -542,6 +548,7 @@ DEFAULT_CLICONF_PLUGIN_PATH:
   ini:
   - {key: cliconf_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_CONNECTION_PLUGIN_PATH:
   name: Connection Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/connection:/usr/share/ansible/plugins/connection" }}'
@@ -551,6 +558,7 @@ DEFAULT_CONNECTION_PLUGIN_PATH:
   - {key: connection_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.connection.path}
+  template: restricted
 DEFAULT_DEBUG:
   name: Debug mode
   default: False
@@ -598,6 +606,7 @@ DEFAULT_FILTER_PLUGIN_PATH:
   ini:
   - {key: filter_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_FORCE_HANDLERS:
   name: Force handlers to run after failure
   default: False
@@ -713,6 +722,7 @@ DEFAULT_HTTPAPI_PLUGIN_PATH:
   ini:
   - {key: httpapi_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_INTERNAL_POLL_INTERVAL:
   name: Internal poll interval
   default: 0.001
@@ -735,6 +745,7 @@ DEFAULT_INVENTORY_PLUGIN_PATH:
   ini:
   - {key: inventory_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_JINJA2_EXTENSIONS:
   name: Enabled Jinja2 extensions
   default: []
@@ -797,6 +808,7 @@ DEFAULT_LOCAL_TMP:
   ini:
   - {key: local_tmp, section: defaults}
   type: tmppath
+  template: restricted
 DEFAULT_LOG_PATH:
   name: Ansible log file path
   default: ~
@@ -822,6 +834,7 @@ DEFAULT_LOOKUP_PLUGIN_PATH:
   - {key: lookup_plugins, section: defaults}
   type: pathspec
   yaml: {key: defaults.lookup_plugins}
+  template: restricted
 DEFAULT_MANAGED_STR:
   name: Ansible managed
   default: 'Ansible managed'
@@ -862,6 +875,7 @@ DEFAULT_MODULE_PATH:
   ini:
   - {key: library, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon-separated paths in which Ansible will search for Module utils files, which are shared by modules.
@@ -870,6 +884,7 @@ DEFAULT_MODULE_UTILS_PATH:
   ini:
   - {key: module_utils, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_NETCONF_PLUGIN_PATH:
   name: Netconf Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/netconf:/usr/share/ansible/plugins/netconf" }}'
@@ -970,6 +985,7 @@ DEFAULT_ROLES_PATH:
   - {key: roles_path, section: defaults}
   type: pathspec
   yaml: {key: defaults.roles_path}
+  template: restricted
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
   default: fuse, nfs, vboxsf, ramfs, 9p, vfat
@@ -1046,6 +1062,7 @@ DEFAULT_STRATEGY_PLUGIN_PATH:
   ini:
   - {key: strategy_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_SU:
   default: False
   description: 'Toggle the use of "su" for tasks.'
@@ -1069,6 +1086,7 @@ DEFAULT_TERMINAL_PLUGIN_PATH:
   ini:
   - {key: terminal_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_TEST_PLUGIN_PATH:
   name: Jinja2 Test Plugins Path
   description: Colon-separated paths in which Ansible will search for Jinja2 Test Plugins.
@@ -1077,6 +1095,7 @@ DEFAULT_TEST_PLUGIN_PATH:
   ini:
   - {key: test_plugins, section: defaults}
   type: pathspec
+  template: restricted
 DEFAULT_TIMEOUT:
   name: Connection timeout
   default: 10
@@ -1113,6 +1132,7 @@ DEFAULT_VARS_PLUGIN_PATH:
   ini:
   - {key: vars_plugins, section: defaults}
   type: pathspec
+  template: restricted
 # TODO: unused?
 #DEFAULT_VAR_COMPRESSION_LEVEL:
 #  default: 0
@@ -1411,6 +1431,7 @@ GALAXY_TOKEN_PATH:
   - {key: token_path, section: galaxy}
   type: path
   version_added: "2.9"
+  template: restricted
 GALAXY_DISPLAY_PROGRESS:
   default: ~
   description:
@@ -1436,6 +1457,7 @@ GALAXY_CACHE_DIR:
     key: cache_dir
   type: path
   version_added: '2.11'
+  template: restricted
 GALAXY_DISABLE_GPG_VERIFY:
   default: false
   type: bool
@@ -1688,6 +1710,7 @@ INVENTORY_IGNORE_EXTS:
   - {key: inventory_ignore_extensions, section: defaults}
   - {key: ignore_extensions, section: inventory}
   type: list
+  template: restricted
 INVENTORY_IGNORE_PATTERNS:
   name: Inventory ignore patterns
   default: []
@@ -1746,17 +1769,7 @@ MODULE_IGNORE_EXTS:
   ini:
   - {key: module_ignore_exts, section: defaults}
   type: list
-MODULE_STRICT_UTF8_RESPONSE:
-  name: Module strict UTF-8 response
-  description:
-    - Enables whether module responses are evaluated for containing non-UTF-8 data.
-    - Disabling this may result in unexpected behavior.
-    - Only ansible-core should evaluate this configuration.
-  env: [{name: ANSIBLE_MODULE_STRICT_UTF8_RESPONSE}]
-  ini:
-    - {key: module_strict_utf8_response, section: defaults}
-  type: bool
-  default: True
+  template: restricted
 OLD_PLUGIN_CACHE_CLEARING:
   description: Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviors in which a plugin loaded in previous plays would be unexpectedly 'sticky'. This setting allows the user to return to that behavior.
   env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
@@ -1809,6 +1822,7 @@ PERSISTENT_CONTROL_PATH_DIR:
   ini:
   - {key: control_path_dir, section: persistent_connection}
   type: path
+  template: restricted
 PERSISTENT_CONNECT_TIMEOUT:
   name: Persistence timeout
   default: 30

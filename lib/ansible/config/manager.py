@@ -27,7 +27,7 @@ from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
 Plugin = namedtuple('Plugin', 'name type')
-Setting = namedtuple('Setting', 'name value origin type')
+Setting = namedtuple('Setting', 'name value origin type template')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
@@ -549,19 +549,31 @@ class ConfigManager(object):
                 else:
                     origin = 'default'
                     value = defs[config].get('default')
-                    if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
-                        # template default values if possible
-                        # NOTE: cannot use is_template due to circular dep
+                    if defs[config].get('template', 'static') == 'restricted' and variables is not None:
                         try:
                             t = NativeEnvironment().from_string(value)
                             value = t.render(variables)
                         except Exception:
                             pass  # not templatable
+                
+            elif defs[config].get('template', 'static') in ('restricted', 'vault', 'full', 'implicit') and variables is not None and \
+                 config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):                   
+                # template default values if needed and possible
+                t_type = defs[config]['template']
+                use_lookup = True
+                if t_type == 'full':
+                    t_value = value
+                elif t_type == 'implcit':
+                    t_value = '{{%s}}' % value
+                elif t_type == 'restricted':
+                    t_value = value
+                    use_lookup = False
+                elif t_type == 'vault':
+                    # todo .. force only to unvault?
+                    t_value = value
 
-            # template if possible and needed
-            if config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):
                 try:
-                    value = templar.template(value)
+                    value = templar.template(value, disable_lookups=(not use_lookup))
                 except Exception as e:
                     pass
                     # TOOD: warning "leaving value for '%s' as is, could not template: %s" % (config, to_native(e))
