@@ -1,0 +1,4 @@
+- name: role_handler
+  debug:
+    msg: "a handler from a role"
+  listen: role_handler

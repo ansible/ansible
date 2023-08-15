@@ -509,8 +509,11 @@ class StrategyBase:
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
         templar = Templar(None)
+        handlers = [h for b in reversed(iterator._play.handlers) for h in b.block]
         # iterate in reversed order since last handler loaded with the same name wins
-        for handler in (h for b in reversed(iterator._play.handlers) for h in b.block if h.name):
+        for handler in handlers:
+            if not handler.name:
+                continue
             if not handler.cached_name:
                 if templar.is_template(handler.name):
                     templar.available_variables = self._variable_manager.get_vars(
@@ -548,7 +551,8 @@ class StrategyBase:
                 break
 
         templar.available_variables = {}
-        for handler in (h for b in iterator._play.handlers for h in b.block):
+        seen = []
+        for handler in handlers:
             if listeners := handler.listen:
                 if notification in handler.get_validated_value(
                     'listen',
@@ -556,6 +560,9 @@ class StrategyBase:
                     listeners,
                     templar,
                 ):
+                    if handler.name and handler.name in seen:
+                        continue
+                    seen.append(handler.name)
                     yield handler
 
     @debug_closure

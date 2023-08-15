@@ -1,0 +1,2 @@
+dependencies:
+  - test_listen_role_dedup_global
