@@ -374,3 +374,6 @@
       - '"{{ remote_tmp_dir_test }}/astest/old.txt" in astest_list'
       - '"{{ remote_tmp_dir_test }}/astest/.hidden.txt" in astest_list'
       - '"checksum" in result.files[0]'
+
+- name: Run mode tests
+  import_tasks: mode.yml
