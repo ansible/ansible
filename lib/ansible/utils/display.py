@@ -707,6 +707,7 @@ class Display(metaclass=Singleton):
             try:
                 os.set_blocking(self._stdin_fd, False)
                 while key_pressed is None and (seconds is None or (time.time() - start < seconds)):
+                    time.sleep(0.001)
                     key_pressed = self._stdin.read(1)
             finally:
                 os.set_blocking(self._stdin_fd, True)
