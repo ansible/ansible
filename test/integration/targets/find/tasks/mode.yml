@@ -1,0 +1,68 @@
+- name: create test files for mode matching
+  file:
+    path: '{{ remote_tmp_dir_test }}/mode_{{ item }}'
+    state: touch
+    mode: '{{ item }}'
+  loop:
+    - '0644'
+    - '0444'
+    - '0400'
+    - '0700'
+    - '0666'
+
+- name: exact mode octal
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: '0644'
+    exact_mode: true
+  register: exact_mode_0644
+
+- name: exact mode symbolic
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: 'u=rw,g=r,o=r'
+    exact_mode: true
+  register: exact_mode_0644_symbolic
+
+- name: find all user readable files octal
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: '0400'
+    exact_mode: false
+  register: user_readable_octal
+
+- name: find all user readable files symbolic
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: 'u=r'
+    exact_mode: false
+  register: user_readable_symbolic
+
+- name: all other readable files octal
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: '0004'
+    exact_mode: false
+  register: other_readable_octal
+
+- name: all other readable files symbolic
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: 'o=r'
+    exact_mode: false
+  register: other_readable_symbolic
+
+- assert:
+    that:
+      - exact_mode_0644.files == exact_mode_0644_symbolic.files
+      - exact_mode_0644.files[0].path == '{{ remote_tmp_dir_test }}/mode_0644'
+      - user_readable_octal.files == user_readable_symbolic.files
+      - user_readable_octal.files|map(attribute='path')|map('basename')|sort == ['mode_0400', 'mode_0444', 'mode_0644', 'mode_0666', 'mode_0700']
+      - other_readable_octal.files == other_readable_symbolic.files
+      - other_readable_octal.files|map(attribute='path')|map('basename')|sort == ['mode_0444', 'mode_0644', 'mode_0666']
