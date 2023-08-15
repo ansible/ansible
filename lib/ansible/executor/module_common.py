@@ -26,6 +26,7 @@ import datetime
 import json
 import os
 import shlex
+import time
 import zipfile
 import re
 import pkgutil
@@ -177,13 +178,13 @@ def _ansiballz_main():
         z = zipfile.ZipFile(modlib_path, mode='a')
 
         # py3: modlib_path will be text, py2: it's bytes.  Need bytes at the end
-        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  modlib_path
+        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %% modlib_path
         sitecustomize = sitecustomize.encode('utf-8')
         # Use a ZipInfo to work around zipfile limitation on hosts with
         # clocks set to a pre-1980 year (for instance, Raspberry Pi)
         zinfo = zipfile.ZipInfo()
         zinfo.filename = 'sitecustomize.py'
-        zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
+        zinfo.date_time = %(date_time)s
         z.writestr(zinfo, sitecustomize)
         z.close()
 
@@ -870,7 +871,17 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         return name_parts[5:]  # eg, foo.bar for ansible_collections.ns.coll.plugins.module_utils.foo.bar
 
 
-def recursive_finder(name, module_fqn, module_data, zf):
+def _make_zinfo(filename, date_time, zf=None):
+    zinfo = zipfile.ZipInfo(
+        filename=filename,
+        date_time=date_time
+    )
+    if zf:
+        zinfo.compress_type = zf.compression
+    return zinfo
+
+
+def recursive_finder(name, module_fqn, module_data, zf, date_time):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs. (no longer actually recursive)
@@ -976,7 +987,10 @@ def recursive_finder(name, module_fqn, module_data, zf):
     for py_module_name in py_module_cache:
         py_module_file_name = py_module_cache[py_module_name][1]
 
-        zf.writestr(py_module_file_name, py_module_cache[py_module_name][0])
+        zf.writestr(
+            _make_zinfo(py_module_file_name, date_time, zf=zf),
+            py_module_cache[py_module_name][0]
+        )
         mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
         display.vvvvv("Including module_utils file %s" % mu_file)
 
@@ -1020,13 +1034,16 @@ def _get_ansible_module_fqn(module_path):
     return remote_module_fqn
 
 
-def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
+def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
     """Add a module from ansible or from an ansible collection into the module zip"""
     module_path_parts = remote_module_fqn.split('.')
 
     # Write the module
     module_path = '/'.join(module_path_parts) + '.py'
-    zf.writestr(module_path, b_module_data)
+    zf.writestr(
+        _make_zinfo(module_path, date_time, zf=zf),
+        b_module_data
+    )
 
     # Write the __init__.py's necessary to get there
     if module_path_parts[0] == 'ansible':
@@ -1045,7 +1062,10 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
             continue
         # Note: We don't want to include more than one ansible module in a payload at this time
         # so no need to fill the __init__.py with namespace code
-        zf.writestr(package_path, b'')
+        zf.writestr(
+            _make_zinfo(package_path, date_time, zf=zf),
+            b''
+        )
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
@@ -1110,6 +1130,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         remote_module_fqn = 'ansible.modules.%s' % module_name
 
     if module_substyle == 'python':
+        date_time = time.gmtime()[:6]
+        if date_time[0] < 1980:
+            date_string = datetime.datetime(*date_time, tzinfo=datetime.timezone.utc).strftime('%c')
+            raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_string}')
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
             python_repred_params = repr(json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True))
@@ -1155,10 +1179,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
 
                     # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    recursive_finder(module_name, remote_module_fqn, b_module_data, zf)
+                    recursive_finder(module_name, remote_module_fqn, b_module_data, zf, date_time)
 
                     display.debug('ANSIBALLZ: Writing module into payload')
-                    _add_module_to_zip(zf, remote_module_fqn, b_module_data)
+                    _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
 
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
@@ -1241,7 +1265,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         else:
             coverage = ''
 
-        now = datetime.datetime.now(datetime.timezone.utc)
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
@@ -1249,12 +1272,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             params=python_repred_params,
             shebang=shebang,
             coding=ENCODING_STRING,
-            year=now.year,
-            month=now.month,
-            day=now.day,
-            hour=now.hour,
-            minute=now.minute,
-            second=now.second,
+            date_time=date_time,
             coverage=coverage,
             rlimit=rlimit,
         )))
