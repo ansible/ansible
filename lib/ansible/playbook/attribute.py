@@ -84,6 +84,8 @@ class Attribute:
         if default is not None and self.isa in _CONTAINERS and not callable(default):
             raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
 
+        self._finalized = False
+
     def __set_name__(self, owner, name):
         self.name = name
 

@@ -68,22 +68,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     # inheritance is only triggered if the 'current value' is Sentinel,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    args = NonInheritableFieldAttribute(isa='dict', default=dict)
-    action = NonInheritableFieldAttribute(isa='string')
+    args = NonInheritableFieldAttribute(isa='dict', default=dict, priority=20)
+    action = NonInheritableFieldAttribute(isa='string', priority=30)
 
-    async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async')
-    changed_when = NonInheritableFieldAttribute(isa='list', default=list)
-    delay = NonInheritableFieldAttribute(isa='int', default=5)
-    failed_when = NonInheritableFieldAttribute(isa='list', default=list)
-    loop = NonInheritableFieldAttribute(isa='list')
-    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
-    poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
+    async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async', priority=80)
+    changed_when = NonInheritableFieldAttribute(isa='list', default=list, priority=15)
+    delay = NonInheritableFieldAttribute(isa='int', default=5, priority=40)
+    failed_when = NonInheritableFieldAttribute(isa='list', default=list, priority=15)
+    loop = NonInheritableFieldAttribute(isa='list', priority=70)
+    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl, priority=70)
+    poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL, priority=80)
     register = NonInheritableFieldAttribute(isa='string', static=True)
-    retries = NonInheritableFieldAttribute(isa='int', default=3)
-    until = NonInheritableFieldAttribute(isa='list', default=list)
+    retries = NonInheritableFieldAttribute(isa='int', default=3, priority=40)
+    until = NonInheritableFieldAttribute(isa='list', default=list, priority=0)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
-    loop_with = NonInheritableFieldAttribute(isa='string', private=True)
+    loop_with = NonInheritableFieldAttribute(isa='string', private=True, priority=70)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -336,27 +336,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 env = templar.template(value, convert_bare=False)
 
         return env
-
-    def _post_validate_changed_when(self, attr, value, templar):
-        '''
-        changed_when is evaluated after the execution of the task is complete,
-        and should not be templated during the regular post_validate step.
-        '''
-        return value
-
-    def _post_validate_failed_when(self, attr, value, templar):
-        '''
-        failed_when is evaluated after the execution of the task is complete,
-        and should not be templated during the regular post_validate step.
-        '''
-        return value
-
-    def _post_validate_until(self, attr, value, templar):
-        '''
-        until is evaluated after the execution of the task is complete,
-        and should not be templated during the regular post_validate step.
-        '''
-        return value
 
     def get_vars(self):
         all_vars = dict()

@@ -74,46 +74,46 @@ class PlayContext(Base):
     '''
 
     # base
-    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
-    shell = FieldAttribute(isa='string')
-    executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
+    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION, priority=50)
+    shell = FieldAttribute(isa='string', priority=70)
+    executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE, priority=69)
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
-    remote_addr = FieldAttribute(isa='string')
-    password = FieldAttribute(isa='string')
-    timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
-    connection_user = FieldAttribute(isa='string')
-    private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
-    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
+    remote_addr = FieldAttribute(isa='string', priority=70)
+    password = FieldAttribute(isa='string', priority=70)
+    timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT, priority=80)
+    connection_user = FieldAttribute(isa='string', priority=70)
+    private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE, priority=70)
+    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING, priority=70)
 
     # networking modules
-    network_os = FieldAttribute(isa='string')
+    network_os = FieldAttribute(isa='string', priority=90)
 
     # docker FIXME: remove these
-    docker_extra_args = FieldAttribute(isa='string')
+    docker_extra_args = FieldAttribute(isa='string', priority=70)
 
     # ???
-    connection_lockfd = FieldAttribute(isa='int')
+    connection_lockfd = FieldAttribute(isa='int', priority=70)
 
     # privilege escalation fields
-    become = FieldAttribute(isa='bool')
-    become_method = FieldAttribute(isa='string')
-    become_user = FieldAttribute(isa='string')
-    become_pass = FieldAttribute(isa='string')
-    become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
-    become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
-    prompt = FieldAttribute(isa='string')
+    become = FieldAttribute(isa='bool', priority=70)
+    become_method = FieldAttribute(isa='string', priority=70)
+    become_user = FieldAttribute(isa='string', priority=65)
+    become_pass = FieldAttribute(isa='string', priority=65)
+    become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE, priority=65)
+    become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS, priority=65)
+    prompt = FieldAttribute(isa='string', priority=60)
 
     # general flags
-    only_tags = FieldAttribute(isa='set', default=set)
-    skip_tags = FieldAttribute(isa='set', default=set)
+    only_tags = FieldAttribute(isa='set', default=set, priority=90)
+    skip_tags = FieldAttribute(isa='set', default=set, priority=90)
 
-    start_at_task = FieldAttribute(isa='string')
-    step = FieldAttribute(isa='bool', default=False)
+    start_at_task = FieldAttribute(isa='string', priority=90)
+    step = FieldAttribute(isa='bool', default=False, priority=90)
 
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
-    force_handlers = FieldAttribute(isa='bool', default=False)
+    force_handlers = FieldAttribute(isa='bool', default=False, priority=90)
 
     @property
     def verbosity(self):

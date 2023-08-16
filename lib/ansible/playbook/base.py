@@ -114,6 +114,8 @@ class FieldAttributeBase:
         # init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
+        self._templar = None
+
     @property
     def finalized(self):
         return self._finalized
@@ -504,7 +506,23 @@ class FieldAttributeBase:
                 # mostly playcontext as only tasks/handlers/blocks really resolve parent
                 setattr(self, name, Sentinel)
 
-    def post_validate(self, templar):
+    def update_templar(self, templar):
+        self._templar = templar
+
+    def __gettattr__(self, name):
+
+        # this should only be called when an attribute is not yet finalized,
+        # once it is, it will appear as a property with the correct value.
+        if name in self.fattributes:
+            if self._templar is None:
+                raise AttributeError
+            self.post_validate(self._templar, field_attribute=name)
+        else:
+            raise AttributeError
+
+        return getattr(self, name)
+
+    def post_validate(self, templar, field_attribute=None):
         '''
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
@@ -513,8 +531,21 @@ class FieldAttributeBase:
 
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
+        last = False
 
-        for (name, attribute) in self.fattributes.items():
+        # sort by priority
+        for (name, attribute) in sorted(self.fattributes.items(), key=lambda i: i[1].priority):
+
+            # only process until the field we need
+            if last:
+                break
+
+            if field_attribute is not None and field_attribute == name:
+                last = True
+
+            #if attribute._finalized:
+            #    continue
+
             if attribute.static:
                 value = getattr(self, name)
 
@@ -542,7 +573,10 @@ class FieldAttributeBase:
                 if method:
                     value = method(attribute, getattr(self, name), templar)
                 elif attribute.isa == 'class':
-                    value = getattr(self, name)
+                    if isinstance(value, attribute.class_type):
+                        value = attribute.post_validate(templar, field_attribute=field_attribute)
+                    else:
+                        value = getattr(self, name)
                 else:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
@@ -569,8 +603,20 @@ class FieldAttributeBase:
                         msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
                     else:
                         msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+
+                    # ensure booleans are not 'true' cause template string that failed is truthy
+                    if attribute.isa == 'bool':
+                        if name == 'no_log':
+                            setattr(self, name, True)
+                        else:
+                            setattr(self, name, attribute.default)
+
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
+            # we finalized THIS FA
+            # attribute._finalized = True
+
+        # finalized the whole object
         self._finalized = True
 
     def _load_vars(self, attr, ds):
@@ -716,40 +762,40 @@ class FieldAttributeBase:
 
 class Base(FieldAttributeBase):
 
-    name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True)
+    name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True, priority=99)
 
     # connection/transport
-    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
-    port = FieldAttribute(isa='int')
-    remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
+    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'), priority=25)
+    port = FieldAttribute(isa='int', priority=24)
+    remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'), priority=24)
 
     # variables
     vars = NonInheritableFieldAttribute(isa='dict', priority=100, static=True)
 
     # module default params
-    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True, priority=35)
 
     # flags and misc. settings
-    environment = FieldAttribute(isa='list', extend=True, prepend=True)
-    no_log = FieldAttribute(isa='bool')
-    run_once = FieldAttribute(isa='bool')
-    ignore_errors = FieldAttribute(isa='bool')
-    ignore_unreachable = FieldAttribute(isa='bool')
-    check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
-    diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
-    any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
-    throttle = FieldAttribute(isa='int', default=0)
-    timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT)
+    environment = FieldAttribute(isa='list', extend=True, prepend=True, priority=35)
+    no_log = FieldAttribute(isa='bool', priority=50)
+    run_once = FieldAttribute(isa='bool', priority=80)
+    ignore_errors = FieldAttribute(isa='bool', priority=10)
+    ignore_unreachable = FieldAttribute(isa='bool', priority=10)
+    check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'), priority=35)
+    diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'), priority=35)
+    any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL, priority=10)
+    throttle = FieldAttribute(isa='int', default=0, priority=95)
+    timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT, priority=40)
 
     # explicitly invoke a debugger on tasks
-    debugger = FieldAttribute(isa='string')
+    debugger = FieldAttribute(isa='string', priority=35)
 
     # Privilege escalation
-    become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
-    become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
-    become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
-    become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
-    become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
+    become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'), priority=35)
+    become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'), priority=35)
+    become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'), priority=34)
+    become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'), priority=34)
+    become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'), priority=34)
 
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []  # type: list[str]
