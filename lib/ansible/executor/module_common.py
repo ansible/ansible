@@ -881,7 +881,7 @@ def _make_zinfo(filename, date_time, zf=None):
     return zinfo
 
 
-def recursive_finder(name, module_fqn, module_data, zf, date_time):
+def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs. (no longer actually recursive)
@@ -891,6 +891,8 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time):
     :arg zf: An open :python:class:`zipfile.ZipFile` object that holds the Ansible module payload
         which we're assembling
     """
+    if date_time is None:
+        date_time = time.gmtime()[:6]
 
     # py_module_cache maps python module names to a tuple of the code in the module
     # and the pathname to the module.
