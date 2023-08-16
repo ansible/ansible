@@ -568,10 +568,6 @@ def create_pull_request_body(title: str) -> str:
 ##### ISSUE TYPE
 
 Feature Pull Request
-
-##### COMPONENT NAME
-
-ansible
 """
 
     return body.lstrip()
