@@ -270,6 +270,12 @@ options:
             - Requires O(local) is omitted or V(False).
         type: str
         version_added: "2.12"
+    mobile:
+        description:
+            - Creates a mobile account.
+            - Currently supported on macOS.
+        type: bool
+        version_added: "2.16"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -579,6 +585,7 @@ class User(object):
         self.password_expire_min = module.params['password_expire_min']
         self.password_expire_warn = module.params['password_expire_warn']
         self.umask = module.params['umask']
+        self.mobile = module.params['mobile']
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -2506,11 +2513,17 @@ class DarwinUser(User):
         return (rc, out, err)
 
     def create_user(self, command_name='dscl'):
-        cmd = self._get_dscl()
-        cmd += ['-create', '/Users/%s' % self.name]
-        (rc, out, err) = self.execute_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
+        if self.mobile:
+            cmd = ['/System/Library/CoreServices/ManagedClient.app/Contents/Resources/createmobileaccount', '-n', self.name, '-D']
+            (rc, out, err) = self.execute_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Cannot create mobile user "%s".' % self.name, err=err, out=out, rc=rc)
+        else:
+            cmd = self._get_dscl()
+            cmd += ['-create', '/Users/%s' % self.name]
+            (rc, out, err) = self.execute_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
 
         self._make_group_numerical()
         if self.uid is None:
@@ -3140,6 +3153,7 @@ def main():
             authorization=dict(type='str'),
             role=dict(type='str'),
             umask=dict(type='str'),
+            mobile=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
