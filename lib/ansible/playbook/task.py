@@ -79,7 +79,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = NonInheritableFieldAttribute(isa='string', static=True)
-    retries = NonInheritableFieldAttribute(isa='int', default=3)
+    retries = NonInheritableFieldAttribute(isa='int')  # default is set in TaskExecutor
     until = NonInheritableFieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
