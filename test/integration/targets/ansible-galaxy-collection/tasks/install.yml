@@ -4,6 +4,12 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: directory
 
+- name: install simple collection from first accessible server (check mode)
+  command: ansible-galaxy collection install namespace1.name1 -vvvv --check-mode
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: from_first_good_server_check_mode
+
 - name: install simple collection from first accessible server
   command: ansible-galaxy collection install namespace1.name1 -vvvv
   environment:
@@ -24,6 +30,7 @@
 - name: assert install simple collection from first good server
   assert:
     that:
+    - '"Installing ''namespace1.name1:1.0.9'' to" in from_first_good_server_check_mode.stdout'
     - '"Installing ''namespace1.name1:1.0.9'' to" in from_first_good_server.stdout'
     - install_normal_files.files | length == 3
     - install_normal_files.files[0].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']

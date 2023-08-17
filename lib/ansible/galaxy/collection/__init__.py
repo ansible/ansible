@@ -655,6 +655,7 @@ def install_collections(
         disable_gpg_verify,  # type: bool
         offline,  # type: bool
         read_requirement_paths,  # type: set[str]
+        check_mode,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -768,7 +769,7 @@ def install_collections(
                 concrete_coll_pin = concrete_coll_pin.with_signatures_repopulated()
 
             try:
-                install(concrete_coll_pin, output_path, artifacts_manager)
+                install(concrete_coll_pin, output_path, artifacts_manager, check_mode)
             except AnsibleError as err:
                 if ignore_errors:
                     display.warning(
@@ -1472,7 +1473,7 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         yield req
 
 
-def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
+def install(collection, path, artifacts_manager, check_mode):  # FIXME: mv to dataclasses?
     # type: (Candidate, str, ConcreteArtifactsManager) -> None
     """Install a collection under a given path.
 
@@ -1488,6 +1489,9 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
         u"Installing '{coll!s}' to '{path!s}'".
         format(coll=to_text(collection), path=collection_path),
     )
+    if check_mode:
+        display.vvvv("Skipping install in check mode")
+        return
 
     if os.path.exists(b_collection_path):
         shutil.rmtree(b_collection_path)

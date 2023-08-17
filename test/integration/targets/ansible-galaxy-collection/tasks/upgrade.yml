@@ -147,6 +147,10 @@
   failed_when:
     - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'
 
+- name: install a new version of the collection with --upgrade (check mode)
+  command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade {{ galaxy_verbosity }} --check-mode
+  register: result_check_mode
+
 - name: install a new version of the collection with --upgrade
   command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade {{ galaxy_verbosity }}
   register: result
@@ -158,6 +162,7 @@
 
 - assert:
     that:
+      - '"Installing ''namespace1.name1:0.0.5'' to" in result_check_mode.stdout'
       - '"namespace1.name1:0.0.5 was installed successfully" in result.stdout_lines'
       - (metadata.content | b64decode | from_json).collection_info.version == '0.0.5'
 
@@ -175,12 +180,18 @@
 - assert:
     that: '"namespace1.name1:1.0.9 was installed successfully" in result.stdout_lines'
 
+- name: update the collection to the latest available version including prereleases (check mode)
+  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }} --check-mode
+  register: result_check_mode
+
 - name: upgrade the collection to the latest available version including prereleases
   command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }}
   register: result
 
 - assert:
-    that: '"namespace1.name1:1.1.0-beta.1 was installed successfully" in result.stdout_lines'
+    that:
+      - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in result_check_mode.stdout'
+      - '"namespace1.name1:1.1.0-beta.1 was installed successfully" in result.stdout_lines'
 
 - name: run the same command again
   command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }}
