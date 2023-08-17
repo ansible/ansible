@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy collection install - add a ``--check-mode`` option to check what would installed without check mode.
