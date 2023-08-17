@@ -754,6 +754,15 @@ def install_collections(
                 )
                 continue
 
+            if check_mode:
+                collection_path = os.path.join(output_path, concrete_coll_pin.namespace, concrete_coll_pin.name)
+                b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
+                display.display(
+                    u"Installing '{coll!s}' to '{path!s}'".
+                    format(coll=to_text(concrete_coll_pin), path=collection_path)
+                )
+                continue
+
             if not disable_gpg_verify and concrete_coll_pin.signatures and not keyring_exists:
                 # Duplicate warning msgs are not displayed
                 display.warning(
@@ -769,7 +778,7 @@ def install_collections(
                 concrete_coll_pin = concrete_coll_pin.with_signatures_repopulated()
 
             try:
-                install(concrete_coll_pin, output_path, artifacts_manager, check_mode)
+                install(concrete_coll_pin, output_path, artifacts_manager)
             except AnsibleError as err:
                 if ignore_errors:
                     display.warning(
@@ -1473,7 +1482,7 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         yield req
 
 
-def install(collection, path, artifacts_manager, check_mode):  # FIXME: mv to dataclasses?
+def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     # type: (Candidate, str, ConcreteArtifactsManager) -> None
     """Install a collection under a given path.
 
@@ -1489,9 +1498,6 @@ def install(collection, path, artifacts_manager, check_mode):  # FIXME: mv to da
         u"Installing '{coll!s}' to '{path!s}'".
         format(coll=to_text(collection), path=collection_path),
     )
-    if check_mode:
-        display.vvvv("Skipping install in check mode")
-        return
 
     if os.path.exists(b_collection_path):
         shutil.rmtree(b_collection_path)
