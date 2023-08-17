@@ -190,3 +190,5 @@ ansible-playbook test_include_role_handler_once.yml -i inventory.handlers "$@" 2
 
 ansible-playbook test_listen_role_dedup.yml "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'a handler from a role')" = "1" ]
+
+ansible localhost -m include_role -a "name=r1-dep_chain-vars" "$@"

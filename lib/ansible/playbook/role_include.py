@@ -113,7 +113,7 @@ class IncludeRole(TaskInclude):
             b.collections = actual_role.collections
 
         # updated available handlers in play
-        handlers = actual_role.get_handler_blocks(play=myplay)
+        handlers = actual_role.get_handler_blocks(play=myplay, dep_chain=dep_chain)
         for h in handlers:
             h._parent = p_block
         myplay.handlers = myplay.handlers + handlers
