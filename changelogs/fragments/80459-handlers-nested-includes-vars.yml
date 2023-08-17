@@ -1,0 +1,2 @@
+bugfixes:
+  - include_role - expose variables from parent roles to role's handlers (https://github.com/ansible/ansible/issues/80459)
