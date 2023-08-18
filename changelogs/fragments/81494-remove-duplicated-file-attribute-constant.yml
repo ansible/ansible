@@ -1,0 +1,2 @@
+bugfixes:
+  - "Remove duplicated and unused FILE_ATTRIBUTES constant in module_utils/basic.py file."
