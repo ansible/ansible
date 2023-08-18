@@ -546,8 +546,7 @@ class GalaxyCLI(CLI):
                                         help='Install collection artifacts (tarballs) without contacting any distribution servers. '
                                              'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
                                         )
-            install_parser.add_argument('--check-mode', dest='check_mode', default=False, action='store_true',
-                                        help='check which collections will be installed')
+            opt_help.add_check_options(install_parser)
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -1459,7 +1458,8 @@ class GalaxyCLI(CLI):
             disable_gpg_verify=disable_gpg_verify,
             offline=context.CLIARGS.get('offline', False),
             read_requirement_paths=read_req_paths,
-            check_mode=context.CLIARGS.get('check_mode', False)
+            check_mode=context.CLIARGS.get('check', False),
+            diff_mode=context.CLIARGS.get('diff', False),
         )
 
         return 0

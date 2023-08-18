@@ -6,6 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import difflib
 import errno
 import fnmatch
 import functools
@@ -656,6 +657,7 @@ def install_collections(
         offline,  # type: bool
         read_requirement_paths,  # type: set[str]
         check_mode,  # type: bool
+        diff_mode,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -673,6 +675,15 @@ def install_collections(
         for path in {output_path} | read_requirement_paths
         for coll in find_existing_collections(path, artifacts_manager)
     }
+
+    if diff_mode:
+        diff = {'before': {}, 'after': {}}
+
+        for req in existing_collections:
+            req_path = to_text(os.path.dirname(os.path.dirname(os.path.realpath(req.src))))
+            diff['before'].setdefault(req_path, {})
+            diff['before'][req_path][req.fqcn] = (req.ver, req._source_info.get('server', 'unknown origin'))
+            diff['after'][req_path] = diff['before'][req_path].copy()
 
     unsatisfied_requirements = set(
         chain.from_iterable(
@@ -738,6 +749,7 @@ def install_collections(
         )
 
     keyring_exists = artifacts_manager.keyring is not None
+    changed = False
     with _display_progress("Starting collection install process"):
         for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
@@ -754,13 +766,16 @@ def install_collections(
                 )
                 continue
 
+            if diff_mode:
+                output_path_text = to_text(output_path)
+                diff['after'].setdefault(output_path_text, {})
+
+                concrete_coll_pin_src = getattr(concrete_coll_pin.src, 'api_server', concrete_coll_pin.src) or ''
+                diff['after'][output_path_text][concrete_coll_pin.fqcn] = (concrete_coll_pin.ver, concrete_coll_pin_src)
+
+            changed |= True
             if check_mode:
-                collection_path = os.path.join(output_path, concrete_coll_pin.namespace, concrete_coll_pin.name)
-                b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
-                display.display(
-                    u"Installing '{coll!s}' to '{path!s}'".
-                    format(coll=to_text(concrete_coll_pin), path=collection_path)
-                )
+                display.vvvv(f"Skipping installing {concrete_coll_pin!s} in check mode")
                 continue
 
             if not disable_gpg_verify and concrete_coll_pin.signatures and not keyring_exists:
@@ -791,6 +806,35 @@ def install_collections(
                     )
                 else:
                     raise
+
+        if check_mode and changed:
+            display.display("Collection updates available")
+        elif changed:
+            display.display("Collections updated")
+        else:
+            display.display("No collections updated")
+
+        if diff_mode:
+            _print_diff_text(diff)
+
+
+def _print_diff_text(diff):
+    diff['before'] = json.dumps(diff['before'], sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+    diff['after'] = json.dumps(diff['after'], sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+
+    before_lines = diff['before'].splitlines(True)
+    after_lines = diff['after'].splitlines(True)
+    differ = difflib.unified_diff(before_lines,
+                                  after_lines,
+                                  n=C.DIFF_CONTEXT)
+    difflines = list(differ)
+    for line in difflines:
+        if line.startswith(u'+'):
+            display.display(line, color=C.COLOR_DIFF_ADD)
+        elif line.startswith(u'-'):
+            display.display(line, color=C.COLOR_DIFF_REMOVE)
+        else:
+            display.display(line)
 
 
 # NOTE: imported in ansible.cli.galaxy
