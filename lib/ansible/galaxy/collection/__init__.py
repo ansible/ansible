@@ -677,13 +677,18 @@ def install_collections(
     }
 
     if diff_mode:
-        diff = {'before': {}, 'after': {}}
+        diff: dict[str, dict] = {'before': {}, 'after': {}}
 
         for req in existing_collections:
             req_path = to_text(os.path.dirname(os.path.dirname(os.path.realpath(req.src))))
-            diff['before'].setdefault(req_path, {})
-            diff['before'][req_path][req.fqcn] = (req.ver, req._source_info.get('server', 'unknown origin'))
-            diff['after'][req_path] = diff['before'][req_path].copy()
+
+            fqcn_tuple_pairs: dict[str, tuple[str, str]] = {}
+            diff['before'].setdefault(req_path, fqcn_tuple_pairs)
+            diff['after'].setdefault(req_path, fqcn_tuple_pairs)
+
+            req_tuple = (req.ver, req._source_info.get('server') or 'unknown origin',)
+            diff['before'][req_path][req.fqcn] = req_tuple
+            diff['after'][req_path][req.fqcn] = req_tuple
 
     unsatisfied_requirements = set(
         chain.from_iterable(

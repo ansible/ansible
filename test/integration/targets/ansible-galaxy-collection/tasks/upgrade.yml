@@ -148,7 +148,7 @@
     - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'
 
 - name: install a new version of the collection with --upgrade (check mode)
-  command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade {{ galaxy_verbosity }} --check-mode
+  command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade {{ galaxy_verbosity }} --check
   register: result_check_mode
 
 - name: install a new version of the collection with --upgrade
@@ -181,7 +181,7 @@
     that: '"namespace1.name1:1.0.9 was installed successfully" in result.stdout_lines'
 
 - name: update the collection to the latest available version including prereleases (check mode)
-  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }} --check-mode
+  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }} --check
   register: result_check_mode
 
 - name: upgrade the collection to the latest available version including prereleases

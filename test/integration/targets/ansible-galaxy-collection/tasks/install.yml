@@ -5,7 +5,7 @@
     state: directory
 
 - name: install simple collection from first accessible server (check mode)
-  command: ansible-galaxy collection install namespace1.name1 -vvvv --check-mode
+  command: ansible-galaxy collection install namespace1.name1 -vvvv --check
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: from_first_good_server_check_mode
