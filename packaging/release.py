@@ -1341,8 +1341,11 @@ def test_sdist() -> None:
                 sdist = stack.enter_context(tarfile.open(sdist_file))
             except FileNotFoundError:
                 raise ApplicationError(f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}") from None
-
-            sdist.extractall(temp_dir)
+            if hasattr(tarfile, 'data_filter'):
+                # Remove this check when Python 3.11 is EOL
+                sdist.extractall(temp_dir, filter='data')
+            else:
+                sdist.extractall(temp_dir)
 
         pyc_glob = "*.pyc*"
         pyc_files = sorted(path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob))

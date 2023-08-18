@@ -391,7 +391,11 @@ class GalaxyRole(object):
                                         continue
                                     n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
-                                role_tar_file.extract(member, to_native(self.path))
+                                if hasattr(tarfile, 'data_filter'):
+                                    # Remove this check when Python 3.11 is EOL
+                                    role_tar_file.extract(member, to_native(self.path), filter='fully_trusted')
+                                else:
+                                    role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()

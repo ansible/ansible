@@ -159,7 +159,11 @@ class ValidateModulesTest(SanitySingleVersion):
                 temp_dir = process_scoped_temporary_directory(args)
 
                 with tarfile.open(path) as file:
-                    file.extractall(temp_dir)
+                    if hasattr(tarfile, 'data_filter'):
+                        # Remove this check when Python 3.11 is EOL
+                        file.extractall(temp_dir, filter='data')
+                    else:
+                        file.extractall(temp_dir)
 
                 cmd.extend([
                     '--original-plugins', temp_dir,

@@ -1,0 +1,3 @@
+---
+minor_changes:
+- tarfile - handle data filter deprecation warning message for extract and extractall (https://github.com/ansible/ansible/issues/80832).
