@@ -809,10 +809,6 @@ def install_collections(
 
         if check_mode and changed:
             display.display("Collection updates available")
-        elif changed:
-            display.display("Collections updated")
-        else:
-            display.display("No collections updated")
 
         if diff_mode:
             _print_diff_text(diff)
