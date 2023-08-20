@@ -47,6 +47,7 @@ PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
             {'path': '/usr/bin/installp', 'name': 'installp'},
             {'path': '/QOpenSys/pkgs/bin/yum', 'name': 'yum'},
+            {'path': '/data/data/com.termux/files/usr/bin/apt', 'name': 'apt'},
             ]
 
 
