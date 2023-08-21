@@ -371,13 +371,17 @@ class GalaxyRole(object):
                                 n_archive_parent_dir = to_native(archive_parent_dir)
                                 n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
                                 n_final_parts = []
+                                # Check if we have any files with illegal names,
+                                # and throw an exception if so. This keeps us
+                                # from producing a broken installation.
                                 for n_part in n_parts:
-                                    # TODO if the condition triggers it produces a broken installation.
-                                    # It will create the parent directory as an empty file and will
-                                    # explode if the directory contains valid files.
-                                    # Leaving this as is since the whole module needs a rewrite.
-                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
-                                        n_final_parts.append(n_part)
+                                    if n_part == '..':
+                                        raise RuntimeError(f"Illegal filename '{n_part}': '..' is not allowed")
+                                    if n_part.startswith('~'):
+                                        raise RuntimeError(f"Illegal filename '{n_part}': names cannot start with '~'")
+                                    if '$' in n_part:
+                                        raise RuntimeError(f"Illegal filename '{n_part}': names cannot contain '$'")
+                                    n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
                                 role_tar_file.extract(member, to_native(self.path))
 
