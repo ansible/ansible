@@ -388,7 +388,7 @@ def _load_params():
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
         # This helper used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
+        print('\n{"msg": "Error: Module unable to decode stdin/parameters to valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
 
     if PY2:
@@ -399,7 +399,7 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", '
+        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in JSON data from stdin. Unable to figure out what parameters were passed", '
               '"failed": true}')
         sys.exit(1)
 
@@ -568,7 +568,7 @@ class AnsibleModule(object):
             raise AssertionError("implementation error -- version and date must not both be set")
         deprecate(msg, version=version, date=date, collection_name=collection_name)
         # For compatibility, we accept that neither version nor date is set,
-        # and treat that the same as if version would haven been set
+        # and treat that the same as if version would not have been set
         if date is not None:
             self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
         else:
@@ -695,7 +695,7 @@ class AnsibleModule(object):
 
     def find_mount_point(self, path):
         '''
-            Takes a path and returns it's mount point
+            Takes a path and returns its mount point
 
         :param path: a string type with a filesystem path
         :returns: the path to the mount point as a text type
@@ -891,7 +891,7 @@ class AnsibleModule(object):
                                    details=to_native(e))
 
                 if mode != stat.S_IMODE(mode):
-                    # prevent mode from having extra info orbeing invalid long number
+                    # prevent mode from having extra info or being invalid long number
                     path = to_text(b_path)
                     self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
 
