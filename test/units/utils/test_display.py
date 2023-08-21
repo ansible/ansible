@@ -18,16 +18,14 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 
 @pytest.fixture
 def problematic_wcswidth_chars():
-    problematic = []
-    try:
-        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
-    except Exception:
-        return problematic
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
 
     candidates = set(chr(c) for c in range(sys.maxunicode) if unicodedata.category(chr(c)) == 'Cf')
-    for c in candidates:
-        if _LIBC.wcswidth(c, _MAX_INT) == -1:
-            problematic.append(c)
+    problematic = [candidate for candidate in candidates if _LIBC.wcswidth(candidate, _MAX_INT) == -1]
+
+    if not problematic:
+        # Newer distributions (Ubuntu 22.04, Fedora 38) include a libc which does not report problematic characters.
+        pytest.skip("no problematic wcswidth chars found")  # pragma: nocover
 
     return problematic
 
@@ -54,9 +52,6 @@ def test_get_text_width():
 
 
 def test_get_text_width_no_locale(problematic_wcswidth_chars):
-    if not problematic_wcswidth_chars:
-        pytest.skip("No problmatic wcswidth chars")
-    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
     pytest.raises(EnvironmentError, get_text_width, problematic_wcswidth_chars[0])
 
 
