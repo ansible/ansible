@@ -376,7 +376,7 @@ class GalaxyRole(object):
                                     # It will create the parent directory as an empty file and will
                                     # explode if the directory contains valid files.
                                     # Leaving this as is since the whole module needs a rewrite.
-                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
+                                    if n_part != '..' and not n_part.startswith('~'):
                                         n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
                                 role_tar_file.extract(member, to_native(self.path))
