@@ -1,2 +1,2 @@
 bugfixes:
-  - "Remove duplicated and unused FILE_ATTRIBUTES constant in module_utils/basic.py file."
+  - Import ``FILE_ATTRIBUTES`` from ``ansible.module_utils.common.file`` in ``ansible.module_utils.basic`` instead of defining it twice.
