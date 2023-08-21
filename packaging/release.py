@@ -1341,9 +1341,10 @@ def test_sdist() -> None:
                 sdist = stack.enter_context(tarfile.open(sdist_file))
             except FileNotFoundError:
                 raise ApplicationError(f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}") from None
+
+            # deprecated: description='extractall fallback without filter' python_version='3.11'
             if hasattr(tarfile, 'data_filter'):
-                # Remove this check when Python 3.11 is EOL
-                sdist.extractall(temp_dir, filter='data')
+                sdist.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
             else:
                 sdist.extractall(temp_dir)
 

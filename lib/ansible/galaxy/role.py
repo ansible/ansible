@@ -391,8 +391,8 @@ class GalaxyRole(object):
                                         continue
                                     n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
-                                if hasattr(tarfile, 'data_filter'):
-                                    # Remove this check when Python 3.11 is EOL
+                                # deprecated: description='extract fallback without filter' python_version='3.11'
+                                if hasattr(tarfile, 'fully_trusted_filter'):
                                     role_tar_file.extract(member, to_native(self.path), filter='fully_trusted')
                                 else:
                                     role_tar_file.extract(member, to_native(self.path))
