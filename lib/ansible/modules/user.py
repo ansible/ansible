@@ -28,6 +28,7 @@ options:
     comment:
         description:
             - Optionally sets the description (aka I(GECOS)) of user account.
+            - On macOS, this defaults to the O(name) option.
         type: str
     hidden:
         description:
@@ -49,6 +50,7 @@ options:
     group:
         description:
             - Optionally sets the user's primary group (takes a group name).
+            - On macOS, this defaults to V('staff')
         type: str
     groups:
         description:
@@ -2511,6 +2513,14 @@ class DarwinUser(User):
         (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
+
+        # Make the Gecos (alias display name) default to username
+        if self.comment is None:
+            self.comment = self.name
+
+        # Make user group default to 'staff'
+        if self.group is None:
+            self.group = 'staff'
 
         self._make_group_numerical()
         if self.uid is None:
