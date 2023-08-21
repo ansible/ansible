@@ -65,3 +65,15 @@
       - "user_test1.results[2]['state'] == 'present'"
       - "user_test1.results[3]['state'] == 'present'"
       - "user_test1.results[4]['state'] == 'present'"
+
+- name: register user informations
+  when: ansible_facts.system == 'Darwin'
+  command: dscl . -read /Users/ansibulluser
+  register: user_test2
+
+- name: validate user defaults for MacOS
+  when: ansible_facts.system == 'Darwin'
+  assert:
+    that:
+      - "'RealName: ansibulluser' in user_test2.stdout_lines "
+      - "'PrimaryGroupID: 20' in user_test2.stdout_lines "
