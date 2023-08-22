@@ -227,14 +227,7 @@ class Group(object):
                     if line.startswith(to_bytes(name_test)):
                         exists = True
                         break
-
-            if not exists:
-                self.module.warn(
-                    "'local: true' specified and group was not found in {file}. "
-                    "The local group may already exist if the local group database exists somewhere other than {file}.".format(file=self.GROUPFILE))
-
             return exists
-
         else:
             try:
                 if grp.getgrnam(self.name):
