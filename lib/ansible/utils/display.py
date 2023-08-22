@@ -709,7 +709,7 @@ class Display(metaclass=Singleton):
                 while key_pressed is None and (seconds is None or (time.time() - start < seconds)):
                     key_pressed = self._stdin.read(1)
                     # throttle to prevent excess CPU consumption
-                    time.sleep(0.001)
+                    time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
             finally:
                 os.set_blocking(self._stdin_fd, True)
                 if key_pressed is None:
