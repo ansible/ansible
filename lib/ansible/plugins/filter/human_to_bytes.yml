@@ -23,7 +23,7 @@ EXAMPLES: |
   size: '{{ "1.15 GB" | human_to_bytes }}'
 
   # size => 1234803098
-  size: '{{ "1.15" | human_to_bytes(deafult_unit="G") }}'
+  size: '{{ "1.15" | human_to_bytes(default_unit="G") }}'
 
   # this is an error, wants bits, got bytes
   ERROR: '{{ "1.15 GB" | human_to_bytes(isbits=true) }}'
