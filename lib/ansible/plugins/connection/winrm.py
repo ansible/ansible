@@ -509,7 +509,11 @@ class Connection(ConnectionBase):
                     # continue. As the calling method still tries to wait for
                     # the proc to end if this failed it shouldn't hurt to just
                     # treat this as a warning.
-                    display.warning("WSMan OperationTimeout during send input, attempting to continue")
+                    display.warning(
+                        "WSMan OperationTimeout during send input, attempting to continue. "
+                        "If this continues to occur, try increasing the connection_timeout "
+                        "value for this host."
+                    )
                     if not is_last:
                         time.sleep(5)
 
