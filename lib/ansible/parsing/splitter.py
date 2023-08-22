@@ -80,7 +80,7 @@ def parse_kv(args, check_raw=False):
                 k = x[:pos]
                 v = x[pos + 1:]
 
-                if check_raw and k not in get_command_args().keys():
+                if check_raw and k not in get_command_args():
                     raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
