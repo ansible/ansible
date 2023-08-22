@@ -240,6 +240,7 @@ import shlex
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.shell import get_command_args
 
 
 def main():
@@ -248,20 +249,7 @@ def main():
     # hence don't copy this one if you are looking to build others!
     # NOTE: ensure splitter.py is kept in sync for exceptions
     module = AnsibleModule(
-        argument_spec=dict(
-            _raw_params=dict(),
-            _uses_shell=dict(type='bool', default=False),
-            argv=dict(type='list', elements='str'),
-            chdir=dict(type='path'),
-            executable=dict(),
-            expand_argument_vars=dict(type='bool', default=True),
-            creates=dict(type='path'),
-            removes=dict(type='path'),
-            # The default for this really comes from the action plugin
-            stdin=dict(required=False),
-            stdin_add_newline=dict(type='bool', default=True),
-            strip_empty_ends=dict(type='bool', default=True),
-        ),
+        argument_spec=get_command_args(),
         supports_check_mode=True,
     )
     shell = module.params['_uses_shell']

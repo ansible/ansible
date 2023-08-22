@@ -24,6 +24,7 @@ import re
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.shell import get_command_args
 from ansible.parsing.quoting import unquote
 
 
@@ -79,8 +80,7 @@ def parse_kv(args, check_raw=False):
                 k = x[:pos]
                 v = x[pos + 1:]
 
-                # FIXME: make the retrieval of this list of shell/command options a function, so the list is centralized
-                if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn', 'stdin', 'stdin_add_newline', 'strip_empty_ends'):
+                if check_raw and k not in get_command_args().keys():
                     raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
