@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - debconf - idempotency in questions with type 'password' (https://github.com/ansible/ansible/issues/47676).

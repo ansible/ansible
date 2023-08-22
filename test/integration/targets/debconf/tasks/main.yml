@@ -33,4 +33,44 @@
               - 'debconf_test0.current is defined'
               - '"tzdata/Zones/Etc" in debconf_test0.current'
               - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
+
+    - name: install debconf-utils
+      apt:
+        name: debconf-utils
+        state: present
+      register: debconf_utils_deb_install
+
+    - name: Check if password is set
+      debconf:
+        name: ddclient
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      register: debconf_test1
+
+    - name: validate results for test 1
+      assert:
+          that:
+              - debconf_test1.changed
+
+    - name: Change password again
+      debconf:
+        name: ddclient
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      no_log: yes
+      register: debconf_test2
+
+    - name: validate results for test 1
+      assert:
+          that:
+              - not debconf_test2.changed
+  always:
+    - name: uninstall debconf-utils
+      apt:
+        name: debconf-utils
+        state: absent
+      when: debconf_utils_deb_install is changed
+
   when: ansible_distribution in ('Ubuntu', 'Debian')
