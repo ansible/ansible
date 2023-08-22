@@ -575,10 +575,9 @@ def path_join(paths):
         of the different members '''
     if isinstance(paths, string_types):
         return os.path.join(paths)
-    elif is_sequence(paths):
+    if is_sequence(paths):
         return os.path.join(*paths)
-    else:
-        raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
+    raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
 def commonpath(paths):
