@@ -28,7 +28,6 @@ from .util import (
     SubprocessError,
     display,
     filter_args,
-    ANSIBLE_BIN_PATH,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     OutputStream,
@@ -37,6 +36,10 @@ from .util import (
 from .util_common import (
     ResultType,
     process_scoped_temporary_directory,
+)
+
+from .ansible_util import (
+    get_ansible_bin_path,
 )
 
 from .containers import (
@@ -140,7 +143,7 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
             con.extract_archive(chdir=working_directory, src=payload_file)
     else:
         content_root = working_directory
-        ansible_bin_path = ANSIBLE_BIN_PATH
+        ansible_bin_path = get_ansible_bin_path(args)
 
     command = generate_command(args, host_state.controller_profile.python, ansible_bin_path, content_root, exclude, require)
 
