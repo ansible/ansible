@@ -6,6 +6,8 @@ DOCUMENTATION:
   positional: _input
   description:
     - Returns a path obtained by joining one or more path components.
+    - If a path component is an absolute path, then all previous components
+      are ignored and joining continues from the absolute path. See examples for details.
   options:
     _input:
       description: A path, or a list of paths.
@@ -21,8 +23,13 @@ EXAMPLES: |
   # equivalent to '/etc/subdir/{{filename}}'
   wheremyfile: "{{ ['/etc', 'subdir', filename] | path_join }}"
 
-  # trustme => '/etc/apt/trusted.d/mykey.gpgp'
+  # trustme => '/etc/apt/trusted.d/mykey.gpg'
   trustme: "{{ ['/etc', 'apt', 'trusted.d', 'mykey.gpg'] | path_join }}"
+
+  # If one of the paths is absolute, then path_join ignores all previous path components
+  # If backup_dir == '/tmp' and backup_file == '/sample/baz.txt', the result is '/sample/baz.txt'
+  # backup_path => "/sample/baz.txt"
+  backup_path: "{{ ('/etc', backup_dir, backup_file) | path_join }}"
 
 RETURN:
   _value:
