@@ -387,8 +387,8 @@ def _load_params():
     try:
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
-        # This helper used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode stdin/parameters to valid JSON. Unable to parse what parameters were passed", "failed": true}')
+        # This helper is used too early for fail_json to work.
+        print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
 
     if PY2:
