@@ -104,6 +104,7 @@ options:
       - This option enables the named package and version to replace an already installed higher version of that package.
       - Note that setting O(allow_downgrade=true) can make this module behave in a non-idempotent way.
       - (The task could end up with a set of packages that does not match the complete list of specified packages to install).
+      - 'O(allow_downgrade) is only supported by C(apt) and will be ignored if C(aptitude) is detected or specified.'
     aliases: [ allow-downgrade, allow_downgrades, allow-downgrades ]
     type: bool
     default: 'no'
@@ -171,7 +172,8 @@ options:
     description:
       - 'Corresponds to the C(--no-remove) option for C(apt).'
       - 'If V(true), it is ensured that no packages will be removed or the task will fail.'
-      - 'O(fail_on_autoremove) is only supported with O(state) except V(absent)'
+      - 'O(fail_on_autoremove) is only supported with O(state) except V(absent).'
+      - 'O(fail_on_autoremove) is only supported by C(apt) and will be ignored if C(aptitude) is detected or specified.'
     type: bool
     default: 'no'
     version_added: "2.11"
@@ -1090,15 +1092,23 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
-    if fail_on_autoremove and apt_cmd == APT_GET_CMD:
-        fail_on_autoremove = '--no-remove'
+    if fail_on_autoremove:
+        if apt_cmd == APT_GET_CMD:
+            fail_on_autoremove = '--no-remove'
+        else:
+            m.warn("APTITUDE does not support '--no-remove', ignoring the 'fail_on_autoremove' parameter.")
+            fail_on_autoremove = ''
     else:
         fail_on_autoremove = ''
 
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
-    if allow_downgrade and apt_cmd == APT_GET_CMD:
-        allow_downgrade = '--allow-downgrades'
+    if allow_downgrade:
+        if apt_cmd == APT_GET_CMD:
+            allow_downgrade = '--allow-downgrades'
+        else:
+            m.warn("APTITUDE does not support '--allow-downgrades', ignoring the 'allow_downgrade' parameter.")
+            allow_downgrade = ''
     else:
         allow_downgrade = ''
 
