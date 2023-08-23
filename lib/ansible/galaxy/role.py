@@ -376,11 +376,14 @@ class GalaxyRole(object):
                                 # from producing a broken installation.
                                 for n_part in n_parts:
                                     if n_part == '..':
-                                        raise RuntimeError(f"Illegal filename '{n_part}': '..' is not allowed")
+                                        display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
+                                        raise RuntimeError
                                     if n_part.startswith('~'):
-                                        raise RuntimeError(f"Illegal filename '{n_part}': names cannot start with '~'")
+                                        display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
+                                        raise RuntimeError
                                     if '$' in n_part:
-                                        raise RuntimeError(f"Illegal filename '{n_part}': names cannot contain '$'")
+                                        display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
+                                        raise RuntimeError
                                     n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
                                 role_tar_file.extract(member, to_native(self.path))
