@@ -385,7 +385,6 @@ import sys
 
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import fetch_file
-from ansible.module_utils.six import text_type
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
@@ -582,6 +581,7 @@ class DnfModule(YumDnf):
             import dnf.cli
             import dnf.const
             import dnf.exceptions
+            import dnf.package
             import dnf.subject
             import dnf.util
             HAS_DNF = True
@@ -966,12 +966,14 @@ class DnfModule(YumDnf):
     def _update_only(self, pkgs):
         not_installed = []
         for pkg in pkgs:
-            if self._is_installed(pkg):
+            if self._is_installed(
+                    self._package_dict(pkg)["nevra"] if isinstance(pkg, dnf.package.Package) else pkg
+            ):
                 try:
-                    if isinstance(to_text(pkg), text_type):
-                        self.base.upgrade(pkg)
-                    else:
+                    if isinstance(pkg, dnf.package.Package):
                         self.base.package_upgrade(pkg)
+                    else:
+                        self.base.upgrade(pkg)
                 except Exception as e:
                     self.module.fail_json(
                         msg="Error occurred attempting update_only operation: {0}".format(to_native(e)),
