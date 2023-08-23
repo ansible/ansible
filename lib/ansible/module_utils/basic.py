@@ -20,29 +20,6 @@ if not _PY_MIN:
     )
     sys.exit(1)
 
-FILE_ATTRIBUTES = {
-    'A': 'noatime',
-    'a': 'append',
-    'c': 'compressed',
-    'C': 'nocow',
-    'd': 'nodump',
-    'D': 'dirsync',
-    'e': 'extents',
-    'E': 'encrypted',
-    'h': 'blocksize',
-    'i': 'immutable',
-    'I': 'indexed',
-    'j': 'journalled',
-    'N': 'inline',
-    's': 'zero',
-    'S': 'synchronous',
-    't': 'notail',
-    'T': 'blockroot',
-    'u': 'undelete',
-    'X': 'compressedraw',
-    'Z': 'compresseddirty',
-}
-
 # Ansible modules can be written in any language.
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
@@ -172,6 +149,7 @@ from ansible.module_utils.common.file import (
     is_executable,
     format_attributes,
     get_flags_from_attributes,
+    FILE_ATTRIBUTES,
 )
 from ansible.module_utils.common.sys_info import (
     get_distribution,
