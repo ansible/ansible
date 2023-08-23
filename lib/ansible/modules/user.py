@@ -508,12 +508,25 @@ try:
 except AttributeError:
     HAVE_SPWD = False
 
+try:
+    if not HAVE_SPWD:
+        raise AttributeError
+    _LIBC.__errno_location.restype = ctypes.POINTER(ctypes.c_int)
+    _LIBC.__errno_location.argtypes = ()
+    HAVE_ERRNO = True
+except AttributeError:
+    HAVE_ERRNO = False
+
 
 _HASH_RE = re.compile(r'[^a-zA-Z0-9./=]')
 
 
 def getspnam(b_name):
     return _LIBC.getspnam(b_name).contents
+
+
+def get_errno():
+    return _LIBC.__errno_location().contents.value
 
 
 class User(object):
@@ -919,7 +932,7 @@ class User(object):
 
         if self.expires is not None:
 
-            current_expires = int(self.user_password()[1])
+            current_expires = int(self.user_password(allow_error=True)[1])
 
             if self.expires < time.gmtime(0):
                 if current_expires >= 0:
@@ -1102,6 +1115,13 @@ class User(object):
             try:
                 shadow_info = getspnam(to_bytes(self.name))
             except ValueError:
+                if min_needs_change or max_needs_change:
+                    err = 'Unable to determine if password expiration needs to be updated'
+                    if HAVE_ERRNO and get_errno() != 0:
+                        rc = get_errno()
+                    else:
+                        rc = 1
+                    return rc, '', err
                 return None, '', ''
 
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
@@ -1123,7 +1143,7 @@ class User(object):
 
         return self.execute_command(cmd)
 
-    def user_password(self):
+    def user_password(self, allow_error=False):
         passwd = ''
         expires = ''
         if HAVE_SPWD:
@@ -1133,6 +1153,12 @@ class User(object):
                 expires = shadow_info.sp_expire
                 return passwd, expires
             except ValueError:
+                if allow_error and expires == '' and self.expires:
+                    err = 'Unable to determine current password expiration'
+                    if HAVE_ERRNO and get_errno() != 0:
+                        self.module.fail_json(name=self.name, msg=err, rc=get_errno())
+                    self.module.fail_json(name=self.name, msg=err)
+
                 return passwd, expires
 
         if not self.user_exists():
@@ -1562,7 +1588,7 @@ class FreeBsdUser(User):
 
         if self.expires is not None:
 
-            current_expires = int(self.user_password()[1])
+            current_expires = int(self.user_password(allow_error=True)[1])
 
             # If expiration is negative or zero and the current expiration is greater than zero, disable expiration.
             # In OpenBSD, setting expiration to zero disables expiration. It does not expire the account.
