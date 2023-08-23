@@ -16,7 +16,7 @@
     - role: a
       when: role_set_var is defined
 
-- name: test deduping allows for 1 successful execution of role after it fails
+- name: test deduping role for failed host
   hosts: testhost,localhost
   gather_facts: false
   tags: [ 'conditional_failed' ]
@@ -26,8 +26,9 @@
     - role: failed_when
 
     - role: set_var
+    - role: recover
 
-    # Succeeds on remaining host
+    # Deduplicated after the failure, ONLY runs for localhost
     - role: failed_when
     # Deduplicated with the previous success
     - role: failed_when
