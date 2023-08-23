@@ -1,0 +1,2 @@
+bugfixes:
+  - role deduplication - don't deduplicate before a role has had a task run for that particular host (https://github.com/ansible/ansible/issues/81486).
