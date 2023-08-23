@@ -31,6 +31,7 @@
 - import_tasks: test_expires.yml
 - import_tasks: test_expires_new_account.yml
 - import_tasks: test_expires_new_account_epoch_negative.yml
+- import_tasks: test_expires_no_shadow.yml
 - import_tasks: test_expires_min_max.yml
 - import_tasks: test_expires_warn.yml
 - import_tasks: test_shadow_backup.yml
