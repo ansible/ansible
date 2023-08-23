@@ -377,13 +377,13 @@ class GalaxyRole(object):
                                 for n_part in n_parts:
                                     if n_part == '..':
                                         display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
-                                        raise RuntimeError
+                                        continue
                                     if n_part.startswith('~'):
                                         display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
-                                        raise RuntimeError
+                                        continue
                                     if '$' in n_part:
                                         display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
-                                        raise RuntimeError
+                                        continue
                                     n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
                                 role_tar_file.extract(member, to_native(self.path))
