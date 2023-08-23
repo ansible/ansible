@@ -400,6 +400,8 @@
         - { upgrade_type: safe, force_apt_get: True }
         - { upgrade_type: full, force_apt_get: True }
 
+    - include_tasks: "upgrade_scenarios.yml"
+
     - name: Remove aptitude if not originally present
       apt:
         pkg: aptitude
