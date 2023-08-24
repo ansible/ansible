@@ -1,2 +1,2 @@
 bugfixes:
-  - Changed ``ansible-galaxy`` to warn about illegal filenames in roles it is installing rather than merely crashing out with Errno 20 Not a directory. It will still crash out but it will now explain what it tripped over, giving the user a chance to remove the invalid files and try again.
+  - The command ``ansible-galaxy`` used to crash out with a "Errno 20 Not a directory" error when extracting files from a role when encountering a file with an illegal name. Now it gives a warning identifying the culprit file and the rule violation (e.g., "my$class.jar" has a "$" in the name) before crashing out, giving the user a chance to remove the invalid file and try again.
