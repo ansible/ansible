@@ -38,6 +38,13 @@ def assert_hash(expected, secret, algorithm, **settings):
 
 
 @pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')
+def test_passlib_or_crypt():
+    # deprecated: description='passlib_or_crypt deprecated' core_version='2.20'
+    expected = "$5$rounds=5000$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+    assert encrypt.passlib_or_crypt("123", "sha256_crypt", salt="12345678", rounds=5000) == expected
+
+
+@pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')
 def test_encrypt_with_rounds_no_passlib():
     with passlib_off():
         assert_hash("$5$rounds=5000$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7",

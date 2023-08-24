@@ -271,7 +271,7 @@ class PasslibHash(BaseHash):
 
 def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
     display.deprecated("passlib_or_crypt API is deprecated in favor of do_encrypt", version='2.20')
-    return do_encrypt(secret=secret, algorithm=algorithm, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+    return do_encrypt(secret, algorithm, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):
