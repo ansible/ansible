@@ -371,10 +371,10 @@ class GalaxyRole(object):
                                 n_archive_parent_dir = to_native(archive_parent_dir)
                                 n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
                                 n_final_parts = []
-                                # Check if we have any files with illegal names,
-                                # and display a warning if so. This could help users
-                                # to debug a broken installation.
                                 for n_part in n_parts:
+                                    # Check if we have any files with illegal names,
+                                    # and display a warning if so. This could help users
+                                    # to debug a broken installation.
                                     if n_part == '..':
                                         display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
                                         continue
