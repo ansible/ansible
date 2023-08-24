@@ -388,7 +388,7 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     raise TypeError(to_native(msg))
 
 
-def check_type_list(value):
+def check_type_list(value, allow_conversion=True):
     """Verify that the value is a list or convert to a list
 
     A comma separated string will be split into a list. Raises a :class:`TypeError`
@@ -402,6 +402,8 @@ def check_type_list(value):
     """
     if isinstance(value, list):
         return value
+    elif not allow_conversion:
+        raise TypeError('%s cannot be converted to a list' % type(value))
 
     if isinstance(value, string_types):
         return value.split(",")
@@ -411,7 +413,7 @@ def check_type_list(value):
     raise TypeError('%s cannot be converted to a list' % type(value))
 
 
-def check_type_dict(value):
+def check_type_dict(value, allow_conversion=True):
     """Verify that value is a dict or convert it to a dict and return it.
 
     Raises :class:`TypeError` if unable to convert to a dict
@@ -423,7 +425,7 @@ def check_type_dict(value):
     if isinstance(value, dict):
         return value
 
-    if isinstance(value, string_types):
+    if allow_conversion and isinstance(value, string_types):
         if value.startswith("{"):
             try:
                 return json.loads(value)
@@ -465,7 +467,7 @@ def check_type_dict(value):
     raise TypeError('%s cannot be converted to a dict' % type(value))
 
 
-def check_type_bool(value):
+def check_type_bool(value, allow_conversion=True):
     """Verify that the value is a bool or convert it to a bool and return it.
 
     Raises :class:`TypeError` if unable to convert to a bool
@@ -478,13 +480,13 @@ def check_type_bool(value):
     if isinstance(value, bool):
         return value
 
-    if isinstance(value, string_types) or isinstance(value, (int, float)):
+    if allow_conversion and isinstance(value, string_types) or isinstance(value, (int, float)):
         return boolean(value)
 
     raise TypeError('%s cannot be converted to a bool' % type(value))
 
 
-def check_type_int(value):
+def check_type_int(value, allow_conversion=True):
     """Verify that the value is an integer and return it or convert the value
     to an integer and return it
 
@@ -497,7 +499,7 @@ def check_type_int(value):
     if isinstance(value, integer_types):
         return value
 
-    if isinstance(value, string_types):
+    if allow_conversion and isinstance(value, string_types):
         try:
             return int(value)
         except ValueError:
@@ -506,7 +508,7 @@ def check_type_int(value):
     raise TypeError('%s cannot be converted to an int' % type(value))
 
 
-def check_type_float(value):
+def check_type_float(value, allow_conversion=True):
     """Verify that value is a float or convert it to a float and return it
 
     Raises :class:`TypeError` if unable to convert to a float
@@ -518,7 +520,7 @@ def check_type_float(value):
     if isinstance(value, float):
         return value
 
-    if isinstance(value, (binary_type, text_type, int)):
+    if allow_conversion and isinstance(value, (binary_type, text_type, int)):
         try:
             return float(value)
         except ValueError:
@@ -527,11 +529,11 @@ def check_type_float(value):
     raise TypeError('%s cannot be converted to a float' % type(value))
 
 
-def check_type_path(value,):
+def check_type_path(value):
     """Verify the provided value is a string or convert it to a string,
     then return the expanded path
     """
-    value = check_type_str(value)
+    value = check_type_str(value, allow_conversion=False)
     return os.path.expanduser(os.path.expandvars(value))
 
 

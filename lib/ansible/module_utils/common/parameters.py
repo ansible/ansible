@@ -9,6 +9,7 @@ import datetime
 import os
 
 from collections import deque
+from functools import partial
 from itertools import chain
 
 from ansible.module_utils.common.collections import is_iterable
@@ -105,11 +106,17 @@ PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'no_log')
 
 DEFAULT_TYPE_VALIDATORS = {
     'str': check_type_str,
+    'str_strict': partial(check_type_str, allow_conversion=False),
     'list': check_type_list,
+    'list_strict': partial(check_type_list, allow_conversion=False),
     'dict': check_type_dict,
+    'dict_strict': partial(check_type_dict, allow_conversion=False),
     'bool': check_type_bool,
+    'bool_strict': partial(check_type_bool, allow_conversion=False),
     'int': check_type_int,
+    'int_strict': partial(check_type_int, allow_conversion=False),
     'float': check_type_float,
+    'float_strict': partial(check_type_float, allow_conversion=False),
     'path': check_type_path,
     'raw': check_type_raw,
     'jsonarg': check_type_jsonarg,
@@ -613,6 +620,8 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         wanted_type = spec.get('type')
+        if wanted_type and spec.get('strict', False):
+            wanted_type = '%s_strict' % wanted_type
         type_checker, wanted_name = _get_type_validator(wanted_type)
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
@@ -627,6 +636,8 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
         try:
             parameters[param] = type_checker(value, **kwargs)
             elements_wanted_type = spec.get('elements', None)
+            if elements_wanted_type and spec.get('strict', False):
+                elements_wanted_type = '%s_strict' % elements_wanted_type
             if elements_wanted_type:
                 elements = parameters[param]
                 if wanted_type != 'list' or not isinstance(elements, list):

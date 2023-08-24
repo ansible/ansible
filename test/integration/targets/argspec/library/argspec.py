@@ -32,6 +32,29 @@ def main():
             'mapping': {
                 'type': 'dict',
             },
+            'str_strict': {
+                'type': 'str',
+                'strict': True,
+            },
+            'list_strict': {
+                'type': 'list_strict',
+            },
+            'dict_strict': {
+                'type': 'dict',
+                'strict': True,
+            },
+            'bool_strict': {
+                'type': 'bool',
+                'strict': True,
+            },
+            'int_strict': {
+                'type': 'int',
+                'strict': True,
+            },
+            'float_strict': {
+                'type': 'float',
+                'strict': True,
+            },
             'required_one_of': {
                 'required_one_of': [['thing', 'other']],
                 'type': 'list',
