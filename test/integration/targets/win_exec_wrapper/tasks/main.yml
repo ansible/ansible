@@ -272,3 +272,12 @@
   assert:
     that:
     - ps_log_count.stdout | int == 0
+
+- name: test module that sets HadErrors with no error records
+  test_rc_1:
+  register: module_had_errors
+
+- name: assert test module that sets HadErrors with no error records
+  assert:
+    that:
+    - module_had_errors.rc == 0
