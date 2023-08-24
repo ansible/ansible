@@ -393,7 +393,7 @@ class GalaxyRole(object):
                                 member.name = os.path.join(*n_final_parts)
                                 # deprecated: description='extract fallback without filter' python_version='3.11'
                                 if hasattr(tarfile, 'data_filter'):
-                                    role_tar_file.extract(member, to_native(self.path), filter='data')
+                                    role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
                                 else:
                                     role_tar_file.extract(member, to_native(self.path))
 
