@@ -48,7 +48,6 @@ $test_whoami = {
     Add-Type -TypeDefinition @'
 using Microsoft.Win32.SafeHandles;
 using System;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -212,7 +211,6 @@ namespace Ansible
     {
         public SafeLsaMemoryBuffer() : base(true) { }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             UInt32 res = NativeMethods.LsaFreeReturnBuffer(handle);
@@ -232,7 +230,6 @@ namespace Ansible
             base.SetHandle(handle);
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             Marshal.FreeHGlobal(handle);
@@ -245,7 +242,6 @@ namespace Ansible
         public SafeNativeHandle() : base(true) { }
         public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             return NativeMethods.CloseHandle(handle);
