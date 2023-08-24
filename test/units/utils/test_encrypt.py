@@ -28,10 +28,10 @@ class passlib_off(object):
 def assert_hash(expected, secret, algorithm, **settings):
 
     if encrypt.PASSLIB_AVAILABLE:
-        assert encrypt.passlib_or_crypt(secret, algorithm, **settings) == expected
+        assert encrypt.do_encrypt(secret, algorithm, **settings) == expected
         assert encrypt.PasslibHash(algorithm).hash(secret, **settings) == expected
     else:
-        assert encrypt.passlib_or_crypt(secret, algorithm, **settings) == expected
+        assert encrypt.do_encrypt(secret, algorithm, **settings) == expected
         with pytest.raises(AnsibleError) as excinfo:
             encrypt.PasslibHash(algorithm).hash(secret, **settings)
         assert excinfo.value.args[0] == "passlib must be installed and usable to hash with '%s'" % algorithm
