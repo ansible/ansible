@@ -274,9 +274,9 @@ def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, 
     return do_encrypt(secret=secret, algorithm=algorithm, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
 
-def do_encrypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
+def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return PasslibHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     if HAS_CRYPT:
-        return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return CryptHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     raise AnsibleError("Unable to encrypt nor hash, either crypt or passlib must be installed.", orig_exc=CRYPT_E)
