@@ -1,4 +1,4 @@
-bugfixes:
+minor_changes:
   - ansible-galaxy - used to crash out with a "Errno 20 Not a directory" error when extracting files from a role when hitting a file with an illegal name. Now it gives a warning identifying the culprit file and the rule violation (e.g., "my$class.jar" has a "$" in the name) before crashing out, giving the user a chance to remove the invalid file and try again. (https://github.com/ansible/ansible/pull/81555)
 
 known_issues:
