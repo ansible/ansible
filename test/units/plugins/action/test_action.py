@@ -34,6 +34,7 @@ from ansible.module_utils.six.moves import shlex_quote, builtins
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
+from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import init_plugin_loader
 from ansible.template import Templar
 from ansible.vars.clean import clean_facts
@@ -753,13 +754,16 @@ class TestActionBase(unittest.TestCase):
     def test_action_base_sudo_only_if_user_differs(self):
         fake_loader = MagicMock()
         fake_loader.get_basedir.return_value = os.getcwd()
+        fake_connection = MagicMock(spec=ConnectionBase)
+        fake_connection.exec_command.return_value = (0, '', '')
+        fake_connection.prepare_command = lambda info: ConnectionBase.prepare_command(fake_connection, info)
         play_context = PlayContext()
 
         action_base = DerivedActionBase(None, None, play_context, fake_loader, None, None)
         action_base.get_become_option = MagicMock(return_value='root')
         action_base._get_remote_user = MagicMock(return_value='root')
 
-        action_base._connection = MagicMock(exec_command=MagicMock(return_value=(0, '', '')))
+        action_base._connection = fake_connection
 
         action_base._connection._shell = shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
 
