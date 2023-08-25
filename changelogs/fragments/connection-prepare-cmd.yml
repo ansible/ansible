@@ -1,0 +1,7 @@
+minor_changes:
+- >-
+  connection - Added new method to connection plugins called ``prepare_command``. This method can be used by connection
+  plugins to have finer control over how the command is built to match the connection plugins implementation. The
+  default behaviour on how commands are constructed remains unchanged.
+bugfixes:
+- psrp - Support setting ``chdir`` with ``script`` when using the ``psrp`` connection plugin - https://github.com/ansible/ansible/issues/81277

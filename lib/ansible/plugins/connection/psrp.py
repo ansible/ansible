@@ -316,7 +316,7 @@ from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, PrepareCommandInfo
 from ansible.plugins.shell.powershell import ShellModule as PowerShellPlugin
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
@@ -343,7 +343,6 @@ class Connection(ConnectionBase):
 
     transport = 'psrp'
     module_implementation_preferences = ('.ps1', '.exe', '')
-    allow_executable = False
     has_pipelining = True
     allow_extras = True
 
@@ -429,7 +428,28 @@ class Connection(ConnectionBase):
         self.runspace = None
         self._connect()
 
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def prepare_command(
+        self,
+        info: PrepareCommandInfo,
+    ) -> tuple[str, bytes | None, bool, dict[str, t.Any]]:
+        # PSRP is special in that it's always executed by the PowerShell shell
+        # and it runs a script not a command. It doesn't use the base
+        # prepare_command because it needs to special handle (or ignore) things
+        # like chdir.
+        exec_kwargs = {
+            'chdir': info.chdir,
+        }
+
+        return (info.cmd, info.in_data, False, exec_kwargs)
+
+    def exec_command(
+        self,
+        cmd: str,
+        in_data: bytes | None = None,
+        sudoable: bool = True,
+        *,
+        chdir: str | None = None,
+    ) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data,
                                              sudoable=sudoable)
 
@@ -466,6 +486,9 @@ class Connection(ConnectionBase):
             script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
+
+        if chdir:
+            script = f"cd '{chdir}'; [System.Environment]::CurrentDirectory = '{chdir}'; {script}"
 
         rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data)
         return rc, stdout, stderr

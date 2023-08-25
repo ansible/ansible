@@ -6,6 +6,7 @@ from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections.abc as c
+import dataclasses
 import fcntl
 import io
 import os
@@ -45,6 +46,29 @@ def ensure_connect(
             self._connect()
         return func(self, *args, **kwargs)
     return wrapped
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class PrepareCommandInfo:
+    """Data used for prepare_command().
+
+    These are attributes that are used in the prepare_command() function.
+    More attributes might be added over time as more functionality is added.
+
+    Attributes:
+        cmd: The command to execute.
+        in_data: Data that should be written to the commands stdin.
+        use_become: Become should be used on the task.
+        executable: If set, the cmd should be run with this executable.
+        chdir: If set, the cmd should be run with this directory.
+        ansible_loader_basedir: The Dataloader base directory for the current task.
+    """
+    cmd: str
+    in_data: bytes | None = None
+    use_become: bool = False
+    executable: str | None = None
+    chdir: str | None = None
+    ansible_loader_basedir: str
 
 
 class ConnectionBase(AnsiblePlugin):
@@ -96,11 +120,10 @@ class ConnectionBase(AnsiblePlugin):
         self._connected = False
         self._socket_path: str | None = None
 
-        # helper plugins
-        self._shell = shell
-
         # we always must have shell
-        if not self._shell:
+        if shell:
+            self._shell = shell
+        else:
             shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
             self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
 
@@ -147,6 +170,58 @@ class ConnectionBase(AnsiblePlugin):
     @abstractmethod
     def _connect(self: T) -> T:
         """Connect to the host we've been initialized with"""
+
+    def prepare_command(
+        self,
+        info: PrepareCommandInfo,
+    ) -> tuple[str, bytes | None, bool, dict[str, t.Any]]:
+        """Prepares a complex command for exec_command.
+
+        This is the base class that implements all the historical rules Ansible
+        has when preparing a command from _low_level_execute_command() before
+        it calls exec_command(). It can be overridden in a connection
+        implementation if requires custom handling or to embed more information
+        passed through to exec_command.
+
+        The return value is a tuple consisting of the following
+
+        * cmd: the cmd str that will be passed to exec_command
+        * in_data: if set, the data to be passed to the command's stdin
+        * use_become: historically known as sudoable, signals whether the cmd
+            has been wrapped in a become command
+        * exec_kwargs: custom kwargs to be passed to exec_command that are
+            specific to the connection plugin
+
+        :arg info: the command information that should be prepared.
+        :returns: a tuple of (cmd, in_data, use_become, exec_kwargs).
+        """
+        cmd = info.cmd
+        if info.chdir:
+            display.debug(f"prepare_command(): changing cwd to '{info.chdir}' for this command")
+            cmd = self._shell.append_command('cd %s' % info.chdir, cmd)
+
+        if info.use_become and self.become:
+            display.debug("prepare_command(): using become for this command")
+            cmd = self.become.build_become_command(cmd, self._shell)
+
+        # FUTURE: allow_executable should be deprecated and connections that
+        # can't use executable handling should use a custom prepare_command
+        # implementation.
+        # Windows is special and doesn't support any of the executable handling.
+        if self.allow_executable and not getattr(self._shell, "_IS_WINDOWS", False):
+            executable = info.executable
+            if executable is None:
+                executable = self._play_context.executable
+
+                # FIXME: Integrate this into ssh only.
+                # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
+                # only applied for the default executable to avoid interfering with the raw action
+                cmd = self._shell.append_command(cmd, 'sleep 0')
+
+            if executable:
+                cmd = executable + ' -c ' + shlex.quote(cmd)
+
+        return (cmd, info.in_data, info.use_become, {})
 
     @ensure_connect
     @abstractmethod

@@ -29,6 +29,7 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
+from ansible.plugins.connection import PrepareCommandInfo
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
@@ -1277,14 +1278,6 @@ class ActionBase(ABC):
         '''
 
         display.debug("_low_level_execute_command(): starting")
-        # if not cmd:
-        #     # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-        #     display.debug("_low_level_execute_command(): no command, exiting")
-        #     return dict(stdout='', stderr='', rc=254)
-
-        if chdir:
-            display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
-            cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
         # https://github.com/ansible/ansible/issues/68054
         if executable:
@@ -1292,28 +1285,32 @@ class ActionBase(ABC):
 
         ruser = self._get_remote_user()
         buser = self.get_become_option('become_user')
-        if (sudoable and self._connection.become and  # if sudoable and have become
-                resource_from_fqcr(self._connection.transport) != 'network_cli' and  # if not using network_cli
-                (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
-            display.debug("_low_level_execute_command(): using become for this command")
-            cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
+        use_become = bool(
+            sudoable and
+            # FUTURE: this should be moved into the network_cli prepare_command
+            # function once 2.16 is the min version for that collection.
+            resource_from_fqcr(self._connection.transport) != 'network_cli' and
+            (
+                C.BECOME_ALLOW_SAME_USER or
+                (buser != ruser or not any((ruser, buser)))
+            )
+        )
 
-        if self._connection.allow_executable:
-            if executable is None:
-                executable = self._play_context.executable
-                # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
-                # only applied for the default executable to avoid interfering with the raw action
-                cmd = self._connection._shell.append_command(cmd, 'sleep 0')
-            if executable:
-                cmd = executable + ' -c ' + shlex.quote(cmd)
+        # Allow the connection plugin to prepare the final command and input
+        # data in case it ahs any custom rules or special handling
+        cmd_info = PrepareCommandInfo(
+            cmd=cmd,
+            in_data=in_data,
+            use_become=use_become,
+            executable=executable,
+            chdir=chdir,
+            ansible_loader_basedir=self._loader.get_basedir(),
+        )
+        cmd, in_data, sudoable, cmd_kwargs = self._connection.prepare_command(cmd_info)
 
-        display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
+        display.debug(f"_low_level_execute_command(): executing: {cmd}")
 
-        # Change directory to basedir of task for command execution when connection is local
-        if self._connection.transport == 'local':
-            self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
-
-        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable, **cmd_kwargs)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type

@@ -31,7 +31,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, PrepareCommandInfo
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
@@ -65,6 +65,14 @@ class Connection(ConnectionBase):
             display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
             self._connected = True
         return self
+
+    def prepare_command(
+        self,
+        info: PrepareCommandInfo,
+    ) -> tuple[str, bytes | None, bool, dict[str, t.Any]]:
+        # Change directory to basedir of task for command execution when connection is local
+        self.cwd = to_bytes(info.ansible_loader_basedir, errors='surrogate_or_strict')
+        return super().prepare_command(info)
 
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the local host '''
