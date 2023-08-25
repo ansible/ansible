@@ -496,7 +496,7 @@ class GalaxyCLI(CLI):
             description_text = (
                 'Install {0}(s) from file(s), URL(s) or Ansible '
                 'Galaxy to the first entry in the config {1}S_PATH '
-                'unless overriden by --{0}s-path'.format(galaxy_type, galaxy_type.upper())
+                'unless overridden by --{0}s-path'.format(galaxy_type, galaxy_type.upper())
             )
         install_parser = parser.add_parser('install', parents=parents,
                                            help='Install {0}(s) from file(s), URL(s) or Ansible '
