@@ -40,11 +40,25 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
+        validation_result, new_module_args = self.validate_argument_spec(
+            argument_spec={
+                '_raw_params': {},
+                'cmd': {'type': 'str'},
+                'creates': {'type': 'str'},
+                'removes': {'type': 'str'},
+                'chdir': {'type': 'str'},
+                'executable': {'type': 'str'},
+            },
+            required_one_of=[
+                ['_raw_params', 'cmd']
+            ]
+        )
+
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         try:
-            creates = self._task.args.get('creates')
+            creates = new_module_args['creates']
             if creates:
                 # do not run the command if the line contains creates=filename
                 # and the filename already exists. This allows idempotence
@@ -52,7 +66,7 @@ class ActionModule(ActionBase):
                 if self._remote_file_exists(creates):
                     raise AnsibleActionSkip("%s exists, matching creates option" % creates)
 
-            removes = self._task.args.get('removes')
+            removes = new_module_args['removes']
             if removes:
                 # do not run the command if the line contains removes=filename
                 # and the filename does not exist. This allows idempotence
@@ -62,7 +76,7 @@ class ActionModule(ActionBase):
 
             # The chdir must be absolute, because a relative path would rely on
             # remote node behaviour & user config.
-            chdir = self._task.args.get('chdir')
+            chdir = new_module_args['chdir']
             if chdir:
                 # Powershell is the only Windows-path aware shell
                 if getattr(self._connection._shell, "_IS_WINDOWS", False) and \
@@ -75,13 +89,14 @@ class ActionModule(ActionBase):
             # Split out the script as the first item in raw_params using
             # shlex.split() in order to support paths and files with spaces in the name.
             # Any arguments passed to the script will be added back later.
-            raw_params = to_native(self._task.args.get('_raw_params', ''), errors='surrogate_or_strict')
+            raw_params = to_native(new_module_args.get('_raw_params', ''), errors='surrogate_or_strict')
             parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
             source = parts[0]
 
             # Support executable paths and files with spaces in the name.
-            executable = to_native(self._task.args.get('executable', ''), errors='surrogate_or_strict')
-
+            executable = new_module_args['executable']
+            if executable:
+                executable = to_native(new_module_args['executable'], errors='surrogate_or_strict')
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
             except AnsibleError as e:
@@ -90,7 +105,7 @@ class ActionModule(ActionBase):
             if self._task.check_mode:
                 # check mode is supported if 'creates' or 'removes' are provided
                 # the task has already been skipped if a change would not occur
-                if self._task.args.get('creates') or self._task.args.get('removes'):
+                if new_module_args['creates'] or new_module_args['removes']:
                     result['changed'] = True
                     raise _AnsibleActionDone(result=result)
                 # If the script doesn't return changed in the result, it defaults to True,

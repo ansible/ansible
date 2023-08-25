@@ -37,6 +37,17 @@
 ## script
 ##
 
+- name: Required one of free-form and cmd
+  script:
+  ignore_errors: yes
+  register: script_required
+
+- name: assert that the script fails if neither free-form nor cmd is given
+  assert:
+    that:
+      - script_required.failed
+      - "'one of the following' in script_required.msg"
+
 - name: execute the test.sh script via command
   script: test.sh
   register: script_result0

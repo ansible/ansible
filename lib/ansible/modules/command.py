@@ -276,7 +276,7 @@ def main():
     strip = module.params['strip_empty_ends']
     expand_argument_vars = module.params['expand_argument_vars']
 
-    # we promissed these in 'always' ( _lines get autoaded on action plugin)
+    # we promised these in 'always' ( _lines get auto-added on action plugin)
     r = {'changed': False, 'stdout': '', 'stderr': '', 'rc': None, 'cmd': None, 'start': None, 'end': None, 'delta': None, 'msg': ''}
 
     if not shell and executable:
