@@ -59,8 +59,8 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
-            - If O(read_whole_file) is V(true) it matches against the beginning of the line (uses
-              V(re.match(\))). If O(read_whole_file) is V(false), it searches anywhere for that pattern
+            - If O(read_whole_file) is V(false) it matches against the beginning of the line (uses
+              V(re.match(\))). If O(read_whole_file) is V(true), it searches anywhere for that pattern
               (uses V(re.search(\))).
             - Works only when O(file_type) is V(file).
         type: str
