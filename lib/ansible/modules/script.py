@@ -12,15 +12,16 @@ version_added: "0.9"
 short_description: Runs a local script on a remote node after transferring it
 description:
   - The M(ansible.builtin.script) module takes the script name followed by a list of space-delimited arguments.
-  - Either a free form command or O(cmd) parameter is required, see the examples.
-  - The local script at path will be transferred to the remote node and then executed.
+  - Either a free-form command or O(cmd) parameter is required, see the examples.
+  - The local script at the path will be transferred to the remote node and then executed.
   - The given script will be processed through the shell environment on the remote node.
-  - This module does not require python on the remote system, much like the M(ansible.builtin.raw) module.
+  - This module does not require Python on the remote system, much like the M(ansible.builtin.raw) module.
   - This module is also supported for Windows targets.
 options:
   free_form:
     description:
       - Path to the local script file followed by optional arguments.
+    type: str
   cmd:
     type: str
     description:
@@ -29,26 +30,30 @@ options:
     description:
       - A filename on the remote node, when it already exists, this step will B(not) be run.
     version_added: "1.5"
+    type: str
   removes:
     description:
       - A filename on the remote node, when it does not exist, this step will B(not) be run.
     version_added: "1.5"
+    type: str
   chdir:
     description:
       - Change into this directory on the remote node before running the script.
     version_added: "2.4"
+    type: str
   executable:
     description:
-      - Name or path of a executable to invoke the script with.
+      - Name or path of an executable to invoke the script with.
     version_added: "2.6"
+    type: str
 notes:
   - It is usually preferable to write Ansible modules rather than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The P(ansible.builtin.ssh#connection) connection plugin will force pseudo-tty allocation via C(-tt) when scripts are executed.
     Pseudo-ttys do not have a stderr channel and all stderr is sent to stdout. If you depend on separated stdout and stderr result keys,
-    please switch to a copy+command set of tasks instead of using script.
+    please switch to a set of tasks that comprises M(ansible.builtin.copy) with M(ansible.builtin.command) instead of using M(ansible.builtin.script).
   - If the path to the local script contains spaces, it needs to be quoted.
   - This module is also supported for Windows targets.
-  - If the script returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+  - If the script returns non-UTF-8 data, it must be encoded to avoid issues. One option is to pipe
     the output through C(base64).
 seealso:
   - module: ansible.builtin.shell
@@ -106,6 +111,6 @@ EXAMPLES = r'''
   args:
     executable: python3
 
-- name: Run a Powershell script on a windows host
+- name: Run a Powershell script on a Windows host
   script: subdirectories/under/path/with/your/playbook/script.ps1
 '''
