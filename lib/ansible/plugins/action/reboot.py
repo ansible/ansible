@@ -310,12 +310,7 @@ class ActionModule(ActionBase):
                         error = to_text(e).splitlines()[-1]
                     except IndexError as e:
                         error = to_text(e)
-                    msg = "{action}: {desc} fail '{err}', retrying in {sleep:.4} seconds...".format(
-                        action=self._task.action,
-                        desc=action_desc,
-                        err=error,
-                        sleep=fail_sleep,
-                    )
+                    msg = f"{self._task.action}: {action_desc} fail '{error}', retrying in {fail_sleep:.4f} seconds..."
 
                     display.debug(msg)
                     display.vvv(msg)
