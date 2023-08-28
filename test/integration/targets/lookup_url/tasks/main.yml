@@ -52,3 +52,27 @@
 
 - name: Test use_netrc=False
   import_tasks: use_netrc.yml
+
+- vars:
+    ansible_lookup_url_agent: ansible-test-lookup-url-agent
+  block:
+    - name: Test user agent
+      set_fact:
+        web_data: "{{ lookup('url', 'https://{{ httpbin_host }}/user-agent') }}"
+
+    - name: Assert that user agent is set
+      assert:
+        that:
+          - ansible_lookup_url_agent in web_data['user-agent']
+
+- vars:
+    ansible_lookup_url_force_basic_auth: yes
+  block:
+    - name: Test force basic auth
+      set_fact:
+        web_data: "{{ lookup('url', 'https://{{ httpbin_host }}/headers', username='abc') }}"
+
+    - name: Assert that Authorization header is set
+      assert:
+        that:
+          - 'Authorization' in web_data.headers
