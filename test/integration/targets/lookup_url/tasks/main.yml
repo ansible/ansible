@@ -63,7 +63,7 @@
     - name: Assert that user agent is set
       assert:
         that:
-          - ansible_lookup_url_agent in web_data['user-agent']
+          - "'{{ ansible_lookup_url_agent }}' in web_data['user-agent']"
 
 - vars:
     ansible_lookup_url_force_basic_auth: yes
@@ -75,4 +75,4 @@
     - name: Assert that Authorization header is set
       assert:
         that:
-          - 'Authorization' in web_data.headers
+          - "'Authorization' in web_data.headers"
