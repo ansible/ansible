@@ -668,6 +668,28 @@
         - "'changed' in dnf_result"
         - "'results' in dnf_result"
 
+# Install RPM from url with update_only
+- name: install from url with update_only
+  dnf:
+    name: "file://{{ pkg_path }}"
+    state: latest
+    update_only: true
+    disable_gpg_check: true
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+        - "dnf_result is not failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
 - name: Create a temp RPM file which does not contain nevra information
   file:
     name: "/tmp/non_existent_pkg.rpm"
