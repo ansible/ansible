@@ -69,12 +69,12 @@ options:
     version_added: "2.10"
     default: ansible-httpget
     vars:
-        - name: ansible_lookup_url_http_agent
+        - name: ansible_lookup_url_agent
     env:
-        - name: ANSIBLE_LOOKUP_URL_HTTP_AGENT
+        - name: ANSIBLE_LOOKUP_URL_AGENT
     ini:
         - section: url_lookup
-          key: http_agent
+          key: agent
   force_basic_auth:
     description: Force basic authentication
     type: boolean
