@@ -156,11 +156,14 @@ def publish_collection(module, collection):
 
             # Extract the tarfile to sign the MANIFEST.json
             with tarfile.open(collection_path, mode='r') as collection_tar:
+                maybe_filter_kwargs = {
+                    'filter': 'data',
+                } if hasattr(tarfile, 'data_filter') else {}
                 # deprecated: description='extractall fallback without filter' python_version='3.11'
-                if hasattr(tarfile, 'data_filter'):
-                    collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)), filter='data')
-                else:
-                    collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)))
+                collection_tar.extractall(
+                    path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)),
+                    **maybe_filter_kwargs
+                )
 
             manifest_path = os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version), 'MANIFEST.json')
             signature_path = os.path.join(module.params['signature_dir'], '%s-%s-%s-MANIFEST.json.asc' % (namespace, name, version))

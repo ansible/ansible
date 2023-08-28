@@ -160,10 +160,11 @@ class ValidateModulesTest(SanitySingleVersion):
 
                 with tarfile.open(path) as file:
                     # deprecated: description='extractall fallback without filter' python_version='3.11'
-                    if hasattr(tarfile, 'data_filter'):
-                        file.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
-                    else:
-                        file.extractall(temp_dir)
+                    maybe_filter_kwargs = {
+                        'filter': 'data',
+                    } if hasattr(tarfile, 'data_filter') else {}
+                    # deprecated: description='extractall fallback without filter' python_version='3.11'
+                    file.extractall(temp_dir, **maybe_filter_kwargs)  # type: ignore[arg-type]
 
                 cmd.extend([
                     '--original-plugins', temp_dir,
