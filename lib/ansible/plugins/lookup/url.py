@@ -81,9 +81,9 @@ options:
     version_added: "2.10"
     default: False
     vars:
-        - name: ansible_lookup_force_basic_auth
+        - name: ansible_lookup_url_force_basic_auth
     env:
-        - name: ANSIBLE_LOOKUP_FORCE_BASIC_AUTH
+        - name: ANSIBLE_LOOKUP_URL_FORCE_BASIC_AUTH
     ini:
         - section: url_lookup
           key: force_basic_auth
