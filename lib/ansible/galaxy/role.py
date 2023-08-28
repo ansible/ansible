@@ -376,8 +376,20 @@ class GalaxyRole(object):
                                     # It will create the parent directory as an empty file and will
                                     # explode if the directory contains valid files.
                                     # Leaving this as is since the whole module needs a rewrite.
-                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
-                                        n_final_parts.append(n_part)
+                                    #
+                                    # Check if we have any files with illegal names,
+                                    # and display a warning if so. This could help users
+                                    # to debug a broken installation.
+                                    if n_part == '..':
+                                        display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
+                                        continue
+                                    if n_part.startswith('~'):
+                                        display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
+                                        continue
+                                    if '$' in n_part:
+                                        display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
+                                        continue
+                                    n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
                                 role_tar_file.extract(member, to_native(self.path))
 
