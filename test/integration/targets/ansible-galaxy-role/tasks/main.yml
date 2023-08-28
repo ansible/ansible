@@ -30,6 +30,11 @@
     content: ""
     dest: "{{ remote_tmp_dir }}/role.d/tasks/~invalid.yml"
 
+- name: Invalid file
+  copy:
+    content: ""
+    dest: "{{ remote_tmp_dir }}/role.d/tasks/invalid$name.yml"
+
 - name: Valid requirements file
   copy:
     dest: valid-requirements.yml
