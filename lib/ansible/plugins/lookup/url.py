@@ -81,12 +81,12 @@ options:
     version_added: "2.10"
     default: False
     vars:
-        - name: ansible_lookup_url_agent
+        - name: ansible_lookup_url_force_basic_auth
     env:
-        - name: ANSIBLE_LOOKUP_URL_AGENT
+        - name: ANSIBLE_LOOKUP_URL_FORCE_BASIC_AUTH
     ini:
         - section: url_lookup
-          key: agent
+          key: force_basic_auth
   follow_redirects:
     description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
     type: string
