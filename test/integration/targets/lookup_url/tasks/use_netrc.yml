@@ -10,7 +10,7 @@
 
 - name: test Url lookup with ~/.netrc forced Basic auth
   set_fact:
-    web_data: "{{ lookup('ansible.builtin.url', 'https://{{ httpbin_host }}/bearer', headers={'Authorization':'Bearer foobar'}) }}"
+    web_data: "{{ lookup('ansible.builtin.url', 'https://' ~ httpbin_host ~ '/bearer', headers={'Authorization':'Bearer foobar'}) }}"
   ignore_errors: yes
 
 - name: assert test Url lookup with ~/.netrc forced Basic auth
@@ -22,7 +22,7 @@
 
 - name: test Url lookup with use_netrc=False
   set_fact:
-    web_data: "{{ lookup('ansible.builtin.url', 'https://{{ httpbin_host }}/bearer', headers={'Authorization':'Bearer foobar'}, use_netrc='False') }}"
+    web_data: "{{ lookup('ansible.builtin.url', 'https://' ~ httpbin_host ~ '/bearer', headers={'Authorization':'Bearer foobar'}, use_netrc='False') }}"
 
 - name: assert test Url lookup with netrc=False used Bearer authentication
   assert:
