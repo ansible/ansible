@@ -58,7 +58,7 @@
   block:
     - name: Test user agent
       set_fact:
-        web_data: "{{ lookup('url', 'https://{{ httpbin_host }}/user-agent') }}"
+        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/user-agent') }}"
 
     - name: Assert that user agent is set
       assert:
