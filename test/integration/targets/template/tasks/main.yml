@@ -25,7 +25,7 @@
 
 - name: show jinja2 version
   debug:
-     msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
+     msg: "{{ lookup('pipe', ansible_python.executable ~ ' -c \"import jinja2; print(jinja2.__version__)\"') }}"
 
 - name: get default group
   shell: id -gn
@@ -760,7 +760,7 @@
     that:
       - test
   vars:
-    test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
+    test: "{{ lookup('file', output_dir ~ '/empty_template.templated')|length == 0 }}"
 
 - name: test jinja2 override without colon throws proper error
   block:
