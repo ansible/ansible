@@ -1,6 +1,6 @@
 - name: Test that retrieving a url works
   set_fact:
-    web_data: "{{ lookup('url', 'https://{{ httpbin_host }}/get?one') }}"
+    web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/get?one') }}"
 
 - name: Assert that the url was retrieved
   assert:
@@ -9,7 +9,7 @@
 
 - name: Test that retrieving a url with invalid cert fails
   set_fact:
-    web_data: "{{ lookup('url', 'https://{{ badssl_host }}/') }}"
+    web_data: "{{ lookup('url', 'https://' ~ badssl_host ~ '/') }}"
   ignore_errors: True
   register: url_invalid_cert
 
@@ -20,12 +20,12 @@
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
-    web_data: "{{ lookup('url', 'https://{{ badssl_host }}/', validate_certs=False) }}"
+    web_data: "{{ lookup('url', 'https://' ~ badssl_host ~ '/', validate_certs=False) }}"
   register: url_no_validate_cert
 
 - assert:
     that:
-      - "'{{ badssl_host_substring }}' in web_data"
+      - badssl_host_substring in web_data
 
 - vars:
     url: https://{{ httpbin_host }}/get
