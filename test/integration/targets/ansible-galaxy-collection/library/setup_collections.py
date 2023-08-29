@@ -157,6 +157,7 @@ def publish_collection(module, collection):
             # Extract the tarfile to sign the MANIFEST.json
             with tarfile.open(collection_path, mode='r') as collection_tar:
                 # deprecated: description='extractall fallback without filter' python_version='3.11'
+                # Replace 'tar_filter' with 'data_filter' and 'filter=tar' with 'filter=data' once Python 3.12 is minimum requirement.
                 if hasattr(tarfile, 'tar_filter'):
                     collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)), filter='tar')
                 else:

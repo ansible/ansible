@@ -1,4 +1,4 @@
 ---
 bugfixes:
 - tarfile - handle data filter deprecation warning message for extract and extractall (https://github.com/ansible/ansible/issues/80832).
-- ansible-galaxy - implemented probing mechanism for broken data filter in tarfile.
+- ansible-galaxy - Enabled the ``data`` tarfile filter during role installation for Python versions that support it. A probing mechanism is used to avoid Python versions with a broken implementation.

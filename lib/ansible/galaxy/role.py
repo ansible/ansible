@@ -24,6 +24,7 @@ __metaclass__ = type
 
 import errno
 import datetime
+import functools
 import os
 import tarfile
 import tempfile
@@ -43,6 +44,32 @@ from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 
 display = Display()
+
+
+@functools.cache
+def _check_working_data_filter() -> bool:
+    """
+    Check if tarfile.data_filter implementation is working
+    for the current Python version or not
+    """
+
+    # Implemented the following code to circumvent broken implementation of data_filter
+    # in tarfile. See for more information - https://github.com/python/cpython/issues/107845
+    # deprecated: description='probing broken data filter implementation' python_version='3.11'
+    ret = False
+    if hasattr(tarfile, 'data_filter'):
+        # We explicitly check if tarfile.data_filter is broken or not
+        ti = tarfile.TarInfo('docs/README.md')
+        ti.type = tarfile.SYMTYPE
+        ti.linkname = '../README.md'
+
+        try:
+            tarfile.data_filter(ti, '/foo')
+        except tarfile.LinkOutsideDestinationError:
+            pass
+        else:
+            ret = True
+    return ret
 
 
 class GalaxyRole(object):
@@ -392,24 +419,7 @@ class GalaxyRole(object):
                                     n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
 
-                                # Implemented the following code to circumvent broken implementation of data_filter
-                                # in tarfile. See for more information - https://github.com/python/cpython/issues/107845
-                                # deprecated: description='probing broken data filter implementation' python_version='3.12'
-                                HAS_FUNCTIONING_DATA_FILTER = False
-                                if hasattr(tarfile, 'data_filter'):
-                                    # We explicitly check if tarfile.data_filter is broken or not
-                                    ti = tarfile.TarInfo('docs/README.md')
-                                    ti.type = tarfile.SYMTYPE
-                                    ti.linkname = '../README.md'
-
-                                    try:
-                                        tarfile.data_filter(ti, '/foo')
-                                    except tarfile.LinkOutsideDestinationError:
-                                        pass
-                                    else:
-                                        HAS_FUNCTIONING_DATA_FILTER = True
-
-                                if HAS_FUNCTIONING_DATA_FILTER:
+                                if _check_working_data_filter():
                                     # deprecated: description='extract fallback without filter' python_version='3.11'
                                     role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
                                 else:
