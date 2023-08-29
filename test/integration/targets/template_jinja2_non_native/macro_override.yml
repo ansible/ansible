@@ -12,4 +12,4 @@
           - "'foobar' not in data"
           - "'\"foo\" \"bar\"' in data"
       vars:
-        data: "{{ lookup('file', '{{ output_dir }}/macro_override.out') }}"
+        data: "{{ lookup('file', output_dir ~ '/macro_override.out') }}"
