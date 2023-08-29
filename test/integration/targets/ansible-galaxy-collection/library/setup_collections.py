@@ -136,6 +136,7 @@ def publish_collection(module, collection):
                 fd.write(b'data')
 
             os.symlink(b_target_file, os.path.join(b_collection_dir, b_target_file + b'-link'))
+            os.symlink(temp_fd.name, os.path.join(b_collection_dir, b_target_file + b'-outside-link'))
             os.symlink(os.path.join(b'..', b_target_file), os.path.join(b_collection_dir, b'docs', b_target_file))
             os.symlink(os.path.join(b_collection_dir, b_target_file),
                        os.path.join(b_collection_dir, b'plugins', b_target_file))
@@ -155,14 +156,11 @@ def publish_collection(module, collection):
 
             # Extract the tarfile to sign the MANIFEST.json
             with tarfile.open(collection_path, mode='r') as collection_tar:
-                maybe_filter_kwargs = {
-                    'filter': 'data',
-                } if hasattr(tarfile, 'data_filter') else {}
                 # deprecated: description='extractall fallback without filter' python_version='3.11'
-                collection_tar.extractall(
-                    path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)),
-                    **maybe_filter_kwargs
-                )
+                if hasattr(tarfile, 'tar_filter'):
+                    collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)), filter='tar')
+                else:
+                    collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)))
 
             manifest_path = os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version), 'MANIFEST.json')
             signature_path = os.path.join(module.params['signature_dir'], '%s-%s-%s-MANIFEST.json.asc' % (namespace, name, version))
