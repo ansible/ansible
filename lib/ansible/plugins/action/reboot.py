@@ -286,6 +286,7 @@ class ActionModule(ActionBase):
 
         fail_count = 0
         max_fail_sleep = 12
+        last_error_msg = ''
 
         while datetime.now(timezone.utc) < max_end_time:
             try:
@@ -299,7 +300,7 @@ class ActionModule(ActionBase):
                         self._connection.reset()
                     except AnsibleConnectionFailure:
                         pass
-                # Use exponential backoff with a max timout, plus a little bit of randomness
+                # Use exponential backoff with a max timeout, plus a little bit of randomness
                 random_int = random.randint(0, 1000) / 1000
                 fail_sleep = 2 ** fail_count + random_int
                 if fail_sleep > max_fail_sleep:
@@ -310,13 +311,18 @@ class ActionModule(ActionBase):
                         error = to_text(e).splitlines()[-1]
                     except IndexError as e:
                         error = to_text(e)
-                    msg = f"{self._task.action}: {action_desc} fail '{error}', retrying in {fail_sleep:.4f} seconds..."
+                    last_error_msg = f"{self._task.action}: {action_desc} fail '{error}'"
+                    msg = f"{last_error_msg}, retrying in {fail_sleep:.4f} seconds..."
 
                     display.debug(msg)
                     display.vvv(msg)
                 fail_count += 1
                 time.sleep(fail_sleep)
 
+        if last_error_msg:
+            msg = f"Last error message before the timeout exception - {last_error_msg}"
+            display.debug(msg)
+            display.vvv(msg)
         raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
 
     def perform_reboot(self, task_vars, distribution):
