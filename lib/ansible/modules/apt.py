@@ -79,6 +79,7 @@ options:
         suggested packages. By default, Ansible will use the same defaults as the operating system.
     aliases: [ install-suggests ]
     type: bool
+    version_added: "2.16"
   force:
     description:
       - 'Corresponds to the C(--force-yes) to I(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes)'
