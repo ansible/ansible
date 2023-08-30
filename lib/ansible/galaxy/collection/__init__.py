@@ -1855,9 +1855,8 @@ def _resolve_depenency_map(
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:
         parents = [
-            "%s.%s:%s" % (p.namespace, p.name, p.ver)
-            for p in dep_exc.criterion.iter_parent()
-            if p is not None and not p.is_virtual
+            str(p) for p in dep_exc.criterion.iter_parent()
+            if p is not None
         ]
 
         error_msg_lines = [
