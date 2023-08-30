@@ -546,3 +546,8 @@
       - command_strip.stderr == 'hello \n '
       - command_no_strip.stdout== 'hello \n \r\n'
       - command_no_strip.stderr == 'hello \n \r\n'
+
+- name: Run command that backgrounds, to ensure no hang
+  shell: '{{ role_path }}/scripts/yoink.sh &'
+  delegate_to: localhost
+  timeout: 5
