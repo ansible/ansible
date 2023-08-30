@@ -545,7 +545,7 @@ def download_collections(
             if concrete_coll_pin.is_virtual:
                 display.display(
                     '{coll!s} is not downloadable'.
-                    format(coll=to_text(concrete_coll_pin), coll_type=concrete_coll_pin.type),
+                    format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
 

@@ -463,8 +463,8 @@ class _ComputedReqKindsMixin:
     def __unicode__(self):
         if self.fqcn is None:
             return (
-                f'"{self.type} collection Git repo"' if self.is_scm
-                else f'"{self.type} collection namespace"'
+                f'{self.type} collection from a Git repo' if self.is_scm
+                else f'{self.type} collection from a namespace'
             )
 
         return (
