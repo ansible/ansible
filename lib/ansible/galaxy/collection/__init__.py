@@ -519,7 +519,7 @@ def get_virtual_requirement_dependencies(requirement, artifacts_manager, seen=No
         except AnsibleError:
             # Ignore if the concrete artifact manager fails to download git repos.
             # This will be an error (or warning if --ignore-errors is provided) once the dep resolver runs.
-            pass
+            yield from ()
     else:
         yield requirement
 
