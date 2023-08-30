@@ -68,9 +68,16 @@ options:
     type: str
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). V(true) installs recommended packages.  V(false) does not install
-        recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
+      - Corresponds to the C(--no-install-recommends) option for I(apt). V(true) installs recommended packages. V(false) does not install
+        recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed
+        unless O(install_suggests=true).
     aliases: [ install-recommends ]
+    type: bool
+  install_suggests:
+    description:
+      - Corresponds to the C(--install-suggests) option for I(apt). V(true) installs suggested packages. V(false) does not install
+        suggested packages. By default, Ansible will use the same defaults as the operating system.
+    aliases: [ install-suggests ]
     type: bool
   force:
     description:
@@ -708,7 +715,7 @@ def mark_installed_manually(m, packages):
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends=None, force=False,
+            install_recommends=None, install_suggests=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
             allow_unauthenticated=False, allow_downgrade=False, allow_change_held_packages=False):
@@ -799,6 +806,12 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             cmd += " -o APT::Install-Recommends=yes"
         # install_recommends is None uses the OS default
 
+        if install_suggests is False:
+            cmd += " -o APT::Install-Suggests=no"
+        elif install_suggests is True:
+            cmd += " -o APT::Install-Suggests=yes"
+        # install_suggests is None uses the OS default
+
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
@@ -846,6 +859,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
 
 def install_deb(
         m, debs, cache, force, fail_on_autoremove, install_recommends,
+        install_suggests,
         allow_unauthenticated,
         allow_downgrade,
         allow_change_held_packages,
@@ -900,6 +914,7 @@ def install_deb(
     if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
+                                     install_suggests=install_suggests,
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
                                      allow_downgrade=allow_downgrade,
@@ -1219,6 +1234,7 @@ def main():
             deb=dict(type='path'),
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
+            install_suggests=dict(type='bool', aliases=['install-suggests']),
             force=dict(type='bool', default=False),
             upgrade=dict(type='str', choices=['dist', 'full', 'no', 'safe', 'yes'], default='no'),
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
@@ -1350,6 +1366,8 @@ def main():
 
     updated_cache = False
     updated_cache_time = 0
+    install_recommends = p['install_recommends']
+    install_suggests = p['install_suggests']
     allow_unauthenticated = p['allow_unauthenticated']
     allow_downgrade = p['allow_downgrade']
     allow_change_held_packages = p['allow_change_held_packages']
@@ -1443,6 +1461,7 @@ def main():
                     p['deb'] = fetch_file(module, p['deb'])
                 install_deb(module, p['deb'], cache,
                             install_recommends=install_recommends,
+                            install_suggests=install_suggests,
                             allow_unauthenticated=allow_unauthenticated,
                             allow_change_held_packages=allow_change_held_packages,
                             allow_downgrade=allow_downgrade,
@@ -1498,6 +1517,7 @@ def main():
                     upgrade=state_upgrade,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
+                    install_suggests=install_suggests,
                     force=force_yes,
                     dpkg_options=dpkg_options,
                     build_dep=state_builddep,
