@@ -251,7 +251,9 @@ def generate_ansible_coverage_config() -> str:
     coverage_config = '''
 [run]
 branch = True
-concurrency = multiprocessing
+concurrency =
+    multiprocessing
+    thread
 parallel = True
 
 omit =
@@ -272,7 +274,9 @@ def generate_collection_coverage_config(args: TestConfig) -> str:
     coverage_config = '''
 [run]
 branch = True
-concurrency = multiprocessing
+concurrency =
+    multiprocessing
+    thread
 parallel = True
 disable_warnings =
     no-data-collected
