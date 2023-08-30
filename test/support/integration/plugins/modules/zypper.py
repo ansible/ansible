@@ -41,7 +41,7 @@ options:
         - Package name C(name) or package specifier or a list of either.
         - Can include a version like C(name=1.0), C(name>3.4) or C(name<=2.7). If a version is given, C(oldpackage) is implied and zypper is allowed to
           update the package within the version range given.
-        - You can also pass a url or a local path to a rpm file.
+        - You can also pass a url or a local path to an rpm file.
         - When using state=latest, this can be '*', which updates all installed packages.
         required: true
         aliases: [ 'pkg' ]
