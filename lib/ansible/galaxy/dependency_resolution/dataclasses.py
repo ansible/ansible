@@ -463,8 +463,8 @@ class _ComputedReqKindsMixin:
     def __unicode__(self):
         if self.fqcn is None:
             return (
-                u'"{self.type} collection Git repo"' if self.is_scm
-                else u'"{self.type} collection namespace"'
+                f'"{self.type} collection Git repo"' if self.is_scm
+                else f'"{self.type} collection namespace"'
             )
 
         return (
@@ -504,14 +504,14 @@ class _ComputedReqKindsMixin:
     @property
     def namespace(self):
         if self.is_virtual:
-            raise TypeError('{self.type} collections do not have a namespace')
+            raise TypeError(f'{self.type} collections do not have a namespace')
 
         return self._get_separate_ns_n_name()[0]
 
     @property
     def name(self):
         if self.is_virtual:
-            raise TypeError('{self.type} collections do not have a name')
+            raise TypeError(f'{self.type} collections do not have a name')
 
         return self._get_separate_ns_n_name()[-1]
 
