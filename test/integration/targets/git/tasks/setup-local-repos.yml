@@ -56,6 +56,16 @@
   args:
     chdir: "{{ repo_dir }}/shallow_branches"
 
+- name: SETUP-LOCAL-REPOS | get ref head for test_branch
+  shell: git checkout test_branch && git rev-parse head
+  args:
+    chdir: "{{ repo_dir }}/shallow_branches"
+  register: ref_head_id
+
+- name: SETUP-LOCAL-REPOS | store ref head for test_branch
+  set_fact:
+    test_branch_ref_head_id: "{{ ref_head_id.stdout }}"
+
 # Make this a bare one, we need to be able to push to it from clones
 # We make the repo here for consistency with the other repos,
 # but we finish setting it up in forcefully-fetch-tag.yml.
