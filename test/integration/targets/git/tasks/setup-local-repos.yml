@@ -57,7 +57,7 @@
     chdir: "{{ repo_dir }}/shallow_branches"
 
 - name: SETUP-LOCAL-REPOS | get ref head for test_branch
-  shell: git checkout test_branch && git rev-parse head
+  shell: git checkout test_branch && git rev-parse HEAD
   args:
     chdir: "{{ repo_dir }}/shallow_branches"
   register: ref_head_id
