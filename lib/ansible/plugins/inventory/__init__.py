@@ -397,6 +397,7 @@ class Constructable(object):
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
+                    group_priority = keyed.get('priority', None)
                     default_value_name = keyed.get('default_value', None)
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
@@ -445,6 +446,8 @@ class Constructable(object):
                                 sep = ''
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
+                            if priority is not None:
+                                    result_gname.set_priority(int(priority))
                             self.inventory.add_host(host, result_gname)
 
                             if raw_parent_name:
