@@ -397,10 +397,12 @@ class Constructable(object):
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
-                    try:
-                        group_priority = int(keyed.get('priority', None))
-                    except ValueError as e:
-                        raise AnsibleParserError("Invalid group priority given: %s" % to_native(e))
+                    group_priority = keyed.get('priority', None)
+                    if group_priority is not None:
+                        try:
+                            group_priority = int(group_priority)
+                        except ValueError as e:
+                            raise AnsibleParserError("Invalid group priority given: %s" % to_native(e))
                     default_value_name = keyed.get('default_value', None)
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
