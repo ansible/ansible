@@ -59,7 +59,7 @@ options:
         default: True
         version_added: '2.12'
       priority:
-        descrioption: Set group's priority for fine control of variable precedence
+        description: Set group's priority for fine control of variable precedence
         type: int
         version_added: '2.16'
   use_extra_vars:
