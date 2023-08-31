@@ -121,7 +121,7 @@ def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: Ho
     coverage_files = get_python_coverage_files()
 
     def _default_stub_value(source_paths: list[str]) -> dict[str, set[tuple[int, int]]]:
-        return {path: set() for path in source_paths}
+        return {path: {(0, 0)} for path in source_paths}
 
     counter = 0
     sources = _get_coverage_targets(args, walk_compile_targets)
