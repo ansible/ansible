@@ -14,10 +14,14 @@ module: copy
 version_added: historical
 short_description: Copy files to remote locations
 description:
-    - The M(ansible.builtin.copy) module copies a file from the local or remote machine to a location on the remote machine.
+    - The M(ansible.builtin.copy) module copies a file or a directory structure from the local or remote machine to a location on the remote machine.
+      File system meta-information (permissions, ownership, etc.) may be set, even when the file or directory already exists on the target system.
+      Some meta-information may be copied on request.
+    - Get meta-information with the M(ansible.builtin.stat) module.
+    - Set meta-information with the M(ansible.builtin.file) module.
     - Use the M(ansible.builtin.fetch) module to copy files from remote locations to the local box.
     - If you need variable interpolation in copied files, use the M(ansible.builtin.template) module.
-      Using a variable in the O(content) field will result in unpredictable output.
+      Using a variable with the O(content) parameter produces unpredictable results.
     - For Windows targets, use the M(ansible.windows.win_copy) module instead.
 options:
   src:
