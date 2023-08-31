@@ -565,6 +565,15 @@ class _ComputedReqKindsMixin:
         return not self.is_concrete_artifact
 
     @property
+    def is_pinned(self):
+        """Indicate if the version set is considered pinned."""
+        version_string = self.ver[0]
+        return version_string.isdigit() or not (
+            version_string == '*' or
+            version_string.startswith(('<', '>', '!='))
+        )
+
+    @property
     def source_info(self):
         return self._source_info
 
