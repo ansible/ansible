@@ -415,6 +415,7 @@ class Constructable(_BaseInventoryPlugin):
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
+
                     default_value_name = keyed.get('default_value', None)
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
