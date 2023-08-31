@@ -61,7 +61,7 @@ options:
       priority:
         descrioption: Set group's priority for fine control of variable precedence
         type: int
-        version_Added: '2.16'
+        version_added: '2.16'
   use_extra_vars:
     version_added: '2.11'
     description: Merge extra vars into the available variables for composition (highest precedence).
