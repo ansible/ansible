@@ -1817,10 +1817,11 @@ def _resolve_depenency_map(
         elif not req.specifier.contains(RESOLVELIB_VERSION.vstring):
             raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
-    if allow_pre_release:
-        pre_release_hint = ''
-    else:
-        pre_release_hint = 'Hint: Pre-releases are not installed by default unless the specific version is given. To enable pre-releases, use --pre.'
+    pre_release_hint = '' if allow_pre_release else (
+        'Hint: Pre-releases hosted on Galaxy or Automation Hub are not '
+        'installed by default unless a specific version is requested. '
+        'To enable pre-releases globally, use --pre.'
+    )
 
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
