@@ -846,7 +846,7 @@ def main():
     )
 
     ip_version = module.params['ip_version']
-    iptables_path = module.get_bin_path(BINS[ip_version], True)
+    iptables_path = module.get_bin_path(BINS[ip_version], required=True)
 
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:

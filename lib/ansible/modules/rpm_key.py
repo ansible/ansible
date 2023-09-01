@@ -102,7 +102,7 @@ class RpmKey(object):
         keyfile = None
         should_cleanup_keyfile = False
         self.module = module
-        self.rpm = self.module.get_bin_path('rpm', True)
+        self.rpm = self.module.get_bin_path('rpm', required=True)
         state = module.params['state']
         key = module.params['key']
         fingerprint = module.params['fingerprint']

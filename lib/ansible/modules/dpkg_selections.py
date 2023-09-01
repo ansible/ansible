@@ -66,7 +66,7 @@ def main():
         supports_check_mode=True,
     )
 
-    dpkg = module.get_bin_path('dpkg', True)
+    dpkg = module.get_bin_path('dpkg', required=True)
 
     locale = get_best_parsable_locale(module)
     DPKG_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)

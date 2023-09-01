@@ -356,7 +356,7 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[["rootdir", "chroot", "jail"]])
 
-    pkgng_path = module.get_bin_path('pkg', True)
+    pkgng_path = module.get_bin_path('pkg', required=True)
 
     p = module.params
 

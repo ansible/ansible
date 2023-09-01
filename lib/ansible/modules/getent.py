@@ -141,7 +141,7 @@ def main():
     service = module.params.get('service')
     fail_key = module.params.get('fail_key')
 
-    getent_bin = module.get_bin_path('getent', True)
+    getent_bin = module.get_bin_path('getent', required=True)
 
     if key is not None:
         cmd = [getent_bin, database, key]

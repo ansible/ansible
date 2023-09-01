@@ -125,7 +125,7 @@ def enforce_state(module, params):
     hash_host = params.get("hash_host")
     state = params.get("state")
     # Find the ssh-keygen binary
-    sshkeygen = module.get_bin_path("ssh-keygen", True)
+    sshkeygen = module.get_bin_path("ssh-keygen", required=True)
 
     if not key and state != "absent":
         module.fail_json(msg="No key specified when adding a host")

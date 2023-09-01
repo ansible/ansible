@@ -362,7 +362,7 @@ class LinuxVirtual(Virtual):
         # dmidecode is the safest option to parse virtualization related values
         dmi_bin = self.module.get_bin_path('dmidecode')
         # We still want to continue even if dmidecode is not available
-        if dmi_bin is not None:
+        if dmi_bin:
             (rc, out, err) = self.module.run_command('%s -s system-product-name' % dmi_bin)
             if rc == 0:
                 # Strip out commented lines (specific dmidecode output)

@@ -325,25 +325,26 @@ class AIXScanService(BaseService):
         services = {}
         if platform.system() == 'AIX':
             lssrc_path = self.module.get_bin_path("lssrc")
-            if lssrc_path:
-                rc, stdout, stderr = self.module.run_command("%s -a" % lssrc_path)
-                if rc != 0:
-                    self.module.warn("lssrc could not retrieve service data (%s): %s" % (rc, stderr))
-                else:
-                    for line in stdout.split('\n'):
-                        line_data = line.split()
-                        if len(line_data) < 2:
-                            continue  # Skipping because we expected more data
-                        if line_data[0] == "Subsystem":
-                            continue  # Skip header
-                        service_name = line_data[0]
-                        if line_data[-1] == "active":
-                            service_state = "running"
-                        elif line_data[-1] == "inoperative":
-                            service_state = "stopped"
-                        else:
-                            service_state = "unknown"
-                        services[service_name] = {"name": service_name, "state": service_state, "source": "src"}
+            if lssrc_path is None:
+                return services
+            rc, stdout, stderr = self.module.run_command("%s -a" % lssrc_path)
+            if rc != 0:
+                self.module.warn("lssrc could not retrieve service data (%s): %s" % (rc, stderr))
+            else:
+                for line in stdout.split('\n'):
+                    line_data = line.split()
+                    if len(line_data) < 2:
+                        continue  # Skipping because we expected more data
+                    if line_data[0] == "Subsystem":
+                        continue  # Skip header
+                    service_name = line_data[0]
+                    if line_data[-1] == "active":
+                        service_state = "running"
+                    elif line_data[-1] == "inoperative":
+                        service_state = "stopped"
+                    else:
+                        service_state = "unknown"
+                    services[service_name] = {"name": service_name, "state": service_state, "source": "src"}
         return services
 
 
@@ -381,34 +382,35 @@ class OpenBSDScanService(BaseService):
 
         services = {}
         self.rcctl_path = self.module.get_bin_path("rcctl")
-        if self.rcctl_path:
+        if self.rcctl_path is None:
+            return services
 
-            # populate services will all possible
-            for svc in self.query_rcctl('all'):
-                services[svc] = {'name': svc, 'source': 'rcctl', 'rogue': False}
-                services[svc].update(self.get_info(svc))
+        # populate services will all possible
+        for svc in self.query_rcctl('all'):
+            services[svc] = {'name': svc, 'source': 'rcctl', 'rogue': False}
+            services[svc].update(self.get_info(svc))
 
-            for svc in self.query_rcctl('on'):
-                services[svc].update({'status': 'enabled'})
+        for svc in self.query_rcctl('on'):
+            services[svc].update({'status': 'enabled'})
 
-            for svc in self.query_rcctl('started'):
-                services[svc].update({'state': 'running'})
+        for svc in self.query_rcctl('started'):
+            services[svc].update({'state': 'running'})
 
-            # Override the state for services which are marked as 'failed'
-            for svc in self.query_rcctl('failed'):
-                services[svc].update({'state': 'failed'})
+        # Override the state for services which are marked as 'failed'
+        for svc in self.query_rcctl('failed'):
+            services[svc].update({'state': 'failed'})
 
-            for svc in services.keys():
-                # Based on the list of services that are enabled/failed, determine which are disabled
-                if services[svc].get('status') is None:
-                    services[svc].update({'status': 'disabled'})
+        for svc in services.keys():
+            # Based on the list of services that are enabled/failed, determine which are disabled
+            if services[svc].get('status') is None:
+                services[svc].update({'status': 'disabled'})
 
-                # and do the same for those are aren't running
-                if services[svc].get('state') is None:
-                    services[svc].update({'state': 'stopped'})
+            # and do the same for those are aren't running
+            if services[svc].get('state') is None:
+                services[svc].update({'state': 'stopped'})
 
-            for svc in self.query_rcctl('rogue'):
-                services[svc]['rogue'] = True
+        for svc in self.query_rcctl('rogue'):
+            services[svc]['rogue'] = True
 
         return services
 

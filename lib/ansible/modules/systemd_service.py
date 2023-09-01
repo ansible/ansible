@@ -365,7 +365,7 @@ def main():
             if globpattern in unit:
                 module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
 
-    systemctl = module.get_bin_path('systemctl', True)
+    systemctl = module.get_bin_path('systemctl', required=True)
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
         os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()

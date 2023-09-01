@@ -832,7 +832,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
 
 def get_field_of_deb(m, deb_file, field="Version"):
-    cmd_dpkg = m.get_bin_path("dpkg", True)
+    cmd_dpkg = m.get_bin_path("dpkg", required=True)
     cmd = cmd_dpkg + " --field %s %s" % (deb_file, field)
     rc, stdout, stderr = m.run_command(cmd)
     if rc != 0:
@@ -1302,7 +1302,7 @@ def main():
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
     global APTITUDE_CMD
-    APTITUDE_CMD = module.get_bin_path("aptitude", False)
+    APTITUDE_CMD = module.get_bin_path("aptitude")
     global APT_GET_CMD
     APT_GET_CMD = module.get_bin_path("apt-get")
 

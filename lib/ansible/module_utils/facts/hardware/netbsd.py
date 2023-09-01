@@ -163,9 +163,10 @@ class NetBSDHardware(Hardware):
     def get_uptime_facts(self):
         # On NetBSD, we need to call sysctl with -n to get this value as an int.
         sysctl_cmd = self.module.get_bin_path('sysctl')
-        cmd = [sysctl_cmd, '-n', 'kern.boottime']
+        if sysctl_cmd is None:
+            return {}
 
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command([sysctl_cmd, '-n', 'kern.boottime'])
 
         if rc != 0:
             return {}

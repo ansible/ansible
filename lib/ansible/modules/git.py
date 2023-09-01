@@ -1218,7 +1218,7 @@ def main():
     gpg_whitelist = module.params['gpg_whitelist']
     reference = module.params['reference']
     single_branch = module.params['single_branch']
-    git_path = module.params['executable'] or module.get_bin_path('git', True)
+    git_path = module.params['executable'] or module.get_bin_path('git', required=True)
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']

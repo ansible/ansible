@@ -130,6 +130,8 @@ class FreeBSDHardware(Hardware):
         # On FreeBSD, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
         sysctl_cmd = self.module.get_bin_path('sysctl')
+        if sysctl_cmd is None:
+            return {}
         cmd = [sysctl_cmd, '-b', 'kern.boottime']
 
         # We need to get raw bytes, not UTF-8.

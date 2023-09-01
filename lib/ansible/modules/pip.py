@@ -433,7 +433,7 @@ def _get_pip(module, env=None, executable=None):
         if env is None:
             opt_dirs = []
             for basename in candidate_pip_basenames:
-                pip = module.get_bin_path(basename, False, opt_dirs)
+                pip = module.get_bin_path(basename, required=False, opt_dirs=opt_dirs)
                 if pip is not None:
                     break
             else:
@@ -515,7 +515,7 @@ def _get_package_info(module, package, env=None):
         opt_dirs = ['%s/bin' % env]
     else:
         opt_dirs = []
-    python_bin = module.get_bin_path('python', False, opt_dirs)
+    python_bin = module.get_bin_path('python', required=False, opt_dirs=opt_dirs)
 
     if python_bin is None:
         formatted_dep = None
@@ -537,7 +537,7 @@ def setup_virtualenv(module, env, chdir, out, err):
     # Find the binary for the command in the PATH
     # and switch the command for the explicit path.
     if os.path.basename(cmd[0]) == cmd[0]:
-        cmd[0] = module.get_bin_path(cmd[0], True)
+        cmd[0] = module.get_bin_path(cmd[0], required=True)
 
     # Add the system-site-packages option if that
     # is enabled, otherwise explicitly set the option

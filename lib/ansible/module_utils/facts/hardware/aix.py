@@ -131,17 +131,19 @@ class AIXHardware(Hardware):
         data = out.split()
         dmi_facts['firmware_version'] = data[1].strip('IBM,')
         lsconf_path = self.module.get_bin_path("lsconf")
-        if lsconf_path:
-            rc, out, err = self.module.run_command(lsconf_path)
-            if rc == 0 and out:
-                for line in out.splitlines():
-                    data = line.split(':')
-                    if 'Machine Serial Number' in line:
-                        dmi_facts['product_serial'] = data[1].strip()
-                    if 'LPAR Info' in line:
-                        dmi_facts['lpar_info'] = data[1].strip()
-                    if 'System Model' in line:
-                        dmi_facts['product_name'] = data[1].strip()
+        if lsconf_path is None:
+            return dmi_facts
+
+        rc, out, err = self.module.run_command(lsconf_path)
+        if rc == 0 and out:
+            for line in out.splitlines():
+                data = line.split(':')
+                if 'Machine Serial Number' in line:
+                    dmi_facts['product_serial'] = data[1].strip()
+                if 'LPAR Info' in line:
+                    dmi_facts['lpar_info'] = data[1].strip()
+                if 'System Model' in line:
+                    dmi_facts['product_name'] = data[1].strip()
         return dmi_facts
 
     def get_vgs_facts(self):
@@ -233,8 +235,8 @@ class AIXHardware(Hardware):
         device_facts = {}
         device_facts['devices'] = {}
 
-        lsdev_cmd = self.module.get_bin_path('lsdev', True)
-        lsattr_cmd = self.module.get_bin_path('lsattr', True)
+        lsdev_cmd = self.module.get_bin_path('lsdev', required=True)
+        lsattr_cmd = self.module.get_bin_path('lsattr', required=True)
         rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
 
         for line in out_lsdev.splitlines():

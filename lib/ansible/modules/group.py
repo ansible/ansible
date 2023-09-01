@@ -161,7 +161,7 @@ class Group(object):
             command_name = 'lgroupdel'
         else:
             command_name = 'groupdel'
-        cmd = [self.module.get_bin_path(command_name, True), self.name]
+        cmd = [self.module.get_bin_path(command_name, required=True), self.name]
         return self.execute_command(cmd)
 
     def _local_check_gid_exists(self):
@@ -176,7 +176,7 @@ class Group(object):
             self._local_check_gid_exists()
         else:
             command_name = 'groupadd'
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
@@ -194,7 +194,7 @@ class Group(object):
             self._local_check_gid_exists()
         else:
             command_name = 'groupmod'
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
         info = self.group_info()
         for key in kwargs:
             if key == 'gid':
@@ -263,7 +263,7 @@ class Linux(Group):
             command_name = 'lgroupdel'
         else:
             command_name = 'groupdel'
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
         if self.force:
             cmd.append('-f')
         cmd.append(self.name)
@@ -286,7 +286,7 @@ class SunOS(Group):
     GROUPFILE = '/etc/group'
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        cmd = [self.module.get_bin_path('groupadd', required=True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
@@ -314,11 +314,11 @@ class AIX(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('rmgroup', True), self.name]
+        cmd = [self.module.get_bin_path('rmgroup', required=True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('mkgroup', True)]
+        cmd = [self.module.get_bin_path('mkgroup', required=True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('id=' + str(kwargs[key]))
@@ -328,7 +328,7 @@ class AIX(Group):
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('chgroup', True)]
+        cmd = [self.module.get_bin_path('chgroup', required=True)]
         info = self.group_info()
         for key in kwargs:
             if key == 'gid':
@@ -359,11 +359,11 @@ class FreeBsdGroup(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('pw', True), 'groupdel', self.name]
+        cmd = [self.module.get_bin_path('pw', required=True), 'groupdel', self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
+        cmd = [self.module.get_bin_path('pw', required=True), 'groupadd', self.name]
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
@@ -372,7 +372,7 @@ class FreeBsdGroup(Group):
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('pw', True), 'groupmod', self.name]
+        cmd = [self.module.get_bin_path('pw', required=True), 'groupmod', self.name]
         info = self.group_info()
         cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
@@ -415,7 +415,7 @@ class DarwinGroup(Group):
     distribution = None
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('dseditgroup', True)]
+        cmd = [self.module.get_bin_path('dseditgroup', required=True)]
         cmd += ['-o', 'create']
         if self.gid is not None:
             cmd += ['-i', str(self.gid)]
@@ -429,7 +429,7 @@ class DarwinGroup(Group):
         return (rc, out, err)
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('dseditgroup', True)]
+        cmd = [self.module.get_bin_path('dseditgroup', required=True)]
         cmd += ['-o', 'delete']
         cmd += ['-L', self.name]
         (rc, out, err) = self.execute_command(cmd)
@@ -438,7 +438,7 @@ class DarwinGroup(Group):
     def group_mod(self, gid=None):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd = [self.module.get_bin_path('dseditgroup', True)]
+            cmd = [self.module.get_bin_path('dseditgroup', required=True)]
             cmd += ['-o', 'edit']
             if gid is not None:
                 cmd += ['-i', str(gid)]
@@ -450,7 +450,7 @@ class DarwinGroup(Group):
     def get_lowest_available_system_gid(self):
         # check for lowest available system gid (< 500)
         try:
-            cmd = [self.module.get_bin_path('dscl', True)]
+            cmd = [self.module.get_bin_path('dscl', required=True)]
             cmd += ['/Local/Default', '-list', '/Groups', 'PrimaryGroupID']
             (rc, out, err) = self.execute_command(cmd)
             lines = out.splitlines()
@@ -483,11 +483,11 @@ class OpenBsdGroup(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        cmd = [self.module.get_bin_path('groupdel', required=True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        cmd = [self.module.get_bin_path('groupadd', required=True)]
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
@@ -497,7 +497,7 @@ class OpenBsdGroup(Group):
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupmod', True)]
+        cmd = [self.module.get_bin_path('groupmod', required=True)]
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
@@ -529,11 +529,11 @@ class NetBsdGroup(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        cmd = [self.module.get_bin_path('groupdel', required=True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        cmd = [self.module.get_bin_path('groupadd', required=True)]
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
@@ -543,7 +543,7 @@ class NetBsdGroup(Group):
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupmod', True)]
+        cmd = [self.module.get_bin_path('groupmod', required=True)]
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
@@ -572,7 +572,7 @@ class BusyBoxGroup(Group):
     """
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('addgroup', True)]
+        cmd = [self.module.get_bin_path('addgroup', required=True)]
         if self.gid is not None:
             cmd.extend(['-g', str(self.gid)])
 
@@ -584,7 +584,7 @@ class BusyBoxGroup(Group):
         return self.execute_command(cmd)
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('delgroup', True), self.name]
+        cmd = [self.module.get_bin_path('delgroup', required=True), self.name]
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):

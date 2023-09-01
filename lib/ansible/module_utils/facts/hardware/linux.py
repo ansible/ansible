@@ -820,7 +820,7 @@ class LinuxHardware(Hardware):
         dm_prefix = '/dev/dm-'
         mapper_device = dm_device
         if dm_device.startswith(dm_prefix):
-            dmsetup_cmd = self.module.get_bin_path('dmsetup', True)
+            dmsetup_cmd = self.module.get_bin_path('dmsetup', required=True)
             mapper_prefix = '/dev/mapper/'
             rc, dm_name, err = self.module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
             if rc == 0:
@@ -832,10 +832,10 @@ class LinuxHardware(Hardware):
 
         lvm_facts = {'lvm': 'N/A'}
 
-        if os.getuid() == 0 and self.module.get_bin_path('vgs'):
+        vgs_path = self.module.get_bin_path('vgs')
+        if os.getuid() == 0 and vgs_path:
             lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
 
-            vgs_path = self.module.get_bin_path('vgs')
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
             vgs = {}
             if vgs_path:

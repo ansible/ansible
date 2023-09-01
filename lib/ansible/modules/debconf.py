@@ -129,7 +129,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_password_value(module, pkg, question, vtype):
-    getsel = module.get_bin_path('debconf-get-selections', True)
+    getsel = module.get_bin_path('debconf-get-selections', required=True)
     cmd = [getsel]
     rc, out, err = module.run_command(cmd)
     if rc != 0:
@@ -151,7 +151,7 @@ def get_password_value(module, pkg, question, vtype):
 
 
 def get_selections(module, pkg):
-    cmd = [module.get_bin_path('debconf-show', True), pkg]
+    cmd = [module.get_bin_path('debconf-show', required=True), pkg]
     rc, out, err = module.run_command(' '.join(cmd))
 
     if rc != 0:
@@ -167,7 +167,7 @@ def get_selections(module, pkg):
 
 
 def set_selection(module, pkg, question, vtype, value, unseen):
-    setsel = module.get_bin_path('debconf-set-selections', True)
+    setsel = module.get_bin_path('debconf-set-selections', required=True)
     cmd = [setsel]
     if unseen:
         cmd.append('-u')

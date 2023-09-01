@@ -178,7 +178,7 @@ class CommandStrategy(BaseStrategy):
 
     def __init__(self, module):
         super(CommandStrategy, self).__init__(module)
-        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, required=True)
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd]
@@ -287,7 +287,7 @@ class AlpineStrategy(FileStrategy):
 
     def set_current_hostname(self, name):
         super(AlpineStrategy, self).set_current_hostname(name)
-        hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+        hostname_cmd = self.module.get_bin_path(self.COMMAND, required=True)
 
         cmd = [hostname_cmd, '-F', self.FILE]
         rc, out, err = self.module.run_command(cmd)
@@ -305,7 +305,7 @@ class SystemdStrategy(BaseStrategy):
 
     def __init__(self, module):
         super(SystemdStrategy, self).__init__(module)
-        self.hostnamectl_cmd = self.module.get_bin_path(self.COMMAND, True)
+        self.hostnamectl_cmd = self.module.get_bin_path(self.COMMAND, required=True)
 
     def get_current_hostname(self):
         cmd = [self.hostnamectl_cmd, '--transient', 'status']
@@ -396,7 +396,7 @@ class OpenBSDStrategy(FileStrategy):
 
     def __init__(self, module):
         super(OpenBSDStrategy, self).__init__(module)
-        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, required=True)
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd]
@@ -422,7 +422,7 @@ class SolarisStrategy(BaseStrategy):
 
     def __init__(self, module):
         super(SolarisStrategy, self).__init__(module)
-        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, required=True)
 
     def set_current_hostname(self, name):
         cmd_option = '-t'
@@ -458,7 +458,7 @@ class FreeBSDStrategy(BaseStrategy):
 
     def __init__(self, module):
         super(FreeBSDStrategy, self).__init__(module)
-        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, required=True)
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd]
@@ -529,7 +529,7 @@ class DarwinStrategy(BaseStrategy):
     def __init__(self, module):
         super(DarwinStrategy, self).__init__(module)
 
-        self.scutil = self.module.get_bin_path('scutil', True)
+        self.scutil = self.module.get_bin_path('scutil', required=True)
         self.name_types = ('HostName', 'ComputerName', 'LocalHostName')
         self.scrubbed_name = self._scrub_hostname(self.module.params['name'])
 

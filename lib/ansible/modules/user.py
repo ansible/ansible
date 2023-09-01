@@ -660,7 +660,7 @@ class User(object):
         else:
             command_name = 'userdel'
 
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
         if self.force and not self.local:
             cmd.append('-f')
         if self.remove:
@@ -673,12 +673,12 @@ class User(object):
 
         if self.local:
             command_name = 'luseradd'
-            lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
-            lchage_cmd = self.module.get_bin_path('lchage', True)
+            lgroupmod_cmd = self.module.get_bin_path('lgroupmod', required=True)
+            lchage_cmd = self.module.get_bin_path('lchage', required=True)
         else:
             command_name = 'useradd'
 
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -813,7 +813,7 @@ class User(object):
         else:
             command_name = 'usermod'
 
-        usermod_path = self.module.get_bin_path(command_name, True)
+        usermod_path = self.module.get_bin_path(command_name, required=True)
 
         # for some reason, usermod --help cannot be used by non root
         # on RH/Fedora, due to lack of execute bit for others
@@ -836,15 +836,15 @@ class User(object):
 
         if self.local:
             command_name = 'lusermod'
-            lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
+            lgroupmod_cmd = self.module.get_bin_path('lgroupmod', required=True)
             lgroupmod_add = set()
             lgroupmod_del = set()
-            lchage_cmd = self.module.get_bin_path('lchage', True)
+            lchage_cmd = self.module.get_bin_path('lchage', required=True)
             lexpires = None
         else:
             command_name = 'usermod'
 
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
         info = self.user_info()
         has_append = self._check_usermod_append()
 
@@ -1113,7 +1113,7 @@ class User(object):
             return (None, '', '')  # target state already reached
 
         command_name = 'chage'
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
         if min_needs_change:
             cmd.extend(["-m", self.password_expire_min])
         if max_needs_change:
@@ -1186,7 +1186,7 @@ class User(object):
                 overwrite = 'y'
             else:
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
-        cmd = [self.module.get_bin_path('ssh-keygen', True)]
+        cmd = [self.module.get_bin_path('ssh-keygen', required=True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
         if self.ssh_bits > 0:
@@ -1259,7 +1259,7 @@ class User(object):
         ssh_key_file = self.get_ssh_key_path()
         if not os.path.exists(ssh_key_file):
             return (1, 'SSH Key file %s does not exist' % ssh_key_file, '')
-        cmd = [self.module.get_bin_path('ssh-keygen', True)]
+        cmd = [self.module.get_bin_path('ssh-keygen', required=True)]
         cmd.append('-l')
         cmd.append('-f')
         cmd.append(ssh_key_file)
@@ -1353,7 +1353,7 @@ class FreeBsdUser(User):
         info = self.user_info()
         if self.password_lock and not info[1].startswith('*LOCKED*'):
             cmd = [
-                self.module.get_bin_path('pw', True),
+                self.module.get_bin_path('pw', required=True),
                 'lock',
                 self.name
             ]
@@ -1363,7 +1363,7 @@ class FreeBsdUser(User):
             return self.execute_command(cmd)
         elif self.password_lock is False and info[1].startswith('*LOCKED*'):
             cmd = [
-                self.module.get_bin_path('pw', True),
+                self.module.get_bin_path('pw', required=True),
                 'unlock',
                 self.name
             ]
@@ -1376,7 +1376,7 @@ class FreeBsdUser(User):
 
     def remove_user(self):
         cmd = [
-            self.module.get_bin_path('pw', True),
+            self.module.get_bin_path('pw', required=True),
             'userdel',
             '-n',
             self.name
@@ -1388,7 +1388,7 @@ class FreeBsdUser(User):
 
     def create_user(self):
         cmd = [
-            self.module.get_bin_path('pw', True),
+            self.module.get_bin_path('pw', required=True),
             'useradd',
             '-n',
             self.name,
@@ -1456,7 +1456,7 @@ class FreeBsdUser(User):
         # we have to set the password in a second command
         if self.password is not None:
             cmd = [
-                self.module.get_bin_path('chpass', True),
+                self.module.get_bin_path('chpass', required=True),
                 '-p',
                 self.password,
                 self.name
@@ -1478,7 +1478,7 @@ class FreeBsdUser(User):
 
     def modify_user(self):
         cmd = [
-            self.module.get_bin_path('pw', True),
+            self.module.get_bin_path('pw', required=True),
             'usermod',
             '-n',
             self.name
@@ -1595,7 +1595,7 @@ class FreeBsdUser(User):
         # we have to set the password in a second command
         if self.update_password == 'always' and self.password is not None and info[1].lstrip('*LOCKED*') != self.password.lstrip('*LOCKED*'):
             cmd = [
-                self.module.get_bin_path('chpass', True),
+                self.module.get_bin_path('chpass', required=True),
                 '-p',
                 self.password,
                 self.name
@@ -1645,7 +1645,7 @@ class OpenBSDUser(User):
     SHADOWFILE = '/etc/master.passwd'
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('useradd', True)]
+        cmd = [self.module.get_bin_path('useradd', required=True)]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -1700,14 +1700,14 @@ class OpenBSDUser(User):
         return self.execute_command(cmd)
 
     def remove_user_userdel(self):
-        cmd = [self.module.get_bin_path('userdel', True)]
+        cmd = [self.module.get_bin_path('userdel', required=True)]
         if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def modify_user(self):
-        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd = [self.module.get_bin_path('usermod', required=True)]
         info = self.user_info()
 
         if self.uid is not None and info[2] != int(self.uid):
@@ -1769,7 +1769,7 @@ class OpenBSDUser(User):
         if self.login_class is not None:
             # find current login class
             user_login_class = None
-            userinfo_cmd = [self.module.get_bin_path('userinfo', True), self.name]
+            userinfo_cmd = [self.module.get_bin_path('userinfo', required=True), self.name]
             (rc, out, err) = self.execute_command(userinfo_cmd, obey_checkmode=False)
 
             for line in out.splitlines():
@@ -1820,7 +1820,7 @@ class NetBSDUser(User):
     SHADOWFILE = '/etc/master.passwd'
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('useradd', True)]
+        cmd = [self.module.get_bin_path('useradd', required=True)]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -1877,14 +1877,14 @@ class NetBSDUser(User):
         return self.execute_command(cmd)
 
     def remove_user_userdel(self):
-        cmd = [self.module.get_bin_path('userdel', True)]
+        cmd = [self.module.get_bin_path('userdel', required=True)]
         if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def modify_user(self):
-        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd = [self.module.get_bin_path('usermod',required= True)]
         info = self.user_info()
 
         if self.uid is not None and info[2] != int(self.uid):
@@ -2011,7 +2011,7 @@ class SunOS(User):
         return (minweeks, maxweeks, warnweeks)
 
     def remove_user(self):
-        cmd = [self.module.get_bin_path('userdel', True)]
+        cmd = [self.module.get_bin_path('userdel', required=True)]
         if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
@@ -2019,7 +2019,7 @@ class SunOS(User):
         return self.execute_command(cmd)
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('useradd', True)]
+        cmd = [self.module.get_bin_path('useradd', required=True)]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2124,7 +2124,7 @@ class SunOS(User):
         return (rc, out, err)
 
     def modify_user_usermod(self):
-        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd = [self.module.get_bin_path('usermod', required=True)]
         cmd_len = len(cmd)
         info = self.user_info()
 
@@ -2302,7 +2302,7 @@ class DarwinUser(User):
             self.fields.append(('hidden', 'IsHidden'))
 
     def _get_dscl(self):
-        return [self.module.get_bin_path('dscl', True), self.dscl_directory]
+        return [self.module.get_bin_path('dscl', required=True), self.dscl_directory]
 
     def _list_user_groups(self):
         cmd = self._get_dscl()
@@ -2628,7 +2628,7 @@ class AIX(User):
     SHADOWFILE = '/etc/security/passwd'
 
     def remove_user(self):
-        cmd = [self.module.get_bin_path('userdel', True)]
+        cmd = [self.module.get_bin_path('userdel', required=True)]
         if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
@@ -2636,7 +2636,7 @@ class AIX(User):
         return self.execute_command(cmd)
 
     def create_user_useradd(self, command_name='useradd'):
-        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd = [self.module.get_bin_path(command_name, required=True)]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2682,7 +2682,7 @@ class AIX(User):
         # set password with chpasswd
         if self.password is not None:
             cmd = []
-            cmd.append(self.module.get_bin_path('chpasswd', True))
+            cmd.append(self.module.get_bin_path('chpasswd', required=True))
             cmd.append('-e')
             cmd.append('-c')
             self.execute_command(cmd, data="%s:%s" % (self.name, self.password))
@@ -2690,7 +2690,7 @@ class AIX(User):
         return (rc, out, err)
 
     def modify_user_usermod(self):
-        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd = [self.module.get_bin_path('usermod', required=True)]
         info = self.user_info()
 
         if self.uid is not None and info[2] != int(self.uid):
@@ -2754,7 +2754,7 @@ class AIX(User):
         # set password with chpasswd
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd = []
-            cmd.append(self.module.get_bin_path('chpasswd', True))
+            cmd.append(self.module.get_bin_path('chpasswd', required=True))
             cmd.append('-e')
             cmd.append('-c')
             (rc2, out2, err2) = self.execute_command(cmd, data="%s:%s" % (self.name, self.password))
@@ -2968,7 +2968,7 @@ class BusyBox(User):
     """
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('adduser', True)]
+        cmd = [self.module.get_bin_path('adduser', required=True)]
 
         cmd.append('-D')
 
@@ -3016,7 +3016,7 @@ class BusyBox(User):
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         if self.password is not None:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd = [self.module.get_bin_path('chpasswd', required=True)]
             cmd.append('--encrypted')
             data = '{name}:{password}'.format(name=self.name, password=self.password)
             rc, out, err = self.execute_command(cmd, data=data)
@@ -3027,7 +3027,7 @@ class BusyBox(User):
         # Add to additional groups
         if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
-            add_cmd_bin = self.module.get_bin_path('adduser', True)
+            add_cmd_bin = self.module.get_bin_path('adduser', required=True)
             for group in groups:
                 cmd = [add_cmd_bin, self.name, group]
                 rc, out, err = self.execute_command(cmd)
@@ -3039,7 +3039,7 @@ class BusyBox(User):
     def remove_user(self):
 
         cmd = [
-            self.module.get_bin_path('deluser', True),
+            self.module.get_bin_path('deluser', required=True),
             self.name
         ]
 
@@ -3055,8 +3055,8 @@ class BusyBox(User):
         out = ''
         err = ''
         info = self.user_info()
-        add_cmd_bin = self.module.get_bin_path('adduser', True)
-        remove_cmd_bin = self.module.get_bin_path('delgroup', True)
+        add_cmd_bin = self.module.get_bin_path('adduser', required=True)
+        remove_cmd_bin = self.module.get_bin_path('delgroup', required=True)
 
         # Manage group membership
         if self.groups is not None and len(self.groups):
@@ -3080,7 +3080,7 @@ class BusyBox(User):
 
         # Manage password
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd = [self.module.get_bin_path('chpasswd', required=True)]
             cmd.append('--encrypted')
             data = '{name}:{password}'.format(name=self.name, password=self.password)
             rc, out, err = self.execute_command(cmd, data=data)
