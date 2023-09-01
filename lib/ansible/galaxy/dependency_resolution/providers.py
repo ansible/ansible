@@ -51,7 +51,6 @@ class CollectionDependencyProviderBase(AbstractProvider):
             self,  # type: CollectionDependencyProviderBase
             apis,  # type: MultiGalaxyAPIProxy
             concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
-            user_requirements=None,  # type: t.Iterable[Requirement]
             preferred_candidates=None,  # type: t.Iterable[Candidate]
             with_deps=True,  # type: bool
             with_pre_releases=False,  # type: bool
@@ -87,57 +86,11 @@ class CollectionDependencyProviderBase(AbstractProvider):
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
-        self._pinned_candidate_requests = set(
-            # NOTE: User-provided signatures are supplemental, so signatures
-            # NOTE: are not used to determine if a candidate is user-requested
-            Candidate(req.fqcn, req.ver, req.src, req.type, None)
-            for req in (user_requirements or ())
-            if req.is_concrete_artifact or (
-                req.ver != '*' and
-                not req.ver.startswith(('<', '>', '!='))
-            )
-        )
         self._preferred_candidates = set(preferred_candidates or ())
         self._with_deps = with_deps
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
         self._include_signatures = include_signatures
-
-    def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
-        """Check if the candidate is requested by the user."""
-        if candidate in self._pinned_candidate_requests:
-            return True
-
-        if candidate.is_online_index_pointer and candidate.src is not None:
-            # NOTE: Candidate is a namedtuple, it has a source server set
-            # NOTE: to a specific GalaxyAPI instance or `None`. When the
-            # NOTE: user runs
-            # NOTE:
-            # NOTE:     $ ansible-galaxy collection install ns.coll
-            # NOTE:
-            # NOTE: then it's saved in `self._pinned_candidate_requests`
-            # NOTE: as `('ns.coll', '*', None, 'galaxy')` but then
-            # NOTE: `self.find_matches()` calls `self.is_satisfied_by()`
-            # NOTE: with Candidate instances bound to each specific
-            # NOTE: server available, those look like
-            # NOTE: `('ns.coll', '*', GalaxyAPI(...), 'galaxy')` and
-            # NOTE: wouldn't match the user requests saved in
-            # NOTE: `self._pinned_candidate_requests`. This is why we
-            # NOTE: normalize the collection to have `src=None` and try
-            # NOTE: again.
-            # NOTE:
-            # NOTE: When the user request comes from `requirements.yml`
-            # NOTE: with the `source:` set, it'll match the first check
-            # NOTE: but it still can have entries with `src=None` so this
-            # NOTE: normalized check is still necessary.
-            # NOTE:
-            # NOTE: User-provided signatures are supplemental, so signatures
-            # NOTE: are not used to determine if a candidate is user-requested
-            return Candidate(
-                candidate.fqcn, candidate.ver, None, candidate.type, None
-            ) in self._pinned_candidate_requests
-
-        return False
 
     def identify(self, requirement_or_candidate):
         # type: (t.Union[Candidate, Requirement]) -> str
@@ -416,7 +369,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             requirement.ver.startswith('<') or
             requirement.ver.startswith('>') or
             requirement.ver.startswith('!=')
-        ) or self._is_user_requested(candidate)
+        )
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 
