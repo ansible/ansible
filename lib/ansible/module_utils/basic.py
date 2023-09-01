@@ -994,7 +994,7 @@ class AnsibleModule(object):
 
     def get_file_attributes(self, path, include_version=True):
         output = {}
-        attrcmd = self.get_bin_path('lsattr', False)
+        attrcmd = self.get_bin_path('lsattr')
         if attrcmd:
             flags = '-vd' if include_version else '-d'
             attrcmd = [attrcmd, flags, path]
@@ -1411,7 +1411,7 @@ class AnsibleModule(object):
         Find system executable in PATH.
 
         :param arg: The executable to find.
-        :param required: if executable is not found and required is ``True``, fail_json
+        :param required: if the executable is not found and required is ``True``, fail_json
         :param opt_dirs: optional list of directories to search in addition to ``PATH``
         :returns: if found return full path; otherwise return None
         '''

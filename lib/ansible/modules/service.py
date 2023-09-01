@@ -347,7 +347,7 @@ class Service(object):
             psflags = 'auxww'
 
         # Find ps binary
-        psbin = self.module.get_bin_path('ps', True)
+        psbin = self.module.get_bin_path('ps', required=True)
 
         (rc, psout, pserr) = self.execute_command('%s %s' % (psbin, psflags))
         # If rc is 0, set running as appropriate
@@ -1023,10 +1023,7 @@ class FreeBsdService(Service):
     distribution = None
 
     def get_service_tools(self):
-        self.svc_cmd = self.module.get_bin_path('service', True)
-        if not self.svc_cmd:
-            self.module.fail_json(msg='unable to find service binary')
-
+        self.svc_cmd = self.module.get_bin_path('service', required=True)
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
@@ -1289,15 +1286,8 @@ class SunOSService(Service):
     distribution = None
 
     def get_service_tools(self):
-        self.svcs_cmd = self.module.get_bin_path('svcs', True)
-
-        if not self.svcs_cmd:
-            self.module.fail_json(msg='unable to find svcs binary')
-
-        self.svcadm_cmd = self.module.get_bin_path('svcadm', True)
-
-        if not self.svcadm_cmd:
-            self.module.fail_json(msg='unable to find svcadm binary')
+        self.svcs_cmd = self.module.get_bin_path('svcs', required=True)
+        self.svcadm_cmd = self.module.get_bin_path('svcadm', required=True)
 
         if self.svcadm_supports_sync():
             self.svcadm_sync = '-s'
@@ -1424,25 +1414,10 @@ class AIX(Service):
     distribution = None
 
     def get_service_tools(self):
-        self.lssrc_cmd = self.module.get_bin_path('lssrc', True)
-
-        if not self.lssrc_cmd:
-            self.module.fail_json(msg='unable to find lssrc binary')
-
-        self.startsrc_cmd = self.module.get_bin_path('startsrc', True)
-
-        if not self.startsrc_cmd:
-            self.module.fail_json(msg='unable to find startsrc binary')
-
-        self.stopsrc_cmd = self.module.get_bin_path('stopsrc', True)
-
-        if not self.stopsrc_cmd:
-            self.module.fail_json(msg='unable to find stopsrc binary')
-
-        self.refresh_cmd = self.module.get_bin_path('refresh', True)
-
-        if not self.refresh_cmd:
-            self.module.fail_json(msg='unable to find refresh binary')
+        self.lssrc_cmd = self.module.get_bin_path('lssrc', required=True)
+        self.startsrc_cmd = self.module.get_bin_path('startsrc', required=True)
+        self.stopsrc_cmd = self.module.get_bin_path('stopsrc', required=True)
+        self.refresh_cmd = self.module.get_bin_path('refresh', required=True)
 
     def get_service_status(self):
         status = self.get_aix_src_status()

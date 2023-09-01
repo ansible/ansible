@@ -316,7 +316,7 @@ def main():
     force = module.params['force']
     username = module.params['username']
     password = module.params['password']
-    svn_path = module.params['executable'] or module.get_bin_path('svn', True)
+    svn_path = module.params['executable'] or module.get_bin_path('svn', required=True)
     export = module.params['export']
     switch = module.params['switch']
     checkout = module.params['checkout']

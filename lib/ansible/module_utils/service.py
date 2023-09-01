@@ -94,7 +94,7 @@ def get_ps(module, pattern):
         flags = '-ef'
     else:
         flags = 'auxww'
-    psbin = module.get_bin_path('ps', True)
+    psbin = module.get_bin_path('ps', required=True)
 
     (rc, psout, pserr) = module.run_command([psbin, flags])
     if rc == 0:
@@ -265,7 +265,7 @@ def check_ps(module, pattern):
         psflags = 'auxww'
 
     # Find ps binary
-    psbin = module.get_bin_path('ps', True)
+    psbin = module.get_bin_path('ps', required=True)
 
     (rc, out, err) = module.run_command('%s %s' % (psbin, psflags))
     # If rc is 0, set running as appropriate
