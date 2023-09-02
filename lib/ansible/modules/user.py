@@ -1884,7 +1884,7 @@ class NetBSDUser(User):
         return self.execute_command(cmd)
 
     def modify_user(self):
-        cmd = [self.module.get_bin_path('usermod',required= True)]
+        cmd = [self.module.get_bin_path('usermod', required=True)]
         info = self.user_info()
 
         if self.uid is not None and info[2] != int(self.uid):
