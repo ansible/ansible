@@ -739,8 +739,7 @@ class ActionBase(ABC):
             return remote_paths
 
         # we'll need this down here
-        become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user')
-
+         https://docs.ansible.com/ansible-core/2.15/playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
