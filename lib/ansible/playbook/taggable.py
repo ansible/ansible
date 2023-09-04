@@ -23,6 +23,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+from ansible.utils.sentinel import Sentinel
 
 
 def _flatten_tags(tags: list) -> list:
@@ -55,8 +56,8 @@ class Taggable:
             templar = Templar(loader=self._loader, variables=all_vars)
             obj = self
             while obj is not None:
-                if hasattr(obj, "_tags"):
-                    obj._tags = _flatten_tags(templar.template(obj._tags))
+                if (_tags := getattr(obj, "_tags", Sentinel)) is not Sentinel:
+                    obj._tags = _flatten_tags(templar.template(_tags))
                 obj = obj._parent
             tags = set(self.tags)
         else:
