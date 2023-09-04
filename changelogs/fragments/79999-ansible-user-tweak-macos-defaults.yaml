@@ -1,0 +1,2 @@
+minor_changes:
+  - 'ansible_user_module - tweaked macos user defaults to reflect expected defaults (https://github.com/ansible/ansible/issues/44316)'

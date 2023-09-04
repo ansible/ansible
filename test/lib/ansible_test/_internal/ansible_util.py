@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import typing as t
 
 from .constants import (
+    ANSIBLE_BIN_SYMLINK_MAP,
     SOFT_RLIMIT_NOFILE,
 )
 
@@ -17,12 +19,15 @@ from .util import (
     common_environment,
     ApplicationError,
     ANSIBLE_LIB_ROOT,
+    ANSIBLE_TEST_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
-    ANSIBLE_BIN_PATH,
+    ANSIBLE_ROOT,
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
+    MODE_FILE_EXECUTE,
     get_ansible_version,
     raw_command,
+    verified_chmod,
 )
 
 from .util_common import (
@@ -78,8 +83,10 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
     env = common_environment()
     path = env['PATH']
 
-    if not path.startswith(ANSIBLE_BIN_PATH + os.path.pathsep):
-        path = ANSIBLE_BIN_PATH + os.path.pathsep + path
+    ansible_bin_path = get_ansible_bin_path(args)
+
+    if not path.startswith(ansible_bin_path + os.path.pathsep):
+        path = ansible_bin_path + os.path.pathsep + path
 
     if not ansible_config:
         # use the default empty configuration unless one has been provided
@@ -194,6 +201,52 @@ def configure_plugin_paths(args: CommonConfig) -> dict[str, str]:
     env = dict((key, value) for key, value in env.items() if os.path.isdir(value))
 
     return env
+
+
+@mutex
+def get_ansible_bin_path(args: CommonConfig) -> str:
+    """
+    Return a directory usable for PATH, containing only the ansible entry points.
+    If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    try:
+        return get_ansible_bin_path.bin_path  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    if ANSIBLE_SOURCE_ROOT:
+        # when running from source there is no need for a temporary directory since we already have known entry point scripts
+        bin_path = os.path.join(ANSIBLE_ROOT, 'bin')
+    else:
+        # when not running from source the installed entry points cannot be relied upon
+        # doing so would require using the interpreter specified by those entry points, which conflicts with using our interpreter and injector
+        # instead a temporary directory is created which contains only ansible entry points
+        # symbolic links cannot be used since the files are likely not executable
+        bin_path = create_temp_dir(prefix='ansible-test-', suffix='-bin')
+        bin_links = {os.path.join(bin_path, name): get_cli_path(path) for name, path in ANSIBLE_BIN_SYMLINK_MAP.items()}
+
+        if not args.explain:
+            for dst, src in bin_links.items():
+                shutil.copy(src, dst)
+                verified_chmod(dst, MODE_FILE_EXECUTE)
+
+    get_ansible_bin_path.bin_path = bin_path  # type: ignore[attr-defined]
+
+    return bin_path
+
+
+def get_cli_path(path: str) -> str:
+    """Return the absolute path to the CLI script from the given path which is relative to the `bin` directory of the original source tree layout."""
+    path_rewrite = {
+        '../lib/ansible/': ANSIBLE_LIB_ROOT,
+        '../test/lib/ansible_test/': ANSIBLE_TEST_ROOT,
+    }
+
+    for prefix, destination in path_rewrite.items():
+        if path.startswith(prefix):
+            return os.path.join(destination, path[len(prefix):])
+
+    raise RuntimeError(path)
 
 
 @mutex

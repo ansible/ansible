@@ -99,48 +99,48 @@ requirements:
 
 EXAMPLES = '''
 - name: Make sure a service unit is running
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     state: started
     name: httpd
 
 - name: Stop service cron on debian, if running
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: cron
     state: stopped
 
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     state: restarted
     daemon_reload: true
     name: crond
 
 - name: Reload service httpd, in all cases
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: httpd.service
     state: reloaded
 
 - name: Enable service httpd and ensure it is not masked
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: httpd
     enabled: true
     masked: no
 
 - name: Enable a timer unit for dnf-automatic
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: dnf-automatic.timer
     state: started
     enabled: true
 
 - name: Just force systemd to reread configs (2.4 and above)
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     daemon_reload: true
 
 - name: Just force systemd to re-execute itself (2.8 and above)
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     daemon_reexec: true
 
 - name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: myservice
     state: started
     scope: user

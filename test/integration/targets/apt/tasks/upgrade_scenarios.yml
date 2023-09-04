@@ -1,0 +1,25 @@
+# See https://github.com/ansible/ansible/issues/77868
+# fail_on_autoremove is not valid parameter for aptitude
+- name: Use fail_on_autoremove using aptitude
+  apt:
+    upgrade: yes
+    fail_on_autoremove: yes
+  register: fail_on_autoremove_result
+
+- name: Check if fail_on_autoremove does not fail with aptitude
+  assert:
+    that:
+    - not fail_on_autoremove_result.failed
+
+# See https://github.com/ansible/ansible/issues/77868
+# allow_downgrade is not valid parameter for aptitude
+- name: Use allow_downgrade using aptitude
+  apt:
+    upgrade: yes
+    allow_downgrade: yes
+  register: allow_downgrade_result
+
+- name: Check if allow_downgrade does not fail with aptitude
+  assert:
+    that:
+    - not allow_downgrade_result.failed

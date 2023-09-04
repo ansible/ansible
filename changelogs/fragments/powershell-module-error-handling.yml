@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  powershell modules - Only set an rc of 1 if the PowerShell pipeline signaled an error occurred AND there are error
+  records present. Previously it would do so only if the error signal was present without checking the error count.

@@ -24,6 +24,7 @@ __metaclass__ = type
 
 import errno
 import datetime
+import functools
 import os
 import tarfile
 import tempfile
@@ -43,6 +44,32 @@ from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 
 display = Display()
+
+
+@functools.cache
+def _check_working_data_filter() -> bool:
+    """
+    Check if tarfile.data_filter implementation is working
+    for the current Python version or not
+    """
+
+    # Implemented the following code to circumvent broken implementation of data_filter
+    # in tarfile. See for more information - https://github.com/python/cpython/issues/107845
+    # deprecated: description='probing broken data filter implementation' python_version='3.11'
+    ret = False
+    if hasattr(tarfile, 'data_filter'):
+        # We explicitly check if tarfile.data_filter is broken or not
+        ti = tarfile.TarInfo('docs/README.md')
+        ti.type = tarfile.SYMTYPE
+        ti.linkname = '../README.md'
+
+        try:
+            tarfile.data_filter(ti, '/foo')
+        except tarfile.LinkOutsideDestinationError:
+            pass
+        else:
+            ret = True
+    return ret
 
 
 class GalaxyRole(object):
@@ -376,10 +403,27 @@ class GalaxyRole(object):
                                     # It will create the parent directory as an empty file and will
                                     # explode if the directory contains valid files.
                                     # Leaving this as is since the whole module needs a rewrite.
-                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
-                                        n_final_parts.append(n_part)
+                                    #
+                                    # Check if we have any files with illegal names,
+                                    # and display a warning if so. This could help users
+                                    # to debug a broken installation.
+                                    if n_part == '..':
+                                        display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
+                                        continue
+                                    if n_part.startswith('~'):
+                                        display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
+                                        continue
+                                    if '$' in n_part:
+                                        display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
+                                        continue
+                                    n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
-                                role_tar_file.extract(member, to_native(self.path))
+
+                                if _check_working_data_filter():
+                                    # deprecated: description='extract fallback without filter' python_version='3.11'
+                                    role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                                else:
+                                    role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()

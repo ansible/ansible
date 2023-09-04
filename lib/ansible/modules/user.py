@@ -28,6 +28,7 @@ options:
     comment:
         description:
             - Optionally sets the description (aka I(GECOS)) of user account.
+            - On macOS, this defaults to the O(name) option.
         type: str
     hidden:
         description:
@@ -49,6 +50,7 @@ options:
     group:
         description:
             - Optionally sets the user's primary group (takes a group name).
+            - On macOS, this defaults to V('staff')
         type: str
     groups:
         description:
@@ -917,7 +919,8 @@ class User(object):
 
         if self.expires is not None:
 
-            current_expires = int(self.user_password()[1])
+            current_expires = self.user_password()[1] or '0'
+            current_expires = int(current_expires)
 
             if self.expires < time.gmtime(0):
                 if current_expires >= 0:
@@ -1560,7 +1563,8 @@ class FreeBsdUser(User):
 
         if self.expires is not None:
 
-            current_expires = int(self.user_password()[1])
+            current_expires = self.user_password()[1] or '0'
+            current_expires = int(current_expires)
 
             # If expiration is negative or zero and the current expiration is greater than zero, disable expiration.
             # In OpenBSD, setting expiration to zero disables expiration. It does not expire the account.
@@ -2511,6 +2515,14 @@ class DarwinUser(User):
         (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
+
+        # Make the Gecos (alias display name) default to username
+        if self.comment is None:
+            self.comment = self.name
+
+        # Make user group default to 'staff'
+        if self.group is None:
+            self.group = 'staff'
 
         self._make_group_numerical()
         if self.uid is None:

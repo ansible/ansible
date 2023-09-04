@@ -59,8 +59,8 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
-            - If O(read_whole_file) is V(true) it matches against the beginning of the line (uses
-              V(re.match(\))). If O(read_whole_file) is V(false), it searches anywhere for that pattern
+            - If O(read_whole_file) is V(false) it matches against the beginning of the line (uses
+              V(re.match(\))). If O(read_whole_file) is V(true), it searches anywhere for that pattern
               (uses V(re.search(\))).
             - Works only when O(file_type) is V(file).
         type: str
@@ -111,6 +111,22 @@ options:
             - Set this to V(true) to include hidden files, otherwise they will be ignored.
         type: bool
         default: no
+    mode:
+        description:
+            - Choose objects matching a specified permission. This value is
+              restricted to modes that can be applied using the python
+              C(os.chmod) function.
+            - The mode can be provided as an octal such as V("0644") or
+              as symbolic such as V(u=rw,g=r,o=r)
+        type: raw
+        version_added: '2.16'
+    exact_mode:
+        description:
+            - Restrict mode matching to exact matches only, and not as a
+              minimum set of permissions to match.
+        type: bool
+        default: true
+        version_added: '2.16'
     follow:
         description:
             - Set this to V(true) to follow symlinks in path for systems with python 2.6+.
@@ -252,6 +268,13 @@ import time
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+
+
+class _Object:
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
@@ -344,6 +367,25 @@ def contentfilter(fsname, pattern, read_whole_file=False):
     return False
 
 
+def mode_filter(st, mode, exact, module):
+    if not mode:
+        return True
+
+    st_mode = stat.S_IMODE(st.st_mode)
+
+    try:
+        mode = int(mode, 8)
+    except ValueError:
+        mode = module._symbolic_mode_to_octal(_Object(st_mode=0), mode)
+
+    mode = stat.S_IMODE(mode)
+
+    if exact:
+        return st_mode == mode
+
+    return bool(st_mode & mode)
+
+
 def statinfo(st):
     pw_name = ""
     gr_name = ""
@@ -414,11 +456,18 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
+            mode=dict(type='raw'),
+            exact_mode=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
 
     params = module.params
+
+    if params['mode'] and not isinstance(params['mode'], string_types):
+        module.fail_json(
+            msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s" % params['mode'].__class__.__name__
+        )
 
     # Set the default match pattern to either a match-all glob or
     # regex depending on use_regex being set.  This makes sure if you
@@ -489,7 +538,9 @@ def main():
 
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -502,15 +553,19 @@ def main():
                                 filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
-                           agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                sizefilter(st, size) and
+                                contentfilter(fsname, params['contains'], params['read_whole_file']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -518,7 +573,9 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             filelist.append(r)

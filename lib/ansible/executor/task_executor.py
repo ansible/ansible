@@ -620,17 +620,11 @@ class TaskExecutor:
         if omit_token is not None:
             self._task.args = remove_omit(self._task.args, omit_token)
 
-        # Read some values from the task, so that we can modify them if need be
-        if self._task.until:
-            retries = self._task.retries
-            if retries is None:
-                retries = 3
-            elif retries <= 0:
-                retries = 1
-            else:
-                retries += 1
-        else:
-            retries = 1
+        retries = 1  # includes the default actual run + retries set by user/default
+        if self._task.retries is not None:
+            retries += max(0, self._task.retries)
+        elif self._task.until:
+            retries += 3  # the default is not set in FA because we need to differentiate "unset" value
 
         delay = self._task.delay
         if delay < 0:
@@ -736,7 +730,7 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            if self._task.until:
+            if retries > 1:
                 result['attempts'] = attempt
 
             # set the changed property if it was missing.
@@ -768,7 +762,7 @@ class TaskExecutor:
 
             if retries > 1:
                 cond = Conditional(loader=self._loader)
-                cond.when = self._task.until
+                cond.when = self._task.until or [not result['failed']]
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:

@@ -42,7 +42,7 @@ from packaging.version import Version, InvalidVersion
 # region CLI Framework
 
 
-C = t.TypeVar("C", bound=t.Callable[[...], None])
+C = t.TypeVar("C", bound=t.Callable[..., None])
 
 
 def path_to_str(value: t.Any) -> str:
@@ -50,12 +50,27 @@ def path_to_str(value: t.Any) -> str:
     return f"{value}/" if isinstance(value, pathlib.Path) and value.is_dir() else str(value)
 
 
+@t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[True]) -> CompletedProcess:
+    ...
+
+
+@t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[False]) -> None:
+    ...
+
+
+@t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str) -> None:
+    ...
+
+
 def run(
     *args: t.Any,
     env: dict[str, t.Any] | None,
     cwd: pathlib.Path | str,
     capture_output: bool = False,
-) -> CompletedProcess:
+) -> CompletedProcess | None:
     """Run the specified command."""
     args = [arg.relative_to(cwd) if isinstance(arg, pathlib.Path) else arg for arg in args]
 
@@ -76,16 +91,18 @@ def run(
             stderr=ex.stderr,
         ) from None
 
+    if not capture_output:
+        return None
+
     # improve type hinting
     return CompletedProcess(
-        args=str_args,
         stdout=p.stdout,
         stderr=p.stderr,
     )
 
 
 @contextlib.contextmanager
-def suppress_when(error_as_warning: bool) -> None:
+def suppress_when(error_as_warning: bool) -> t.Generator[None, None, None]:
     """Conditionally convert an ApplicationError in the provided context to a warning."""
     if error_as_warning:
         try:
@@ -122,9 +139,8 @@ class CalledProcessError(Exception):
 class CompletedProcess:
     """Results from a completed process."""
 
-    args: tuple[str, ...]
-    stdout: str | None
-    stderr: str | None
+    stdout: str
+    stderr: str
 
 
 class Display:
@@ -167,7 +183,7 @@ class CommandFramework:
     """
 
     def __init__(self, **kwargs: dict[str, t.Any] | None) -> None:
-        self.commands: list[C] = []
+        self.commands: list[t.Callable[..., None]] = []
         self.arguments = kwargs
         self.parsed_arguments: argparse.Namespace | None = None
 
@@ -176,7 +192,7 @@ class CommandFramework:
         self.commands.append(func)
         return func
 
-    def run(self, *args: C, **kwargs) -> None:
+    def run(self, *args: t.Callable[..., None], **kwargs) -> None:
         """Run the specified command(s), using any provided internal args."""
         for arg in args:
             self._run(arg, **kwargs)
@@ -202,6 +218,9 @@ class CommandFramework:
 
                 arguments = arguments.copy()
                 exclusive = arguments.pop("exclusive", None)
+
+                # noinspection PyProtectedMember, PyUnresolvedReferences
+                command_parser: argparse._ActionsContainer
 
                 if exclusive:
                     if exclusive not in exclusive_groups:
@@ -234,7 +253,7 @@ class CommandFramework:
             display.fatal(ex)
             sys.exit(1)
 
-    def _run(self, func: C, **kwargs) -> None:
+    def _run(self, func: t.Callable[..., None], **kwargs) -> None:
         """Run the specified command, using any provided internal args."""
         signature = inspect.signature(func)
         func_args = {name: getattr(self.parsed_arguments, name) for name in signature.parameters if hasattr(self.parsed_arguments, name)}
@@ -253,7 +272,7 @@ class CommandFramework:
         display.show(f"<== {label}", color=Display.BLUE)
 
     @staticmethod
-    def _format_command_name(func: C) -> str:
+    def _format_command_name(func: t.Callable[..., None]) -> str:
         """Return the friendly name of the given command."""
         return func.__name__.replace("_", "-")
 
@@ -441,7 +460,22 @@ class VersionMode(enum.Enum):
         raise NotImplementedError(self)
 
 
-def git(*args: t.Any, capture_output: bool = False) -> CompletedProcess:
+@t.overload
+def git(*args: t.Any, capture_output: t.Literal[True]) -> CompletedProcess:
+    ...
+
+
+@t.overload
+def git(*args: t.Any, capture_output: t.Literal[False]) -> None:
+    ...
+
+
+@t.overload
+def git(*args: t.Any) -> None:
+    ...
+
+
+def git(*args: t.Any, capture_output: t.Literal[True] | t.Literal[False] = False) -> CompletedProcess | None:
     """Run the specified git command."""
     return run("git", *args, env=None, cwd=CHECKOUT_DIR, capture_output=capture_output)
 
@@ -534,10 +568,6 @@ def create_pull_request_body(title: str) -> str:
 ##### ISSUE TYPE
 
 Feature Pull Request
-
-##### COMPONENT NAME
-
-ansible
 """
 
     return body.lstrip()
@@ -629,7 +659,7 @@ def get_git_state(version: Version, allow_stale: bool) -> GitState:
 
 
 @functools.cache
-def ensure_venv() -> dict[str, str]:
+def ensure_venv() -> dict[str, t.Any]:
     """Ensure the release venv is ready and return the env vars needed to use it."""
 
     # TODO: consider freezing the ansible and release requirements along with their dependencies
@@ -1274,7 +1304,7 @@ def build(allow_dirty: bool = False) -> None:
         commit_time = int(git("show", "-s", "--format=%ct", capture_output=True).stdout)
 
         env.update(
-            SOURCE_DATE_EPOCH=str(commit_time),
+            SOURCE_DATE_EPOCH=commit_time,
         )
 
         git("worktree", "add", "-d", temp_dir)
@@ -1312,7 +1342,11 @@ def test_sdist() -> None:
             except FileNotFoundError:
                 raise ApplicationError(f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}") from None
 
-            sdist.extractall(temp_dir)
+            # deprecated: description='extractall fallback without filter' python_version='3.11'
+            if hasattr(tarfile, 'data_filter'):
+                sdist.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
+            else:
+                sdist.extractall(temp_dir)
 
         pyc_glob = "*.pyc*"
         pyc_files = sorted(path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob))

@@ -1,0 +1,2 @@
+deprecated_features:
+  - "``STRING_CONVERSION_ACTION`` config option is deprecated as it is no longer used in the Ansible Core code base."

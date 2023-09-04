@@ -37,7 +37,7 @@ options:
       - If a previous version is specified, the task also needs to turn O(allow_downgrade) on.
         See the O(allow_downgrade) documentation for caveats with downgrading packages.
       - When using O(state=latest), this can be V('*') which means run C(yum -y update).
-      - You can also pass a url or a local path to a rpm file (using O(state=present)).
+      - You can also pass a url or a local path to an rpm file (using O(state=present)).
         To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
     type: list
