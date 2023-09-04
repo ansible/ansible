@@ -83,10 +83,8 @@ options:
       See CVE-2020-1736 for further details.
   directory_mode:
     description:
-    - Set the access permissions of newly created directories to the given mode.
-      Permissions on existing directories do not change.
-    - See O(mode) for the syntax of accepted values.
-    - The target system's defaults determine permissions when this parameter is not set.
+
+
     type: raw
     version_added: '1.5'
   remote_src:
