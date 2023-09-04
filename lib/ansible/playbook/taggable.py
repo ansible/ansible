@@ -25,6 +25,16 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 
 
+def _flatten_tags(tags: list) -> list:
+    rv = set()
+    for tag in tags:
+        if isinstance(tag, list):
+            rv.update(tag)
+        else:
+            rv.add(tag)
+    return list(rv)
+
+
 class Taggable:
 
     untagged = frozenset(['untagged'])
@@ -34,11 +44,7 @@ class Taggable:
         if isinstance(ds, list):
             return ds
         elif isinstance(ds, string_types):
-            value = ds.split(',')
-            if isinstance(value, list):
-                return [x.strip() for x in value]
-            else:
-                return [ds]
+            return [x.strip() for x in ds.split(',')]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
@@ -47,16 +53,12 @@ class Taggable:
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
-            tags = templar.template(self.tags)
-
-            _temp_tags = set()
-            for tag in tags:
-                if isinstance(tag, list):
-                    _temp_tags.update(tag)
-                else:
-                    _temp_tags.add(tag)
-            tags = _temp_tags
-            self.tags = list(tags)
+            obj = self
+            while obj is not None:
+                if hasattr(obj, "_tags"):
+                    obj._tags = _flatten_tags(templar.template(obj._tags))
+                obj = obj._parent
+            tags = set(self.tags)
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged
