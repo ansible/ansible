@@ -857,6 +857,34 @@ releases:
     - fork_safe_stdio.yml
     - v2.14.1_summary.yaml
     release_date: '2022-12-06'
+  2.14.10rc1:
+    changes:
+      bugfixes:
+      - PowerShell - Remove some code which is no longer valid for dotnet 5+
+      - ansible-galaxy - Enabled the ``data`` tarfile filter during role installation
+        for Python versions that support it. A probing mechanism is used to avoid
+        Python versions with a broken implementation.
+      - ansible-test - Always use ansible-test managed entry points for ansible-core
+        CLI tools when not running from source. This fixes issues where CLI entry
+        points created during install are not compatible with ansible-test.
+      - tarfile - handle data filter deprecation warning message for extract and extractall
+        (https://github.com/ansible/ansible/issues/80832).
+      minor_changes:
+      - "ansible-test \u2014 Replaced `freebsd/12.3` remote with `freebsd/12.4`. The
+        former is no longer functional."
+      release_summary: '| Release Date: 2023-09-05
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.10rc1_summary.yaml
+    - ansible-test-entry-points.yml
+    - dotnet-preparation.yml
+    - freebsd-12.3-replacement.yml
+    - tarfile_extract_warn.yml
+    release_date: '2023-09-05'
   2.14.1rc1:
     changes:
       bugfixes:

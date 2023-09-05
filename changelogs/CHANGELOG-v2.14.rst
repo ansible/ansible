@@ -5,6 +5,29 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.10rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2023-09-05
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test — Replaced `freebsd/12.3` remote with `freebsd/12.4`. The former is no longer functional.
+
+Bugfixes
+--------
+
+- PowerShell - Remove some code which is no longer valid for dotnet 5+
+- ansible-galaxy - Enabled the ``data`` tarfile filter during role installation for Python versions that support it. A probing mechanism is used to avoid Python versions with a broken implementation.
+- ansible-test - Always use ansible-test managed entry points for ansible-core CLI tools when not running from source. This fixes issues where CLI entry points created during install are not compatible with ansible-test.
+- tarfile - handle data filter deprecation warning message for extract and extractall (https://github.com/ansible/ansible/issues/80832).
+
 v2.14.9
 =======
 
