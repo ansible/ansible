@@ -1,0 +1,2 @@
+bugfixes:
+  - display - defensively convert incoming strings to text to prevent behavior changes from increased verbosity
