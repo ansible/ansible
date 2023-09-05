@@ -18,6 +18,10 @@ from collections import defaultdict, namedtuple
 from traceback import format_exc
 
 import ansible.module_utils.compat.typing as t
+
+from .filter import AnsibleJinja2Filter
+from .test import AnsibleJinja2Test
+
 from ansible import __version__ as ansible_version
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
@@ -1067,28 +1071,17 @@ class Jinja2Loader(PluginLoader):
     We need to do a few things differently in the base class because of file == plugin
     assumptions and dedupe logic.
     """
-    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
-
+    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None):
         super(Jinja2Loader, self).__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=required_base_class)
-        self._loaded_j2_file_maps = []
+        self._plugin_wrapper_type = plugin_wrapper_type
+        self._cached_non_collection_wrappers = {}
 
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
-        self._loaded_j2_file_maps = []
+        self._cached_non_collection_wrappers = {}
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
-
-        # TODO: handle collection plugin find, see 'get_with_context'
-        # this can really 'find plugin file'
-        plugin = super(Jinja2Loader, self).find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases,
-                                                       collection_list=collection_list)
-
-        # if not found, try loading all non collection plugins and see if this in there
-        if not plugin:
-            all_plugins = self.all()
-            plugin = all_plugins.get(name, None)
-
-        return plugin
+        raise NotImplementedError('find_plugin is not supported on Jinja2Loader')
 
     @property
     def method_map_name(self):
@@ -1122,8 +1115,7 @@ class Jinja2Loader(PluginLoader):
         for func_name, func in plugin_map:
             fq_name = '.'.join((collection, func_name))
             full = '.'.join((full_name, func_name))
-            pclass = self._load_jinja2_class()
-            plugin = pclass(func)
+            plugin = self._plugin_wrapper_type(func)
             if plugin in plugins:
                 continue
             self._update_object(plugin, full, plugin_path, resolved=fq_name)
@@ -1131,27 +1123,28 @@ class Jinja2Loader(PluginLoader):
 
         return plugins
 
+    # FUTURE: now that the resulting plugins are closer, refactor base class method with some extra
+    # hooks so we can avoid all the duplicated plugin metadata logic, and also cache the collection results properly here
     def get_with_context(self, name, *args, **kwargs):
-
-        # found_in_cache = True
-        class_only = kwargs.pop('class_only', False)  # just pop it, dont want to pass through
-        collection_list = kwargs.pop('collection_list', None)
+        # pop N/A kwargs to avoid passthrough to parent methods
+        kwargs.pop('class_only', False)
+        kwargs.pop('collection_list', None)
 
         context = PluginLoadContext()
 
         # avoid collection path for legacy
         name = name.removeprefix('ansible.legacy.')
 
-        if '.' not in name:
-            # Filter/tests must always be FQCN except builtin and legacy
-            for known_plugin in self.all(*args, **kwargs):
-                if known_plugin.matches_name([name]):
-                    context.resolved = True
-                    context.plugin_resolved_name = name
-                    context.plugin_resolved_path = known_plugin._original_path
-                    context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
-                    context._resolved_fqcn = known_plugin.ansible_name
-                    return get_with_context_result(known_plugin, context)
+        self._ensure_non_collection_wrappers(*args, **kwargs)
+
+        # check for stuff loaded via legacy/builtin paths first
+        if known_plugin := self._cached_non_collection_wrappers.get(name):
+            context.resolved = True
+            context.plugin_resolved_name = name
+            context.plugin_resolved_path = known_plugin._original_path
+            context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
+            context._resolved_fqcn = known_plugin.ansible_name
+            return get_with_context_result(known_plugin, context)
 
         plugin = None
         key, leaf_key = get_fqcr_and_name(name)
@@ -1237,14 +1230,10 @@ class Jinja2Loader(PluginLoader):
                     # use 'parent' loader class to find files, but cannot return this as it can contain
                     # multiple plugins per file
                     plugin_impl = super(Jinja2Loader, self).get_with_context(module_name, *args, **kwargs)
-                except Exception as e:
-                    raise KeyError(to_native(e))
-
-                try:
                     method_map = getattr(plugin_impl.object, self.method_map_name)
                     plugin_map = method_map().items()
                 except Exception as e:
-                    display.warning("Skipping %s plugins in '%s' as it seems to be invalid: %r" % (self.type, to_text(plugin_impl.object._original_path), e))
+                    display.warning(f"Skipping {self.type} plugins in {module_name}'; an error occurred while loading: {e}")
                     continue
 
                 for func_name, func in plugin_map:
@@ -1253,11 +1242,11 @@ class Jinja2Loader(PluginLoader):
                     # TODO: load  anyways into CACHE so we only match each at end of loop
                     #       the files themseves should already be cached by base class caching of modules(python)
                     if key in (func_name, fq_name):
-                        pclass = self._load_jinja2_class()
-                        plugin = pclass(func)
+                        plugin = self._plugin_wrapper_type(func)
                         if plugin:
                             context = plugin_impl.plugin_load_context
                             self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 
         except AnsiblePluginRemovedError as apre:
@@ -1272,8 +1261,7 @@ class Jinja2Loader(PluginLoader):
         return get_with_context_result(plugin, context)
 
     def all(self, *args, **kwargs):
-
-        # inputs, we ignore 'dedupe' we always do, used in base class to find files for this one
+        kwargs.pop('_dedupe', None)
         path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)  # basically ignored for test/filters since they are functions
 
@@ -1281,9 +1269,19 @@ class Jinja2Loader(PluginLoader):
         if path_only and class_only:
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
-        found = set()
+        self._ensure_non_collection_wrappers(*args, **kwargs)
+        if path_only:
+            yield from (w._original_path for w in self._cached_non_collection_wrappers.values())
+        else:
+            yield from (w for w in self._cached_non_collection_wrappers.values())
+
+    def _ensure_non_collection_wrappers(self, *args, **kwargs):
+        if self._cached_non_collection_wrappers:
+            return
+
         # get plugins from files in configured paths (multiple in each)
-        for p_map in self._j2_all_file_maps(*args, **kwargs):
+        for p_map in super(Jinja2Loader, self).all(*args, **kwargs):
+            is_builtin = p_map.ansible_name.startswith('ansible.builtin.')
 
             # p_map is really object from file with class that holds multiple plugins
             plugins_list = getattr(p_map, self.method_map_name)
@@ -1294,57 +1292,35 @@ class Jinja2Loader(PluginLoader):
                 continue
 
             for plugin_name in plugins.keys():
+                if '.' in plugin_name:
+                    display.debug(f'{plugin_name} skipped in {p_map._original_path}; Jinja plugin short names may not contain "."')
+                    continue
+
                 if plugin_name in _PLUGIN_FILTERS[self.package]:
                     display.debug("%s skipped due to a defined plugin filter" % plugin_name)
                     continue
 
-                if plugin_name in found:
-                    display.debug("%s skipped as duplicate" % plugin_name)
-                    continue
+                # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
+                # its own surrogate wrapper instance here to ease the bookkeeping...
+                wrapper = self._plugin_wrapper_type(plugins[plugin_name])
+                fqcn = plugin_name
+                collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
+                if not plugin_name.startswith(collection):
+                    fqcn = f"{collection}.{plugin_name}"
 
-                if path_only:
-                    result = p_map._original_path
-                else:
-                    # loader class is for the file with multiple plugins, but each plugin now has it's own class
-                    pclass = self._load_jinja2_class()
-                    result = pclass(plugins[plugin_name])  # if bad plugin, let exception rise
-                    found.add(plugin_name)
-                    fqcn = plugin_name
-                    collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
-                    if not plugin_name.startswith(collection):
-                        fqcn = f"{collection}.{plugin_name}"
+                self._update_object(wrapper, plugin_name, p_map._original_path, resolved=fqcn)
 
-                    self._update_object(result, plugin_name, p_map._original_path, resolved=fqcn)
-                yield result
+                target_names = {plugin_name, fqcn}
+                if is_builtin:
+                    target_names.add(f'ansible.builtin.{plugin_name}')
 
-    def _load_jinja2_class(self):
-        """ override the normal method of plugin classname as these are used in the generic funciton
-            to access the 'multimap' of filter/tests to function, this is a 'singular' plugin for
-            each entry.
-        """
-        class_name = 'AnsibleJinja2%s' % get_plugin_class(self.class_name).capitalize()
-        module = __import__(self.package, fromlist=[class_name])
+                for target_name in target_names:
+                    if existing_plugin := self._cached_non_collection_wrappers.get(target_name):
+                        display.debug(f'Jinja plugin {target_name} from {p_map._original_path} skipped; '
+                                      f'shadowed by plugin from {existing_plugin._original_path})')
+                        continue
 
-        return getattr(module, class_name)
-
-    def _j2_all_file_maps(self, *args, **kwargs):
-        """
-        * Unlike other plugin types, file != plugin, a file can contain multiple plugins (of same type).
-          This is why we do not deduplicate ansible file names at this point, we mostly care about
-          the names of the actual jinja2 plugins which are inside of our files.
-        * This method will NOT fetch collection plugin files, only those that would be expected under 'ansible.builtin/legacy'.
-        """
-        # populate cache if needed
-        if not self._loaded_j2_file_maps:
-
-            # We don't deduplicate ansible file names.
-            # Instead, calling code deduplicates jinja2 plugin names when loading each file.
-            kwargs['_dedupe'] = False
-
-            # To match correct precedence, call base class' all() to get a list of files,
-            self._loaded_j2_file_maps = list(super(Jinja2Loader, self).all(*args, **kwargs))
-
-        return self._loaded_j2_file_maps
+                    self._cached_non_collection_wrappers[target_name] = wrapper
 
 
 def get_fqcr_and_name(resource, collection='ansible.builtin'):
@@ -1572,13 +1548,15 @@ filter_loader = Jinja2Loader(
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins',
+    AnsibleJinja2Filter
 )
 
 test_loader = Jinja2Loader(
     'TestModule',
     'ansible.plugins.test',
     C.DEFAULT_TEST_PLUGIN_PATH,
-    'test_plugins'
+    'test_plugins',
+    AnsibleJinja2Test
 )
 
 strategy_loader = PluginLoader(
