@@ -739,7 +739,7 @@ class ActionBase(ABC):
             return remote_paths
 
         # we'll need this down here
-       become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
+        become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
