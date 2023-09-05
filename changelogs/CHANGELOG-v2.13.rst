@@ -5,6 +5,50 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2023-09-05
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+
+Minor Changes
+-------------
+
+- Removed ``exclude`` and ``recursive-exclude`` commands for generated files from the ``MANIFEST.in`` file. These excludes were unnecessary since releases are expected to be built with a clean worktree.
+- Removed ``exclude`` commands for sanity test files from the ``MANIFEST.in`` file. These tests were previously excluded because they did not pass when run from an sdist. However, sanity tests are not expected to pass from an sdist, so excluding some (but not all) of the failing tests makes little sense.
+- Removed redundant ``include`` commands from the ``MANIFEST.in`` file. These includes either duplicated default behavior or another command.
+- The ``ansible-core`` sdist no longer contains pre-generated man pages. Instead, a ``packaging/cli-doc/build.py`` script is included in the sdist. This script can generate man pages and standalone RST documentation for ``ansible-core`` CLI programs.
+- The ``docs`` and ``examples`` directories are no longer included in the ``ansible-core`` sdist. These directories have been moved to the https://github.com/ansible/ansible-documentation repository.
+- The minimum required ``setuptools`` version is now 45.2.0, as it is the oldest version to support Python 3.10.
+- Use ``include`` where ``recursive-include`` is unnecessary in the ``MANIFEST.in`` file.
+- Use ``package_data`` instead of ``include_package_data`` for ``setup.cfg`` to avoid ``setuptools`` warnings.
+- ansible-test - Update the logic used to detect when ``ansible-test`` is running from source.
+- ansible-test — Replaced `freebsd/12.3` remote with `freebsd/12.4`. The former is no longer functional.
+- ansible-test — Replaced `freebsd/13.0` remote with `freebsd/13.1`. The former is no longer functional.
+
+Bugfixes
+--------
+
+- Exclude internal options from man pages and docs.
+- Fix ``ansible-config init`` man page option indentation.
+- The ``ansible-config init`` command now has a documentation description.
+- The ``ansible-galaxy collection download`` command now has a documentation description.
+- The ``ansible-galaxy collection install`` command documentation is now visible (previously hidden by a decorator).
+- The ``ansible-galaxy collection verify`` command now has a documentation description.
+- The ``ansible-galaxy role install`` command documentation is now visible (previously hidden by a decorator).
+- The ``ansible-inventory`` command command now has a documentation description (previously used as the epilog).
+- Update module_utils.urls unit test to work with cryptography >= 41.0.0.
+- When generating man pages, use ``func`` to find the command function instead of looking it up by the command name.
+- ansible-galaxy - Enabled the ``data`` tarfile filter during role installation for Python versions that support it. A probing mechanism is used to avoid Python versions with a broken implementation.
+- ansible-test - Always use ansible-test managed entry points for ansible-core CLI tools when not running from source. This fixes issues where CLI entry points created during install are not compatible with ansible-test.
+- ansible-test - Pre-build a PyYAML wheel before installing requirements to avoid a potential Cython build failure.
+- man page build - Sub commands of ``ansible-galaxy role`` and ``ansible-galaxy collection`` are now documented.
+- tarfile - handle data filter deprecation warning message for extract and extractall (https://github.com/ansible/ansible/issues/80832).
+
 v2.13.11
 ========
 
