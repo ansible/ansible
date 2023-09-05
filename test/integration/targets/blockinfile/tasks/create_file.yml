@@ -30,3 +30,10 @@
       - empty_test_2 is changed
       - "'Block removed' in empty_test_2.msg"
       - empty_test_stat.stat.size == 0
+
+- name: Create file in current directory
+  blockinfile:
+    path: "empty.txt"
+    block: Hello.
+    state: present
+    create: yes

@@ -269,7 +269,7 @@ def main():
             module.fail_json(rc=257,
                              msg='Path %s does not exist !' % path)
         destpath = os.path.dirname(path)
-        if not os.path.exists(destpath) and not module.check_mode:
+        if destpath and not os.path.exists(destpath) and not module.check_mode:
             try:
                 os.makedirs(destpath)
             except Exception as e:
