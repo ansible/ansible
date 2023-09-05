@@ -159,7 +159,11 @@ class ValidateModulesTest(SanitySingleVersion):
                 temp_dir = process_scoped_temporary_directory(args)
 
                 with tarfile.open(path) as file:
-                    file.extractall(temp_dir)
+                    # deprecated: description='extractall fallback without filter' python_version='3.11'
+                    if hasattr(tarfile, 'data_filter'):
+                        file.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
+                    else:
+                        file.extractall(temp_dir)
 
                 cmd.extend([
                     '--original-plugins', temp_dir,
