@@ -838,6 +838,9 @@ def env_fallback(*args, **kwargs):
 
 def set_fallbacks(argument_spec, parameters):
     no_log_values = set()
+    if not isinstance(parameters, Mapping):
+        # The wrong type is handled somewhere else
+        return no_log_values
     for param, value in argument_spec.items():
         fallback = value.get('fallback', (None,))
         fallback_strategy = fallback[0]

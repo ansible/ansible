@@ -490,6 +490,13 @@
         other_alias: bar
   register: alias_warning_listdict
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults: true
+  ignore_errors: true
+  register: regression_dict_wrong_type
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -657,3 +664,6 @@
 
       - "'Both option apply_defaults.bar and its alias apply_defaults.bar_alias2 are set.' in alias_warning_dict.warnings"
       - "'Both option required_one_of[0].other and its alias required_one_of[0].other_alias are set.' in alias_warning_listdict.warnings"
+
+      - regression_dict_wrong_type is failed
+      - regression_dict_wrong_type.msg == "Value 'True' in the sub parameter field 'apply_defaults' must by a dict, not 'bool'"
