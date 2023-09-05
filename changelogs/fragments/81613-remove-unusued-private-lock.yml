@@ -1,0 +1,2 @@
+bugfixes:
+  - lib/ansible/utils/encrypt.py - remove unused private ``_LOCK`` (https://github.com/ansible/ansible/issues/81613)

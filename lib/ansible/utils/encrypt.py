@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import multiprocessing
 import random
 import re
 import string
@@ -42,8 +41,6 @@ except Exception as e:
 display = Display()
 
 __all__ = ['do_encrypt']
-
-_LOCK = multiprocessing.Lock()
 
 DEFAULT_PASSWORD_LENGTH = 20
 
