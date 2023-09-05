@@ -5,6 +5,34 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-09-05
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Deprecated Features
+-------------------
+
+- vault and unfault filters - the undocumented ``vaultid`` parameter is deprecated and will be removed in ansible-core 2.20. Use ``vault_id`` instead.
+
+Bugfixes
+--------
+
+- PowerShell - Remove some code which is no longer valid for dotnet 5+
+- Prompting - add a short sleep between polling for user input to reduce CPU consumption (https://github.com/ansible/ansible/issues/81516).
+- ansible-galaxy - Enabled the ``data`` tarfile filter during role installation for Python versions that support it. A probing mechanism is used to avoid Python versions with a broken implementation.
+- ansible-test - Always use ansible-test managed entry points for ansible-core CLI tools when not running from source. This fixes issues where CLI entry points created during install are not compatible with ansible-test.
+- first found lookup has been updated to use the normalized argument parsing (pythonic) matching the documented examples.
+- handlers - the ``listen`` keyword can affect only one handler with the same name, the last one defined as it is a case with the ``notify`` keyword (https://github.com/ansible/ansible/issues/81013)
+- include_role - expose variables from parent roles to role's handlers (https://github.com/ansible/ansible/issues/80459)
+- tarfile - handle data filter deprecation warning message for extract and extractall (https://github.com/ansible/ansible/issues/80832).
+- vault and unvault filters now properly take ``vault_id`` parameter.
+
 v2.15.3
 =======
 
