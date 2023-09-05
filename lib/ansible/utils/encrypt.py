@@ -102,7 +102,7 @@ class CryptHash(BaseHash):
             "Python crypt module is deprecated and will be removed from "
             "Python 3.13. Install the passlib library for continued "
             "encryption functionality.",
-            version=2.17
+            version="2.17",
         )
 
         self.algo_data = self.algorithms[algorithm]
