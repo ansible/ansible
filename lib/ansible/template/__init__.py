@@ -479,11 +479,9 @@ class JinjaPluginIntercept(MutableMapping):
         try:
             func = self._delegatee[key]
         except KeyError as e:
-            # FIXME: bypassing the cache for failures allows some error messages to propagate
             self._seen_it.remove(key)
             raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(original_exc or e)), 0)
 
-        # FIXME: do we want to do this for Jinja builtins or not? Also, the wrapped function should be cached so we don't re-wrap on every invocation
         # if i do have func and it is a filter, it nees wrapping
         if self._pluginloader.type == 'filter':
             # filter need wrapping

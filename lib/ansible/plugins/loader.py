@@ -1300,8 +1300,9 @@ class Jinja2Loader(PluginLoader):
                     display.debug("%s skipped due to a defined plugin filter" % plugin_name)
                     continue
 
-                # loader class is for the file with multiple plugins, but each plugin now has it's own class
-                wrapper = self._plugin_wrapper_type(plugins[plugin_name])  # if bad plugin, let exception rise
+                # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
+                # its own surrogate wrapper instance here to ease the bookkeeping...
+                wrapper = self._plugin_wrapper_type(plugins[plugin_name])
                 fqcn = plugin_name
                 collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
                 if not plugin_name.startswith(collection):
