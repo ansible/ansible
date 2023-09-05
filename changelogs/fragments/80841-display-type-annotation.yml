@@ -1,0 +1,4 @@
+minor_changes:
+  - Add Python type hints to the Display class (https://github.com/ansible/ansible/issues/80841)
+bugfixes:
+  - vars_prompt - internally convert the ``unsafe`` value to ``bool``

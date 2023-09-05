@@ -148,7 +148,7 @@ class PlaybookExecutor:
                             encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
-                            unsafe = var.get("unsafe", None)
+                            unsafe = boolean(var.get("unsafe", False))
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:

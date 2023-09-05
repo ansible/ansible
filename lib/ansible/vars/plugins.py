@@ -64,7 +64,7 @@ def get_vars_from_path(loader, path, entities, stage):
             needs_enabled = plugin.REQUIRES_ENABLED
         elif hasattr(plugin, 'REQUIRES_WHITELIST'):
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
-                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+                               "Use 'REQUIRES_ENABLED' instead.", version="2.18")
             needs_enabled = plugin.REQUIRES_WHITELIST
 
         # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
