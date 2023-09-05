@@ -3,3 +3,6 @@ bugfixes:
     Previously, list operations were performed unless the inputs were a hashable type such as ``str``, instead of a collection, such as a ``list`` or ``tuple``.
   - Set filters ``intersect``, ``difference``, ``symmetric_difference`` and ``union`` now always return a ``list``, never a ``set``.
     Previously, a ``set`` would be returned if the inputs were a hashable type such as ``str``, instead of a collection, such as a ``list`` or ``tuple``.
+minor_changes:
+  - Documentation for set filters ``intersect``, ``difference``, ``symmetric_difference`` and ``union`` now states
+    that the returned list items are in arbitrary order.

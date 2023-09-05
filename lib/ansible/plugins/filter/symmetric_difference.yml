@@ -5,6 +5,7 @@ DOCUMENTATION:
   short_description: different items from two lists
   description:
     - Provide a unique list of all the elements unique to each list.
+    - Items in the resulting list are returned in arbitrary order.
   options:
     _input:
       description: A list.
