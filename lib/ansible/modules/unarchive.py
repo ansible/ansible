@@ -19,15 +19,15 @@ short_description: Unpacks an archive after (optionally) copying it from the loc
 description:
      - The M(ansible.builtin.unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
-     - Set O(remote_src=yes) to unpack an archive which already exists on the target.
-     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set O(remote_src=yes).
+     - Set O(remote_src=true) to unpack an archive which already exists on the target.
+     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set O(remote_src=true).
      - For Windows targets, use the M(community.windows.win_unzip) module instead.
 options:
   src:
     description:
-      - If O(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If O(remote_src=yes), path on the
+      - If O(remote_src=false) (default), local path to archive file to copy to the target server; can be absolute or relative. If O(remote_src=true), path on the
         target server to existing archive file to unpack.
-      - If O(remote_src=yes) and O(src) contains V(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
+      - If O(remote_src=true) and O(src) contains V(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
         simple cases, for full download support use the M(ansible.builtin.get_url) module.
     type: path
     required: true
