@@ -44,7 +44,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def _check_working_data_filter() -> bool:
     """
     Check if tarfile.data_filter implementation is working
