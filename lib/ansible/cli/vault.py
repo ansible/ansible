@@ -19,7 +19,8 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
+from ansible.parsing.vault.editor import VaultEditor
+from ansible.parsing.vault.lib import VaultLib, match_encrypt_secret
 from ansible.utils.display import Display
 
 display = Display()

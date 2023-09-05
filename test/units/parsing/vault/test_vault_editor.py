@@ -31,7 +31,8 @@ from unittest.mock import patch
 
 from ansible import errors
 from ansible.parsing import vault
-from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
+from ansible.parsing.vault.lib import VaultLib, match_encrypt_secret
+from ansible.parsing.vault.editor import VaultEditor
 
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
@@ -72,7 +73,7 @@ class TestVaultEditor(unittest.TestCase):
         return vault_secrets
 
     def test_methods_exist(self):
-        v = vault.VaultEditor(None)
+        v = VaultEditor(None)
         slots = ['create_file',
                  'decrypt_file',
                  'edit_file',
@@ -84,7 +85,7 @@ class TestVaultEditor(unittest.TestCase):
             assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
 
     def _create_test_dir(self):
-        suffix = '_ansible_unit_test_%s_' % (self.__class__.__name__)
+        suffix = '_ansible_unit_test_%s_' % self.__class__.__name__
         return tempfile.mkdtemp(suffix=suffix)
 
     def _create_file(self, test_dir, name, content, symlink=False):
@@ -98,7 +99,7 @@ class TestVaultEditor(unittest.TestCase):
             vault_secrets = self._secrets(self.vault_password)
         return VaultEditor(VaultLib(vault_secrets))
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_helper_empty_target(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -124,7 +125,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertEqual(data, b'\0')
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_helper_call_exception(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -142,7 +143,7 @@ class TestVaultEditor(unittest.TestCase):
                                src_file_path,
                                self.vault_secret)
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_helper_symlink_target(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -167,14 +168,14 @@ class TestVaultEditor(unittest.TestCase):
 
         tmp_path = editor_args[-1]
 
-        # simulate the tmp file being editted
+        # simulate the tmp file being edited
         with open(tmp_path, 'wb') as tmp_file:
             tmp_file.write(new_src_contents)
 
     def _faux_command(self, tmp_path):
         pass
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_helper_no_change(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -226,10 +227,10 @@ class TestVaultEditor(unittest.TestCase):
         new_password = 'password2:electricbugaloo'
         new_vault_secret = TextVaultSecret(new_password)
         new_vault_secrets = [('default', new_vault_secret)]
-        ve.rekey_file(src_file_path, vault.match_encrypt_secret(new_vault_secrets)[1])
+        ve.rekey_file(src_file_path, match_encrypt_secret(new_vault_secrets)[1])
 
         # FIXME: can just update self._secrets here
-        new_ve = vault.VaultEditor(VaultLib(new_vault_secrets))
+        new_ve = VaultEditor(VaultLib(new_vault_secrets))
         self._assert_file_is_encrypted(new_ve, src_file_path, src_file_contents)
 
     def test_rekey_file_no_new_password(self):
@@ -312,7 +313,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self._assert_file_is_link(src_file_link_path, src_file_path)
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_no_vault_id(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
@@ -339,7 +340,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_with_vault_id(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
@@ -367,7 +368,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_symlink(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
@@ -403,7 +404,7 @@ class TestVaultEditor(unittest.TestCase):
         # self.assertEqual(src_file_plaintext, new_src_contents,
         #                 'The decrypted plaintext of the editted file is not the expected contents.')
 
-    @patch('ansible.parsing.vault.subprocess.call')
+    @patch('ansible.parsing.vault.editor.subprocess.call')
     def test_edit_file_not_encrypted(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
@@ -439,7 +440,7 @@ class TestVaultEditor(unittest.TestCase):
                                ve.decrypt_file,
                                src_file_path)
 
-    @patch.object(vault.VaultEditor, '_editor_shell_command')
+    @patch.object(VaultEditor, '_editor_shell_command')
     def test_create_file(self, mock_editor_shell_command):
 
         def sc_side_effect(filename):
@@ -451,7 +452,7 @@ class TestVaultEditor(unittest.TestCase):
 
         _secrets = self._secrets('ansible')
         ve = self._vault_editor(_secrets)
-        ve.create_file(tmp_file.name, vault.match_encrypt_secret(_secrets)[1])
+        ve.create_file(tmp_file.name, match_encrypt_secret(_secrets)[1])
 
         self.assertTrue(os.path.exists(tmp_file.name))
 

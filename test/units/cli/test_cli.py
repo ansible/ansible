@@ -24,6 +24,7 @@ from unittest.mock import patch, MagicMock
 
 from units.mock.loader import DictDataLoader
 
+import ansible.parsing.vault.lib
 from ansible.release import __version__
 from ansible.parsing import vault
 from ansible import cli
@@ -141,7 +142,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           vault_ids=['secret1@%s' % filename, 'secret2'],
                                           vault_password_files=[filename])
         self.assertIsInstance(res, list)
-        matches = vault.match_secrets(res, ['secret1'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['secret1'])
         self.assertIn('secret1', [x[0] for x in matches])
         match = matches[0][1]
         self.assertEqual(match.bytes, b'file1_password')
@@ -157,7 +158,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           auto_prompt=False)
 
         self.assertIsInstance(res, list)
-        matches = vault.match_secrets(res, ['prompt1'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['prompt1'])
         self.assertIn('prompt1', [x[0] for x in matches])
         match = matches[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
@@ -176,7 +177,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
 
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), 2)
-        matches = vault.match_secrets(res, ['prompt1'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['prompt1'])
         self.assertIn('prompt1', [x[0] for x in matches])
         self.assertEqual(len(matches), 1)
 
@@ -196,7 +197,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=True)
 
         self.assertIsInstance(res, list)
-        matches = vault.match_secrets(res, ['file1'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['file1'])
         self.assertIn('file1', [x[0] for x in matches])
         self.assertNotIn('prompt1', [x[0] for x in matches])
         match = matches[0][1]
@@ -205,7 +206,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
     def _assert_ids(self, vault_id_names, res, password=b'prompt1_password'):
         self.assertIsInstance(res, list)
         len_ids = len(vault_id_names)
-        matches = vault.match_secrets(res, vault_id_names)
+        matches = ansible.parsing.vault.lib.match_secrets(res, vault_id_names)
         self.assertEqual(len(res), len_ids, 'len(res):%s does not match len_ids:%s' % (len(res), len_ids))
         self.assertEqual(len(matches), len_ids)
         for index, prompt in enumerate(vault_id_names):
@@ -262,7 +263,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=False)
 
         self.assertIsInstance(res, list)
-        matches = vault.match_secrets(res, ['default'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['default'])
         # --vault-password-file/DEFAULT_VAULT_PASSWORD_FILE is higher precendce than prompts
         # if the same vault-id ('default') regardless of cli order since it didn't matter in 2.3
 
@@ -276,7 +277,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           auto_prompt=True)
 
         self.assertIsInstance(res, list)
-        matches = vault.match_secrets(res, ['default'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['default'])
         self.assertEqual(matches[0][1].bytes, b'file1_password')
         self.assertEqual(matches[1][1].bytes, b'prompt1_password')
         self.assertEqual(len(matches), 2)
@@ -303,11 +304,11 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=True)
 
         self.assertIsInstance(res, list)
-        matches = vault.match_secrets(res, ['some_file'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['some_file'])
         # --vault-password-file/DEFAULT_VAULT_PASSWORD_FILE is higher precendce than prompts
         # if the same vault-id ('default') regardless of cli order since it didn't matter in 2.3
         self.assertEqual(matches[0][1].bytes, b'some_file_password')
-        matches = vault.match_secrets(res, ['some_prompt'])
+        matches = ansible.parsing.vault.lib.match_secrets(res, ['some_prompt'])
         self.assertEqual(matches[0][1].bytes, b'some_prompt_password')
 
     @patch('ansible.cli.PromptVaultSecret')
@@ -321,7 +322,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=True)
 
         self.assertIsInstance(res, list)
-        match = vault.match_secrets(res, ['default'])[0][1]
+        match = ansible.parsing.vault.lib.match_secrets(res, ['default'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
 
     @patch('ansible.cli.PromptVaultSecret')
@@ -335,7 +336,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=True)
 
         self.assertIsInstance(res, list)
-        match = vault.match_secrets(res, ['default'])[0][1]
+        match = ansible.parsing.vault.lib.match_secrets(res, ['default'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
 
     @patch('ansible.cli.PromptVaultSecret')
@@ -349,7 +350,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=False)
 
         self.assertIsInstance(res, list)
-        match = vault.match_secrets(res, ['some_vault_id'])[0][1]
+        match = ansible.parsing.vault.lib.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
 
     @patch('ansible.cli.PromptVaultSecret')
@@ -363,7 +364,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=False)
 
         self.assertIsInstance(res, list)
-        match = vault.match_secrets(res, ['some_vault_id'])[0][1]
+        match = ansible.parsing.vault.lib.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
 
     @patch('ansible.cli.PromptVaultSecret')
@@ -377,5 +378,5 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=True)
 
         self.assertIsInstance(res, list)
-        match = vault.match_secrets(res, ['some_vault_id'])[0][1]
+        match = ansible.parsing.vault.lib.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')

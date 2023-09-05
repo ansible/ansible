@@ -23,8 +23,7 @@ import os
 
 from units.compat import unittest
 from unittest.mock import patch, mock_open
-from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
-from ansible.parsing.vault import AnsibleVaultError
+from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound, AnsibleVaultError
 from ansible.module_utils.common.text.converters import to_text
 
 from units.mock.vault_helper import TextVaultSecret

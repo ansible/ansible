@@ -102,7 +102,7 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         self.assertIsInstance(avu.vault, vault.VaultLib)
 
     def _from_plaintext(self, seq):
-        id_secret = vault.match_encrypt_secret(self.good_vault_secrets)
+        id_secret = vault.lib.match_encrypt_secret(self.good_vault_secrets)
         return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault, secret=id_secret[1])
 
     def test_empty_init(self):

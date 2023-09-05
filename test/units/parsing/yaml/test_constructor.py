@@ -78,7 +78,7 @@ def test_duplicate_yaml_dict_key_warn(dupe_node, monkeypatch):
     assert cap.calls == expected
 
 
-def test_duplicate_yaml_dict_key_error(dupe_node, monkeypatch, mocker):
+def test_duplicate_yaml_dict_key_error(dupe_node, monkeypatch):
     monkeypatch.setattr(C, 'DUPLICATE_YAML_DICT_KEY', 'error')
     ac = AnsibleConstructor()
     pytest.raises(ConstructorError, ac.construct_mapping, dupe_node)

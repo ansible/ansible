@@ -23,6 +23,8 @@ import io
 from jinja2.exceptions import UndefinedError
 
 from units.compat import unittest
+
+import ansible.parsing.vault.lib
 from ansible.parsing import vault
 from ansible.parsing.yaml import dumper, objects
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -54,8 +56,10 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
     def test_ansible_vault_encrypted_unicode(self):
         plaintext = 'This is a string we are going to encrypt.'
-        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext(plaintext, vault=self.vault,
-                                                                  secret=vault.match_secrets(self.vault_secrets, ['vault_secret'])[0][1])
+        avu = objects.AnsibleVaultEncryptedUnicode.from_plaintext(
+            plaintext,
+            vault=self.vault,
+            secret=ansible.parsing.vault.lib.match_secrets(self.vault_secrets, ['vault_secret'])[0][1])
 
         yaml_out = self._dump_string(avu, dumper=self.dumper)
         stream = self._build_stream(yaml_out)
