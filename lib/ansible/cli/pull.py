@@ -80,7 +80,7 @@ class PullCLI(CLI):
 
         super(PullCLI, self).init_parser(
             usage='%prog -U <repository> [options] [<playbook.yml>]',
-            desc="pulls playbooks from a VCS repo and executes them for the remote host")
+            desc="pulls playbooks from a VCS repo and executes them on target host")
 
         # Do not add check_options as there's a conflict with --checkout/-C
         opt_help.add_connect_options(self.parser)
