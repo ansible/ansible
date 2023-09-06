@@ -16,6 +16,19 @@
     - role: a
       when: role_set_var is defined
 
+- name: test deduping allows for successful execution of role after host is unreachable
+  hosts: fake,testhost
+  gather_facts: false
+  tags: [ 'unreachable' ]
+  ignore_unreachable: yes
+  roles:
+    # unreachable by the first host
+    - role: test_connectivity
+
+    # unreachable host will try again,
+    # the successful host will not because it's deduplicated
+    - role: test_connectivity
+
 - name: test deduping role for failed host
   hosts: testhost,localhost
   gather_facts: false
