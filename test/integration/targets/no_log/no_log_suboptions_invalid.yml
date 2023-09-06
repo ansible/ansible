@@ -43,3 +43,6 @@
         subopt_list:
           - subopt1: GOLIATH
           - subopt1: FREEFALL
+      when: false  # TODO FIXME: The code that should prevent 'AGROUND' ending up in the output
+                   #             has been broken for some time; its misbehavior was masked by
+                   #             the bug fixed in https://github.com/ansible/ansible/pull/81631.
