@@ -223,10 +223,9 @@ options:
     profile:
         description:
             - Sets the profile of the user.
-            - Does nothing when used with other platforms.
             - Can set multiple profiles using comma separation.
             - To delete all the profiles, use O(profile='').
-            - Currently supported on Illumos/Solaris.
+            - Currently supported on Illumos/Solaris. Does nothing when used with other platforms.
         type: str
         version_added: "2.8"
     authorization:
@@ -240,10 +239,9 @@ options:
     role:
         description:
             - Sets the role of the user.
-            - Does nothing when used with other platforms.
             - Can set multiple roles using comma separation.
             - To delete all roles, use O(role='').
-            - Currently supported on Illumos/Solaris.
+            - Currently supported on Illumos/Solaris. Does nothing when used with other platforms.
         type: str
         version_added: "2.8"
     password_expire_max:
@@ -267,8 +265,7 @@ options:
     umask:
         description:
             - Sets the umask of the user.
-            - Does nothing when used with other platforms.
-            - Currently supported on Linux.
+            - Currently supported on Linux. Does nothing when used with other platforms.
             - Requires O(local) is omitted or V(False).
         type: str
         version_added: "2.12"
