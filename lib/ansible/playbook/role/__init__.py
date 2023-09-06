@@ -619,8 +619,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         eor_task.action = 'meta'
         eor_task.args = {'_raw_params': 'role_complete'}
         eor_task.implicit = True
-        eor_task.tags = ['always']
-        eor_task.when = True
+        eor_task.tags = self.tags
+        eor_task.when = self.when
 
         eor_block.block = [eor_task]
         block_list.append(eor_block)
