@@ -14,6 +14,8 @@ import tempfile
 
 from collections import namedtuple
 from collections.abc import Mapping, Sequence
+from jinja2 import Environment, Undefined
+from jinja2.filters import make_attrgetter
 from jinja2.nativetypes import NativeEnvironment
 
 from ansible.errors import AnsibleOptionsError, AnsibleError
@@ -276,6 +278,9 @@ def _add_base_defs_deprecations(base_defs):
                 for entry in data[section]:
                     process(entry)
 
+def _undef2none(v):
+    return None if isinstance(v, Undefined) else v
+
 
 class ConfigManager(object):
 
@@ -304,6 +309,8 @@ class ConfigManager(object):
 
         # ensure we always have config def entry
         self._base_defs['CONFIG_FILE'] = {'default': None, 'type': 'path'}
+
+        self._environment = Environment()
 
     def _read_config_yaml_file(self, yml_file):
         # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
@@ -361,7 +368,7 @@ class ConfigManager(object):
         for pdef in self.get_configuration_definitions(plugin_type, name).values():
             if 'vars' in pdef and pdef['vars']:
                 for var_entry in pdef['vars']:
-                    pvars.append(var_entry['name'])
+                    pvars.append(var_entry['name'].split('.')[0])
         return pvars
 
     def get_plugin_options_from_var(self, plugin_type, name, variable):
@@ -419,8 +426,13 @@ class ConfigManager(object):
         origin = None
         for entry in entry_list:
             name = entry.get('name')
+            getter = make_attrgetter(
+                environment=self._environment,
+                attribute=name,
+                postprocess=_undef2none,
+            )
             try:
-                temp_value = container.get(name, None)
+                temp_value = getter(container)
             except UnicodeEncodeError:
                 self.WARNINGS.add(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
                 continue

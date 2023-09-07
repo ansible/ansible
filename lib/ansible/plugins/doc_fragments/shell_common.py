@@ -18,6 +18,7 @@ options:
       - section: defaults
         key: remote_tmp
     vars:
+      - name: ansible_facts.remote_tmp
       - name: ansible_remote_tmp
   common_remote_group:
     name: Enables changing the group ownership of temporary files and directories

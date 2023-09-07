@@ -52,4 +52,6 @@ class UserFactCollector(BaseFactCollector):
         user_facts['real_group_id'] = os.getgid()
         user_facts['effective_group_id'] = os.getgid()
 
+        user_facts['remote_tmp'] = os.path.expanduser(os.path.expandvars(module._remote_tmp))
+
         return user_facts

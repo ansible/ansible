@@ -928,6 +928,7 @@ class ActionBase(ABC):
         if '..' in os.path.dirname(expanded).split('/'):
             raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._get_remote_addr({}))
 
+        self._connection._shell.set_option('remote_tmp', expanded)
         return expanded
 
     def _strip_success_message(self, data):
