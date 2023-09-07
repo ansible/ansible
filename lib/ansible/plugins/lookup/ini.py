@@ -190,7 +190,7 @@ class LookupModule(LookupBase):
             config.seek(0, os.SEEK_SET)
 
             try:
-                self.cp.readfp(config)
+                self.cp.read_file(config)
             except configparser.DuplicateOptionError as doe:
                 raise AnsibleLookupError("Duplicate option in '{file}': {error}".format(file=paramvals['file'], error=to_native(doe)))
 
