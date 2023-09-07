@@ -39,7 +39,7 @@ options:
               facts."
         type: list
         elements: str
-        default: "all"
+        default: "!all"
     gather_timeout:
         version_added: "2.2"
         description:
