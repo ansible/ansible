@@ -645,7 +645,7 @@ class Display(metaclass=Singleton):
         if encrypt:
             # Circular import because encrypt needs a display class
             from ansible.utils.encrypt import do_encrypt
-            result = do_encrypt(result, encrypt, salt_size, salt)
+            result = do_encrypt(result, encrypt, salt_size=salt_size, salt=salt)
 
         # handle utf-8 chars
         result = to_text(result, errors='surrogate_or_strict')

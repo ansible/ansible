@@ -163,7 +163,7 @@ class CryptHash(BaseHash):
             result = None
             orig_exc = e
 
-        # None as result would be interpreted by the some modules (user module)
+        # None as result would be interpreted by some modules (user module)
         # as no password at all.
         if not result:
             raise AnsibleError(
@@ -267,12 +267,13 @@ class PasslibHash(BaseHash):
 
 
 def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
+    display.deprecated("passlib_or_crypt API is deprecated in favor of do_encrypt", version='2.20')
+    return do_encrypt(secret, algorithm, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+
+
+def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return PasslibHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     if HAS_CRYPT:
-        return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return CryptHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     raise AnsibleError("Unable to encrypt nor hash, either crypt or passlib must be installed.", orig_exc=CRYPT_E)
-
-
-def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None):
-    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt, ident=ident)

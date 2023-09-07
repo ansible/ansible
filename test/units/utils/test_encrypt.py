@@ -27,14 +27,23 @@ class passlib_off(object):
 
 def assert_hash(expected, secret, algorithm, **settings):
 
+    assert encrypt.do_encrypt(secret, algorithm, **settings) == expected
     if encrypt.PASSLIB_AVAILABLE:
-        assert encrypt.passlib_or_crypt(secret, algorithm, **settings) == expected
         assert encrypt.PasslibHash(algorithm).hash(secret, **settings) == expected
     else:
-        assert encrypt.passlib_or_crypt(secret, algorithm, **settings) == expected
         with pytest.raises(AnsibleError) as excinfo:
             encrypt.PasslibHash(algorithm).hash(secret, **settings)
         assert excinfo.value.args[0] == "passlib must be installed and usable to hash with '%s'" % algorithm
+
+
+@pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')
+def test_passlib_or_crypt():
+    with passlib_off():
+        expected = "$5$rounds=5000$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+        assert encrypt.passlib_or_crypt("123", "sha256_crypt", salt="12345678", rounds=5000) == expected
+
+    expected = "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+    assert encrypt.passlib_or_crypt("123", "sha256_crypt", salt="12345678", rounds=5000) == expected
 
 
 @pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')
