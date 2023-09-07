@@ -80,6 +80,7 @@ class AnsiblePlugin(ABC):
         return option_value, origin
 
     def get_option(self, option, hostvars=None):
+
         if option not in self._options:
             option_value, dummy = self.get_option_and_origin(option, hostvars=hostvars)
             self.set_option(option, option_value)
