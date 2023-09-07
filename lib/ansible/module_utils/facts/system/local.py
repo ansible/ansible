@@ -91,7 +91,11 @@ class LocalFactCollector(BaseFactCollector):
                 # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
                 try:
-                    cp.read_file(StringIO(out))
+                    try:
+                        cp.read_file(StringIO(out))
+                    except AttributeError:
+                        # Python 2
+                        cp.readfp(StringIO(out))
                 except configparser.Error:
                     fact = "error loading facts as JSON or ini - please check content: %s" % fn
                     module.warn(fact)
