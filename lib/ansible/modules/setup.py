@@ -183,7 +183,7 @@ from ansible.module_utils.facts.namespace import PrefixFactNamespace
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            gather_subset=dict(default=["all"], required=False, type='list', elements='str'),
+            gather_subset=dict(default=["!all"], required=False, type='list', elements='str'),
             gather_timeout=dict(default=10, required=False, type='int'),
             filter=dict(default=[], required=False, type='list', elements='str'),
             fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
@@ -199,7 +199,8 @@ def main():
     #       to collect nothing except for the below list
     # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
     #       some tweaking on how gather_subset operations are performed
-    minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
+    if 'all' not in gather_subset:
+      minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
                                        'distribution', 'dns', 'env', 'fips', 'local',
                                        'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
                                        'service_mgr', 'ssh_pub_keys', 'user'])
