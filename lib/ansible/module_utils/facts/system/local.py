@@ -26,6 +26,7 @@ import ansible.module_utils.compat.typing as t
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import configparser, StringIO
 
 
@@ -91,7 +92,10 @@ class LocalFactCollector(BaseFactCollector):
                 # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
                 try:
-                    cp.readfp(StringIO(out))
+                    if PY3:
+                        cp.read_file(StringIO(out))
+                    else:
+                        cp.readfp(StringIO(out))
                 except configparser.Error:
                     fact = "error loading facts as JSON or ini - please check content: %s" % fn
                     module.warn(fact)
