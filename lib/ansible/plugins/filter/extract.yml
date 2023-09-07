@@ -12,7 +12,7 @@ DOCUMENTATION:
       description: Index or key to extract.
       type: raw
       required: true
-    contianer:
+    container:
       description: Dictionary or list from which to extract a value.
       type: raw
       required: true
