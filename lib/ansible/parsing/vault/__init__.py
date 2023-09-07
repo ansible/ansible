@@ -1044,10 +1044,10 @@ class VaultEditor:
         since in the plaintext case, the original contents can be of any text encoding
         or arbitrary binary data.
 
-        When used to write the result of vault encryption, the val of the 'data' arg
-        should be a utf-8 encoded byte string and not a text typ and not a text type..
+        When used to write the result of vault encryption, the value of the 'data' arg
+        should be a utf-8 encoded byte string and not a text type.
 
-        When used to write the result of vault decryption, the val of the 'data' arg
+        When used to write the result of vault decryption, the value of the 'data' arg
         should be a byte string and not a text type.
 
         :arg data: the byte string (bytes) data
@@ -1077,6 +1077,8 @@ class VaultEditor:
             output = getattr(sys.stdout, 'buffer', sys.stdout)
             output.write(b_file_data)
         else:
+            if not os.access(os.path.dirname(thefile), os.W_OK):
+                raise AnsibleError("Destination '%s' not writable" % (os.path.dirname(thefile)))
             # file names are insecure and prone to race conditions, so remove and create securely
             if os.path.isfile(thefile):
                 if shred:

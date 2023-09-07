@@ -1,0 +1,3 @@
+---
+bugfixes:
+- ansible-vault - fail when the destination file location is not writable before performing encryption (https://github.com/ansible/ansible/issues/81455).
