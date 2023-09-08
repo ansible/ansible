@@ -195,3 +195,6 @@ ansible localhost -m include_role -a "name=r1-dep_chain-vars" "$@"
 
 ansible-playbook test_include_tasks_in_include_role.yml "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran')" = "1" ]
+
+ansible-playbook test_run_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran once')" = "1" ]
