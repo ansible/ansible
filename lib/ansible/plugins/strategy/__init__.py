@@ -571,10 +571,7 @@ class StrategyBase:
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
         '''
-
         ret_results = []
-        handler_templar = Templar(self._loader)
-
         cur_pass = 0
         while True:
             try:
@@ -702,7 +699,7 @@ class StrategyBase:
                         else:
                             all_task_vars = found_task_vars
                         all_task_vars[original_task.register] = wrap_var(result_item)
-                        post_process_whens(result_item, original_task, handler_templar, all_task_vars)
+                        post_process_whens(result_item, original_task, Templar(self._loader), all_task_vars)
                         if original_task.loop or original_task.loop_with:
                             new_item_result = TaskResult(
                                 task_result._host,
