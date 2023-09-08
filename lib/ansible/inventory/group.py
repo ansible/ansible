@@ -56,7 +56,7 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
 
 class InventoryObjectType(Enum):
     HOST = 0
-    GROUP = 0
+    GROUP = 1
 
 
 class Group:
