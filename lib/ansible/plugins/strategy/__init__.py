@@ -1034,7 +1034,7 @@ class StrategyBase:
         elif meta_action == 'role_complete':
             # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
             # How would this work with allow_duplicates??
-            if task.implicit and _evaluate_conditional(target_host):
+            if task.implicit:
                 role_obj = self._get_cached_role(task, iterator._play)
                 if target_host.name in role_obj._had_task_run:
                     role_obj._completed[target_host.name] = True
