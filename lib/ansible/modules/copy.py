@@ -17,6 +17,7 @@ description:
     - The M(ansible.builtin.copy) module copies a file or a directory structure from the local or remote machine to a location on the remote machine.
       File system meta-information (permissions, ownership, etc.) may be set, even when the file or directory already exists on the target system.
       Some meta-information may be copied on request.
+    - Copied files are auto-decrypted if the source is vaulted.
     - Get meta-information with the M(ansible.builtin.stat) module.
     - Set meta-information with the M(ansible.builtin.file) module.
     - Use the M(ansible.builtin.fetch) module to copy files from remote locations to the local box.
