@@ -120,12 +120,9 @@ class NetBSDHardware(Hardware):
         mount_facts = {}
 
         mount_facts['mounts'] = []
-        fstab = get_file_content('/etc/fstab')
-
-        if not fstab:
+        if not os.access("/proc/mounts", os.R_OK):
             return mount_facts
-
-        for line in fstab.splitlines():
+        for line in get_file_lines("/proc/mounts"):
             if line.startswith('#') or line.strip() == '':
                 continue
             fields = re.sub(r'\s+', ' ', line).split()
