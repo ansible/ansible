@@ -1036,8 +1036,9 @@ class StrategyBase:
             # How would this work with allow_duplicates??
             if task.implicit:
                 role_obj = self._get_cached_role(task, iterator._play)
-                role_obj._completed[target_host.name] = True
-                msg = 'role_complete for %s' % target_host.name
+                if target_host.name in role_obj._had_task_run:
+                    role_obj._completed[target_host.name] = True
+                    msg = 'role_complete for %s' % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)

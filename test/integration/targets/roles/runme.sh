@@ -10,6 +10,12 @@ set -eux
 # but still dupe across plays
 [ "$(ansible-playbook no_dupes.yml -i ../../inventory "$@" | grep -c '"msg": "A"')" = "3" ]
 
+# and don't dedupe before the role successfully completes
+[ "$(ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags conditional_skipped "$@" | grep -c '"msg": "A"')" = "1" ]
+[ "$(ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags conditional_failed "$@" | grep -c '"msg": "failed_when task succeeded"')" = "1" ]
+[ "$(ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachable "$@" | grep -c '"data": "reachable"')" = "1" ]
+ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachable "$@" | grep -e 'ignored=2'
+
 # include/import can execute another instance of role
 [ "$(ansible-playbook allowed_dupes.yml -i ../../inventory --tags importrole "$@" | grep -c '"msg": "A"')" = "2" ]
 [ "$(ansible-playbook allowed_dupes.yml -i ../../inventory --tags includerole "$@" | grep -c '"msg": "A"')" = "2" ]
