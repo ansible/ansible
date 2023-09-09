@@ -505,9 +505,10 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
         # We don't mimmic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
         try:
             pkgver = next(v1 for v1 in pkg.version_list if v1.ver_str == version)
-            policy.set_priority(pkgver, 0)
         except StopIteration:
             pass
+        else:
+            policy.set_priority(pkgver, 0)
         policy.create_pin('Version', pkgname, version, 1001)
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
