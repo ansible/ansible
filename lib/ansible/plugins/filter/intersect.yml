@@ -5,6 +5,7 @@ DOCUMENTATION:
   short_description: intersection of lists
   description:
     - Provide a list with the common elements from other lists.
+    - Items in the resulting list are returned in arbitrary order.
   options:
     _input:
       description: A list.
