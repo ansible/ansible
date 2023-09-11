@@ -1069,6 +1069,17 @@ releases:
     - urls-client-cert-py12.yml
     - urls-unit-test-latest-cryptography.yml
     release_date: '2023-08-07'
+  2.15.4:
+    changes:
+      release_summary: '| Release Date: 2023-09-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.4_summary.yaml
+    release_date: '2023-09-11'
   2.15.4rc1:
     changes:
       bugfixes:
