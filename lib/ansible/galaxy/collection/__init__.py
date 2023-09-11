@@ -1420,6 +1420,10 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
 
     if path_filter and not is_sequence(path_filter):
         path_filter = [path_filter]
+    if namespace_filter and not is_sequence(namespace_filter):
+        namespace_filter = [namespace_filter]
+    if collection_filter and not is_sequence(collection_filter):
+        collection_filter = [collection_filter]
 
     paths = set()
     for path in files('ansible_collections').glob('*/*/'):
@@ -1441,9 +1445,9 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
     for path in paths:
         namespace = path.parent.name
         name = path.name
-        if namespace_filter and namespace != namespace_filter:
+        if namespace_filter and namespace not in namespace_filter:
             continue
-        if collection_filter and name != collection_filter:
+        if collection_filter and name not in collection_filter:
             continue
 
         if dedupe:

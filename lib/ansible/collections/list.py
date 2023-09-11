@@ -32,16 +32,31 @@ def list_collection_dirs(search_paths=None, coll_filter=None, artifacts_manager=
 
     namespace_filter = None
     collection_filter = None
+    has_pure_namespace_filter = False  # whether at least one coll_filter is a namespace-only filter
     if coll_filter is not None:
-        if '.' in coll_filter:
-            try:
-                namespace_filter, collection_filter = coll_filter.split('.')
-            except ValueError:
-                raise AnsibleError("Invalid collection pattern supplied: %s" % coll_filter)
-        else:
-            namespace_filter = coll_filter
+        if isinstance(coll_filter, str):
+            coll_filter = [coll_filter]
+        namespace_filter = set()
+        for coll_name in coll_filter:
+            if '.' in coll_name:
+                try:
+                    namespace, collection = coll_name.split('.')
+                except ValueError:
+                    raise AnsibleError("Invalid collection pattern supplied: %s" % coll_name)
+                namespace_filter.add(namespace)
+                if not has_pure_namespace_filter:
+                    if collection_filter is None:
+                        collection_filter = []
+                    collection_filter.append(collection)
+            else:
+                namespace_filter.add(coll_name)
+                has_pure_namespace_filter = True
+                collection_filter = None
+        namespace_filter = sorted(namespace_filter)
 
     for req in find_existing_collections(search_paths, artifacts_manager, namespace_filter=namespace_filter,
                                          collection_filter=collection_filter, dedupe=dedupe):
 
+        if not has_pure_namespace_filter and coll_filter is not None and req.fqcn not in coll_filter:
+            continue
         yield to_bytes(req.src)
