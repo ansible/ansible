@@ -6,27 +6,28 @@ from __future__ import annotations
 
 import datetime
 import os
+import urllib.request
+import http.client
 
-from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, RequestWithMethod,
-                                       UnixHTTPHandler, UnixHTTPSConnection, httplib)
-from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
+from ansible.module_utils.urls import (Request, open_url, cookiejar,
+                                       UnixHTTPHandler, UnixHTTPSConnection)
+from ansible.module_utils.urls import HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
 from units.compat.mock import call
 
 
-if HAS_SSLCONTEXT:
-    import ssl
+import ssl
 
 
 @pytest.fixture
 def urlopen_mock(mocker):
-    return mocker.patch('ansible.module_utils.urls.urllib_request.urlopen')
+    return mocker.patch('ansible.module_utils.urls.urllib.request.urlopen')
 
 
 @pytest.fixture
 def install_opener_mock(mocker):
-    return mocker.patch('ansible.module_utils.urls.urllib_request.install_opener')
+    return mocker.patch('ansible.module_utils.urls.urllib.request.install_opener')
 
 
 def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
@@ -111,37 +112,16 @@ def test_Request_open(urlopen_mock, install_opener_mock):
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
 
-    if not HAS_SSLCONTEXT:
-        expected_handlers = (
-            SSLValidationHandler,
-            RedirectHandlerFactory(),  # factory, get handler
-        )
-    else:
-        expected_handlers = (
-            RedirectHandlerFactory(),  # factory, get handler
-        )
+    expected_handlers = (
+        RedirectHandlerFactory(),  # factory, get handler
+    )
 
     found_handlers = []
     for handler in handlers:
-        if isinstance(handler, SSLValidationHandler) or handler.__class__.__name__ == 'RedirectHandler':
+        if handler.__class__.__name__ == 'RedirectHandler':
             found_handlers.append(handler)
 
     assert len(found_handlers) == len(expected_handlers)
-
-
-def test_Request_open_http(urlopen_mock, install_opener_mock):
-    r = Request().open('GET', 'http://ansible.com/')
-    args = urlopen_mock.call_args[0]
-
-    opener = install_opener_mock.call_args[0][0]
-    handlers = opener.handlers
-
-    found_handlers = []
-    for handler in handlers:
-        if isinstance(handler, SSLValidationHandler):
-            found_handlers.append(handler)
-
-    assert len(found_handlers) == 0
 
 
 def test_Request_open_unix_socket(urlopen_mock, install_opener_mock):
@@ -198,8 +178,8 @@ def test_Request_open_username(urlopen_mock, install_opener_mock):
     handlers = opener.handlers
 
     expected_handlers = (
-        urllib_request.HTTPBasicAuthHandler,
-        urllib_request.HTTPDigestAuthHandler,
+        urllib.request.HTTPBasicAuthHandler,
+        urllib.request.HTTPDigestAuthHandler,
     )
 
     found_handlers = []
@@ -217,8 +197,8 @@ def test_Request_open_username_in_url(urlopen_mock, install_opener_mock):
     handlers = opener.handlers
 
     expected_handlers = (
-        urllib_request.HTTPBasicAuthHandler,
-        urllib_request.HTTPDigestAuthHandler,
+        urllib.request.HTTPBasicAuthHandler,
+        urllib.request.HTTPDigestAuthHandler,
     )
 
     found_handlers = []
@@ -235,8 +215,8 @@ def test_Request_open_username_force_basic(urlopen_mock, install_opener_mock):
     handlers = opener.handlers
 
     expected_handlers = (
-        urllib_request.HTTPBasicAuthHandler,
-        urllib_request.HTTPDigestAuthHandler,
+        urllib.request.HTTPBasicAuthHandler,
+        urllib.request.HTTPDigestAuthHandler,
     )
 
     found_handlers = []
@@ -261,8 +241,8 @@ def test_Request_open_auth_in_netloc(urlopen_mock, install_opener_mock):
     handlers = opener.handlers
 
     expected_handlers = (
-        urllib_request.HTTPBasicAuthHandler,
-        urllib_request.HTTPDigestAuthHandler,
+        urllib.request.HTTPBasicAuthHandler,
+        urllib.request.HTTPDigestAuthHandler,
     )
 
     found_handlers = []
@@ -295,20 +275,19 @@ def test_Request_open_netrc(urlopen_mock, install_opener_mock, monkeypatch):
 
 
 def test_Request_open_no_proxy(urlopen_mock, install_opener_mock, mocker):
-    build_opener_mock = mocker.patch('ansible.module_utils.urls.urllib_request.build_opener')
+    build_opener_mock = mocker.patch('ansible.module_utils.urls.urllib.request.build_opener')
 
     r = Request().open('GET', 'http://ansible.com/', use_proxy=False)
 
     handlers = build_opener_mock.call_args[0]
     found_handlers = []
     for handler in handlers:
-        if isinstance(handler, urllib_request.ProxyHandler):
+        if isinstance(handler, urllib.request.ProxyHandler):
             found_handlers.append(handler)
 
     assert len(found_handlers) == 1
 
 
-@pytest.mark.skipif(not HAS_SSLCONTEXT, reason="requires SSLContext")
 def test_Request_open_no_validate_certs(urlopen_mock, install_opener_mock):
     r = Request().open('GET', 'https://ansible.com/', validate_certs=False)
 
@@ -324,7 +303,7 @@ def test_Request_open_no_validate_certs(urlopen_mock, install_opener_mock):
     assert ssl_handler is not None
 
     inst = ssl_handler._build_https_connection('foo')
-    assert isinstance(inst, httplib.HTTPSConnection)
+    assert isinstance(inst, http.client.HTTPSConnection)
 
     context = ssl_handler._context
     # Differs by Python version
@@ -369,7 +348,7 @@ def test_Request_open_cookies(urlopen_mock, install_opener_mock):
 
     cookies_handler = None
     for handler in handlers:
-        if isinstance(handler, urllib_request.HTTPCookieProcessor):
+        if isinstance(handler, urllib.request.HTTPCookieProcessor):
             cookies_handler = handler
             break
 
@@ -385,15 +364,6 @@ def test_Request_open_invalid_method(urlopen_mock, install_opener_mock):
     assert req.data is None
     assert req.get_method() == 'UNKNOWN'
     # assert r.status == 504
-
-
-def test_Request_open_custom_method(urlopen_mock, install_opener_mock):
-    r = Request().open('DELETE', 'https://ansible.com/')
-
-    args = urlopen_mock.call_args[0]
-    req = args[0]
-
-    assert isinstance(req, RequestWithMethod)
 
 
 def test_Request_open_user_agent(urlopen_mock, install_opener_mock):

@@ -25,32 +25,3 @@ def test_generic_urlparse_netloc():
     assert generic_parts.hostname == 'ansible.com'
     assert generic_parts.port == 443
     assert urlunparse(generic_parts.as_list()) == url
-
-
-def test_generic_urlparse_no_netloc():
-    url = 'https://user:passwd@ansible.com:443/blog'
-    parts = list(urlparse(url))
-    generic_parts = generic_urlparse(parts)
-    assert generic_parts.hostname == 'ansible.com'
-    assert generic_parts.port == 443
-    assert generic_parts.username == 'user'
-    assert generic_parts.password == 'passwd'
-    assert urlunparse(generic_parts.as_list()) == url
-
-
-def test_generic_urlparse_no_netloc_no_auth():
-    url = 'https://ansible.com:443/blog'
-    parts = list(urlparse(url))
-    generic_parts = generic_urlparse(parts)
-    assert generic_parts.username is None
-    assert generic_parts.password is None
-
-
-def test_generic_urlparse_no_netloc_no_host():
-    url = '/blog'
-    parts = list(urlparse(url))
-    generic_parts = generic_urlparse(parts)
-    assert generic_parts.username is None
-    assert generic_parts.password is None
-    assert generic_parts.port is None
-    assert generic_parts.hostname == ''
