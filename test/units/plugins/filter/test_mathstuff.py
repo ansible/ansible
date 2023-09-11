@@ -1,9 +1,8 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
 import pytest
 
 from jinja2 import Environment
@@ -12,54 +11,68 @@ import ansible.plugins.filter.mathstuff as ms
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 
 
-UNIQUE_DATA = (([1, 3, 4, 2], [1, 3, 4, 2]),
-               ([1, 3, 2, 4, 2, 3], [1, 3, 2, 4]),
-               (['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd']),
-               (['a', 'a', 'd', 'b', 'a', 'd', 'c', 'b'], ['a', 'd', 'b', 'c']),
-               )
+UNIQUE_DATA = [
+    ([], []),
+    ([1, 3, 4, 2], [1, 3, 4, 2]),
+    ([1, 3, 2, 4, 2, 3], [1, 3, 2, 4]),
+    ([1, 2, 3, 4], [1, 2, 3, 4]),
+    ([1, 1, 4, 2, 1, 4, 3, 2], [1, 4, 2, 3]),
+]
 
-TWO_SETS_DATA = (([1, 2], [3, 4], ([], sorted([1, 2]), sorted([1, 2, 3, 4]), sorted([1, 2, 3, 4]))),
-                 ([1, 2, 3], [5, 3, 4], ([3], sorted([1, 2]), sorted([1, 2, 5, 4]), sorted([1, 2, 3, 4, 5]))),
-                 (['a', 'b', 'c'], ['d', 'c', 'e'], (['c'], sorted(['a', 'b']), sorted(['a', 'b', 'd', 'e']), sorted(['a', 'b', 'c', 'e', 'd']))),
-                 )
+TWO_SETS_DATA = [
+    ([], [], ([], [], [])),
+    ([1, 2], [1, 2], ([1, 2], [], [])),
+    ([1, 2], [3, 4], ([], [1, 2], [1, 2, 3, 4])),
+    ([1, 2, 3], [5, 3, 4], ([3], [1, 2], [1, 2, 5, 4])),
+    ([1, 2, 3], [4, 3, 5], ([3], [1, 2], [1, 2, 4, 5])),
+]
+
+
+def dict_values(values: list[int]) -> list[dict[str, int]]:
+    """Return a list of non-hashable values derived from the given list."""
+    return [dict(x=value) for value in values]
+
+
+for _data, _expected in list(UNIQUE_DATA):
+    UNIQUE_DATA.append((dict_values(_data), dict_values(_expected)))
+
+for _dataset1, _dataset2, _expected in list(TWO_SETS_DATA):
+    TWO_SETS_DATA.append((dict_values(_dataset1), dict_values(_dataset2), tuple(dict_values(answer) for answer in _expected)))
+
 
 env = Environment()
 
 
-@pytest.mark.parametrize('data, expected', UNIQUE_DATA)
-class TestUnique:
-    def test_unhashable(self, data, expected):
-        assert ms.unique(env, list(data)) == expected
+def assert_lists_contain_same_elements(a, b) -> None:
+    """Assert that the two values given are lists that contain the same elements, even when the elements cannot be sorted or hashed."""
+    assert isinstance(a, list)
+    assert isinstance(b, list)
 
-    def test_hashable(self, data, expected):
-        assert ms.unique(env, tuple(data)) == expected
+    missing_from_a = [item for item in b if item not in a]
+    missing_from_b = [item for item in a if item not in b]
 
-
-@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
-class TestIntersect:
-    def test_unhashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.intersect(env, list(dataset1), list(dataset2))) == expected[0]
-
-    def test_hashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.intersect(env, tuple(dataset1), tuple(dataset2))) == expected[0]
+    assert not missing_from_a, f'elements from `b` {missing_from_a} missing from `a` {a}'
+    assert not missing_from_b, f'elements from `a` {missing_from_b} missing from `b` {b}'
 
 
-@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
-class TestDifference:
-    def test_unhashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.difference(env, list(dataset1), list(dataset2))) == expected[1]
-
-    def test_hashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.difference(env, tuple(dataset1), tuple(dataset2))) == expected[1]
+@pytest.mark.parametrize('data, expected', UNIQUE_DATA, ids=str)
+def test_unique(data, expected):
+    assert_lists_contain_same_elements(ms.unique(env, data), expected)
 
 
-@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
-class TestSymmetricDifference:
-    def test_unhashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.symmetric_difference(env, list(dataset1), list(dataset2))) == expected[2]
+@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA, ids=str)
+def test_intersect(dataset1, dataset2, expected):
+    assert_lists_contain_same_elements(ms.intersect(env, dataset1, dataset2), expected[0])
 
-    def test_hashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.symmetric_difference(env, tuple(dataset1), tuple(dataset2))) == expected[2]
+
+@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA, ids=str)
+def test_difference(dataset1, dataset2, expected):
+    assert_lists_contain_same_elements(ms.difference(env, dataset1, dataset2), expected[1])
+
+
+@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA, ids=str)
+def test_symmetric_difference(dataset1, dataset2, expected):
+    assert_lists_contain_same_elements(ms.symmetric_difference(env, dataset1, dataset2), expected[2])
 
 
 class TestLogarithm:

@@ -5,6 +5,7 @@ DOCUMENTATION:
   short_description: the difference of one list from another
   description:
     - Provide a unique list of all the elements of the first list that do not appear in the second one.
+    - Items in the resulting list are returned in arbitrary order.
   options:
     _input:
       description: A list.

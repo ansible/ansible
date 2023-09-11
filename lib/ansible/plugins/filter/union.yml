@@ -5,6 +5,7 @@ DOCUMENTATION:
   short_description: union of lists
   description:
     - Provide a unique list of all the elements of two lists.
+    - Items in the resulting list are returned in arbitrary order.
   options:
     _input:
       description: A list.
