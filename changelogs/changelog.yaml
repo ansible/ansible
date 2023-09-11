@@ -862,6 +862,17 @@ releases:
     - build-no-straight.yaml
     - man-page-build-docs-dependency.yml
     release_date: '2023-07-10'
+  2.13.12:
+    changes:
+      release_summary: '| Release Date: 2023-09-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 2.13.12_summary.yaml
+    release_date: '2023-09-11'
   2.13.12rc1:
     changes:
       bugfixes:
