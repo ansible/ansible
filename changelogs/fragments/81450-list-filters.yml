@@ -1,0 +1,4 @@
+bugfixes:
+  - "ansible-console - fix filtering by collection names when a collection search path was set (https://github.com/ansible/ansible/pull/81450)."
+minor_changes:
+  - "ansible-doc - allow to filter listing of collections and metadata dump by more than one collection (https://github.com/ansible/ansible/pull/81450)."
