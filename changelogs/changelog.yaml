@@ -857,6 +857,17 @@ releases:
     - fork_safe_stdio.yml
     - v2.14.1_summary.yaml
     release_date: '2022-12-06'
+  2.14.10:
+    changes:
+      release_summary: '| Release Date: 2023-09-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.10_summary.yaml
+    release_date: '2023-09-11'
   2.14.10rc1:
     changes:
       bugfixes:
