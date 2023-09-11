@@ -144,6 +144,7 @@ class GalaxyProvider(CloudProvider):
                 display.info(f'>>> {friendly_name} Configuration\n{to_text(content)}', verbosity=3)
                 docker_exec(self.args, descriptor.container_id, ['mkdir', '-p', os.path.dirname(path)], True)
                 docker_cp_to(self.args, descriptor.container_id, temp_fd.name, path)
+                docker_exec(self.args, descriptor.container_id, ['chmod', '644', path], True)
 
         self._set_cloud_config('PULP_HOST', GALAXY_HOST_NAME)
         self._set_cloud_config('PULP_USER', 'admin')
