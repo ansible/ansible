@@ -1,0 +1,3 @@
+---
+bugfixes:
+- copy - print correct destination filename when using `content` and `--diff` (https://github.com/ansible/ansible/issues/79749).
