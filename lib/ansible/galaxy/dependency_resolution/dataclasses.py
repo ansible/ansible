@@ -397,7 +397,6 @@ class _ComputedReqKindsMixin:
                 req_type = 'dir'
                 req_source = src_path
             elif _is_collection_namespace_dir(src_path):
-                req_name = None  # No name for a virtual req or "namespace."?
                 req_type = 'subdirs'
                 req_source = src_path
             else:
@@ -441,6 +440,12 @@ class _ComputedReqKindsMixin:
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
+        elif req_type != 'galaxy' and req_source is not None and req_name is not None:
+            display.warning(
+                f"A collection name and source were provided for the requirement {collection_req}, "
+                "but only the source will determine the installed collection name."
+            )
+            req_name = None
 
         if req_type not in {'galaxy', 'subdirs'} and req_version == '*':
             req_version = art_mgr.get_direct_collection_version(tmp_inst_req)

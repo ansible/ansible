@@ -2,11 +2,30 @@
   command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/'
   register: installed
 
+# https://github.com/ansible/ansible/issues/81687
+- name: Create a requirements file
+  copy:
+    dest: "{{ galaxy_dir }}/test_requirements.yml"
+    content: |
+      collections:
+        - name: ansible_test.collection_1
+          source: git+file://{{ test_repo_path }}/.git#/collection_1/
+          type: git
+          # the bug: shouldn't compare this value against non-virtual collections
+          version: HEAD
+
+- name: Rerun installing a collection with a dep using a requirements file
+  command: 'ansible-galaxy collection install -r {{ galaxy_dir }}/test_requirements.yml'
+  register: installed_again
+
 - name: SCM collections don't have a concrete artifact version so the collection should always be reinstalled
   assert:
     that:
-      - "'Created collection for ansible_test.collection_1' in installed.stdout"
-      - "'Created collection for ansible_test.collection_2' in installed.stdout"
+      - "'Created collection for ansible_test.collection_1' in item.stdout"
+      - "'Created collection for ansible_test.collection_2' in item.stdout"
+  loop:
+    - "{{ installed }}"
+    - "{{ installed_again }}"
 
 - name: The collection should also be reinstalled when --force flag is used
   command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/ --force'
@@ -29,3 +48,8 @@
 
 - include_tasks: ./empty_installed_collections.yml
   when: cleanup
+
+- name: Remove requirements file
+  file:
+    path: "{{ galaxy_dir }}/test_requirements.yml"
+    state: absent
