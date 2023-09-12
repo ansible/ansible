@@ -1325,6 +1325,8 @@ def _build_collection_tar(
 
                 if os.path.islink(b_src_path):
                     b_link_target = os.path.realpath(b_src_path)
+                    if not os.path.exists(b_link_target):
+                        raise AnsibleError(f"Failed to find the target path '{to_native(b_link_target)}' for the symlink '{to_native(b_src_path)}'.")
                     if _is_child_path(b_link_target, b_collection_path):
                         b_rel_path = os.path.relpath(b_link_target, start=os.path.dirname(b_src_path))
 
