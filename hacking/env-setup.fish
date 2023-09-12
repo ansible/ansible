@@ -23,16 +23,16 @@ set -gx PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 # Set PYTHONPATH
 if not set -q PYTHONPATH
     set -gx PYTHONPATH $PREFIX_PYTHONPATH
-else if not string match -qr "$PREFIX_PYTHONPATH($|:)" $PYTHONPATH
-    if not $QUIET
+else if not string match -qr $PREFIX_PYTHONPATH'($|:)' $PYTHONPATH
+    if not test -n "$QUIET"
         echo "Appending PYTHONPATH"
     end
     set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
 end
 
 # Set ansible_test PYTHONPATH
-if not string match -qr "$ANSIBLE_TEST_PREFIX_PYTHONPATH($|:)" $PYTHONPATH
-    if not $QUIET
+if not string match -qr $ANSIBLE_TEST_PREFIX_PYTHONPATH'($|:)' $PYTHONPATH
+    if not test -n "$QUIET"
         echo "Appending PYTHONPATH"
     end
     set -gx PYTHONPATH "$ANSIBLE_TEST_PREFIX_PYTHONPATH:$PYTHONPATH"
@@ -46,7 +46,7 @@ end
 # Set MANPATH
 if not set -q MANPATH
     set -gx MANPATH $PREFIX_MANPATH
-else if not string match -qr "$PREFIX_MANPATH($|:)" $MANPATH
+else if not string match -qr $PREFIX_MANPATH'($|:)' $MANPATH
     set -gx MANPATH "$PREFIX_MANPATH:$MANPATH"
 end
 
@@ -71,11 +71,11 @@ function gen_egg_info
         rm -rf $PREFIX_PYTHONPATH/ansible*.egg-info
     end
     # Execute setup.py egg_info using the chosen Python interpreter
-    (eval $PYTHON_BIN setup.py egg_info)
+    eval $PYTHON_BIN setup.py egg_info
 end
 
 pushd $ANSIBLE_HOME
-if $QUIET
+if test -n "$QUIET"
     # Run gen_egg_info in the background and redirect output to /dev/null
     gen_egg_info &> /dev/null
     # Remove any .pyc files found
