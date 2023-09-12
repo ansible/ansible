@@ -282,7 +282,11 @@ class Display(metaclass=Singleton):
 
         self.columns = None
         self.verbosity = verbosity
-        self.log_verbosity = max(verbosity, C.LOG_VERBOSITY)
+        if C.LOG_VERBOSITY is None:
+            # allow log to have higher verbosity
+            self.log_verbosity = verbosity
+        else:
+            self.log_verbosity = max(verbosity, C.LOG_VERBOSITY)
 
         # list of all deprecation messages to prevent duplicate display
         self._deprecations: dict[str, int] = {}
@@ -459,8 +463,8 @@ class Display(metaclass=Singleton):
                 self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
-
-        if self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
+        elif self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
+            # we send to log if log was configured with higher verbosity
             if host is None:
                 self.log(msg)
             else:
