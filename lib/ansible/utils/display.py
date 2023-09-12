@@ -282,8 +282,8 @@ class Display(metaclass=Singleton):
 
         self.columns = None
         self.verbosity = verbosity
+
         if C.LOG_VERBOSITY is None:
-            # allow log to have higher verbosity
             self.log_verbosity = verbosity
         else:
             self.log_verbosity = max(verbosity, C.LOG_VERBOSITY)
