@@ -695,7 +695,7 @@ def install_collections(
         req
         for req in unsatisfied_requirements
         for exs in existing_collections
-        if req.fqcn == exs.fqcn and meets_requirements(exs.ver, req.ver)
+        if req.fqcn == exs.fqcn and not req.is_virtual and meets_requirements(exs.ver, req.ver)
     }
 
     if not unsatisfied_requirements and not upgrade:
