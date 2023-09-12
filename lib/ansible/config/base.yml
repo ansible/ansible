@@ -384,6 +384,16 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+LOG_VERBOSITY:
+  name: Default log verbosity
+  default: 0
+  description:
+    - This will set log verbosity if higher than the normal display verbosity, otherwise it will match that.
+  env: [{name: ANSIBLE_LOG_VERBOSITY}]
+  ini:
+  - {key: log_verbosity, section: defaults}
+  type: int
+  version_added: "2.16"
 INVENTORY_UNPARSED_WARNING:
   name: Warning when no inventory files can be parsed, resulting in an implicit inventory with only localhost
   default: True
