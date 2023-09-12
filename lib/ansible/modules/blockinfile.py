@@ -272,8 +272,10 @@ def main():
         if not os.path.exists(destpath) and not module.check_mode:
             try:
                 os.makedirs(destpath)
+            except OSError as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e.errno, e.strerror))
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s Error: %s' % (destpath, to_native(e)))
         original = None
         lines = []
     else:

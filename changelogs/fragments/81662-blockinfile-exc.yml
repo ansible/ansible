@@ -1,0 +1,2 @@
+bugfixes:
+  - "blockinfile - avoid crash with Python 3 if creating the directory fails when ``create=true`` (https://github.com/ansible/ansible/pull/81662)."

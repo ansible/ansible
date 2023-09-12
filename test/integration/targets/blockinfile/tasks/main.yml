@@ -31,6 +31,7 @@
 
 - import_tasks: add_block_to_existing_file.yml
 - import_tasks: create_file.yml
+- import_tasks: create_dir.yml
 - import_tasks: preserve_line_endings.yml
 - import_tasks: block_without_trailing_newline.yml
 - import_tasks: file_without_trailing_newline.yml
