@@ -19,6 +19,12 @@ except ImportError:
     class Criterion:  # type: ignore[no-redef]
         pass
 
+try:
+    from resolvelib.structs import State
+except ImportError:
+    class State:  # type: ignore[no-redef]
+        pass
+
 from ansible.utils.display import Display
 from .dataclasses import Candidate, Requirement
 
@@ -99,3 +105,49 @@ class CollectionDependencyReporter(BaseReporter):
     def backtracking(self, candidate: Candidate) -> None:  # resolvelib < 0.9.0
         """Print out rejection messages on pre-defined limit hits."""
         self._maybe_log_rejection_message(candidate)
+
+
+class CollectionDependencyDebuggingReporter(CollectionDependencyReporter):
+    """A reporter that does an info log for every event it sees."""
+
+    def starting(self) -> None:
+        display.display('Reporter.starting()')
+
+    def starting_round(self, index: int) -> None:
+        display.display(f'Reporter.starting_round({index !r})')
+
+    def ending_round(
+            self,
+            index: int,
+            state: State[Requirement, Candidate, str],
+    ) -> None:
+        display.display(f'Reporter.ending_round({index !r}, {state !r})')
+
+    def ending(self, state: State[Requirement, Candidate, str]) -> None:
+        display.display(f'Reporter.ending({state !r})')
+
+    def adding_requirement(
+            self,
+            requirement: Requirement,
+            parent: Candidate,
+    ) -> None:
+        display.display(
+            f'Reporter.adding_requirement({requirement !r}, {parent !r})',
+        )
+
+    def rejecting_candidate(  # resolvelib >= 0.9.0
+            self,
+            criterion: Criterion[Candidate, Requirement],
+            candidate: Candidate,
+    ) -> None:
+        display.display(
+            f'Reporter.rejecting_candidate({criterion !r}, {candidate !r})',
+        )
+        return super().rejecting_candidate(criterion, candidate)
+
+    def backtracking(self, candidate: Candidate) -> None:  # resolvelib < 0.9.0
+        display.display(f'Reporter.backtracking({candidate !r})')
+        return super().backtracking(candidate)
+
+    def pinning(self, candidate: Candidate) -> None:
+        display.display(f'Reporter.pinning({candidate !r})')
