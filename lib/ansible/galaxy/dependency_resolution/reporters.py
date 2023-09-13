@@ -19,3 +19,46 @@ class CollectionDependencyReporter(BaseReporter):
     This is a proxy class allowing us to abstract away importing resolvelib
     outside of the `ansible.galaxy.dependency_resolution` Python package.
     """
+
+
+from logging import basicConfig, DEBUG, getLogger
+from sys import stdout
+
+
+basicConfig(stream=stdout, level=DEBUG)
+logger = getLogger(__name__)
+logger.info('INFO THING')
+logger.debug('DEBUG THING')
+
+from typing import Any
+from .dataclasses import Candidate, Requirement
+
+
+class CollectionDependencyDebuggingReporter(CollectionDependencyReporter):
+    """A reporter that does an info log for every event it sees."""
+
+    def starting(self) -> None:
+        logger.info("Reporter.starting()")
+
+    def starting_round(self, index: int) -> None:
+        logger.info("Reporter.starting_round(%r)", index)
+
+    def ending_round(self, index: int, state: Any) -> None:
+        logger.info("Reporter.ending_round(%r, %r)", index, state)
+
+    def ending(self, state: Any) -> None:
+        logger.info("Reporter.ending(%r)", state)
+
+    def adding_requirement(self, requirement: Requirement, parent: Candidate) -> None:
+        logger.info("Reporter.adding_requirement(%r, %r)", requirement, parent)
+
+    def rejecting_candidate(self, criterion: Any, candidate: Candidate) -> None:
+        logger.info("Reporter.rejecting_candidate(%r, %r)", criterion, candidate)
+
+    backtracking = rejecting_candidate  # Old pre-v0.9.0 resolvelib hook name
+
+    def pinning(self, candidate: Candidate) -> None:
+        logger.info("Reporter.pinning(%r)", candidate)
+
+    def pinning(self, candidate: Candidate) -> None:
+        logger.info("Reporter.pinning(%r)", candidate)

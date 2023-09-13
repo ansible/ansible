@@ -21,6 +21,9 @@ if t.TYPE_CHECKING:
 from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 from ansible.galaxy.dependency_resolution.providers import CollectionDependencyProvider
 from ansible.galaxy.dependency_resolution.reporters import CollectionDependencyReporter
+from ansible.galaxy.dependency_resolution.reporters import CollectionDependencyDebuggingReporter
+from ansible.galaxy.dependency_resolution.reporters import CollectionDependencyReporter
+
 from ansible.galaxy.dependency_resolution.resolvers import CollectionDependencyResolver
 
 
@@ -51,5 +54,6 @@ def build_collection_dependency_resolver(
             upgrade=upgrade,
             include_signatures=include_signatures,
         ),
-        CollectionDependencyReporter(),
+        CollectionDependencyDebuggingReporter(),
+        # CollectionDependencyReporter(),
     )
