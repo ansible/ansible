@@ -24,7 +24,7 @@ options:
   mode:
     description:
     - If V(status), obtain the status.
-    - If V(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job O(jid).
+    - If V(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job O(jid), without waiting for it to finish.
     type: str
     choices: [ cleanup, status ]
     default: status
@@ -70,6 +70,11 @@ EXAMPLES = r'''
   until: job_result.finished
   retries: 100
   delay: 10
+
+- name: Clean up async file
+  ansible.builtin.async_status:
+    jid: '{{ yum_sleeper.ansible_job_id }}'
+    mode: cleanup
 '''
 
 RETURN = r'''
