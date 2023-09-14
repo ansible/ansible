@@ -34,7 +34,6 @@ import email.mime.nonmultipart
 import email.parser
 import email.policy
 import email.utils
-import functools
 import http.client
 import mimetypes
 import netrc
@@ -49,8 +48,8 @@ import urllib.error
 import urllib.request
 from contextlib import contextmanager
 from http import cookiejar
-from urllib.parse import urlparse, urlunparse, unquote
-from urllib.request import AbstractHTTPHandler, BaseHandler
+from urllib.parse import unquote, urlparse, urlunparse
+from urllib.request import BaseHandler
 
 try:
     import gzip
@@ -63,7 +62,6 @@ except ImportError:
 else:
     GzipFile = gzip.GzipFile  # type: ignore[assignment,misc]
 
-import ansible.module_utils.compat.typing as t
 from ansible.module_utils.basic import get_distribution, missing_required_lib
 from ansible.module_utils.common.collections import Mapping, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -202,8 +200,6 @@ b_PEM_CERT_RE = re.compile(
     flags=re.M | re.S
 )
 
-LOADED_VERIFY_LOCATIONS = set()  # type: t.Set[str]
-
 _SENTINEL = object()
 
 urllib.request.HTTPRedirectHandler.http_error_308 = urllib.request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined,assignment]
@@ -241,34 +237,9 @@ class MissingModuleError(Exception):
         self.module = module
 
 
-HTTPSClientAuthHandler = None
+UnixHTTPSHandler = None
 UnixHTTPSConnection = None
 if HAS_SSL:
-    class HTTPSClientAuthHandler(urllib.request.HTTPSHandler):  # type: ignore[no-redef]
-        '''Handles client authentication via cert/key
-
-        This is a fairly lightweight extension on HTTPSHandler, and can be used
-        in place of HTTPSHandler
-        '''
-
-        def __init__(self, client_cert=None, client_key=None, unix_socket=None, **kwargs):
-            urllib.request.HTTPSHandler.__init__(self, **kwargs)
-            self.client_cert = client_cert
-            self.client_key = client_key
-            self._unix_socket = unix_socket
-
-        def https_open(self, req):
-            return self.do_open(self._build_https_connection, req)
-
-        def _build_https_connection(self, host, **kwargs):
-            try:
-                kwargs['context'] = self._context
-            except AttributeError:
-                pass
-            if self._unix_socket:
-                return UnixHTTPSConnection(self._unix_socket)(host, **kwargs)
-            return http.client.HTTPSConnection(host, **kwargs)
-
     @contextmanager
     def unix_socket_patch_httpconnection_connect():
         '''Monkey patch ``http.client.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
@@ -297,6 +268,19 @@ if HAS_SSL:
         def __call__(self, *args, **kwargs):
             http.client.HTTPSConnection.__init__(self, *args, **kwargs)
             return self
+
+    class UnixHTTPSHandler(urllib.request.HTTPSHandler):  # type: ignore[no-redef]
+        def __init__(self, unix_socket, **kwargs):
+            urllib.request.HTTPSHandler.__init__(self, **kwargs)
+            self._unix_socket = unix_socket
+
+        def https_open(self, req):
+            return self.do_open(
+                UnixHTTPSConnection(self._unix_socket),
+                req,
+                context=self._context,
+                check_hostname=self._check_hostname
+            )
 
 
 class UnixHTTPConnection(http.client.HTTPConnection):
@@ -465,7 +449,7 @@ def RedirectHandlerFactory(follow_redirects=None):
                 # Do not preserve payload and filter headers
                 data = None
                 req_headers = {k: v for k, v in req.headers.items()
-                                  if k.lower() not in ("content-length", "content-type", "transfer-encoding")}
+                               if k.lower() not in ("content-length", "content-type", "transfer-encoding")}
 
                 # http://tools.ietf.org/html/rfc7231#section-6.4.4
                 if code == 303 and method != 'HEAD':
@@ -492,7 +476,8 @@ def RedirectHandlerFactory(follow_redirects=None):
     return RedirectHandler
 
 
-def make_context(cafile=None, cadata=None, ciphers=None, validate_certs=True, client_cert=None, client_key=None):
+def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_certs=True, client_cert=None,
+                 client_key=None):
     if ciphers is None:
         ciphers = []
 
@@ -506,8 +491,11 @@ def make_context(cafile=None, cadata=None, ciphers=None, validate_certs=True, cl
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-    if validate_certs and any((cafile, cadata)):
-        context.load_verify_locations(cafile=cafile, cadata=cadata)
+    if validate_certs and any((cadata, capath)):
+        if not cadata:
+            cadata = bytearray()
+        cadata.extend(get_ca_certs(capath=capath)[0])
+        context.load_verify_locations(cadata=cadata)
 
     if ciphers:
         context.set_ciphers(':'.join(map(to_native, ciphers)))
@@ -518,25 +506,28 @@ def make_context(cafile=None, cadata=None, ciphers=None, validate_certs=True, cl
     return context
 
 
-def get_ca_certs(cafile=None):
+def get_ca_certs(cafile=None, capath=None):
     # tries to find a valid CA cert in one of the
     # standard locations for the current distribution
 
-    cadata = bytearray()
+    # Using a dict, instead of a set for order, the value is meaningless and will be None
+    # Not directly using a bytearray to avoid duplicates with fast lookup
+    cadata = {}
 
     if cafile:
         paths_checked = [cafile]
         with open(to_bytes(cafile, errors='surrogate_or_strict'), 'rb') as f:
             for b_pem in extract_pem_certs(f.read()):
-                cadata.extend(
-                    ssl.PEM_cert_to_DER_cert(
-                        to_native(b_pem, errors='surrogate_or_strict')
-                    )
+                b_der = ssl.PEM_cert_to_DER_cert(
+                    to_native(b_pem, errors='surrogate_or_strict')
                 )
-        return cafile, cadata, paths_checked
+                cadata[b_der] = None
+        return bytearray().join(cadata), paths_checked
 
     default_verify_paths = ssl.get_default_verify_paths()
     paths_checked = {default_verify_paths.capath}
+    if capath:
+        paths_checked.add(capath)
 
     system = to_text(platform.system(), errors='surrogate_or_strict')
     # build a list of paths to check for .crt/.pem files
@@ -563,11 +554,10 @@ def get_ca_certs(cafile=None):
 
     # Write the dummy ca cert if we are running on macOS
     if system == u'Darwin':
-        cadata.extend(
-            ssl.PEM_cert_to_DER_cert(
-                to_native(b_DUMMY_CA_CERT, errors='surrogate_or_strict')
-            )
+        b_der = ssl.PEM_cert_to_DER_cert(
+            to_native(b_DUMMY_CA_CERT, errors='surrogate_or_strict')
         )
+        cadata[b_der] = None
         # Default Homebrew path for OpenSSL certs
         paths_checked.add('/usr/local/etc/openssl')
 
@@ -580,24 +570,22 @@ def get_ca_certs(cafile=None):
 
         for f in os.listdir(path):
             full_path = os.path.join(path, f)
-            if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
+            if os.path.isfile(full_path) and os.path.splitext(f)[1] in {'.pem', '.cer', '.crt'}:
                 try:
-                    if full_path not in LOADED_VERIFY_LOCATIONS:
-                        with open(full_path, 'rb') as cert_file:
-                            b_cert = cert_file.read()
-                        try:
-                            for b_pem in extract_pem_certs(b_cert):
-                                cadata.extend(
-                                    ssl.PEM_cert_to_DER_cert(
-                                        to_native(b_pem, errors='surrogate_or_strict')
-                                    )
-                                )
-                        except Exception:
-                            continue
+                    with open(full_path, 'rb') as cert_file:
+                        b_cert = cert_file.read()
+                    try:
+                        for b_pem in extract_pem_certs(b_cert):
+                            b_der = ssl.PEM_cert_to_DER_cert(
+                                to_native(b_pem, errors='surrogate_or_strict')
+                            )
+                            cadata[b_der] = None
+                    except Exception:
+                        continue
                 except (OSError, IOError):
                     pass
 
-    return None, cadata, list(paths_checked)
+    return bytearray().join(cadata), list(paths_checked)
 
 
 def getpeercert(response, binary_form=False):
@@ -654,7 +642,8 @@ class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
+                 ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True,
+                 context=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -693,6 +682,7 @@ class Request:
         self.decompress = decompress
         self.ciphers = ciphers
         self.use_netrc = use_netrc
+        self.context = context
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -709,7 +699,7 @@ class Request:
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
              unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
-             ciphers=None, use_netrc=None):
+             ciphers=None, use_netrc=None, context=None):
         """
         Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -751,6 +741,8 @@ class Request:
         :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
         :kwarg ciphers: (optional) List of ciphers to use
         :kwarg use_netrc: (optional) Boolean determining whether to use credentials from ~/.netrc file
+        :kwarg context: (optional) ssl.Context object for SSL validation. When provided, all other SSL related
+            arguments are ignored. See make_context.
         :returns: HTTPResponse. Added in Ansible 2.9
         """
 
@@ -780,6 +772,7 @@ class Request:
         decompress = self._fallback(decompress, self.decompress)
         ciphers = self._fallback(ciphers, self.ciphers)
         use_netrc = self._fallback(use_netrc, self.use_netrc)
+        context = self._fallback(context, self.context)
 
         handlers = []
 
@@ -847,19 +840,19 @@ class Request:
             proxyhandler = urllib.request.ProxyHandler({})
             handlers.append(proxyhandler)
 
-        tmp_ca_path, cadata, paths_checked = get_ca_certs(ca_path)
-        context = make_context(
-            cafile=tmp_ca_path,
-            cadata=cadata,
-            ciphers=ciphers,
-            validate_certs=validate_certs,
-            client_cert=client_cert,
-            client_key=client_key,
-        )
-        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                               client_key=client_key,
-                                               unix_socket=unix_socket,
-                                               context=context))
+        if not context:
+            context = make_context(
+                cafile=ca_path,
+                ciphers=ciphers,
+                validate_certs=validate_certs,
+                client_cert=client_cert,
+                client_key=client_key,
+            )
+        if unix_socket:
+            ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, context=context)
+        else:
+            ssl_handler = urllib.request.HTTPSHandler(context=context)
+        handlers.append(ssl_handler)
 
         handlers.append(RedirectHandlerFactory(follow_redirects))
 
