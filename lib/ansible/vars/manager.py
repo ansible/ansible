@@ -796,8 +796,9 @@ class VarsWithSources(MutableMapping):
 
     def __ror__(self, other):
         if isinstance(other, MutableMapping):
-            c = self.data.copy()
+            c = self.__class__()
             c.update(other)
+            c.update(self.data)
             return c
         return NotImplemented
 
