@@ -296,6 +296,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
         signatures = []
         extra_signature_sources = []  # type: list[str]
 
+        discarding_pre_releases_acceptable = any(
+            not is_pre_release(candidate_version)
+            for candidate_version, _src_server in coll_versions
+        )
         all_pinned_requirement_version_numbers = {
             # NOTE: Pinned versions can start with a number, but also with an
             # NOTE: equals sign. Stripping it at the beginning should be
@@ -335,6 +339,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
                     # NOTE:     pre-release dependency versions, even if those
                     # NOTE:     dependencies are transitive.
                     is_pre_release(tmp_candidate.ver)
+                    and discarding_pre_releases_acceptable
                     and not (
                         self._with_pre_releases
                         or tmp_candidate.is_concrete_artifact
