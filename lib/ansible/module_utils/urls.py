@@ -200,8 +200,6 @@ b_PEM_CERT_RE = re.compile(
     flags=re.M | re.S
 )
 
-_SENTINEL = object()
-
 urllib.request.HTTPRedirectHandler.http_error_308 = urllib.request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined,assignment]
 
 #
