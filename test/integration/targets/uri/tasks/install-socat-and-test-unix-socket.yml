@@ -1,0 +1,23 @@
+- block:
+    - block:
+        - name: install socat
+          package:
+            name: socat
+            state: present
+          register: socat_install
+
+        - include_tasks: unix-socket.yml
+      rescue:
+        - debug:
+            msg: We don't have a package manager for this host and sivel is lazy
+          when: ansible_failed_task.action == 'package' and 'Could not find a module for' in ansible_failed_result.msg
+
+        - fail:
+            msg: ansible_failed_result
+          when: ansible_failed_task.action != 'package' or 'Could not find a module for' not in ansible_failed_result.msg|default('')
+  always:
+    - name: uninstall socat
+      package:
+        name: socat
+        state: absent
+      when: socat_install|default({}) is changed

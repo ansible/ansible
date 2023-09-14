@@ -694,3 +694,6 @@
 
 - name: Test use_netrc.yml
   import_tasks: use_netrc.yml
+
+- name: Test unix socket
+  import_tasks: install-socat-and-test-unix-socket.yml
