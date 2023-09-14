@@ -230,7 +230,7 @@ class NoSSLError(SSLValidationError):
 class MissingModuleError(Exception):
     """Failed to import 3rd party module required by the caller"""
     def __init__(self, message, import_traceback, module=None):
-        super(MissingModuleError, self).__init__(message)
+        super().__init__(message)
         self.import_traceback = import_traceback
         self.module = module
 
@@ -260,16 +260,15 @@ if HAS_SSL:
                 # Disable pylint check for the super() call. It complains about UnixHTTPSConnection
                 # being a NoneType because of the initial definition above, but it won't actually
                 # be a NoneType when this code runs
-                # pylint: disable=bad-super-call
-                super(UnixHTTPSConnection, self).connect()
+                super().connect()
 
         def __call__(self, *args, **kwargs):
-            http.client.HTTPSConnection.__init__(self, *args, **kwargs)
+            super().__init__(*args, **kwargs)
             return self
 
     class UnixHTTPSHandler(urllib.request.HTTPSHandler):  # type: ignore[no-redef]
         def __init__(self, unix_socket, **kwargs):
-            urllib.request.HTTPSHandler.__init__(self, **kwargs)
+            super().__init__(**kwargs)
             self._unix_socket = unix_socket
 
         def https_open(self, req):
@@ -297,7 +296,7 @@ class UnixHTTPConnection(http.client.HTTPConnection):
             self.sock.settimeout(self.timeout)
 
     def __call__(self, *args, **kwargs):
-        http.client.HTTPConnection.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         return self
 
 
@@ -305,7 +304,7 @@ class UnixHTTPHandler(urllib.request.HTTPHandler):
     '''Handler for Unix urls'''
 
     def __init__(self, unix_socket, **kwargs):
-        urllib.request.HTTPHandler.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self._unix_socket = unix_socket
 
     def http_open(self, req):
@@ -317,7 +316,7 @@ class ParseResultDottedDict(dict):
     A dict that acts similarly to the ParseResult named tuple from urllib
     '''
     def __init__(self, *args, **kwargs):
-        super(ParseResultDottedDict, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__dict__ = self
 
     def as_list(self):
@@ -381,7 +380,7 @@ class GzipDecodedReader(GzipFile):
             raise MissingModuleError(self.missing_gzip_error(), import_traceback=GZIP_IMP_ERR)
 
         self._io = fp
-        gzip.GzipFile.__init__(self, mode='rb', fileobj=self._io)  # pylint: disable=non-parent-init-called
+        super().__init__(mode='rb', fileobj=self._io)  # pylint: disable=non-parent-init-called
 
     def close(self):
         try:
