@@ -417,22 +417,23 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            self._log(msg, color)
+            self.log(msg, color)
 
-    @staticmethod
-    def _log(msg: str, color: str | None = None)
-        msg2 = nocolor.lstrip('\n')
+    def log(self, msg: str, color: str | None = None, caplevel: int = 0)
 
-        lvl = logging.INFO
-        if color:
-            # set logger level based on color (not great)
-            try:
-                lvl = color_to_log_level[color]
-            except KeyError:
-                # this should not happen, but JIC
-                raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
-        # actually log
-        logger.log(lvl, msg2)
+        if self.log_verbosity > caplevel:
+            msg2 = nocolor.lstrip('\n')
+
+            lvl = logging.INFO
+            if color:
+                # set logger level based on color (not great)
+                try:
+                    lvl = color_to_log_level[color]
+                except KeyError:
+                    # this should not happen, but JIC
+                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+            # actually log
+            logger.log(lvl, msg2)
 
     def v(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=0)
@@ -470,8 +471,8 @@ class Display(metaclass=Singleton):
         elif self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
             # we send to log if log was configured with higher verbosity
             if host is not None:
-                msg = "<%s> %s" % (host, msg)
-            self._log(msg, C.COLOR_VERBOSE)
+                msg = "<%s> %s" % (host, msg, caplevel)
+            self.log(msg, C.COLOR_VERBOSE)
 
     def get_deprecation_message(
         self,
