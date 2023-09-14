@@ -417,9 +417,10 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            self._log(msg, color=color)
+            self._log(msg, color)
 
-    def _log(msg, color=None):
+    @staticmethod
+    def _log(msg: str, color: str | None = None)
         msg2 = nocolor.lstrip('\n')
 
         lvl = logging.INFO
@@ -470,7 +471,7 @@ class Display(metaclass=Singleton):
             # we send to log if log was configured with higher verbosity
             if host is not None:
                 msg = "<%s> %s" % (host, msg)
-            self._log(msg, color=C.COLOR_VERBOSE)
+            self._log(msg, C.COLOR_VERBOSE)
 
     def get_deprecation_message(
         self,
