@@ -419,7 +419,7 @@ class Display(metaclass=Singleton):
         if logger and not screen_only:
             self.log(msg, color)
 
-    def log(self, msg: str, color: str | None = None, caplevel: int = 0)
+    def log(self, msg: str, color: str | None = None, caplevel: int = 0):
 
         if self.log_verbosity > caplevel:
             msg2 = nocolor.lstrip('\n')
