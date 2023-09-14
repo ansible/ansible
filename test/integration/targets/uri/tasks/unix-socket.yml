@@ -27,9 +27,10 @@
   uri:
     url: https://{{ httpbin_host }}/get
     unix_socket: '{{ remote_tmp_dir }}/https.sock'
-  register: unix_socket_https_no_validate
+  register: unix_socket_https
 
 - assert:
     that:
       - unix_socket_http.json is defined
       - unix_socket_https_no_validate.json is defined
+      - unix_socket_https.json is defined
