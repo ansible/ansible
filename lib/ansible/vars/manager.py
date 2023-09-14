@@ -786,3 +786,21 @@ class VarsWithSources(MutableMapping):
 
     def copy(self):
         return VarsWithSources.new_vars_with_sources(self.data.copy(), self.sources.copy())
+
+    def __or__(self, other):
+        if isinstance(other, MutableMapping):
+            c = self.data.copy()
+            c.update(other)
+            return c
+        return NotImplemented
+
+    def __ror__(self, other):
+        if isinstance(other, MutableMapping):
+            c = self.data.copy()
+            c.update(other)
+            return c
+        return NotImplemented
+
+    def __ior__(self, other):
+        self.data.update(other)
+        return self.data

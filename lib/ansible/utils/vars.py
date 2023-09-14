@@ -88,11 +88,7 @@ def combine_vars(a, b, merge=None):
 
     # HASH_BEHAVIOUR == 'replace'
     _validate_mutable_mappings(a, b)
-    # NOTE: In the case of ANSIBLE_DEBUG=1 task_vars is VarsWithSources(MutableMapping)
-    # so '|' operator cannot be used as it can be used only on dicts
-    # https://peps.python.org/pep-0584/#what-about-mapping-and-mutablemapping
-    result = a.copy()
-    result.update(b)
+    result = a | b
     return result
 
 
