@@ -129,7 +129,7 @@ class ActionModule(ActionBase):
         else:
             args = self._get_value_from_facts('SHUTDOWN_COMMAND_ARGS', distribution, 'DEFAULT_SHUTDOWN_COMMAND_ARGS')
 
-            # Convert seconds to minutes. If less that 60, set it to 0.
+            # Convert seconds to minutes. If less than 60, set it to 0.
             delay_min = self.pre_reboot_delay // 60
             reboot_message = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
             return args.format(delay_sec=self.pre_reboot_delay, delay_min=delay_min, message=reboot_message)
@@ -236,7 +236,7 @@ class ActionModule(ActionBase):
         display.vvv("{action}: attempting to get system boot time".format(action=self._task.action))
         connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
-        # override connection timeout from defaults to custom value
+        # override connection timeout from defaults to the custom value
         if connect_timeout:
             try:
                 display.debug("{action}: setting connect_timeout to {value}".format(action=self._task.action, value=connect_timeout))
@@ -286,6 +286,7 @@ class ActionModule(ActionBase):
 
         fail_count = 0
         max_fail_sleep = 12
+        last_error_msg = ''
 
         while datetime.now(timezone.utc) < max_end_time:
             try:
@@ -299,7 +300,7 @@ class ActionModule(ActionBase):
                         self._connection.reset()
                     except AnsibleConnectionFailure:
                         pass
-                # Use exponential backoff with a max timout, plus a little bit of randomness
+                # Use exponential backoff with a max timeout, plus a little bit of randomness
                 random_int = random.randint(0, 1000) / 1000
                 fail_sleep = 2 ** fail_count + random_int
                 if fail_sleep > max_fail_sleep:
@@ -310,14 +311,18 @@ class ActionModule(ActionBase):
                         error = to_text(e).splitlines()[-1]
                     except IndexError as e:
                         error = to_text(e)
-                    display.debug("{action}: {desc} fail '{err}', retrying in {sleep:.4} seconds...".format(
-                        action=self._task.action,
-                        desc=action_desc,
-                        err=error,
-                        sleep=fail_sleep))
+                    last_error_msg = f"{self._task.action}: {action_desc} fail '{error}'"
+                    msg = f"{last_error_msg}, retrying in {fail_sleep:.4f} seconds..."
+
+                    display.debug(msg)
+                    display.vvv(msg)
                 fail_count += 1
                 time.sleep(fail_sleep)
 
+        if last_error_msg:
+            msg = f"Last error message before the timeout exception - {last_error_msg}"
+            display.debug(msg)
+            display.vvv(msg)
         raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
 
     def perform_reboot(self, task_vars, distribution):
@@ -406,7 +411,7 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
         self._supports_async = True
 
-        # If running with local connection, fail so we don't reboot ourself
+        # If running with local connection, fail so we don't reboot ourselves
         if self._connection.transport == 'local':
             msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
