@@ -500,7 +500,7 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) != 7 and len(pcs[0]) != 10:
+            if len(pcs[0]) != 7 and len(pcs[0]) != 8 and len(pcs[0]) != 10:
                 continue
             if len(pcs[6]) != 15:
                 continue
@@ -548,6 +548,12 @@ class ZipArchive(object):
                 if path[-1] == '/':
                     permstr = 'rwxrwxrwx'
                 elif permstr == 'rwx---':
+                    permstr = 'rwxrwxrwx'
+                else:
+                    permstr = 'rw-rw-rw-'
+                file_umask = umask
+            elif len(permstr) == 7:
+                if permstr == 'rwxa---':
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
