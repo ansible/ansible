@@ -500,6 +500,7 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
+            # 7 or 8 are FAT, 10 is normal unix perms
             if len(pcs[0]) not in (7, 8, 10):
                 continue
             if len(pcs[6]) != 15:
