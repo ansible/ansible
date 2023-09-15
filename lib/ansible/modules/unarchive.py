@@ -500,7 +500,7 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) not in (7,8,10):
+            if len(pcs[0]) not in (7, 8, 10):
                 continue
             if len(pcs[6]) != 15:
                 continue
