@@ -172,29 +172,6 @@ except ImportError:
     HTTPGSSAPIAuthHandler = None  # type: types.ModuleType | None  # type: ignore[no-redef]
 
 
-# This is a dummy cacert provided for macOS since you need at least 1
-# ca cert, regardless of validity, for Python on macOS to use the
-# keychain functionality in OpenSSL for validating SSL certificates.
-# See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
-b_DUMMY_CA_CERT = b"""-----BEGIN CERTIFICATE-----
-MIICvDCCAiWgAwIBAgIJAO8E12S7/qEpMA0GCSqGSIb3DQEBBQUAMEkxCzAJBgNV
-BAYTAlVTMRcwFQYDVQQIEw5Ob3J0aCBDYXJvbGluYTEPMA0GA1UEBxMGRHVyaGFt
-MRAwDgYDVQQKEwdBbnNpYmxlMB4XDTE0MDMxODIyMDAyMloXDTI0MDMxNTIyMDAy
-MlowSTELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9saW5hMQ8wDQYD
-VQQHEwZEdXJoYW0xEDAOBgNVBAoTB0Fuc2libGUwgZ8wDQYJKoZIhvcNAQEBBQAD
-gY0AMIGJAoGBANtvpPq3IlNlRbCHhZAcP6WCzhc5RbsDqyh1zrkmLi0GwcQ3z/r9
-gaWfQBYhHpobK2Tiq11TfraHeNB3/VfNImjZcGpN8Fl3MWwu7LfVkJy3gNNnxkA1
-4Go0/LmIvRFHhbzgfuo9NFgjPmmab9eqXJceqZIlz2C8xA7EeG7ku0+vAgMBAAGj
-gaswgagwHQYDVR0OBBYEFPnN1nPRqNDXGlCqCvdZchRNi/FaMHkGA1UdIwRyMHCA
-FPnN1nPRqNDXGlCqCvdZchRNi/FaoU2kSzBJMQswCQYDVQQGEwJVUzEXMBUGA1UE
-CBMOTm9ydGggQ2Fyb2xpbmExDzANBgNVBAcTBkR1cmhhbTEQMA4GA1UEChMHQW5z
-aWJsZYIJAO8E12S7/qEpMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEA
-MUB80IR6knq9K/tY+hvPsZer6eFMzO3JGkRFBh2kn6JdMDnhYGX7AXVHGflrwNQH
-qFy+aenWXsC0ZvrikFxbQnX8GVtDADtVznxOi7XzFw7JOxdsVrpXgSN0eh0aMzvV
-zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
------END CERTIFICATE-----
-"""
-
 b_PEM_CERT_RE = re.compile(
     br'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
     flags=re.M | re.S
@@ -546,19 +523,12 @@ def get_ca_certs(cafile=None, capath=None):
     elif system == u'AIX':
         paths_checked.add('/var/ssl/certs')
         paths_checked.add('/opt/freeware/etc/ssl/certs')
+    elif system == u'Darwin':
+        paths_checked.add('/usr/local/etc/openssl')
 
     # fall back to a user-deployed cert in a standard
     # location if the OS platform one is not available
     paths_checked.add('/etc/ansible')
-
-    # Write the dummy ca cert if we are running on macOS
-    if system == u'Darwin':
-        b_der = ssl.PEM_cert_to_DER_cert(
-            to_native(b_DUMMY_CA_CERT, errors='surrogate_or_strict')
-        )
-        cadata[b_der] = None
-        # Default Homebrew path for OpenSSL certs
-        paths_checked.add('/usr/local/etc/openssl')
 
     # for all of the paths, find any  .crt or .pem files
     # and compile them into single temp file for use
