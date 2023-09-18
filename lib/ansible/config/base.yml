@@ -1960,11 +1960,11 @@ TAGS_SKIP:
 TARGET_LOG_INFO:
   name: Target log info
   description: A string to insert into target logging for tracking purposes
-  env: [{name: ANSIBLE_REMOTE_LOG_INFO}]
+  env: [{name: ANSIBLE_TARGET_LOG_INFO}]
   ini:
-  - {key: remote_log_info , section: defaults}
+  - {key: target_log_info , section: defaults}
   vars:
-  - name: ansible_remote_log_info
+  - name: ansible_target_log_info
 TASK_TIMEOUT:
   name: Task Timeout
   default: 0

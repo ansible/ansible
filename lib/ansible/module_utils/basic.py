@@ -1305,8 +1305,8 @@ class AnsibleModule(object):
                 # TODO: surrogateescape is a danger here on Py3
                 journal_msg = remove_values(msg, self.no_log_values)
 
-            if self._remote_log_info:
-                journal_msg = self._remote_log_info + journal_msg
+            if self._target_log_info:
+                journal_msg = self._target_log_info + journal_msg
 
             if PY3:
                 syslog_msg = journal_msg
