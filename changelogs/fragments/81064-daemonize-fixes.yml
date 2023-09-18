@@ -1,2 +1,0 @@
-bugfixes:
-  - "``ansible.module_utils.service`` - fix inter-process communication in ``daemonize()``"

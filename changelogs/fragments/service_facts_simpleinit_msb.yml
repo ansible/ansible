@@ -1,2 +1,0 @@
-minor_changes:
-  - Update ``ansible_service_mgr`` fact to include init system for SMGL OS family

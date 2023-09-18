@@ -1,2 +1,0 @@
-bugfixes:
-  - dnf - fix a failure when a package from URI was specified and ``update_only`` was set (https://github.com/ansible/ansible/issues/81376).

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - apt - ignore fail_on_autoremove and allow_downgrade parameters when using aptitude (https://github.com/ansible/ansible/issues/77868).

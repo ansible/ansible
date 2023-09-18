@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Remove Fedora 37 remote support.
-  - ansible-test - Remove Fedora 37 test container.

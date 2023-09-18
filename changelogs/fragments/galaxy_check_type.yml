@@ -1,3 +1,0 @@
----
-bugfixes:
-- galaxy - cross check the collection type and collection source (https://github.com/ansible/ansible/issues/79463).

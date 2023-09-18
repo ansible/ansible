@@ -1,2 +1,0 @@
-bugfixes:
-  - "ansible-test local change detection - use ``git merge-base <branch> HEAD`` instead of ``git merge-base --fork-point <branch>`` (https://github.com/ansible/ansible/pull/79734)."

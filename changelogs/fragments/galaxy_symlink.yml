@@ -1,3 +1,0 @@
----
-bugfixes:
-- galaxy - check if the target for symlink exists (https://github.com/ansible/ansible/pull/81586).

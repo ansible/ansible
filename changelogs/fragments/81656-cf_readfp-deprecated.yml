@@ -1,2 +1,0 @@
-bugfixes:
-  - Replace uses of ``configparser.ConfigParser.readfp()`` which was removed in Python 3.12 with ``configparser.ConfigParser.read_file()`` (https://github.com/ansible/ansible/issues/81656)

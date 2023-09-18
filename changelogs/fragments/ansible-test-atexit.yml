@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Use a context manager to perform cleanup at exit instead of using the built-in ``atexit`` module.

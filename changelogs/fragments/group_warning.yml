@@ -1,3 +1,0 @@
----
-minor_changes:
-- group - remove extraneous warning shown when user does not exist (https://github.com/ansible/ansible/issues/77049).

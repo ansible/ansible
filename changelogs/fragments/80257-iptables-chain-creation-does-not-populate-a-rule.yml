@@ -1,2 +1,0 @@
-bugfixes:
-  - iptables - remove default rule creation when creating iptables chain to be more similar to the command line utility (https://github.com/ansible/ansible/issues/80256).

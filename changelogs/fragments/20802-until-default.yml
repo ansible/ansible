@@ -1,2 +1,0 @@
-minor_changes:
-  - tasks - the ``retries`` keyword can be specified without ``until`` in which case the task is retried until it succeeds but at most ``retries`` times (https://github.com/ansible/ansible/issues/20802)

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Enable ``thread`` code coverage in addition to the existing ``multiprocessing`` coverage.

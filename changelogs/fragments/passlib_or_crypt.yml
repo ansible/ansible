@@ -1,3 +1,0 @@
----
-bugfixes:
-- encrypt - deprecate passlib_or_crypt API (https://github.com/ansible/ansible/issues/55839).

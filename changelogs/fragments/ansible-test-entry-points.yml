@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - Always use ansible-test managed entry points for ansible-core CLI tools when not running from source.
-                   This fixes issues where CLI entry points created during install are not compatible with ansible-test.
