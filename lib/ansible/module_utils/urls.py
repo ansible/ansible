@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
@@ -6,6 +7,7 @@
 #
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com>, 2015
+# Copyright: Contributors to the Ansible project
 #
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
@@ -193,12 +195,18 @@ class ProxyError(ConnectionError):
 
 
 class SSLValidationError(ConnectionError):
-    """Failure to connect due to SSL validation failing"""
+    """Failure to connect due to SSL validation failing
+
+    No longer used, but kept for backwards compatibility
+    """
     pass
 
 
 class NoSSLError(SSLValidationError):
-    """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
+    """Needed to connect to an HTTPS url but no ssl library available to verify the certificate
+
+    No longer used, but kept for backwards compatibility
+    """
     pass
 
 
@@ -374,7 +382,7 @@ class GzipDecodedReader(GzipFile):
 
 class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
     """This is an implementation of a RedirectHandler to match the
-    functionality provided by http.client2. It will utilize the value of
+    functionality provided by httplib2. It will utilize the value of
     ``follow_redirects`` to determine how redirects should be handled in
     urllib.
     """
@@ -469,7 +477,7 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-    # If cafile is passed, we are only using that for verification
+    # If cafile is passed, we are only using that for verification,
     # don't add additional ca certs
     if validate_certs and not cafile:
         if not cadata:
@@ -494,6 +502,8 @@ def get_ca_certs(cafile=None, capath=None):
     # Not directly using a bytearray to avoid duplicates with fast lookup
     cadata = {}
 
+    # If cafile is passed, we are only using that for verification,
+    # don't add additional ca certs
     if cafile:
         paths_checked = [cafile]
         with open(to_bytes(cafile, errors='surrogate_or_strict'), 'r', errors='surrogateescape') as f:
@@ -715,8 +725,6 @@ class Request:
             arguments are ignored. See make_context.
         :returns: HTTPResponse. Added in Ansible 2.9
         """
-
-        method = method.upper()
 
         if headers is None:
             headers = {}
@@ -1205,12 +1213,6 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
-    except NoSSLError as e:
-        distribution = get_distribution()
-        if distribution is not None and distribution.lower() == 'redhat':
-            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e), **info)
-        else:
-            module.fail_json(msg='%s' % to_native(e), **info)
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
