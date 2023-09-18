@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed `freebsd/13.1` remote.

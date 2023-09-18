@@ -1,2 +1,0 @@
-removed_features:
-  - Removed Python 3.9 as a supported version on the controller. Python 3.10 or newer is required.

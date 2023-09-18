@@ -1,2 +1,0 @@
-bugfixes:
-  - pkg_mgr.py - Fix `ansible_pkg_mgr` incorrect in TencentOS Server Linux

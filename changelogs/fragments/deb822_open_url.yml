@@ -1,2 +1,0 @@
-bugfixes:
-- deb822_repository - use http-agent for receiving content (https://github.com/ansible/ansible/issues/80809).

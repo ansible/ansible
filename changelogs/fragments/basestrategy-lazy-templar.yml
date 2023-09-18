@@ -1,2 +1,0 @@
-bugfixes:
-  - "``StrategyBase._process_pending_results`` - create a ``Templar`` on demand for templating ``changed_when``/``failed_when``."

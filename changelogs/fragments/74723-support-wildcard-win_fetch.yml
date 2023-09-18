@@ -1,3 +1,0 @@
-bugfixes:
-- win_fetch - Add support for using file with wildcards in file name.
-  (https://github.com/ansible/ansible/issues/73128)

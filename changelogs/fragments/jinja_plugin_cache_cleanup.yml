@@ -1,2 +1,0 @@
-bugfixes:
-  - PluginLoader - fix Jinja plugin performance issues (https://github.com/ansible/ansible/issues/79652)

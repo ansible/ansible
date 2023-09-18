@@ -1,5 +1,0 @@
-bugfixes:
-- ansiballz - Prevent issue where the time on the control host could
-  change part way through building the ansiballz file, potentially causing
-  a pre-1980 date to be used during ansiballz unpacking leading to a zip
-  file error (https://github.com/ansible/ansible/issues/80089)

@@ -1,3 +1,0 @@
----
-minor_changes:
-- reboot - show last error message in verbose logs (https://github.com/ansible/ansible/issues/81574).
