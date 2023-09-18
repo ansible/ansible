@@ -1306,7 +1306,7 @@ class AnsibleModule(object):
                 journal_msg = remove_values(msg, self.no_log_values)
 
             if self._target_log_info:
-                journal_msg = remove_values(self._target_log_info) + journal_msg
+                journal_msg = remove_values(self._target_log_info, self.no_log_values) + journal_msg
 
             if PY3:
                 syslog_msg = journal_msg
