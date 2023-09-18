@@ -300,6 +300,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
             not is_pre_release(candidate_version)
             for candidate_version, _src_server in coll_versions
         )
+
+        # NOTE: The optimization of conditionally looping over the requirements
+        # NOTE: is used to skip having to compute the pinned status of all
+        # NOTE: requirements and apply version normalization to the found ones.
         all_pinned_requirement_version_numbers = {
             # NOTE: Pinned versions can start with a number, but also with an
             # NOTE: equals sign. Stripping it at the beginning should be
@@ -310,7 +314,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
             requirement.ver.lstrip('=').strip()
             for requirement in requirements
             if requirement.is_pinned
-        }
+        } if discarding_pre_releases_acceptable else set()
+
         for version, src_server in coll_versions:
             tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
 
