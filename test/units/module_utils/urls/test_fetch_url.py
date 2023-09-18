@@ -139,26 +139,6 @@ def test_fetch_url_cookies(mocker, fake_ansible_module):
     assert info['set-cookie'] == 'Foo=bar, Baz=qux'
 
 
-def test_fetch_url_nossl(open_url_mock, fake_ansible_module, mocker):
-    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='notredhat')
-
-    open_url_mock.side_effect = NoSSLError
-    with pytest.raises(FailJson) as excinfo:
-        fetch_url(fake_ansible_module, 'http://ansible.com/')
-
-    assert 'python-ssl' not in excinfo.value.kwargs['msg']
-
-    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='redhat')
-
-    open_url_mock.side_effect = NoSSLError
-    with pytest.raises(FailJson) as excinfo:
-        fetch_url(fake_ansible_module, 'http://ansible.com/')
-
-    assert 'python-ssl' in excinfo.value.kwargs['msg']
-    assert 'http://ansible.com/' == excinfo.value.kwargs['url']
-    assert excinfo.value.kwargs['status'] == -1
-
-
 def test_fetch_url_connectionerror(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = ConnectionError('TESTS')
     with pytest.raises(FailJson) as excinfo:
