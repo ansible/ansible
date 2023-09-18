@@ -1957,6 +1957,14 @@ TAGS_SKIP:
   ini:
   - {key: skip, section: tags}
   version_added: "2.5"
+TARGET_LOG_INFO:
+  name: Target log info
+  description: A string to insert into target logging for tracking purposes
+  env: [{name: ANSIBLE_REMOTE_LOG_INFO}]
+  ini:
+  - {key: remote_log_info , section: defaults}
+  vars:
+  - name: ansible_remote_log_info
 TASK_TIMEOUT:
   name: Task Timeout
   default: 0
