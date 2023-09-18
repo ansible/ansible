@@ -1,2 +1,0 @@
-minor_changes:
-  - blockinfile - add append_newline and prepend_newline options (https://github.com/ansible/ansible/issues/80835).

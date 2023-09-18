@@ -1,2 +1,0 @@
-bugfixes:
-  - pkg_mgr.py - Fix `ansible_pkg_mgr` is unknown in Kylin Linux (https://github.com/ansible/ansible/issues/81332)

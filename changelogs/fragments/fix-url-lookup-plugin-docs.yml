@@ -1,2 +1,0 @@
-bugfixes:
-  - lookup/url.py - Fix incorrect var/env/ini entry for `force_basic_auth`

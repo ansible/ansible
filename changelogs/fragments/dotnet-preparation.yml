@@ -1,2 +1,0 @@
-bugfixes:
-- PowerShell - Remove some code which is no longer valid for dotnet 5+

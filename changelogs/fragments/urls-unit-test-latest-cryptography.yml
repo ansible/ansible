@@ -1,2 +1,0 @@
-bugfixes:
-  - Update module_utils.urls unit test to work with cryptography >= 41.0.0.

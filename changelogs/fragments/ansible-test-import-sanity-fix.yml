@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - The ``import`` sanity test now checks the collection loader for remote-only Python support when testing ansible-core.

@@ -1,2 +1,0 @@
-bugfixes:
-  - Prompting - add a short sleep between polling for user input to reduce CPU consumption (https://github.com/ansible/ansible/issues/81516).

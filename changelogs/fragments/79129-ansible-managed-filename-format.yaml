@@ -1,6 +1,0 @@
----
-bugfixes:
-  - template - Fix for formatting issues when a template path contains
-    valid jinja/strftime pattern (especially line break one) and
-    using the template path in ansible_managed
-    (https://github.com/ansible/ansible/pull/79129)

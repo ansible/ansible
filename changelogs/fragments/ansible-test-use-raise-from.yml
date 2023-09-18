@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Use ``raise ... from ...`` when raising exceptions from within an exception handler.

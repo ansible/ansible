@@ -1,3 +1,0 @@
----
-deprecated_features:
-- yum_repository - deprecated parameter 'keepcache' (https://github.com/ansible/ansible/issues/78693).

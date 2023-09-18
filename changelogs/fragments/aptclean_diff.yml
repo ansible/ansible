@@ -1,2 +1,0 @@
-minor_changes:
-  - apt - return calculated diff while running apt clean operation.

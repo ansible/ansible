@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged ``setuptools`` instead of installing the latest version from PyPI.

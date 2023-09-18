@@ -1,2 +1,0 @@
-bugfixes:
-- Inventory scripts parser not treat exception when getting hostsvar (https://github.com/ansible/ansible/issues/81103)
