@@ -1,0 +1,3 @@
+---
+bugfixes:
+- inventory_ini - handle SyntaxWarning while parsing ini file in inventory (https://github.com/ansible/ansible/issues/81457).
