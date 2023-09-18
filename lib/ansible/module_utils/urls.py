@@ -488,7 +488,9 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-    if validate_certs and any((cadata, capath)):
+    # If cafile is passed, we are only using that for verification
+    # don't add additional ca certs
+    if validate_certs and not cafile:
         if not cadata:
             cadata = bytearray()
         cadata.extend(get_ca_certs(capath=capath)[0])
