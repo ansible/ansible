@@ -566,7 +566,19 @@ class _ComputedReqKindsMixin:
 
     @property
     def is_pinned(self):
-        """Indicate if the version set is considered pinned."""
+        """Indicate if the version set is considered pinned.
+
+        This essentially computes whether the version field of the current
+        requirement explicitly requests a specific version and not an allowed
+        version range.
+
+        It is then used to help the resolvelib-based dependency resolver judge
+        whether it's acceptable to consider a pre-release candidate version
+        despite pre-release installs not being requested by the end-user
+        explicitly.
+
+        See https://github.com/ansible/ansible/pull/81606 for extra context.
+        """
         version_string = self.ver[0]
         return version_string.isdigit() or not (
             version_string == '*' or
