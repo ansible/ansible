@@ -8,7 +8,6 @@ import gzip
 import io
 import sys
 import http.client
-from urllib.response import addinfourl
 
 from ansible.module_utils.urls import GzipDecodedReader, Request
 

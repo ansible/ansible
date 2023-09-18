@@ -5,9 +5,6 @@
 from __future__ import annotations
 
 from ansible.module_utils import urls
-from ansible.module_utils.common.text.converters import to_native
-
-import pytest
 
 
 def test_basic_auth_header():

@@ -64,7 +64,7 @@ except ImportError:
 else:
     GzipFile = gzip.GzipFile  # type: ignore[assignment,misc]
 
-from ansible.module_utils.basic import get_distribution, missing_required_lib
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import Mapping, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
