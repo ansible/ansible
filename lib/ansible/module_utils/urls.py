@@ -172,12 +172,10 @@ except ImportError:
     HTTPGSSAPIAuthHandler = None  # type: types.ModuleType | None  # type: ignore[no-redef]
 
 
-b_PEM_CERT_RE = re.compile(
-    br'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
+PEM_CERT_RE = re.compile(
+    r'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
     flags=re.M | re.S
 )
-
-urllib.request.HTTPRedirectHandler.http_error_308 = urllib.request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined,assignment]
 
 #
 # Exceptions
@@ -322,8 +320,8 @@ def generic_urlparse(parts):
     return result
 
 
-def extract_pem_certs(b_data):
-    for match in b_PEM_CERT_RE.finditer(b_data):
+def extract_pem_certs(data):
+    for match in PEM_CERT_RE.finditer(data):
         yield match.group(0)
 
 
@@ -357,7 +355,7 @@ class GzipDecodedReader(GzipFile):
             raise MissingModuleError(self.missing_gzip_error(), import_traceback=GZIP_IMP_ERR)
 
         self._io = fp
-        super().__init__(mode='rb', fileobj=self._io)  # pylint: disable=non-parent-init-called
+        super().__init__(mode='rb', fileobj=self._io)
 
     def close(self):
         try:
@@ -374,80 +372,86 @@ class GzipDecodedReader(GzipFile):
         )
 
 
-def RedirectHandlerFactory(follow_redirects=None):
-    """This is a class factory that closes over the value of
-    ``follow_redirects`` so that the RedirectHandler class has access to
-    that value without having to use globals, and potentially cause problems
-    where ``open_url`` or ``fetch_url`` are used multiple times in a module.
+class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """This is an implementation of a RedirectHandler to match the
+    functionality provided by http.client2. It will utilize the value of
+    ``follow_redirects`` to determine how redirects should be handled in
+    urllib.
     """
 
-    class RedirectHandler(urllib.request.HTTPRedirectHandler):
-        """This is an implementation of a RedirectHandler to match the
-        functionality provided by http.client2. It will utilize the value of
-        ``follow_redirects`` that is passed into ``RedirectHandlerFactory``
-        to determine how redirects should be handled in urllib2.
-        """
+    def __init__(self, follow_redirects=None):
+        self.follow_redirects = follow_redirects
 
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            # Preserve urllib2 compatibility
-            if follow_redirects in {'urllib2', 'urllib'}:
-                return urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
+    def __call__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        return self
 
-            # Handle disabled redirects
-            elif follow_redirects in ['no', 'none', False]:
-                raise urllib.error.HTTPError(newurl, code, msg, headers, fp)
+    try:
+        urllib.request.HTTPRedirectHandler.http_error_308  # type: ignore[attr-defined]
+    except AttributeError:
+        # deprecated: description='urllib http 308 support' python_version='3.11'
+        http_error_308 = urllib.request.HTTPRedirectHandler.http_error_302
 
-            method = req.get_method()
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        follow_redirects = self.follow_redirects
 
-            # Handle non-redirect HTTP status or invalid follow_redirects
-            if follow_redirects in ['all', 'yes', True]:
-                if code < 300 or code >= 400:
-                    raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
-            elif follow_redirects == 'safe':
-                if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
-                    raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
-            else:
+        # Preserve urllib2 compatibility
+        if follow_redirects in ('urllib2', 'urllib'):
+            return urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
+
+        # Handle disabled redirects
+        elif follow_redirects in ('no', 'none', False):
+            raise urllib.error.HTTPError(newurl, code, msg, headers, fp)
+
+        method = req.get_method()
+
+        # Handle non-redirect HTTP status or invalid follow_redirects
+        if follow_redirects in ('all', 'yes', True):
+            if code < 300 or code >= 400:
                 raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
+        elif follow_redirects == 'safe':
+            if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
+                raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
+        else:
+            raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
 
-            data = req.data
-            origin_req_host = req.origin_req_host
+        data = req.data
+        origin_req_host = req.origin_req_host
 
-            # Be conciliant with URIs containing a space
-            newurl = newurl.replace(' ', '%20')
+        # Be conciliant with URIs containing a space
+        newurl = newurl.replace(' ', '%20')
 
-            # Support redirect with payload and original headers
-            if code in (307, 308):
-                # Preserve payload and headers
-                req_headers = req.headers
-            else:
-                # Do not preserve payload and filter headers
-                data = None
-                req_headers = {k: v for k, v in req.headers.items()
-                               if k.lower() not in ("content-length", "content-type", "transfer-encoding")}
+        # Support redirect with payload and original headers
+        if code in (307, 308):
+            # Preserve payload and headers
+            req_headers = req.headers
+        else:
+            # Do not preserve payload and filter headers
+            data = None
+            req_headers = {k: v for k, v in req.headers.items()
+                           if k.lower() not in ("content-length", "content-type", "transfer-encoding")}
 
-                # http://tools.ietf.org/html/rfc7231#section-6.4.4
-                if code == 303 and method != 'HEAD':
-                    method = 'GET'
+            # http://tools.ietf.org/html/rfc7231#section-6.4.4
+            if code == 303 and method != 'HEAD':
+                method = 'GET'
 
-                # Do what the browsers do, despite standards...
-                # First, turn 302s into GETs.
-                if code == 302 and method != 'HEAD':
-                    method = 'GET'
+            # Do what the browsers do, despite standards...
+            # First, turn 302s into GETs.
+            if code == 302 and method != 'HEAD':
+                method = 'GET'
 
-                # Second, if a POST is responded to with a 301, turn it into a GET.
-                if code == 301 and method == 'POST':
-                    method = 'GET'
+            # Second, if a POST is responded to with a 301, turn it into a GET.
+            if code == 301 and method == 'POST':
+                method = 'GET'
 
-            return urllib.request.Request(
-                newurl,
-                data=data,
-                headers=req_headers,
-                origin_req_host=origin_req_host,
-                unverifiable=True,
-                method=method.upper(),
-            )
-
-    return RedirectHandler
+        return urllib.request.Request(
+            newurl,
+            data=data,
+            headers=req_headers,
+            origin_req_host=origin_req_host,
+            unverifiable=True,
+            method=method.upper(),
+        )
 
 
 def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_certs=True, client_cert=None,
@@ -492,11 +496,9 @@ def get_ca_certs(cafile=None, capath=None):
 
     if cafile:
         paths_checked = [cafile]
-        with open(to_bytes(cafile, errors='surrogate_or_strict'), 'rb') as f:
-            for b_pem in extract_pem_certs(f.read()):
-                b_der = ssl.PEM_cert_to_DER_cert(
-                    to_native(b_pem, errors='surrogate_or_strict')
-                )
+        with open(to_bytes(cafile, errors='surrogate_or_strict'), 'r', errors='surrogateescape') as f:
+            for pem in extract_pem_certs(f.read()):
+                b_der = ssl.PEM_cert_to_DER_cert(pem)
                 cadata[b_der] = None
         return bytearray().join(cadata), paths_checked
 
@@ -541,19 +543,18 @@ def get_ca_certs(cafile=None, capath=None):
             full_path = os.path.join(path, f)
             if os.path.isfile(full_path) and os.path.splitext(f)[1] in {'.pem', '.cer', '.crt'}:
                 try:
-                    with open(full_path, 'rb') as cert_file:
-                        b_cert = cert_file.read()
+                    with open(full_path, 'r', errors='surrogateescape') as cert_file:
+                        cert = cert_file.read()
                     try:
-                        for b_pem in extract_pem_certs(b_cert):
-                            b_der = ssl.PEM_cert_to_DER_cert(
-                                to_native(b_pem, errors='surrogate_or_strict')
-                            )
+                        for pem in extract_pem_certs(cert):
+                            b_der = ssl.PEM_cert_to_DER_cert(pem)
                             cadata[b_der] = None
                     except Exception:
                         continue
                 except (OSError, IOError):
                     pass
 
+    # paths_checked isn't used any more, but is kept just for ease of debugging
     return bytearray().join(cadata), list(paths_checked)
 
 
@@ -582,7 +583,7 @@ def get_channel_binding_cert_hash(certificate_der):
         pass
 
     # If the signature hash algorithm is unknown/unsupported or md5/sha1 we must use SHA256.
-    if not hash_algorithm or hash_algorithm.name in ['md5', 'sha1']:
+    if not hash_algorithm or hash_algorithm.name in ('md5', 'sha1'):
         hash_algorithm = hashes.SHA256()
 
     digest = hashes.Hash(hash_algorithm, default_backend())
@@ -695,7 +696,7 @@ class Request:
         :kwarg http_agent: (optional) String of the User-Agent to use in the request
         :kwarg force_basic_auth: (optional) Boolean determining if auth header should be sent in the initial request
         :kwarg follow_redirects: (optional) String of urllib2, all/yes, safe, none to determine how redirects are
-            followed, see RedirectHandlerFactory for more information
+            followed, see HTTPRedirectHandler for more information
         :kwarg client_cert: (optional) PEM formatted certificate chain file to be used for SSL client authentication.
             This file can also include the key as well, and if the key is included, client_key is not required
         :kwarg client_key: (optional) PEM formatted file that contains your private key to be used for SSL client
@@ -823,7 +824,7 @@ class Request:
             ssl_handler = urllib.request.HTTPSHandler(context=context)
         handlers.append(ssl_handler)
 
-        handlers.append(RedirectHandlerFactory(follow_redirects))
+        handlers.append(HTTPRedirectHandler(follow_redirects))
 
         # add some nicer cookie handling
         if cookies is not None:
@@ -1176,7 +1177,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
                      decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+        # Lowercase keys, to conform to py2 behavior
         info.update({k.lower(): v for k, v in r.info().items()})
 
         # Don't be lossy, append header values for duplicate headers

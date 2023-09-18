@@ -11,7 +11,7 @@ import http.client
 
 from ansible.module_utils.urls import (Request, open_url, cookiejar,
                                        UnixHTTPHandler, UnixHTTPSConnection)
-from ansible.module_utils.urls import RedirectHandlerFactory
+from ansible.module_utils.urls import HTTPRedirectHandler
 
 import pytest
 from units.compat.mock import call
@@ -114,12 +114,12 @@ def test_Request_open(urlopen_mock, install_opener_mock):
     handlers = opener.handlers
 
     expected_handlers = (
-        RedirectHandlerFactory(),  # factory, get handler
+        HTTPRedirectHandler(),
     )
 
     found_handlers = []
     for handler in handlers:
-        if handler.__class__.__name__ == 'RedirectHandler':
+        if handler.__class__.__name__ == 'HTTPRedirectHandler':
             found_handlers.append(handler)
 
     assert len(found_handlers) == len(expected_handlers)
