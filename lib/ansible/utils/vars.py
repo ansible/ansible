@@ -85,11 +85,11 @@ def combine_vars(a, b, merge=None):
 
     if merge or merge is None and C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
-    else:
-        # HASH_BEHAVIOUR == 'replace'
-        _validate_mutable_mappings(a, b)
-        result = a | b
-        return result
+
+    # HASH_BEHAVIOUR == 'replace'
+    _validate_mutable_mappings(a, b)
+    result = a | b
+    return result
 
 
 def merge_hash(x, y, recursive=True, list_merge='replace'):
