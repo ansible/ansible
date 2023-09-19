@@ -1962,7 +1962,7 @@ TARGET_LOG_INFO:
   description: A string to insert into target logging for tracking purposes
   env: [{name: ANSIBLE_TARGET_LOG_INFO}]
   ini:
-  - {key: target_log_info , section: defaults}
+  - {key: target_log_info, section: defaults}
   vars:
   - name: ansible_target_log_info
 TASK_TIMEOUT:
