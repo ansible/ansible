@@ -245,7 +245,7 @@ def create_ssh_port_forwards(
     """
     options: dict[str, t.Union[str, int]] = dict(
         LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward
-        ControlPath='none',  # if the user has ControlPath set up for every host, it will prevent creation of fowards
+        ControlPath='none',  # if the user has ControlPath set up for every host, it will prevent creation of forwards
     )
 
     cli_args = []
