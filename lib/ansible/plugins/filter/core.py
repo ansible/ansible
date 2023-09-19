@@ -33,6 +33,7 @@ from ansible.module_utils.six import string_types, integer_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
+from ansible.parsing.yaml import from_yaml as internal_from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
@@ -248,7 +249,7 @@ def from_yaml(data):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
         # read the data
-        return yaml_load(text_type(to_text(data, errors='surrogate_or_strict')))
+        return internal_from_yaml(data)
     return data
 
 
@@ -257,7 +258,7 @@ def from_yaml_all(data):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
         # read the data
-        return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
+        return yaml_load_all(data)
     return data
 
 
