@@ -51,11 +51,6 @@ PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
 
 
-def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
-    display.deprecated("add_collection_plugins method, use ansible.plugins.list functions instead.", version='2.17')
-    plugin_list.update(list_plugins(plugin_type, coll_filter))
-
-
 def jdump(text):
     try:
         display.display(json_dump(text))
@@ -423,11 +418,6 @@ class DocCLI(CLI, RoleMixin):
                 plugin = f"{plugin}, {entrypoint} entrypoint"
             return f"`{text}' (of {plugin})"
         return f"`{text}'"
-
-    @classmethod
-    def find_plugins(cls, path, internal, plugin_type, coll_filter=None):
-        display.deprecated("find_plugins method as it is incomplete/incorrect. use ansible.plugins.list functions instead.", version='2.17')
-        return list_plugins(plugin_type, coll_filter, [path]).keys()
 
     @classmethod
     def tty_ify(cls, text):
