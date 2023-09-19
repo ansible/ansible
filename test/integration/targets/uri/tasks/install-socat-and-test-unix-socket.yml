@@ -1,23 +1,25 @@
-- block:
-    - block:
-        - name: install socat
-          package:
-            name: socat
-            state: present
-          register: socat_install
+- when: ansible_facts.distribution not in ['MacOSX']
+  block:
+    - name: install socat
+      package:
+        name: socat
+        state: present
+      register: socat_install_package
+      when: ansible_facts.distribution not in ['Alpine']
 
-        - include_tasks: unix-socket.yml
-      rescue:
-        - debug:
-            msg: We don't have a package manager for this host and sivel is lazy
-          when: ansible_failed_task.action == 'package' and 'Could not find a module for' in ansible_failed_result.msg
+    - name: install socat for alpine
+      command: apk add --virtual .socat socat
+      register: socat_install_alpine
+      when: ansible_facts.distribution == 'Alpine'
 
-        - fail:
-            msg: ansible_failed_result
-          when: ansible_failed_task.action != 'package' or 'Could not find a module for' not in ansible_failed_result.msg|default('')
+    - include_tasks: unix-socket.yml
   always:
     - name: uninstall socat
       package:
         name: socat
         state: absent
-      when: socat_install|default({}) is changed
+      when: socat_install_package|default({}) is changed
+
+    - name: uninstall socat for alpine
+      command: apk del .socat
+      when: socat_install_alpine|default({}) is changed and 'Installing socat' in socat_install_alpine.stdout
