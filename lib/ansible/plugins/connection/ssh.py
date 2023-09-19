@@ -747,7 +747,7 @@ class Connection(ConnectionBase):
             b_command += [b'-b', b'-']
 
         if display.verbosity:
-            b_command.append(b'-%s' % ('v' * display.verbosity))
+            b_command.append(b'-' + (b'v' * display.verbosity))
 
         # Next, we add ssh_args
         ssh_args = self.get_option('ssh_args')

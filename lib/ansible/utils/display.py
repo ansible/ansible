@@ -471,8 +471,8 @@ class Display(metaclass=Singleton):
         elif self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
             # we send to log if log was configured with higher verbosity
             if host is not None:
-                msg = "<%s> %s" % (host, msg, caplevel)
-            self.log(msg, C.COLOR_VERBOSE)
+                msg = "<%s> %s" % (host, msg)
+            self.log(msg, C.COLOR_VERBOSE, caplevel)
 
     def get_deprecation_message(
         self,
