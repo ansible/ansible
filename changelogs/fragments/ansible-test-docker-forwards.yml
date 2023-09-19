@@ -1,0 +1,5 @@
+bugfixes:
+- ansible-test - Properly detect docker host when using ``ssh://`` protocol for connecting to the docker daemon.
+- ansible-test - Explicitly supply ``ControlPath=none`` when setting up port fowarding over SSH to address
+  the scenario where the local ssh configuration uses ``ControlPath`` for all hosts, and would prevent
+  ports to be forwarded after the initial connection to the host.

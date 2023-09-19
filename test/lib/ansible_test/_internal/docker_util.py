@@ -496,7 +496,7 @@ def get_docker_hostname() -> str:
     """Return the hostname of the Docker service."""
     docker_host = os.environ.get('DOCKER_HOST')
 
-    if docker_host and docker_host.startswith('tcp://'):
+    if docker_host and docker_host.startswith(('tcp://', 'ssh://')):
         try:
             hostname = urllib.parse.urlparse(docker_host)[1].split(':')[0]
             display.info('Detected Docker host: %s' % hostname, verbosity=1)
