@@ -1,2 +1,2 @@
-bugfixes:
+minor_changes:
   - galaxy - Make sure paths are correct building collections when runnning ``_build_files_manifest_walk``
