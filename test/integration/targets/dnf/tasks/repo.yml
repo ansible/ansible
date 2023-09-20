@@ -307,3 +307,33 @@
         - dinginessentail-with-weak-dep
         - dinginessentail-weak-dep
         state: absent
+
+- block:
+    - dnf:
+        name: dinginessentail
+        state: present
+
+    - dnf:
+        list: dinginessentail*
+      register: list_out
+
+    - name: check that dnf returns nevra for backwards compat
+      assert:
+        that:
+          - '"envra" in list_out["results"][0]'
+          - '"nevra" in list_out["results"][0]'
+
+    - set_fact:
+        passed: true
+      loop: "{{ list_out.results }}"
+      when: item.yumstate == 'installed'
+
+    - name: Test that there is yumstate=installed in the result
+      assert:
+        that:
+          - passed is defined
+  always:
+    - name: Clean up
+      dnf:
+        name: dinginessentail
+        state: absent
