@@ -105,6 +105,7 @@
       dnf:
         name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
+        disable_gpg_check: True
       register: dnf_result
 
     - name: Check dinginessentail with rpm
