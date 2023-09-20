@@ -1,0 +1,16 @@
+---
+
+bugfixes:
+- >-
+  ansible-galaxy - started allowing the use of pre-releases
+  for dependencies on any level of the dependency tree that
+  specifically demand exact pre-release versions of
+  collections and not version ranges.
+  (https://github.com/ansible/ansible/pull/81606)
+- >-
+  ansible-galaxy - started allowing the use of pre-releases
+  for collections that do not have any stable versions
+  published.
+  (https://github.com/ansible/ansible/pull/81606)
+
+...

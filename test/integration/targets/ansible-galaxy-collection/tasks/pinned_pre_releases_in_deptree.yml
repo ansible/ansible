@@ -1,0 +1,79 @@
+---
+
+- name: >-
+    test that the dependency resolver chooses pre-releases if they are pinned
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  block:
+  - name: reset installation directory
+    file:
+      state: "{{ item }}"
+      path: "{{ galaxy_dir }}/ansible_collections"
+    loop:
+    - absent
+    - directory
+
+  - name: >-
+      install collections with pre-release versions in the dependency tree
+    command: >-
+      ansible-galaxy collection install
+      meta_ns_with_transitive_wildcard_dep.meta_name_with_transitive_wildcard_dep
+      rc_meta_ns_with_transitive_dev_dep.rc_meta_name_with_transitive_dev_dep:=2.4.5-rc5
+      {{ galaxy_verbosity }}
+    register: prioritize_direct_req
+  - assert:
+      that:
+      - >-
+        "rc_meta_ns_with_transitive_dev_dep.rc_meta_name_with_transitive_dev_dep:2.4.5-rc5 was installed successfully"
+        in prioritize_direct_req.stdout
+      - >-
+        "meta_ns_with_transitive_wildcard_dep.meta_name_with_transitive_wildcard_dep:4.5.6 was installed successfully"
+        in prioritize_direct_req.stdout
+      - >-
+        "ns_with_dev_dep.name_with_dev_dep:6.7.8 was installed successfully"
+        in prioritize_direct_req.stdout
+      - >-
+        "ns_with_wildcard_dep.name_with_wildcard_dep:5.6.7-beta.3 was installed successfully"
+        in prioritize_direct_req.stdout
+      - >-
+        "dev_and_stables_ns.dev_and_stables_name:1.2.3-dev0 was installed successfully"
+        in prioritize_direct_req.stdout
+
+  - name: cleanup
+    file:
+      state: "{{ item }}"
+      path: "{{ galaxy_dir }}/ansible_collections"
+    loop:
+    - absent
+    - directory
+
+  - name: >-
+      install collection that only has pre-release versions published
+      to the index
+    command: >-
+      ansible-galaxy collection install
+      rc_meta_ns_with_transitive_dev_dep.rc_meta_name_with_transitive_dev_dep:*
+      {{ galaxy_verbosity }}
+    register: select_pre_release_if_no_stable
+  - assert:
+      that:
+      - >-
+        "rc_meta_ns_with_transitive_dev_dep.rc_meta_name_with_transitive_dev_dep:2.4.5-rc5 was installed successfully"
+        in select_pre_release_if_no_stable.stdout
+      - >-
+        "ns_with_dev_dep.name_with_dev_dep:6.7.8 was installed successfully"
+        in select_pre_release_if_no_stable.stdout
+      - >-
+        "dev_and_stables_ns.dev_and_stables_name:1.2.3-dev0 was installed successfully"
+        in select_pre_release_if_no_stable.stdout
+  always:
+  - name: cleanup
+    file:
+      state: "{{ item }}"
+      path: "{{ galaxy_dir }}/ansible_collections"
+    loop:
+    - absent
+    - directory
+
+...
