@@ -54,6 +54,7 @@ class StrategyModule(StrategyBase):
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
+        self._rolling_play = False
 
     def run(self, iterator, play_context):
         '''
@@ -76,6 +77,8 @@ class StrategyModule(StrategyBase):
 
         # start with all workers being counted as being free
         workers_free = len(self._workers)
+        if self._rolling_play:
+            workers_free = min(workers_free, iterator._play.throttle)
 
         self._set_hosts_cache(iterator._play)
 
@@ -128,20 +131,21 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables", host=host_name)
 
-                        try:
-                            throttle = int(templar.template(task.throttle))
-                        except Exception as e:
-                            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+                        if not self._rolling_play:
+                            try:
+                                throttle = int(templar.template(task.throttle))
+                            except Exception as e:
+                                raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
 
-                        if throttle > 0:
-                            same_tasks = 0
-                            for worker in self._workers:
-                                if worker and worker.is_alive() and worker._task._uuid == task._uuid:
-                                    same_tasks += 1
+                            if throttle > 0:
+                                same_tasks = 0
+                                for worker in self._workers:
+                                    if worker and worker.is_alive() and worker._task._uuid == task._uuid:
+                                        same_tasks += 1
 
-                            display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
-                            if same_tasks >= throttle:
-                                break
+                                display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
+                                if same_tasks >= throttle:
+                                    break
 
                         # advance the host, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
