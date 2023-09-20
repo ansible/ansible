@@ -1,2 +1,4 @@
 minor_changes:
-  - galaxy - Make sure paths are correct building collections when runnning ``_build_files_manifest_walk``
+  - >-
+    ansible-galaxy - Started normalizing build directory with a trailing separator when building collections, internally.
+    (https://github.com/ansible/ansible/pull/81619).
