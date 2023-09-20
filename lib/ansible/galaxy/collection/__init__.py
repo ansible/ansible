@@ -1203,10 +1203,17 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
 
     manifest = _make_manifest()
 
+    def _discover_relative_base_directory(b_path: bytes, b_top_level_dir: bytes) -> bytes:
+        if b_path == b_top_level_dir:
+            return b''
+        common_prefix = os.path.commonpath((b_top_level_dir, b_path))
+        b_rel_base_dir = os.path.relpath(b_path, common_prefix)
+        return b_rel_base_dir.lstrip(os.path.sep.encode())
+
     def _walk(b_path, b_top_level_dir):
+        b_rel_base_dir = _discover_relative_base_directory(b_path, b_top_level_dir)
         for b_item in os.listdir(b_path):
             b_abs_path = os.path.join(b_path, b_item)
-            b_rel_base_dir = b'' if b_path == b_top_level_dir else b_path[len(b_top_level_dir) + 1:]
             b_rel_path = os.path.join(b_rel_base_dir, b_item)
             rel_path = to_text(b_rel_path, errors='surrogate_or_strict')
 

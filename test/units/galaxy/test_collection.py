@@ -39,10 +39,17 @@ def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
 
 
-@pytest.fixture()
-def collection_input(tmp_path_factory):
-    ''' Creates a collection skeleton directory for build tests '''
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+@pytest.fixture
+def collection_path_suffix(request):
+    """Return test collection path suffix or the default."""
+    return getattr(request, 'param', 'test-ÅÑŚÌβŁÈ Collections Input')
+
+
+@pytest.fixture
+def collection_input(tmp_path_factory, collection_path_suffix):
+    """Create a collection skeleton directory for build tests."""
+    test_dir = to_text(tmp_path_factory.mktemp(collection_path_suffix))
+
     namespace = 'ansible_namespace'
     collection = 'collection'
     skeleton = os.path.join(os.path.dirname(os.path.split(__file__)[0]), 'cli', 'test_data', 'collection_skeleton')
@@ -467,6 +474,14 @@ def test_build_existing_output_without_force(collection_input):
         collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'), to_text(output_dir, errors='surrogate_or_strict'), False)
 
 
+@pytest.mark.parametrize(
+    'collection_path_suffix',
+    (
+        'test-ÅÑŚÌβŁÈ Collections Input 1 with_slash/',
+        'test-ÅÑŚÌβŁÈ Collections Input 2 no slash',
+    ),
+    indirect=('collection_path_suffix', ),
+)
 def test_build_existing_output_with_force(collection_input):
     input_dir, output_dir = collection_input
 
