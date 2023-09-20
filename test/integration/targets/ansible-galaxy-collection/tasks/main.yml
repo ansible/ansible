@@ -135,6 +135,17 @@
   loop_control:
     loop_var: resolvelib_version
 
+- name: test choosing pinned pre-releases anywhere in the dependency tree
+  # This is a regression test for the case when the end-user does not
+  # explicitly allow installing pre-release collection versions, but their
+  # precise pins are still selected if met among the dependencies, either
+  # direct or transitive.
+  include_tasks: pinned_pre_releases_in_deptree.yml
+
+- name: test installing prereleases via scm direct requests
+  # In this test suite because the bug relies on the dep having versions on a Galaxy server
+  include_tasks: virtual_direct_requests.yml
+
 - name: publish collection with a dep on another server
   setup_collections:
     server: secondary
