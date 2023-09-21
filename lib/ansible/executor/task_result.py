@@ -7,6 +7,7 @@ __metaclass__ = type
 
 from ansible import constants as C
 from ansible.parsing.dataloader import DataLoader
+from ansible.template import Templar
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
@@ -75,6 +76,8 @@ class TaskResult:
     def needs_debugger(self, globally_enabled=False):
         _debugger = self._task_fields.get('debugger')
         _ignore_errors = C.TASK_DEBUGGER_IGNORE_ERRORS and self._task_fields.get('ignore_errors')
+        if Templar(None).is_template(_ignore_errors):
+            _ignore_errors = False
 
         ret = False
         if globally_enabled and ((self.is_failed() and not _ignore_errors) or self.is_unreachable()):

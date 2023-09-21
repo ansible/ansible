@@ -133,7 +133,10 @@ class TaskExecutor:
                             templar = Templar(loader=self._loader, variables=self._job_vars.copy().update(res))
                             item_ignore = item.pop('_ansible_ignore_errors')
                             if templar.is_template(item_ignore):
-                                item_ignore = templare.template(item_ignore)
+                                try:
+                                    item_ignore = templare.template(item_ignore, fail_on_undefined=True)
+                                except Exception as e:
+                                    item_ignore = False
                             if not res.get('failed'):
                                 res['failed'] = True
                                 res['msg'] = 'One or more items failed'
@@ -144,7 +147,10 @@ class TaskExecutor:
                             templar = Templar(loader=self._loader, variables=self._job_vars.copy().update(res))
                             item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
                             if templar.is_template(item_ignore_unreachable):
-                                item_ignore_unreachable = templare.template(item_ignore_unreachable)
+                                try:
+                                    item_ignore_unreachable = templare.template(item_ignore_unreachable, fail_on_undefined=True)
+                                except Exception as e:
+                                    item_ignore_unreachable = False
                             if not res.get('unreachable'):
                                 self._task.ignore_unreachable = item_ignore_unreachable
                             elif self._task.ignore_unreachable and not item_ignore_unreachable:

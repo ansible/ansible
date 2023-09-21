@@ -590,6 +590,8 @@ class StrategyBase:
             if task_result.is_failed():
                 role_ran = True
                 ignore_errors = original_task.ignore_errors
+                if Templar(None).is_template(ignore_errors):
+                    ignore_errors = False
                 if not ignore_errors:
                     # save the current state before failing it for later inspection
                     state_when_failed = iterator.get_state_for_host(original_host.name)

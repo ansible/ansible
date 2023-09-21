@@ -455,11 +455,11 @@ class FieldAttributeBase:
                 value = value.replace('%', '')
             value = float(value)
         elif attribute.isa == 'list':
-            if value is in NONES:
+            if value in NONES:
                 value = []
             elif not isinstance(value, list):
                 value = [value]
-            if attribute.listof is not in NONES:
+            if attribute.listof not in NONES:
                 for item in value:
                     if not isinstance(item, attribute.listof):
                         raise AnsibleParserError("the field '%s' should be a list of %s, "
@@ -556,7 +556,7 @@ class FieldAttributeBase:
                     continue
 
                 # and make sure the attribute is of the type it should be
-                if value is not in NONES:
+                if value not in NONES:
                     value = self.get_validated_value(name, attribute, value, templar)
 
                 # and assign the massaged value back to the attribute field
