@@ -1371,6 +1371,8 @@ def main():
                         del apt_pkg.Config['APT::Default-Release']
                     cache.open(progress=None)
                     retry_default_release = True
+                else:
+                    retry_default_release = False
 
             mtimestamp, updated_cache_time = get_updated_cache_time()
             # Cache valid time is default 0, which will update the cache if
@@ -1408,7 +1410,7 @@ def main():
                         updated_cache = True
                     updated_cache_time = post_cache_update_time
 
-                    if retry_default_release and not cache_primed:
+                    if retry_default_release:
                         cache_primed = True
                         continue
 
