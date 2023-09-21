@@ -1,0 +1,2 @@
+bugfixes:
+- Harden python templates for respawn and ansiballz around str literal quoting
