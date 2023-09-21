@@ -167,7 +167,7 @@ def _ansiballz_main():
     else:
         PY3 = True
 
-    ZIPDATA = """%(zipdata)s"""
+    ZIPDATA = %(zipdata)r
 
     # Note: temp_path isn't needed once we switch to zipimport
     def invoke_module(modlib_path, temp_path, json_params):
@@ -197,7 +197,7 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        runpy.run_module(mod_name='%(module_fqn)s', init_globals=dict(_module_fqn='%(module_fqn)s', _modlib_path=modlib_path),
+        runpy.run_module(mod_name=%(module_fqn)r, init_globals=dict(_module_fqn=%(module_fqn)r, _modlib_path=modlib_path),
                          run_name='__main__', alter_sys=True)
 
         # Ansible modules must exit themselves
@@ -288,7 +288,7 @@ def _ansiballz_main():
             basic._ANSIBLE_ARGS = json_params
 
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=True)
+            runpy.run_module(mod_name=%(module_fqn)r, init_globals=None, run_name='__main__', alter_sys=True)
 
             # Ansible modules must exit themselves
             print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -313,9 +313,9 @@ def _ansiballz_main():
         # store this in remote_tmpdir (use system tempdir instead)
         # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
         # (this helps ansible-test produce coverage stats)
-        temp_path = tempfile.mkdtemp(prefix='ansible_%(ansible_module)s_payload_')
+        temp_path = tempfile.mkdtemp(prefix='ansible_' + %(ansible_module)r + '_payload_')
 
-        zipped_mod = os.path.join(temp_path, 'ansible_%(ansible_module)s_payload.zip')
+        zipped_mod = os.path.join(temp_path, 'ansible_' + %(ansible_module)r + '_payload.zip')
 
         with open(zipped_mod, 'wb') as modlib:
             modlib.write(base64.b64decode(ZIPDATA))
@@ -338,7 +338,7 @@ if __name__ == '__main__':
 '''
 
 ANSIBALLZ_COVERAGE_TEMPLATE = '''
-        os.environ['COVERAGE_FILE'] = '%(coverage_output)s=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
+        os.environ['COVERAGE_FILE'] = %(coverage_output)r + '=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
 
         import atexit
 
@@ -348,7 +348,7 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
             print('{"msg": "Could not import `coverage` module.", "failed": true}')
             sys.exit(1)
 
-        cov = coverage.Coverage(config_file='%(coverage_config)s')
+        cov = coverage.Coverage(config_file=%(coverage_config)r)
 
         def atexit_coverage():
             cov.stop()
