@@ -1,0 +1,4 @@
+minor_changes:
+    - ansible-galaxy dependency resolution messages have changed the unexplained 'virtual' collection for the specific type ('scm', 'dir', etc) that is more user friendly
+bugfixes:
+    - ansible-galaxy error on dependency resolution will not error itself due to 'virtual' collections not having a name/namespace.
