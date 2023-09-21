@@ -75,7 +75,7 @@ namespace Ansible.Basic
             { "socket", null },
             { "string_conversion_action", null },
             { "syslog_facility", null },
-            { "target_log_info", null },
+            { "target_log_info", "TargetLogInfo"},
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
@@ -378,7 +378,7 @@ namespace Ansible.Basic
             }
             if (sanitise)
                 message = (string)RemoveNoLogValues(message, noLogValues);
-            message = String.Format("{0} - {1}", ModuleName, message);
+            message = String.Format("{0} {1}- {2}", ModuleName, TargetLogInfo, message);
 
             using (EventLog eventLog = new EventLog("Application"))
             {
