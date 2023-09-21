@@ -820,9 +820,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             changed = APT_GET_ZERO not in out
 
         data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
-    
+
         check_locked_error(out, err)
-        
+
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
@@ -1544,6 +1544,7 @@ def main():
 def check_locked_error(stdout, stderr):
     if ("lock was locked" in stderr or "lock was locked" in stdout):
         raise apt.cache.LockFailedException
+
 
 if __name__ == "__main__":
     main()
