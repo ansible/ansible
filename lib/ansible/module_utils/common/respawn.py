@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 
-from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def has_respawned():
