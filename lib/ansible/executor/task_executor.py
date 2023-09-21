@@ -130,7 +130,10 @@ class TaskExecutor:
                         if res['skipped'] and ('skipped' not in item or ('skipped' in item and not item['skipped'])):
                             res['skipped'] = False
                         if 'failed' in item and item['failed']:
+                            templar = Templar(loader=self._loader, variables=self._job_vars.copy().update(res))
                             item_ignore = item.pop('_ansible_ignore_errors')
+                            if templar.is_template(item_ignore):
+                                item_ignore = templare.template(item_ignore)
                             if not res.get('failed'):
                                 res['failed'] = True
                                 res['msg'] = 'One or more items failed'
@@ -138,7 +141,10 @@ class TaskExecutor:
                             elif self._task.ignore_errors and not item_ignore:
                                 self._task.ignore_errors = item_ignore
                         if 'unreachable' in item and item['unreachable']:
+                            templar = Templar(loader=self._loader, variables=self._job_vars.copy().update(res))
                             item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
+                            if templar.is_template(item_ignore_unreachable):
+                                item_ignore_unreachable = templare.template(item_ignore_unreachable)
                             if not res.get('unreachable'):
                                 self._task.ignore_unreachable = item_ignore_unreachable
                             elif self._task.ignore_unreachable and not item_ignore_unreachable:
