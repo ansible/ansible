@@ -155,6 +155,7 @@ $tests = @{
         "_ansible_shell_executable": "ignored",
         "_ansible_socket": "ignored",
         "_ansible_syslog_facility": "ignored",
+		"_ansible_target_log_info": "ignored",
         "_ansible_tmpdir": "$($m_tmpdir -replace "\\", "\\")",
         "_ansible_verbosity": 3,
         "_ansible_version": "2.8.0"
