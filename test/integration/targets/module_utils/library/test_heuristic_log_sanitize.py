@@ -27,6 +27,16 @@ def main():
             }
         },
     )
+
+    # This test module is testing that the data that will be used for logging
+    # to syslog properly sanitizes URLs that contain a password.
+    #
+    # As such, we build an expected sanitized string from the input, to
+    # compare it with the output from heuristic_log_sanitize.
+    #
+    # To test this in the same way that modules ultimately operate this test
+    # monkeypatches ansible.module_utils.basic to store the sanitized data
+    # for later inspection.
     data = module.params['data']
     left = data.rindex(':') + 1
     right = data.rindex('@')
