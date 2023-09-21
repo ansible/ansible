@@ -82,6 +82,7 @@ _ADDITIONAL_CHECKS = (
 
 # if adding boolean attribute, also add to PASS_BOOL
 # some of this dupes defaults from controller config
+# keep in sync with copy in lib/ansible/module_utils/csharp/Ansible.Basic.cs
 PASS_VARS = {
     'check_mode': ('check_mode', False),
     'debug': ('_debug', False),

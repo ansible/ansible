@@ -61,6 +61,7 @@ namespace Ansible.Basic
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
             // null values means no mapping, not used in Ansible.Basic.AnsibleModule
+			// keep in sync with python counterpart in lib/ansible/module_utils/common/parameters.py
             { "check_mode", "CheckMode" },
             { "debug", "DebugMode" },
             { "diff", "DiffMode" },
@@ -74,6 +75,7 @@ namespace Ansible.Basic
             { "socket", null },
             { "string_conversion_action", null },
             { "syslog_facility", null },
+            { "target_log_info", null },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
