@@ -30,6 +30,8 @@ from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
+NONES = (None, Sentinel)
+
 
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
     valid_metadata = {
@@ -453,11 +455,11 @@ class FieldAttributeBase:
                 value = value.replace('%', '')
             value = float(value)
         elif attribute.isa == 'list':
-            if value is None:
+            if value is in NONES:
                 value = []
             elif not isinstance(value, list):
                 value = [value]
-            if attribute.listof is not None:
+            if attribute.listof is not in NONES:
                 for item in value:
                     if not isinstance(item, attribute.listof):
                         raise AnsibleParserError("the field '%s' should be a list of %s, "
@@ -554,12 +556,8 @@ class FieldAttributeBase:
                     continue
 
                 # and make sure the attribute is of the type it should be
-                if value is not in (None, Sentinel):
-                    if not templar.is_template(value):
-                        value = self.get_validated_value(name, attribute, value, templar)
-                    else:
-                        # Could not evaluate, set to default or force latter evaluation
-                        setattr(self, name, Sentinel)
+                if value is not in NONES:
+                    value = self.get_validated_value(name, attribute, value, templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
