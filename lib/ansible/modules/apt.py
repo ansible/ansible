@@ -1365,7 +1365,10 @@ def main():
                 except SystemError as e:
                     if cache_primed or module.check_mode:
                         raise e
-                    del apt_pkg.config['APT::Default-Release']
+                    try:
+                        del apt_pkg.config['APT::Default-Release']
+                    except AttributeError:
+                        del apt_pkg.Config['APT::Default-Release']
                     cache.open(progress=None)
                     retry_default_release = True
 
