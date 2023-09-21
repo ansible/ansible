@@ -554,8 +554,12 @@ class FieldAttributeBase:
                     continue
 
                 # and make sure the attribute is of the type it should be
-                if value is not None:
-                    value = self.get_validated_value(name, attribute, value, templar)
+                if value is not in (None, Sentinel):
+                    if not templar.is_template(value):
+                        value = self.get_validated_value(name, attribute, value, templar)
+                    else:
+                        # Could not evaluate, set to default or force latter evaluation
+                        setattr(self, name, Sentinel)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
