@@ -392,7 +392,7 @@ LOG_VERBOSITY:
   ini:
   - {key: log_verbosity, section: defaults}
   type: int
-  version_added: "2.16"
+  version_added: "2.17"
 INVENTORY_UNPARSED_WARNING:
   name: Warning when no inventory files can be parsed, resulting in an implicit inventory with only localhost
   default: True
