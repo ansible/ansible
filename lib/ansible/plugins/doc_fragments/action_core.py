@@ -29,7 +29,7 @@ attributes:
       support: full
       platforms: all
     until:
-      description: Denotes if this action objeys until/retry/poll keywords
+      description: Denotes if this action obeys until/retry/poll keywords
       support: full
     tags:
       description: Allows for the 'tags' keyword to control the selection of this action for execution
