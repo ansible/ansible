@@ -67,6 +67,28 @@
       - >-
         "dev_and_stables_ns.dev_and_stables_name:1.2.3-dev0 was installed successfully"
         in select_pre_release_if_no_stable.stdout
+
+  - name: cleanup
+    file:
+      state: "{{ item }}"
+      path: "{{ galaxy_dir }}/ansible_collections"
+    loop:
+    - absent
+    - directory
+
+  - name: >-
+      request installing collection from range when only pre-releases
+      match the user request
+    command: >-
+      ansible-galaxy collection install
+      'dev_and_stables_ns.dev_and_stables_name:>=1.0.0,<1.2.4'
+      {{ galaxy_verbosity }}
+    register: select_pre_release_from_range_if_no_stable
+  - assert:
+      that:
+      - >-
+        "dev_and_stables_ns.dev_and_stables_name:1.2.3-dev0 was installed successfully"
+        in select_pre_release_from_range_if_no_stable.stdout
   always:
   - name: cleanup
     file:

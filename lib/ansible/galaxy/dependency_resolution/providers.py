@@ -296,26 +296,6 @@ class CollectionDependencyProviderBase(AbstractProvider):
         signatures = []
         extra_signature_sources = []  # type: list[str]
 
-        discarding_pre_releases_acceptable = any(
-            not is_pre_release(candidate_version)
-            for candidate_version, _src_server in coll_versions
-        )
-
-        # NOTE: The optimization of conditionally looping over the requirements
-        # NOTE: is used to skip having to compute the pinned status of all
-        # NOTE: requirements and apply version normalization to the found ones.
-        all_pinned_requirement_version_numbers = {
-            # NOTE: Pinned versions can start with a number, but also with an
-            # NOTE: equals sign. Stripping it at the beginning should be
-            # NOTE: enough. If there's a space after equals, the second strip
-            # NOTE: will take care of it.
-            # NOTE: Without this conversion, requirements versions like
-            # NOTE: '1.2.3-alpha.4' work, but '=1.2.3-alpha.4' don't.
-            requirement.ver.lstrip('=').strip()
-            for requirement in requirements
-            if requirement.is_pinned
-        } if discarding_pre_releases_acceptable else set()
-
         for version, src_server in coll_versions:
             tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
 
@@ -324,34 +304,6 @@ class CollectionDependencyProviderBase(AbstractProvider):
                     requirement, tmp_candidate,
                 )
                 if not candidate_satisfies_requirement:
-                    break
-
-                should_disregard_pre_release_candidate = (
-                    # NOTE: Do not discard pre-release candidates in the
-                    # NOTE: following cases:
-                    # NOTE:   * the end-user requested pre-releases explicitly;
-                    # NOTE:   * the candidate is a concrete artifact (e.g. a
-                    # NOTE:     Git repository, subdirs, a tarball URL, or a
-                    # NOTE:     local dir or file etc.);
-                    # NOTE:   * the candidate's pre-release version exactly
-                    # NOTE:     matches a version specifically requested by one
-                    # NOTE:     of the requirements in the current match
-                    # NOTE:     discovery round (i.e. matching a requirement
-                    # NOTE:     that is not a range but an explicit specific
-                    # NOTE:     version pin). This works when some requirements
-                    # NOTE:     request version ranges but others (possibly on
-                    # NOTE:     different dependency tree level depths) demand
-                    # NOTE:     pre-release dependency versions, even if those
-                    # NOTE:     dependencies are transitive.
-                    is_pre_release(tmp_candidate.ver)
-                    and discarding_pre_releases_acceptable
-                    and not (
-                        self._with_pre_releases
-                        or tmp_candidate.is_concrete_artifact
-                        or version in all_pinned_requirement_version_numbers
-                    )
-                )
-                if should_disregard_pre_release_candidate:
                     break
 
                 # FIXME
@@ -397,7 +349,70 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 )
             }
 
-        return list(preinstalled_candidates) + latest_matches
+        # NOTE: Following is the stage of postponed pre-release candidate
+        # NOTE: evaluation. It is necessary to allow the dependency resolver
+        # NOTE: select pre-release candidates if none of the candidate versions
+        # NOTE: that match all the requirements on this round, are stable
+        # NOTE: releases. Those pre-releases are only taken into account, if
+        # NOTE: there are no preinstalled candidates available that satisfy
+        # NOTE: said requirements.
+        prefer_avoiding_pre_releases = not self._with_pre_releases
+        preinstalled_candidates_satisfy_requirements = bool(
+            preinstalled_candidates,
+        )
+        discarding_pre_releases_acceptable = prefer_avoiding_pre_releases and (
+            preinstalled_candidates_satisfy_requirements or
+            any(
+                not is_pre_release(candidate.ver)
+                for candidate in latest_matches
+            )
+        )
+
+        # NOTE: The optimization of conditionally looping over the requirements
+        # NOTE: is used to skip having to compute the pinned status of all
+        # NOTE: requirements and apply version normalization to the found ones.
+        all_pinned_requirement_version_numbers = {
+            # NOTE: Pinned versions can start with a number, but also with an
+            # NOTE: equals sign. Stripping it at the beginning should be
+            # NOTE: enough. If there's a space after equals, the second strip
+            # NOTE: will take care of it.
+            # NOTE: Without this conversion, requirements versions like
+            # NOTE: '1.2.3-alpha.4' work, but '=1.2.3-alpha.4' don't.
+            requirement.ver.lstrip('=').strip()
+            for requirement in requirements
+            if requirement.is_pinned
+        } if discarding_pre_releases_acceptable else set()
+
+        def should_disregard_as_pre_release(candidate) -> bool:
+            # NOTE: Do not discard pre-release candidates in the
+            # NOTE: following cases:
+            # NOTE:   * the end-user requested pre-releases explicitly;
+            # NOTE:   * the candidate is a concrete artifact (e.g. a
+            # NOTE:     Git repository, subdirs, a tarball URL, or a
+            # NOTE:     local dir or file etc.);
+            # NOTE:   * the candidate's pre-release version exactly
+            # NOTE:     matches a version specifically requested by one
+            # NOTE:     of the requirements in the current match
+            # NOTE:     discovery round (i.e. matching a requirement
+            # NOTE:     that is not a range but an explicit specific
+            # NOTE:     version pin). This works when some requirements
+            # NOTE:     request version ranges but others (possibly on
+            # NOTE:     different dependency tree level depths) demand
+            # NOTE:     pre-release dependency versions, even if those
+            # NOTE:     dependencies are transitive.
+            return (
+                is_pre_release(candidate.ver)
+                and not candidate.is_concrete_artifact
+                and candidate.ver not in all_pinned_requirement_version_numbers
+            )
+
+        matching_non_preinstalled_candidates = [
+            candidate
+            for candidate in latest_matches
+            if not should_disregard_as_pre_release(candidate)
+        ] if discarding_pre_releases_acceptable else latest_matches
+
+        return list(preinstalled_candidates) + matching_non_preinstalled_candidates
 
     def is_satisfied_by(self, requirement, candidate):
         # type: (Requirement, Candidate) -> bool
