@@ -1,0 +1,2 @@
+known_issues:
+  - ansible-test - The ``pylint`` sanity test is not supported on Python 3.12. Use Python 3.10 or 3.11 instead.
