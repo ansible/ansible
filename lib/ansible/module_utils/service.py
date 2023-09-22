@@ -215,9 +215,10 @@ def daemonize(module, cmd):
                 for out in list(fds):
                     if out in rfd:
                         data = os.read(out.fileno(), chunk)
-                        if not data:
+                        if data:
+                            output[out] += to_bytes(data, errors=errors)
+                        else:
                             fds.remove(out)
-                        output[out] += data
             else:
                 break
 
@@ -248,7 +249,7 @@ def daemonize(module, cmd):
                 data = os.read(pipe[0], chunk)
                 if not data:
                     break
-                return_data += data
+                return_data += to_bytes(data, errors=errors)
 
         # Note: no need to specify encoding on py3 as this module sends the
         # pickle to itself (thus same python interpreter so we aren't mixing
