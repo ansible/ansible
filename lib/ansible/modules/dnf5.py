@@ -357,6 +357,8 @@ def is_installed(base, spec):
 
 
 def is_newer_version_installed(base, spec):
+    if "/" in spec:
+        spec = spec.split("/")[-1][:-4]
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
     except RuntimeError:
