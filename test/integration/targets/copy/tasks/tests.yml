@@ -92,6 +92,18 @@
       - "stat_results.stat.issock == false"
       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
 
+- name: Test copying content with force=false when the dest already exists
+  copy:
+    content: other_data
+    dest: "{{ remote_file }}"
+    mode: 0444
+    force: False
+  register: repeat_copy_result
+
+- name: Assert no changes are made
+  assert:
+    that: repeat_copy_result is not changed
+
 - name: Overwrite the file via same means
   copy:
     src: foo.txt
