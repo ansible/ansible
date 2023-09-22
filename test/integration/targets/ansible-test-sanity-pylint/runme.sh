@@ -2,6 +2,11 @@
 
 set -eu
 
+if [ "${ANSIBLE_TEST_PYTHON_VERSION}" = "3.12" ]; then
+    echo "skipping test, pylint is not supported on Python 3.12"
+    exit
+fi
+
 source ../collection/setup.sh
 
 # Create test scenarios at runtime that do not pass sanity tests.
