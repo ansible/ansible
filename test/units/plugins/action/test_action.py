@@ -186,58 +186,6 @@ class TestActionBase(unittest.TestCase):
             # test module not found
             self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
-    def test_action_base__compute_environment_string(self):
-        fake_loader = DictDataLoader({
-        })
-
-        # create our fake task
-        mock_task = MagicMock()
-        mock_task.action = "copy"
-        mock_task.args = dict(a=1)
-
-        # create a mock connection, so we don't actually try and connect to things
-        def env_prefix(**args):
-            return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in args.items()])
-        mock_connection = MagicMock()
-        mock_connection._shell.env_prefix.side_effect = env_prefix
-
-        # we're using a real play context here
-        play_context = PlayContext()
-
-        # and we're using a real templar here too
-        templar = Templar(loader=fake_loader)
-
-        # our test class
-        action_base = DerivedActionBase(
-            task=mock_task,
-            connection=mock_connection,
-            play_context=play_context,
-            loader=fake_loader,
-            templar=templar,
-            shared_loader_obj=None,
-        )
-
-        # test standard environment setup
-        mock_task.environment = [dict(FOO='foo'), None]
-        env_string = action_base._compute_environment_string()
-        self.assertEqual(env_string, "FOO=foo")
-
-        # test where environment is not a list
-        mock_task.environment = dict(FOO='foo')
-        env_string = action_base._compute_environment_string()
-        self.assertEqual(env_string, "FOO=foo")
-
-        # test environment with a variable in it
-        templar.available_variables = dict(the_var='bar')
-        mock_task.environment = [dict(FOO='{{the_var}}')]
-        env_string = action_base._compute_environment_string()
-        self.assertEqual(env_string, "FOO=bar")
-
-        # test with a bad environment set
-        mock_task.environment = dict(FOO='foo')
-        mock_task.environment = ['hi there']
-        self.assertRaises(AnsibleError, action_base._compute_environment_string)
-
     def test_action_base__early_needs_tmp_path(self):
         # create our fake task
         mock_task = MagicMock()

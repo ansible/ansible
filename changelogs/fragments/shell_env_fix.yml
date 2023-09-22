@@ -1,0 +1,2 @@
+bugfixes:
+  - shell plugins now correctly use config settings, until now it was being overriden by action base class forcing use of keyword.

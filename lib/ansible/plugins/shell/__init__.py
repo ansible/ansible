@@ -86,7 +86,11 @@ class ShellBase(AnsiblePlugin):
         return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, shlex.quote(text_type(v))) for k, v in kwargs.items()])
+        # get those set via plugin
+        merged = self.env.copy()
+        # add those set by caller
+        merged.update(kwargs)
+        return ' '.join(['%s=%s' % (k, shlex.quote(text_type(v))) for k, v in merged.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)

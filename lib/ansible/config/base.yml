@@ -569,9 +569,14 @@ DEFAULT_EXECUTABLE:
   description:
     - "This indicates the command to use to spawn a shell under for Ansible's execution needs on a target.
       Users may need to change this in rare instances when shell usage is constrained, but in most cases it may be left as is."
-  env: [{name: ANSIBLE_EXECUTABLE}]
+  env:
+    - name: ANSIBLE_SHELL_EXECUTABLE
+      version_added: '2.15'
+    - name: ANSIBLE_EXECUTABLE
   ini:
-  - {key: executable, section: defaults}
+    - {key: executable, section: defaults}
+  vars:
+    - name: ansible_shell_executable
 DEFAULT_FACT_PATH:
   name: local fact path
   description:
