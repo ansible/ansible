@@ -49,7 +49,7 @@ class IncludeRole(TaskInclude):
 
     # =================================================================================
     # ATTRIBUTES
-    public = NonInheritableFieldAttribute(isa='bool', default=False, private=False, always_post_validate=True)
+    public = NonInheritableFieldAttribute(isa='bool', default=None, private=False, always_post_validate=True)
 
     # private as this is a 'module options' vs a task property
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
@@ -135,10 +135,6 @@ class IncludeRole(TaskInclude):
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
-
-        # public default for imports is different
-        if 'public' not in ir.args and ir.action in C._ACTION_IMPORT_ROLE:
-            ir.args['public'] = True
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
