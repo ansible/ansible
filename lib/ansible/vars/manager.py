@@ -198,7 +198,7 @@ class VariableManager:
         if play:
             for role in play.get_roles():
                 # role from roles if explicitly public or if import_role and config defaults to public
-                if role.public or (role.public is None and role.static and not C.DEFAULT_PRIVATE_ROLE_VARS):
+                if role.public or (role.public is None and role.static and not C.DEFAULT_PRIVATE_ROLE_VARS and role._completed.get(to_text(host), False)):
                     all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
         if task:
             # set basedirs
