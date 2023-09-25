@@ -59,7 +59,7 @@ options:
   public:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play.
-      - Variables are exposed to the play at playbook parsing time, and available to earlier roles and tasks as well unlike.
+      - Variables are exposed to the play at playbook parsing time, and available to earlier roles and tasks as well unlike C(include_role).
       - The default depends on the configuration option C(DEFAULT_PRIVATE_ROLE_VARS) configuration option.
     type: bool
     default: yes
