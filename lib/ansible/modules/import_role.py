@@ -58,10 +58,9 @@ options:
     version_added: '2.11'
   public:
     description:
-      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to V(true)
-        the variables will be available to tasks following the C(include_role) task. This functionality differs from
-        standard variable exposure for roles listed under the C(roles) header or M(ansible.builtin.import_role) as they are exposed
-        to the play at playbook parsing time, and available to earlier roles and tasks as well.
+      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play.
+      - Variables are exposed to the play at playbook parsing time, and available to earlier roles and tasks as well unlike.
+      - The default depends on the configuration option C(DEFAULT_PRIVATE_ROLE_VARS) configuration option.
     type: bool
     default: yes
     version_added: '2.16'
