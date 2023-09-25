@@ -13,3 +13,4 @@ packaging
 # NOTE: When updating the upper bound, also update the latest version used
 # NOTE: in the ansible-galaxy-collection test suite.
 resolvelib >= 0.5.3, < 1.1.0  # dependency resolver used by ansible-galaxy
+cffi == 1.16.0rc1

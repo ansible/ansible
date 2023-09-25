@@ -1,1 +1,2 @@
 cryptography >= 2.5, < 3.4
+cffi == 1.16.0rc1 ; python_version >= '3.8'

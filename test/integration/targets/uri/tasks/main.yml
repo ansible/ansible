@@ -428,6 +428,7 @@
       pyopenssl == 17.5.0
       six == 1.13.0
       urllib3 == 1.23
+      cffi == 1.16.0rc1 ; python_version >= '3.8'
     dest: "{{ remote_constraints }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
