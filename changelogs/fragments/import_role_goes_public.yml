@@ -1,0 +1,2 @@
+minor_changes:
+  - import_role action now also get's a ``public`` option, but it does not work exactly the same as ``include_role``'s version.
