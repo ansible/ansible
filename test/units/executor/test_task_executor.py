@@ -584,7 +584,7 @@ class TestTaskExecutor(unittest.TestCase):
             pass  # does not set _sub_plugin attribute to something else than '{}'
 
         te._connection = LegacyPlugin()
-
+        context = MagicMock()
         with patch("ansible.executor.task_executor.start_connection"):
             te._get_action_handler_with_context = MagicMock(
                 return_value=get_with_context_result(mock_action, context)
@@ -592,3 +592,4 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
+        self.assertIsNotNone(res)
