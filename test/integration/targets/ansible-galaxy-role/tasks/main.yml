@@ -59,3 +59,5 @@
 
 - name: Uninstall invalid role
   command: ansible-galaxy role remove invalid-testrole
+
+- import_tasks: dir-traversal.yml
