@@ -119,3 +119,7 @@
       that:
       - optionaltest is success
       - optionaltest.msg == 'all missing optional imports behaved as expected'
+
+  - name: Test heuristic_log_sanitize
+    test_heuristic_log_sanitize:
+      data: https://user:pass@example.org/
