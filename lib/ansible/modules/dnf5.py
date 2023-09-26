@@ -357,9 +357,15 @@ def is_installed(base, spec):
 
 
 def is_newer_version_installed(base, spec):
+    # FIXME investigate whether this function can be replaced by dnf5's allow_downgrade option
+    if "/" in spec:
+        spec = spec.split("/")[-1]
+        if spec.endswith(".rpm"):
+            spec = spec[:-4]
+
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except RuntimeError:
+    except (RuntimeError, StopIteration):
         return False
     spec_name = spec_nevra.get_name()
     v = spec_nevra.get_version()

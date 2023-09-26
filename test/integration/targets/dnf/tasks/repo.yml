@@ -101,6 +101,30 @@
         that:
             - "'results' in dnf_result"
     # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file (higher version is already installed)
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+            - "'rc' in dnf_result"
+            - "'results' in dnf_result"
+    # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (downgrade)
       dnf:
         name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
