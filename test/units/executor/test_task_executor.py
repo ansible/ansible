@@ -549,8 +549,8 @@ class TestTaskExecutor(unittest.TestCase):
 
         class LegacyPlugin(NetworkConnectionBase):
 
-            def __init__(self,play_context):
-                super(LegacyPlugin,self).__init__(play_context=mock_play_context)
+            def __init__(self, play_context):
+                super(LegacyPlugin, self).__init__(play_context=mock_play_context)
 
                 # does not set _sub_plugin attribute to something else than '{}'
                 self._load_name = "LegacyPlugin"
@@ -568,22 +568,22 @@ class TestTaskExecutor(unittest.TestCase):
                 pass
 
             def get_option_and_origin(self, option, hostvars=None):
-                if option=='persistent_log_messages':
-                    return ( 'fromini', False )
-                elif option=='persistent_command_timeout':
-                    return ( 'fromini', 10 )
-                elif option=='environment':
-                    return ( 'fromini', [] )
-                elif option=='plugin_type':
-                    return ( 'fromini', 'connection' )
-                return super().get_option_and_origin(option,hostvars)
+                if option == 'persistent_log_messages':
+                    return ('fromini', False)
+                elif option == 'persistent_command_timeout':
+                    return ('fromini', 10)
+                elif option == 'environment':
+                    return ('fromini', [])
+                elif option == 'plugin_type':
+                    return ('fromini', 'connection')
+                return super().get_option_and_origin(option, hostvars)
 
         mock_legacy_connection = LegacyPlugin(play_context=mock_play_context)
         te._get_connection = MagicMock(return_value=mock_legacy_connection)
 
         mock_action.run.return_value = dict(ansible_facts=dict())
         try:
-          res = te._execute()
-          self.assertIsNotNone(res)
+            res = te._execute()
+            self.assertIsNotNone(res)
         except NotImplementedError:    # ignore 'an AnsibleCollectionFinder has not been
-          pass                         # installed in this process
+            pass                         # installed in this process
