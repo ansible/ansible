@@ -1,0 +1,2 @@
+bugfixes:
+  - Allow for searching handler subdir for included task via include_role (https://github.com/ansible/ansible/issues/81722)
