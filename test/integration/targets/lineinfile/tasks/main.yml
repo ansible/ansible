@@ -258,6 +258,27 @@
     that:
       - "result.stat.checksum == 'd4eeb07bdebab2d1cdb3ec4a3635afa2618ad4ea'"
 
+- name: try to remove the middle line again
+  lineinfile:
+    dest: "{{ remote_tmp_dir }}/test.txt"
+    state: absent
+    regexp: "^This is line 3$"
+  register: result
+
+- name: assert no change was made
+  assert:
+    that: result is not changed
+
+- name: use stat to verify no change was made
+  stat:
+    path: "{{ remote_tmp_dir }}/test.txt"
+  register: result
+
+- name: assert test checksum matches after the middle line was removed
+  assert:
+    that:
+      - "result.stat.checksum == 'd4eeb07bdebab2d1cdb3ec4a3635afa2618ad4ea'"
+
 - name: run a validation script that succeeds
   lineinfile:
     dest: "{{ remote_tmp_dir }}/test.txt"
