@@ -91,12 +91,8 @@
       vars:
         defined:
           play_and_import: play
-          play_and_import_and_role_vars: play
           play_and_include: play
-          play_and_include_and_role_vars: play
           play_and_roles: play
-          play_and_roles_and_role_vars: play
-          play_and_role_vars: play
           play_only: play
           default_only: default
           import_and_role_vars: role_vars
