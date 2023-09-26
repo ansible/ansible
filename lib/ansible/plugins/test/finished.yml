@@ -17,5 +17,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns V(True) if the aysnc task has finished, V(False) otherwise.
+    description: Returns V(True) if the async task has finished, V(False) otherwise.
     type: boolean
