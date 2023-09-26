@@ -29,7 +29,7 @@ def main():
     )
 
     # This test module is testing that the data that will be used for logging
-    # to syslog properly sanitizes URLs that contain a password.
+    # to syslog is properly sanitized when it includes URLs that contain a password.
     #
     # As such, we build an expected sanitized string from the input, to
     # compare it with the output from heuristic_log_sanitize.
