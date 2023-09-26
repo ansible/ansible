@@ -419,6 +419,7 @@ class Display(metaclass=Singleton):
         if logger and not screen_only:
             self.log(nocolor, color)
 
+    @proxy_display
     def log(self, msg: str, color: str | None = None, caplevel: int = 0):
 
         if self.log_verbosity > caplevel:
