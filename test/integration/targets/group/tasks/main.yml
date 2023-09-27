@@ -17,3 +17,4 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - import_tasks: tests.yml
+- import_tasks: test_create_group_min_max.yml
