@@ -1841,7 +1841,7 @@ def _resolve_depenency_map(
         offline=offline,
     )
     try:
-        return collection_dep_resolver.resolve(
+        dependency_map = collection_dep_resolver.resolve(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
         ).mapping
@@ -1895,3 +1895,24 @@ def _resolve_depenency_map(
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc
+    else:
+        if not allow_pre_release:
+            pre_release_candidates = tuple(
+                concrete_coll_pin
+                for concrete_coll_pin in dependency_map.values()
+                if concrete_coll_pin.is_pre_release
+            )
+            if pre_release_candidates:
+                log_msg_lines = [
+                    'The pre-release collections versions have been selected, '
+                    'being the only way to satisfy the dependency tree '
+                    'constraints, despite the user not requesting them '
+                    'globally:',
+                ]
+                for collection_candidate in pre_release_candidates:
+                    log_msg_lines.append(f'* {collection_candidate!s}')
+                log_msg_lines.append(pre_release_hint)
+                log_msg = '\n'.join(log_msg_lines)
+                display.warning(log_msg, formatted=True)
+
+        return dependency_map

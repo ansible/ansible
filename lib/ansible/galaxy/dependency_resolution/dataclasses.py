@@ -30,6 +30,7 @@ if t.TYPE_CHECKING:
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
+from ansible.galaxy.dependency_resolution.versioning import is_pre_release
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -584,6 +585,11 @@ class _ComputedReqKindsMixin:
             version_string == '*' or
             version_string.startswith(('<', '>', '!='))
         )
+
+    @property
+    def is_pre_release(self) -> bool:
+        """Return whether this candidate has a pre-release version."""
+        return is_pre_release(self.ver)
 
     @property
     def source_info(self):
