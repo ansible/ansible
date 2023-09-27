@@ -114,6 +114,8 @@
     apply:
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+        ANSIBLE_NOCOLOR: 1
+        ANSIBLE_FORCE_COLOR: 0
   loop:
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
