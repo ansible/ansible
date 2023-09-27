@@ -202,7 +202,7 @@ class VariableManager:
                 # role is not set
                 #    use config option as default
                 role_is_static_or_completed = role.static or role._completed.get(host.name, False)
-                if role.public and role_is_static_or_completed  or \
+                if role.public and role_is_static_or_completed or \
                    role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
                     all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
         if task:
@@ -395,7 +395,7 @@ class VariableManager:
             #    use config option as default
             for role in play.get_roles():
                 role_is_static_or_completed = role.static or role._completed.get(host.name, False)
-                if role.public and role_is_static_or_completed  or \
+                if role.public and role_is_static_or_completed or \
                    role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
 
                     all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)

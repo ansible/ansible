@@ -63,7 +63,7 @@ options:
       - The default depends on the configuration option C(DEFAULT_PRIVATE_ROLE_VARS) configuration option.
     type: bool
     default: yes
-    version_added: '2.16'
+    version_added: '2.17'
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
