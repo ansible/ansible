@@ -64,20 +64,20 @@ options:
         version_added: "2.8"
     gid_min:
         description:
-            - Sets the GID_MIN value for group creation
-            - Overwrites /etc/login.defs default value
+            - Sets the GID_MIN value for group creation.
+            - Overwrites /etc/login.defs default value.
             - Currently supported on Linux. Does nothing when used with other platforms.
             - Requires O(local) is omitted or V(False).
         type: int
-        version_added: "2.17"
+        version_added: "2.18"
     gid_max:
         description:
-            - Sets the GID_MAX value for group creation
-            - Overwrites /etc/login.defs default value
+            - Sets the GID_MAX value for group creation.
+            - Overwrites /etc/login.defs default value.
             - Currently supported on Linux. Does nothing when used with other platforms.
             - Requires O(local) is omitted or V(False).
         type: int
-        version_added: "2.17"
+        version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:

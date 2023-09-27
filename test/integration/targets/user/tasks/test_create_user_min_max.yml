@@ -71,5 +71,3 @@
     local: true
   register: uidmaxlocaluser_test_1
   failed_when: not uidmaxlocaluser_test_1.failed
-
-

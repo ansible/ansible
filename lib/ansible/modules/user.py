@@ -277,20 +277,20 @@ options:
         version_added: "2.18"
     uid_min:
         description:
-            - Sets the UID_MIN value for user creation
-            - Overwrites /etc/login.defs default value
+            - Sets the UID_MIN value for user creation.
+            - Overwrites /etc/login.defs default value.
             - Currently supported on Linux. Does nothing when used with other platforms.
             - Requires O(local) is omitted or V(False).
         type: int
-        version_added: "2.17"
+        version_added: "2.18"
     uid_max:
         description:
-            - Sets the UID_MAX value for user creation
-            - Overwrites /etc/login.defs default value
+            - Sets the UID_MAX value for user creation.
+            - Overwrites /etc/login.defs default value.
             - Currently supported on Linux. Does nothing when used with other platforms.
             - Requires O(local) is omitted or V(False).
         type: int
-        version_added: "2.17"
+        version_added: "2.18"
 
 extends_documentation_fragment: action_common_attributes
 attributes:
