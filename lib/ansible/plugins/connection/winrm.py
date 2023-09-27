@@ -170,6 +170,7 @@ import json
 import tempfile
 import shlex
 import subprocess
+import time
 
 from inspect import getfullargspec
 from urllib.parse import urlunsplit
@@ -197,6 +198,7 @@ from ansible.utils.display import Display
 try:
     import winrm
     from winrm import Response
+    from winrm.exceptions import WinRMError, WinRMOperationTimeoutError
     from winrm.protocol import Protocol
     import requests.exceptions
     HAS_WINRM = True
@@ -491,6 +493,43 @@ class Connection(ConnectionBase):
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
+    def _winrm_write_stdin(self, command_id, stdin_iterator):
+        for (data, is_last) in stdin_iterator:
+            for attempt in range(1, 4):
+                try:
+                    self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+
+                except WinRMOperationTimeoutError:
+                    # A WSMan OperationTimeout can be received for a Send
+                    # operation when the server is under severe load. On manual
+                    # testing the input is still processed and it's safe to
+                    # continue. As the calling method still tries to wait for
+                    # the proc to end if this failed it shouldn't hurt to just
+                    # treat this as a warning.
+                    display.warning(
+                        "WSMan OperationTimeout during send input, attempting to continue. "
+                        "If this continues to occur, try increasing the connection_timeout "
+                        "value for this host."
+                    )
+                    if not is_last:
+                        time.sleep(5)
+
+                except WinRMError as e:
+                    # Error 170 == ERROR_BUSY. This could be the result of a
+                    # timed out Send from above still being processed on the
+                    # server. Add a 5 second delay and try up to 3 times before
+                    # fully giving up.
+                    # pywinrm does not expose the internal WSMan fault details
+                    # through an actual object but embeds it as a repr.
+                    if attempt == 3 or "'wsmanfault_code': '170'" not in str(e):
+                        raise
+
+                    display.warning(f"WSMan send failed on attempt {attempt} as the command is busy, trying to send data again")
+                    time.sleep(5)
+                    continue
+
+                break
+
     def _winrm_send_input(self, protocol, shell_id, command_id, stdin, eof=False):
         rq = {'env:Envelope': protocol._get_soap_header(
             resource_uri='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd',
@@ -520,8 +559,7 @@ class Connection(ConnectionBase):
 
             try:
                 if stdin_iterator:
-                    for (data, is_last) in stdin_iterator:
-                        self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+                    self._winrm_write_stdin(command_id, stdin_iterator)
 
             except Exception as ex:
                 display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
