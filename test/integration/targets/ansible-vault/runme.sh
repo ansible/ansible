@@ -358,8 +358,8 @@ vaulted_var="$(ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VA
 grep 'the_var_from_stdin' <<< "${vaulted_var}"
 
 # from stdin and positional args
-multiple_vars="$(ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_not_from_stdin" --stdin-name "the_var_from_stdin" < "${TEST_FILE}")"
-grep -e 'the_var_from_stdin' -e 'the_var_not_from_stdin' <<< "${multiple_vars}"
+multiple_vars="$(ansible-vault encrypt_string not_secret "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_not_from_stdin" --stdin-name "the_var_from_stdin" < "${TEST_FILE}")"
+grep 'the_var_from_stdin' <<< "${multiple_vars}" && grep 'the_var_not_from_stdin' <<< "${multiple_vars}"
 
 # write to file
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "blippy" "a test string names blippy" --output "${MYTMPDIR}/enc_string_test_file"
