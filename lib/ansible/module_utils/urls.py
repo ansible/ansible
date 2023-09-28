@@ -774,8 +774,12 @@ def extract_pem_certs(b_data):
 def _py2_get_param(headers, param, header='content-type'):
     m = httplib.HTTPMessage(io.StringIO())
     cd = headers.getheader(header) or ''
-    m.plisttext = cd[cd.index(';'):]
-    m.parseplist()
+    try:
+        m.plisttext = cd[cd.index(';'):]
+        m.parseplist()
+    except ValueError:
+        return None
+
     return m.getparam(param)
 
 
