@@ -6,4 +6,4 @@ PyYAML==6.0.1
 rstcheck==5.0.0
 semantic-version==2.10.0
 types-docutils==0.18.3
-typing_extensions==4.7.1
+typing_extensions==4.8.0
