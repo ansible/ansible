@@ -771,6 +771,14 @@ def extract_pem_certs(b_data):
         yield match.group(0)
 
 
+def _py2_get_param(headers, param, header='content-type'):
+    m = httplib.HTTPMessage(io.StringIO())
+    cd = headers.getheader(header) or ''
+    m.plisttext = cd[cd.index(';'):]
+    m.parseplist()
+    return m.getparam(param)
+
+
 def get_response_filename(response):
     url = response.geturl()
     path = urlparse(url)[2]
@@ -778,7 +786,12 @@ def get_response_filename(response):
     if filename:
         filename = unquote(filename)
 
-    return response.headers.get_param('filename', header='content-disposition') or filename
+    if PY2:
+        get_param = functools.partial(_py2_get_param, response.headers)
+    else:
+        get_param = response.headers.get_param
+
+    return get_param('filename', header='content-disposition') or filename
 
 
 def parse_content_type(response):
