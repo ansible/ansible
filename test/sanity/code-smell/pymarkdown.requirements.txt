@@ -5,5 +5,5 @@ pymarkdownlnt==0.9.13.4
 PyYAML==6.0.1
 tomli==2.0.1
 toolz==0.12.0
-typing_extensions==4.7.1
+typing_extensions==4.8.0
 wcwidth==0.2.6
