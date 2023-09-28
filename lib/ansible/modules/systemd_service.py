@@ -15,6 +15,8 @@ version_added: "2.2"
 short_description:  Manage systemd units
 description:
     - Controls systemd units (services, timers, and so on) on remote hosts.
+    - M(ansible.builtin.systemd) is renamed to M(ansible.builtin.systemd_service) to better reflect the scope of the module.
+      M(ansible.builtin.systemd) is kept as an alias for backward compatibility.
 options:
     name:
         description:
@@ -32,7 +34,7 @@ options:
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Whether the unit should start on boot. B(At least one of state and enabled are required.)
+            - Whether the unit should start on boot. B(At least one of the states and enabled are required.)
         type: bool
     force:
         description:
@@ -64,7 +66,7 @@ options:
             - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
             - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
-            - The user must have access, normally given via setting the C(XDG_RUNTIME_DIR) variable, see example below.
+            - The user must have access, normally given via setting the C(XDG_RUNTIME_DIR) variable, see the example below.
 
         type: str
         choices: [ system, user, global ]
@@ -89,9 +91,9 @@ notes:
     - Since 2.4, one of the following options is required O(state), O(enabled), O(masked), O(daemon_reload), (O(daemon_reexec) since 2.8),
       and all except O(daemon_reload) and (O(daemon_reexec) since 2.8) also require O(name).
     - Before 2.4 you always required O(name).
-    - Globs are not supported in name, i.e C(postgres*.service).
+    - Globs are not supported in name, in other words, C(postgres*.service).
     - The service names might vary by specific OS/distribution
-    - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with service state.
+    - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with the service state.
       It has been reported that systemctl can behave differently depending on the order of operations if you do the same manually.
 requirements:
     - A system managed by systemd.
