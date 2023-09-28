@@ -340,6 +340,19 @@ class GalaxyCLI(CLI):
                                      help='A file containing a list of collections to be downloaded.')
         download_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
                                      help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
+        download_parser.add_argument('--forbid-inevitable-pre-releases',
+                                     dest='forbid_inevitable_pre_releases',
+                                     action='store_true',
+                                     help='Prevent any pre-release '
+                                     'collection versions from being '
+                                     'considered. Even if it is the last '
+                                     'hope. By default, pre-releases that '
+                                     'are the only way to satisfy the '
+                                     'requirement can be selected when '
+                                     'there are no stable candidates '
+                                     'available that could satisfy the '
+                                     'requirements.',
+                                     )
 
     def add_init_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -523,6 +536,19 @@ class GalaxyCLI(CLI):
                                         help='A file containing a list of collections to be installed.')
             install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
                                         help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
+            install_parser.add_argument('--forbid-inevitable-pre-releases',
+                                        dest='forbid_inevitable_pre_releases',
+                                        action='store_true',
+                                        help='Prevent any pre-release '
+                                        'collection versions from being '
+                                        'considered. Even if it is the last '
+                                        'hope. By default, pre-releases that '
+                                        'are the only way to satisfy the '
+                                        'requirement can be selected when '
+                                        'there are no stable candidates '
+                                        'available that could satisfy the '
+                                        'requirements.',
+                                        )
             install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
                                         help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
             install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
@@ -1074,6 +1100,7 @@ class GalaxyCLI(CLI):
         download_collections(
             requirements, download_path, self.api_servers, no_deps,
             context.CLIARGS['allow_pre_release'],
+            forbid_inevitable_pre_releases=context.CLIARGS['forbid_inevitable_pre_releases'],
             artifacts_manager=artifacts_manager,
         )
 
@@ -1424,6 +1451,10 @@ class GalaxyCLI(CLI):
 
         # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
         allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
+        forbid_inevitable_pre_releases = context.CLIARGS.get(
+            'forbid_inevitable_pre_releases',
+            False,
+        )
         upgrade = context.CLIARGS.get('upgrade', False)
 
         collections_path = C.COLLECTIONS_PATHS
@@ -1453,6 +1484,7 @@ class GalaxyCLI(CLI):
             requirements, output_path, self.api_servers, ignore_errors,
             no_deps, force, force_with_deps, upgrade,
             allow_pre_release=allow_pre_release,
+            forbid_inevitable_pre_releases=forbid_inevitable_pre_releases,
             artifacts_manager=artifacts_manager,
             disable_gpg_verify=disable_gpg_verify,
             offline=context.CLIARGS.get('offline', False),
