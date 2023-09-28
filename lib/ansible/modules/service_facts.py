@@ -94,7 +94,7 @@ import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
+from ansible.module_utils.service import is_systemd_managed
 
 
 class BaseService(object):
@@ -245,7 +245,7 @@ class SystemctlScanService(BaseService):
     BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
 
     def systemd_enabled(self):
-        return ServiceMgrFactCollector.is_systemd_managed(self.module)
+        return is_systemd_managed(self.module)
 
     def _list_from_units(self, systemctl_path, services):
 
