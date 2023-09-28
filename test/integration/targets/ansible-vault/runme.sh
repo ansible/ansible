@@ -351,15 +351,13 @@ ansible-vault encrypt_string "$@" --vault-id "${NEW_VAULT_PASSWORD}" --name "bli
 # from stdin
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" < "${TEST_FILE}"
 
-vaulted_var="$(ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --stdin-name "the_var_from_stdin" < "${TEST_FILE}")"
-grep 'the_var_from_stdin' <<< "${vaulted_var}"
+ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --stdin-name "the_var_from_stdin" < "${TEST_FILE}" | grep 'the_var_from_stdin'
 
-vaulted_var="$(ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_from_stdin" < "${TEST_FILE}")"
-grep 'the_var_from_stdin' <<< "${vaulted_var}"
+ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_from_stdin" < "${TEST_FILE}" | grep -vz 'the_var_from_stdin'
 
 # from stdin and positional args
-multiple_vars="$(ansible-vault encrypt_string not_secret "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_not_from_stdin" --stdin-name "the_var_from_stdin" < "${TEST_FILE}")"
-grep 'the_var_from_stdin' <<< "${multiple_vars}" && grep 'the_var_not_from_stdin' <<< "${multiple_vars}"
+ansible-vault encrypt_string not_secret "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_not_from_stdin" --stdin-name "the_var_from_stdin" < "${TEST_FILE}" | tee out.txt
+grep out.txt -e 'the_var_from_stdin' && grep out.txt -e 'the_var_not_from_stdin'
 
 # write to file
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "blippy" "a test string names blippy" --output "${MYTMPDIR}/enc_string_test_file"

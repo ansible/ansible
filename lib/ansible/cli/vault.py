@@ -141,13 +141,6 @@ class VaultCLI(CLI):
             if '-' in options.args or not options.args or options.encrypt_string_stdin_name:
                 self.encrypt_string_read_stdin = True
 
-                # If we're going to read 1 arg from stdin implicitly (no command line args),
-                # set --stdin-name to the first --name if it wasn't provided
-                if not options.encrypt_string_stdin_name and not options.args and options.encrypt_string_names:
-                    options.encrypt_string_stdin_name = options.encrypt_string_names[0]
-                    if len(options.encrypt_string_names) > 1:
-                        display.display('The number of --name options do not match the number of args.', stderr=True)
-
             # TODO: prompting from stdin and reading from stdin seem mutually exclusive, but verify that.
             if options.encrypt_string_prompt and self.encrypt_string_read_stdin:
                 raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
@@ -361,6 +354,8 @@ class VaultCLI(CLI):
                 display.display('The last named variable will be "%s". The rest will not have'
                                 ' names.' % context.CLIARGS['encrypt_string_names'][-1],
                                 stderr=True)
+            elif not name_and_text_list and context.CLIARGS['encrypt_string_names']:
+                display.display("No command line arguments provided to use with --name. To name an argument from stdin use --stdin-name.", stderr=True)
 
             # Add the rest of the args without specifying a name
             for extra_arg in args[len(name_and_text_list):]:
