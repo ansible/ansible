@@ -329,7 +329,7 @@ class VaultCLI(CLI):
                 display.display("Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a newline)", stderr=True)
 
             stdin_text = sys.stdin.read()
-            if stdin_text.rstrip() == '':
+            if stdin_text == '':
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
 
             if sys.stdout.isatty() and not stdin_text.endswith("\n"):

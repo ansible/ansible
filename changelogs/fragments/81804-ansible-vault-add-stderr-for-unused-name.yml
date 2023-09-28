@@ -1,3 +1,2 @@
 bugfixes:
   - ansible-vault encrypt_string - give informative message when --name is provided and won't be used.
-  - ansible-vault encrypt_string - remove trailing whitespace before determining whether there is anything to encrypt.
