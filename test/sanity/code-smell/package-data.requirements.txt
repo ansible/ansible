@@ -13,5 +13,5 @@ semantic-version==2.10.0
 setuptools==66.1.0
 tomli==2.0.1
 types-docutils==0.18.3
-typing_extensions==4.7.1
+typing_extensions==4.8.0
 wheel==0.41.2
