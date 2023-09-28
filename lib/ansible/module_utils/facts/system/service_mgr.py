@@ -51,6 +51,16 @@ class ServiceMgrFactCollector(BaseFactCollector):
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
                     return True
+
+            # If all else fails, check if init is the systemd command, using comm as cmdline could be symlink
+            try:
+                with open('/proc/1/comm', 'r') as init_proc:
+                    init = init_proc.readline().strip()
+                    return init == 'systemd'
+            except IOError:
+                # If comm doesn't exist, old kernel, no systemd
+                return False
+
         return False
 
     @staticmethod
