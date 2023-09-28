@@ -102,6 +102,40 @@
       - >-
         "* dev_and_stables_ns.dev_and_stables_name:1.2.3-dev0"
         in select_pre_release_from_range_if_no_stable.stderr_lines
+
+  - name: cleanup
+    file:
+      state: "{{ item }}"
+      path: "{{ galaxy_dir }}/ansible_collections"
+    loop:
+    - absent
+    - directory
+
+  - name: >-
+      request installing collection from range when only pre-releases
+      match the user request
+    command: >-
+      ansible-galaxy collection install
+      --forbid-inevitable-pre-releases
+      'dev_and_stables_ns.dev_and_stables_name:>=1.0.0,<1.2.4'
+      {{ galaxy_verbosity }}
+    ignore_errors: yes
+    register: forbid_selected_pre_release_from_range_if_no_stable
+  - assert:
+      that:
+      - forbid_selected_pre_release_from_range_if_no_stable is failed
+      - >-
+        "was installed successfully"
+        not in forbid_selected_pre_release_from_range_if_no_stable.stdout_lines
+      - >-
+        'ERROR! ' ~
+        'The pre-release collections versions have been selected, ' ~
+        'being the only way to satisfy the dependency tree ' ~
+        'constraints, despite the user not requesting them globally:'
+        in forbid_selected_pre_release_from_range_if_no_stable.stderr_lines
+      - >-
+        "* dev_and_stables_ns.dev_and_stables_name:1.2.3-dev0"
+        in forbid_selected_pre_release_from_range_if_no_stable.stderr_lines
   always:
   - name: cleanup
     file:
