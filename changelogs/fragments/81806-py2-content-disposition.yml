@@ -1,0 +1,3 @@
+bugfixes:
+- uri/urls - Add compat function to handle the ability to parse the filename from a Content-Disposition header
+  (https://github.com/ansible/ansible/issues/81806)
