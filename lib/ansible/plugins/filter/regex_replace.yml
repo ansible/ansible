@@ -28,6 +28,16 @@ DOCUMENTATION:
       description: Force the search to be case insensitive if V(True), case sensitive otherwise.
       type: bool
       default: no
+    count:
+      description: Maximum number of pattern occurrences to replace. If zero, replace all occurrences.
+      type: int
+      default: 0
+      version_added: "2.17"
+    mandatory_count:
+      description: Except a certain number of replacements. Raises an error otherwise. If zero, ignore.
+      type: int
+      default: 0
+      version_added: "2.17"
 
 EXAMPLES: |
 
@@ -45,6 +55,9 @@ EXAMPLES: |
   # on inline regex flags
   # piratecomment => '#CAR\n#tar\nfoo\n#bar\n'
   piratecomment: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_replace('(?im)^(.ar)$', '#\\1') }}"
+
+  # 'foo=bar=baz' => 'foo:bar=baz'
+  key_value: "{{ 'foo=bar=baz' | regex_replace('=', ':', count=1) }}"
 
 RETURN:
   _value:
