@@ -392,19 +392,20 @@ def _get_cmd_options(module, cmd):
 def _get_packages(module, pip, chdir):
     '''Return results of pip command to get packages.'''
     # Try 'pip list' command first.
-    command = pip + ['list', '--format=freeze']
+    list_command = pip + ['list', '--format=freeze']
     locale = get_best_parsable_locale(module)
     lang_env = {'LANG': locale, 'LC_ALL': locale, 'LC_MESSAGES': locale}
-    rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
+    _rc, list_out, list_err = module.run_command(list_command, cwd=chdir, environ_update=lang_env)
 
-    # If there was an error (pip version too old) then use 'pip freeze'.
+    # Use also pip freeze, since pip list does not show the commit used
+    # in case of installation from VCS.
+    # We keep the already existing behaviour of failing only if the freeze command fails
+    freeze_command = pip + ['freeze']
+    rc, freeze_out, freeze_err = module.run_command(freeze_command, cwd=chdir)
     if rc != 0:
-        command = pip + ['freeze']
-        rc, out, err = module.run_command(command, cwd=chdir)
-        if rc != 0:
-            _fail(module, command, out, err)
+        _fail(module, freeze_command, freeze_out, freeze_err)
 
-    return ' '.join(command), out, err
+    return ' '.join(list_command + [";"] + freeze_command), list_out + freeze_out, list_err + freeze_err
 
 
 def _is_present(module, req, installed_pkgs, pkg_command):
@@ -799,7 +800,7 @@ def main():
             )
 
         if module.check_mode:
-            if extra_args or requirements or state == 'latest' or not name:
+            if extra_args or requirements or state == 'latest' or not name or state== "forcereinstall":
                 module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
@@ -849,7 +850,7 @@ def main():
                 changed = 'Successfully installed' in out_pip
             else:
                 dummy, out_freeze_after, dummy = _get_packages(module, pip, chdir)
-                changed = out_freeze_before != out_freeze_after
+                changed = out_freeze_before != out_freeze_after or state == "forcereinstall"
 
         changed = changed or venv_created
 
