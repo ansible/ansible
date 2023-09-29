@@ -27,7 +27,6 @@ from ansible.module_utils.common.text.converters import to_native
 
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.service import is_systemd_managed
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -44,7 +43,15 @@ class ServiceMgrFactCollector(BaseFactCollector):
 
     @staticmethod
     def is_systemd_managed(module):
-        return is_systemd_managed(module)
+        # tools must be installed
+        if module.get_bin_path('systemctl'):
+
+            # this should show if systemd is the boot init system, if checking init failed to mark as systemd
+            # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
+            for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
+                if os.path.exists(canary):
+                    return True
+        return False
 
     @staticmethod
     def is_systemd_managed_offline(module):
