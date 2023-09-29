@@ -109,6 +109,19 @@
     that:
         - "not dnf_result.changed"
 
+- name: install sos again with empty string enablerepo
+  dnf:
+    name: sos
+    state: present
+    enablerepo: ""
+  register: dnf_result
+
+- name: verify no change on third install with empty string enablerepo
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
 # Multiple packages
 - name: uninstall sos and dos2unix
   dnf: name=sos,dos2unix state=removed
