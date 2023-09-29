@@ -241,7 +241,7 @@ options:
         registered to RHN or an RHN Satellite, repoquery allows for querying
         all channels assigned to the system. It is also required to use the
         'list' parameter.
-      - "NOTE: This will run and be logged as a separate yum transation which
+      - "NOTE: This will run and be logged as a separate yum transaction, translation which
         takes place before any other installation or removal."
       - "NOTE: This will use the system's default enabled repositories without
         regard for disablerepo/enablerepo given to the module."

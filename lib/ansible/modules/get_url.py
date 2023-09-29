@@ -261,7 +261,7 @@ EXAMPLES = r'''
 
 - name: Download file from a file path
   ansible.builtin.get_url:
-    url: file:///tmp/afile.txt
+    url: file:///tmp/a_file.txt
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.

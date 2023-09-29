@@ -18,7 +18,7 @@ DOCUMENTATION:
     decoration:
       description: Indicator for comment or intermediate comment depending on the style.
       type: string
-    begining:
+    beginning:
       description: Indicator of the start of a comment block, only available for styles that support multiline comments.
       type: string
     end:
