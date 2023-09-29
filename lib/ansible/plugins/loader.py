@@ -1173,24 +1173,22 @@ class Jinja2Loader(PluginLoader):
             # check deprecations
             deprecation_entry = routing_entry.get('deprecation')
             if deprecation_entry:
-                warning_text = deprecation_entry.get('warning_text')
+                warning_text = deprecation_entry.get('warning_text') or ''
                 removal_date = deprecation_entry.get('removal_date')
                 removal_version = deprecation_entry.get('removal_version')
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" is deprecated'.format(self.type, key)
+                warning_text = f'{self.type.title()} "{key}" has been deprecated.{" " if warning_text else ""}{warning_text}'
 
                 display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
 
             # check removal
             tombstone_entry = routing_entry.get('tombstone')
             if tombstone_entry:
-                warning_text = tombstone_entry.get('warning_text')
+                warning_text = tombstone_entry.get('warning_text') or ''
                 removal_date = tombstone_entry.get('removal_date')
                 removal_version = tombstone_entry.get('removal_version')
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" has been removed'.format(self.type, key)
+                warning_text = f'{self.type.title()} "{key}" has been removed.{" " if warning_text else ""}{warning_text}'
 
                 exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
                                                           collection_name=acr.collection, removed=True)
