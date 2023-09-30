@@ -49,12 +49,12 @@ options:
     - If O(dest) is a relative path, the starting directory is determined by the remote host.
     - If O(src) and O(dest) are files, the parent directory of O(dest) is not created and the task fails if it does not already exist.
     type: path
-    required: true
+    required: yes
   backup:
     description:
     - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: false
+    default: no
     version_added: '0.7'
   force:
     description:
@@ -62,7 +62,7 @@ options:
     - If V(true), the remote file will be replaced when contents are different than the source.
     - If V(false), the file will only be transferred if the destination does not exist.
     type: bool
-    default: true
+    default: yes
     version_added: '1.1'
   mode:
     description:
@@ -98,19 +98,19 @@ options:
     - O(remote_src) only works with O(mode=preserve) as of version 2.6.
     - Autodecryption of files does not work when O(remote_src=yes).
     type: bool
-    default: false
+    default: no
     version_added: '2.0'
   follow:
     description:
     - This flag indicates that filesystem links in the destination, if they exist, should be followed.
     type: bool
-    default: false
+    default: no
     version_added: '1.8'
   local_follow:
     description:
     - This flag indicates that filesystem links in the source tree, if they exist, should be followed.
     type: bool
-    default: true
+    default: yes
     version_added: '2.4'
   checksum:
     description:
@@ -190,7 +190,7 @@ EXAMPLES = r'''
     owner: root
     group: root
     mode: '0644'
-    backup: true
+    backup: yes
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
   ansible.builtin.copy:
@@ -202,7 +202,7 @@ EXAMPLES = r'''
   ansible.builtin.copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
-    remote_src: true
+    remote_src: yes
     validate: /usr/sbin/visudo -csf %s
 
 - name: Copy using inline content
@@ -214,13 +214,13 @@ EXAMPLES = r'''
   ansible.builtin.copy:
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
-    follow: true
+    follow: yes
 
 - name: If follow=no, /path/to/link will become a file and be overwritten by contents of foo.conf
   ansible.builtin.copy:
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
-    follow: false
+    follow: no
 '''
 
 RETURN = r'''
