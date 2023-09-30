@@ -63,6 +63,31 @@
 - command: "{{ ansible_python.executable }} -c 'import {{ item }}'"
   loop: '{{ pip_test_modules }}'
 
+# force reinstall packages in check mode and ensure we recorded a change
+- name: forcereinstall packages in check mode
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: forcereinstall
+  check_mode: true
+  register: forcereinstall_result_check_mode
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "forcereinstall_result_check_mode is changed"
+
+# force reinstall packages for real and ensure we recorded a change
+- name: forcereinstall packages
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: forcereinstall
+  register: forcereinstall_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "forcereinstall_result is changed"
+
 # now remove it to test uninstallation of a package we are sure is installed
 
 - name: now uninstall so we can see that a change occurred
@@ -128,6 +153,45 @@
   assert:
     that:
       - "not (url_installed is changed)"
+
+- name: install the same module from url pointing to a specific commit
+  pip:
+    name: "git+https://github.com/dvarrazzo/pyiso8601@8bfaaa3e5c63a9eda4449e606786802f4e95ba60#egg=iso8601"
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    editable: true
+    state: latest
+  register: url_installed_specific_commit
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "url_installed_specific_commit is changed"
+
+- name: install the same module from url pointing to the same specific commit
+  pip:
+    name: "git+https://github.com/dvarrazzo/pyiso8601@8bfaaa3e5c63a9eda4449e606786802f4e95ba60#egg=iso8601"
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    editable: true
+    state: latest
+  register: url_installed_specific_commit_again
+
+- name: verify we did not record a change
+  assert:
+    that:
+      - "not (url_installed_specific_commit_again is changed)"
+
+- name: install the same module from url pointing to a different specific commit with same package version
+  pip:
+    name: "git+https://github.com/dvarrazzo/pyiso8601@a48aa33f9fe5aa77d40fa2a38584750570d38ad6#egg=iso8601"
+    state: latest
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+  register: url_installed_different_specific_commit_same_version
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "url_installed_different_specific_commit_same_version is changed"
+
 
 # Test pip package in check mode doesn't always report changed.
 
