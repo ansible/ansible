@@ -63,31 +63,6 @@
 - command: "{{ ansible_python.executable }} -c 'import {{ item }}'"
   loop: '{{ pip_test_modules }}'
 
-# force reinstall packages in check mode and ensure we recorded a change
-- name: forcereinstall packages in check mode
-  pip:
-    name: "{{ pip_test_packages }}"
-    state: forcereinstall
-  check_mode: true
-  register: forcereinstall_result_check_mode
-
-- name: verify we recorded a change
-  assert:
-    that:
-      - "forcereinstall_result_check_mode is changed"
-
-# force reinstall packages for real and ensure we recorded a change
-- name: forcereinstall packages
-  pip:
-    name: "{{ pip_test_packages }}"
-    state: forcereinstall
-  register: forcereinstall_result
-
-- name: verify we recorded a change
-  assert:
-    that:
-      - "forcereinstall_result is changed"
-
 # now remove it to test uninstallation of a package we are sure is installed
 
 - name: now uninstall so we can see that a change occurred

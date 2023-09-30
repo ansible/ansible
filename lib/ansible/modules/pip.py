@@ -800,7 +800,7 @@ def main():
             )
 
         if module.check_mode:
-            if extra_args or requirements or state == 'latest' or not name or state == "forcereinstall":
+            if extra_args or requirements or state == 'latest' or not name:
                 module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
@@ -850,7 +850,7 @@ def main():
                 changed = 'Successfully installed' in out_pip
             else:
                 dummy, out_freeze_after, dummy = _get_packages(module, pip, chdir)
-                changed = out_freeze_before != out_freeze_after or state == "forcereinstall"
+                changed = out_freeze_before != out_freeze_after
 
         changed = changed or venv_created
 
