@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Provide additional information about the alternative plugin in the deprecation message (https://github.com/ansible/ansible/issues/80561).

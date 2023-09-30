@@ -335,6 +335,27 @@
     that:
       - '"hElLo there"|regex_replace("hello", "hi", ignorecase=True) == "hi there"'
 
+- name: Verify regex_replace with count
+  assert:
+    that:
+      - '"foo=bar=baz"|regex_replace("=", ":", count=1) == "foo:bar=baz"'
+
+- name: Verify regex_replace with correct mandatory_count
+  assert:
+    that:
+      - '"foo=bar=baz"|regex_replace("=", ":", mandatory_count=2) == "foo:bar:baz"'
+
+- name: Verify regex_replace with incorrect mandatory_count
+  debug:
+    msg: "{{ 'foo=bar=baz'|regex_replace('=', ':', mandatory_count=1) }}"
+  ignore_errors: yes
+  register: incorrect_mandatory_count
+
+- assert:
+    that:
+      - "incorrect_mandatory_count is failed"
+      - "' times, but matches ' in incorrect_mandatory_count.msg"
+
 - name: Verify case-insensitive regex_findall
   assert:
     that:
