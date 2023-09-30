@@ -129,6 +129,14 @@
     that:
       - "not (url_installed is changed)"
 
+# Note: this is due to a bug of pip which in old version does not automatically refetch
+# refs after the first install
+- name: Fetch commits needed for following test
+  command: git fetch origin 8bfaaa3e5c63a9eda4449e606786802f4e95ba60 a48aa33f9fe5aa77d40fa2a38584750570d38ad6
+  args:
+    chdir: "{{ remote_tmp_dir }}/pipenv/src/iso8601/"
+
+
 - name: install the same module from url pointing to a specific commit
   pip:
     name: "git+https://github.com/dvarrazzo/pyiso8601@8bfaaa3e5c63a9eda4449e606786802f4e95ba60#egg=iso8601"
