@@ -121,7 +121,7 @@ def fileglob(pathname):
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False):
+def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False, count=0, mandatory_count=0):
     ''' Perform a `re.sub` returning a string '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
@@ -132,7 +132,11 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    return _re.sub(replacement, value)
+    (output, subs) = _re.subn(replacement, value, count=count)
+    if mandatory_count and mandatory_count != subs:
+        raise AnsibleFilterError("'%s' should match %d times, but matches %d times in '%s'"
+                                 % (pattern, mandatory_count, count, value))
+    return output
 
 
 def regex_findall(value, regex, multiline=False, ignorecase=False):
