@@ -129,17 +129,16 @@
     that:
       - "not (url_installed is changed)"
 
-# Note: this is due to a bug of pip which in old version does not automatically refetch
-# refs after the first install
-- name: Fetch commits needed for following test
-  command: git fetch origin 8bfaaa3e5c63a9eda4449e606786802f4e95ba60 a48aa33f9fe5aa77d40fa2a38584750570d38ad6
-  args:
+# Note: this is needed due to an issue of pip 9.0.3 and python 3.6 to install
+# non refs commit (reproduced on RHEL 8.8 trying to run 'pip3 install -e git+https://github.com/dvarrazzo/pyiso8601@8bfaaa3e5c63a9eda4449e606786802f4e95ba60#egg=iso8601')
+- name: update git refs for backcompatibility with pip 9.0.3
+  shell: "git update-ref refs/heads/test 8bfaaa3e5c63a9eda4449e606786802f4e95ba60; git update-ref refs/heads/test1 a48aa33f9fe5aa77d40fa2a38584750570d38ad6"
+  args:  
     chdir: "{{ remote_tmp_dir }}/pipenv/src/iso8601/"
-
 
 - name: install the same module from url pointing to a specific commit
   pip:
-    name: "git+https://github.com/dvarrazzo/pyiso8601@8bfaaa3e5c63a9eda4449e606786802f4e95ba60#egg=iso8601"
+    name: "git+https://github.com/dvarrazzo/pyiso8601@test#egg=iso8601"
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
     editable: true
     state: latest
@@ -152,7 +151,7 @@
 
 - name: install the same module from url pointing to the same specific commit
   pip:
-    name: "git+https://github.com/dvarrazzo/pyiso8601@8bfaaa3e5c63a9eda4449e606786802f4e95ba60#egg=iso8601"
+    name: "git+https://github.com/dvarrazzo/pyiso8601@test#egg=iso8601"
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
     editable: true
     state: latest
@@ -165,7 +164,7 @@
 
 - name: install the same module from url pointing to a different specific commit with same package version
   pip:
-    name: "git+https://github.com/dvarrazzo/pyiso8601@a48aa33f9fe5aa77d40fa2a38584750570d38ad6#egg=iso8601"
+    name: "git+https://github.com/dvarrazzo/pyiso8601@test1#egg=iso8601"
     state: latest
     editable: true
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
