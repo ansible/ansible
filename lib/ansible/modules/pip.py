@@ -800,7 +800,7 @@ def main():
             )
 
         if module.check_mode:
-            if extra_args or requirements or state == 'latest' or not name or state== "forcereinstall":
+            if extra_args or requirements or state == 'latest' or not name or state == "forcereinstall":
                 module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)

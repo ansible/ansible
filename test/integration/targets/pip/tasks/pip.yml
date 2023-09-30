@@ -184,6 +184,7 @@
   pip:
     name: "git+https://github.com/dvarrazzo/pyiso8601@a48aa33f9fe5aa77d40fa2a38584750570d38ad6#egg=iso8601"
     state: latest
+    editable: true
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
   register: url_installed_different_specific_commit_same_version
 
