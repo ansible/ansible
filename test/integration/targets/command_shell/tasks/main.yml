@@ -150,15 +150,15 @@
 
 # creates
 
-- name: verify that afile.txt is absent
+- name: verify that a_file.txt is absent
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: absent
 
-- name: create afile.txt with create_afile.sh via command (check mode)
-  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/afile.txt"
+- name: create a_file.txt with create_afile.sh via command (check mode)
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/a_file.txt"
   args:
-    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test }}/a_file.txt"
   register: check_mode_result
   check_mode: yes
 
@@ -167,26 +167,26 @@
       - check_mode_result.changed
       - "'skipped' not in check_mode_result"
 
-- name: verify that afile.txt still does not exist
+- name: verify that a_file.txt still does not exist
   stat:
-    path: "{{remote_tmp_dir_test}}/afile.txt"
+    path: "{{remote_tmp_dir_test}}/a_file.txt"
   register: stat_result
   failed_when: stat_result.stat.exists
 
-- name: create afile.txt with create_afile.sh via command
-  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/afile.txt"
+- name: create a_file.txt with create_afile.sh via command
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/a_file.txt"
   args:
-    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test }}/a_file.txt"
 
-- name: verify that afile.txt is present
+- name: verify that a_file.txt is present
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: file
 
 - name: re-run previous command using creates with globbing (check mode)
-  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/a_file.txt"
   args:
-    creates: "{{ remote_tmp_dir_test }}/afile.*"
+    creates: "{{ remote_tmp_dir_test }}/a_file.*"
   register: check_mode_result
   check_mode: yes
 
@@ -196,9 +196,9 @@
       - "'skipped' not in check_mode_result"
 
 - name: re-run previous command using creates with globbing
-  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/a_file.txt"
   args:
-    creates: "{{ remote_tmp_dir_test }}/afile.*"
+    creates: "{{ remote_tmp_dir_test }}/a_file.*"
   register: command_result3
 
 - name: assert that creates with globbing is working
@@ -208,10 +208,10 @@
 
 # removes
 
-- name: remove afile.txt with remote_afile.sh via command (check mode)
-  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+- name: remove a_file.txt with remote_afile.sh via command (check mode)
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/a_file.txt"
   args:
-    removes: "{{ remote_tmp_dir_test }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test }}/a_file.txt"
   register: check_mode_result
   check_mode: yes
 
@@ -220,24 +220,24 @@
       - check_mode_result.changed
       - "'skipped' not in check_mode_result"
 
-- name: verify that afile.txt still exists
+- name: verify that a_file.txt still exists
   stat:
-    path: "{{remote_tmp_dir_test}}/afile.txt"
+    path: "{{remote_tmp_dir_test}}/a_file.txt"
   register: stat_result
   failed_when: not stat_result.stat.exists
 
-- name: remove afile.txt with remote_afile.sh via command
-  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+- name: remove a_file.txt with remote_afile.sh via command
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/a_file.txt"
   args:
-    removes: "{{ remote_tmp_dir_test }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test }}/a_file.txt"
 
-- name: verify that afile.txt is absent
-  file: path={{remote_tmp_dir_test}}/afile.txt state=absent
+- name: verify that a_file.txt is absent
+  file: path={{remote_tmp_dir_test}}/a_file.txt state=absent
 
 - name: re-run previous command using removes with globbing (check mode)
-  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/a_file.txt"
   args:
-    removes: "{{ remote_tmp_dir_test }}/afile.*"
+    removes: "{{ remote_tmp_dir_test }}/a_file.*"
   register: check_mode_result
   check_mode: yes
 
@@ -247,9 +247,9 @@
       - "'skipped' not in check_mode_result"
 
 - name: re-run previous command using removes with globbing
-  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/a_file.txt"
   args:
-    removes: "{{ remote_tmp_dir_test }}/afile.*"
+    removes: "{{ remote_tmp_dir_test }}/a_file.*"
   register: command_result4
 
 - name: assert that removes with globbing is working
@@ -359,27 +359,27 @@
 
 # creates
 
-- name: Verify that afile.txt is absent
+- name: Verify that a_file.txt is absent
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: absent
 
 - name: Execute the test.sh script with chdir
-  shell: "{{ remote_tmp_dir_test }}/test.sh > {{ remote_tmp_dir_test }}/afile.txt"
+  shell: "{{ remote_tmp_dir_test }}/test.sh > {{ remote_tmp_dir_test }}/a_file.txt"
   args:
     chdir: "{{ remote_tmp_dir_test }}"
-    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test }}/a_file.txt"
 
-- name: Verify that afile.txt is present
+- name: Verify that a_file.txt is present
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: file
 
 # multiline
 
 - name: Remove test file previously created
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: absent
 
 - name: Execute a shell command using a literal multiline block
@@ -405,7 +405,7 @@
 - name: Execute a shell command using a literal multiline block with arguments in it
   shell: |
     executable="{{ bash.stdout }}"
-    creates={{ remote_tmp_dir_test }}/afile.txt
+    creates={{ remote_tmp_dir_test }}/a_file.txt
     echo "test"
   register: shell_result6
 
@@ -435,14 +435,14 @@
     - shell_result7.stdout == 'One\n  Two\n    Three'
 
 - name: execute a shell command with no trailing newline to stdin
-  shell: cat > {{remote_tmp_dir_test }}/afile.txt
+  shell: cat > {{remote_tmp_dir_test }}/a_file.txt
   args:
     stdin: test
     stdin_add_newline: no
 
 - name: make sure content matches expected
   copy:
-    dest: "{{remote_tmp_dir_test }}/afile.txt"
+    dest: "{{remote_tmp_dir_test }}/a_file.txt"
     content: test
   register: shell_result7
   failed_when:
@@ -450,14 +450,14 @@
       shell_result7 is changed
 
 - name: execute a shell command with trailing newline to stdin
-  shell: cat > {{remote_tmp_dir_test }}/afile.txt
+  shell: cat > {{remote_tmp_dir_test }}/a_file.txt
   args:
     stdin: test
     stdin_add_newline: yes
 
 - name: make sure content matches expected
   copy:
-    dest: "{{remote_tmp_dir_test }}/afile.txt"
+    dest: "{{remote_tmp_dir_test }}/a_file.txt"
     content: |
         test
   register: shell_result8
@@ -466,13 +466,13 @@
       shell_result8 is changed
 
 - name: execute a shell command with trailing newline to stdin, default
-  shell: cat > {{remote_tmp_dir_test }}/afile.txt
+  shell: cat > {{remote_tmp_dir_test }}/a_file.txt
   args:
     stdin: test
 
 - name: make sure content matches expected
   copy:
-    dest: "{{remote_tmp_dir_test }}/afile.txt"
+    dest: "{{remote_tmp_dir_test }}/a_file.txt"
     content: |
         test
   register: shell_result9
@@ -482,7 +482,7 @@
 
 - name: remove the previously created file
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: absent
 
 - name: test check mode skip message

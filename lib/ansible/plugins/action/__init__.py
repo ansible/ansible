@@ -568,7 +568,7 @@ class ActionBase(ABC):
         if isinstance(data, dict):
             data = jsonify(data)
 
-        afd, afile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
+        afd, a_file = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         afo = os.fdopen(afd, 'wb')
         try:
             data = to_bytes(data, errors='surrogate_or_strict')
@@ -580,9 +580,9 @@ class ActionBase(ABC):
         afo.close()
 
         try:
-            self._transfer_file(afile, remote_path)
+            self._transfer_file(a_file, remote_path)
         finally:
-            os.unlink(afile)
+            os.unlink(a_file)
 
         return remote_path
 

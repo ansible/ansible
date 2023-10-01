@@ -85,26 +85,26 @@
       - unicode_args.stdout_lines[2] == '-Ӧther'
 
 # creates
-- name: verify that afile.txt is absent
+- name: verify that a_file.txt is absent
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: absent
 
-- name: create afile.txt with create_afile.sh via command
-  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
+- name: create a_file.txt with create_afile.sh via command
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/a_file.txt
   args:
-    creates: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test | expanduser }}/a_file.txt"
   register: _create_test1
 
 - name: Check state of created file
   stat:
-    path: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
+    path: "{{ remote_tmp_dir_test | expanduser }}/a_file.txt"
   register: _create_stat1
 
 - name: Run create_afile.sh again to ensure it is skipped
-  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/a_file.txt
   args:
-    creates: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test | expanduser }}/a_file.txt"
   register: _create_test2
 
 - name: Assert that script report a change, file was created, second run was skipped
@@ -116,26 +116,26 @@
 
 
 # removes
-- name: verify that afile.txt is present
+- name: verify that a_file.txt is present
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: file
 
-- name: remove afile.txt with remote_afile.sh via command
-  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
+- name: remove a_file.txt with remote_afile.sh via command
+  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/a_file.txt
   args:
-    removes: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test | expanduser }}/a_file.txt"
   register: _remove_test1
 
 - name: Check state of removed file
   stat:
-    path: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
+    path: "{{ remote_tmp_dir_test | expanduser }}/a_file.txt"
   register: _remove_stat1
 
 - name: Run remote_afile.sh again to enure it is skipped
-  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
+  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/a_file.txt
   args:
-    removes: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test | expanduser }}/a_file.txt"
   register: _remove_test2
 
 - name: Assert that script report a change, file was removed, second run was skipped
@@ -147,9 +147,9 @@
 
 
 # async
-- name: verify that afile.txt is absent
+- name: verify that a_file.txt is absent
   file:
-    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/a_file.txt"
     state: absent
 
 - name: test task failure with async param
