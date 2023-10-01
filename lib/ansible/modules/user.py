@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
+# Copyright: (c) 2012, Stephen From <sfromm@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -295,7 +295,7 @@ seealso:
 - module: ansible.builtin.group
 - module: ansible.windows.win_user
 author:
-- Stephen Fromm (@sfromm)
+- Stephen From (@sfromm)
 '''
 
 EXAMPLES = r'''

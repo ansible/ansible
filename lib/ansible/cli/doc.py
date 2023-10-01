@@ -1077,7 +1077,7 @@ class DocCLI(CLI, RoleMixin):
 
             text.append("%s%s %s" % (base_indent, opt_leadin, o))
 
-            # description is specifically formated and can either be string or list of strings
+            # description is specifically formatted and can either be string or list of strings
             if 'description' not in opt:
                 raise AnsibleError("All (sub-)options and return values must have a 'description' field")
             if is_sequence(opt['description']):
