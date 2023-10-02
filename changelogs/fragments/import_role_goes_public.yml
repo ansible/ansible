@@ -1,0 +1,3 @@
+minor_changes:
+  - "``import_role`` action now also gets a ``public`` option that controls variable exports,  default depending on ``DEFAULT_PRIVATE_ROLE_VARS`` (if using defaults equates to ``public=True``)."
+  - "``DEFAULT_PRIVATE_ROLE_VARS`` is now overriden by explicit setting of ``public`` for ``include_roles`` and ``import_roles``."
