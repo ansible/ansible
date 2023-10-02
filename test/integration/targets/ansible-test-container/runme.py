@@ -1052,9 +1052,10 @@ class ApkBootstrapper(Bootstrapper):
         # The `openssl` package is used to generate hashed passwords.
         # crun added as podman won't install it as dep if runc is present
         # but we don't want runc as it fails
-        packages = ['docker', 'podman', 'openssl', 'crun']
+        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
+        run_command('apk', 'add', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 
