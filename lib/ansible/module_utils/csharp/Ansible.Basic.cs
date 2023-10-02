@@ -261,6 +261,7 @@ namespace Ansible.Basic
             DiffMode = false;
             KeepRemoteFiles = false;
             ModuleName = "undefined win module";
+			TargetLogInfo = ''
             NoLog = (bool)argumentSpec["no_log"];
             Verbosity = 0;
             AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
