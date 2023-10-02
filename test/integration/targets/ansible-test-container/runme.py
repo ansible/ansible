@@ -1052,6 +1052,9 @@ class ApkBootstrapper(Bootstrapper):
         # The `openssl` package is used to generate hashed passwords.
         # crun added as podman won't install it as dep if runc is present
         # but we don't want runc as it fails
+        # The edge `crun` package installed below requires ip6tables, and in
+        # edge, the `iptables` package includes `ip6tables`, but in 3.18 they
+        # are separate. Remove `ip6tables` once we update to 3.19.
         packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
