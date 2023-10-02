@@ -545,7 +545,7 @@ def download_collections(
         for fqcn, concrete_coll_pin in dep_map.copy().items():  # FIXME: move into the provider
             if concrete_coll_pin.is_virtual:
                 display.display(
-                    'Virtual collection {coll!s} is not downloadable'.
+                    '{coll!s} is not downloadable'.
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
@@ -744,7 +744,7 @@ def install_collections(
         for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
-                    "'{coll!s}' is virtual, skipping.".
+                    "Encountered {coll!s}, skipping.".
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
@@ -1804,8 +1804,7 @@ def _resolve_depenency_map(
         )
     except CollectionDependencyInconsistentCandidate as dep_exc:
         parents = [
-            "%s.%s:%s" % (p.namespace, p.name, p.ver)
-            for p in dep_exc.criterion.iter_parent()
+            str(p) for p in dep_exc.criterion.iter_parent()
             if p is not None
         ]
 
