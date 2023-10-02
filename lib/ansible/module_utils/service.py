@@ -207,17 +207,20 @@ def daemonize(module, cmd):
         p = subprocess.Popen(run_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
         fds = [p.stdout, p.stderr]
 
-        # loop reading output till its done
+        # loop reading output till it is done
         output = {p.stdout: b(""), p.stderr: b("")}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
-            if (rfd + wfd + efd) or p.poll():
+            if (rfd + wfd + efd) or p.poll() is None:
                 for out in list(fds):
                     if out in rfd:
                         data = os.read(out.fileno(), chunk)
-                        if not data:
+                        if data:
+                            output[out] += to_bytes(data, errors=errors)
+                        else:
                             fds.remove(out)
-                    output[out] += b(data)
+            else:
+                break
 
         # even after fds close, we might want to wait for pid to die
         p.wait()
@@ -246,7 +249,7 @@ def daemonize(module, cmd):
                 data = os.read(pipe[0], chunk)
                 if not data:
                     break
-                return_data += b(data)
+                return_data += to_bytes(data, errors=errors)
 
         # Note: no need to specify encoding on py3 as this module sends the
         # pickle to itself (thus same python interpreter so we aren't mixing
