@@ -129,6 +129,7 @@ namespace Ansible.Basic
         public bool KeepRemoteFiles { get; private set; }
         public string ModuleName { get; private set; }
         public bool NoLog { get; private set; }
+        public string TargetLogInfo { get; private set; }
         public int Verbosity { get; private set; }
         public string AnsibleVersion { get; private set; }
 
