@@ -1050,9 +1050,16 @@ class ApkBootstrapper(Bootstrapper):
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
-        packages = ['docker', 'podman', 'openssl']
+        # crun added as podman won't install it as dep if runc is present
+        # but we don't want runc as it fails
+        # The edge `crun` package installed below requires ip6tables, and in
+        # edge, the `iptables` package includes `ip6tables`, but in 3.17 they
+        # are separate.
+        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
+        # 3.17 only contains crun 1.7.2, to get at least 1.9.2 to resolve the run/shm issue, install crun from edge
+        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 
