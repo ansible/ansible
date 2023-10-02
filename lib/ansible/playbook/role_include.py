@@ -138,7 +138,7 @@ class IncludeRole(TaskInclude):
 
         # public is only valid argument for includes, imports are always 'public' (after they run)
         if 'public' in ir.args and ir.action not in C._ACTION_INCLUDE_ROLE:
-            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)A
+            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
