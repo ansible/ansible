@@ -1710,19 +1710,6 @@ INVENTORY_UNPARSED_IS_FAILED:
   ini:
   - {key: unparsed_is_failed, section: inventory}
   type: bool
-JINJA2_NATIVE_WARNING:
-   name: Running older than required Jinja version for jinja2_native warning
-   default: True
-   description: Toggle to control showing warnings related to running a Jinja version
-                older than required for jinja2_native.
-   env:
-    - name: ANSIBLE_JINJA2_NATIVE_WARNING
-      deprecated:
-        why: This option is no longer used in the Ansible Core code base.
-        version: "2.17"
-   ini:
-   - {key: jinja2_native_warning, section: defaults}
-   type: boolean
 MAX_FILE_SIZE_FOR_DIFF:
   name: Diff maximum file size
   default: 104448
