@@ -5,10 +5,21 @@
 from __future__ import annotations
 
 import astroid
-from pylint.interfaces import IAstroidChecker
+
+# support pylint 2.x and 3.x -- remove when supporting only 3.x
+try:
+    from pylint.interfaces import IAstroidChecker
+except ImportError:
+    class IAstroidChecker:
+        """Backwards compatibility for 2.x / 3.x support."""
+
+try:
+    from pylint.checkers.utils import check_messages
+except ImportError:
+    from pylint.checkers.utils import only_required_for_messages as check_messages
+
 from pylint.checkers import BaseChecker
 from pylint.checkers import utils
-from pylint.checkers.utils import check_messages
 
 MSGS = {
     'E9305': ("disabled",  # kept for backwards compatibility with inline ignores, remove after 2.14 is EOL
