@@ -1060,7 +1060,7 @@ class ApkBootstrapper(Bootstrapper):
         run_command('apk', 'add', *packages)
         # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from edge
         # Remove once we update to 3.19
-        run_command('apk', 'add', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
+        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 
