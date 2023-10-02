@@ -406,7 +406,7 @@ class OpenBSDStrategy(FileStrategy):
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
-        cmd = [self.hostname_cmd, name]
+        cmd = [self.hostname_cmd, '--', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -450,7 +450,8 @@ class SolarisStrategy(BaseStrategy):
 class FreeBSDStrategy(BaseStrategy):
     """
     This is a FreeBSD hostname manipulation strategy class - it edits
-    the /etc/rc.conf.d/hostname file.
+    the /etc/rc.conf.d/hostname file for permanent changes and executes
+    the hostname command for transient ones.
     """
 
     FILE = '/etc/rc.conf.d/hostname'
@@ -468,7 +469,7 @@ class FreeBSDStrategy(BaseStrategy):
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
-        cmd = [self.hostname_cmd, name]
+        cmd = [self.hostname_cmd, '--', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
