@@ -136,6 +136,10 @@ class IncludeRole(TaskInclude):
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
 
+        # public is only valid argument for includes, imports are always 'public' (after they run)
+        if 'public' in ir.args and ir.action not in C._ACTION_INCLUDE_ROLE:
+            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)A
+
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:

@@ -937,7 +937,6 @@ DEFAULT_PRIVATE_ROLE_VARS:
     - Makes role variables inaccessible from other roles.
     - This was introduced as a way to reset role variables to default values if
       a role is used more than once in a playbook.
-    - Starting in version '2.17' M(ansible.builtin.include_roles) and M(ansible.builtin.import_roles) can override this via the C(public) parameter.
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
   - {key: private_role_vars, section: defaults}
