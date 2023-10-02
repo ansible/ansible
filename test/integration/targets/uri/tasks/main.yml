@@ -766,6 +766,30 @@
     dest: "{{ remote_tmp_dir }}/output"
     state: absent
 
+- name: Test download root to dir without content-disposition
+  uri:
+    url: "https://{{ httpbin_host }}/"
+    dest: "{{ remote_tmp_dir }}"
+  register: get_root_no_filename
+
+- name: Test downloading to dir without content-disposition
+  uri:
+    url: "https://{{ httpbin_host }}/response-headers"
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_no_filename
+
+- name: Test downloading to dir with content-disposition
+  uri:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=attachment%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_root_no_filename.path == remote_tmp_dir ~ "/index.html"
+      - get_dir_no_filename.path == remote_tmp_dir ~ "/response-headers"
+      - get_dir_filename.path == remote_tmp_dir ~ "/filename.json"
+
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml
 
