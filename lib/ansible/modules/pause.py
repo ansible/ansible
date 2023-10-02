@@ -15,7 +15,7 @@ description:
   - To pause/wait/sleep per host, use the M(ansible.builtin.wait_for) module.
   - You can use C(ctrl+c) if you wish to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely.
     To continue early press C(ctrl+c) and then C(c). To abort a playbook press C(ctrl+c) and then C(a).
-  - Prompting for a set amount of time is not supported. Pausing playbook execution is interruptable but does not return user input.
+  - Prompting for a set amount of time is not supported. Pausing playbook execution is interruptible but does not return user input.
   - The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates).
     When using pauses with the C(serial) playbook parameter (as in rolling updates) you are only prompted once for the current group of hosts.
   - This module is also supported for Windows targets.
