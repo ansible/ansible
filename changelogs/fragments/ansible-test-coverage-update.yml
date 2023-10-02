@@ -1,0 +1,6 @@
+---
+
+bugfixes:
+- ansible-test — Python 3.8–3.12 will use ``coverage`` v7.3.2.
+
+...
