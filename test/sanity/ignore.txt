@@ -50,18 +50,12 @@ lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
-lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
-lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
-lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
-lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends on presence of libselinux.so
-lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
-lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
@@ -78,8 +72,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUse
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/pycompat24.py no-get-exception
 lib/ansible/module_utils/six/__init__.py empty-init # breaks namespacing, bundled, do not override
-lib/ansible/module_utils/six/__init__.py future-import-boilerplate # ignore bundled
-lib/ansible/module_utils/six/__init__.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/six/__init__.py no-basestring
 lib/ansible/module_utils/six/__init__.py no-dict-iteritems
 lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
@@ -126,7 +118,6 @@ test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
-test/integration/targets/module_utils/library/test.py future-import-boilerplate # allow testing of Python 2.x implicit relative imports
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
