@@ -1,0 +1,2 @@
+bugfixes:
+  - Properly template tags in parent blocks (https://github.com/ansible/ansible/issues/81053)
