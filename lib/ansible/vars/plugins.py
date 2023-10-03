@@ -39,19 +39,29 @@ def get_plugin_vars(loader, plugin, path, entities):
     return data
 
 
+cache_vars_plugins = True
+cached_vars_plugin_list = None
+
 def get_vars_from_path(loader, path, entities, stage):
+    global cached_vars_plugin_list
 
     data = {}
 
-    vars_plugin_list = list(vars_loader.all())
-    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
-            vars_plugin = vars_loader.get(plugin_name)
-            if vars_plugin is None:
-                # Error if there's no play directory or the name is wrong?
-                continue
-            if vars_plugin not in vars_plugin_list:
-                vars_plugin_list.append(vars_plugin)
+    if not cache_vars_plugins or not cached_vars_plugin_list:
+        vars_plugin_list = list(vars_loader.all(aggressive_cache=True))
+        for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
+            if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
+                vars_plugin = vars_loader.get(plugin_name)
+                if vars_plugin is None:
+                    # Error if there's no play directory or the name is wrong?
+                    continue
+                if vars_plugin not in vars_plugin_list:
+                    vars_plugin_list.append(vars_plugin)
+
+        cached_vars_plugin_list = vars_plugin_list
+
+    if cache_vars_plugins:
+        vars_plugin_list = cached_vars_plugin_list
 
     for plugin in vars_plugin_list:
         # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
