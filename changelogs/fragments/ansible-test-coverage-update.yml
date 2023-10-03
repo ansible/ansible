@@ -1,2 +1,5 @@
 minor_changes:
-  - ansible-test - Update ``coverage`` to version 7.6.1.
+- ansible-test — Python 3.8–3.12 will use ``coverage`` v7.3.2.
+- ansible-test — ``coverage`` v6.5.0 is to be used only under Python 3.7.
+
+...
