@@ -90,7 +90,7 @@ def _plugin_should_run(plugin, stage):
 
     try:
         allowed_stages = plugin.get_option('stage')
-    except AttributeError:
+    except (AttributeError, KeyError):
         pass
 
     if allowed_stages:
