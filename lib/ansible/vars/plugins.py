@@ -1,16 +1,15 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+
+from functools import lru_cache
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import InventoryObjectType
-from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import vars_loader
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -18,7 +17,6 @@ from ansible.utils.vars import combine_vars
 display = Display()
 
 cached_vars_plugin_order = None
-has_stage_cache = {}  # type: dict[AnsiblePlugin, bool]
 
 
 def _load_vars_plugins_order():
@@ -83,6 +81,30 @@ def get_plugin_vars(loader, plugin, path, entities):
     return data
 
 
+# optimized for stateless plugins; non-stateless plugin instances will fall out quickly
+@lru_cache(maxsize=10)
+def _plugin_should_run(plugin, stage):
+    # if a plugin-specific setting has not been provided, use the global setting
+    # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
+    allowed_stages = None
+
+    try:
+        allowed_stages = plugin.get_option('stage')
+    except AttributeError:
+        pass
+
+    if allowed_stages:
+        return allowed_stages in ('all', stage)
+
+    # plugin didn't declare a preference; consult global config
+    config_stage_override = C.RUN_VARS_PLUGINS
+    if config_stage_override == 'demand' and stage == 'inventory':
+        return False
+    elif config_stage_override == 'start' and stage == 'task':
+        return False
+    return True
+
+
 def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
@@ -94,25 +116,7 @@ def get_vars_from_path(loader, path, entities, stage):
         if (plugin := vars_loader.get(plugin_name)) is None:
             continue
 
-        if not getattr(plugin, 'is_stateless', False):
-            # avoid needlessly bloating has_stage_cache
-            has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
-        else:
-            try:
-                has_stage = has_stage_cache[plugin]
-            except KeyError:
-                has_stage = has_stage_cache[plugin] = hasattr(plugin, 'get_option') and plugin.has_option('stage')
-
-        # if a plugin-specific setting has not been provided, use the global setting
-        # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
-        use_global = (has_stage and plugin.get_option('stage') is None) or not has_stage
-
-        if use_global:
-            if C.RUN_VARS_PLUGINS == 'demand' and stage == 'inventory':
-                continue
-            elif C.RUN_VARS_PLUGINS == 'start' and stage == 'task':
-                continue
-        elif has_stage and plugin.get_option('stage') not in ('all', stage):
+        if not _plugin_should_run(plugin, stage):
             continue
 
         if (new_vars := get_plugin_vars(loader, plugin, path, entities)) != {}:

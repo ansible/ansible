@@ -872,12 +872,12 @@ class PluginLoader:
         if name in self.aliases:
             name = self.aliases[name]
 
-        if self._plugin_instance_cache is not None and name in self._plugin_instance_cache:
+        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(name)):
             # Resolving the FQCN is slow, even if we've passed in the resolved FQCN.
             # Short-circuit here if we've previously resolved this name.
             # This will need to be restricted if non-vars plugins start using the cache, since
             # some non-fqcn plugin need to be resolved again with the collections list.
-            return get_with_context_result(*self._plugin_instance_cache[name])
+            return get_with_context_result(*cached_load_result)
 
         plugin_load_context = self.find_plugin_with_context(name, collection_list=collection_list)
         if not plugin_load_context.resolved or not plugin_load_context.plugin_resolved_path:
@@ -887,19 +887,19 @@ class PluginLoader:
         fq_name = plugin_load_context.resolved_fqcn
         if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
-        name = plugin_load_context.plugin_resolved_name
+        resolved_type_name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
-        if self._plugin_instance_cache is not None and name in self._plugin_instance_cache:
+        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(fq_name)):
             # This is unused by vars plugins, but it's here in case the instance cache expands to other plugin types.
             # We get here if we've seen this plugin before, but it wasn't called with the resolved FQCN.
-            return get_with_context_result(*self._plugin_instance_cache[name])
+            return get_with_context_result(*cached_load_result)
         redirected_names = plugin_load_context.redirect_list or []
 
         if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source(name, path)
+            self._module_cache[path] = self._load_module_source(resolved_type_name, path)
             found_in_cache = False
 
-        self._load_config_defs(name, self._module_cache[path], path)
+        self._load_config_defs(resolved_type_name, self._module_cache[path], path)
 
         obj = getattr(self._module_cache[path], self.class_name)
 
@@ -916,26 +916,27 @@ class PluginLoader:
                 return get_with_context_result(None, plugin_load_context)
 
         # FIXME: update this to use the load context
-        self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+        self._display_plugin_load(self.class_name, resolved_type_name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
 
         if not class_only:
             try:
                 # A plugin may need to use its _load_name in __init__ (for example, to set
                 # or get options from config), so update the object before using the constructor
                 instance = object.__new__(obj)
-                self._update_object(instance, name, path, redirected_names, fq_name)
+                self._update_object(instance, resolved_type_name, path, redirected_names, fq_name)
                 obj.__init__(instance, *args, **kwargs)  # pylint: disable=unnecessary-dunder-call
                 obj = instance
             except TypeError as e:
                 if "abstract" in e.args[0]:
                     # Abstract Base Class or incomplete plugin, don't load
-                    display.v('Returning not found on "%s" as it has unimplemented abstract methods; %s' % (name, to_native(e)))
+                    display.v('Returning not found on "%s" as it has unimplemented abstract methods; %s' % (resolved_type_name, to_native(e)))
                     return get_with_context_result(None, plugin_load_context)
                 raise
 
-        self._update_object(obj, name, path, redirected_names, fq_name)
+        self._update_object(obj, resolved_type_name, path, redirected_names, fq_name)
         if self._plugin_instance_cache is not None and getattr(obj, 'is_stateless', False):
-            self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
+            # store under both the originally requested name and the resolved FQ name
+            self._plugin_instance_cache[name] = self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
