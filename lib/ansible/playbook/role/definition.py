@@ -77,7 +77,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if it is not. If the data is a dictionary, it calls the 'preprocess_data'
         function of the superclass 'RoleDefinition' and assigns the result to the
         data.
-        The original value of the data is saved in the '_ds' instance variable. 
+        The original value of the data is saved in the '_ds' instance variable.
         A new 'AnsibleMapping' object is created and if the data is an instance of
         'AnsibleBaseYAMLObject', its positional information is assigned to the new
         object.
