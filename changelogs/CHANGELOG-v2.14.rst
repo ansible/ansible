@@ -5,6 +5,34 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2023-10-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-galaxy dependency resolution messages have changed the unexplained 'virtual' collection for the specific type ('scm', 'dir', etc) that is more user friendly
+
+Security Fixes
+--------------
+
+- ansible-galaxy - Prevent roles from using symlinks to overwrite files outside of the installation directory (CVE-2023-5115)
+
+Bugfixes
+--------
+
+- PluginLoader - fix Jinja plugin performance issues (https://github.com/ansible/ansible/issues/79652)
+- ansible-galaxy error on dependency resolution will not error itself due to 'virtual' collections not having a name/namespace.
+- ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
+- winrm - Better handle send input failures when communicating with hosts under load
+
 v2.14.10
 ========
 
