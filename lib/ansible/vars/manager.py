@@ -184,6 +184,9 @@ class VariableManager:
 
             See notes in the VarsWithSources docstring for caveats and limitations of the source tracking
             '''
+            if new_data == {}:
+                return data
+
             if C.DEFAULT_DEBUG:
                 # Populate var sources dict
                 for key in new_data:
