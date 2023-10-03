@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - Updated the distro test containers to version 6.3.0 to include coverage 7.3.2 for Python 3.8+.
