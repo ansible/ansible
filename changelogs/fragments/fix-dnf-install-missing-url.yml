@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix handling missing urls in ansible.module_utils.urls.fetch_file for Python 3.

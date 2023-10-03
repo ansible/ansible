@@ -510,6 +510,7 @@
     that:
         - "dnf_result is failed"
         - "not dnf_result.changed"
+        - "'Failure downloading' in dnf_result.msg or 'Failed to download' in dnf_result.msg"
 
 - name: verify dnf module outputs
   assert:

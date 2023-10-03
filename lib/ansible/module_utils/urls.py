@@ -2058,7 +2058,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
                               unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
-        if not rsp:
+        if not rsp or (rsp.code and rsp.code >= 400):
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
         data = rsp.read(bufsize)
         while data:
