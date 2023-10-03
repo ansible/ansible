@@ -5,6 +5,41 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-10-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-galaxy dependency resolution messages have changed the unexplained 'virtual' collection for the specific type ('scm', 'dir', etc) that is more user friendly
+
+Security Fixes
+--------------
+
+- ansible-galaxy - Prevent roles from using symlinks to overwrite files outside of the installation directory (CVE-2023-5115)
+
+Bugfixes
+--------
+
+- Allow for searching handler subdir for included task via include_role (https://github.com/ansible/ansible/issues/81722)
+- PluginLoader - fix Jinja plugin performance issues (https://github.com/ansible/ansible/issues/79652)
+- ``ansible.module_utils.service`` - ensure binary data transmission in ``daemonize()``
+- ``ansible.module_utils.service`` - fix inter-process communication in ``daemonize()``
+- ansible-galaxy - started allowing the use of pre-releases for collections that do not have any stable versions published. (https://github.com/ansible/ansible/pull/81606)
+- ansible-galaxy - started allowing the use of pre-releases for dependencies on any level of the dependency tree that specifically demand exact pre-release versions of collections and not version ranges. (https://github.com/ansible/ansible/pull/81606)
+- ansible-galaxy error on dependency resolution will not error itself due to 'virtual' collections not having a name/namespace.
+- ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
+- role deduplication - don't deduplicate before a role has had a task run for that particular host (https://github.com/ansible/ansible/issues/81486).
+- uri/urls - Add compat function to handle the ability to parse the filename from a Content-Disposition header (https://github.com/ansible/ansible/issues/81806)
+- winrm - Better handle send input failures when communicating with hosts under load
+
 v2.15.4
 =======
 
