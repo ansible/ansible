@@ -714,7 +714,7 @@
 
 - name: check that proper error message is emitted when in operator is used
   assert:
-    that: "\"'y' is undefined\" in error.msg"
+    that: "\"The error was: 'y' is undefined\n\n\" in error.msg"
 
 - template:
     src: template_import_macro_globals.j2

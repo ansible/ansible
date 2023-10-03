@@ -1013,7 +1013,7 @@ class Templar:
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
-                raise AnsibleUndefinedVariable(e, orig_exc=e)
+                raise AnsibleUndefinedVariable(e)
             else:
                 display.debug("Ignoring undefined failure: %s" % to_text(e))
                 return data
