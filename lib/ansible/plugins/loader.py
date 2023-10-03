@@ -34,6 +34,7 @@ from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_P
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
+from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.plugin_docs import add_fragments
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
@@ -51,6 +52,29 @@ _PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
+
+_final_q = None
+
+
+def proxy_load(method):
+
+    def proxyit(self, *args, **kwargs):
+        if sys.modules[__name__]._final_q:
+            # If _final_q is set, that means we are in a WorkerProcess
+            # and instead of displaying messages directly from the fork
+            # we will proxy them through the queue
+            sys.modules[__name__]._final_q.send_plugin_loader(method.__name__, *args, **kwargs)
+        return method(self, *args, **kwargs)
+
+    return proxyit
+
+def set_queue(queue):
+    """Set the _final_q on PLuginLoader, so that we know to proxy requests over the queue
+    This is only needed in ansible.executor.process.worker:WorkerProcess._run
+    """
+    if multiprocessing_context.parent_process() is None:
+        raise RuntimeError('queue cannot be set in parent process')
+    sys.modules[__name__]._final_q = queue
 
 
 def get_all_plugin_loaders():
@@ -858,6 +882,7 @@ class PluginLoader:
     def get(self, name, *args, **kwargs):
         return self.get_with_context(name, *args, **kwargs).object
 
+    @proxy_load
     def get_with_context(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
@@ -932,6 +957,7 @@ class PluginLoader:
 
             display.debug(msg)
 
+    @proxy_load
     def all(self, *args, **kwargs):
         '''
         Iterate through all plugins of this type, in configured paths (no collections)
@@ -1125,6 +1151,7 @@ class Jinja2Loader(PluginLoader):
 
     # FUTURE: now that the resulting plugins are closer, refactor base class method with some extra
     # hooks so we can avoid all the duplicated plugin metadata logic, and also cache the collection results properly here
+    @proxy_load
     def get_with_context(self, name, *args, **kwargs):
         # pop N/A kwargs to avoid passthrough to parent methods
         kwargs.pop('class_only', False)
@@ -1258,6 +1285,7 @@ class Jinja2Loader(PluginLoader):
 
         return get_with_context_result(plugin, context)
 
+    @proxy_load
     def all(self, *args, **kwargs):
         kwargs.pop('_dedupe', None)
         path_only = kwargs.pop('path_only', False)

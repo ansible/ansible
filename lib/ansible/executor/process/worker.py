@@ -169,6 +169,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
         # Set the queue on Display so calls to Display.display are proxied over the queue
         display.set_queue(self._final_q)
+        self._shared_loader_obj.set_queue(self._final_q)
 
         global current_worker
         current_worker = self
