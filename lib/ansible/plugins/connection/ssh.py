@@ -388,6 +388,7 @@ import io
 import os
 import pty
 import re
+import selectors
 import shlex
 import subprocess
 import time
@@ -401,7 +402,6 @@ from ansible.errors import (
     AnsibleFileNotFound,
 )
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean

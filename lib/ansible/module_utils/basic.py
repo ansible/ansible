@@ -34,6 +34,7 @@ import pwd
 import platform
 import re
 import select
+import selectors
 import shlex
 import shutil
 import signal
@@ -71,8 +72,6 @@ except ImportError:
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
-
-from ansible.module_utils.compat import selectors
 
 from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
