@@ -1,0 +1,5 @@
+bugfixes:
+  - Cache host_group_vars after instantiating it once and limit the amount of repetitive work it needs to do every time it runs.
+  - Call PluginLoader.all() once for vars plugins, and load vars plugins that run automatically or are enabled specifically by name subsequently.
+deprecated_features:
+  - Old style vars plugins which use the entrypoints `get_host_vars` or `get_group_vars` are deprecated. The plugin should be updated to inherit from `BaseVarsPlugin` and define a `get_vars` method as the entrypoint.

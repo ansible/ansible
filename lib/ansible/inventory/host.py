@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from collections.abc import Mapping, MutableMapping
 
-from ansible.inventory.group import Group
+from ansible.inventory.group import Group, InventoryObjectType
 from ansible.parsing.utils.addresses import patterns
 from ansible.utils.vars import combine_vars, get_unique_id
 
@@ -31,6 +31,7 @@ __all__ = ['Host']
 
 class Host:
     ''' a single ansible host '''
+    base_type = InventoryObjectType.HOST
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
 

@@ -1,22 +1,56 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
+from functools import lru_cache
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.inventory.host import Host
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.inventory.group import InventoryObjectType
 from ansible.plugins.loader import vars_loader
-from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
 display = Display()
+
+cached_vars_plugin_order = None
+
+
+def _load_vars_plugins_order():
+    # find 3rd party legacy vars plugins once, and look them up by name subsequently
+    auto = []
+    for auto_run_plugin in vars_loader.all(class_only=True):
+        needs_enabled = False
+        if hasattr(auto_run_plugin, 'REQUIRES_ENABLED'):
+            needs_enabled = auto_run_plugin.REQUIRES_ENABLED
+        elif hasattr(auto_run_plugin, 'REQUIRES_WHITELIST'):
+            needs_enabled = auto_run_plugin.REQUIRES_WHITELIST
+            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+        if needs_enabled:
+            continue
+        auto.append(auto_run_plugin._load_name)
+
+    # find enabled plugins once so we can look them up by resolved fqcn subsequently
+    enabled = []
+    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
+        if (plugin := vars_loader.get(plugin_name)) is None:
+            enabled.append(plugin_name)
+        else:
+            collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
+            # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
+            if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+                display.warning(
+                    "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
+                    "This should be removed from the plugin %s." % plugin.ansible_name
+                )
+            enabled.append(plugin.ansible_name)
+
+    global cached_vars_plugin_order
+    cached_vars_plugin_order = auto + enabled
 
 
 def get_plugin_vars(loader, plugin, path, entities):
@@ -25,9 +59,17 @@ def get_plugin_vars(loader, plugin, path, entities):
     try:
         data = plugin.get_vars(loader, path, entities)
     except AttributeError:
+        if hasattr(plugin, 'get_host_vars') or hasattr(plugin, 'get_group_vars'):
+            display.deprecated(
+                f"The vars plugin {plugin.ansible_name} from {plugin._original_path} is relying "
+                "on the deprecated entrypoints 'get_host_vars' and 'get_group_vars'. "
+                "This plugin should be updated to inherit from BaseVarsPlugin and define "
+                "a 'get_vars' method as the main entrypoint instead.",
+                version="2.20",
+            )
         try:
             for entity in entities:
-                if isinstance(entity, Host):
+                if entity.base_type is InventoryObjectType.HOST:
                     data |= plugin.get_host_vars(entity.name)
                 else:
                     data |= plugin.get_group_vars(entity.name)
@@ -39,59 +81,46 @@ def get_plugin_vars(loader, plugin, path, entities):
     return data
 
 
+# optimized for stateless plugins; non-stateless plugin instances will fall out quickly
+@lru_cache(maxsize=10)
+def _plugin_should_run(plugin, stage):
+    # if a plugin-specific setting has not been provided, use the global setting
+    # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
+    allowed_stages = None
+
+    try:
+        allowed_stages = plugin.get_option('stage')
+    except (AttributeError, KeyError):
+        pass
+
+    if allowed_stages:
+        return allowed_stages in ('all', stage)
+
+    # plugin didn't declare a preference; consult global config
+    config_stage_override = C.RUN_VARS_PLUGINS
+    if config_stage_override == 'demand' and stage == 'inventory':
+        return False
+    elif config_stage_override == 'start' and stage == 'task':
+        return False
+    return True
+
+
 def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    vars_plugin_list = list(vars_loader.all())
-    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
-            vars_plugin = vars_loader.get(plugin_name)
-            if vars_plugin is None:
-                # Error if there's no play directory or the name is wrong?
-                continue
-            if vars_plugin not in vars_plugin_list:
-                vars_plugin_list.append(vars_plugin)
+    if cached_vars_plugin_order is None:
+        _load_vars_plugins_order()
 
-    for plugin in vars_plugin_list:
-        # legacy plugins always run by default, but they can set REQUIRES_ENABLED=True to opt out.
-
-        builtin_or_legacy = plugin.ansible_name.startswith('ansible.builtin.') or '.' not in plugin.ansible_name
-
-        # builtin is supposed to have REQUIRES_ENABLED=True, the following is for legacy plugins...
-        needs_enabled = not builtin_or_legacy
-        if hasattr(plugin, 'REQUIRES_ENABLED'):
-            needs_enabled = plugin.REQUIRES_ENABLED
-        elif hasattr(plugin, 'REQUIRES_WHITELIST'):
-            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
-                               "Use 'REQUIRES_ENABLED' instead.", version="2.18")
-            needs_enabled = plugin.REQUIRES_WHITELIST
-
-        # A collection plugin was enabled to get to this point because vars_loader.all() does not include collection plugins.
-        # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-        if not builtin_or_legacy and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
-            display.warning(
-                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                "This should be removed from the plugin %s." % plugin.ansible_name
-            )
-        elif builtin_or_legacy and needs_enabled and not plugin.matches_name(C.VARIABLE_PLUGINS_ENABLED):
+    for plugin_name in cached_vars_plugin_order:
+        if (plugin := vars_loader.get(plugin_name)) is None:
             continue
 
-        has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
-
-        # if a plugin-specific setting has not been provided, use the global setting
-        # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
-        use_global = (has_stage and plugin.get_option('stage') is None) or not has_stage
-
-        if use_global:
-            if C.RUN_VARS_PLUGINS == 'demand' and stage == 'inventory':
-                continue
-            elif C.RUN_VARS_PLUGINS == 'start' and stage == 'task':
-                continue
-        elif has_stage and plugin.get_option('stage') not in ('all', stage):
+        if not _plugin_should_run(plugin, stage):
             continue
 
-        data = combine_vars(data, get_plugin_vars(loader, plugin, path, entities))
+        if (new_vars := get_plugin_vars(loader, plugin, path, entities)) != {}:
+            data = combine_vars(data, new_vars)
 
     return data
 
@@ -105,10 +134,11 @@ def get_vars_from_inventory_sources(loader, sources, entities, stage):
             continue
         if ',' in path and not os.path.exists(path):  # skip host lists
             continue
-        elif not os.path.isdir(to_bytes(path)):
+        elif not os.path.isdir(path):
             # always pass the directory of the inventory source file
             path = os.path.dirname(path)
 
-        data = combine_vars(data, get_vars_from_path(loader, path, entities, stage))
+        if (new_vars := get_vars_from_path(loader, path, entities, stage)) != {}:
+            data = combine_vars(data, new_vars)
 
     return data
