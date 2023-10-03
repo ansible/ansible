@@ -191,14 +191,14 @@ collection_list:
     dependencies:
       dev_and_stables_ns.dev_and_stables_name: 1.2.3-dev0
 
-  - namespace: rc_meta_ns_with_transitive_dev_dep
-    name: rc_meta_name_with_transitive_dev_dep
+  - namespace: rc_meta_ns_with_trans_dev_dep
+    name: rc_meta_nm_w_transitive_dev_dep
     version: 2.4.5-rc5
     dependencies:
       ns_with_dev_dep.name_with_dev_dep: >-
         *
-  - namespace: meta_ns_with_transitive_wildcard_dep
-    name: meta_name_with_transitive_wildcard_dep
+  - namespace: meta_ns_with_trans_wildcard_dep
+    name: meta_name_w_trans_wildcard_dep
     version: 4.5.6
     dependencies:
       ns_with_wildcard_dep.name_with_wildcard_dep: 5.6.7-beta.3
