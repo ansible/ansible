@@ -129,13 +129,13 @@ if not HAS_SSLCONTEXT:
         try:
             from urllib3.contrib.pyopenssl import PyOpenSSLContext
         except Exception:
-            from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
+            from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext  # type: ignore[no-redef]
         HAS_URLLIB3_PYOPENSSLCONTEXT = True
     except Exception:
         # urllib3<1.15,>=1.6
         try:
             try:
-                from urllib3.contrib.pyopenssl import ssl_wrap_socket
+                from urllib3.contrib.pyopenssl import ssl_wrap_socket  # type: ignore[attr-defined]
             except Exception:
                 from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
             HAS_URLLIB3_SSL_WRAP_SOCKET = True
