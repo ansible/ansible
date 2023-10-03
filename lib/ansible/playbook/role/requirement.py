@@ -66,6 +66,19 @@ class RoleRequirement(RoleDefinition):
 
     @staticmethod
     def role_yaml_parse(role):
+        """
+        Parse the 'role' parameter and extract relevant information.
+
+        This function supports both old style and new style role requirements.
+        If the 'role' parameter is a string, it is parsed based on the presence of commas.
+        If the 'role' parameter is a dictionary, it is processed based on the keys present.
+
+        Parameters:
+            role (Union[str, dict]): The role parameter to parse.
+
+        Returns:
+            dict: A dictionary containing the extracted role information.
+        """
 
         if isinstance(role, string_types):
             name = None
@@ -124,5 +137,19 @@ class RoleRequirement(RoleDefinition):
 
     @staticmethod
     def scm_archive_role(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
+        """
+        This static method is used to archive a role in a source control management system.
+
+        Parameters:
+            src (str): The source location of the role.
+            scm (str, optional): The type of source control management system. Defaults to 'git'.
+            name (str, optional): The name of the role. Defaults to None.
+            version (str, optional): The version of the role. Defaults to 'HEAD'.
+            keep_scm_meta (bool, optional): Whether to keep the source control
+                management metadata. Defaults to False.
+
+        Returns:
+            The result of scm_archive_resource function.
+        """
 
         return scm_archive_resource(src, scm=scm, name=name, version=version, keep_scm_meta=keep_scm_meta)

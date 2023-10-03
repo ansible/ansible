@@ -30,6 +30,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
+
 from ansible.playbook.role import Role, hash_params
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
@@ -88,6 +89,9 @@ class Play(Base, Taggable, CollectionSearch):
     # =================================================================================
 
     def __init__(self):
+        """
+        Initialize a new 'Play' object.
+        """
         super(Play, self).__init__()
 
         self._included_conditional = None
@@ -102,6 +106,9 @@ class Play(Base, Taggable, CollectionSearch):
         self._group_actions = {}
 
     def __repr__(self):
+        """
+        Return the name of the 'Play' object.
+        """
         return self.get_name()
 
     @property
@@ -121,6 +128,24 @@ class Play(Base, Taggable, CollectionSearch):
         return cache
 
     def _validate_hosts(self, attribute, name, value):
+        """
+        Validate the 'hosts' attribute in the data set.
+
+        This function checks if the 'hosts' attribute is present in the data set.
+        If it is present, it validates the value of the 'hosts' attribute.
+        If the value is empty, an AnsibleParserError is raised.
+        If the value is a sequence, each item in the sequence is checked to ensure it
+        is a valid string.
+        If the value is not a sequence or a string, an AnsibleParserError is raised.
+
+        Parameters:
+            attribute (str): The name of the attribute being validated.
+            name (str): The name of the Play.
+            value: The value of the 'hosts' attribute.
+
+        Raises:
+            AnsibleParserError: If the 'hosts' list is empty or contains invalid values.
+        """
         # Only validate 'hosts' if a value was passed in to original data set.
         if 'hosts' in self._ds:
             if not value:
@@ -138,7 +163,18 @@ class Play(Base, Taggable, CollectionSearch):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
-        ''' return the name of the Play '''
+        """
+        Return the name of the Play.
+
+        This function returns the name of the Play. If the name attribute is
+        already set, it is returned. Otherwise, if the hosts attribute is a
+        sequence, the name is set to the comma-separated string of hosts. If the
+        hosts attribute is not a sequence or a string, the name is set to an empty
+        string.
+
+        Returns:
+            str: The name of the Play.
+        """
         if self.name:
             return self.name
 
@@ -151,6 +187,22 @@ class Play(Base, Taggable, CollectionSearch):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
+        """
+        Load data into a Play object.
+
+        This static method creates a Play object and loads data into it. If the
+        vars parameter is provided, the vars attribute of the Play object is set
+        to a copy of the vars parameter.
+
+        Parameters:
+            data: The data to be loaded into the Play object.
+            variable_manager: The variable manager to use.
+            loader: The loader to use.
+            vars: The variables to associate with the Play object.
+
+        Returns:
+            Play: The Play object with the loaded data.
+        """
         p = Play()
         if vars:
             p.vars = vars.copy()
@@ -247,6 +299,22 @@ class Play(Base, Taggable, CollectionSearch):
         return self.roles
 
     def _load_vars_prompt(self, attr, ds):
+        """
+        Preprocess the 'ds' variable and return a list of prompt data.
+
+        This private method takes two parameters, 'self' and 'ds'. It preprocesses the
+        'ds' variable using the 'preprocess_vars' function and stores the result in the
+        'new_ds' variable. It then initializes an empty list 'vars_prompts'. If
+        'new_ds' is not None, it iterates over each 'prompt_data' in 'new_ds' and
+        performs the following validations:
+
+        - If 'prompt_data' does not contain the key 'name', an 'AnsibleParserError' is raised.
+        - For each key in 'prompt_data', if the key is not one of the supported keys,
+        an 'AnsibleParserError' is raised.
+
+        Finally, the 'prompt_data' is appended to the 'vars_prompts' list. The method
+        returns the 'vars_prompts' list.
+        """
         new_ds = preprocess_vars(ds)
         vars_prompts = []
         if new_ds is not None:
@@ -297,11 +365,14 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile(self):
-        '''
+        """
         Compiles and returns the task list for this play, compiled from the
-        roles (which are themselves compiled recursively) and/or the list of
-        tasks specified in the play.
-        '''
+        roles (which are themselves compiled recursively) and/or the list of tasks
+        specified in the play.
+
+        Returns:
+            list: The compiled task list.
+        """
 
         # create a block containing a single flush handlers meta
         # task, so we can be sure to run handlers at certain points
@@ -353,9 +424,21 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def get_vars(self):
+        """
+        Get a copy of the 'vars' attribute.
+
+        Returns:
+            list: A copy of the 'vars' attribute.
+        """
         return self.vars.copy()
 
     def get_vars_files(self):
+        """
+        Get the 'vars_files' attribute as a list.
+
+        Returns:
+            list: The 'vars_files' attribute as a list, or an empty list if it is None.
+        """
         if self.vars_files is None:
             return []
         elif not isinstance(self.vars_files, list):
@@ -363,12 +446,30 @@ class Play(Base, Taggable, CollectionSearch):
         return self.vars_files
 
     def get_handlers(self):
+        """
+        Get a copy of the 'handlers' attribute.
+
+        Returns:
+            list: A copy of the 'handlers' attribute.
+        """
         return self.handlers[:]
 
     def get_roles(self):
+        """
+        Get a copy of the 'roles' attribute.
+
+        Returns:
+            list: A copy of the 'roles' attribute.
+        """
         return self.roles[:]
 
     def get_tasks(self):
+        """
+        Get a list of tasks.
+
+        Returns:
+            list: A list of tasks.
+        """
         tasklist = []
         for task in self.pre_tasks + self.tasks + self.post_tasks:
             if isinstance(task, Block):
@@ -378,6 +479,12 @@ class Play(Base, Taggable, CollectionSearch):
         return tasklist
 
     def serialize(self):
+        """
+        Serialize the object.
+
+        Returns:
+            dict: The serialized data.
+        """
         data = super(Play, self).serialize()
 
         roles = []
@@ -391,6 +498,15 @@ class Play(Base, Taggable, CollectionSearch):
         return data
 
     def deserialize(self, data):
+        """
+        Deserialize a `Play` object from the provided data.
+
+        This function deserializes a `Play` object from a dictionary `data` and initializes
+        the attributes of the `Play` object.
+
+        Parameters:
+            data (dict): The dictionary containing the data to deserialize.
+        """
         super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
@@ -408,6 +524,15 @@ class Play(Base, Taggable, CollectionSearch):
             del data['roles']
 
     def copy(self):
+        """
+        Create a copy of the `Play` object.
+
+        This function creates a new `Play` object with the same attributes and values as
+        the current `Play` object.
+
+        Returns:
+            Play: The copy of the `Play` object.
+        """
         new_me = super(Play, self).copy()
         new_me.role_cache = self.role_cache.copy()
         new_me._included_conditional = self._included_conditional

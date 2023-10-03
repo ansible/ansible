@@ -85,29 +85,110 @@ class Attribute:
             raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
 
     def __set_name__(self, owner, name):
+        """
+        Set the name attribute of the instance.
+
+        Parameters:
+            owner: The class that owns the instance.
+            name: The name of the instance.
+        """
         self.name = name
 
     def __eq__(self, other):
+        """
+        Check if the priority of the other instance is equal to the priority of the
+        current instance.
+
+        Parameters:
+            other: The other instance to compare.
+
+        Returns:
+            bool: True if the priorities are equal, False otherwise.
+        """
         return other.priority == self.priority
 
     def __ne__(self, other):
+        """
+        Check if the priority of the other instance is not equal to the priority of the
+        current instance.
+
+        Parameters:
+            other: The other instance to compare.
+
+        Returns:
+            bool: True if the priorities are not equal, False otherwise.
+        """
         return other.priority != self.priority
 
     # NB: higher priority numbers sort first
 
     def __lt__(self, other):
+        """
+        Check if the priority of the other instance is less than the priority of the
+        current instance.
+
+        Parameters:
+            other: The other instance to compare.
+
+        Returns:
+            bool: True if the priority of the other instance is less than the
+            priority of the current instance, False otherwise.
+        """
         return other.priority < self.priority
 
     def __gt__(self, other):
+        """
+        Check if the priority of the other instance is greater than the priority of the
+        current instance.
+
+        Parameters:
+            other: The other instance to compare.
+
+        Returns:
+            bool: True if the priority of the other instance is greater than the
+            priority of the current instance, False otherwise.
+        """
         return other.priority > self.priority
 
     def __le__(self, other):
+        """
+        Check if the priority of the other instance is less than or equal to the
+        priority of the current instance.
+
+        Parameters:
+            other: The other instance to compare.
+
+        Returns:
+            bool: True if the priority of the other instance is less than or equal
+            to the priority of the current instance, False otherwise.
+        """
         return other.priority <= self.priority
 
     def __ge__(self, other):
+        """
+        Check if the priority of the other instance is greater than or equal to the
+        priority of the current instance.
+
+        Parameters:
+            other: The other instance to compare.
+
+        Returns:
+            bool: True if the priority of the other instance is greater than or
+            equal to the priority of the current instance, False otherwise.
+        """
         return other.priority >= self.priority
 
     def __get__(self, obj, obj_type=None):
+        """
+        Retrieve the value of the attribute from the object.
+
+        Parameters:
+            obj: The object instance.
+            obj_type: The type of the object.
+
+        Returns:
+            The value of the attribute.
+        """
         method = f'_get_attr_{self.name}'
         if hasattr(obj, method):
             # NOTE this appears to be not used in the codebase,
@@ -130,6 +211,17 @@ class Attribute:
         return value
 
     def __set__(self, obj, value):
+        """
+        Set the value of the attribute on the given object.
+
+        This method sets the value of the attribute with the specified name on the
+        given object. It also sets the value of a corresponding attribute with an
+        alias if one is provided.
+
+        Parameters:
+            obj: The object on which to set the attribute.
+            value: The value to set for the attribute.
+        """
         setattr(obj, f'_{self.name}', value)
         if self.alias is not None:
             setattr(obj, f'_{self.alias}', value)
@@ -138,6 +230,15 @@ class Attribute:
     # leaving it here for test_attr_int_del from
     # test/units/playbook/test_base.py to pass.
     def __delete__(self, obj):
+        """
+        Delete the attribute from the given object.
+
+        This method deletes the attribute with the specified name from the given
+        object.
+
+        Parameters:
+            obj: The object from which to delete the attribute.
+        """
         delattr(obj, f'_{self.name}')
 
 
@@ -146,6 +247,7 @@ class NonInheritableFieldAttribute(Attribute):
 
 
 class FieldAttribute(Attribute):
+
     def __init__(self, extend=False, prepend=False, **kwargs):
         super().__init__(**kwargs)
 
@@ -181,7 +283,9 @@ class FieldAttribute(Attribute):
 
 
 class ConnectionFieldAttribute(FieldAttribute):
+    """A class representing a custom field attribute for the 'connection' attribute."""
     def __get__(self, obj, obj_type=None):
+        """Override the __get__ method to modify the behavior of the 'connection' attribute."""
         from ansible.module_utils.compat.paramiko import paramiko
         from ansible.utils.ssh_functions import check_for_controlpersist
         value = super().__get__(obj, obj_type)

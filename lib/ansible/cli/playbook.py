@@ -36,6 +36,14 @@ class PlaybookCLI(CLI):
     name = 'ansible-playbook'
 
     def init_parser(self):
+        """
+        Initialize the parser for command-line options.
+
+        This method sets up the parser for command-line options, including
+        usage and description. It also adds various options to the parser using
+        the add_argument method. Finally, it defines a few more options specific
+        to Ansible playbooks.
+        """
 
         # create parser for CLI options
         super(PlaybookCLI, self).init_parser(
@@ -67,6 +75,16 @@ class PlaybookCLI(CLI):
         self.parser.add_argument('args', help='Playbook(s)', metavar='playbook', nargs='+')
 
     def post_process_args(self, options):
+        """
+        Perform post-processing on the options parameter and return the updated options.
+
+        Args:
+            self: The current object instance.
+            options: The options parameter to be processed.
+
+        Returns:
+            The updated options parameter.
+        """
 
         # for listing, we need to know if user had tag input
         # capture here as parent function sets defaults for tags
@@ -231,6 +249,13 @@ class PlaybookCLI(CLI):
 
     @staticmethod
     def _flush_cache(inventory, variable_manager):
+        """
+        Flushes the cache by clearing the facts associated with each host in the inventory.
+
+        Parameters:
+            inventory: An object representing the inventory.
+            variable_manager: An object representing the variable manager.
+        """
         for host in inventory.list_hosts():
             hostname = host.get_name()
             variable_manager.clear_facts(hostname)

@@ -39,6 +39,15 @@ class Conditional:
     when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
 
     def __init__(self, loader=None):
+        """
+        Initializes a new instance of the Conditional class.
+
+        Parameters:
+            loader: The loader to be used.
+
+        Raises:
+            AnsibleError: If a loader is not specified when using Conditional directly.
+        """
         # when used directly, this class needs a loader, but we want to
         # make sure we don't trample on the existing one if this class
         # is used as a mix-in with a playbook base class
@@ -50,6 +59,14 @@ class Conditional:
         super().__init__()
 
     def _validate_when(self, attr, name, value):
+        """
+        Validates the 'when' field.
+
+        Parameters:
+            attr: The attribute.
+            name: The name of the field.
+            value: The value of the field.
+        """
         if not isinstance(value, list):
             setattr(self, name, [value])
 
@@ -64,6 +81,16 @@ class Conditional:
         """Loops through the conditionals set on this object, returning
         False if any of them evaluate as such as well as the condition
         that was false.
+
+        Parameters:
+            templar (Templar): The Templar object used for evaluating conditionals.
+            all_vars (dict[str, t.Any]): A dictionary containing all variables.
+
+        Returns:
+            tuple[bool, t.Optional[str]]: A tuple containing a boolean indicating
+            the result (True if all conditionals evaluate to True, False
+            otherwise) and an optional string indicating the condition that was
+            false.
         """
         for conditional in self.when:
             if conditional is None or conditional == "":
@@ -86,6 +113,23 @@ class Conditional:
         return True, None
 
     def _check_conditional(self, conditional: str, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
+        """
+        Check the given conditional string and evaluate it as a Jinja2 template.
+
+        If the conditional string is a template, a warning is raised. The method
+        then evaluates the conditional string as a Jinja2 template and returns a
+        boolean value based on the evaluation. If there is an undefined variable
+        in the conditional string, an AnsibleUndefinedVariable exception is raised.
+
+        Parameters:
+            conditional (str): The conditional string to be evaluated.
+            templar (Templar): The Templar object used for template evaluation.
+            all_vars (dict[str, t.Any]): A dictionary of available variables.
+
+        Returns:
+            bool: The boolean value resulting from the evaluation of the
+            conditional string.
+        """
         original = conditional
         templar.available_variables = all_vars
         try:

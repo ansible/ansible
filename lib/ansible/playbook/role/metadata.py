@@ -45,14 +45,32 @@ class RoleMetadata(Base, CollectionSearch):
     argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
+        """
+        Initialize a new RoleMetadata object.
+
+        Parameters:
+            owner: The owner of the RoleMetadata object.
+        """
         self._owner = owner
         super(RoleMetadata, self).__init__()
 
     @staticmethod
     def load(data, owner, variable_manager=None, loader=None):
-        '''
-        Returns a new RoleMetadata object based on the datastructure passed in.
-        '''
+        """
+        Returns a new RoleMetadata object based on the data structure passed in.
+
+        Parameters:
+            data: The data structure for the RoleMetadata object.
+            owner: The owner of the RoleMetadata object.
+            variable_manager: The variable manager.
+            loader: The loader.
+
+        Returns:
+            RoleMetadata: A new RoleMetadata object.
+
+        Raises:
+            AnsibleParserError: If the 'meta/main.yml' is not a dictionary.
+        """
 
         if not isinstance(data, dict):
             raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
@@ -111,11 +129,23 @@ class RoleMetadata(Base, CollectionSearch):
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 
     def serialize(self):
+        """
+        Serialize the object into a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the object.
+        """
         return dict(
             allow_duplicates=self._allow_duplicates,
             dependencies=self._dependencies
         )
 
     def deserialize(self, data):
+        """
+        Deserialize the object from a dictionary.
+
+        Args:
+            data (dict): A dictionary containing the serialized data.
+        """
         setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
         setattr(self, 'dependencies', data.get('dependencies', []))

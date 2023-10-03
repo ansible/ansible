@@ -69,6 +69,21 @@ class IncludeRole(TaskInclude):
         return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
+        """
+        Retrieve a list of blocks and handlers from a role.
+
+        This method retrieves the list of blocks and handlers from a role. It takes in
+        four optional parameters: 'play', 'variable_manager', 'loader', and 'self'.
+
+        Parameters:
+            play (object): The play object to use when dynamic (default: None).
+            variable_manager (object): The variable manager object (default: None).
+            loader (object): The loader object (default: None).
+            self (object): The current object (default: None).
+
+        Returns:
+            tuple: A tuple containing the blocks and handlers.
+        """
 
         # only need play passed in when dynamic
         if play is None:
@@ -121,6 +136,24 @@ class IncludeRole(TaskInclude):
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+        """
+        Load data and create an instance of IncludeRole.
+
+        This static method takes various parameters including data, block, role,
+        task_include, variable_manager, and loader. It performs several operations
+        on the input data and returns an instance of IncludeRole.
+
+        Parameters:
+            data: The data to be processed.
+            block (optional): The block to be passed to IncludeRole.
+            role (optional): The role to be passed to IncludeRole.
+            task_include (optional): The task_include to be passed to IncludeRole.
+            variable_manager (optional): The variable_manager to be passed to IncludeRole.
+            loader (optional): The loader to be passed to IncludeRole.
+
+        Returns:
+            IncludeRole: An instance of IncludeRole created using the provided parameters.
+        """
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
@@ -163,6 +196,19 @@ class IncludeRole(TaskInclude):
         return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
+        """
+        Create a copy of the current object.
+
+        This method creates a new instance of the current object and sets some
+        attributes of the new object.
+
+        Parameters:
+            exclude_parent (bool): Whether to exclude the parent role from the copy.
+            exclude_tasks (bool): Whether to exclude the tasks from the copy.
+
+        Returns:
+            object: A copy of the current object.
+        """
 
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
@@ -174,6 +220,15 @@ class IncludeRole(TaskInclude):
         return new_me
 
     def get_include_params(self):
+        """
+        Get the parameters from the parent role.
+
+        This method retrieves the parameters from the parent role and adds them to a
+        dictionary.
+
+        Returns:
+            dict: A dictionary containing the parameters.
+        """
         v = super(IncludeRole, self).get_include_params()
         if self._parent_role:
             v |= self._parent_role.get_role_params()

@@ -32,6 +32,14 @@ display = Display()
 
 
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
+    """
+    Validates the metadata of an action group.
+
+    Parameters:
+        action (dict): The action to validate.
+        found_group_metadata (bool): Indicates if the group contains metadata entries.
+        fq_group_name (str): The fully qualified name of the action group.
+    """
     valid_metadata = {
         'extend_group': {
             'types': (list, string_types,),
@@ -71,20 +79,29 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
 
 
 class _ClassProperty:
+    """A descriptor class for creating class properties."""
     def __set_name__(self, owner, name):
+        """Called when the class property is assigned a name."""
         self.name = name
 
     def __get__(self, obj, objtype=None):
+        """Called when the class property is accessed."""
         return getattr(objtype, f'_{self.name}')()
 
 
 class FieldAttributeBase:
+    """
+    This is the base class for field attributes.
+    """
 
     fattributes = _ClassProperty()
 
     @classmethod
     @cache
     def _fattributes(cls):
+        """
+        Return a dictionary of all Attribute objects defined in the class and its superclasses.
+        """
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
@@ -97,6 +114,9 @@ class FieldAttributeBase:
         return fattributes
 
     def __init__(self):
+        """
+        Initialize the FieldAttributeBase object.
+        """
 
         # initialize the data loader and variable manager, which will be provided
         # later when the object is actually loaded
@@ -116,10 +136,19 @@ class FieldAttributeBase:
 
     @property
     def finalized(self):
+        """
+        Return True if the object has been finalized, False otherwise.
+        """
         return self._finalized
 
     def dump_me(self, depth=0):
-        ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
+        """
+        This function is never called from production code, it is here to be used when
+        debugging as a 'complex print'.
+
+        Parameters:
+            depth (int): The current depth level of the object in the recursive call.
+        """
         if depth == 0:
             display.debug("DUMPING OBJECT ------------------------------------------------------")
         display.debug("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
@@ -133,11 +162,29 @@ class FieldAttributeBase:
             self._play.dump_me(depth + 2)
 
     def preprocess_data(self, ds):
-        ''' infrequently used method to do some pre-processing of legacy terms '''
+        """
+        Infrequently used method to do some pre-processing of legacy terms.
+
+        Parameters:
+            ds: The data structure to be pre-processed.
+
+        Returns:
+            The pre-processed data structure.
+        """
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None):
-        ''' walk the input datastructure and assign any values '''
+        """
+        walk the input datastructure and assign any values
+
+        Parameters:
+            ds: The input data structure.
+            variable_manager: The variable manager class used to manage and merge variables.
+            loader: The data loader class used to parse data from strings and files.
+
+        Returns:
+            The constructed object.
+        """
 
         if ds is None:
             raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
@@ -179,18 +226,47 @@ class FieldAttributeBase:
         return self
 
     def get_ds(self):
+        """
+        Retrieves the '_ds' attribute from the current object and returns it if it exists.
+
+        Returns:
+            The '_ds' attribute if it exists, otherwise None.
+        """
         try:
             return getattr(self, '_ds')
         except AttributeError:
             return None
 
     def get_loader(self):
+        """
+        Retrieves the '_loader' attribute from the current object and returns it.
+
+        Returns:
+            The '_loader' attribute.
+        """
         return self._loader
 
     def get_variable_manager(self):
+        """
+        Retrieves the '_variable_manager' attribute from the current object and returns it.
+
+        Returns:
+            The '_variable_manager' attribute.
+        """
         return self._variable_manager
 
     def _post_validate_debugger(self, attr, value, templar):
+        """
+        Performs validation on the 'debugger' attribute by checking if it is a valid value.
+
+        Parameters:
+            attr (str): The name of the attribute.
+            value: The value of the attribute.
+            templar: The templar object.
+
+        Returns:
+            The validated value of the attribute.
+        """
         value = templar.template(value)
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
         if value and isinstance(value, string_types) and value not in valid_values:
@@ -198,10 +274,16 @@ class FieldAttributeBase:
         return value
 
     def _validate_attributes(self, ds):
-        '''
-        Ensures that there are no keys in the datastructure which do
-        not map to attributes for this object.
-        '''
+        """
+        Ensures that there are no keys in the datastructure which do not map to
+        attributes for this object.
+
+        Parameters:
+            ds (dict): The data structure to validate.
+
+        Raises:
+            AnsibleParserError: If a key in the data structure does not map to a valid attribute.
+        """
 
         valid_attrs = frozenset(self.fattributes)
         for key in ds:
@@ -232,6 +314,20 @@ class FieldAttributeBase:
         self._validated = True
 
     def _load_module_defaults(self, name, value):
+        """
+        Load module defaults.
+
+        This method loads module defaults based on the given name and value. It performs
+        validations and updates defaults_entry for special cases. The method
+        returns a list of validated module defaults.
+
+        Parameters:
+            name (str): The name parameter.
+            value: The value parameter.
+
+        Returns:
+            list: A list of validated module defaults.
+        """
         if value is None:
             return
 
@@ -288,6 +384,16 @@ class FieldAttributeBase:
 
     @property
     def play(self):
+        """
+        This property returns the play value of the instance.
+
+        If the instance has a '_play' attribute, it returns the value of '_play'.
+        If the instance has a '_parent' attribute and the '_parent' has a '_play'
+        attribute, it returns the value of '_parent._play'.
+        If none of the above conditions are met, it returns the instance itself.
+        If the returned value's class name is not 'Play', it returns None.
+        Finally, it returns the value of 'play'.
+        """
         if hasattr(self, '_play'):
             play = self._play
         elif hasattr(self, '_parent') and hasattr(self._parent, '_play'):
@@ -387,6 +493,19 @@ class FieldAttributeBase:
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name, mandatory=True):
+        """
+        Resolve the specified action and return the resolved fully qualified class name.
+
+        Parameters:
+            action_name (str): The name of the action.
+            mandatory (bool, optional): Whether the action is mandatory. Defaults to True.
+
+        Returns:
+            str: The resolved fully qualified class name.
+
+        Raises:
+            AnsibleParserError: If the action cannot be resolved and mandatory is True.
+        """
         context = module_loader.find_plugin_with_context(action_name)
         if context.resolved and not context.action_plugin:
             prefer = action_loader.find_plugin_with_context(action_name)
@@ -402,11 +521,12 @@ class FieldAttributeBase:
         display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
 
     def squash(self):
-        '''
-        Evaluates all attributes and sets them to the evaluated version,
-        so that all future accesses of attributes do not need to evaluate
-        parent attributes.
-        '''
+        """
+        Evaluate all attributes and set them to their evaluated version.
+
+        This allows future accesses of the attributes to not require re-evaluation
+        of parent attributes.
+        """
         if not self._squashed:
             for name in self.fattributes:
                 setattr(self, name, getattr(self, name))
@@ -438,6 +558,37 @@ class FieldAttributeBase:
         return new_me
 
     def get_validated_value(self, name, attribute, value, templar):
+        """
+        Validate and convert the value based on the specified attribute.
+
+        This function takes in a name, attribute, value, and templar as input parameters.
+        It performs various validations on the value based on the type specified by the
+        attribute.
+        If the attribute is a string, it converts the value to a string.
+        If the attribute is an int, it converts the value to an integer.
+        If the attribute is a float, it converts the value to a float.
+        If the attribute is a bool, it converts the value to a boolean.
+        If the attribute is a percent, it converts the value to a float after removing
+        any '%' character.
+        If the attribute is a list, it converts the value to a list and checks if the
+        items in the list match the specified type.
+        If the attribute is a set, it converts the value to a set and handles different
+        types of inputs.
+        If the attribute is a dict, it converts the value to a dictionary.
+        If the attribute is a class, it checks if the value is an instance of the
+        specified class type and calls the post_validate method on the value.
+        If the attribute type is not recognized, an AnsibleAssertionError is raised.
+        The function returns the validated value.
+
+        Parameters:
+            name (str): The name of the attribute.
+            attribute: The attribute object specifying the type and other constraints.
+            value: The value to be validated and converted.
+            templar: The templar object.
+
+        Returns:
+            The validated and converted value.
+        """
         if attribute.isa == 'string':
             value = to_text(value)
         elif attribute.isa == 'int':
@@ -715,6 +866,9 @@ class FieldAttributeBase:
 
 
 class Base(FieldAttributeBase):
+    """
+    This is a class representing the Base class.
+    """
 
     name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True)
 
@@ -746,6 +900,7 @@ class Base(FieldAttributeBase):
 
     # Privilege escalation
     become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
+
     become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
     become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
     become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
@@ -768,6 +923,12 @@ class Base(FieldAttributeBase):
         return path
 
     def get_dep_chain(self):
+        """
+        Recursively retrieve the dependency chain by calling 'get_dep_chain' on the
+        parent until it reaches the top level.
+        Returns:
+            None: if the object has no parent
+        """
 
         if hasattr(self, '_parent') and self._parent:
             return self._parent.get_dep_chain()

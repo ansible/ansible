@@ -30,6 +30,7 @@ from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
+
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
@@ -143,7 +144,24 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             return "TASK: %s" % self.get_name()
 
     def _preprocess_with_loop(self, ds, new_ds, k, v):
-        ''' take a lookup plugin name and store it correctly '''
+        """
+        Take a lookup plugin name and store it correctly.
+
+        This method preprocesses a lookup plugin name by removing the prefix 'with_'
+        from the name and then stores it correctly in the `new_ds` dictionary. It
+        checks for duplicates in the `new_ds` dictionary and raises an
+        `AnsibleError` if a duplicate is found. An `AnsibleError` is also raised
+        if the value `v` is
+        None. Finally, the method adds the loop name and value to the `new_ds`
+        dictionary.
+
+        Parameters:
+            self: The instance of the class.
+            ds: The original data structure.
+            new_ds: The new data structure.
+            k: The key.
+            v: The value.
+        """
 
         loop_name = k.removeprefix("with_")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
@@ -156,10 +174,21 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         #                    version="2.10", collection_name='ansible.builtin')
 
     def preprocess_data(self, ds):
-        '''
-        tasks are especially complex arguments so need pre-processing.
-        keep it short.
-        '''
+        """
+        Preprocesses the given data structure.
+
+        This function performs several operations on the input data structure, including:
+        - Validating the data structure
+        - Cleaning the data structure
+        - Resolving action and arguments
+        - Handling deprecated features
+
+        Parameters:
+            ds (dict): The data structure to be preprocessed.
+
+        Returns:
+            AnsibleMapping: The preprocessed data structure.
+        """
 
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
@@ -290,10 +319,18 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         super(Task, self).post_validate(templar)
 
     def _post_validate_loop(self, attr, value, templar):
-        '''
+        """
         Override post validation for the loop field, which is templated
         specially in the TaskExecutor class when evaluating loops.
-        '''
+
+        Parameters:
+            attr: The attribute to be validated.
+            value: The value of the attribute.
+            templar: The templar object used for evaluating loops.
+
+        Returns:
+            The value parameter.
+        """
         return value
 
     def _post_validate_environment(self, attr, value, templar):
@@ -381,6 +418,30 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return all_vars
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
+        """
+        Create a copy of the current Task instance.
+
+        This function creates a copy of the current Task instance and assigns it to a
+        new variable. It then sets the '_parent' attribute of the new instance to
+        None, and if the original instance has a non-empty '_parent' attribute and
+        'exclude_parent' is False, it creates a copy of the original instance's
+        '_parent' attribute and assigns it to the new instance's '_parent'
+        attribute.
+        The function also assigns the '_role' attribute of the new instance to the same
+        value as the original instance's '_role' attribute. Finally, it assigns
+        the values of 'implicit', 'resolved_action', and '_uuid' attributes from
+        the original instance to the new instance. The function returns the new
+        instance at the end.
+
+        Parameters:
+            exclude_parent (bool, optional): Whether to exclude the '_parent'
+                attribute from the copy. Defaults to False.
+            exclude_tasks (bool, optional): Whether to exclude tasks from the copy.
+            Defaults to False.
+
+        Returns:
+            Task: A copy of the current Task instance.
+        """
         new_me = super(Task, self).copy()
 
         new_me._parent = None
@@ -398,6 +459,19 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return new_me
 
     def serialize(self):
+        """
+        Serialize the Task instance into a dictionary.
+
+        This function creates a dictionary 'data' by calling the 'serialize' function
+        of the parent class. If the '_squashed' and '_finalized' attributes of the
+        original instance are both False, it adds key-value pairs to the 'data'
+        dictionary for the '_parent', 'parent_type', 'role', 'implicit', and
+        'resolved_action' attributes of the original instance. The function then
+        returns the 'data' dictionary.
+
+        Returns:
+            dict: A dictionary representing the serialized Task instance.
+        """
         data = super(Task, self).serialize()
 
         if not self._squashed and not self._finalized:
@@ -414,6 +488,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return data
 
     def deserialize(self, data):
+        """
+        Deserialize data and set attributes of the Task object based on the data.
+        """
 
         # import is here to avoid import loops
         from ansible.playbook.task_include import TaskInclude
@@ -457,9 +534,17 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
-        '''
+        """
         Generic logic to get the attribute or parent attribute for a task value.
-        '''
+
+        Parameters:
+            attr (str): The name of the attribute to retrieve.
+            omit (bool, optional): If True, omit self and only get parent values.
+            Defaults to False.
+
+        Returns:
+            Any: The value of the attribute or the parent attribute.
+        """
         fattr = self.fattributes[attr]
 
         extend = fattr.extend
@@ -497,11 +582,35 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return value
 
     def all_parents_static(self):
+        """
+        Recursive function to check if the current object has any parent objects.
+
+        If the current object has a parent, this function calls itself on the parent object.
+        If the current object has no parent, this function returns True.
+
+        Returns:
+            bool: True if the current object has no parent, False otherwise.
+        """
         if self._parent:
             return self._parent.all_parents_static()
         return True
 
     def get_first_parent_include(self):
+        """
+        Recursive function to get the first parent object of type 'TaskInclude'.
+
+        If the current object has a parent, this function checks if the parent is an
+        instance of 'TaskInclude'.
+        If the parent is an instance of 'TaskInclude', this function returns the parent object.
+        If the parent is not an instance of 'TaskInclude', this function calls itself
+        on the parent object.
+        If the current object has no parent or if the parent is not an instance of
+        'TaskInclude', this function returns None.
+
+        Returns:
+            TaskInclude: The first parent object of type 'TaskInclude', or None if no such
+            parent is found.
+        """
         from ansible.playbook.task_include import TaskInclude
         if self._parent:
             if isinstance(self._parent, TaskInclude):
@@ -510,6 +619,16 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return None
 
     def get_play(self):
+        """
+        Function to get the 'play' attribute of the first parent object of type 'Block'.
+
+        Starting from the current object's parent, this function traverses up the
+        parent chain until it finds an object of type 'Block'.
+        It then returns the '_play' attribute of that 'Block' object.
+
+        Returns:
+            Block: The first parent object of type 'Block'.
+        """
         parent = self._parent
         while not isinstance(parent, Block):
             parent = parent._parent
