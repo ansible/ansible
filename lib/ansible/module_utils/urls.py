@@ -255,11 +255,17 @@ if HAS_SSL:
             self._unix_socket = unix_socket
 
         def https_open(self, req):
+            kwargs = {}
+            try:
+                # deprecated: description='deprecated check_hostname' python_version='3.12'
+                kwargs['check_hostname'] = self._check_hostname
+            except AttributeError:
+                pass
             return self.do_open(
                 UnixHTTPSConnection(self._unix_socket),
                 req,
                 context=self._context,
-                check_hostname=self._check_hostname
+                **kwargs
             )
 
 
