@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix ``run_once`` being incorrectly interpreted on handlers (https://github.com/ansible/ansible/issues/81666)

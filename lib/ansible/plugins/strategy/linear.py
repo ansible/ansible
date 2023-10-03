@@ -242,6 +242,12 @@ class StrategyModule(StrategyBase):
                         self._queue_task(host, task, task_vars, play_context)
                         del task_vars
 
+                    if isinstance(task, Handler):
+                        if run_once:
+                            task.clear_hosts()
+                        else:
+                            task.remove_host(host)
+
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
