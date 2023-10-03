@@ -1,0 +1,2 @@
+minor_changes:
+  - yum/dnf - Support installing optional packages in a package group (https://github.com/ansible/ansible/issues/67187).

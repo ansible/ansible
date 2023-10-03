@@ -257,6 +257,12 @@ options:
     type: bool
     default: "no"
     version_added: "2.12"
+  with_optional:
+    description:
+      - Include optional packages when installing package groups.
+    type: bool
+    default: "no"
+    version_added: "2.14"
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
@@ -352,6 +358,12 @@ EXAMPLES = '''
   ansible.builtin.dnf:
     name: '@Development tools'
     state: present
+
+- name: Install the 'Development tools' package group with any optional packages
+  ansible.builtin.dnf:
+    name: '@Development tools'
+    state: present
+    with_optional: true
 
 - name: Autoremove unneeded packages installed as dependencies
   ansible.builtin.dnf:
@@ -1085,6 +1097,11 @@ class DnfModule(YumDnf):
                             results=[],
                         )
 
+            if self.with_optional:
+                package_types = list(dnf.const.GROUP_PACKAGE_TYPES) + ['optional']
+            else:
+                package_types = list(dnf.const.GROUP_PACKAGE_TYPES)
+
             if self.state in ['installed', 'present']:
                 # Install files.
                 self._install_remote_rpms(filenames)
@@ -1105,7 +1122,7 @@ class DnfModule(YumDnf):
                 # Install groups.
                 for group in groups:
                     try:
-                        group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        group_pkg_count_installed = self.base.group_install(group, package_types)
                         if group_pkg_count_installed == 0:
                             response['results'].append("Group {0} already installed.".format(group))
                         else:
@@ -1121,7 +1138,7 @@ class DnfModule(YumDnf):
 
                 for environment in environments:
                     try:
-                        self.base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
+                        self.base.environment_install(environment, package_types)
                     except dnf.exceptions.DepsolveError as e:
                         failure_response['msg'] = "Depsolve Error occurred attempting to install environment: {0}".format(environment)
                         self.module.fail_json(**failure_response)
@@ -1175,7 +1192,7 @@ class DnfModule(YumDnf):
                         except dnf.exceptions.CompsError:
                             if not self.update_only:
                                 # If not already installed, try to install.
-                                group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                                group_pkg_count_installed = self.base.group_install(group, package_types)
                                 if group_pkg_count_installed == 0:
                                     response['results'].append("Group {0} already installed.".format(group))
                                 else:
@@ -1189,7 +1206,7 @@ class DnfModule(YumDnf):
                             self.base.environment_upgrade(environment)
                         except dnf.exceptions.CompsError:
                             # If not already installed, try to install.
-                            self.base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
+                            self.base.environment_install(environment, package_types)
                     except dnf.exceptions.DepsolveError as e:
                         failure_response['msg'] = "Depsolve Error occurred attempting to install environment: {0}".format(environment)
                     except dnf.exceptions.Error as e:

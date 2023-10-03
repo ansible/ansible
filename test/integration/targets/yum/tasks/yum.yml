@@ -412,17 +412,124 @@
     that:
       - "'sos' in ls_out.stdout"
 
-- name: install group
+- name: ensure group and optional packages are not installed
+  yum:
+    name: "{{ item }}"
+    state: absent
+  register: result
+  loop:
+    - "@Custom Group"
+    - "dinginessentail"  # mandatory
+    - "landsidescalping"  # optional
+
+- assert:
+    that:
+      - not item.changed
+  loop: "{{ result.results }}"
+
+- name: install group with optional packages
   yum:
     name: "@Custom Group"
     state: present
+    with_optional: True
   register: yum_result
+
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
+  failed_when: False
+  register: dinginessentail_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  failed_when: False
+  register: landsidescalping_result
+
+- name: verify installation of the group
+  assert:
+    that:
+      - "yum_result is success"
+      - "yum_result is changed"
+      - dinginessentail_result.rc == 0
+      - landsidescalping_result.rc == 0
 
 - name: verify installation of the group
   assert:
     that:
         - "yum_result is success"
         - "yum_result is changed"
+
+- name: install group again with the same options
+  yum:
+    name: "@Custom Group"
+    state: present
+    with_optional: True
+  register: yum_result
+
+- name: verify group was already installed
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is not changed"
+
+- name: remove group
+  yum:
+    name: "@Custom Group"
+    state: absent
+  register: yum_result
+
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
+  failed_when: False
+  register: dinginessentail_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  failed_when: False
+  register: landsidescalping_result
+
+- name: verify removal of the group
+  assert:
+    that:
+      - "yum_result is success"
+      - "yum_result is changed"
+      - dinginessentail_result.rc == 1
+      - landsidescalping_result.rc == 1
+
+- name: remove group again with the same options
+  yum:
+    name: "@Custom Group"
+    state: absent
+  register: yum_result
+
+- name: verify group was already removed
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is not changed"
+
+- name: install group
+  yum:
+    name: "@Custom Group"
+    state: present
+  register: yum_result
+
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
+  failed_when: False
+  register: dinginessentail_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  failed_when: False
+  register: landsidescalping_result
+
+- name: verify installation of the group
+  assert:
+    that:
+      - "yum_result is success"
+      - "yum_result is changed"
+      - dinginessentail_result.rc == 0
+      - landsidescalping_result.rc == 1
 
 - name: verify yum module outputs
   assert:
