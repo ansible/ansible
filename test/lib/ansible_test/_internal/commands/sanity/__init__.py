@@ -765,11 +765,6 @@ class SanityTest(metaclass=abc.ABCMeta):
         return False
 
     @property
-    def py2_compat(self) -> bool:
-        """True if the test only applies to code that runs on Python 2.x."""
-        return False
-
-    @property
     def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return CONTROLLER_PYTHON_VERSIONS
@@ -786,22 +781,10 @@ class SanityTest(metaclass=abc.ABCMeta):
 
     def filter_targets_by_version(self, args: SanityConfig, targets: list[TestTarget], python_version: str) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
+        del args  # args is not used here, but derived classes may make use of it
         del python_version  # python_version is not used here, but derived classes may make use of it
 
         targets = self.filter_targets(targets)
-
-        if self.py2_compat:
-            # This sanity test is a Python 2.x compatibility test.
-            content_config = get_content_config(args)
-
-            if content_config.py2_support:
-                # This collection supports Python 2.x.
-                # Filter targets to include only those that require support for remote-only Python versions.
-                targets = self.filter_remote_targets(targets)
-            else:
-                # This collection does not support Python 2.x.
-                # There are no targets to test.
-                targets = []
 
         return targets
 
@@ -878,7 +861,6 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__no_targets: bool = self.config.get('no_targets')
             self.__include_directories: bool = self.config.get('include_directories')
             self.__include_symlinks: bool = self.config.get('include_symlinks')
-            self.__py2_compat: bool = self.config.get('py2_compat', False)
             self.__error_code: str | None = self.config.get('error_code', None)
         else:
             self.output = None
@@ -894,7 +876,6 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__no_targets = True
             self.__include_directories = False
             self.__include_symlinks = False
-            self.__py2_compat = False
             self.__error_code = None
 
         if self.no_targets:
@@ -938,11 +919,6 @@ class SanityCodeSmellTest(SanitySingleVersion):
     def include_symlinks(self) -> bool:
         """True if the test targets should include symlinks."""
         return self.__include_symlinks
-
-    @property
-    def py2_compat(self) -> bool:
-        """True if the test only applies to code that runs on Python 2.x."""
-        return self.__py2_compat
 
     @property
     def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:

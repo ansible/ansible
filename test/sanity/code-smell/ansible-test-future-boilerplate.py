@@ -5,15 +5,7 @@ import sys
 
 
 def main():
-    # The following directories contain code which must work under Python 2.x.
-    py2_compat = (
-        'test/lib/ansible_test/_util/target/',
-    )
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if any(path.startswith(prefix) for prefix in py2_compat):
-            continue
-
         with open(path, 'rb') as path_fd:
             lines = path_fd.read().splitlines()
 

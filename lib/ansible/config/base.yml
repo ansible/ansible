@@ -1563,10 +1563,8 @@ INTERPRETER_PYTHON_FALLBACK:
   - python3.9
   - python3.8
   - python3.7
-  - python3.6
   - /usr/bin/python3
   - /usr/libexec/platform-python
-  - python2.7
   - /usr/bin/python
   - python
   vars:

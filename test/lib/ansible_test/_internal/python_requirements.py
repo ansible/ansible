@@ -446,17 +446,7 @@ def get_venv_packages(python: PythonConfig) -> dict[str, str]:
         wheel='0.37.1',
     )
 
-    override_packages = {
-        '2.7': dict(
-            pip='20.3.4',  # 21.0 requires Python 3.6+
-            setuptools='44.1.1',  # 45.0.0 requires Python 3.5+
-            wheel=None,
-        ),
-        '3.6': dict(
-            pip='21.3.1',  # 22.0 requires Python 3.7+
-            setuptools='59.6.0',  # 59.7.0 requires Python 3.7+
-            wheel=None,
-        ),
+    override_packages: dict[str, dict[str, str]] = {
     }
 
     packages = {name: version or default_packages[name] for name, version in override_packages.get(python.version, default_packages).items()}
