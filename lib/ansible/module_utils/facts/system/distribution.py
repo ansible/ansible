@@ -511,7 +511,7 @@ class Distribution(object):
     # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'RHEL', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
+                                'OEL', 'Amazon', 'Amzn', 'Virtuozzo', 'XenServer', 'Alibaba',
                                 'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky', 'TencentOS',
                                 'EuroLinux', 'Kylin Linux Advanced Server'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
