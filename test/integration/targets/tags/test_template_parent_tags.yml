@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    tags_in_var:
+      - tag1
+  tasks:
+    - block:
+        - name: Tagged_task
+          debug:
+      tags: "{{ tags_in_var }}"
