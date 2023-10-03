@@ -1,0 +1,6 @@
+bugfixes:
+- >
+  roles - give a warning for unsupported fields in the role argument spec during implicit ``validate_argument_spec`` tasks.
+  The valid portion of the argument spec is used to validate variables to prevent unhandled errors during validation.
+  (https://github.com/ansible/ansible/issues/79624, https://github.com/ansible/ansible/issues/84103)
+- validate_argument_spec - give an error for unsupported fields in the argument spec to prevent unhandled errors during validation.

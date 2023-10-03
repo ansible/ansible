@@ -1,0 +1,38 @@
+---
+argument_specs:
+  main:
+    short_description: Test invalid argument specifications.
+    description:
+      - Test argument specification features which are not applicable for role variables.
+      - The validation for role arguments is read-only.
+    options:
+      password:
+        description: "Things not to do."
+        no_log: true
+
+      auth:
+        description: "A dictionary containing a no_log suboption."
+        type: dict
+        options:
+          password:
+            description: "Things not to do."
+            no_log: true
+
+      option_with_suboptions:
+        description: "Things not to do."
+        type: dict
+        apply_defaults: true
+        options:
+          sub_option:
+            description: "A suboption of an option with apply_defaults."
+            default: "magic"
+
+      option_name:
+        description: "Things not to do."
+        aliases:
+          - option_alias
+
+      option_with_env_fallback:
+        description: "Things not to do."
+        fallback:
+          - ENV_VAR
