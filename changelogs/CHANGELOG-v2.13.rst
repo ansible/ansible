@@ -5,6 +5,26 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.13rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2023-10-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+
+Security Fixes
+--------------
+
+- ansible-galaxy - Prevent roles from using symlinks to overwrite files outside of the installation directory (CVE-2023-5115)
+
+Bugfixes
+--------
+
+- ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
+
 v2.13.12
 ========
 

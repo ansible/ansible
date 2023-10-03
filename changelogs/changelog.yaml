@@ -957,6 +957,25 @@ releases:
     - tarfile_extract_warn.yml
     - urls-unit-test-latest-cryptography.yml
     release_date: '2023-09-05'
+  2.13.13rc1:
+    changes:
+      bugfixes:
+      - ansible-galaxy info - fix reporting no role found when lookup_role_by_name
+        returns None.
+      release_summary: '| Release Date: 2023-10-03
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+        '
+      security_fixes:
+      - ansible-galaxy - Prevent roles from using symlinks to overwrite files outside
+        of the installation directory (CVE-2023-5115)
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 2.13.13rc1_summary.yaml
+    - cve-2023-5115.yml
+    - fix-ansible-galaxy-info-no-role-found.yml
+    release_date: '2023-10-03'
   2.13.1rc1:
     changes:
       bugfixes:
