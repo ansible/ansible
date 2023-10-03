@@ -4,9 +4,7 @@
 # https://github.com/pytest-dev/pytest-forked
 # https://github.com/pytest-dev/py
 # TIP: Disable pytest-xdist when debugging internal errors in this plugin.
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pickle
