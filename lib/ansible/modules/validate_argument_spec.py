@@ -94,6 +94,14 @@ argument_errors:
     - "error message 1"
     - "error message 2"
 
+argument_spec_errors:
+  description: A list of errors from the 'argument_spec' arg.
+  returned: failure
+  type: list
+  elements: str
+  sample:
+    - "option_str: options. Suboptions are supported for types dict and list."
+
 argument_spec_data:
   description: A dict of the data from the 'argument_spec' arg.
   returned: failure
