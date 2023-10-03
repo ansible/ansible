@@ -1,0 +1,141 @@
+- name: install a group to test and dnf-utils
+  dnf:
+    name: "{{ pkgs }}"
+    state: present
+  vars:
+    pkgs:
+      - "@Custom Group"
+      - dnf-utils
+
+- name: check mode remove the group
+  dnf:
+    name: "@Custom Group"
+    state: absent
+  check_mode: yes
+  register: dnf_result
+
+- name: verify changed
+  assert:
+    that:
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: remove the group
+  dnf:
+    name: "@Custom Group"
+    state: absent
+  register: dnf_result
+
+- name: verify changed
+  assert:
+    that:
+        - "dnf_result.rc == 0"
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: remove the group again
+  dnf:
+    name: "@Custom Group"
+    state: absent
+  register: dnf_result
+
+- name: verify changed
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: check mode remove the group again
+  dnf:
+    name: "@Custom Group"
+    state: absent
+  check_mode: yes
+  register: dnf_result
+
+- name: verify changed
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: install a group and a package to test
+  dnf:
+    name: "@Custom Group,sos"
+    state: present
+  register: dnf_output
+
+- name: check mode remove the group along with the package
+  dnf:
+    name: "@Custom Group,sos"
+    state: absent
+  register: dnf_result
+  check_mode: yes
+
+- name: verify changed
+  assert:
+    that:
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: remove the group along with the package
+  dnf:
+    name: "@Custom Group,sos"
+    state: absent
+  register: dnf_result
+
+- name: verify changed
+  assert:
+    that:
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: check mode remove the group along with the package
+  dnf:
+    name: "@Custom Group,sos"
+    state: absent
+  register: dnf_result
+  check_mode: yes
+
+- name: verify not changed
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"

@@ -436,10 +436,6 @@
     name: landsidescalping
     state: absent
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
-  register: shell_dnf_result
-
 - dnf:
     name: "@Custom Group"
     state: absent
@@ -459,9 +455,6 @@
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
-
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
 
 - dnf:
     name: "@Custom Group"
