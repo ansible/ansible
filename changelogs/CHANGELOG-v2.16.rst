@@ -5,6 +5,34 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2023-10-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - When invoking ``sleep`` in containers during container setup, the ``env`` command is used to avoid invoking the shell builtin, if present.
+
+Security Fixes
+--------------
+
+- ansible-galaxy - Prevent roles from using symlinks to overwrite files outside of the installation directory (CVE-2023-5115)
+
+Bugfixes
+--------
+
+- ``import_role`` reverts to previous behavior of exporting vars at compile time.
+- ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
+- uri/urls - Add compat function to handle the ability to parse the filename from a Content-Disposition header (https://github.com/ansible/ansible/issues/81806)
+- winrm - Better handle send input failures when communicating with hosts under load
+
 v2.16.0b1
 =========
 
@@ -82,10 +110,11 @@ Minor Changes
 - ansible-test - Update the ``nios-test-container`` to version 2.0.0, which supports API version 2.9.
 - ansible-test - Update the logic used to detect when ``ansible-test`` is running from source.
 - ansible-test - Updated the CloudStack test container to version 1.6.1.
+- ansible-test - Updated the distro test containers to version 6.3.0 to include coverage 7.3.2 for Python 3.8+. The alpine3 container is now based on 3.18 instead of 3.17 and includes Python 3.11 instead of Python 3.10.
 - ansible-test - Use ``datetime.datetime.now`` with ``tz`` specified instead of ``datetime.datetime.utcnow``.
 - ansible-test - Use a context manager to perform cleanup at exit instead of using the built-in ``atexit`` module.
 - ansible-test - remove Alpine 3.17 from remotes
-- ansible-test — Python 3.8–3.12 will use ``coverage`` v7.3.0.
+- ansible-test — Python 3.8–3.12 will use ``coverage`` v7.3.2.
 - ansible-test — ``coverage`` v6.5.0 is to be used only under Python 3.7.
 - ansible-vault create: Now raises an error when opening the editor without tty. The flag --skip-tty-check restores previous behaviour.
 - ansible_user_module - tweaked macos user defaults to reflect expected defaults (https://github.com/ansible/ansible/issues/44316)
