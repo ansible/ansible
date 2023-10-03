@@ -200,11 +200,14 @@ class VariableManager:
             basedirs = [self._loader.get_basedir()]
 
         if play:
-            # get role defaults (lowest precedence)
-            for role in play.roles:
-                if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
-
+            if not C.DEFAULT_PRIVATE_ROLE_VARS:
+                for role in play.get_roles():
+                    # role is public and
+                    #    either static or dynamic and completed
+                    # role is not set
+                    #    use config option as default
+                    if role.static or role.public and role._completed.get(host.name, False):
+                        all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
         if task:
             # set basedirs
             if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
@@ -381,10 +384,16 @@ class VariableManager:
                 raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
                                          "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
-            # We now merge in all exported vars from all roles in the play (very high precedence)
-            for role in play.roles:
-                if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+            # We now merge in all exported vars from all roles in the play,
+            # unless the user has disabled this
+            # role is public and
+            #    either static or dynamic and completed
+            # role is not set
+            #    use config option as default
+            if not C.DEFAULT_PRIVATE_ROLE_VARS:
+                for role in play.get_roles():
+                    if role.static or role.public and role._completed.get(host.name, False):
+                        all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
