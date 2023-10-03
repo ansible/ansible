@@ -233,79 +233,6 @@ bootstrap_remote_macos()
     echo 'PATH="/usr/local/bin:$PATH"' > /etc/zshenv
 }
 
-bootstrap_remote_rhel_7()
-{
-    packages="
-        gcc
-        python-devel
-        python-virtualenv
-        "
-
-    while true; do
-        # shellcheck disable=SC2086
-        yum install -q -y ${packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
-
-    install_pip
-
-    bootstrap_remote_rhel_pinned_pip_packages
-}
-
-bootstrap_remote_rhel_8()
-{
-    if [ "${python_version}" = "3.6" ]; then
-        py_pkg_prefix="python3"
-    else
-        py_pkg_prefix="python${python_version}"
-    fi
-
-    packages="
-        gcc
-        ${py_pkg_prefix}-devel
-        "
-
-    # pip isn't included in the Python devel package under Python 3.11
-    if [ "${python_version}" != "3.6" ]; then
-        packages="
-            ${packages}
-            ${py_pkg_prefix}-pip
-        "
-    fi
-
-    # Jinja2 is not installed with an OS package since the provided version is too old.
-    # Instead, ansible-test will install it using pip.
-    if [ "${controller}" ]; then
-        packages="
-            ${packages}
-            ${py_pkg_prefix}-cryptography
-            "
-    fi
-
-    # Python 3.11 isn't a module like the earlier versions
-    if [ "${python_version}" = "3.6" ]; then
-        while true; do
-            # shellcheck disable=SC2086
-            yum module install -q -y "python${python_package_version}" \
-            && break
-            echo "Failed to install packages. Sleeping before trying again..."
-            sleep 10
-        done
-    fi
-
-    while true; do
-        # shellcheck disable=SC2086
-        yum install -q -y ${packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
-
-    bootstrap_remote_rhel_pinned_pip_packages
-}
-
 bootstrap_remote_rhel_9()
 {
     if [ "${python_version}" = "3.9" ]; then
@@ -351,8 +278,6 @@ bootstrap_remote_rhel_9()
 bootstrap_remote_rhel()
 {
     case "${platform_version}" in
-        7.*) bootstrap_remote_rhel_7 ;;
-        8.*) bootstrap_remote_rhel_8 ;;
         9.*) bootstrap_remote_rhel_9 ;;
     esac
 }

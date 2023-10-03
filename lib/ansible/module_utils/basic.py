@@ -2,22 +2,20 @@
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
+import json
 import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY3_MIN = sys.version_info >= (3, 6)
-_PY2_MIN = (2, 7) <= sys.version_info < (3,)
-_PY_MIN = _PY3_MIN or _PY2_MIN
+_PY_MIN = (3, 7)
 
-if not _PY_MIN:
-    print(
-        '\n{"failed": true, '
-        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.6. Current version: %s"}' % ''.join(sys.version.splitlines())
-    )
+if sys.version_info < _PY_MIN:
+    print(json.dumps(dict(
+        failed=True,
+        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+    )))
     sys.exit(1)
 
 # Ansible modules can be written in any language.
@@ -127,12 +125,6 @@ def _get_available_hash_algorithms():
 
 
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
-
-try:
-    from ansible.module_utils.common._json_compat import json
-except ImportError as e:
-    print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
-    sys.exit(1)
 
 from ansible.module_utils.six.moves.collections_abc import (
     KeysView,

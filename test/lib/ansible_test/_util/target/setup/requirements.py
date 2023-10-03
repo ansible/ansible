@@ -1,6 +1,5 @@
 """A tool for installing test requirements on the controller and target host."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # pylint: disable=wrong-import-position
 
