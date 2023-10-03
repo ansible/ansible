@@ -11,7 +11,7 @@ import http.client
 import urllib.error
 from http.cookiejar import Cookie
 
-from ansible.module_utils.urls import fetch_url, ConnectionError, NoSSLError
+from ansible.module_utils.urls import fetch_url, ConnectionError
 
 import pytest
 from units.compat.mock import MagicMock
