@@ -40,6 +40,7 @@ lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-sp
 lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/replace.py pylint:used-before-assignment  # false positive detection by pylint
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/stat.py validate-modules:parameter-invalid

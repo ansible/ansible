@@ -82,12 +82,6 @@ class PylintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
-    @property
-    def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
-        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
-        # NOTE: When removing the Python 3.12 exclusion, be sure to update the ansible-test-sanity-pylint integration test.
-        return tuple(version for version in super().supported_python_versions if version != '3.12')
-
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
