@@ -3,36 +3,61 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.six import PY3
+import datetime as _datetime
 
-import datetime
-
-
-if PY3:
-    UTC = datetime.timezone.utc
-else:
-    _ZERO = datetime.timedelta(0)
-
-    class _UTC(datetime.tzinfo):
-        __slots__ = ()
-
-        def utcoffset(self, dt):
-            return _ZERO
-
-        def dst(self, dt):
-            return _ZERO
-
-        def tzname(self, dt):
-            return "UTC"
-
-    UTC = _UTC()
+from ansible.module_utils.common.warnings import deprecate
 
 
-def utcfromtimestamp(timestamp):  # type: (float) -> datetime.datetime
+_UTC = _datetime.timezone.utc
+
+
+def _utcfromtimestamp(timestamp: float) -> _datetime.datetime:
     """Construct an aware UTC datetime from a POSIX timestamp."""
-    return datetime.datetime.fromtimestamp(timestamp, UTC)
+    return _datetime.datetime.fromtimestamp(timestamp, _UTC)
 
 
-def utcnow():  # type: () -> datetime.datetime
+def _utcnow() -> _datetime.datetime:
     """Construct an aware UTC datetime from time.time()."""
-    return datetime.datetime.now(UTC)
+    return _datetime.datetime.now(_UTC)
+
+
+__all__ = ('UTC', 'utcfromtimestamp', 'utcnow')  # pylint: disable=undefined-all-variable
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings.
+
+    Specifically, for ``UTC``, ``utcfromtimestamp()`` and ``utcnow()``.
+    """
+
+    if importable_name == 'UTC':
+        deprecate(
+            msg=f'The `ansible.module_utils.compat.datetime'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+
+        return _UTC
+
+    if importable_name == 'utcfromtimestamp':
+        deprecate(
+            msg=f'The `ansible.module_utils.compat.datetime'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+
+        return _utcfromtimestamp
+
+    if importable_name == 'utcnow':
+        deprecate(
+            msg=f'The `ansible.module_utils.compat.datetime'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+
+        return _utcnow
+
+    raise AttributeError(
+        f'cannot import name {importable_name !r} '
+        f'has no attribute ({__file__ !s})',
+    )
