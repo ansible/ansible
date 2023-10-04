@@ -86,37 +86,32 @@ class Attribute:
 
     def __set_name__(self, owner, name):
         """
-        Set the name attribute of the instance.
+        Set the name of the instance attribute.
 
-        Parameters:
-            owner: The class that owns the instance.
-            name: The name of the instance.
+        :arg owner: The owner of the instance attribute.
+        :arg name: The name of the instance attribute.
         """
         self.name = name
 
     def __eq__(self, other):
         """
-        Check if the priority of the other instance is equal to the priority of the
-        current instance.
+        Check if the priority of the current object is equal to the priority of the
+        other object.
 
-        Parameters:
-            other: The other instance to compare.
-
-        Returns:
-            bool: True if the priorities are equal, False otherwise.
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is equal to the priority
+        of the other object, False otherwise.
         """
         return other.priority == self.priority
 
     def __ne__(self, other):
         """
-        Check if the priority of the other instance is not equal to the priority of the
-        current instance.
+        Check if the priority of the current object is not equal to the priority of the
+        other object.
 
-        Parameters:
-            other: The other instance to compare.
-
-        Returns:
-            bool: True if the priorities are not equal, False otherwise.
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is not equal to the
+        priority of the other object, False otherwise.
         """
         return other.priority != self.priority
 
@@ -124,70 +119,62 @@ class Attribute:
 
     def __lt__(self, other):
         """
-        Check if the priority of the other instance is less than the priority of the
-        current instance.
+        Check if the priority of the current object is less than the priority of the
+        other object.
 
-        Parameters:
-            other: The other instance to compare.
-
-        Returns:
-            bool: True if the priority of the other instance is less than the
-            priority of the current instance, False otherwise.
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is less than the priority
+        of the other object, False otherwise.
         """
         return other.priority < self.priority
 
     def __gt__(self, other):
         """
-        Check if the priority of the other instance is greater than the priority of the
-        current instance.
+        Check if the priority of the current object is greater than the priority of the
+        other object.
 
-        Parameters:
-            other: The other instance to compare.
-
-        Returns:
-            bool: True if the priority of the other instance is greater than the
-            priority of the current instance, False otherwise.
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is greater than the
+        priority of the other object, False otherwise.
         """
         return other.priority > self.priority
 
     def __le__(self, other):
         """
-        Check if the priority of the other instance is less than or equal to the
-        priority of the current instance.
+        Check if the priority of the current object is less than or equal to the
+        priority of the other object.
 
-        Parameters:
-            other: The other instance to compare.
-
-        Returns:
-            bool: True if the priority of the other instance is less than or equal
-            to the priority of the current instance, False otherwise.
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is less than or equal to
+        the priority of the other object, False otherwise.
         """
         return other.priority <= self.priority
 
     def __ge__(self, other):
         """
-        Check if the priority of the other instance is greater than or equal to the
-        priority of the current instance.
+        Check if the priority of the current object is greater than or equal to the
+        priority of the other object.
 
-        Parameters:
-            other: The other instance to compare.
-
-        Returns:
-            bool: True if the priority of the other instance is greater than or
-            equal to the priority of the current instance, False otherwise.
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is greater than or equal
+        to the priority of the other object, False otherwise.
         """
         return other.priority >= self.priority
 
     def __get__(self, obj, obj_type=None):
         """
-        Retrieve the value of the attribute from the object.
+        Retrieve the value of the attribute for the given object.
 
-        Parameters:
-            obj: The object instance.
-            obj_type: The type of the object.
+        The method takes into consideration certain object states (like '_squashed' and
+        '_finalized') to determine the appropriate value retrieval mechanism. If
+        the object is in a specific state or contains a specialized method for
+        attribute retrieval, it uses that. Otherwise, it resorts to default
+        mechanisms or provided callable defaults.
 
-        Returns:
-            The value of the attribute.
+        :arg obj: The instance for which the attribute's value needs to be retrieved.
+        :kwarg obj_type: The type of the instance, if provided. Defaults to None.
+        :returns: The value of the attribute for the given object. If the attribute hasn't
+                  been initialized, it returns the default value or invokes a callable default.
         """
         method = f'_get_attr_{self.name}'
         if hasattr(obj, method):
@@ -214,13 +201,8 @@ class Attribute:
         """
         Set the value of the attribute on the given object.
 
-        This method sets the value of the attribute with the specified name on the
-        given object. It also sets the value of a corresponding attribute with an
-        alias if one is provided.
-
-        Parameters:
-            obj: The object on which to set the attribute.
-            value: The value to set for the attribute.
+        :arg obj: The object on which to set the attribute.
+        :arg value: The value to set for the attribute.
         """
         setattr(obj, f'_{self.name}', value)
         if self.alias is not None:
@@ -229,15 +211,12 @@ class Attribute:
     # NOTE this appears to be not needed in the codebase,
     # leaving it here for test_attr_int_del from
     # test/units/playbook/test_base.py to pass.
+
     def __delete__(self, obj):
         """
         Delete the attribute from the given object.
 
-        This method deletes the attribute with the specified name from the given
-        object.
-
-        Parameters:
-            obj: The object from which to delete the attribute.
+        :arg obj: The object from which to delete the attribute.
         """
         delattr(obj, f'_{self.name}')
 
@@ -247,7 +226,6 @@ class NonInheritableFieldAttribute(Attribute):
 
 
 class FieldAttribute(Attribute):
-
     def __init__(self, extend=False, prepend=False, **kwargs):
         super().__init__(**kwargs)
 
@@ -283,9 +261,20 @@ class FieldAttribute(Attribute):
 
 
 class ConnectionFieldAttribute(FieldAttribute):
-    """A class representing a custom field attribute for the 'connection' attribute."""
+    """
+    Represents a connection field attribute.
+    """
     def __get__(self, obj, obj_type=None):
-        """Override the __get__ method to modify the behavior of the 'connection' attribute."""
+        """
+        Retrieve the value of the attribute for the given object.
+
+        The method retrieves the value of the attribute and performs some conditional logic to
+        determine the appropriate value to return.
+
+        :arg obj: The instance for which the attribute's value needs to be retrieved.
+        :kwarg obj_type: The type of the instance, if provided. Defaults to None.
+        :returns: The value of the attribute for the given object.
+        """
         from ansible.module_utils.compat.paramiko import paramiko
         from ansible.utils.ssh_functions import check_for_controlpersist
         value = super().__get__(obj, obj_type)
