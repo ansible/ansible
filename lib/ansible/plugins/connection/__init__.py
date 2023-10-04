@@ -267,19 +267,19 @@ class ConnectionBase(AnsiblePlugin):
                 # its my cousin ...
                 value = self._shell._load_name
             else:
-                # deal with generic options if the plugin supports em (for exmaple not all connections have a remote user)
+                # deal with generic options if the plugin supports em (for example not all connections have a remote user)
                 options = C.config.get_plugin_options_from_var('connection', self._load_name, varname)
                 if options:
                     value = self.get_option(options[0])  # for these variables there should be only one option
                 elif 'become' not in varname:
-                    # fallback to play_context, unles becoem related  TODO: in the end should come from task/play and not pc
+                    # fallback to play_context, unless become related  TODO: in the end, should come from task/play and not pc
                     for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
                         if varname in var_list:
                             try:
                                 value = getattr(self._play_context, prop)
                                 break
                             except AttributeError:
-                                # it was not defined, fine to ignore
+                                # It was not defined; fine to ignore
                                 continue
 
             if value is not None:
