@@ -15,7 +15,6 @@ from .config import (
 from .util import (
     find_python,
     SubprocessError,
-    get_available_python_versions,
     ANSIBLE_TEST_TARGET_TOOLS_ROOT,
     display,
     remove_tree,
@@ -85,49 +84,21 @@ def create_virtual_environment(
     system_site_packages: bool = False,
     pip: bool = False,
 ) -> bool:
-    """Create a virtual environment using venv or virtualenv for the requested Python version."""
+    """Create a virtual environment using venv for the requested Python version."""
     if not os.path.exists(python.path):
         # the requested python version could not be found
         return False
 
-    if str_to_version(python.version) >= (3, 0):
-        # use the built-in 'venv' module on Python 3.x
-        # creating a virtual environment using 'venv' when running in a virtual environment created by 'virtualenv' results
-        # in a copy of the original virtual environment instead of creation of a new one
-        # avoid this issue by only using "real" python interpreters to invoke 'venv'
-        for real_python in iterate_real_pythons(python.version):
-            if run_venv(args, real_python, system_site_packages, pip, path):
-                display.info('Created Python %s virtual environment using "venv": %s' % (python.version, path), verbosity=1)
-                return True
-
-        # something went wrong, most likely the package maintainer for the Python installation removed ensurepip
-        # which will prevent creation of a virtual environment without installation of other OS packages
-
-    # use the installed 'virtualenv' module on the Python requested version
-    if run_virtualenv(args, python.path, python.path, system_site_packages, pip, path):
-        display.info('Created Python %s virtual environment using "virtualenv": %s' % (python.version, path), verbosity=1)
-        return True
-
-    available_pythons = get_available_python_versions()
-
-    for available_python_version, available_python_interpreter in sorted(available_pythons.items()):
-        if available_python_interpreter == python.path:
-            # already attempted to use this interpreter
-            continue
-
-        virtualenv_version = get_virtualenv_version(args, available_python_interpreter)
-
-        if not virtualenv_version:
-            # virtualenv not available for this Python or we were unable to detect the version
-            continue
-
-        # try using 'virtualenv' from another Python to setup the desired version
-        if run_virtualenv(args, available_python_interpreter, python.path, system_site_packages, pip, path):
-            display.info('Created Python %s virtual environment using "virtualenv" on Python %s: %s' % (python.version, available_python_version, path),
-                         verbosity=1)
+    # creating a virtual environment using 'venv' when running in a virtual environment created by 'virtualenv' results
+    # in a copy of the original virtual environment instead of creation of a new one
+    # avoid this issue by only using "real" python interpreters to invoke 'venv'
+    for real_python in iterate_real_pythons(python.version):
+        if run_venv(args, real_python, system_site_packages, pip, path):
+            display.info('Created Python %s virtual environment using "venv": %s' % (python.version, path), verbosity=1)
             return True
 
-    # no suitable 'virtualenv' available
+    # something went wrong, most likely the package maintainer for the Python installation removed ensurepip
+    # which will prevent creation of a virtual environment without installation of other OS packages
     return False
 
 
@@ -210,72 +181,3 @@ def run_venv(
         return False
 
     return True
-
-
-def run_virtualenv(
-    args: EnvironmentConfig,
-    run_python: str,
-    env_python: str,
-    system_site_packages: bool,
-    pip: bool,
-    path: str,
-) -> bool:
-    """Create a virtual environment using the 'virtualenv' module."""
-    # always specify which interpreter to use to guarantee the desired interpreter is provided
-    # otherwise virtualenv may select a different interpreter than the one running virtualenv
-    cmd = [run_python, '-m', 'virtualenv', '--python', env_python]
-
-    if system_site_packages:
-        cmd.append('--system-site-packages')
-
-    if not pip:
-        cmd.append('--no-pip')
-        # these options provide consistency with venv, which does not install them without pip
-        cmd.append('--no-setuptools')
-        cmd.append('--no-wheel')
-
-    cmd.append(path)
-
-    try:
-        run_command(args, cmd, capture=True)
-    except SubprocessError as ex:
-        remove_tree(path)
-
-        if args.verbosity > 1:
-            display.error(ex.message)
-
-        return False
-
-    return True
-
-
-def get_virtualenv_version(args: EnvironmentConfig, python: str) -> t.Optional[tuple[int, ...]]:
-    """Get the virtualenv version for the given python interpreter, if available, otherwise return None."""
-    try:
-        cache = get_virtualenv_version.cache  # type: ignore[attr-defined]
-    except AttributeError:
-        cache = get_virtualenv_version.cache = {}  # type: ignore[attr-defined]
-
-    if python not in cache:
-        try:
-            stdout = run_command(args, [python, '-m', 'virtualenv', '--version'], capture=True)[0]
-        except SubprocessError as ex:
-            stdout = ''
-
-            if args.verbosity > 1:
-                display.error(ex.message)
-
-        version = None
-
-        if stdout:
-            # noinspection PyBroadException
-            try:
-                version = str_to_version(stdout.strip())
-            except Exception:  # pylint: disable=broad-except
-                pass
-
-        cache[python] = version
-
-    version = cache[python]
-
-    return version

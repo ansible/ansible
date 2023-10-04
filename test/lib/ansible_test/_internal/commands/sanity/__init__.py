@@ -1117,7 +1117,6 @@ def create_sanity_virtualenv(
     commands = collect_requirements(  # create_sanity_virtualenv()
         python=python,
         controller=True,
-        virtualenv=False,
         command=None,
         ansible=False,
         cryptography=False,
