@@ -138,7 +138,7 @@ class GpgBaseError(Exception):
         return ' '.join(cls.__doc__.split())
 
     def __post_init__(self):
-        for field_name, field_type in inspect.get_annotations(type(self), eval_str=True):
+        for field_name, field_type in inspect.get_annotations(type(self), eval_str=True).items():
             super(GpgBaseError, self).__setattr__(field_name, field_type(getattr(self, field_name)))
 
 
