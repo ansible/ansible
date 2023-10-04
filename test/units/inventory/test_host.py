@@ -17,8 +17,7 @@
 
 # for __setstate__/__getstate__ tests
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pickle
 

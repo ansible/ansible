@@ -2,8 +2,7 @@
 # (c) 2015, 2017 Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (annotations, absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: local

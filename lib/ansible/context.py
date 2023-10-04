@@ -1,10 +1,6 @@
 # Copyright: (c) 2018, Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 """
 Context of the running Ansible.
 
@@ -14,6 +10,7 @@ running the ansible command line tools.
 
 These APIs are still in flux so do not use them unless you are willing to update them with every Ansible release
 """
+from __future__ import annotations
 
 from collections.abc import Mapping, Set
 

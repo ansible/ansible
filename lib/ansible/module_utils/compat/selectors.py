@@ -15,14 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 '''
 Compat selectors library.  Python-3.5 has this builtin.  The selectors2
 package exists on pypi to backport the functionality as far as python-2.6.
 '''
+from __future__ import annotations
+
 # The following makes it easier for us to script updates of the bundled code
 _BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.1", "version_constraints": ">1.0,<2.0"}
 

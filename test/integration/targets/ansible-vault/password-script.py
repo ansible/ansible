@@ -16,8 +16,7 @@
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # https://docs.ansible.com/ansible/latest/user_guide/vault.html for more details.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import sys
 

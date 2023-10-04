@@ -3,8 +3,7 @@
 
 # General networking tools that may be used by all modules
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 from struct import pack

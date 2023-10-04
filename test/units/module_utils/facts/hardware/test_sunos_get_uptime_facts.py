@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import time
 from ansible.module_utils.facts.hardware import sunos

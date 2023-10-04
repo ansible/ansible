@@ -2,8 +2,7 @@
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 # (c) 2017, Peter Sprygada <psprygad@redhat.com>
 # (c) 2017 Ansible Project
-from __future__ import (annotations, absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections.abc as c
 import fcntl

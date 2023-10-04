@@ -25,8 +25,7 @@ Every version number class implements the following interface:
     of the same class, thus must follow the same rules)
 """
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 

@@ -17,6 +17,7 @@
 # does not follow this behavior and instead returns that no file descriptor
 # events have occurred rather than retry the syscall. The decision to drop
 # support for select.devpoll is made to maintain 100% test coverage.
+from __future__ import annotations
 
 import errno
 import math

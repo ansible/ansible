@@ -1,6 +1,5 @@
 #!/usr/bin/python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible_collections.testns.testcoll.plugins.module_utils.echo_impl import do_echo
 
