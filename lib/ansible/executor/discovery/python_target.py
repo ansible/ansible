@@ -4,8 +4,7 @@
 # FUTURE: this could be swapped out for our bundled version of distro to move more complete platform
 # logic to the targets, so long as we maintain Py2.6 compat and don't need to do any kind of script assembly
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import platform

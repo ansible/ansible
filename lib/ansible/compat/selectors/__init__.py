@@ -15,10 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 # NOT_BUNDLED
 
 '''
@@ -27,6 +23,8 @@ package exists on pypi to backport the functionality as far as python-2.6.
 Implementation previously resided here - maintaining this file after the
 move to ansible.module_utils for code backwards compatibility.
 '''
+from __future__ import annotations
+
 import sys
 from ansible.module_utils.compat import selectors
 sys.modules['ansible.compat.selectors'] = selectors

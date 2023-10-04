@@ -3,12 +3,12 @@ plugins/modules/check_mode_attribute_1.py:0:0: attributes-check-mode: The module
 plugins/modules/check_mode_attribute_2.py:0:0: attributes-check-mode: The module does not declare support for check mode, but the check_mode attribute's support value is 'partial' and not 'none'
 plugins/modules/check_mode_attribute_3.py:0:0: attributes-check-mode: The module does declare support for check mode, but the check_mode attribute's support value is 'none'
 plugins/modules/check_mode_attribute_4.py:0:0: attributes-check-mode-details: The module declares it does not fully support check mode, but has no details on what exactly that means
-plugins/modules/import_order.py:8:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
+plugins/modules/import_order.py:7:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
 plugins/modules/invalid_yaml_syntax.py:0:0: deprecation-mismatch: "meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.
 plugins/modules/invalid_yaml_syntax.py:0:0: missing-documentation: No DOCUMENTATION provided
-plugins/modules/invalid_yaml_syntax.py:8:15: documentation-syntax-error: DOCUMENTATION is not valid YAML
-plugins/modules/invalid_yaml_syntax.py:12:15: invalid-examples: EXAMPLES is not valid YAML
-plugins/modules/invalid_yaml_syntax.py:16:15: return-syntax-error: RETURN is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:7:15: documentation-syntax-error: DOCUMENTATION is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:11:15: invalid-examples: EXAMPLES is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:15:15: return-syntax-error: RETURN is not valid YAML
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.0: While parsing "V(C\(" at index 1: Unnecessarily escaped "(" @ data['options']['a11']['suboptions']['b1']['description'][0]. Got 'V(C\\(foo\\)).'
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.2: While parsing "P(foo.bar#baz)" at index 1: Plugin name "foo.bar" is not a FQCN @ data['options']['a11']['suboptions']['b1']['description'][2]. Got 'P(foo.bar#baz).'
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.3: While parsing "P(foo.bar.baz)" at index 1: Parameter "foo.bar.baz" is not of the form FQCN#type @ data['options']['a11']['suboptions']['b1']['description'][3]. Got 'P(foo.bar.baz).'

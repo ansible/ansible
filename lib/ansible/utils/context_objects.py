@@ -1,13 +1,10 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 """
 Hold command line arguments for use in other modules
 """
+from __future__ import annotations
 
 from abc import ABCMeta
 from collections.abc import Container, Mapping, Sequence, Set
