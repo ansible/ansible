@@ -30,7 +30,6 @@ from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
-
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
@@ -189,6 +188,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
+        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead",
+        #                    version="2.10", collection_name='ansible.builtin')
 
     def preprocess_data(self, ds):
         '''

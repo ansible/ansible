@@ -218,7 +218,8 @@ class PlayContext(Base):
     def set_attributes_from_cli(self):
         """
         Configure this connection information instance with data from options specified
-        by the user on the command line.
+        by the user on the command line. These have a lower precedence than those set on the play
+        or host.
 
         The method retrieves the 'timeout', 'private_key_file', '_internal_verbosity',
         and 'start_at_task' options from the 'context.CLIARGS' dictionary and sets
