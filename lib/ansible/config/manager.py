@@ -555,9 +555,9 @@ class ConfigManager(object):
                             value = t.render(variables)
                         except Exception:
                             pass  # not templatable
-                
+
             elif defs[config].get('template', 'static') in ('restricted', 'vault', 'full', 'implicit') and variables is not None and \
-                 config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):                   
+                 config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):
                 # template default values if needed and possible
                 t_type = defs[config]['template']
                 use_lookup = True
