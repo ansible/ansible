@@ -49,6 +49,7 @@ namespace Ansible.Basic
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
+        private bool ignoreUnknownOpts = false;
         private string remoteTmp = Path.GetTempPath();
         private string tmpdir = null;
         private HashSet<string> noLogValues = new HashSet<string>();
@@ -64,6 +65,7 @@ namespace Ansible.Basic
             { "debug", "DebugMode" },
             { "diff", "DiffMode" },
             { "keep_remote_files", "KeepRemoteFiles" },
+            { "ignore_unknown_opts", "ignoreUnknownOpts" },
             { "module_name", "ModuleName" },
             { "no_log", "NoLog" },
             { "remote_tmp", "remoteTmp" },
@@ -76,7 +78,7 @@ namespace Ansible.Basic
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
-        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "no_log" };
+        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
@@ -1043,7 +1045,7 @@ namespace Ansible.Basic
             foreach (string parameter in removedParameters)
                 param.Remove(parameter);
 
-            if (unsupportedParameters.Count > 0)
+            if (unsupportedParameters.Count > 0 && !ignoreUnknownOpts)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
                 string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
