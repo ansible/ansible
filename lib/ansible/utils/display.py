@@ -436,24 +436,31 @@ class Display(metaclass=Singleton):
             # actually log
             logger.log(lvl, msg2)
 
+    @proxy_display
     def v(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=0)
 
+    @proxy_display
     def vv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=1)
 
+    @proxy_display
     def vvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=2)
 
+    @proxy_display
     def vvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=3)
 
+    @proxy_display
     def vvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=4)
 
+    @proxy_display
     def vvvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=5)
 
+    @proxy_display
     def debug(self, msg: str, host: str | None = None) -> None:
         if C.DEFAULT_DEBUG:
             if host is None:
@@ -461,6 +468,7 @@ class Display(metaclass=Singleton):
             else:
                 self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
+    @proxy_display
     def verbose(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
 
         to_stderr = C.VERBOSE_TO_STDERR
@@ -555,10 +563,12 @@ class Display(metaclass=Singleton):
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
+    @proxy_display
     def system_warning(self, msg: str) -> None:
         if C.SYSTEM_WARNINGS:
             self.warning(msg)
 
+    @proxy_display
     def banner(self, msg: str, color: str | None = None, cows: bool = True) -> None:
         '''
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
@@ -582,6 +592,7 @@ class Display(metaclass=Singleton):
         stars = u"*" * star_len
         self.display(u"\n%s %s" % (msg, stars), color=color)
 
+    @proxy_display
     def banner_cowsay(self, msg: str, color: str | None = None) -> None:
         if u": [" in msg:
             msg = msg.replace(u"[", u"")
@@ -599,6 +610,7 @@ class Display(metaclass=Singleton):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
+    @proxy_display
     def error(self, msg: str, wrap_text: bool = True) -> None:
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
