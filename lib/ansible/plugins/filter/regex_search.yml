@@ -40,5 +40,6 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Matched string or empty string if no match.
+    # Return None if no match, see https://docs.python.org/3/library/re.html#re.search
+    description: Matched string or None (NoneType object) if no match.
     type: str
