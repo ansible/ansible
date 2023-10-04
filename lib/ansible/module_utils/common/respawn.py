@@ -19,7 +19,7 @@ def respawn_module(interpreter_path):
     Respawn the currently-running Ansible Python module under the specified Python interpreter.
 
     Ansible modules that require libraries that are typically available only under well-known interpreters
-    (eg, ``yum``, ``apt``, ``dnf``) can use bespoke logic to determine the libraries they need are not
+    (eg, ``apt``, ``dnf``) can use bespoke logic to determine the libraries they need are not
     available, then call `respawn_module` to re-execute the current module under a different interpreter
     and exit the current process when the new subprocess has completed. The respawned process inherits only
     stdout/stderr from the current process.

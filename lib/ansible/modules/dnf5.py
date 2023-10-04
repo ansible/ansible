@@ -151,7 +151,7 @@ options:
   validate_certs:
     description:
       - This is effectively a no-op in the dnf5 module as dnf5 itself handles downloading a https url as the source of the rpm,
-        but is an accepted parameter for feature parity/compatibility with the M(ansible.builtin.yum) module.
+        but is an accepted parameter for feature parity/compatibility with the M(ansible.builtin.dnf) module.
     type: bool
     default: "yes"
   sslverify:
@@ -174,8 +174,8 @@ options:
     default: "no"
   install_repoquery:
     description:
-      - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
-        parity/compatibility with the M(ansible.builtin.yum) module.
+      - This is effectively a no-op in DNF as it is not needed with DNF.
+      - This option is deprecated and will be removed in ansible-core 2.20.
     type: bool
     default: "yes"
   download_only:
@@ -222,7 +222,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: In the case of dnf, it has 2 action plugins that use it under the hood, M(ansible.builtin.yum) and M(ansible.builtin.package).
+        details: dnf5 has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
         support: partial
     async:
         support: none
@@ -408,13 +408,7 @@ class Dnf5Module(YumDnf):
         super(Dnf5Module, self).__init__(module)
         self._ensure_dnf()
 
-        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
-        self.lockfile = ""
         self.pkg_mgr_name = "dnf5"
-
-        # DNF specific args that are not part of YumDnf
-        self.allowerasing = self.module.params["allowerasing"]
-        self.nobest = self.module.params["nobest"]
 
     def _ensure_dnf(self):
         locale = get_best_parsable_locale(self.module)
@@ -456,10 +450,6 @@ class Dnf5Module(YumDnf):
             ),
             failures=[],
         )
-
-    def is_lockfile_pid_valid(self):
-        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
-        return True
 
     def run(self):
         if sys.version_info.major < 3:
@@ -702,10 +692,6 @@ class Dnf5Module(YumDnf):
 
 
 def main():
-    # Extend yumdnf_argument_spec with dnf-specific features that will never be
-    # backported to yum because yum is now in "maintenance mode" upstream
-    yumdnf_argument_spec["argument_spec"]["allowerasing"] = dict(default=False, type="bool")
-    yumdnf_argument_spec["argument_spec"]["nobest"] = dict(default=False, type="bool")
     Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
 
 

@@ -332,7 +332,7 @@
         state: absent
 
     - name: Remove all test packages installed
-      yum:
+      dnf:
         name:
           - broken-*
           - dinginessentail

@@ -2,7 +2,7 @@
 # https://github.com/ansible/ansible/issues/70244
 - block:
     - name: Install dosfstools
-      yum:
+      dnf:
         name: dosfstools
         state: present
 
@@ -31,6 +31,6 @@
         state: absent
 
     - name: Uninstall dosfstools
-      yum:
+      dnf:
         name: dosfstools
         state: absent

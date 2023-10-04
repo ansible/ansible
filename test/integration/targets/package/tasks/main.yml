@@ -149,17 +149,17 @@
   when: ansible_distribution in package_distros
 
 ##
-## yum
+## dnf
 ##
-#Validation for new parameter 'use' in yum action plugin which aliases to 'use_backend'
+#Validation for new parameter 'use' in dnf action plugin which aliases to 'use_backend'
 #Issue: https://github.com/ansible/ansible/issues/70774
 - block:
     - name: verify if using both the parameters 'use' and 'use_backend' throw error
-      yum:
+      dnf:
         name: at
         state: present
-        use_backend: yum
-        use: yum
+        use_backend: dnf
+        use: dnf
       ignore_errors: yes
       register: result
 
@@ -170,7 +170,7 @@
           - "not result is changed"
 
     - name: verify if package installation is successful using 'use' parameter
-      yum:
+      dnf:
         name: at
         state: present
         use: dnf
@@ -182,7 +182,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
         use: dnf
@@ -194,7 +194,7 @@
           - "result is changed"
 
     - name: verify if package installation is successful using 'use_backend' parameter
-      yum:
+      dnf:
         name: at
         state: present
         use_backend: dnf
@@ -206,7 +206,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
         use_backend: dnf
@@ -218,7 +218,7 @@
           - "result is changed"
 
     - name: verify if package installation is successful without using 'use_backend' and 'use' parameters
-      yum:
+      dnf:
         name: at
         state: present
       register: result
@@ -229,7 +229,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
       register: result

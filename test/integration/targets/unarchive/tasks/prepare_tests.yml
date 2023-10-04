@@ -5,7 +5,7 @@
 - name: Ensure required binaries are present
   package:
     name: "{{ unarchive_packages }}"
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+  when: ansible_pkg_mgr in ('dnf', 'apt', 'pkgng')
 
 - name: prep our file
   copy:
