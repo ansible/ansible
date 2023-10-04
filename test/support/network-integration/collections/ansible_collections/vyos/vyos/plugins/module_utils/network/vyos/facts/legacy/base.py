@@ -9,9 +9,8 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 import platform
 import re
 from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.vyos import (

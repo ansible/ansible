@@ -21,7 +21,7 @@ def main():
                 missing = False
                 break
 
-            if text.startswith(b'from __future__ ') or text == b'__metaclass__ = type':
+            if text.strip().startswith(b'from __future__ ') or text.strip().startswith(b'__metaclass__ '):
                 invalid_future.append(text.decode())
 
         if missing:
@@ -33,7 +33,6 @@ def main():
                 node = ast.parse(contents)
 
                 # files consisting of only assignments have no need for future import boilerplate
-                # the only exception would be division during assignment, but we'll overlook that for simplicity
                 # the most likely case is that of a documentation only python file
                 if all(isinstance(statement, ast.Assign) for statement in node.body):
                     missing = False

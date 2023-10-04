@@ -1,9 +1,8 @@
 #!/usr/bin/python
 """Ansible module to detect the presence of both the normal and Ansible-specific versions of Paramiko."""
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
 

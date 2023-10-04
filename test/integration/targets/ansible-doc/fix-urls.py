@@ -1,4 +1,5 @@
 """Unwrap URLs to docs.ansible.com and remove version"""
+from __future__ import annotations
 
 import re
 import sys

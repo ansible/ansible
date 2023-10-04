@@ -2,8 +2,7 @@
 Compatibility shim for mock imports in modules and module_utils.
 This can be removed once support for Python 2.7 is dropped.
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 try:
     from unittest.mock import (  # pylint: disable=unused-import

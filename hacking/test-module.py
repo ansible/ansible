@@ -28,8 +28,7 @@
 #    ./hacking/test-module.py -m lib/ansible/modules/lineinfile.py -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
 #    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "echo hello" -n -o "test_hello"
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import optparse

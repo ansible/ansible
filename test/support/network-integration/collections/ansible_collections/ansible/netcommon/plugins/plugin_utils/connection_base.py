@@ -2,9 +2,8 @@
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 # (c) 2017, Peter Sprygada <psprygad@redhat.com>
 # (c) 2017 Ansible Project
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 import os
 
