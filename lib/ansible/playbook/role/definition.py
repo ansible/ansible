@@ -32,7 +32,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionRef
-
 from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
@@ -47,6 +46,15 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
     role = NonInheritableFieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
+        """
+        Initialize the RoleDefinition instance with given parameters.
+
+        :arg play: The play instance. Defaults to None.
+        :kwarg role_basedir: The base directory of the role. Defaults to None.
+        :kwarg variable_manager: The variable manager. Defaults to None.
+        :kwarg loader: The loader. Defaults to None.
+        :kwarg collection_list: The list of collections. Defaults to None.
+        """
 
         super(RoleDefinition, self).__init__()
 
@@ -65,32 +73,38 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
+        """
+        Load data into the RoleDefinition instance.
+
+        :arg data: The data to be loaded.
+        :kwarg variable_manager: The variable manager. Defaults to None.
+        :kwarg loader: The loader. Defaults to None.
+        :raises AnsibleError: Always raises an 'AnsibleError'.
+        """
         raise AnsibleError("not implemented")
 
     def preprocess_data(self, ds):
         """
-        Preprocess the data by performing several operations on it.
+        Preprocess the input data.
 
-        This function checks if the data is an integer and converts it to a string if
-        it is. Then it checks if the data is not a dictionary, a string, or an
-        instance of 'AnsibleBaseYAMLObject' and raises an 'AnsibleAssertionError'
-        if it is not. If the data is a dictionary, it calls the 'preprocess_data'
-        function of the superclass 'RoleDefinition' and assigns the result to the
-        data.
-        The original value of the data is saved in the '_ds' instance variable.
-        A new 'AnsibleMapping' object is created and if the data is an instance of
-        'AnsibleBaseYAMLObject', its positional information is assigned to the new
-        object.
-        The function then extracts the role name from the data, determines the role
-        path based on the role name, and splits the role parameters from the valid
-        role attributes. The role name is added to the new data structure and the
-        cleaned-up data structure is returned.
+        The function performs the following steps:
+        - If the input data is an integer, it is converted to a string.
+        - If the input data is not a dictionary, string, or AnsibleBaseYAMLObject, an
+        AnsibleAssertionError is raised.
+        - If the input data is a dictionary, it is preprocessed using the super class's
+        preprocess_data method.
+        - The original input data is saved as self._ds.
+        - A new data structure (new_ds) is created to preserve file:line:column information.
+        - The role name is extracted from the data structure and used to determine the
+        role path.
+        - The role parameters are split from the valid role attributes, and the new
+        data structure is updated.
+        - The role name is set in the new data structure.
+        - The role path is stored internally.
+        - The cleaned-up data structure (new_ds) is returned.
 
-        Parameters:
-            ds: The data to be preprocessed.
-
-        Returns:
-            AnsibleMapping: The cleaned-up data structure.
+        :arg ds: The input data to be preprocessed.
+        :returns: The cleaned-up data structure.
         """
         # role names that are simply numbers can be parsed by PyYAML
         # as integers even when quoted, so turn it into a string type
@@ -254,31 +268,24 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return (role_def, role_params)
 
     def get_role_params(self):
-        """
-        Returns a copy of the role parameters dictionary.
-        """
         return self._role_params.copy()
 
     def get_role_path(self):
-        """
-        Returns the role path.
-        """
         return self._role_path
 
     def get_name(self, include_role_fqcn=True):
         """
-        Get the name of the object.
+        Return the name of the object.
 
-        Returns the name of the object by concatenating the non-empty values of
-        'self._role_collection' and 'self.role' with a '.' delimiter if
-        'include_role_fqcn' is True. Otherwise, it returns the value of 'self.role'.
+        If include_role_fqcn is True, return the concatenation of the _role_collection
+        and role attributes, separated by a dot. If include_role_fqcn is False,
+        return the role attribute.
 
-        Parameters:
-            include_role_fqcn (bool): Whether to include the fully qualified class
-                name in the name.
+        :arg include_role_fqcn: A boolean indicating whether to include the
+        _role_collection attribute.
+                                Defaults to True.
 
-        Returns:
-            str: The name of the object.
+        :returns: The name of the object.
         """
         if include_role_fqcn:
             return '.'.join(x for x in (self._role_collection, self.role) if x)

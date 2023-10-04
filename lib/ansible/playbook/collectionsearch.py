@@ -17,18 +17,12 @@ display = Display()
 
 def _ensure_default_collection(collection_list=None):
     """
-    Ensure that the default collection is included in a list of collections.
+    Ensure the default collection is included in the collection list.
 
-    This function takes a list of collections as input and adds the default collection
-    to the beginning of the list if it is not already present. It also adds
-    'ansible.legacy' and 'ansible.builtin' to the list if they are not already
-    present.
-
-    Parameters:
-        collection_list (list): A list of collections.
-
-    Returns:
-        list: A modified list of collections.
+    :arg collection_list: A list of collections. Defaults to None.
+    :returns: A list of collections with the default collection inserted if not
+    already present, and with 'ansible.builtin' and 'ansible.legacy' included
+    if there are other collections.
     """
     default_collection = AnsibleCollectionConfig.default_collection
 
@@ -48,25 +42,12 @@ def _ensure_default_collection(collection_list=None):
 
 
 class CollectionSearch:
-    """
-    Class representing a collection search.
-    """
 
     # this needs to be populated before we can resolve tasks/roles/etc
     collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
                                  always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
-        """
-        Load the collections attribute with the provided data source.
-
-        Parameters:
-            attr: The attribute to load.
-            ds: The data source.
-
-        Returns:
-            list: The loaded collections attribute.
-        """
         # We are always a mixin with Base, so we can validate this untemplated
         # field early on to guarantee we are dealing with a list.
         ds = self.get_validated_value('collections', self.fattributes.get('collections'), ds, None)

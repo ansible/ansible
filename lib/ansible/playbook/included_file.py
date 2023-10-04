@@ -35,21 +35,8 @@ display = Display()
 
 
 class IncludedFile:
-    """
-    This class represents an included file.
-    """
 
     def __init__(self, filename, args, vars, task, is_role=False):
-        """
-        Initialize a new IncludedFile object.
-
-        Parameters:
-            filename (str): The name of the file.
-            args (list): The arguments for the file.
-            vars (dict): The variables for the file.
-            task (Task): The associated task.
-            is_role (bool, optional): Whether the file is a role. Defaults to False.
-        """
         self._filename = filename
         self._args = args
         self._vars = vars
@@ -59,30 +46,12 @@ class IncludedFile:
         self._results = []
 
     def add_host(self, host):
-        """
-        Add a host to the list of hosts.
-
-        Parameters:
-            host (str): The host to be added.
-
-        Raises:
-            ValueError: If the host already exists in the list.
-        """
         if host not in self._hosts:
             self._hosts.append(host)
             return
         raise ValueError()
 
     def __eq__(self, other):
-        """
-        Check if the IncludedFile object is equal to another object.
-
-        Parameters:
-            other (object): The object to compare with.
-
-        Returns:
-            bool: True if the objects are equal, False otherwise.
-        """
         return (other._filename == self._filename and
                 other._args == self._args and
                 other._vars == self._vars and
@@ -90,16 +59,19 @@ class IncludedFile:
                 other._task._parent._uuid == self._task._parent._uuid)
 
     def __repr__(self):
-        """
-        Return a string representation of the IncludedFile object.
-
-        Returns:
-            str: The string representation.
-        """
         return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
 
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
+        """
+        Process include results and return a list of included files.
+
+        :arg results: A list of include results.
+        :arg iterator: The iterator.
+        :arg loader: The loader.
+        :arg variable_manager: The variable manager.
+        :returns: A list of included files.
+        """
         included_files = []
         task_vars_cache = {}
 

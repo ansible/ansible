@@ -67,17 +67,11 @@ class RoleRequirement(RoleDefinition):
     @staticmethod
     def role_yaml_parse(role):
         """
-        Parse the 'role' parameter and extract relevant information.
+        Parse a role to extract the name, source, SCM (Source Code Management) type,
+        and version.
 
-        This function supports both old style and new style role requirements.
-        If the 'role' parameter is a string, it is parsed based on the presence of commas.
-        If the 'role' parameter is a dictionary, it is processed based on the keys present.
-
-        Parameters:
-            role (Union[str, dict]): The role parameter to parse.
-
-        Returns:
-            dict: A dictionary containing the extracted role information.
+        :arg role: The role to be parsed.
+        :returns: A dictionary containing the parsed role.
         """
 
         if isinstance(role, string_types):
@@ -138,18 +132,17 @@ class RoleRequirement(RoleDefinition):
     @staticmethod
     def scm_archive_role(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
         """
-        This static method is used to archive a role in a source control management system.
+        Archives a resource using the specified source control management system.
 
-        Parameters:
-            src (str): The source location of the role.
-            scm (str, optional): The type of source control management system. Defaults to 'git'.
-            name (str, optional): The name of the role. Defaults to None.
-            version (str, optional): The version of the role. Defaults to 'HEAD'.
-            keep_scm_meta (bool, optional): Whether to keep the source control
-                management metadata. Defaults to False.
+        :arg src: The source of the resource to be archived.
+        :kwarg scm: The source control management system to be used. Defaults to 'git'.
+        :kwarg name: The name of the resource. Defaults to None.
+        :kwarg version: The version of the resource. Defaults to 'HEAD'.
+        :kwarg keep_scm_meta: Whether to keep the source control management metadata.
+        Defaults to False.
 
-        Returns:
-            The result of scm_archive_resource function.
+        :returns: The result of archiving the resource using the specified source
+        control management system.
         """
 
         return scm_archive_resource(src, scm=scm, name=name, version=version, keep_scm_meta=keep_scm_meta)

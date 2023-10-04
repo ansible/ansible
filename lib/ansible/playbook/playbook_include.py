@@ -32,7 +32,6 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -50,19 +49,10 @@ class PlaybookInclude(Base, Conditional, Taggable):
         return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
     def load_data(self, ds, variable_manager=None, loader=None, basedir=None):
-        """
+        '''
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object
-
-        Parameters:
-            ds: The data source.
-            variable_manager: The VariableManager object.
-            loader: The DataLoader object.
-            basedir: The base directory.
-
-        Returns:
-            Playbook: The loaded Playbook object.
-        """
+        '''
 
         # import here to avoid a dependency loop
         from ansible.playbook import Playbook
@@ -138,12 +128,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         Regorganizes the data for a PlaybookInclude datastructure to line
         up with what we expect the proper attributes to be
 
-        Parameters:
-            self: The instance of the class.
-            ds (dict): The dictionary to be reorganized.
-
-        Returns:
-            The reorganized data.
+        :arg ds: The data structure to be preprocessed.
+        :raises AnsibleAssertionError: If the input data structure is not a dictionary.
+        :returns: The updated data structure after preprocessing.
         """
 
         if not isinstance(ds, dict):

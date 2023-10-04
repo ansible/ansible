@@ -34,10 +34,6 @@ from ansible.utils.sentinel import Sentinel
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatable):
-    """
-    This is a class representing a block that is used in a play. It contains task
-    lists and inherits from multiple base classes.
-    """
 
     # main block fields containing the task lists
     block = NonInheritableFieldAttribute(isa='list', default=list)
@@ -49,17 +45,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
     # otherwise = FieldAttribute(isa='list')
 
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
-        """
-        Initialize a new Block instance.
-
-        Parameters:
-            play: The play associated with the block.
-            parent_block: The parent block of the current block.
-            role: The role of the block.
-            task_include: The task to include.
-            use_handlers: Whether to use handlers.
-            implicit: Whether the block is implicit.
-        """
         self._play = play
         self._role = role
         self._parent = None
@@ -75,33 +60,14 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         super(Block, self).__init__()
 
     def __repr__(self):
-        """
-        Return a string representation of the Block instance.
-        """
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 
     def __eq__(self, other):
-        """
-        Compare two Block instances based on their UUIDs.
-
-        Parameters:
-            other: The other Block instance to compare.
-
-        Returns:
-            bool: True if the instances are equal, False otherwise.
-        """
+        '''object comparison based on _uuid'''
         return self._uuid == other._uuid
 
     def __ne__(self, other):
-        """
-        Compare two Block instances based on their UUIDs.
-
-        Parameters:
-            other: The other Block instance to compare.
-
-        Returns:
-            bool: True if the instances are not equal, False otherwise.
-        """
+        '''object comparison based on _uuid'''
         return self._uuid != other._uuid
 
     def get_vars(self):
@@ -122,22 +88,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
     @staticmethod
     def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
         """
-        Load data into a new instance of the Block class.
-
-        This method creates a new instance of the Block class and loads data into it.
-
-        Parameters:
-            data: The data to be loaded into the Block instance.
-            play: The play associated with the Block instance.
-            parent_block: The parent block associated with the Block instance.
-            role: The role associated with the Block instance.
-            task_include: The task include associated with the Block instance.
-            use_handlers: A boolean indicating whether handlers should be used.
-            variable_manager: The variable manager to be used.
-            loader: The loader to be used.
-
-        Returns:
-            The new Block instance with the loaded data.
+        Load data into a new block object and return the object.
         """
         implicit = not Block.is_block(data)
         b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers, implicit=implicit)
@@ -146,15 +97,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
     @staticmethod
     def is_block(ds):
         """
-        Check if a given object is a block.
-
-        This method checks if a given object is a block by checking for specific attributes.
-
-        Parameters:
-            ds: The object to be checked.
-
-        Returns:
-            bool: True if the object is a block, False otherwise.
+        Check if a given data structure is a block.
         """
         is_block = False
         if isinstance(ds, dict):
@@ -180,7 +123,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def _load_block(self, attr, ds):
         """
-        Load a block of tasks with various parameters.
+        Load a block of tasks from the input ds.
+
+        :arg attr: The attribute to load the block for.
+        :arg ds: The input data structure to load the block from.
         """
         try:
             return load_list_of_tasks(
@@ -198,18 +144,17 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def _load_rescue(self, attr, ds):
         """
-        Load a list of rescue tasks with specified parameters.
+        Load a list of tasks from a data structure.
 
-        This method attempts to load a list of tasks with the given parameters. If an
-        AssertionError is raised during the loading process, an AnsibleParserError is
-        raised with a specific error message.
+        The function uses the load_list_of_tasks function to load a list of tasks from
+        the provided data structure. It passes various parameters to the
+        load_list_of_tasks function, including the play, block, role,
+        task_include, variable_manager, loader, and use_handlers.
 
-        Parameters:
-            attr (str): The attribute associated with the rescue tasks.
-            ds: The list of tasks to load.
+        :arg attr: The attribute name.
+        :arg ds: The data structure from which to load the tasks.
 
-        Returns:
-            The loaded list of tasks.
+        :returns: The loaded list of tasks.
         """
         try:
             return load_list_of_tasks(
@@ -227,18 +172,17 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def _load_always(self, attr, ds):
         """
-        Load a list of always tasks with specified parameters.
+        Load a list of tasks from a data structure.
 
-        This method attempts to load a list of tasks with the given parameters. If an
-        AssertionError is raised during the loading process, an AnsibleParserError is
-        raised with a specific error message.
+        The function uses the load_list_of_tasks function to load a list of tasks from
+        the provided data structure. It passes various parameters to the
+        load_list_of_tasks function, including the play, block, role,
+        task_include, variable_manager, loader, and use_handlers.
 
-        Parameters:
-            attr (str): The attribute associated with the always tasks.
-            ds: The list of tasks to load.
+        :arg attr: The attribute name.
+        :arg ds: The data structure from which to load the tasks.
 
-        Returns:
-            The loaded list of tasks.
+        :returns: The loaded list of tasks.
         """
         try:
             return load_list_of_tasks(
@@ -256,18 +200,14 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def _validate_always(self, attr, name, value):
         """
-        Validate the 'always' attribute.
+        Validate the 'always' keyword.
 
-        This method checks if the 'always' attribute can be used without the 'block'
-        attribute. If not, it raises an AnsibleParserError.
+        The function checks if the 'always' keyword is used without a 'block' keyword.
+        If it is, it raises an AnsibleParserError with a specific error message.
 
-        Parameters:
-            attr (str): The attribute associated with the 'always' attribute.
-            name (str): The name of the 'always' attribute.
-            value: The value of the 'always' attribute.
-
-        Raises:
-            AnsibleParserError: If the 'always' attribute is used without the 'block' attribute.
+        :arg attr: The attribute name.
+        :arg name: The name of the keyword being validated.
+        :arg value: The value of the keyword being validated.
         """
         if value and not self.block:
             raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
@@ -276,17 +216,16 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def get_dep_chain(self):
         """
-        Get the dependency chain of the object.
+        Return the dependency chain of the object.
 
-        This method returns a list of objects that the current object depends on. If
-        the dependency chain is not already calculated, the method checks if the
-        object has a parent. If it has a parent, it calls the 'get_dep_chain'
-        method on the parent object recursively to get the dependency chain. If it
-        doesn't have a parent, it returns None. If the dependency chain is already
-        calculated, it returns a copy of the dependency chain list.
+        If the '_dep_chain' instance variable is None, the function checks if the
+        '_parent' instance variable exists.
+        If it does, the function recursively calls the 'get_dep_chain' method on the
+        parent object.
+        If '_parent' is None, the function returns None.
 
-        Returns:
-            list or None: The dependency chain of the object or None if the object has no parent.
+        If '_dep_chain' is not None, the function returns a copy of the '_dep_chain'
+        instance variable.
         """
         if self._dep_chain is None:
             if self._parent:
@@ -343,10 +282,12 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return new_me
 
     def serialize(self):
-        '''
+        """
         Override of the default serialize method, since when we're serializing
         a task we don't want to include the attribute list of tasks.
-        '''
+
+        :returns: A dictionary containing the serialized representation of the task.
+        """
 
         data = dict()
         for attr in self.fattributes:
@@ -403,17 +344,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def set_loader(self, loader):
         """
-        Set the loader for the class instance and its dependencies.
+        Set the loader for the current instance and its dependencies.
 
-        This method assigns the 'loader' parameter to the '_loader' attribute of the
-        class instance.
-        If the class instance has a '_parent' attribute, the 'set_loader' method is recursively
-        called on the '_parent' instance with the 'loader' parameter. Similarly,
-        if the class instance has a '_role' attribute, the 'set_loader' method is
-        recursively called on the '_role' instance with the 'loader' parameter.
-
-        Returns:
-            None
+        :arg loader: The loader to be set.
         """
         self._loader = loader
         if self._parent:
@@ -428,15 +361,18 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def _get_parent_attribute(self, attr, omit=False):
         """
-        Generic logic to get the attribute or parent attribute for a block value.
+        Retrieve the value of the attribute for a block value.
 
-        Parameters:
-            attr (str): The name of the attribute to retrieve.
-            omit (bool, optional): Whether to omit the current object and only
-                retrieve the parent attribute. Defaults to False.
+        The function retrieves the value of the attribute for the given block value.
+        It first checks if the value is present in the current object, and if not, it
+        checks the parent and role objects. It also handles extending and
+        prepending values based on certain conditions.
 
-        Returns:
-            Any: The value of the attribute or parent attribute.
+        :arg attr: The name of the attribute to retrieve.
+        :arg omit: A boolean indicating whether to omit the current object and only
+                    retrieve parent values. Defaults to False.
+
+        :returns: The value of the attribute for the given block value.
         """
         fattr = self.fattributes[attr]
 
@@ -579,7 +515,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def get_first_parent_include(self):
         """
-        Get the first parent that is a TaskInclude object.
+        Retrieve the first parent include of a block.
         """
         from ansible.playbook.task_include import TaskInclude
         if self._parent:

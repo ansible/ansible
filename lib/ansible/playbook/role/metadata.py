@@ -46,10 +46,9 @@ class RoleMetadata(Base, CollectionSearch):
 
     def __init__(self, owner=None):
         """
-        Initialize a new RoleMetadata object.
+        Initialize the RoleMetadata object.
 
-        Parameters:
-            owner: The owner of the RoleMetadata object.
+        :kwarg owner: The owner of the RoleMetadata object. Defaults to None.
         """
         self._owner = owner
         super(RoleMetadata, self).__init__()
@@ -57,19 +56,13 @@ class RoleMetadata(Base, CollectionSearch):
     @staticmethod
     def load(data, owner, variable_manager=None, loader=None):
         """
-        Returns a new RoleMetadata object based on the data structure passed in.
+        Load the RoleMetadata object based on the provided data.
 
-        Parameters:
-            data: The data structure for the RoleMetadata object.
-            owner: The owner of the RoleMetadata object.
-            variable_manager: The variable manager.
-            loader: The loader.
-
-        Returns:
-            RoleMetadata: A new RoleMetadata object.
-
-        Raises:
-            AnsibleParserError: If the 'meta/main.yml' is not a dictionary.
+        :arg data: The datastructure representing the metadata.
+        :arg owner: The owner of the RoleMetadata object.
+        :kwarg variable_manager: The variable manager to be used. Defaults to None.
+        :kwarg loader: The loader to be used. Defaults to None.
+        :returns: The loaded RoleMetadata object.
         """
 
         if not isinstance(data, dict):
@@ -132,8 +125,8 @@ class RoleMetadata(Base, CollectionSearch):
         """
         Serialize the object into a dictionary.
 
-        Returns:
-            dict: A dictionary representation of the object.
+        Returns a dictionary with the values of the '_allow_duplicates' and
+        '_dependencies' attributes.
         """
         return dict(
             allow_duplicates=self._allow_duplicates,
@@ -144,8 +137,11 @@ class RoleMetadata(Base, CollectionSearch):
         """
         Deserialize the object from a dictionary.
 
-        Args:
-            data (dict): A dictionary containing the serialized data.
+        Sets the 'allow_duplicates' and 'dependencies' attributes of the object based
+        on the values in the 'data' dictionary.
+
+        :arg data: A dictionary containing the values for 'allow_duplicates' and
+        'dependencies'.
         """
         setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
         setattr(self, 'dependencies', data.get('dependencies', []))

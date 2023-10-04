@@ -7,14 +7,21 @@ from ansible.playbook.attribute import FieldAttribute
 
 class Delegatable:
     """
-    This class represents a delegatable object.
+    Represents a delegatable entity.
     """
     delegate_to = FieldAttribute(isa='string')
     delegate_facts = FieldAttribute(isa='bool')
 
     def _post_validate_delegate_to(self, attr, value, templar):
         """
-        This method exists just to make it clear that ``Task.post_validate``
-        does not template this value, it is set via ``TaskExecutor._calculate_delegate_to``
+        Validate the `delegate_to` attribute.
+
+        This method exists just to make it clear that `Task.post_validate`
+        does not template this value, it is set via `TaskExecutor._calculate_delegate_to`.
+
+        :arg attr: The name of the attribute.
+        :arg value: The value of the attribute.
+        :arg templar: The templar object.
+        :returns: The value of the attribute.
         """
         return value

@@ -38,7 +38,6 @@ class PlaybookCLI(CLI):
     def init_parser(self):
         """
         Initialize the parser for command-line options.
-
         This method sets up the parser for command-line options, including
         usage and description. It also adds various options to the parser using
         the add_argument method. Finally, it defines a few more options specific
@@ -76,14 +75,10 @@ class PlaybookCLI(CLI):
 
     def post_process_args(self, options):
         """
-        Perform post-processing on the options parameter and return the updated options.
+        Perform post-processing on the options and return the updated options.
 
-        Args:
-            self: The current object instance.
-            options: The options parameter to be processed.
-
-        Returns:
-            The updated options parameter.
+        :arg options: The options to be processed.
+        :returns: The updated options.
         """
 
         # for listing, we need to know if user had tag input
@@ -250,11 +245,13 @@ class PlaybookCLI(CLI):
     @staticmethod
     def _flush_cache(inventory, variable_manager):
         """
-        Flushes the cache by clearing the facts associated with each host in the inventory.
+        Flushes the cache by clearing the facts associated with each host in the
+        inventory from the variable manager.
 
-        Parameters:
-            inventory: An object representing the inventory.
-            variable_manager: An object representing the variable manager.
+        :param inventory: The inventory containing the hosts.
+        :type inventory: object
+        :param variable_manager: The variable manager to clear the facts from.
+        :type variable_manager: object
         """
         for host in inventory.list_hosts():
             hostname = host.get_name()
@@ -262,6 +259,12 @@ class PlaybookCLI(CLI):
 
 
 def main(args=None):
+    """
+    Calls the PlaybookCLI.cli_executor function with the provided args.
+
+    :arg args: A list of arguments to be passed to the cli_executor function.
+    Defaults to None.
+    """
     PlaybookCLI.cli_executor(args)
 
 

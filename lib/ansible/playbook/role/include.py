@@ -39,14 +39,13 @@ class RoleInclude(RoleDefinition, Delegatable):
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
         """
-        Initialize the RoleInclude object.
+        Initialize the RoleInclude object with the given parameters.
 
-        Parameters:
-            play: The play object.
-            role_basedir: The base directory for the role.
-            variable_manager: The variable manager object.
-            loader: The loader object.
-            collection_list: The list of collections.
+        :arg play: The play in which the role is included.
+        :arg role_basedir: The base directory for the role.
+        :arg variable_manager: The variable manager.
+        :arg loader: The loader.
+        :arg collection_list: The collection list.
         """
         super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager,
                                           loader=loader, collection_list=collection_list)
@@ -54,19 +53,16 @@ class RoleInclude(RoleDefinition, Delegatable):
     @staticmethod
     def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=None):
         """
-        Load the role data and return the loaded data as a RoleInclude object.
+        Load role data.
 
-        Parameters:
-            data: The role data to be loaded.
-            play: The play object.
-            current_role_path: The current role path.
-            parent_role: The parent role object.
-            variable_manager: The variable manager object.
-            loader: The loader object.
-            collection_list: The list of collections.
-
-        Returns:
-            RoleInclude: The loaded RoleInclude object.
+        :arg data: The role data to load.
+        :arg play: The play.
+        :arg current_role_path: The current role path.
+        :arg parent_role: The parent role.
+        :arg variable_manager: The variable manager.
+        :arg loader: The loader.
+        :arg collection_list: The collection list.
+        :returns: The loaded role data.
         """
 
         if not (isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)):
