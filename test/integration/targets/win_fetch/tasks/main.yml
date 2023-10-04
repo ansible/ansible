@@ -176,8 +176,13 @@
       - "fetch_missing_implicit.msg"
       - "fetch_missing_implicit is not changed"
 
+- name: create empty temp directory
+  win_file:
+    path: '{{ remote_tmp_dir }}\fetch_tmp'
+    state: directory
+
 - name: attempt to fetch a directory
-  fetch: src="C:\\Windows" dest={{ host_output_dir }}
+  fetch: src="{{ remote_tmp_dir }}\\fetch_tmp" dest={{ host_output_dir }}
   register: fetch_dir
   ignore_errors: true
 
@@ -224,4 +229,3 @@
   assert:
     that:
     - "fetch_wildcard_file_nofail is not failed"
-   
