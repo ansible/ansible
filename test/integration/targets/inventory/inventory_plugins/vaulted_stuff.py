@@ -16,7 +16,6 @@ DOCUMENTATION = '''
 '''
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_native
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 
 
