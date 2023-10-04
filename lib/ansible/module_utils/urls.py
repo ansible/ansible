@@ -489,7 +489,8 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
         if not cadata:
             cadata = bytearray()
         cadata.extend(get_ca_certs(capath=capath)[0])
-        context.load_verify_locations(cadata=cadata)
+        if cadata:
+            context.load_verify_locations(cadata=cadata)
 
     if ciphers:
         context.set_ciphers(':'.join(map(to_native, ciphers)))
@@ -519,7 +520,9 @@ def get_ca_certs(cafile=None, capath=None):
         return bytearray().join(cadata), paths_checked
 
     default_verify_paths = ssl.get_default_verify_paths()
-    paths_checked = {default_verify_paths.capath}
+    default_capath = default_verify_paths.capath
+    paths_checked = {default_capath or default_verify_paths.cafile}
+
     if capath:
         paths_checked.add(capath)
 
@@ -552,7 +555,7 @@ def get_ca_certs(cafile=None, capath=None):
     # and compile them into single temp file for use
     # in the ssl check to speed up the test
     for path in paths_checked:
-        if not os.path.isdir(path):
+        if not path or path == default_capath or not os.path.isdir(path):
             continue
 
         for f in os.listdir(path):
