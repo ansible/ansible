@@ -63,9 +63,6 @@ from .coverage_util import (
 QUIET_PIP_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'quiet_pip.py')
 REQUIREMENTS_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'requirements.py')
 
-# IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-VIRTUALENV_VERSION = '16.7.12'
-
 # Pip Abstraction
 
 
@@ -132,7 +129,6 @@ def install_requirements(
     ansible: bool = False,
     command: bool = False,
     coverage: bool = False,
-    virtualenv: bool = False,
     controller: bool = True,
     connection: t.Optional[Connection] = None,
 ) -> None:
@@ -172,7 +168,6 @@ def install_requirements(
         cryptography=cryptography,
         command=args.command if command else None,
         coverage=coverage,
-        virtualenv=virtualenv,
         minimize=False,
         sanity=None,
     )
@@ -207,18 +202,12 @@ def collect_requirements(
     ansible: bool,
     cryptography: bool,
     coverage: bool,
-    virtualenv: bool,
     minimize: bool,
     command: t.Optional[str],
     sanity: t.Optional[str],
 ) -> list[PipCommand]:
     """Collect requirements for the given Python using the specified arguments."""
     commands: list[PipCommand] = []
-
-    if virtualenv:
-        # sanity tests on Python 2.x install virtualenv when it is too old or is not already installed and the `--requirements` option is given
-        # the last version of virtualenv with no dependencies is used to minimize the changes made outside a virtual environment
-        commands.extend(collect_package_install(packages=[f'virtualenv=={VIRTUALENV_VERSION}'], constraints=False))
 
     if coverage:
         commands.extend(collect_package_install(packages=[f'coverage=={get_coverage_version(python.version).coverage_version}'], constraints=False))

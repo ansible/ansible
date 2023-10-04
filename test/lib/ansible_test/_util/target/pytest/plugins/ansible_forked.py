@@ -11,12 +11,7 @@ import pickle
 import tempfile
 import warnings
 
-from pytest import Item, hookimpl
-
-try:
-    from pytest import TestReport
-except ImportError:
-    from _pytest.runner import TestReport  # Backwards compatibility with pytest < 7. Remove once Python 2.7 is not supported.
+from pytest import Item, hookimpl, TestReport
 
 from _pytest.runner import runtestprotocol
 
