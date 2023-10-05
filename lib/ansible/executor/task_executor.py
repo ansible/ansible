@@ -33,6 +33,7 @@ from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
 
+
 display = Display()
 
 
@@ -1126,14 +1127,19 @@ class TaskExecutor:
         module = self._shared_loader_obj.module_loader.find_plugin_with_context(
             self._task.action, collection_list=collections
         )
-        if not module.resolved or not module.action_plugin:
+
+        if not module.resolved:
+            # if we could not resolve, we return a None context, but handler will still be set
             module = None
-        if module is not None:
+
+        if module.action_plugin:
+            # got an action plugin, use that
             handler_name = module.action_plugin
-        # let action plugin override module, fallback to 'normal' action plugin otherwise
         elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
+            # let action plugin override module, fallback to 'normal' action plugin otherwise
             handler_name = self._task.action
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
+            # networking case, config determines plugin for module
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
