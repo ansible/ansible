@@ -541,16 +541,6 @@ def main():
                     "ignore",
                     "AnsibleCollectionFinder has already been configured")
 
-            if sys.version_info[0] == 2:
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in a future release.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in the next release.")
-
             try:
                 yield
             finally:
