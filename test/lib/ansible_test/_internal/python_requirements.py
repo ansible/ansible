@@ -5,7 +5,6 @@ import base64
 import dataclasses
 import json
 import os
-import re
 import typing as t
 
 from .encoding import (
@@ -24,9 +23,7 @@ from .util import (
     ApplicationError,
     SubprocessError,
     display,
-    find_executable,
     raw_command,
-    str_to_version,
     version_to_str,
 )
 

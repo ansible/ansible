@@ -29,7 +29,6 @@ from .io import (
 from .util import (
     ApplicationError,
     display,
-    str_to_version,
 )
 
 from .data import (
