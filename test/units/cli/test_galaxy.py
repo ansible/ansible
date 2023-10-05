@@ -769,6 +769,20 @@ def test_collection_install_with_names(collection_install):
     assert mock_install.call_args[0][6] is False  # force_deps
 
 
+def test_collection_install_with_invalid_requirements_format(collection_install):
+    output_dir = collection_install[2]
+
+    requirements_file = os.path.join(output_dir, 'requirements.yml')
+    with open(requirements_file, 'wb') as req_obj:
+        req_obj.write(b'"invalid"')
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', '--requirements-file', requirements_file,
+                   '--collections-path', output_dir]
+
+    with pytest.raises(AnsibleError, match="Expecting requirements yaml to be a list or dictionary but got str"):
+        GalaxyCLI(args=galaxy_args).run()
+
+
 def test_collection_install_with_requirements_file(collection_install):
     mock_install, mock_warning, output_dir = collection_install
 
