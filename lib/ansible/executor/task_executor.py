@@ -1132,7 +1132,7 @@ class TaskExecutor:
             # if we could not resolve, we return a None context, but handler will still be set
             module = None
 
-        if module.action_plugin:
+        if module is not None and module.action_plugin:
             # got an action plugin, use that
             handler_name = module.action_plugin
         elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
