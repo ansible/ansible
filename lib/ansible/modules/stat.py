@@ -376,7 +376,7 @@ import stat
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
 def format_output(module, path, st):
@@ -468,6 +468,8 @@ def main():
     try:
         if follow:
             st = os.stat(b_path)
+            b_path = os.path.realpath(b_path)
+            path = to_native(b_path, errors='strict')
         else:
             st = os.lstat(b_path)
     except OSError as e:
