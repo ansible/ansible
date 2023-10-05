@@ -61,7 +61,7 @@ class ActionBase(ABC):
     # A set of valid arguments
     _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
-    # behavioral attributes
+    # behavioural attributes
     BYPASS_HOST_LOOP = False
     TRANSFERS_FILES = False
     _requires_connection = True
@@ -466,7 +466,7 @@ class ActionBase(ABC):
         if getattr(self._connection, '_remote_is_local', False):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
-            # NOTE: shell plugins should populate this setting anyways, but they dont do remote expansion, which
+            # NOTE: shell plugins should populate this setting anyways, but they don't do remote expansion, which
             # we need for 'non posix' systems like cloud-init and solaris
             tmpdir = self._remote_expand_user(self.get_shell_option('remote_tmp', default='~/.ansible/tmp'), sudoable=False)
 
