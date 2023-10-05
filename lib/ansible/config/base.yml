@@ -1156,6 +1156,15 @@ VAULT_ENCRYPT_SALT:
   ini:
   - {key: vault_encrypt_salt, section: defaults}
   version_added: '2.15'
+VAULT_DECRYPT_VARSFILE_FAIL:
+  name: Control vault decryption of a vars file reaction
+  default: True
+  description: Toggle to control if vault decryption failures of vars files are errors or warnings
+  env: [{name: ANSIBLE_VAULT_DECRYPT_VARSFILE_FAIL}]
+  ini:
+  - {key: vault_decrypt_varsfile_fail, section: defaults}
+  type: bool
+  version_added: '2.17'
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
   description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The ``--encrypt-vault-id`` CLI option overrides the configured value.'

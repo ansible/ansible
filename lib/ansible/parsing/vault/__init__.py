@@ -628,7 +628,7 @@ class VaultLib:
                                                 vault_id=vault_id)
         return b_vaulttext
 
-    def decrypt(self, vaulttext, filename=None, obj=None):
+    def decrypt(self, vaulttext, filename=None, obj=None, always_error=True):
         '''Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
@@ -639,10 +639,10 @@ class VaultLib:
         :returns: a byte string containing the decrypted data and the vault-id that was used
 
         '''
-        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename, obj=obj)
+        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename, obj=obj, always_error=always_error)
         return plaintext
 
-    def decrypt_and_get_vault_id(self, vaulttext, filename=None, obj=None):
+    def decrypt_and_get_vault_id(self, vaulttext, filename=None, obj=None, always_error=True):
         """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
@@ -659,7 +659,11 @@ class VaultLib:
             msg = "A vault password must be specified to decrypt data"
             if filename:
                 msg += " in file %s" % to_native(filename)
-            raise AnsibleVaultError(msg)
+            if always_error:
+                raise AnsibleVaultError(msg)
+            else:
+                display.warning(msg)
+                return vaulttext, None, None
 
         if not is_encrypted(b_vaulttext):
             msg = "input is not vault encrypted data. "
@@ -679,7 +683,12 @@ class VaultLib:
         b_plaintext = None
 
         if not self.secrets:
-            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found')
+            msg = 'Attempted to decrypt (%s) but no vault secrets found' % filename
+            if always_error:
+                raise AnsibleVaultError(msg)
+            else:
+                display.warning(msg + '. Skipped')
+                return vaulttext, None, None
 
         # WARNING: Currently, the vault id is not required to match the vault id in the vault blob to
         #          decrypt a vault properly. The vault id in the vault blob is not part of the encrypted
@@ -746,13 +755,22 @@ class VaultLib:
             msg = "Decryption failed (no vault secrets were found that could decrypt)"
             if filename:
                 msg += " on %s" % to_native(filename)
-            raise AnsibleVaultError(msg)
+
+            if always_error:
+                raise AnsibleVaultError(msg)
+            else:
+                display.warning(msg, formatted=True)
+                return vaulttext, None, None
 
         if b_plaintext is None:
             msg = "Decryption failed"
             if filename:
                 msg += " on %s" % to_native(filename)
-            raise AnsibleError(msg)
+            if always_error:
+                raise AnsibleVaultError(msg)
+            else:
+                display.warning(msg, formatted=True)
+                return vaulttext, None, None
 
         return b_plaintext, vault_id_used, vault_secret_used
 

@@ -1,0 +1,2 @@
+minor_changes:
+  - added new config option ``VAULT_DECRYPT_VARSFILE_FAIL`` to allow making vault decryption of vars files from errors into warnings to prevent stopping execution.
