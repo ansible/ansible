@@ -8,7 +8,7 @@
   block:
   - name: unarchive a tar from an URL
     unarchive:
-      src: "https://ftp.gnu.org/gnu/hello/hello-1.3.tar.gz"
+      src: "https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello-source.tar.gz"
       dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
       mode: "0700"
       remote_src: yes
