@@ -105,7 +105,7 @@
         - "legacy_ping_2.ping == 'from task'"
         - "legacy_ping_3.ping == 'from task'"
         - "legacy_ping_4.ping == 'from task'"
-        - "legacy_builtin_defaults.msg == legacy default'"
+        - "legacy_builtin_defaults.msg == 'legacy default'"
         - "builtin_legacy_defaults_1.msg == 'legacy default'"
         - "builtin_legacy_defaults_2.msg == 'legacy default'"
 
