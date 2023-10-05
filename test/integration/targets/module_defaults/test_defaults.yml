@@ -82,7 +82,7 @@
         msg: legacy default
     register: builtin_legacy_defaults_2
 
-  - name: legacy does not use builtin defaults
+  - name: legacy matches builtin defaults
     ansible.legacy.debug:
     register: legacy_builtin_defaults
     module_defaults:
@@ -105,7 +105,7 @@
         - "legacy_ping_2.ping == 'from task'"
         - "legacy_ping_3.ping == 'from task'"
         - "legacy_ping_4.ping == 'from task'"
-        - "legacy_builtin_defaults.msg == 'Hello world!'"
+        - "legacy_builtin_defaults.msg == legacy default'"
         - "builtin_legacy_defaults_1.msg == 'legacy default'"
         - "builtin_legacy_defaults_2.msg == 'legacy default'"
 
