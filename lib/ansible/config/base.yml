@@ -1771,7 +1771,7 @@ MODULE_IGNORE_EXTS:
   type: list
   template: restricted
 MODULE_STRICT_UTF8_RESPONSE:
- name: Module strict UTF-8 response
+  name: Module strict UTF-8 response
   description:
     - Enables whether module responses are evaluated for containing non-UTF-8 data.
     - Disabling this may result in unexpected behavior.
