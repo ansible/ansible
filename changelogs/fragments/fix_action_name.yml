@@ -1,0 +1,2 @@
+bugfixes:
+  - correctly get action name when action/local_action forms are used in task_executor
