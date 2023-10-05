@@ -247,3 +247,22 @@
         that:
           - naked.msg == 'MODULE_DEFAULT' == with_fqcn.msg == with_action.msg == with_delegation.msg == with_local_action.msg
 
+- name: ensure we parse module names correctly (using module_defaults to confirm results)
+  module_defaults:
+    ansible.builtin.ping:
+      data: MODULE_DEFAULT
+  block:
+    - ping:
+      register: naked
+    - ansible.legacy.ping:
+      register: with_fqcn
+    - action: ping 
+      register: with_action
+    - ping:
+      delegate_to: localhost
+      register: with_delegation
+    - local_action:
+        module: ping 
+      register: with_local_action
+    - assert:
+        that: naked.ping == 'MODULE_DEFAULT' == with_fqcn.ping == with_action.ping == with_delegation.ping == with_local_action.ping
