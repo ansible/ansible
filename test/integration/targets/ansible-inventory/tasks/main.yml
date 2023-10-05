@@ -152,3 +152,27 @@
     - json
     - yaml
     - toml
+
+- name: Test vaulted vars error toggle
+  block:
+  - name: "test yaml output file with unicode characters"
+    command: ansible-inventory --list --export -i {{role_path}}/files/vaulted/test.ini
+    register: ai_vaulted
+    ignore_errors: true
+    environment:
+      ANSIBLE_VAULT_DECRYPT_VARSFILE_FAIL: true
+
+  - name: "test yaml output file with unicode characters"
+    command: ansible-inventory --list --export -i {{role_path}}/files/vaulted/test.ini
+    register: ai_no_vaulted
+    ignore_errors: true
+    environment:
+      ANSIBLE_VAULT_DECRYPT_VARSFILE_FAIL: false
+
+  - name: verify toggle
+    assert:
+      that:
+        - ai_vaulted is failed
+        - ai_no_vaulted is succeeded
+        - "'Attempted' in ai_vaulted['stderr']"
+        - "'Attempted' in ai_no_vaulted['stderr']"
