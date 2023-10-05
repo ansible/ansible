@@ -41,7 +41,7 @@ from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, PluginLoaderSend
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -146,6 +146,12 @@ def results_thread_main(strategy):
                     except AnsibleError as e:
                         value = e
                 strategy._workers[result.worker_id].worker_queue.put(value)
+            elif isinstance(result, PluginLoaderSend):
+                loader = getattr(plugin_loader, result.loader_name)
+                if loader is not None:
+                    method = getattr(loader, result.method)
+                    if method is not None:
+                        method(*result.args, **result.kwargs)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):

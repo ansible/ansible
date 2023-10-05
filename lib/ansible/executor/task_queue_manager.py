@@ -66,8 +66,10 @@ class DisplaySend:
         self.args = args
         self.kwargs = kwargs
 
+
 class PluginLoaderSend:
-    def __init__(self, method, *args, **kwargs):
+    def __init__(self, loader_name, method, *args, **kwargs):
+        self.loader_name = loader_name
         self.method = method
         self.args = args
         self.kwargs = kwargs
@@ -112,8 +114,9 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
             PromptSend(**kwargs),
         )
 
-    def send_plugin_loader(self, *args, **kwargs):
-        self.put(PluginLoaderSend(*args, **kwargs))
+    def send_plugin_loader(self, loader_name, method, *args, **kwargs):
+        self.put(PluginLoaderSend(loader_name, method, *args, **kwargs))
+
 
 class AnsibleEndPlay(Exception):
     def __init__(self, result):
