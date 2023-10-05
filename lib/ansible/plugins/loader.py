@@ -59,14 +59,19 @@ _final_q = None
 def proxy_load(method):
 
     def proxyit(self, *args, **kwargs):
-        if sys.modules[__name__]._final_q:
+        if sys.modules[__name__]._final_q and 'play_context' not in kwargs and self.type != 'connection':
             # If _final_q is set, that means we are in a WorkerProcess
             # and instead of displaying messages directly from the fork
             # we will proxy them through the queue
-            sys.modules[__name__]._final_q.send_plugin_loader(method.__name__, *args, **kwargs)
+            if self.class_name == 'ModuleDocFragment':
+                loader_name = 'fragment_loader'
+            else:
+                loader_name = '%s_loader' % self.type
+            sys.modules[__name__]._final_q.send_plugin_loader(loader_name, method.__name__, *args, **kwargs)
         return method(self, *args, **kwargs)
 
     return proxyit
+
 
 def set_queue(queue):
     """Set the _final_q on PLuginLoader, so that we know to proxy requests over the queue
