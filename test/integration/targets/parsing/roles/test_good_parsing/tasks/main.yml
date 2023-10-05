@@ -224,3 +224,28 @@
     that:
       - b == "b"
       - c == "c"
+
+
+- name: ensure we parse action names correctly (using module_defaults to confirm results)
+  module_defaults:
+    ansible.builtin.debug:
+      msg: MODULE_DEFAULT
+  block:
+    - debug:
+      register: naked
+    - ansible.legacy.debug:
+      register: with_fqcn
+    - action: debug
+      register: with_action
+    - debug:
+      delegate_to: localhost
+      register: with_delegation
+    - local_action:
+        module: debug
+      register: with_local_action
+    - assert:
+        that:
+      - assert:
+          that:
+            - naked.msg == 'MODULE_DEFAULT' == with_fqcn.msg == with_action.msg == with_delegation.msg == with_local_action.msg
+
