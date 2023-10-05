@@ -75,13 +75,9 @@ def parse_content_config(data: t.Any) -> ContentConfig:
     python_versions = tuple(version for version in SUPPORTED_PYTHON_VERSIONS
                             if version in CONTROLLER_PYTHON_VERSIONS or version in modules.python_versions)
 
-    # True if Python 2.x is supported.
-    py2_support = any(version for version in python_versions if str_to_version(version)[0] == 2)
-
     return ContentConfig(
         modules=modules,
         python_versions=python_versions,
-        py2_support=py2_support,
     )
 
 
