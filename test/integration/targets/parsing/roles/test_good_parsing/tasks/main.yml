@@ -245,7 +245,5 @@
       register: with_local_action
     - assert:
         that:
-      - assert:
-          that:
-            - naked.msg == 'MODULE_DEFAULT' == with_fqcn.msg == with_action.msg == with_delegation.msg == with_local_action.msg
+          - naked.msg == 'MODULE_DEFAULT' == with_fqcn.msg == with_action.msg == with_delegation.msg == with_local_action.msg
 
