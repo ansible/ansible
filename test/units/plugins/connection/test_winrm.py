@@ -13,8 +13,8 @@ import pytest
 from io import StringIO
 
 from unittest.mock import MagicMock
-from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import winrm
@@ -461,3 +461,103 @@ class TestWinRMKerbAuth(object):
             conn.exec_command('cmd', in_data=None, sudoable=True)
 
         assert str(e.value) == "winrm connection error: msg"
+
+    def test_exec_command_get_output_timeout(self, monkeypatch):
+        requests_exc = pytest.importorskip("requests.exceptions")
+
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+
+        mock_proto = MagicMock()
+        mock_proto.run_command.return_value = "command_id"
+        mock_proto.get_command_output.side_effect = requests_exc.Timeout("msg")
+
+        conn._connected = True
+        conn._winrm_host = 'hostname'
+
+        monkeypatch.setattr(conn, "_winrm_connect", lambda: mock_proto)
+
+        with pytest.raises(AnsibleConnectionFailure) as e:
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+        assert str(e.value) == "winrm connection error: msg"
+
+    def test_exec_command_with_timeout(self, monkeypatch):
+        requests_exc = pytest.importorskip("requests.exceptions")
+
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+
+        mock_proto = MagicMock()
+        mock_proto.run_command.side_effect = requests_exc.Timeout("msg")
+
+        conn._connected = True
+        conn._winrm_host = 'hostname'
+
+        monkeypatch.setattr(conn, "_winrm_connect", lambda: mock_proto)
+
+        with pytest.raises(AnsibleConnectionFailure) as e:
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+        assert str(e.value) == "winrm connection error: msg"
+
+    def test_connect_failure_auth_401(self, monkeypatch):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+
+        mock_proto = MagicMock()
+        mock_proto.open_shell.side_effect = ValueError("Custom exc Code 401")
+
+        mock_proto_init = MagicMock()
+        mock_proto_init.return_value = mock_proto
+        monkeypatch.setattr(winrm, "Protocol", mock_proto_init)
+
+        with pytest.raises(AnsibleConnectionFailure, match="the specified credentials were rejected by the server"):
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+    def test_connect_failure_other_exception(self, monkeypatch):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+
+        mock_proto = MagicMock()
+        mock_proto.open_shell.side_effect = ValueError("Custom exc")
+
+        mock_proto_init = MagicMock()
+        mock_proto_init.return_value = mock_proto
+        monkeypatch.setattr(winrm, "Protocol", mock_proto_init)
+
+        with pytest.raises(AnsibleConnectionFailure, match="basic: Custom exc"):
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+    def test_connect_failure_operation_timed_out(self, monkeypatch):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+
+        mock_proto = MagicMock()
+        mock_proto.open_shell.side_effect = ValueError("Custom exc Operation timed out")
+
+        mock_proto_init = MagicMock()
+        mock_proto_init.return_value = mock_proto
+        monkeypatch.setattr(winrm, "Protocol", mock_proto_init)
+
+        with pytest.raises(AnsibleError, match="the connection attempt timed out"):
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+    def test_connect_no_transport(self):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"_extras": {}})
+        conn._build_winrm_kwargs()
+        conn._winrm_transport = []
+
+        with pytest.raises(AnsibleError, match="No transport found for WinRM connection"):
+            conn._winrm_connect()
