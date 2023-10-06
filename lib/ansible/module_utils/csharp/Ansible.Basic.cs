@@ -61,7 +61,7 @@ namespace Ansible.Basic
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
             // null values means no mapping, not used in Ansible.Basic.AnsibleModule
-			// keep in sync with python counterpart in lib/ansible/module_utils/common/parameters.py
+            // keep in sync with python counterpart in lib/ansible/module_utils/common/parameters.py
             { "check_mode", "CheckMode" },
             { "debug", "DebugMode" },
             { "diff", "DiffMode" },
@@ -262,7 +262,7 @@ namespace Ansible.Basic
             DiffMode = false;
             KeepRemoteFiles = false;
             ModuleName = "undefined win module";
-			TargetLogInfo = "";
+            TargetLogInfo = "";
             NoLog = (bool)argumentSpec["no_log"];
             Verbosity = 0;
             AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
@@ -379,16 +379,18 @@ namespace Ansible.Basic
                 }
             }
             if (sanitise)
+            {
                 message = (string)RemoveNoLogValues(message, noLogValues);
+            }
 
-			if (String.IsNullOrWhiteSpace(TargetLogInfo))
-			{
-			    message = String.Format("{0} - {1}", ModuleName, message);
-			}
-			else
-			{
-			    message = String.Format("{0} {1} - {2}", ModuleName, TargetLogInfo, message);
-			}
+            if (String.IsNullOrWhiteSpace(TargetLogInfo))
+            {
+                message = String.Format("{0} - {1}", ModuleName, message);
+            }
+            else
+            {
+                message = String.Format("{0} {1} - {2}", ModuleName, TargetLogInfo, message);
+            }
 
             using (EventLog eventLog = new EventLog("Application"))
             {
