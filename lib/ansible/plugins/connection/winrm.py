@@ -131,7 +131,7 @@ DOCUMENTATION = """
               connection.
             - The operation timeout belongs to the WS-Man layer and runs on the winRM-service on the
               managed windows host.
-            - The read timeout belongs to the underlying python Request call (http-layer) and runs
+            - The read timeout belongs to the undelying python Request call (http-layer) and runs
               on the ansible controller.
             - The operation timeout sets the WS-Man 'Operation timeout' that runs on the managed
               windows host. The operation timeout specifies how long a command will run on the
