@@ -116,6 +116,10 @@ class RpmKey(object):
             keyfile = self.fetch_key(key)
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
+        elif is_pubkey(key):
+            keyfile = self.keyfile(bytes(key, 'utf-8'))
+            keyid = self.getkeyid(keyfile)
+            should_cleanup_keyfile = True
         elif self.is_keyid(key):
             keyid = key
         elif os.path.isfile(key):
@@ -148,6 +152,15 @@ class RpmKey(object):
             else:
                 module.exit_json(changed=False)
 
+    def keyfile(self, key):
+        tmpfd, tmpname = tempfile.mkstemp()
+        self.module.add_cleanup_file(tmpname)
+        tmpfile = os.fdopen(tmpfd, "w+b")
+        tmpfile.write(key)
+        tmpfile.close()
+
+        return tmpname
+
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
@@ -157,12 +170,8 @@ class RpmKey(object):
         key = rsp.read()
         if not is_pubkey(key):
             self.module.fail_json(msg="Not a public key: %s" % url)
-        tmpfd, tmpname = tempfile.mkstemp()
-        self.module.add_cleanup_file(tmpname)
-        tmpfile = os.fdopen(tmpfd, "w+b")
-        tmpfile.write(key)
-        tmpfile.close()
-        return tmpname
+        keyfile = self.keyfile(key)
+        return keyfile
 
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
