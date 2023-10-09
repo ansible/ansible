@@ -1,6 +1,6 @@
-base image=quay.io/ansible/base-test-container:5.9.0 python=3.11,3.7,3.8,3.9,3.10,3.12
-default image=quay.io/ansible/default-test-container:9.2.0 python=3.11,3.7,3.8,3.9,3.10,3.12 context=collection
-default image=quay.io/ansible/ansible-core-test-container:9.2.0 python=3.11,3.7,3.8,3.9,3.10,3.12 context=ansible-core
+base image=quay.io/ansible/base-test-container:5.9.0 python=3.12,3.11,3.7,3.8,3.9,3.10
+default image=quay.io/ansible/default-test-container:9.2.0 python=3.12,3.11,3.7,3.8,3.9,3.10 context=collection
+default image=quay.io/ansible/ansible-core-test-container:9.2.0 python=3.12,3.11,3.7,3.8,3.9,3.10 context=ansible-core
 alpine3 image=quay.io/ansible/alpine3-test-container:6.3.0 python=3.11 cgroup=none audit=none
 fedora38 image=quay.io/ansible/fedora38-test-container:6.3.0 python=3.11
 ubuntu2004 image=quay.io/ansible/ubuntu2004-test-container:6.3.0 python=3.8
