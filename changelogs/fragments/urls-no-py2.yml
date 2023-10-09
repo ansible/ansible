@@ -1,0 +1,2 @@
+major_changes:
+- urls.py - Removed support for Python 2
