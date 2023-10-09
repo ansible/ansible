@@ -957,6 +957,17 @@ releases:
     - tarfile_extract_warn.yml
     - urls-unit-test-latest-cryptography.yml
     release_date: '2023-09-05'
+  2.13.13:
+    changes:
+      release_summary: '| Release Date: 2023-10-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.13/porting_guides/porting_guide_core_2.13.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 2.13.13_summary.yaml
+    release_date: '2023-10-09'
   2.13.13rc1:
     changes:
       bugfixes:
