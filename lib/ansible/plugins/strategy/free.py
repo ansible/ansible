@@ -146,6 +146,8 @@ class StrategyModule(StrategyBase):
                         # advance the host, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         iterator.set_state_for_host(host.name, state)
+                        if isinstance(task, Handler):
+                            task.remove_host(host)
 
                         try:
                             action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
