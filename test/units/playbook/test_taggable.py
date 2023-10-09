@@ -29,6 +29,7 @@ class TaggableTestObj(Taggable):
     def __init__(self):
         self._loader = DictDataLoader({})
         self.tags = []
+        self._parent = None
 
 
 class TestTaggable(unittest.TestCase):
