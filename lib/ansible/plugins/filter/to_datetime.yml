@@ -29,6 +29,16 @@ EXAMPLES: |
   # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
   {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
 
+  # difference between to dotnet (100ns precision) and iso8601 microsecond timestamps
+  # the date1_short regex replace will work for any timestamp that has a higher than microsecond precision
+  # by cutting off anything more precise than microseconds
+  vars:
+    date1: '2022-11-15T03:23:13.6869568Z'
+    date2: '2021-12-15T16:06:24.400087Z'
+    date1_short: '{{ date1|regex_replace("([^.]+)(\.\d{6})(\d*)(.+)", "\1\2\4") }}' # shorten to microseconds
+    iso8601format: '%Y-%m-%dT%H:%M:%S.%fZ'
+    date_diff_isoed: '{{ (date1_short|to_datetime(iso8601format) - date2|to_datetime(iso8601format)).total_seconds() }}'
+
 RETURN:
   _value:
     description: C(datetime) object from the represented value.
