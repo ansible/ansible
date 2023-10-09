@@ -1,0 +1,25 @@
+- when: ansible_facts.distribution not in ['MacOSX']
+  block:
+    - name: install socat
+      package:
+        name: socat
+        state: present
+      register: socat_install_package
+      when: ansible_facts.distribution not in ['Alpine']
+
+    - name: install socat for alpine
+      command: apk add --virtual .socat socat
+      register: socat_install_alpine
+      when: ansible_facts.distribution == 'Alpine'
+
+    - include_tasks: unix-socket.yml
+  always:
+    - name: uninstall socat
+      package:
+        name: socat
+        state: absent
+      when: socat_install_package|default({}) is changed
+
+    - name: uninstall socat for alpine
+      command: apk del .socat
+      when: socat_install_alpine|default({}) is changed and 'Installing socat' in socat_install_alpine.stdout
