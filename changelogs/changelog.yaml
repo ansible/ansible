@@ -896,6 +896,17 @@ releases:
     - freebsd-12.3-replacement.yml
     - tarfile_extract_warn.yml
     release_date: '2023-09-05'
+  2.14.11:
+    changes:
+      release_summary: '| Release Date: 2023-10-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.11_summary.yaml
+    release_date: '2023-10-09'
   2.14.11rc1:
     changes:
       bugfixes:
