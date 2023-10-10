@@ -5,9 +5,9 @@ import pkgutil
 import pytest
 import re
 import sys
+from importlib import import_module
 
 from ansible.module_utils.six import PY3, string_types
-from ansible.module_utils.compat.importlib import import_module
 from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (

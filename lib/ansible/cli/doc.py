@@ -9,6 +9,7 @@ from __future__ import annotations
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import importlib
 import pkgutil
 import os
 import os.path
@@ -29,7 +30,6 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
-from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
