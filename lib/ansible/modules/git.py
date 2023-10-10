@@ -1321,10 +1321,12 @@ def main():
     if key_file_content:
         key_file_content += "\n" if not key_file_content.endswith("\n") else ""
         key = to_bytes(key_file_content)
-        tmpfile = tempfile.NamedTemporaryFile(prefix="tmp_", delete=False)
+        # tempfile not saved on disk
+        tmpfd, key_file = tempfile.mkstemp()
+        module.add_cleanup_file(key_file)
+        tmpfile = os.fdopen(tmpfd, "w+b")
         tmpfile.write(key)
         tmpfile.close()
-        key_file = tmpfile.name
 
     # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
     set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
