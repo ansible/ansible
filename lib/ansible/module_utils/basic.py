@@ -148,7 +148,6 @@ from ansible.module_utils.common.sys_info import (
     get_distribution_version,
     get_platform_subclass,
 )
-from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     env_fallback,
     remove_values,
@@ -204,8 +203,6 @@ try:
 except NameError:
     # Python 3
     basestring = string_types
-
-_literal_eval = literal_eval
 
 # End of deprecated names
 
@@ -2135,3 +2132,33 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings.
+
+    Specifically, for ``literal_eval()``, ``_literal_eval()``
+    and ``get_exception()``.
+    """
+    if importable_name == 'get_exception':
+        deprecate(
+            msg=f'The `ansible.module_utils.basic.'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+        from ansible.module_utils.pycompat24 import get_exception
+        return get_exception
+
+    if importable_name in {'literal_eval', '_literal_eval'}:
+        deprecate(
+            msg=f'The `ansible.module_utils.basic.'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+        from ast import literal_eval
+        return literal_eval
+
+    raise AttributeError(
+        f'cannot import name {importable_name !r} '
+        f'has no attribute ({__file__ !s})',
+    )

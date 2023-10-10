@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import sys
 
+from ansible.module_utils.common.warnings import deprecate
+
 
 def get_exception():
     """Get the current exception.
@@ -43,10 +45,29 @@ def get_exception():
             e = get_exception()
 
     """
+    deprecate(
+        msg='The `ansible.module_utils.pycompat24.get_exception` '
+        'function is deprecated.',
+        version='2.19',
+    )
     return sys.exc_info()[1]
 
 
-from ast import literal_eval
+def __getattr__(importable_name):
+    """Inject import-time deprecation warning for ``literal_eval()``."""
+    if importable_name == 'literal_eval':
+        deprecate(
+            msg=f'The `ansible.module_utils.pycompat24.'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+        from ast import literal_eval
+        return literal_eval
+
+    raise AttributeError(
+        f'cannot import name {importable_name !r} '
+        f'has no attribute ({__file__ !s})',
+    )
 
 
-__all__ = ('get_exception', 'literal_eval')
+__all__ = ('get_exception', 'literal_eval')  # pylint: disable=undefined-all-variable
