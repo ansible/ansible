@@ -36,11 +36,6 @@ def _deprecated(msg, version):
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
 
 
-def set_constant(name, value, export=vars()):
-    ''' sets constants and returns resolved options dict '''
-    export[name] = value
-
-
 class _DeprecatedSequenceConstant(Sequence):
     def __init__(self, value, msg, version):
         self._value = value
@@ -177,12 +172,23 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
+
+# INITALIZE CONFIG MANAGER
 config = ConfigManager()
 
-# Generate constants from config
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
 
-for warn in config.WARNINGS:
-    _warning(warn)
+def __getattr__(config_constant):
+
+    _cache = vars()
+
+    if config_constant not in _cache:
+        try:
+            _cache[config_constant] = config.get_config_value(config_constant, variables=_cache)
+        except Exception as e:
+            raise AttributeError(e)
+
+        if config.WARNINGS:
+            for warn in config.WARNINGS.pop():
+                _warning(warn)
+
+    return _cache[config_constant]
