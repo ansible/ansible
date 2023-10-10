@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import re
+import sys
 
 from string import ascii_letters, digits
 
@@ -179,16 +180,16 @@ config = ConfigManager()
 
 def __getattr__(config_constant):
 
-    _cache = vars()
-
-    if config_constant not in _cache:
+    if config_constant not in globals():
         try:
-            _cache[config_constant] = config.get_config_value(config_constant, variables=_cache)
+            value = config.get_config_value(config_constant, variables=globals())
         except Exception as e:
             raise AttributeError(e)
+
+        globals()[config_constant] = value
 
         if config.WARNINGS:
             for warn in config.WARNINGS.pop():
                 _warning(warn)
 
-    return _cache[config_constant]
+    return globals()[config_constant]
