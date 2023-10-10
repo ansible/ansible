@@ -82,6 +82,7 @@ options:
             - Specify an optional private key file to use for the checkout.
             - This ensures 'IdentitiesOnly=yes' is present in O(ssh_opts).
         type: str
+        version_added: "2.17"
     reference:
         description:
             - Reference repository (see "git clone --reference ...").
