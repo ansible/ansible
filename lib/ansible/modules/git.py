@@ -290,7 +290,7 @@ EXAMPLES = '''
     dest: /src/ansible-examples
     single_branch: yes
     version: master
-    
+
 - name: Example clone of a single branch using a private key on the target host
   ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
@@ -298,7 +298,7 @@ EXAMPLES = '''
     key_file: /home/ansible/.ssh/id_ed25519
     single_branch: yes
     accept_hostkey: yes
-    
+
 - name: Example clone of a single branch using a private key from the control node
   ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
@@ -1209,7 +1209,7 @@ def main():
             accept_hostkey=dict(default='no', type='bool'),
             accept_newhostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
-            key_file_content=dict(default=None, required=False),
+            key_file_content=dict(default=None, required=False, no_log=True),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
             bare=dict(default='no', type='bool'),
