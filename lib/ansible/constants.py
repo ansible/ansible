@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import re
-import sys
 
 from string import ascii_letters, digits
 
