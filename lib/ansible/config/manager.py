@@ -557,7 +557,7 @@ class ConfigManager(object):
                             pass  # not templatable
 
             elif defs[config].get('template', 'static') in ('restricted', 'vault', 'full', 'implicit') and variables is not None and \
-            config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):
+                 config not in ('_terms', '_input') and None not in (templar, value) and templar.is_template(value):
                 # template default values if needed and possible
                 t_type = defs[config]['template']
                 use_lookup = True
@@ -574,14 +574,14 @@ class ConfigManager(object):
                     t_value = value
 
                 if unvault_only:
-                    #TODO: manually unvault here
+                    # TODO: manually unvault here
                     raise AnsibleError('Unimplemented to only unvault')
                 else:
                     try:
                         value = templar.template(t_value, disable_lookups=(not use_lookup))
                     except Exception as e:
                         # TODO: toggle to error if 'strict'?
-                        display.warning("Unable to template (%s), leaving as is: %s" % to_native(e))
+                        self.WARNINGS.add("Unable to template (%s), leaving as is: %s" % to_native(e))
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
