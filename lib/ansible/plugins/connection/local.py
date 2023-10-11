@@ -21,13 +21,13 @@ import fcntl
 import getpass
 import os
 import pty
+import selectors
 import shutil
 import subprocess
 import typing as t
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase

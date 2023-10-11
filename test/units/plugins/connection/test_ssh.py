@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from selectors import SelectorKey, EVENT_READ
 import pytest
 
 
@@ -26,7 +27,6 @@ from ansible.errors import AnsibleAuthenticationFailure
 from units.compat import unittest
 from unittest.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.module_utils.compat.selectors import SelectorKey, EVENT_READ
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
@@ -389,7 +389,7 @@ def mock_run_env(request, mocker):
     request.cls.mock_popen = mock_popen
 
     request.cls.mock_selector = MockSelector()
-    mocker.patch('ansible.module_utils.compat.selectors.DefaultSelector', lambda: request.cls.mock_selector)
+    mocker.patch('selectors.DefaultSelector', lambda: request.cls.mock_selector)
 
     request.cls.mock_openpty = mocker.patch('pty.openpty')
 

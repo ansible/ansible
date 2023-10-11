@@ -15,16 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# NOT_BUNDLED
-
-'''
-Compat selectors library.  Python-3.5 has this builtin.  The selectors2
-package exists on pypi to backport the functionality as far as python-2.6.
-Implementation previously resided here - maintaining this file after the
-move to ansible.module_utils for code backwards compatibility.
-'''
 from __future__ import annotations
 
 import sys
-from ansible.module_utils.compat import selectors
+import selectors
+
+from ansible.module_utils.common.warnings import deprecate
+
+
 sys.modules['ansible.compat.selectors'] = selectors
+
+
+deprecate(
+    msg='The `ansible.module_utils.compat.selectors` module is deprecated.',
+    version='2.19',
+)
