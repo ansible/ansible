@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Update ``pylint`` to version 3.0.1.
+  - ansible-test - Include missing ``pylint`` requirements for Python 3.10.
