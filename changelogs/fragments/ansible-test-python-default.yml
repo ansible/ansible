@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Make Python 3.12 the default version used in the ``base`` and ``default`` containers.
