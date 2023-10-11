@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import errno
+import selectors
 from itertools import product
 from io import BytesIO
 
@@ -12,7 +13,6 @@ import pytest
 
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import PY2
-from ansible.module_utils.compat import selectors
 
 
 class OpenBytesIO(BytesIO):
