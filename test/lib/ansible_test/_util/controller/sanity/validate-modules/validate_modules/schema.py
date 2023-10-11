@@ -296,7 +296,7 @@ def argument_spec_schema(for_collection):
                 (is_callable, list_string_types),
                 [is_callable, list_string_types],
             ),
-            'choices': Any([object], (object,)),
+            'choices': Any([object], (object,)), dict[Any, Any[str,[str]]]),
             'required': bool,
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
@@ -487,10 +487,17 @@ def check_option_choices(v):
         type_checker, type_name = get_type_checker({'type': v.get('elements')})
     else:
         type_checker, type_name = get_type_checker(v)
+
     if type_checker is None:
         return v
 
-    for value in v_choices:
+    if isinstance(v_choices, dict):
+        # choices are still a list (the keys) but dict form serves to document each choice.
+        iterate = v_choices.keys()
+    else:
+        iterate = v_choices
+
+    for value in iterate:
         try:
             type_checker(value)
         except Exception as exc:

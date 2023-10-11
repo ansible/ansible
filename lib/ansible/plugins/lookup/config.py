@@ -6,36 +6,41 @@ DOCUMENTATION = """
     name: config
     author: Ansible Core Team
     version_added: "2.5"
-    short_description: Lookup current Ansible configuration values
+    short_description: Display the 'resolved' Ansible option values.
     description:
-      - Retrieves the value of an Ansible configuration setting.
-      - You can use C(ansible-config list) to see all available settings.
+      - Retrieves the value of an Ansible configuration setting, resolving all sources, from defaults, ansible.cfg, envirionmnet,
+        CLI, and variables, but not keywords.
+      - The values returned assume the context of the current host or C(inventory_hostname).
+      - You can use C(ansible-config list) to see the global available settings, add C(-t all) to also show plugin options.
     options:
       _terms:
-        description: The key(s) to look up
+        description: The option(s) to look up.
         required: True
       on_missing:
-        description:
-            - action to take if term is missing from config
-            - Error will raise a fatal error
-            - Skip will just ignore the term
-            - Warn will skip over it but issue a warning
+        description: Action to take if term is missing from config
         default: error
         type: string
-        choices: ['error', 'skip', 'warn']
+        choices:
+            error: Return a message and raise fatal signal.
+            warn:  Return a message, but do nothing else.
+            skip:  Ignore.
       plugin_type:
-        description: the type of the plugin referenced by 'plugin_name' option.
+        description: The type of the plugin referenced by 'plugin_name' option.
         choices: ['become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars']
         type: string
         version_added: '2.12'
       plugin_name:
-        description: name of the plugin for which you want to retrieve configuration settings.
+        description: The name of the plugin for which you want to retrieve configuration settings.
         type: string
         version_added: '2.12'
       show_origin:
-        description: toggle the display of what configuration subsystem the value came from
+        description: Set this to return what configuration subsystem the value came from
+                     (defaults, config file, environment, CLI, or variables).
         type: bool
         version_added: '2.16'
+    notes:
+      - Be aware that currently this lookup cannot take keywords nor delegation into account,
+        so for options that support keywords or are affected by delegation, it is at best a good guess or approximation.
 """
 
 EXAMPLES = """
