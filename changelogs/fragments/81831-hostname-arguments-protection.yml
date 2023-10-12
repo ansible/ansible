@@ -1,0 +1,2 @@
+bugfixes:
+ - hostname - prevent hostnames from being interpreted as arguments in hostname module.  Addressed on systemd-based and Free/OpenBSD machines by using the '--' option separator (https://github.com/ansible/ansible/issues/81741).
