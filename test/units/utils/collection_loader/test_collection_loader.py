@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import os
 import pkgutil
 import pytest
@@ -484,11 +485,8 @@ def test_import_from_collection(monkeypatch):
     import ansible_collections.testns.testcoll.plugins.action.my_action
 
     # verify that code loaded from a collection does not inherit __future__ statements from the collection loader
-    if sys.version_info[0] == 2:
-        # if the collection code inherits the division future feature from the collection loader this will fail
-        assert answer == 1
-    else:
-        assert answer == 1.5
+    # if the collection code inherits the annotations future feature from the collection loader this will fail
+    assert inspect.get_annotations(question)['return'] is float
 
     # verify that the filename and line number reported by the trace is correct
     # this makes sure that collection loading preserves file paths and line numbers
@@ -845,12 +843,8 @@ def test_collectionref_components_invalid(name, subdirs, resource, ref_type, exp
     assert re.search(expected_error_expression, str(curerr.value))
 
 
-@pytest.mark.skipif(not PY3, reason='importlib.resources only supported for py3')
 def test_importlib_resources():
-    if sys.version_info < (3, 10):
-        from importlib_resources import files
-    else:
-        from importlib.resources import files
+    from importlib.resources import files
     from pathlib import Path
 
     f = get_default_finder()
