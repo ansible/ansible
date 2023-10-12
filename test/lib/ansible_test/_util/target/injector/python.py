@@ -2,6 +2,7 @@
 """Provides an entry point for python scripts and python modules on the controller with the current python interpreter and optional code coverage collection."""
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 
@@ -18,22 +19,7 @@ def main():
         if coverage_output:
             args += ['-m', 'coverage.__main__', 'run', '--rcfile', coverage_config]
         else:
-            if sys.version_info >= (3, 4):
-                # noinspection PyUnresolvedReferences
-                import importlib.util
-
-                # noinspection PyUnresolvedReferences
-                found = bool(importlib.util.find_spec('coverage'))
-            else:
-                # noinspection PyDeprecation
-                import imp
-
-                try:
-                    # noinspection PyDeprecation
-                    imp.find_module('coverage')
-                    found = True
-                except ImportError:
-                    found = False
+            found = bool(importlib.util.find_spec('coverage'))
 
             if not found:
                 sys.exit('ERROR: Could not find `coverage` module. '
@@ -61,7 +47,7 @@ def find_program(name, executable):  # type: (str, bool) -> str
     Raises an exception if the program is not found.
     """
     path = os.environ.get('PATH', os.path.defpath)
-    seen = set([os.path.abspath(__file__)])
+    seen = {os.path.abspath(__file__)}
     mode = os.F_OK | os.X_OK if executable else os.F_OK
 
     for base in path.split(os.path.pathsep):
