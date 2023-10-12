@@ -5,7 +5,6 @@ import sys
 
 ENCODING = 'utf-8'
 ERRORS = 'replace'
-Text = type(u'')
 
 
 def main():
@@ -28,21 +27,14 @@ def compile_source(path):
     else:
         return
 
-    # In some situations offset can be None. This can happen for syntax errors on Python 2.6
-    # (__future__ import following after a regular import).
-    offset = offset or 0
-
     result = "%s:%d:%d: %s: %s" % (path, lineno, offset, extype.__name__, safe_message(message))
-
-    if sys.version_info <= (3,):
-        result = result.encode(ENCODING, ERRORS)
 
     print(result)
 
 
 def safe_message(value):
-    """Given an input value as text or bytes, return the first non-empty line as text, ensuring it can be round-tripped as UTF-8."""
-    if isinstance(value, Text):
+    """Given an input value as str or bytes, return the first non-empty line as str, ensuring it can be round-tripped as UTF-8."""
+    if isinstance(value, str):
         value = value.encode(ENCODING, ERRORS)
 
     value = value.decode(ENCODING, ERRORS)

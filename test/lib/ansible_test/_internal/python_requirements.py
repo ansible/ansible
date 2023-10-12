@@ -5,7 +5,6 @@ import base64
 import dataclasses
 import json
 import os
-import re
 import typing as t
 
 from .encoding import (
@@ -24,9 +23,7 @@ from .util import (
     ApplicationError,
     SubprocessError,
     display,
-    find_executable,
     raw_command,
-    str_to_version,
     version_to_str,
 )
 
@@ -536,34 +533,12 @@ def get_cryptography_requirements(python: PythonConfig) -> list[str]:
 
 def get_openssl_version(python: PythonConfig) -> t.Optional[tuple[int, ...]]:
     """Return the openssl version."""
-    if not python.version.startswith('2.'):
-        # OpenSSL version checking only works on Python 3.x.
-        # This should be the most accurate, since it is the Python we will be using.
-        version = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'sslcheck.py')], capture=True)[0])['version']
+    version = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'sslcheck.py')], capture=True)[0])['version']
 
-        if version:
-            display.info(f'Detected OpenSSL version {version_to_str(version)} under Python {python.version}.', verbosity=1)
+    if version:
+        display.info(f'Detected OpenSSL version {version_to_str(version)} under Python {python.version}.', verbosity=1)
 
-            return tuple(version)
-
-    # Fall back to detecting the OpenSSL version from the CLI.
-    # This should provide an adequate solution on Python 2.x.
-    openssl_path = find_executable('openssl', required=False)
-
-    if openssl_path:
-        try:
-            result = raw_command([openssl_path, 'version'], capture=True)[0]
-        except SubprocessError:
-            result = ''
-
-        match = re.search(r'^OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+)', result)
-
-        if match:
-            version = str_to_version(match.group('version'))
-
-            display.info(f'Detected OpenSSL version {version_to_str(version)} using the openssl CLI.', verbosity=1)
-
-            return version
+        return tuple(version)
 
     display.info('Unable to detect OpenSSL version.', verbosity=1)
 

@@ -32,7 +32,6 @@ except ImportError:
 from pylint.checkers import BaseChecker, BaseTokenChecker
 
 from ansible.module_utils.compat.version import LooseVersion
-from ansible.module_utils.six import string_types
 from ansible.release import __version__ as ansible_version_raw
 from ansible.utils.version import SemanticVersion
 
@@ -137,7 +136,7 @@ def _get_func_name(node):
 def parse_isodate(value):
     """Parse an ISO 8601 date string."""
     msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         raise ValueError(msg)
     # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
     # we have to do things manually.
