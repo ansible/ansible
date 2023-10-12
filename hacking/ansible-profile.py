@@ -1,24 +1,22 @@
 #!/usr/bin/env python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import cProfile
 import sys
 import traceback
 
-import ansible.constants as C
 from ansible.module_utils.common.text.converters import to_text
 
 target = sys.argv.pop(1)
 myclass = "%sCLI" % target.capitalize()
+module_name = f'ansible.cli.{target}'
 
 try:
     # define cli
-    mycli = getattr(__import__("ansible.cli.%s" % target, fromlist=[myclass]), myclass)
+    mycli = getattr(__import__(module_name, fromlist=[myclass]), myclass)
 except ImportError as e:
-    msg = getattr(e, 'msg', getattr(e, message, ''))
-    if msg.endswith(' %s' % target):
-        raise Exception("Ansible sub-program not implemented: %s" % target)
+    if module_name in e.msg:
+        raise Exception("Ansible sub-program not implemented: %s" % target) from None
     else:
         raise
 
