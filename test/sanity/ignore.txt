@@ -170,6 +170,7 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py boilerplate  # test requires missing boilerplate
 .github/CONTRIBUTING.md pymarkdown:line-length
 hacking/backport/README.md pymarkdown:no-bare-urls
 hacking/ticket_stubs/bug_internal_api.md pymarkdown:no-bare-urls
