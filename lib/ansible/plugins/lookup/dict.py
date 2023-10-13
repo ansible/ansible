@@ -48,7 +48,7 @@ tasks:
 RETURN = """
   _list:
     description:
-      - list of composed dictonaries with key and value
+      - list of composed dictionaries with key and value
     type: list
 """
 

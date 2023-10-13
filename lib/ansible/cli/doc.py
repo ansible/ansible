@@ -814,7 +814,7 @@ class DocCLI(CLI, RoleMixin):
                 else:
                     plugin_names = self._list_plugins(ptype, None)
                     docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names, fail_ok=(ptype in ('test', 'filter')), fail_on_errors=no_fail)
-                    # reset list after each type to avoid polution
+                    # reset list after each type to avoid pollution
         elif listing:
             if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
