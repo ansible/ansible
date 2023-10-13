@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Windows 2012 and 2012-R2 instances are now requested from Azure instead of AWS.
