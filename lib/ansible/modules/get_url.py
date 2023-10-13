@@ -388,6 +388,13 @@ def url_filename(url):
     return fn
 
 
+def url_path(url):
+    fn = os.path.dirname(urlsplit(url)[2])
+    if fn == '':
+        return '/'
+    return fn
+
+
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
             decompress=True, ciphers=None, use_netrc=True):
     """
@@ -555,6 +562,16 @@ def main():
 
                         # Append checksum and path without potential leading './'
                         checksum_map.append((parts[0], parts[1].lstrip("./")))
+
+            path = url_path(url)
+
+            # Calculate relative path between file url and chaecksum url
+            relative_path = path.removeprefix(os.path.commonpath([path,  url_path(checksum_url)]))
+
+            if relative_path == '' :
+                filename = url_filename(url)
+            else :
+                filename = "%s/%s" % (relative_path, url_filename(url))
 
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
