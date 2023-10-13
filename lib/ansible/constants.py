@@ -51,7 +51,30 @@ class _DeprecatedSequenceConstant(Sequence):
         return self._value[y]
 
 
+def __getattr__(config_constant):
+    ''' Handle dynamicall generating a 'constant' when first requested,
+        otherwise just return it from cached value.
+    '''
+
+    if config_constant not in globals():
+        try:
+            value = config.get_config_value(config_constant, variables=globals())
+        except Exception as e:
+            raise AttributeError(e)
+
+        globals()[config_constant] = value
+
+        if config.WARNINGS:
+            for warn in config.WARNINGS.pop():
+                _warning(warn)
+
+    return globals()[config_constant]
+
+
 # CONSTANTS ### yes, actual ones
+
+# required by others so these should always be instanciated first, order is imporant!
+__INITIALIZE = ['ANSIBLE_HOME', 'REJECT_EXTS']
 
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
@@ -176,19 +199,8 @@ MAGIC_VARIABLE_MAPPING = dict(
 # INITALIZE CONFIG MANAGER
 config = ConfigManager()
 
-
-def __getattr__(config_constant):
-
-    if config_constant not in globals():
-        try:
-            value = config.get_config_value(config_constant, variables=globals())
-        except Exception as e:
-            raise AttributeError(e)
-
-        globals()[config_constant] = value
-
-        if config.WARNINGS:
-            for warn in config.WARNINGS.pop():
-                _warning(warn)
-
-    return globals()[config_constant]
+for c in __INITIALIZE:
+    # we always initalize these constants as others depend on them for basic config templating.
+    # TODO: create a dep system to avoid hardcoded list, previouslly relied on order in base.yml
+    #       now relies on order in hardcoded constant in this file.
+    __getattr__(c)
