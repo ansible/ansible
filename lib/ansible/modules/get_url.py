@@ -566,7 +566,7 @@ def main():
             path = url_path(url)
 
             # Calculate relative path between file url and chaecksum url
-            relative_path = path.removeprefix(os.path.commonpath([path,  url_path(checksum_url)]))
+            relative_path = path.removeprefix(os.path.commonpath([path, url_path(checksum_url)]))
 
             if relative_path == '' :
                 filename = url_filename(url)
