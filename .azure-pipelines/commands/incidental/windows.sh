@@ -9,7 +9,7 @@ version="${args[1]}"
 
 target="shippable/windows/incidental/"
 
-stage="${S:-prod}"
+stage=dev
 provider="${P:-default}"
 
 # python version to run full tests on while other versions run minimal tests

@@ -10,7 +10,7 @@ group="${args[2]}"
 
 target="shippable/windows/group${group}/"
 
-stage="${S:-prod}"
+stage=dev
 provider="${P:-default}"
 
 # python versions to test in order

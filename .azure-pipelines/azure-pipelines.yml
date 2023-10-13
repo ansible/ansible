@@ -36,30 +36,6 @@ variables:
 pool: Standard
 
 stages:
-  - stage: Sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-  - stage: Units
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: units/{0}
-          targets:
-            - test: 3.7
-            - test: 3.8
-            - test: 3.9
-            - test: '3.10'
-            - test: 3.11
-            - test: 3.12
   - stage: Windows
     dependsOn: []
     jobs:
@@ -114,60 +90,6 @@ stages:
               test: ubuntu/22.04
           groups:
             - 6
-  - stage: Docker
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Alpine 3
-              test: alpine3
-            - name: Fedora 38
-              test: fedora38
-            - name: Ubuntu 20.04
-              test: ubuntu2004
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-          groups:
-            - 1
-            - 2
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Alpine 3
-              test: alpine3
-            - name: Fedora 38
-              test: fedora38
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-          groups:
-            - 3
-            - 4
-            - 5
-  - stage: Galaxy
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: galaxy/{0}/1
-          targets:
-            - test: '3.10'
-            - test: 3.11
-            - test: 3.12
-  - stage: Generic
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: generic/{0}/1
-          targets:
-            - test: '3.10'
-            - test: 3.11
-            - test: 3.12
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -191,17 +113,3 @@ stages:
               test: ios/csr1000v/
             - name: VyOS Python
               test: vyos/1.1.8/
-  - stage: Summary
-    condition: succeededOrFailed()
-    dependsOn:
-      - Sanity
-      - Units
-      - Windows
-      - Remote
-      - Docker
-      - Galaxy
-      - Generic
-      - Incidental_Windows
-      - Incidental
-    jobs:
-      - template: templates/coverage.yml

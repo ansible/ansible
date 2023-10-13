@@ -11,7 +11,7 @@ group="${args[2]}"
 
 target="shippable/${cloud}/group${group}/"
 
-stage="${S:-prod}"
+stage=dev
 
 changed_all_target="shippable/${cloud}/smoketest/"
 

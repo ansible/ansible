@@ -11,7 +11,7 @@ python_version="${args[2]}"
 
 target="shippable/${platform}/incidental/"
 
-stage="${S:-prod}"
+stage=dev
 provider="${P:-default}"
 
 # python versions to test in order
