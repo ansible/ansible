@@ -477,6 +477,17 @@
     path: "{{ remote_tmp_dir }}/relative256.txt"
   register: stat_result_sha256_relative
 
+- name: download src with sha1 checksum url with relative paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/subdir/relative1.txt'
+    dest: '{{ remote_tmp_dir }}/relative1.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_relative
+
+- stat:
+    path: "{{ remote_tmp_dir }}/relative256.txt"
+  register: stat_result_sha256_relative
+
 - name: download src with sha256 checksum url with file scheme
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
@@ -559,12 +570,14 @@
     that:
       - result_sha1 is changed
       - result_sha1_check_mode is changed
+      - result_sha1_relative is changed
       - result_sha256 is changed
       - result_sha256_with_dot is changed
       - result_sha256_with_asterisk is changed
       - result_sha256_with_file_scheme is changed
       - result_sha256_relative is changed
       - "stat_result_sha1.stat.exists == true"
+      - "stat_result_sha1_relative.stat.exists == true"
       - "stat_result_sha256.stat.exists == true"
       - "stat_result_sha256_with_dot.stat.exists == true"
       - "stat_result_sha256_with_asterisk.stat.exists == true"
