@@ -823,7 +823,45 @@ class Request:
                     if username and password:
                         headers["Authorization"] = basic_auth_header(username, password)
 
-        if not use_proxy:
+        if use_proxy:
+            proxies = urllib.request.getproxies()
+            request_type = generic_urlparse(urlparse(url)).get('scheme')
+
+            # More specific proxy goes first
+            suitable_proxy = proxies.get(request_type) or proxies.get('all')
+            if suitable_proxy:
+                proxy_parts = generic_urlparse(urlparse(suitable_proxy))
+                proxy_hostname = proxy_parts.get('hostname', None)
+                proxy_scheme = proxy_parts.get('scheme', None)
+
+                if proxy_hostname is None or proxy_scheme is None:
+                    raise ProxyError(
+                        "Failed to parse proxy environment variable."
+                        " Please make sure you export proxy as '{http|https|all}_proxy=<SCHEME>://<IP_ADDRESS>:<PORT>'")
+
+                if proxy_scheme in ['socks4', 'socks4a', 'socks5', 'socks5h']:
+                    try:
+                        import socks
+                        from sockshandler import SocksiPyHandler
+                    except ImportError as ex:
+                        imp_err_msg = missing_required_lib('PySocks')
+                        raise MissingModuleError(imp_err_msg, import_traceback=traceback.format_exc()) from ex
+
+                    proxy_type = None
+                    if proxy_scheme.startswith('socks4'):
+                        proxy_type = socks.SOCKS4
+                    else:
+                        proxy_type = socks.SOCKS5
+
+                    proxy_rdns = False
+                    if proxy_scheme[-1] == 'h':
+                        proxy_rdns = True
+
+                    handlers.append(
+                        SocksiPyHandler(proxy_type, proxy_hostname, proxy_parts.get('port', 1080), rdns=proxy_rdns))
+                    proxyhandler = urllib.request.ProxyHandler({})
+                    handlers.append(proxyhandler)
+        else:
             proxyhandler = urllib.request.ProxyHandler({})
             handlers.append(proxyhandler)
 
