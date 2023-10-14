@@ -75,7 +75,7 @@ seealso:
 - module: ansible.builtin.user
 - module: ansible.windows.win_group
 author:
-- Stephen From (@sfromm)
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = '''
