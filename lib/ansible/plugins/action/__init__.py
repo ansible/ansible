@@ -100,7 +100,7 @@ class ActionBase(ABC):
             etc) associated with this task.
         :returns: dictionary of results from the module
 
-        Implementors of action modules may find the following variables especially useful:
+        Implementers of action modules may find the following variables especially useful:
 
         * Module parameters.  These are stored in self._task.args
         """

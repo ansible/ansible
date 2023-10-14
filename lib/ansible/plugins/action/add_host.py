@@ -49,7 +49,7 @@ class ActionModule(ActionBase):
             # TODO: create 'conflict' detection in base class to deal with repeats and aliases and warn user
             args = combine_vars(raw, args)
         else:
-            raise AnsibleActionFail('Invalid raw parameters passed, requires a dictonary/mapping got a  %s' % type(raw))
+            raise AnsibleActionFail('Invalid raw parameters passed, requires a dictionary/mapping got a  %s' % type(raw))
 
         # Parse out any hostname:port patterns
         new_name = args.get('name', args.get('hostname', args.get('host', None)))
