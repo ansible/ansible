@@ -96,7 +96,7 @@ seealso:
 - module: ansible.builtin.template
 - module: ansible.windows.win_copy
 author:
-- Stephen From (@sfromm)
+- Stephen Fromm (@sfromm)
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.flow
