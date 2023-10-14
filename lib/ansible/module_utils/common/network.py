@@ -61,7 +61,7 @@ def to_masklen(val):
 
 
 def to_subnet(addr, mask, dotted_notation=False):
-    """ coverts an addr / mask pair to a subnet in cidr notation """
+    """ converts an addr / mask pair to a subnet in cidr notation """
     try:
         if not is_masklen(mask):
             raise ValueError
