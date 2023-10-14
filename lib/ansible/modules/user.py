@@ -295,7 +295,7 @@ seealso:
 - module: ansible.builtin.group
 - module: ansible.windows.win_user
 author:
-- Stephen From (@sfromm)
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = r'''
