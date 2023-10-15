@@ -456,7 +456,7 @@ class SourcesList(object):
 
 class UbuntuSourcesList(SourcesList):
 
-    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
+    LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
 
     def __init__(self, module):
         self.module = module
