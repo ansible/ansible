@@ -16,12 +16,11 @@ changes like zero-downtime rolling updates with load balancers easy. More inform
 
 ## Design Principles
 
-* Have an extremely simple setup process with a minimal learning curve.
+* Have a straightforward setup process with a minimal learning curve.
 * Manage machines quickly and in parallel.
-* Avoid custom-agents and additional open ports, be agentless by
+* Avoid custom agents and additional open ports, be agentless by
   leveraging the existing SSH daemon.
-* Describe infrastructure in a language that is both machine and human
-  friendly.
+* Describe infrastructure in a language that is both machine and human-friendly.
 * Focus on security and easy auditability/review/rewriting of content.
 * Manage new remote machines instantly, without bootstrapping any
   software.
@@ -32,11 +31,11 @@ changes like zero-downtime rolling updates with load balancers easy. More inform
 ## Use Ansible
 
 You can install a released version of Ansible with `pip` or a package manager. See our
-[installation guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) for details on installing Ansible
+[Installation guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) for details on installing Ansible
 on a variety of platforms.
 
-Power users and developers can run the `devel` branch, which has the latest
-features and fixes, directly. Although it is reasonably stable, you are more likely to encounter
+Power users and developers can directly run the `devel` branch, which has the latest
+features and fixes. Although it is reasonably stable, you are more likely to encounter
 breaking changes when running the `devel` branch. We recommend getting involved
 in the Ansible community if you want to run the `devel` branch.
 
@@ -53,7 +52,7 @@ in the Ansible community if you want to run the `devel` branch.
   to avoid duplicate efforts. This not only helps everyone
   know what is going on, but it also helps save time and effort if we decide
   some changes are needed.
-* For a list of email lists, IRC channels and Working Groups, see the
+* For a list of email lists, IRC channels, and Working Groups, see the
   [Communication page](https://docs.ansible.com/ansible/latest/community/communication.html)
 
 ## Coding Guidelines
@@ -78,7 +77,7 @@ The [Ansible Roadmap page](https://docs.ansible.com/ansible/devel/roadmap/) deta
 ## Authors
 
 Ansible was created by [Michael DeHaan](https://github.com/mpdehaan)
-and has contributions from over 5000 users (and growing). Thanks everyone!
+and has contributions from over 5,000 users (and growing). Thanks, everyone!
 
 [Ansible](https://www.ansible.com) is sponsored by [Red Hat, Inc.](https://www.redhat.com)
 
