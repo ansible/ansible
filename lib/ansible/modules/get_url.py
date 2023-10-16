@@ -394,10 +394,12 @@ def url_path(url):
         return '/'
     return fn
 
+
 def pre_prefix(str, prefix):
     if str.startswith(prefix):
         str_new = str[len(prefix):]
     return str_new
+
 
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
             decompress=True, ciphers=None, use_netrc=True):
