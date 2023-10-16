@@ -18,7 +18,6 @@ from __future__ import annotations
 
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
-from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
 
 
@@ -29,6 +28,8 @@ class ActionModule(ActionBase):
     UNUSED_PARAMS = {
         'systemd': ['pattern', 'runlevel', 'sleep', 'arguments', 'args'],
     }
+
+    _load_defaults_on_execute = False
 
     # HACK: list of unqualified service manager names that are/were built-in, we'll prefix these with `ansible.legacy` to
     # avoid collisions with collections search
@@ -76,13 +77,6 @@ class ActionModule(ActionBase):
                         if unused in new_module_args:
                             del new_module_args[unused]
                             self._display.warning('Ignoring "%s" as it is not used in "%s"' % (unused, module))
-
-                # get defaults for specific module
-                context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
-                new_module_args = get_action_args_with_defaults(
-                    context.resolved_fqcn, new_module_args, self._task.module_defaults, self._templar,
-                    action_groups=self._task._parent._play._action_groups
-                )
 
                 # collection prefix known internal modules to avoid collisions from collections search, while still allowing library/ overrides
                 if module in self.BUILTIN_SVC_MGR_MODULES:

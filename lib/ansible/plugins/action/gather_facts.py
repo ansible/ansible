@@ -8,7 +8,6 @@ import time
 import typing as t
 
 from ansible import constants as C
-from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
@@ -17,6 +16,7 @@ from ansible.utils.vars import merge_hash
 class ActionModule(ActionBase):
 
     _supports_check_mode = True
+    _load_defaults_on_execute = True
 
     def _get_module_args(self, fact_module: str, task_vars: dict[str, t.Any]) -> dict[str, t.Any]:
 
@@ -47,16 +47,6 @@ class ActionModule(ActionBase):
         # Strip out keys with ``None`` values, effectively mimicking ``omit`` behavior
         # This ensures we don't pass a ``None`` value as an argument expecting a specific type
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
-
-        # handle module defaults
-        resolved_fact_module = self._shared_loader_obj.module_loader.find_plugin_with_context(
-            fact_module, collection_list=self._task.collections
-        ).resolved_fqcn
-
-        mod_args = get_action_args_with_defaults(
-            resolved_fact_module, mod_args, self._task.module_defaults, self._templar,
-            action_groups=self._task._parent._play._action_groups
-        )
 
         return mod_args
 

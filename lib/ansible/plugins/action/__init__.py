@@ -21,6 +21,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
+rom ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
@@ -67,6 +68,8 @@ class ActionBase(ABC):
     _requires_connection = True
     _supports_check_mode = True
     _supports_async = False
+
+    _load_defaults_on_execute = False
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
@@ -276,6 +279,13 @@ class ActionBase(ABC):
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
             raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
+
+        # load resolved module_defaults
+        if self._load_defaults_on_execute:
+            module_args = get_action_args_wtih_defaults(
+                result.resolved_fqcn, module_args, self._task.module_defaults,
+                self._templar, action_groups=self._task._parent._play._action_groups,
+            )
 
         # insert shared code and arguments into the module
         final_environment = dict()

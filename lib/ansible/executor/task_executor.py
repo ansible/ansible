@@ -606,8 +606,6 @@ class TaskExecutor:
 
         if module_context is not None:
             module_defaults_fqcn = module_context.resolved_fqcn
-        elif self._task.resolved_action is not None:
-            module_defaults_fqcn = self._task.resolved_action
         else:
             module_defaults_fqcn = self._handler.ansible_name
 

@@ -8,6 +8,8 @@ from ansible.plugins.action.normal import ActionModule as ActionBase
 
 class ActionModule(ActionBase):
 
+    _load_defaults_on_execute = False
+
     def run(self, tmp=None, task_vars=None):
 
         result = super(ActionModule, self).run(tmp, task_vars)

@@ -25,6 +25,7 @@ class ActionModule(ActionBase):
 
     _supports_check_mode = True
     _supports_async = True
+    _load_defaults_on_execute = True
 
     def run(self, tmp=None, task_vars=None):
 
