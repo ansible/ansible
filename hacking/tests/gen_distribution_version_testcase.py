@@ -20,8 +20,8 @@ import sys
 from ansible.module_utils import distro
 from ansible.module_utils.common.text.converters import to_text
 
-
-filelist = [
+# Unique file list, removing duplicates
+filelist = list(set([
     '/etc/oracle-release',
     '/etc/slackware-version',
     '/etc/centos-release',
@@ -41,39 +41,28 @@ filelist = [
     '/etc/os-release',
     '/etc/coreos/update.conf',
     '/usr/lib/os-release',
-]
+]))
 
-fcont = {}
-
-for f in filelist:
-    if os.path.exists(f):
-        s = os.path.getsize(f)
-        if s > 0 and s < 10000:
-            with open(f) as fh:
-                fcont[f] = fh.read()
+# Use list comprehension to filter and read file contents
+fcont = {f: open(f).read() for f in filelist if os.path.exists(f) and 0 < os.path.getsize(f) < 10000}
 
 dist = (distro.id(), distro.version(), distro.codename())
 
 facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version', 'os_family']
 
 try:
-    b_ansible_out = subprocess.check_output(
-        ['ansible', 'localhost', '-m', 'setup'])
+    b_ansible_out = subprocess.check_output(['ansible', 'localhost', '-m', 'setup'])
+    ansible_out = to_text(b_ansible_out)
+    parsed = json.loads(ansible_out[ansible_out.index('{'):])
+    ansible_facts = {}
+    for fact in facts:
+        ansible_facts[fact] = parsed['ansible_facts'].get('ansible_' + fact, "N/A")
 except subprocess.CalledProcessError as e:
     print("ERROR: ansible run failed, output was: \n")
     print(e.output)
-    sys.exit(e.returncode)
+    ansible_facts = {fact: "N/A" for fact in facts}
 
-ansible_out = to_text(b_ansible_out)
-parsed = json.loads(ansible_out[ansible_out.index('{'):])
-ansible_facts = {}
-for fact in facts:
-    try:
-        ansible_facts[fact] = parsed['ansible_facts']['ansible_' + fact]
-    except Exception:
-        ansible_facts[fact] = "N/A"
-
-nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_version']
+nicename = f"{ansible_facts['distribution']} {ansible_facts['distribution_version']}"
 
 output = {
     'name': nicename,
