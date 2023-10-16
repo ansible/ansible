@@ -5,6 +5,39 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-10-16
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Make Python 3.12 the default version used in the ``base`` and ``default`` containers.
+
+Deprecated Features
+-------------------
+
+- Old style vars plugins which use the entrypoints `get_host_vars` or `get_group_vars` are deprecated. The plugin should be updated to inherit from `BaseVarsPlugin` and define a `get_vars` method as the entrypoint.
+
+Bugfixes
+--------
+
+- Cache host_group_vars after instantiating it once and limit the amount of repetitive work it needs to do every time it runs.
+- Call PluginLoader.all() once for vars plugins, and load vars plugins that run automatically or are enabled specifically by name subsequently.
+- Fix ``run_once`` being incorrectly interpreted on handlers (https://github.com/ansible/ansible/issues/81666)
+- Properly template tags in parent blocks (https://github.com/ansible/ansible/issues/81053)
+- ansible-galaxy - Provide a better error message when using a requirements file with an invalid format - https://github.com/ansible/ansible/issues/81901
+- ansible-inventory - index available_hosts for major performance boost when dumping large inventories
+- ansible-test - Add a ``pylint`` plugin to work around a known issue on Python 3.12.
+- ansible-test - Include missing ``pylint`` requirements for Python 3.10.
+- ansible-test - Update ``pylint`` to version 3.0.1.
+
 v2.16.0b2
 =========
 
@@ -313,4 +346,3 @@ Known Issues
 
 - ansible-galaxy - dies in the middle of installing a role when that role contains Java inner classes (files with $ in the file name).  This is by design, to exclude temporary or backup files. (https://github.com/ansible/ansible/pull/81553).
 - ansible-test - The ``pep8`` sanity test is unable to detect f-string spacing issues (E201, E202) on Python 3.10 and 3.11. They are correctly detected under Python 3.12. See (https://github.com/PyCQA/pycodestyle/issues/1190).
-- ansible-test - The ``pylint`` sanity test is not supported on Python 3.12. Use Python 3.10 or 3.11 instead.
