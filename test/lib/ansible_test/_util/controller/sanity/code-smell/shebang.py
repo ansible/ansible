@@ -12,6 +12,7 @@ def main():
     standard_shebangs = set([
         b'#!/bin/bash -eu',
         b'#!/bin/bash -eux',
+        b'#!/bin/bash',
         b'#!/bin/sh',
         b'#!/usr/bin/env bash',
         b'#!/usr/bin/env fish',
