@@ -290,8 +290,6 @@ releases:
       - ansible-test - The ``pep8`` sanity test is unable to detect f-string spacing
         issues (E201, E202) on Python 3.10 and 3.11. They are correctly detected under
         Python 3.12. See (https://github.com/PyCQA/pycodestyle/issues/1190).
-      - ansible-test - The ``pylint`` sanity test is not supported on Python 3.12.
-        Use Python 3.10 or 3.11 instead.
       minor_changes:
       - Add Python type hints to the Display class (https://github.com/ansible/ansible/issues/80841)
       - Add ``GALAXY_COLLECTIONS_PATH_WARNING`` option to disable the warning given
@@ -563,7 +561,6 @@ releases:
     - ansible-test-long-timeout-fix.yml
     - ansible-test-minimum-setuptools.yml
     - ansible-test-nios-container.yml
-    - ansible-test-pylint-python-3.12.yml
     - ansible-test-pylint-update.yml
     - ansible-test-pytest-forked.yml
     - ansible-test-python-3.12.yml
@@ -713,3 +710,44 @@ releases:
     - import_role_goes_public.yml
     - winrm-send-input.yml
     release_date: '2023-10-03'
+  2.16.0rc1:
+    changes:
+      bugfixes:
+      - Cache host_group_vars after instantiating it once and limit the amount of
+        repetitive work it needs to do every time it runs.
+      - Call PluginLoader.all() once for vars plugins, and load vars plugins that
+        run automatically or are enabled specifically by name subsequently.
+      - Fix ``run_once`` being incorrectly interpreted on handlers (https://github.com/ansible/ansible/issues/81666)
+      - Properly template tags in parent blocks (https://github.com/ansible/ansible/issues/81053)
+      - ansible-galaxy - Provide a better error message when using a requirements
+        file with an invalid format - https://github.com/ansible/ansible/issues/81901
+      - ansible-inventory - index available_hosts for major performance boost when
+        dumping large inventories
+      - ansible-test - Add a ``pylint`` plugin to work around a known issue on Python
+        3.12.
+      - ansible-test - Include missing ``pylint`` requirements for Python 3.10.
+      - ansible-test - Update ``pylint`` to version 3.0.1.
+      deprecated_features:
+      - Old style vars plugins which use the entrypoints `get_host_vars` or `get_group_vars`
+        are deprecated. The plugin should be updated to inherit from `BaseVarsPlugin`
+        and define a `get_vars` method as the entrypoint.
+      minor_changes:
+      - ansible-test - Make Python 3.12 the default version used in the ``base`` and
+        ``default`` containers.
+      release_summary: '| Release Date: 2023-10-16
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.0rc1_summary.yaml
+    - 79945-host_group_vars-improvements.yml
+    - 81053-templated-tags-inheritance.yml
+    - 81666-handlers-run_once.yml
+    - 81901-galaxy-requirements-format.yml
+    - ansible-test-pylint3-update.yml
+    - ansible-test-python-3.12-compat.yml
+    - ansible-test-python-default.yml
+    - inv_available_hosts_to_frozenset.yml
+    release_date: '2023-10-16'
