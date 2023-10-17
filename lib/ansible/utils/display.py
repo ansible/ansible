@@ -59,6 +59,8 @@ if t.TYPE_CHECKING:
     # avoid circular import at runtime
     from ansible.executor.task_queue_manager import FinalQueue
 
+P = t.ParamSpec('P')
+
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
 # restype is assumed to be c_int
@@ -120,20 +122,6 @@ def get_text_width(text: str) -> int:
 
     # It doesn't make sense to have a negative printable width
     return width if width >= 0 else 0
-
-
-def proxy_display(method):
-
-    def proxyit(self, *args, **kwargs):
-        if self._final_q:
-            # If _final_q is set, that means we are in a WorkerProcess
-            # and instead of displaying messages directly from the fork
-            # we will proxy them through the queue
-            return self._final_q.send_display(method.__name__, *args, **kwargs)
-        else:
-            return method(self, *args, **kwargs)
-
-    return proxyit
 
 
 class FilterBlackList(logging.Filter):
@@ -359,7 +347,43 @@ class Display(metaclass=Singleton):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    @proxy_display
+    @staticmethod
+    def _proxy(
+        func: c.Callable[t.Concatenate[Display, P], None]
+    ) -> c.Callable[..., None]:
+        @wraps(func)
+        def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> None:
+            if self._final_q:
+                # If _final_q is set, that means we are in a WorkerProcess
+                # and instead of displaying messages directly from the fork
+                # we will proxy them through the queue
+                return self._final_q.send_display(func.__name__, *args, **kwargs)
+            return func(self, *args, **kwargs)
+        return wrapper
+
+    @staticmethod
+    def _meets_debug(
+        func: c.Callable[..., None]
+    ) -> c.Callable[..., None]:
+        @wraps(func)
+        def wrapper(self, msg: str, host: str | None = None) -> None:
+            if not C.DEFAULT_DEBUG:
+                return
+            return func(self, msg, host=host)
+        return wrapper
+
+    @staticmethod
+    def _meets_verbosity(
+        func: c.Callable[..., None]
+    ) -> c.Callable[..., None]:
+        @wraps(func)
+        def wrapper(self, msg: str, host: str | None = None, caplevel: int = None) -> None:
+            if self.verbosity > caplevel:
+                return func(self, msg, host=host, caplevel=caplevel)
+            return
+        return wrapper
+
+    @_proxy
     def display(
         self,
         msg: str,
@@ -436,39 +460,26 @@ class Display(metaclass=Singleton):
             # actually log
             logger.log(lvl, msg2)
 
-    @proxy_display
     def v(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=0)
 
-    @proxy_display
     def vv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=1)
 
-    @proxy_display
     def vvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=2)
 
-    @proxy_display
     def vvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=3)
 
-    @proxy_display
     def vvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=4)
 
-    @proxy_display
     def vvvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=5)
 
-    @proxy_display
-    def debug(self, msg: str, host: str | None = None) -> None:
-        if C.DEFAULT_DEBUG:
-            if host is None:
-                self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
-            else:
-                self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
-
-    @proxy_display
+    @_meets_verbosity
+    @_proxy
     def verbose(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
 
         to_stderr = C.VERBOSE_TO_STDERR
@@ -482,6 +493,14 @@ class Display(metaclass=Singleton):
             if host is not None:
                 msg = "<%s> %s" % (host, msg)
             self._log(msg, C.COLOR_VERBOSE, caplevel)
+
+    @_meets_debug
+    @_proxy
+    def debug(self, msg: str, host: str | None = None) -> None:
+        if host is None:
+            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+        else:
+            self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def get_deprecation_message(
         self,
@@ -525,7 +544,7 @@ class Display(metaclass=Singleton):
 
         return message_text
 
-    @proxy_display
+    @_proxy
     def deprecated(
         self,
         msg: str,
@@ -549,7 +568,7 @@ class Display(metaclass=Singleton):
             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
 
-    @proxy_display
+    @_proxy
     def warning(self, msg: str, formatted: bool = False) -> None:
 
         if not formatted:
@@ -563,12 +582,12 @@ class Display(metaclass=Singleton):
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
-    @proxy_display
+    @_proxy
     def system_warning(self, msg: str) -> None:
         if C.SYSTEM_WARNINGS:
             self.warning(msg)
 
-    @proxy_display
+    @_proxy
     def banner(self, msg: str, color: str | None = None, cows: bool = True) -> None:
         '''
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
@@ -592,7 +611,7 @@ class Display(metaclass=Singleton):
         stars = u"*" * star_len
         self.display(u"\n%s %s" % (msg, stars), color=color)
 
-    @proxy_display
+    @_proxy
     def banner_cowsay(self, msg: str, color: str | None = None) -> None:
         if u": [" in msg:
             msg = msg.replace(u"[", u"")
@@ -610,7 +629,7 @@ class Display(metaclass=Singleton):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
-    @proxy_display
+    @_proxy
     def error(self, msg: str, wrap_text: bool = True) -> None:
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
