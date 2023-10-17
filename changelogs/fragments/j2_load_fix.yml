@@ -1,0 +1,3 @@
+bugfixes:
+  - Plugin loader does not dedupe nor cache filter/test plugins by file basename, but full path name.
+  - Restoring the ability of filters/tests can have same file base name but different tests/filters defined inside.
