@@ -443,7 +443,6 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys

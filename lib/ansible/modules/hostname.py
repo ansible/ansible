@@ -81,7 +81,6 @@ from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils.facts.utils import get_file_lines, get_file_content
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.six import text_type
 
 STRATS = {
     'alpine': 'Alpine',
