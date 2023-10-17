@@ -606,6 +606,8 @@ class TaskExecutor:
 
         if module_context is not None:
             module_defaults_fqcn = module_context.resolved_fqcn
+        elif self._task.action is not None:
+            module_defaults_fqcn = self._task.action
         else:
             module_defaults_fqcn = self._handler.ansible_name
 
@@ -1126,11 +1128,10 @@ class TaskExecutor:
             self._task.action, collection_list=collections
         )
 
-        if not module.resolved:
-            # if we could not resolve, we return a None context, but handler will still be set
+        if not module.resolved or not module.action_plugin:
             module = None
 
-        if module is not None and module.action_plugin:
+        if module is not None:
             # got an action plugin, use that
             handler_name = module.action_plugin
         elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
