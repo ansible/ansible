@@ -182,7 +182,6 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_url
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
@@ -664,7 +663,7 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
