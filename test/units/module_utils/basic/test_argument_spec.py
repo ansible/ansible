@@ -66,6 +66,8 @@ VALID_SPECS = (
     ({'arg': {'type': 'list', 'elements': 'str'}}, {'arg': [42, 32]}, ['42', '32']),
     # parameter is required
     ({'arg': {'required': True}}, {'arg': 42}, '42'),
+    # ignored unknown parameters
+    ({'arg': {'type': 'int'}}, {'arg': 1, 'invalid': True, '_ansible_ignore_unknown_opts': True}, 1),
 )
 
 INVALID_SPECS = (

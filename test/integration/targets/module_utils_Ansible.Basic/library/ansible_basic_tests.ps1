@@ -2253,6 +2253,34 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
+    "Unsupported options with ignore" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    type = "str"
+                }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            option_key = "abc"
+            invalid_key = "def"
+            another_key = "ghi"
+            _ansible_ignore_unknown_opts = $true
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Params | Assert-DictionaryEqual -Expected @{ option_key = "abc"; invalid_key = "def"; another_key = "ghi" }
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $output.Keys.Count | Assert-Equal -Expected 2
+        $output.changed | Assert-Equal -Expected $false
+        $output.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "abc"; invalid_key = "def"; another_key = "ghi" } }
+    }
+
     "Check mode and module doesn't support check mode" = {
         $spec = @{
             options = @{
