@@ -1005,8 +1005,13 @@ class PluginLoader:
 
         loaded_modules = set()
         for path in all_matches:
-            name = os.path.splitext(path)[0]
-            basename = os.path.basename(name)
+            if isinstance(self, Jinja2Loader):
+                # file are names not unique, only filter/test names are
+                # so we cache path in this case for filter/test files
+                name = basename = path
+            else:
+                name = os.path.splitext(path)[0]
+                basename = os.path.basename(name)
 
             if basename in _PLUGIN_FILTERS[self.package]:
                 display.debug("'%s' skipped due to a defined plugin filter" % basename)
