@@ -122,16 +122,16 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
                                ds, play=self.mock_play,
                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
-    def test_unknown_action(self):
-        action_name = 'foo_test_unknown_action'
+    def test_known_action(self):
+        action_name = 'ping'
         ds = [{'action': action_name}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self._assert_is_task_list_or_blocks(res)
         self.assertEqual(res[0].action, action_name)
 
-    def test_block_unknown_action(self):
-        action_name = 'foo_test_block_unknown_action'
+    def test_block_known_action(self):
+        action_name = 'ping'
         ds = [{
             'block': [{'action': action_name}]
         }]
@@ -316,9 +316,9 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
         for r in res:
             self.assertIsInstance(r, RoleInclude)
 
-    def test_block_unknown_action(self):
+    def test_block_known_action(self):
         ds = [{
-            'block': [{'action': 'foo_test_block_unknown_action'}]
+            'block': [{'action': 'ping'}]
         }]
         ds = [{'name': 'bogus_role'}]
         res = helpers.load_list_of_roles(ds, self.mock_play,
@@ -352,8 +352,8 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
                                variable_manager=None,
                                loader=None)
 
-    def test_block_unknown_action(self):
-        ds = [{'action': 'foo', 'collections': []}]
+    def test_block_known_action(self):
+        ds = [{'action': 'ping', 'collections': []}]
         mock_play = MagicMock(name='MockPlay')
         res = helpers.load_list_of_blocks(ds, mock_play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None,
                                           loader=None)
