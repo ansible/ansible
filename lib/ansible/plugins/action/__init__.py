@@ -849,10 +849,13 @@ class ActionBase(ABC):
             path=path,
             follow=follow,
             get_checksum=checksum,
+            get_size=False,  # ansible.windows.win_stat added this in 1.11.0
             checksum_algorithm='sha1',
         )
+        # Unknown opts are ignored as module_args could be specific for the
+        # module that is being executed.
         mystat = self._execute_module(module_name='ansible.legacy.stat', module_args=module_args, task_vars=all_vars,
-                                      wrap_async=False)
+                                      wrap_async=False, ignore_unknown_opts=True)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -936,7 +939,7 @@ class ActionBase(ABC):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_name, module_args, task_vars):
+    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False):
 
         # set check mode in the module arguments, if required
         if self._task.check_mode:
@@ -994,7 +997,11 @@ class ActionBase(ABC):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
+        # tells the module to ignore options that are not in its argspec.
+        module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
+                        ignore_unknown_opts: bool = False):
         '''
         Transfer and run a module along with its arguments.
         '''
@@ -1030,7 +1037,7 @@ class ActionBase(ABC):
         if module_args is None:
             module_args = self._task.args
 
-        self._update_module_args(module_name, module_args, task_vars)
+        self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts)
 
         remove_async_dir = None
         if wrap_async or self._task.async_val:

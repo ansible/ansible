@@ -480,6 +480,8 @@ class AnsibleModule(object):
 
         try:
             error = self.validation_result.errors[0]
+            if isinstance(error, UnsupportedError) and self._ignore_unknown_opts:
+                error = None
         except IndexError:
             error = None
 
