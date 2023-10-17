@@ -32,7 +32,6 @@ class ActionModule(ActionBase):
 
     _load_defaults_on_execute = True
 
-
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
 
