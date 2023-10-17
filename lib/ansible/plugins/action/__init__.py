@@ -282,7 +282,7 @@ class ActionBase(ABC):
 
         # load resolved module_defaults
         if self._load_defaults_on_execute:
-            module_args = get_action_args_wtih_defaults(
+            module_args = get_action_args_with_defaults(
                 result.resolved_fqcn, module_args, self._task.module_defaults,
                 self._templar, action_groups=self._task._parent._play._action_groups,
             )
