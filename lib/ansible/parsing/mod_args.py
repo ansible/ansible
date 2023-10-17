@@ -303,7 +303,7 @@ class ModuleArgsParser:
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 
-        if action is not None:
+        if action is not None and not skip_action_validation:
             context = _get_action_context(action, self._collection_list)
             if context is not None and context.resolved:
                 self.resolved_action = context.resolved_fqcn
