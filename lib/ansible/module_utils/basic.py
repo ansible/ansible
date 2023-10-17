@@ -25,7 +25,6 @@ if sys.version_info < _PY_MIN:
 import __main__
 import atexit
 import errno
-import datetime
 import grp
 import fcntl
 import locale
@@ -37,15 +36,11 @@ import select
 import selectors
 import shlex
 import shutil
-import signal
 import stat
 import subprocess
 import tempfile
 import time
 import traceback
-import types
-
-from itertools import chain, repeat
 
 try:
     import syslog
@@ -158,8 +153,6 @@ from ansible.module_utils.common.parameters import (
 
 from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
 from ansible.module_utils.six import (
-    PY2,
-    PY3,
     b,
     binary_type,
     integer_types,
@@ -361,15 +354,10 @@ def _load_params():
                 buffer = fd.read()
                 fd.close()
             else:
-                buffer = sys.argv[1]
-                if PY3:
-                    buffer = buffer.encode('utf-8', errors='surrogateescape')
+                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
         else:
-            if PY2:
-                buffer = sys.stdin.read()
-            else:
-                buffer = sys.stdin.buffer.read()
+            buffer = sys.stdin.buffer.read()
         _ANSIBLE_ARGS = buffer
 
     try:
@@ -378,9 +366,6 @@ def _load_params():
         # This helper is used too early for fail_json to work.
         print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
-
-    if PY2:
-        params = json_dict_unicode_to_bytes(params)
 
     try:
         return params['ANSIBLE_MODULE_ARGS']
@@ -1311,10 +1296,7 @@ class AnsibleModule(object):
             # ensure we clean up secrets!
             journal_msg = remove_values(journal_msg, self.no_log_values)
 
-            if PY3:
-                syslog_msg = journal_msg
-            else:
-                syslog_msg = journal_msg.encode('utf-8', 'replace')
+            syslog_msg = journal_msg
 
             if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
@@ -1516,12 +1498,7 @@ class AnsibleModule(object):
         # Add traceback if debug or high verbosity and it is missing
         # NOTE: Badly named as exception, it really always has been a traceback
         if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            if PY2:
-                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
-                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
-                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
-            else:
-                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -1790,12 +1767,8 @@ class AnsibleModule(object):
             # create a printable version of the command for use in reporting later,
             # which strips out things like passwords from the args list
             to_clean_args = args
-            if PY2:
-                if isinstance(args, text_type):
-                    to_clean_args = to_bytes(args)
-            else:
-                if isinstance(args, binary_type):
-                    to_clean_args = to_text(args)
+            if isinstance(args, binary_type):
+                to_clean_args = to_text(args)
             if isinstance(args, (text_type, binary_type)):
                 to_clean_args = shlex.split(to_clean_args)
 
@@ -1818,11 +1791,6 @@ class AnsibleModule(object):
             self._clean = ' '.join(shlex_quote(arg) for arg in clean_args)
 
         return self._clean
-
-    def _restore_signal_handlers(self):
-        # Reset SIGPIPE to SIG_DFL, otherwise in Python2.7 it gets ignored in subprocesses.
-        if PY2 and sys.platform != 'win32':
-            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
@@ -1926,11 +1894,7 @@ class AnsibleModule(object):
             if isinstance(args, (binary_type, text_type)):
                 # On python2.6 and below, shlex has problems with text type
                 # On python3, shlex needs a text type.
-                if PY2:
-                    args = to_bytes(args, errors='surrogate_or_strict')
-                elif PY3:
-                    args = to_text(args, errors='surrogateescape')
-                args = shlex.split(args)
+                args = shlex.split(to_text(args, errors='surrogateescape'))
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
@@ -1941,10 +1905,7 @@ class AnsibleModule(object):
         prompt_re = None
         if prompt_regex:
             if isinstance(prompt_regex, text_type):
-                if PY3:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
-                elif PY2:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogate_or_strict')
+                prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
             try:
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
@@ -1983,7 +1944,6 @@ class AnsibleModule(object):
             st_in = subprocess.PIPE
 
         def preexec():
-            self._restore_signal_handlers()
             if umask:
                 os.umask(umask)
 
@@ -1997,10 +1957,8 @@ class AnsibleModule(object):
             preexec_fn=preexec,
             env=env,
         )
-        if PY3 and pass_fds:
+        if pass_fds:
             kwargs["pass_fds"] = pass_fds
-        elif PY2 and pass_fds:
-            kwargs['close_fds'] = False
 
         # make sure we're in the right working directory
         if cwd:
