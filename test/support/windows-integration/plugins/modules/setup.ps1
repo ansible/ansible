@@ -149,18 +149,26 @@ if ($osversion.Version -lt [version]"6.2") {
 }
 
 if($gather_subset.Contains('all_ipv4_addresses') -or $gather_subset.Contains('all_ipv6_addresses')) {
-    $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
+    $NetIPAddress = Get-LazyCimInstance  MSFT_NetIPAddress -namespace ROOT/StandardCimv2
 
-    # TODO: split v4/v6 properly, return in separate keys
     $ips = @()
-    Foreach ($ip in $netcfg.IPAddress) {
-        If ($ip) {
-            $ips += $ip
+    $ipv6s = @()
+    Foreach ($ip in $NetIPAddress) {
+        If ($ip.IPAddress -and $ip.AddressFamily -eq 'IPv4' -and $ip.PrefixOrigin -ne 'WellKnown') {
+            $ips += $ip.IPAddress
+        }elseif($ip.IPAddress -and $ip.AddressFamily -eq 'IPv6' -and $ip.AddressState -eq 'Preferred' -and $ip.IPAddress -ne '::1'){
+            if($ip.PrefixOrigin -eq 'WellKnown'){
+                $ipv6s += $ip.IPAddress.Replace('%'+$ip.InterfaceIndex,'')
+            }else{
+                $ipv6s += $ip.IPAddress
+            }
         }
     }
 
     $ansible_facts += @{
-        ansible_ip_addresses = $ips
+        ansible_all_ipv4_addresses = $ips
+        ansible_all_ipv6_addresses = $ipv6s
+        ansible_ip_addresses = $ips,$ipv6s
     }
 }
 
