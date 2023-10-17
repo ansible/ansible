@@ -9,7 +9,7 @@ async: Run a task asynchronously if the C(action) supports this; value is maximu
 become: Boolean that controls if privilege escalation is used or not on :term:`Task` execution. Implemented by the become plugin. See :ref:`become_plugins`.
 become_exe: Path to the executable used to elevate privileges. Implemented by the become plugin. See :ref:`become_plugins`.
 become_flags: A string of flag(s) to pass to the privilege escalation program when :term:`become` is True.
-become_method: Which method of privilege escalation to use (such as sudo or su).
+become_method: Which method of privilege escalation to use (such as sudo or su)?
 become_user: "User that you 'become' after using privilege escalation. The remote/login user must have permissions to become this user."
 block: List of tasks in a block.
 changed_when: "Conditional expression that overrides the task's normal 'changed' status."
