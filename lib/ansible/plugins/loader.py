@@ -1268,7 +1268,7 @@ class Jinja2Loader(PluginLoader):
                     fq_name = '.'.join((parent_prefix, func_name))
                     src_name = f"ansible_collections.{acr.collection}.plugins.{self.type}.{acr.subdirs}.{func_name}"
                     # TODO: load  anyways into CACHE so we only match each at end of loop
-                    #       the files themseves should already be cached by base class caching of modules(python)
+                    #       the files themselves should already be cached by base class caching of modules(python)
                     if key in (func_name, fq_name):
                         plugin = self._plugin_wrapper_type(func)
                         if plugin:
