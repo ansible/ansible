@@ -1417,7 +1417,7 @@ def _load_plugin_filter():
             display.warning(u'The plugin filter file, {0} does not exist.'
                             u' Skipping.'.format(filter_cfg))
 
-    # Specialcase the stat module as Ansible can run very few things if stat is rejected
+    # Specialize the stat module as Ansible can run very few things if stat is rejected
     if 'stat' in filters['ansible.modules']:
         raise AnsibleError('The stat module was specified in the module reject list file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'
