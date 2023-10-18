@@ -28,7 +28,7 @@ options:
     version_added: '2.3'
   decrypt:
     description:
-    - This option controls the autodecryption of source files using vault.
+    - This option controls the auto-decryption of source files using vault.
     type: bool
     default: yes
     version_added: '2.5'
