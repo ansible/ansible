@@ -134,7 +134,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def __repr__(self):
-        ''' returns a human readable representation of the task '''
+        ''' returns a human-readable representation of the task '''
         if self.action in C._ACTION_META:
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
