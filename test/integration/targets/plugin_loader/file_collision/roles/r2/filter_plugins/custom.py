@@ -12,4 +12,3 @@ class FilterModule(object):
         return {
             'filter2': do_nothing,
         }
-

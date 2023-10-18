@@ -13,4 +13,3 @@ class FilterModule(object):
             'filter1': do_nothing,
             'filter3': do_nothing,
         }
-
