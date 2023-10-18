@@ -122,7 +122,7 @@ class ActionModule(ActionBase):
                 mod_args = self._get_module_args(fact_module, task_vars)
 
                 #  if module does not handle timeout, use timeout to handle module, hijack async_val as this is what async_wrapper uses
-                # TODO: make this action compain about async/async settings, use parallel option instead .. or remove parallel in favor of async settings?
+                # TODO: make this action complain about async/async settings, use parallel option instead .. or remove parallel in favor of async settings?
                 if timeout and 'gather_timeout' not in mod_args:
                     self._task.async_val = int(timeout)
                 elif async_val != 0:
