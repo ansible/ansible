@@ -34,7 +34,7 @@ def get_composite_name(collection, name, path, depth):
             resolved_collection = 'ansible.builtin'
         resource_name = '.'.join(name.split(f"{resolved_collection}.")[1:])
 
-    # collectionize name
+    # collection name
     composite = [resolved_collection]
     if depth:
         composite.extend(path.split(os.path.sep)[depth * -1:])
