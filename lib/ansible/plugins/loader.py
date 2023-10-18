@@ -1017,7 +1017,7 @@ class PluginLoader:
                 display.debug("'%s' skipped due to a defined plugin filter" % basename)
                 continue
 
-            if basename  == '__init__' or basename.endswith(b'__init__.py') or (basename == 'base' and self.package == 'ansible.plugins.cache'):
+            if basename == '__init__' or basename.endswith(b'__init__.py') or (basename == 'base' and self.package == 'ansible.plugins.cache'):
                 # cache has legacy 'base.py' file, which is wrapper for __init__.py
                 display.debug("'%s' skipped due to reserved name" % basename)
                 continue
