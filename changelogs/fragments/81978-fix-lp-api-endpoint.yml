@@ -1,3 +1,0 @@
----
-bugfixes:
-  - apt_repository.py - Use api.launchpad.net endpoint instead of launchpad.net/api
