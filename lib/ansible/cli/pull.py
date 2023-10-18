@@ -274,8 +274,15 @@ class PullCLI(CLI):
             for vault_id in context.CLIARGS['vault_ids']:
                 cmd += " --vault-id=%s" % vault_id
 
+        if context.CLIARGS['become_password_file']:
+            cmd += " --become-password-file=%s" % context.CLIARGS['become_password_file']
+
+        if context.CLIARGS['connection_password_file']:
+            cmd += " --connection-password-file=%s" % context.CLIARGS['connection_password_file']
+
         for ev in context.CLIARGS['extra_vars']:
             cmd += ' -e %s' % shlex.quote(ev)
+
         if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
