@@ -272,24 +272,6 @@ class PullCLI(CLI):
         # Build playbook command
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
 
-<<<<<<< Updated upstream
-        for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e %s' % shlex.quote(ev)
-        if context.CLIARGS['become_ask_pass']:
-            cmd += ' --ask-become-pass'
-        if context.CLIARGS['skip_tags']:
-            cmd += ' --skip-tags "%s"' % to_native(u','.join(context.CLIARGS['skip_tags']))
-        if context.CLIARGS['tags']:
-            cmd += ' -t "%s"' % to_native(u','.join(context.CLIARGS['tags']))
-        if context.CLIARGS['subset']:
-            cmd += ' -l "%s"' % context.CLIARGS['subset']
-        else:
-            cmd += ' -l "%s"' % limit_opts
-        if context.CLIARGS['check']:
-            cmd += ' -C'
-        if context.CLIARGS['diff']:
-            cmd += ' -D'
-=======
         # parse the options dynamically
         for option in context.CLIARGS.keys():
 
@@ -322,7 +304,6 @@ class PullCLI(CLI):
             else:
                 # simple -flag=value
                 cmd += "%s=%s" % (cli_option, shlex.quote(argument))
->>>>>>> Stashed changes
 
         os.chdir(context.CLIARGS['dest'])
 
