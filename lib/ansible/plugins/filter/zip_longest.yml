@@ -8,7 +8,7 @@ DOCUMENTATION:
         If the iterables are of uneven length, missing values are filled-in with O(fillvalue).
         Iteration continues until the longest iterable is exhausted.
   notes:
-    - This is mostly a passhtrough to Python's C(itertools.zip_longest) function
+    - This is mostly a passthrough to Python's C(itertools.zip_longest) function
   options:
     _input:
       description: Original list.
