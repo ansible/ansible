@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Special handling for installation of ``cryptography`` has been removed, as it is no longer necessary.
