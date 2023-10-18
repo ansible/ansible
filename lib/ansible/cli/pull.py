@@ -93,6 +93,8 @@ class PullCLI(CLI):
         self.parser.add_argument('args', help='Playbook(s)', metavar='playbook.yml', nargs='*')
 
         # options unique to pull
+        self._my_opts = frozenset(['ifchanged', 'sleep', 'force', 'dest', 'url', 'fullclone', 'accept_host_key', 'module_name', 'verify', 'clean', 'tracksubs'])
+
         self.parser.add_argument('--purge', default=False, action='store_true', help='purge checkout after playbook run')
         self.parser.add_argument('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
                                  help='only run the playbook if the repository has been updated')
@@ -119,12 +121,14 @@ class PullCLI(CLI):
                                  help='modified files in the working repository will be discarded')
         self.parser.add_argument('--track-subs', dest='tracksubs', default=False, action='store_true',
                                  help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
-        # add a subset of the check_opts flag group manually, as the full set's
+
+        # not unique to pull, but we only want a subset of the check_opts flag group manually, as the full set's
         # shortcodes conflict with above --checkout/-C
         self.parser.add_argument("--check", default=False, dest='check', action='store_true',
                                  help="don't make any changes; instead, try to predict some of the changes that may occur")
         self.parser.add_argument("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                                  help="when changing (small) files and templates, show the differences in those files; works great with --check")
+
 
     def post_process_args(self, options):
         options = super(PullCLI, self).post_process_args(options)
@@ -267,13 +271,8 @@ class PullCLI(CLI):
 
         # Build playbook command
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
-        if context.CLIARGS['vault_password_files']:
-            for vault_password_file in context.CLIARGS['vault_password_files']:
-                cmd += " --vault-password-file=%s" % vault_password_file
-        if context.CLIARGS['vault_ids']:
-            for vault_id in context.CLIARGS['vault_ids']:
-                cmd += " --vault-id=%s" % vault_id
 
+<<<<<<< Updated upstream
         for ev in context.CLIARGS['extra_vars']:
             cmd += ' -e %s' % shlex.quote(ev)
         if context.CLIARGS['become_ask_pass']:
@@ -290,6 +289,40 @@ class PullCLI(CLI):
             cmd += ' -C'
         if context.CLIARGS['diff']:
             cmd += ' -D'
+=======
+        # parse the options dynamically
+        for option in context.CLIARGS.keys():
+
+            # skip ansible-pull specific options
+            if option in self._my_opts:
+                continue
+
+            cli_option = None
+            curr_option = None
+            for a in self.parser._actions:
+                # check parser for matching option
+                if a.store == option:
+                    curr_option = a
+                    cli_option = curr_option.option_strings[0]
+                    break
+            else:
+                # this should not happen, but skip!
+                display.warning("skipping unrecognized option: %s" % option)
+                continue
+
+            # handle list type options
+            if isinstance(context.CLIARGS[option], list):
+                if curr_option.action == 'append':
+                    # append means we can have multiple flags
+                    for argument in context.CLIARGS[option]:
+                        cmd += "%s=%s" % (cli_option, shlex.quote(argument))
+                else:
+                    # just create , sep list, ansible will use as list
+                    cmd += "%s=%s" % (cli_option, shlex.quote(','.join([ a for a in context.CLIARGS[option]])))
+            else:
+                # simple -flag=value
+                cmd += "%s=%s" % (cli_option, shlex.quote(argument))
+>>>>>>> Stashed changes
 
         os.chdir(context.CLIARGS['dest'])
 
