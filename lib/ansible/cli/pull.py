@@ -93,7 +93,7 @@ class PullCLI(CLI):
         self.parser.add_argument('args', help='Playbook(s)', metavar='playbook.yml', nargs='*')
 
         # options unique to pull
-        self._my_opts = frozenset(['ifchanged', 'sleep', 'force', 'dest', 'url', 'fullclone', 'accept_host_key', 'module_name', 'verify', 'clean', 'tracksubs'])
+        self._my_opts = frozenset(['args', 'ifchanged', 'sleep', 'force', 'dest', 'url', 'fullclone', 'accept_host_key', 'module_name', 'verify', 'clean', 'tracksubs', 'version', 'help'])
 
         self.parser.add_argument('--purge', default=False, action='store_true', help='purge checkout after playbook run')
         self.parser.add_argument('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
@@ -279,31 +279,53 @@ class PullCLI(CLI):
             if option in self._my_opts:
                 continue
 
+            if context.CLIARGS[option] is None:
+                # option not specified and no explicit default
+                continue
+
             cli_option = None
             curr_option = None
             for a in self.parser._actions:
                 # check parser for matching option
-                if a.store == option:
+                if getattr(a, 'dest', None) == option:
                     curr_option = a
-                    cli_option = curr_option.option_strings[0]
-                    break
+                    # if it is the default value also counts as 'not set'
+                    if context.CLIARGS[option] == curr_option.default:
+                        # TODO: inspect class and also skip for empty/false non bools
+                        break
+                    try:
+                        if curr_option.option_strings:
+                            cli_option = curr_option.option_strings[0]
+                            break
+                    except AttributeError as e:
+                        display.debug("matched option, but no switches: %s" % option)
+                        break
             else:
                 # this should not happen, but skip!
                 display.warning("skipping unrecognized option: %s" % option)
                 continue
 
+            if None in (curr_option, cli_option):
+                # skip, since it either matches default or does not have flag
+                continue
+
+            #TODO: wrong, need to inspect class
+            if curr_option.type == 'count':
+                # TODO: really replace the -(\-?)(.+) with -\1(\2 X count)
+                continue
+
             # handle list type options
-            if isinstance(context.CLIARGS[option], list):
-                if curr_option.action == 'append':
+            elif isinstance(context.CLIARGS[option], list) and context.CLIARGS[option]:
+                if curr_option.action == 'append': #TODO: wrong, need to inspect class
                     # append means we can have multiple flags
                     for argument in context.CLIARGS[option]:
-                        cmd += "%s=%s" % (cli_option, shlex.quote(argument))
+                        cmd += " %s=%s" % (cli_option, shlex.quote(argument))
                 else:
                     # just create , sep list, ansible will use as list
-                    cmd += "%s=%s" % (cli_option, shlex.quote(','.join([ a for a in context.CLIARGS[option]])))
+                    cmd += " %s=%s" % (cli_option, shlex.quote(','.join([ a for a in context.CLIARGS[option]])))
             else:
                 # simple -flag=value
-                cmd += "%s=%s" % (cli_option, shlex.quote(argument))
+                cmd += " %s=%s" % (cli_option, shlex.quote(to_native(context.CLIARGS[option])))
 
         os.chdir(context.CLIARGS['dest'])
 
