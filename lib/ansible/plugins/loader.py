@@ -1005,28 +1005,29 @@ class PluginLoader:
 
         loaded_modules = set()
         for path in all_matches:
-            if isinstance(self, Jinja2Loader):
-                # file are names not unique, only filter/test names are
-                # so we cache path in this case for filter/test files
-                name = basename = path
+
+            name = os.path.splitext(path)[0]
+            basename = os.path.basename(name)
+
+            if isinstance(self, Jinja2Loader)
+                ref_name = path
             else:
-                name = os.path.splitext(path)[0]
-                basename = os.path.basename(name)
+                ref_name = basename
 
-            if basename in _PLUGIN_FILTERS[self.package]:
-                display.debug("'%s' skipped due to a defined plugin filter" % basename)
+            if ref_name in _PLUGIN_FILTERS[self.package]:
+                display.debug("'%s' skipped due to a defined plugin filter" % ref_name)
                 continue
 
-            if basename == '__init__' or basename.endswith('__init__.py') or (basename == 'base' and self.package == 'ansible.plugins.cache'):
+            if basename == '__init__' or (basename == 'base' and self.package == 'ansible.plugins.cache'):
                 # cache has legacy 'base.py' file, which is wrapper for __init__.py
-                display.debug("'%s' skipped due to reserved name" % basename)
+                display.debug("'%s' skipped due to reserved name" % name)
                 continue
 
-            if dedupe and basename in loaded_modules:
-                display.debug("'%s' skipped as duplicate" % basename)
+            if dedupe and ref_name in loaded_modules:
+                display.debug("'%s' skipped as duplicate" % ref_name)
                 continue
 
-            loaded_modules.add(basename)
+            loaded_modules.add(ref_name)
 
             if path_only:
                 yield path
