@@ -1008,14 +1008,16 @@ class PluginLoader:
 
             name = os.path.splitext(path)[0]
             basename = os.path.basename(name)
+            is_j2 = isinstance(self, Jinja2Loader)
 
-            if isinstance(self, Jinja2Loader)
+            if is_j2:
                 ref_name = path
             else:
                 ref_name = basename
 
-            if ref_name in _PLUGIN_FILTERS[self.package]:
-                display.debug("'%s' skipped due to a defined plugin filter" % ref_name)
+            if not is_j2 and basename in _PLUGIN_FILTERS[self.package]:
+                # j2 plugins get processed in own class, here they would just be container files
+                display.debug("'%s' skipped due to a defined plugin filter" % basename)
                 continue
 
             if basename == '__init__' or (basename == 'base' and self.package == 'ansible.plugins.cache'):
@@ -1024,6 +1026,7 @@ class PluginLoader:
                 continue
 
             if dedupe and ref_name in loaded_modules:
+                # for j2 this is 'same file', other plugins it is basename
                 display.debug("'%s' skipped as duplicate" % ref_name)
                 continue
 
