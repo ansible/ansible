@@ -1,0 +1,11 @@
+plugin: ansible.builtin.constructed
+keyed_groups:
+  - key: keyed_group_1
+    default_value: "priority_2"
+    prefix: b_keyed_group
+    priority: 2
+
+  - key: keyed_group_2
+    default_value: "priority_3"
+    prefix: a_keyed_group
+    priority: '{{ 3 if "priority_3" in ansible_keyed_group_name else 1 }}'
