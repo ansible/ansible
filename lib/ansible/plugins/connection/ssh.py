@@ -279,7 +279,7 @@ DOCUMENTATION = '''
           - name: ansible_control_path
             version_added: '2.7'
       control_path_dir:
-        default: ~/.ansible/cp
+        default: $ANSIBLE_HOME/cp
         description:
           - This sets the directory to use for ssh control path if the control path setting is null.
           - Also, provides the ``%(directory)s`` variable for the control path setting.
