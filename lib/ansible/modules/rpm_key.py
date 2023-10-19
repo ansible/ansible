@@ -84,7 +84,7 @@ import tempfile
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.text.converters import to_native, to_bytes
 
 
 def is_pubkey(string):
@@ -117,7 +117,7 @@ class RpmKey(object):
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
         elif is_pubkey(key):
-            keyfile = self.keyfile(bytes(key, 'utf-8'))
+            keyfile = self.keyfile(to_bytes(key))
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
         elif self.is_keyid(key):
@@ -153,7 +153,7 @@ class RpmKey(object):
                 module.exit_json(changed=False)
 
     def keyfile(self, key):
-        tmpfd, tmpname = tempfile.mkstemp()
+        tmpfd, tmpname = tempfile.mkstemp(dir=self.module.tmpdir)
         self.module.add_cleanup_file(tmpname)
         tmpfile = os.fdopen(tmpfd, "w+b")
         tmpfile.write(key)
