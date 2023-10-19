@@ -417,10 +417,10 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            self.log(nocolor, color)
+            self._log(nocolor, color)
 
     @proxy_display
-    def log(self, msg: str, color: str | None = None, caplevel: int = 0):
+    def _log(self, msg: str, color: str | None = None, caplevel: int = 0):
 
         if self.log_verbosity > caplevel:
             msg2 = msg.lstrip('\n')
@@ -473,7 +473,7 @@ class Display(metaclass=Singleton):
             # we send to log if log was configured with higher verbosity
             if host is not None:
                 msg = "<%s> %s" % (host, msg)
-            self.log(msg, C.COLOR_VERBOSE, caplevel)
+            self._log(msg, C.COLOR_VERBOSE, caplevel)
 
     def get_deprecation_message(
         self,
