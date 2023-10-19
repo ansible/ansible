@@ -22,6 +22,7 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
+        - Since version 2.18 you can also pass the key as a string.
       type: str
       required: true
     state:
