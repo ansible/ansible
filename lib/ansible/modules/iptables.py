@@ -531,6 +531,14 @@ EXAMPLES = r'''
     log_prefix: "IPTABLES:INFO: "
     log_level: info
 
+- name: Block outgoing traffic to a specific IP
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: all
+    destination: 8.8.8.8
+    jump: DROP
+  become: yes    
+
 - name: Allow connections on multiple ports
   ansible.builtin.iptables:
     chain: INPUT
