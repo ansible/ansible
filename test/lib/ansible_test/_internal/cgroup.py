@@ -41,7 +41,7 @@ class CGroupEntry:
     @classmethod
     def parse(cls, value: str) -> CGroupEntry:
         """Parse the given cgroup line from the proc filesystem and return a cgroup entry."""
-        cid, subsystem, path = value.split(':')
+        cid, subsystem, path = value.split(':', maxsplit=2)
 
         return cls(
             id=int(cid),
