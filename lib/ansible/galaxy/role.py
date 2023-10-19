@@ -29,11 +29,12 @@ import tarfile
 import tempfile
 
 from collections.abc import MutableSequence
-from shutil import rmtree
+from shutil import rmtree, move
 
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.collection import _tempdir
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
@@ -268,7 +269,10 @@ class GalaxyRole(object):
         return False
 
     def install(self):
+        with _tempdir() as b_tmp_extraction_dir:
+            return self._install(to_native(b_tmp_extraction_dir))
 
+    def _install(self, temporary_dest):
         if self.scm:
             # create tar file from scm url
             tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=context.CLIARGS['keep_scm_meta'], **self.spec)
@@ -367,6 +371,8 @@ class GalaxyRole(object):
                     # FIXME should this be done in __init__?
                     paths[:0] = self.path
                 paths_len = len(paths)
+                ignore_external = set()
+                extract_complete = False
                 for idx, path in enumerate(paths):
                     self.path = path
                     display.display("- extracting %s to %s" % (self.name, self.path))
@@ -376,13 +382,6 @@ class GalaxyRole(object):
                                 raise AnsibleError("the specified roles path exists and is not a directory.")
                             elif not context.CLIARGS.get("force", False):
                                 raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
-                            else:
-                                # using --force, remove the old path
-                                if not self.remove():
-                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really "
-                                                       "want to put the role here." % self.path)
-                        else:
-                            os.makedirs(self.path)
 
                         resolved_archive = unfrackpath(archive_parent_dir, follow=False)
 
@@ -390,6 +389,8 @@ class GalaxyRole(object):
                         # contained within the tar file here. The default is 'github_repo-target'.
                         # Gerrit instances, on the other hand, does not have a parent directory at all.
                         for member in members:
+                            if extract_complete:
+                                continue
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
@@ -398,6 +399,12 @@ class GalaxyRole(object):
 
                             for attr in ('name', 'linkname'):
                                 if not (attr_value := getattr(member, attr, None)):
+                                    continue
+
+                                if attr == 'name' and not attr_value.startswith(meta_parent_dir):
+                                    # avoid extracting members that aren't adjacent to the role metadata
+                                    display.warning(f"Only extracting members in {archive_parent_dir}: ignoring {member.name}")
+                                    ignore_external.add(member)
                                     continue
 
                                 if attr == 'linkname':
@@ -418,13 +425,26 @@ class GalaxyRole(object):
                                 relative_path = os.path.join(*full_path.replace(relative_path_dir, "", 1).split(os.sep))
                                 setattr(member, attr, relative_path)
 
+                            if member in ignore_external:
+                                continue
+
                             if _check_working_data_filter():
                                 # deprecated: description='extract fallback without filter' python_version='3.11'
-                                role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                                role_tar_file.extract(member, temporary_dest, filter='data')  # type: ignore[call-arg]
                             else:
                                 # Remove along with manual path filter once Python 3.12 is minimum supported version
-                                role_tar_file.extract(member, to_native(self.path))
+                                role_tar_file.extract(member, temporary_dest)
 
+                        extract_complete = True
+
+                        if os.path.exists(self.path) and not self.remove():
+                            raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really "
+                                               "want to put the role here." % self.path)
+                        if not os.path.exists(self.path):
+                            os.makedirs(self.path)
+
+                        for path in os.listdir(temporary_dest):
+                            move(os.path.join(temporary_dest, path), os.path.join(self.path, path))
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
                         break

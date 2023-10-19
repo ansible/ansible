@@ -26,7 +26,7 @@ import time
 import typing as t
 
 from collections import namedtuple
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from hashlib import sha256
 from io import BytesIO
@@ -962,7 +962,8 @@ def _tempdir():
     try:
         yield b_temp_path
     finally:
-        shutil.rmtree(b_temp_path)
+        with suppress(FileNotFoundError):
+            shutil.rmtree(b_temp_path)
 
 
 @contextmanager
