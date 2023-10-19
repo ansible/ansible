@@ -397,12 +397,6 @@ class Constructable(object):
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
-                    group_priority = keyed.get('priority', None)
-                    if group_priority is not None:
-                        try:
-                            group_priority = int(group_priority)
-                        except ValueError as e:
-                            raise AnsibleParserError("Invalid group priority given: %s" % to_native(e))
                     default_value_name = keyed.get('default_value', None)
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
@@ -451,10 +445,20 @@ class Constructable(object):
                                 sep = ''
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
-                            if group_priority is not None:
-                                result_gname.set_priority(group_priority)
-
                             self.inventory.add_host(host, result_gname)
+
+                            # Add `ansible_keyed_group_name` to the variables that we can use to template
+                            templar_variables = combine_vars(variables, {'ansible_keyed_group_name': result_gname})
+                            self.templar.available_variables = templar_variables
+                            # Template the group_priority. There are not many variables available at this point,
+                            # But what we have should be able to be used here.
+                            group_priority = self.templar.template(keyed.get('priority', None))
+                            if group_priority is not None:
+                                result_group = self.inventory.groups.get(result_gname)
+                                try:
+                                    result_group.set_priority(int(group_priority))
+                                except ValueError as e:
+                                    raise AnsibleParserError("Invalid group priority given: %s" % to_native(e))
 
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)

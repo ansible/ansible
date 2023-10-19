@@ -77,6 +77,14 @@ EXAMPLES = r'''
         # this creates a common parent group for all ec2 availability zones
         - key: placement.availability_zone
           parent_group: all_ec2_zones
+
+        # Assuming that there exist `tags` that are assigned to various servers such as 'stuff', 'things', 'status', etc.
+        # The variable `ansible_keyed_group_name` is exposed to the priority. Its value is the resolved group name once
+        # it's been completely templated.
+        - key: tags
+          prefix: tag
+          default_value: "running"
+          priority: "{{ 10 if 'status' in ansible_keyed_group_name else 50 }}"
 '''
 
 import os
