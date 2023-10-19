@@ -1300,13 +1300,16 @@ class AnsibleModule(object):
             # We want journal to always take text type
             # syslog takes bytes on py2, text type on py3
             if isinstance(msg, binary_type):
-                journal_msg = remove_values(msg.decode('utf-8', 'replace'), self.no_log_values)
+                journal_msg = msg.decode('utf-8', 'replace')
             else:
                 # TODO: surrogateescape is a danger here on Py3
-                journal_msg = remove_values(msg, self.no_log_values)
+                journal_msg = msg
 
             if self._target_log_info:
-                journal_msg = remove_values(self._target_log_info, self.no_log_values) + journal_msg
+                journal_msg = ' '.join([self._target_log_info, journal_msg])
+
+            # ensure we clean up secrets!
+            journal_msg = remove_values(journal_msg, self.no_log_values)
 
             if PY3:
                 syslog_msg = journal_msg
