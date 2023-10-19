@@ -3,14 +3,14 @@
     repo: '{{ repo_format2 }}'
     dest: '{{ checkout_dir }}'
     single_branch: yes
-    key_file_content: "{{ lookup('ansible.builtin.env', 'GPG_KEY', default='nobody') }}"
+    key_content: "{{ lookup('ansible.builtin.env', 'SSH_KEY', default='nobody') }}"
     key_file: '{{ github_ssh_private_key }}'
     accept_hostkey: yes
   ignore_errors: True
   register: failed_git
   when: github_ssh_private_key is defined
 
-- name: Assert that mutually exclusive parameters key_file_content & key_file failed
+- name: Assert that mutually exclusive parameters key_content & key_file failed
   assert:
     that:
       - failed_git is failed
