@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-galaxy role install - fix installing partial role content when the tarfile extraction fails (https://github.com/ansible/ansible/issues/81965).
+  - ansible-galaxy role install - allow symlinks with '..' if they resolve to a path in the tarfile's role directory (https://github.com/ansible/ansible/issues/81965).
+  - ansible-galaxy role install - give an error instead of reconstructing symlinks and path names without the invalid parts.

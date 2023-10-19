@@ -952,7 +952,10 @@ def _tempdir():
     try:
         yield b_temp_path
     finally:
-        shutil.rmtree(b_temp_path)
+        try:
+            shutil.rmtree(b_temp_path)
+        except FileNotFoundError:
+            pass
 
 
 @contextmanager

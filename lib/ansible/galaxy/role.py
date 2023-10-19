@@ -29,11 +29,12 @@ import tarfile
 import tempfile
 
 from collections.abc import MutableSequence
-from shutil import rmtree
+from shutil import rmtree, move
 
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.collection import _tempdir
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
@@ -43,6 +44,21 @@ from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 
 display = Display()
+
+
+def is_path_outside_archive(archive_parent_dir : str, path : str, strict: bool) -> bool:
+    """
+    Check if the second path is within the first and exists, and if not returns True.
+    """
+    try:
+        # Get the absolute paths
+        archive_dir = os.path.abspath(archive_parent_dir)
+        if not path.startswith(os.sep):
+            path = os.path.abspath(os.path.join(archive_parent_dir, path))
+
+        return not (path.startswith(archive_dir) and (not strict or os.path.exists(path)))
+    except OSError:
+        return True
 
 
 @functools.cache
@@ -269,7 +285,10 @@ class GalaxyRole(object):
         return False
 
     def install(self):
+        with _tempdir() as b_tmp_extraction_dir:
+            return self._install(to_native(b_tmp_extraction_dir))
 
+    def _install(self, temporary_dest):
         if self.scm:
             # create tar file from scm url
             tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=context.CLIARGS['keep_scm_meta'], **self.spec)
@@ -368,6 +387,7 @@ class GalaxyRole(object):
                     # FIXME should this be done in __init__?
                     paths[:0] = self.path
                 paths_len = len(paths)
+                ignore_external = set()
                 for idx, path in enumerate(paths):
                     self.path = path
                     display.display("- extracting %s to %s" % (self.name, self.path))
@@ -377,18 +397,14 @@ class GalaxyRole(object):
                                 raise AnsibleError("the specified roles path exists and is not a directory.")
                             elif not context.CLIARGS.get("force", False):
                                 raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
-                            else:
-                                # using --force, remove the old path
-                                if not self.remove():
-                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really "
-                                                       "want to put the role here." % self.path)
-                        else:
-                            os.makedirs(self.path)
 
+                        extract_complete = False
                         # We strip off any higher-level directories for all of the files
                         # contained within the tar file here. The default is 'github_repo-target'.
                         # Gerrit instances, on the other hand, does not have a parent directory at all.
                         for member in members:
+                            if extract_complete:
+                                continue
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
@@ -400,7 +416,32 @@ class GalaxyRole(object):
                                     n_attr_value = to_native(attr_value)
                                     n_archive_parent_dir = to_native(archive_parent_dir)
                                     n_parts = n_attr_value.replace(n_archive_parent_dir, "", 1).split(os.sep)
+
+                                    if attr == 'name' and not n_attr_value.startswith(n_archive_parent_dir):
+                                        # Doesn't happen with our build process, but avoid extracting members that aren't adjacent to the role metadata
+                                        display.warning(f"Only extracting members in {n_archive_parent_dir}: ignoring {member.name}")
+                                        ignore_external.add(member)
+                                        continue
+                                    elif attr == 'linkname' and member not in ignore_external and (member.islnk() or member.issym()):
+                                        # https://docs.python.org/3/library/tarfile.html#tarfile.TarInfo.linkname
+                                        if member.islnk():
+                                            # relative to archive dir
+                                            resolve_path = os.path.join(*n_parts)
+                                        else:
+                                            # relative to softlink dir
+                                            relative_to = os.path.dirname(member.name)
+                                            resolve_path = os.path.join(relative_to, *n_parts)
+
+                                        # Because we split on os.sep, any symlinks that were not relative now are.
+                                        # This is quite forgiving, so to avoid broken content, validate it exists.
+                                        strict = n_attr_value.startswith(os.sep) and not n_attr_value.startswith(n_archive_parent_dir)
+
+                                        # validate the path resolves to a path in the role directory
+                                        if is_path_outside_archive(n_archive_parent_dir, resolve_path, strict):
+                                            raise AnsibleError(f"install reverted, symlink '{member.name}' could not be found in the role: {attr_value}")
+
                                     n_final_parts = []
+                                    invalid_parts = False
                                     for n_part in n_parts:
                                         # TODO if the condition triggers it produces a broken installation.
                                         # It will create the parent directory as an empty file and will
@@ -412,24 +453,38 @@ class GalaxyRole(object):
                                         # to debug a broken installation.
                                         if not n_part:
                                             continue
-                                        if n_part == '..':
+                                        if (invalid_parts := (n_part == '..' and attr == 'name')):
                                             display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
                                             continue
-                                        if n_part.startswith('~'):
+                                        if (invalid_parts := n_part.startswith('~')):
                                             display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
                                             continue
-                                        if '$' in n_part:
+                                        if (invalid_parts := '$' in n_part):
                                             display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
                                             continue
                                         n_final_parts.append(n_part)
+
+                                    if invalid_parts or not n_final_parts:
+                                        raise AnsibleError(f"install reverted, role content {member.name} is not able to be extracted")
                                     setattr(member, attr, os.path.join(*n_final_parts))
 
+                                if member in ignore_external:
+                                    continue
                                 if _check_working_data_filter():
                                     # deprecated: description='extract fallback without filter' python_version='3.11'
-                                    role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                                    role_tar_file.extract((member, temporary_dest), filter='data')  # type: ignore[call-arg]
                                 else:
-                                    role_tar_file.extract(member, to_native(self.path))
+                                    role_tar_file.extract(member, temporary_dest)
+                        extract_complete = True
 
+                        if os.path.exists(self.path) and not self.remove():
+                            raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really "
+                                               "want to put the role here." % self.path)
+                        if not os.path.exists(self.path):
+                            os.makedirs(self.path)
+
+                        for path in os.listdir(temporary_dest):
+                            move(os.path.join(temporary_dest, path), os.path.join(self.path, path))
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
                         break
