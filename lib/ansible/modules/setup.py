@@ -154,6 +154,9 @@ EXAMPLES = r"""
 # Only collect the default minimum amount of facts:
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!all'
 
+# Display only facts related to date and time.
+# ansible all -m ansible.builtin.setup -a 'filter=ansible_date_time*'
+
 # Collect no facts, even the default minimum subset of facts:
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!min'
 
