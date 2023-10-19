@@ -59,4 +59,9 @@ EXAMPLES = r'''
   ansible.builtin.fail:
     msg: The system may not be provisioned according to the CMDB status.
   when: cmdb_status != "to-be-staged"
+
+- name: Verify file content
+  ansible.builtin.fail:
+   msg: The file contains unexpected content.
+  when: ansible.builtin.shell('cat /path/to/myfile.txt') != "expected content" 
 '''
