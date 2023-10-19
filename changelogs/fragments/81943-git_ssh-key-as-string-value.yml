@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - git module - Feature to pass a SSH key as a string value
