@@ -296,7 +296,7 @@ def argument_spec_schema(for_collection):
                 (is_callable, list_string_types),
                 [is_callable, list_string_types],
             ),
-            'choices': Any([object], (object,), {object: Any[str,[str]]}),
+            'choices': Any([object], (object,)),
             'required': bool,
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
@@ -549,7 +549,7 @@ def list_dict_option_schema(for_collection, plugin_type):
     basic_option_schema = {
         Required('description'): doc_string_or_strings,
         'required': bool,
-        'choices': list,
+        'choices': Any(list, dict),
         'aliases': Any(list_string_types),
         'version_added': version(for_collection),
         'version_added_collection': collection_name,
