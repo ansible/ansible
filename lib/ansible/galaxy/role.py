@@ -453,13 +453,13 @@ class GalaxyRole(object):
                                         # to debug a broken installation.
                                         if not n_part:
                                             continue
-                                        if (invalid_parts := (n_part == '..' and attr == 'name')):
+                                        if (_invalid := (n_part == '..' and attr == 'name')) and (invalid_parts := _invalid):
                                             display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
                                             continue
-                                        if (invalid_parts := n_part.startswith('~')):
+                                        if (_invalid := n_part.startswith('~')) and (invalid_parts := _invalid):
                                             display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
                                             continue
-                                        if (invalid_parts := '$' in n_part):
+                                        if (_invalid := '$' in n_part) and (invalid_parts := _invalid):
                                             display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
                                             continue
                                         n_final_parts.append(n_part)
@@ -470,9 +470,10 @@ class GalaxyRole(object):
 
                                 if member in ignore_external:
                                     continue
+
                                 if _check_working_data_filter():
                                     # deprecated: description='extract fallback without filter' python_version='3.11'
-                                    role_tar_file.extract((member, temporary_dest), filter='data')  # type: ignore[call-arg]
+                                    role_tar_file.extract(member, temporary_dest, filter='data')  # type: ignore[call-arg]
                                 else:
                                     role_tar_file.extract(member, temporary_dest)
                         extract_complete = True
