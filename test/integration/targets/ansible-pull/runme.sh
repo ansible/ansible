@@ -85,3 +85,5 @@ pass_tests
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" multi_play_1.yml multi_play_2.yml | tee "${temp_log}"
 
 pass_tests_multi
+
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" conn_secret.yml --connection-password-file "${pull_dir}/connection_secret" "$@"
