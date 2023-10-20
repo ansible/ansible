@@ -296,7 +296,7 @@ def argument_spec_schema(for_collection):
                 (is_callable, list_string_types),
                 [is_callable, list_string_types],
             ),
-            'choices': Any([object], (object,), dict[Any, Any[str,[str]]]),
+            'choices': Any([object], (object,), {Any[object]: Any[str,[str]]}),
             'required': bool,
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
