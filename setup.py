@@ -17,6 +17,7 @@ setup(
         'console_scripts': [
             'ansible=ansible.cli.adhoc:main',
             'ansible-config=ansible.cli.config:main',
+            'ansible-connection=ansible.cli.scripts.ansible_connection_cli_stub:main',
             'ansible-console=ansible.cli.console:main',
             'ansible-doc=ansible.cli.doc:main',
             'ansible-galaxy=ansible.cli.galaxy:main',
@@ -24,7 +25,6 @@ setup(
             'ansible-playbook=ansible.cli.playbook:main',
             'ansible-pull=ansible.cli.pull:main',
             'ansible-vault=ansible.cli.vault:main',
-            'ansible-connection=ansible.cli.scripts.ansible_connection_cli_stub:main',
         ],
     },
 )
