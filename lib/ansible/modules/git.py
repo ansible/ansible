@@ -79,8 +79,7 @@ options:
         version_added: "1.5"
     key_content:
         description:
-            - Specify an optional private key file to use for the checkout.
-            - This ensures 'IdentitiesOnly=yes' is present in O(ssh_opts).
+            - Specify an optional private key string value to use for the checkout.
         type: str
         version_added: "2.17"
     reference:
