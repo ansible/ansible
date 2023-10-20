@@ -122,6 +122,9 @@ EXAMPLES = r"""
 # Display only facts returned by facter.
 # ansible all -m ansible.builtin.setup -a 'filter=facter_*'
 
+# Gather facts about SSH host keys (public keys) on all hosts
+# ansible all -m ansible.builtin.setup -a 'filter=ssh_host_key_dsa_public,ssh_host_key_ecdsa_public,ssh_host_key_ed25519_public,ssh_host_key_rsa_public'
+
 # Collect only facts returned by facter.
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!all,facter'
 
