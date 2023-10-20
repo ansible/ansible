@@ -549,7 +549,7 @@ def list_dict_option_schema(for_collection, plugin_type):
     basic_option_schema = {
         Required('description'): doc_string_or_strings,
         'required': bool,
-        'choices': Any(list, dict),
+        'choices': Any(list, {json_value: doc_string_or_strings}),
         'aliases': Any(list_string_types),
         'version_added': version(for_collection),
         'version_added_collection': collection_name,
