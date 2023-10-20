@@ -1,0 +1,2 @@
+bugfixes:
+  - SSH connection plugin - Previously, the default SSH ``control_path_dir`` was hardcoded to ``~/.ansible/cp``. Now, it respects the ``$ANSIBLE_HOME`` environment variable, resulting in a default of ``$ANSIBLE_HOME/cp`` (https://github.com/ansible/ansible/issues/79737).
