@@ -87,4 +87,4 @@ ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" multi_play
 
 pass_tests_multi
 
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" conn_secret.yml --connection-password-file "${OUTPUT_DIR}/secret_connection_password" "$@"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" conn_secret.yml --connection-password-file "${repo_dir}/secret_connection_password" "$@"
