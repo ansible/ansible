@@ -586,15 +586,19 @@ def main():
                         break
                     try:
                         with open(b_path, 'rb') as f:
-                            with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
-                                search = b_compiled_search_re.search(mm)
-                                if search:
-                                    if search.groupdict():
-                                        match_groupdict = search.groupdict()
-                                    if search.groups():
-                                        match_groups = search.groups()
+                            try:
+                                with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
+                                    search = b_compiled_search_re.search(mm)
+                            except ValueError:
+                                # cannot mmap this file, try normal read
+                                search = re.search(b_compiled_search_re, f.read())
 
-                                    break
+                            if search:
+                                if search.groupdict():
+                                    match_groupdict = search.groupdict()
+                                if search.groups():
+                                    match_groups = search.groups()
+                                break
                     except IOError:
                         pass
             elif port:

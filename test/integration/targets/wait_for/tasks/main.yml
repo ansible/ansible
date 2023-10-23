@@ -114,6 +114,12 @@
     path: "{{remote_tmp_dir}}/utf16.txt"
     search_regex: completed
 
+- name: test non mmapable file
+  wait_for:
+    path: "/sys/class/net/lo/carrier"
+    search_regex: "1"
+    timeout: 30
+
 - name: test wait for port timeout
   wait_for:
     port: 12121
