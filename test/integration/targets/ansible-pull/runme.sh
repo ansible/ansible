@@ -36,7 +36,8 @@ function pass_tests {
 	fi
 
 	# test for https://github.com/ansible/ansible/issues/13681
-	if grep -E '127\.0\.0\.1.*ok' "${temp_log}"; then
+	# match play default output stats, was matching limit + docker
+	if grep -E '127\.0\.0\.1\s*: ok=' "${temp_log}"; then
 	    cat "${temp_log}"
 	    echo "Found host 127.0.0.1 in output. Only localhost should be present."
 	    exit 1
