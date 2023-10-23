@@ -85,6 +85,12 @@ class TaskInclude(Task):
         return task
 
     def preprocess_data(self, ds):
+        """
+        Preprocess the data for the task include.
+
+        :arg ds: The data source to be preprocessed.
+        :returns: The preprocessed data source.
+        """
         ds = super(TaskInclude, self).preprocess_data(ds)
 
         diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
@@ -99,15 +105,24 @@ class TaskInclude(Task):
         return ds
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
+        """
+        Create a copy of the current instance.
+
+        :kwarg exclude_parent: Whether to exclude the parent.
+        :kwarg exclude_tasks: Whether to exclude the tasks.
+        :returns: The copied instance.
+        """
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
         return new_me
 
     def build_parent_block(self):
-        '''
+        """
         This method is used to create the parent block for the included tasks
         when ``apply`` is specified
-        '''
+
+        :returns: The parent block for the included tasks
+        """
         apply_attrs = self.args.pop('apply', {})
         if apply_attrs:
             apply_attrs['block'] = []

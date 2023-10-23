@@ -83,29 +83,97 @@ class Attribute:
             raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
 
     def __set_name__(self, owner, name):
+        """
+        Set the name of the instance attribute.
+
+        :arg owner: The owner of the instance attribute.
+        :arg name: The name of the instance attribute.
+        """
         self.name = name
 
     def __eq__(self, other):
+        """
+        Check if the priority of the current object is equal to the priority of the
+        other object.
+
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is equal to the priority
+        of the other object, False otherwise.
+        """
         return other.priority == self.priority
 
     def __ne__(self, other):
+        """
+        Check if the priority of the current object is not equal to the priority of the
+        other object.
+
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is not equal to the
+        priority of the other object, False otherwise.
+        """
         return other.priority != self.priority
 
     # NB: higher priority numbers sort first
 
     def __lt__(self, other):
+        """
+        Check if the priority of the current object is less than the priority of the
+        other object.
+
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is less than the priority
+        of the other object, False otherwise.
+        """
         return other.priority < self.priority
 
     def __gt__(self, other):
+        """
+        Check if the priority of the current object is greater than the priority of the
+        other object.
+
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is greater than the
+        priority of the other object, False otherwise.
+        """
         return other.priority > self.priority
 
     def __le__(self, other):
+        """
+        Check if the priority of the current object is less than or equal to the
+        priority of the other object.
+
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is less than or equal to
+        the priority of the other object, False otherwise.
+        """
         return other.priority <= self.priority
 
     def __ge__(self, other):
+        """
+        Check if the priority of the current object is greater than or equal to the
+        priority of the other object.
+
+        :arg other: The other object to compare.
+        :returns: True if the priority of the current object is greater than or equal
+        to the priority of the other object, False otherwise.
+        """
         return other.priority >= self.priority
 
     def __get__(self, obj, obj_type=None):
+        """
+        Retrieve the value of the attribute for the given object.
+
+        The method takes into consideration certain object states (like '_squashed' and
+        '_finalized') to determine the appropriate value retrieval mechanism. If
+        the object is in a specific state or contains a specialized method for
+        attribute retrieval, it uses that. Otherwise, it resorts to default
+        mechanisms or provided callable defaults.
+
+        :arg obj: The instance for which the attribute's value needs to be retrieved.
+        :kwarg obj_type: The type of the instance, if provided. Defaults to None.
+        :returns: The value of the attribute for the given object. If the attribute hasn't
+                  been initialized, it returns the default value or invokes a callable default.
+        """
         method = f'_get_attr_{self.name}'
         if hasattr(obj, method):
             # NOTE this appears to be not used in the codebase,
@@ -128,6 +196,12 @@ class Attribute:
         return value
 
     def __set__(self, obj, value):
+        """
+        Set the value of the attribute on the given object.
+
+        :arg obj: The object on which to set the attribute.
+        :arg value: The value to set for the attribute.
+        """
         setattr(obj, f'_{self.name}', value)
         if self.alias is not None:
             setattr(obj, f'_{self.alias}', value)
@@ -135,7 +209,13 @@ class Attribute:
     # NOTE this appears to be not needed in the codebase,
     # leaving it here for test_attr_int_del from
     # test/units/playbook/test_base.py to pass.
+
     def __delete__(self, obj):
+        """
+        Delete the attribute from the given object.
+
+        :arg obj: The object from which to delete the attribute.
+        """
         delattr(obj, f'_{self.name}')
 
 
@@ -179,7 +259,20 @@ class FieldAttribute(Attribute):
 
 
 class ConnectionFieldAttribute(FieldAttribute):
+    """
+    Represents a connection field attribute.
+    """
     def __get__(self, obj, obj_type=None):
+        """
+        Retrieve the value of the attribute for the given object.
+
+        The method retrieves the value of the attribute and performs some conditional logic to
+        determine the appropriate value to return.
+
+        :arg obj: The instance for which the attribute's value needs to be retrieved.
+        :kwarg obj_type: The type of the instance, if provided. Defaults to None.
+        :returns: The value of the attribute for the given object.
+        """
         from ansible.module_utils.compat.paramiko import paramiko
         from ansible.utils.ssh_functions import check_for_controlpersist
         value = super().__get__(obj, obj_type)

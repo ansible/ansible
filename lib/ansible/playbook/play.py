@@ -86,6 +86,9 @@ class Play(Base, Taggable, CollectionSearch):
     # =================================================================================
 
     def __init__(self):
+        """
+        Initialize the Play object.
+        """
         super(Play, self).__init__()
 
         self._included_conditional = None
@@ -100,11 +103,22 @@ class Play(Base, Taggable, CollectionSearch):
         self._group_actions = {}
 
     def __repr__(self):
+        """
+        Return a string representation of the Play object.
+
+        :returns: A string representation of the Play object.
+        """
         return self.get_name()
 
     @property
     def ROLE_CACHE(self):
         """Backwards compat for custom strategies using ``play.ROLE_CACHE``
+
+        The ROLE_CACHE property returns a dictionary that is constructed by iterating
+        over the role_cache items and adding each role to the dictionary with a
+        hashed parameter as the key.
+
+        :returns: A dictionary containing roles as values and hashed parameters as keys.
         """
         display.deprecated(
             'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
@@ -119,6 +133,19 @@ class Play(Base, Taggable, CollectionSearch):
         return cache
 
     def _validate_hosts(self, attribute, name, value):
+        """
+        Validate the 'hosts' attribute of the object.
+
+        The method checks if the 'hosts' attribute exists in the object's data set.
+        If it does, it validates the value of the 'hosts' attribute. The value must not
+        be empty, must be a sequence or string, and each item in the sequence must
+        be a valid string.
+
+        :arg attribute: The attribute being validated.
+        :arg name: The name of the attribute being validated.
+        :arg value: The value of the attribute being validated.
+        :raises AnsibleParserError: If the validation fails.
+        """
         # Only validate 'hosts' if a value was passed in to original data set.
         if 'hosts' in self._ds:
             if not value:
@@ -136,7 +163,18 @@ class Play(Base, Taggable, CollectionSearch):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
-        ''' return the name of the Play '''
+        """
+        Return the name of the Play.
+
+        The method returns the name of the Play object. If the 'name' attribute of the
+        Play object is already set, it returns that value. Otherwise, it constructs the
+        name based on the 'hosts' attribute of the Play object. If the 'hosts'
+        attribute is a sequence, it joins the items with commas. If it is a
+        string, it sets the name to the value of the 'hosts' attribute. If the
+        'hosts' attribute is not set, it sets the name to an empty string.
+
+        :returns: The name of the Play.
+        """
         if self.name:
             return self.name
 
@@ -149,6 +187,21 @@ class Play(Base, Taggable, CollectionSearch):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
+        """
+        Load the Play object.
+
+        The method creates a new Play object and assigns the 'vars' parameter to the
+        'vars' attribute of the Play object (if it is provided). It then calls the
+        'load_data' method of the Play object to load data into it. Finally, it
+        returns the created Play object.
+
+        :arg data: The data to load into the Play object.
+        :arg variable_manager: The variable manager to use for the Play object.
+        Defaults to None.
+        :arg loader: The loader to use for the Play object. Defaults to None.
+        :arg vars: The variables to assign to the Play object. Defaults to None.
+        :returns: The created Play object.
+        """
         p = Play()
         if vars:
             p.vars = vars.copy()
@@ -188,20 +241,28 @@ class Play(Base, Taggable, CollectionSearch):
             raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+
+        :arg attr: The attribute to be loaded.
+        :arg ds: The list to load blocks from.
+        :returns: A list of loaded blocks.
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
 
     def _load_post_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+
+        :arg attr: The attribute to be loaded.
+        :arg ds: The list to load blocks from.
+        :returns: A list of loaded blocks.
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
@@ -245,6 +306,24 @@ class Play(Base, Taggable, CollectionSearch):
         return self.roles
 
     def _load_vars_prompt(self, attr, ds):
+        """
+        Preprocess the ds parameter and load vars prompts.
+
+        The method preprocesses the ds parameter by calling the preprocess_vars
+        function. It then initializes an empty list vars_prompts. If the
+        preprocessed ds is not None, it iterates over each prompt_data in the
+        preprocessed ds.
+        Inside the loop, it checks if the prompt_data dictionary contains the key
+        'name'. If it doesn't, it raises an AnsibleParserError exception. Then, it
+        iterates over each key in the prompt_data dictionary and checks if the key
+        is supported. If it finds an unsupported key, it raises an
+        AnsibleParserError exception. Finally, it appends the prompt_data
+        dictionary to the vars_prompts list.
+
+        :arg attr: The attr parameter.
+        :arg ds: The ds parameter.
+        :returns: The vars_prompts list.
+        """
         new_ds = preprocess_vars(ds)
         vars_prompts = []
         if new_ds is not None:
@@ -351,9 +430,21 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def get_vars(self):
+        """
+        Return a copy of the `vars` attribute of the object.
+
+        :returns: A copy of the `vars` attribute.
+        """
         return self.vars.copy()
 
     def get_vars_files(self):
+        """
+        Return a list of the `vars_files` attribute of the object.
+
+        If `vars_files` is not a list, it returns a list containing `vars_files`.
+
+        :returns: A list of `vars_files`.
+        """
         if self.vars_files is None:
             return []
         elif not isinstance(self.vars_files, list):
@@ -361,12 +452,30 @@ class Play(Base, Taggable, CollectionSearch):
         return self.vars_files
 
     def get_handlers(self):
+        """
+        Return a copy of the `handlers` attribute of the object.
+
+        :returns: A copy of the `handlers` attribute.
+        """
         return self.handlers[:]
 
     def get_roles(self):
+        """
+        Return a copy of the `roles` attribute of the object.
+
+        :returns: A copy of the `roles` attribute.
+        """
         return self.roles[:]
 
     def get_tasks(self):
+        """
+        Return a list of tasks from the object, including pre_tasks, tasks, and post_tasks.
+
+        If a task is an instance of the `Block` class, it retrieves and appends the
+        `block`, `rescue`, and `always` attributes to the tasklist.
+
+        :returns: A list of tasks.
+        """
         tasklist = []
         for task in self.pre_tasks + self.tasks + self.post_tasks:
             if isinstance(task, Block):
@@ -376,6 +485,14 @@ class Play(Base, Taggable, CollectionSearch):
         return tasklist
 
     def serialize(self):
+        """
+        Return a dictionary containing the serialized data of the `Play` object.
+
+        The serialized data includes the serialized `roles`, `included_path`,
+        `action_groups`, and `group_actions` attributes.
+
+        :returns: A dictionary containing the serialized data.
+        """
         data = super(Play, self).serialize()
 
         roles = []
@@ -389,6 +506,15 @@ class Play(Base, Taggable, CollectionSearch):
         return data
 
     def deserialize(self, data):
+        """
+        Deserializes the data into the Play object.
+
+        This method calls the `deserialize` method of the parent class
+        and then sets the `_included_path`, `_action_groups`, `_group_actions`,
+        and `roles` attributes of the Play object based on the data.
+
+        :param data: The data to deserialize into the Play object.
+        """
         super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
@@ -406,6 +532,11 @@ class Play(Base, Taggable, CollectionSearch):
             del data['roles']
 
     def copy(self):
+        """
+        Create a copy of the Play object.
+
+        :returns: The copied Play object.
+        """
         new_me = super(Play, self).copy()
         new_me.role_cache = self.role_cache.copy()
         new_me._included_conditional = self._included_conditional

@@ -43,14 +43,25 @@ class RoleMetadata(Base, CollectionSearch):
     argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
+        """
+        Initialize the RoleMetadata object.
+
+        :kwarg owner: The owner of the RoleMetadata object. Defaults to None.
+        """
         self._owner = owner
         super(RoleMetadata, self).__init__()
 
     @staticmethod
     def load(data, owner, variable_manager=None, loader=None):
-        '''
-        Returns a new RoleMetadata object based on the datastructure passed in.
-        '''
+        """
+        Load the RoleMetadata object based on the provided data.
+
+        :arg data: The datastructure representing the metadata.
+        :arg owner: The owner of the RoleMetadata object.
+        :kwarg variable_manager: The variable manager to be used. Defaults to None.
+        :kwarg loader: The loader to be used. Defaults to None.
+        :returns: The loaded RoleMetadata object.
+        """
 
         if not isinstance(data, dict):
             raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
@@ -109,11 +120,26 @@ class RoleMetadata(Base, CollectionSearch):
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 
     def serialize(self):
+        """
+        Serialize the object into a dictionary.
+
+        Returns a dictionary with the values of the '_allow_duplicates' and
+        '_dependencies' attributes.
+        """
         return dict(
             allow_duplicates=self._allow_duplicates,
             dependencies=self._dependencies
         )
 
     def deserialize(self, data):
+        """
+        Deserialize the object from a dictionary.
+
+        Sets the 'allow_duplicates' and 'dependencies' attributes of the object based
+        on the values in the 'data' dictionary.
+
+        :arg data: A dictionary containing the values for 'allow_duplicates' and
+        'dependencies'.
+        """
         setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
         setattr(self, 'dependencies', data.get('dependencies', []))

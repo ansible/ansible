@@ -122,10 +122,14 @@ class PlaybookInclude(Base, Conditional, Taggable):
         return pb
 
     def preprocess_data(self, ds):
-        '''
+        """
         Regorganizes the data for a PlaybookInclude datastructure to line
         up with what we expect the proper attributes to be
-        '''
+
+        :arg ds: The data structure to be preprocessed.
+        :raises AnsibleAssertionError: If the input data structure is not a dictionary.
+        :returns: The updated data structure after preprocessing.
+        """
 
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))

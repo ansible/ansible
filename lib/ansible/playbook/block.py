@@ -85,12 +85,18 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     @staticmethod
     def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+        """
+        Load data into a new block object and return the object.
+        """
         implicit = not Block.is_block(data)
         b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers, implicit=implicit)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
     @staticmethod
     def is_block(ds):
+        """
+        Check if a given data structure is a block.
+        """
         is_block = False
         if isinstance(ds, dict):
             for attr in ('block', 'rescue', 'always'):
@@ -114,6 +120,12 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return super(Block, self).preprocess_data(ds)
 
     def _load_block(self, attr, ds):
+        """
+        Load a block of tasks from the input ds.
+
+        :arg attr: The attribute to load the block for.
+        :arg ds: The input data structure to load the block from.
+        """
         try:
             return load_list_of_tasks(
                 ds,
@@ -129,6 +141,19 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds, orig_exc=e)
 
     def _load_rescue(self, attr, ds):
+        """
+        Load a list of tasks from a data structure.
+
+        The function uses the load_list_of_tasks function to load a list of tasks from
+        the provided data structure. It passes various parameters to the
+        load_list_of_tasks function, including the play, block, role,
+        task_include, variable_manager, loader, and use_handlers.
+
+        :arg attr: The attribute name.
+        :arg ds: The data structure from which to load the tasks.
+
+        :returns: The loaded list of tasks.
+        """
         try:
             return load_list_of_tasks(
                 ds,
@@ -144,6 +169,19 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds, orig_exc=e)
 
     def _load_always(self, attr, ds):
+        """
+        Load a list of tasks from a data structure.
+
+        The function uses the load_list_of_tasks function to load a list of tasks from
+        the provided data structure. It passes various parameters to the
+        load_list_of_tasks function, including the play, block, role,
+        task_include, variable_manager, loader, and use_handlers.
+
+        :arg attr: The attribute name.
+        :arg ds: The data structure from which to load the tasks.
+
+        :returns: The loaded list of tasks.
+        """
         try:
             return load_list_of_tasks(
                 ds,
@@ -159,12 +197,34 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
 
     def _validate_always(self, attr, name, value):
+        """
+        Validate the 'always' keyword.
+
+        The function checks if the 'always' keyword is used without a 'block' keyword.
+        If it is, it raises an AnsibleParserError with a specific error message.
+
+        :arg attr: The attribute name.
+        :arg name: The name of the keyword being validated.
+        :arg value: The value of the keyword being validated.
+        """
         if value and not self.block:
             raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
 
     _validate_rescue = _validate_always
 
     def get_dep_chain(self):
+        """
+        Return the dependency chain of the object.
+
+        If the '_dep_chain' instance variable is None, the function checks if the
+        '_parent' instance variable exists.
+        If it does, the function recursively calls the 'get_dep_chain' method on the
+        parent object.
+        If '_parent' is None, the function returns None.
+
+        If '_dep_chain' is not None, the function returns a copy of the '_dep_chain'
+        instance variable.
+        """
         if self._dep_chain is None:
             if self._parent:
                 return self._parent.get_dep_chain()
@@ -174,6 +234,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             return self._dep_chain[:]
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
+
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
@@ -219,10 +280,12 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return new_me
 
     def serialize(self):
-        '''
+        """
         Override of the default serialize method, since when we're serializing
         a task we don't want to include the attribute list of tasks.
-        '''
+
+        :returns: A dictionary containing the serialized representation of the task.
+        """
 
         data = dict()
         for attr in self.fattributes:
@@ -278,6 +341,11 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             self._dep_chain = self._parent.get_dep_chain()
 
     def set_loader(self, loader):
+        """
+        Set the loader for the current instance and its dependencies.
+
+        :arg loader: The loader to be set.
+        """
         self._loader = loader
         if self._parent:
             self._parent.set_loader(loader)
@@ -290,9 +358,20 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 dep.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
-        '''
-        Generic logic to get the attribute or parent attribute for a block value.
-        '''
+        """
+        Retrieve the value of the attribute for a block value.
+
+        The function retrieves the value of the attribute for the given block value.
+        It first checks if the value is present in the current object, and if not, it
+        checks the parent and role objects. It also handles extending and
+        prepending values based on certain conditions.
+
+        :arg attr: The name of the attribute to retrieve.
+        :arg omit: A boolean indicating whether to omit the current object and only
+                    retrieve parent values. Defaults to False.
+
+        :returns: The value of the attribute for the given block value.
+        """
         fattr = self.fattributes[attr]
 
         extend = fattr.extend
@@ -390,6 +469,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return evaluate_block(self)
 
     def get_tasks(self):
+
         def evaluate_and_append_task(target):
             tmp_list = []
             for task in target:
@@ -432,6 +512,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return True
 
     def get_first_parent_include(self):
+        """
+        Retrieve the first parent include of a block.
+        """
         from ansible.playbook.task_include import TaskInclude
         if self._parent:
             if isinstance(self._parent, TaskInclude):

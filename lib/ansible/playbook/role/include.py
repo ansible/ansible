@@ -36,11 +36,32 @@ class RoleInclude(RoleDefinition, Delegatable):
     """
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
+        """
+        Initialize the RoleInclude object with the given parameters.
+
+        :arg play: The play in which the role is included.
+        :arg role_basedir: The base directory for the role.
+        :arg variable_manager: The variable manager.
+        :arg loader: The loader.
+        :arg collection_list: The collection list.
+        """
         super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager,
                                           loader=loader, collection_list=collection_list)
 
     @staticmethod
     def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=None):
+        """
+        Load role data.
+
+        :arg data: The role data to load.
+        :arg play: The play.
+        :arg current_role_path: The current role path.
+        :arg parent_role: The parent role.
+        :arg variable_manager: The variable manager.
+        :arg loader: The loader.
+        :arg collection_list: The collection list.
+        :returns: The loaded role data.
+        """
 
         if not (isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)):
             raise AnsibleParserError("Invalid role definition: %s" % to_native(data))

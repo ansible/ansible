@@ -115,6 +115,13 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 return "%s" % (self.action,)
 
     def _merge_kv(self, ds):
+        """
+        Merge key-value pairs in a dictionary into a string.
+
+        :arg ds: A dictionary containing key-value pairs.
+        :returns: A string representing the merged key-value pairs, excluding keys
+        starting with an underscore.
+        """
         if ds is None:
             return ""
         elif isinstance(ds, string_types):
@@ -130,18 +137,47 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+        """
+        Load data into a Task object.
+
+        :arg data: The data to be loaded.
+        :kwarg block: The block to be passed to the Task object. Defaults to None.
+        :kwarg role: The role to be passed to the Task object. Defaults to None.
+        :kwarg task_include: The task_include to be passed to the Task object. Defaults
+        to None.
+        :kwarg variable_manager: The variable_manager to be passed to the Task object.
+        Defaults to None.
+        :kwarg loader: The loader to be passed to the Task object. Defaults to None.
+        :returns: The loaded Task object.
+        """
         t = Task(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def __repr__(self):
-        ''' returns a human readable representation of the task '''
+        """
+        Return a human-readable representation of the Task object.
+
+        If the action is a meta task, the representation includes the raw parameters.
+        Otherwise, it includes the task name.
+
+        :returns: A human-readable representation of the Task object.
+        """
         if self.action in C._ACTION_META:
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
 
     def _preprocess_with_loop(self, ds, new_ds, k, v):
-        ''' take a lookup plugin name and store it correctly '''
+        """
+        Take a lookup plugin name and store it correctly.
+
+        :arg ds: The original dictionary containing the lookup plugin name and value.
+        :arg new_ds: The dictionary where the lookup plugin name and value will be stored.
+        :arg k: The lookup plugin name.
+        :arg v: The lookup plugin value.
+        :raises AnsibleError: If duplicate loop definitions are found or if the lookup
+        plugin value is None.
+        """
 
         loop_name = k.removeprefix("with_")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
@@ -249,6 +285,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return super(Task, self).preprocess_data(new_ds)
 
     def _load_loop_control(self, attr, ds):
+        """
+        Load the loop control data.
+
+        :arg attr: The attribute to load.
+        :arg ds: The data structure to load from.
+        :raises AnsibleParserError: If the data structure is not a dictionary.
+        :returns: The loaded data.
+        """
         if not isinstance(ds, dict):
             raise AnsibleParserError(
                 "the `loop_control` value must be specified as a dictionary and cannot "
@@ -259,6 +303,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
 
     def _validate_attributes(self, ds):
+        """
+        Validate the attributes of a task.
+
+        :arg ds: The data structure to validate.
+        """
         try:
             super(Task, self)._validate_attributes(ds)
         except AnsibleParserError as e:
@@ -266,10 +315,24 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             raise e
 
     def _validate_changed_when(self, attr, name, value):
+        """
+        Validate the 'changed_when' attribute of a task.
+
+        :arg attr: The attribute to validate.
+        :arg name: The name of the attribute.
+        :arg value: The value of the attribute.
+        """
         if not isinstance(value, list):
             setattr(self, name, [value])
 
     def _validate_failed_when(self, attr, name, value):
+        """
+        Validate the 'failed_when' attribute of a task.
+
+        :arg attr: The attribute to validate.
+        :arg name: The name of the attribute.
+        :arg value: The value of the attribute.
+        """
         if not isinstance(value, list):
             setattr(self, name, [value])
 
@@ -357,6 +420,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return value
 
     def get_vars(self):
+        """
+        Retrieve all variables from the instance and its parent, excluding 'tags' and
+        'when' variables.
+        """
         all_vars = dict()
         if self._parent:
             all_vars |= self._parent.get_vars()
@@ -371,6 +438,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return all_vars
 
     def get_include_params(self):
+        """
+        Retrieve variables from the instance and its parent if the action is in
+        C._ACTION_ALL_INCLUDES.
+        """
         all_vars = dict()
         if self._parent:
             all_vars |= self._parent.get_include_params()
@@ -412,6 +483,16 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return data
 
     def deserialize(self, data):
+        """
+        Deserialize the data to populate the attributes of the Task object.
+
+        The function first checks if there is a parent object and deserializes it if present.
+        Then it checks if there is a role object and deserializes it if present.
+        Finally, it sets the 'implicit' and 'resolved_action' attributes and calls the
+        'deserialize' function of the super class.
+
+        :param data: The data to be deserialized.
+        """
 
         # import is here to avoid import loops
         from ansible.playbook.task_include import TaskInclude
@@ -443,11 +524,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         super(Task, self).deserialize(data)
 
     def set_loader(self, loader):
-        '''
-        Sets the loader on this object and recursively on parent, child objects.
-        This is used primarily after the Task has been serialized/deserialized, which
-        does not preserve the loader.
-        '''
+        """
+        Set the loader on this object and recursively on parent, child objects.
+
+        This is used primarily after the Task has been serialized/deserialized,
+        which does not preserve the loader.
+
+        :param loader: The loader to be set.
+        """
 
         self._loader = loader
 
@@ -455,9 +539,15 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
-        '''
+        """
         Generic logic to get the attribute or parent attribute for a task value.
-        '''
+
+        :arg attr: The name of the attribute to retrieve.
+        :kwarg omit: A boolean indicating whether to omit the current object's value
+        and only retrieve the parent object's value. Defaults to False.
+
+        :returns: The retrieved value of the attribute for the current object.
+        """
         fattr = self.fattributes[attr]
 
         extend = fattr.extend
@@ -495,11 +585,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return value
 
     def all_parents_static(self):
+        """
+        Recursively checks if the `_parent` attribute is set and if it is, calls the
+        `all_parents_static` function on the `_parent` object. If `_parent` is `None`,
+        it returns True.
+        """
         if self._parent:
             return self._parent.all_parents_static()
         return True
 
     def get_first_parent_include(self):
+        """
+        Checks if the `_parent` attribute is set and if it is, checks if the `_parent`
+        object is an instance of `TaskInclude`. If it is, it returns the `_parent`
+        object. Otherwise, it calls the `get_first_parent_include` function on the
+        `_parent` object. If `_parent` is `None`, it returns None.
+        """
         from ansible.playbook.task_include import TaskInclude
         if self._parent:
             if isinstance(self._parent, TaskInclude):
@@ -508,6 +609,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return None
 
     def get_play(self):
+        """
+        Iteratively traverses the `_parent` hierarchy until it finds an object of type
+        `Block`. Once it finds a `Block`, it returns the `_play` attribute of that
+        `Block` object.
+        """
         parent = self._parent
         while not isinstance(parent, Block):
             parent = parent._parent

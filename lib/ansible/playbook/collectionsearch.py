@@ -15,6 +15,14 @@ display = Display()
 
 
 def _ensure_default_collection(collection_list=None):
+    """
+    Ensure the default collection is included in the collection list.
+
+    :arg collection_list: A list of collections. Defaults to None.
+    :returns: A list of collections with the default collection inserted if not
+    already present, and with 'ansible.builtin' and 'ansible.legacy' included
+    if there are other collections.
+    """
     default_collection = AnsibleCollectionConfig.default_collection
 
     # Will be None when used as the default

@@ -37,6 +37,12 @@ class Conditional:
     when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
 
     def __init__(self, loader=None):
+        """
+        Initialize the Conditional object.
+
+        :kwarg loader: The loader to be used. Defaults to None.
+        :raises AnsibleError: If a loader is not specified when using Conditional directly.
+        """
         # when used directly, this class needs a loader, but we want to
         # make sure we don't trample on the existing one if this class
         # is used as a mix-in with a playbook base class
@@ -48,14 +54,24 @@ class Conditional:
         super().__init__()
 
     def _validate_when(self, attr, name, value):
+        """
+        Validate the when attribute.
+
+        :arg attr: The attribute.
+        :arg name: The name of the attribute.
+        :arg value: The value of the attribute.
+        """
         if not isinstance(value, list):
             setattr(self, name, [value])
 
     def evaluate_conditional(self, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
-        '''
-        Loops through the conditionals set on this object, returning
-        False if any of them evaluate as such.
-        '''
+        """
+        Evaluate the conditional.
+
+        :arg templar: The Templar object.
+        :arg all_vars: A dictionary containing all variables.
+        :returns: True if all conditions evaluate to True, False otherwise.
+        """
         return self.evaluate_conditional_with_result(templar, all_vars)[0]
 
     def evaluate_conditional_with_result(self, templar: Templar, all_vars: dict[str, t.Any]) -> tuple[bool, t.Optional[str]]:
@@ -84,6 +100,20 @@ class Conditional:
         return True, None
 
     def _check_conditional(self, conditional: str, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
+        """
+        Check the given conditional statement.
+
+        This method takes in a conditional statement, an instance of the `Templar`
+        class, and a dictionary of all variables.
+        It evaluates the conditional statement and returns a boolean value based on the
+        evaluation result.
+
+        :arg conditional: A string representing a conditional statement.
+        :arg templar: An instance of the `Templar` class.
+        :arg all_vars: A dictionary containing all variables.
+        :returns: A boolean value indicating the result of evaluating the conditional
+        statement.
+        """
         original = conditional
         templar.available_variables = all_vars
         try:

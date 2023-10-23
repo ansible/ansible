@@ -44,6 +44,15 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
     role = NonInheritableFieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
+        """
+        Initialize the RoleDefinition instance with given parameters.
+
+        :arg play: The play instance. Defaults to None.
+        :kwarg role_basedir: The base directory of the role. Defaults to None.
+        :kwarg variable_manager: The variable manager. Defaults to None.
+        :kwarg loader: The loader. Defaults to None.
+        :kwarg collection_list: The list of collections. Defaults to None.
+        """
 
         super(RoleDefinition, self).__init__()
 
@@ -62,9 +71,39 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
+        """
+        Load data into the RoleDefinition instance.
+
+        :arg data: The data to be loaded.
+        :kwarg variable_manager: The variable manager. Defaults to None.
+        :kwarg loader: The loader. Defaults to None.
+        :raises AnsibleError: Always raises an 'AnsibleError'.
+        """
         raise AnsibleError("not implemented")
 
     def preprocess_data(self, ds):
+        """
+        Preprocess the input data.
+
+        The function performs the following steps:
+        - If the input data is an integer, it is converted to a string.
+        - If the input data is not a dictionary, string, or AnsibleBaseYAMLObject, an
+        AnsibleAssertionError is raised.
+        - If the input data is a dictionary, it is preprocessed using the super class's
+        preprocess_data method.
+        - The original input data is saved as self._ds.
+        - A new data structure (new_ds) is created to preserve file:line:column information.
+        - The role name is extracted from the data structure and used to determine the
+        role path.
+        - The role parameters are split from the valid role attributes, and the new
+        data structure is updated.
+        - The role name is set in the new data structure.
+        - The role path is stored internally.
+        - The cleaned-up data structure (new_ds) is returned.
+
+        :arg ds: The input data to be preprocessed.
+        :returns: The cleaned-up data structure.
+        """
         # role names that are simply numbers can be parsed by PyYAML
         # as integers even when quoted, so turn it into a string type
         if isinstance(ds, int):
@@ -233,6 +272,19 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return self._role_path
 
     def get_name(self, include_role_fqcn=True):
+        """
+        Return the name of the object.
+
+        If include_role_fqcn is True, return the concatenation of the _role_collection
+        and role attributes, separated by a dot. If include_role_fqcn is False,
+        return the role attribute.
+
+        :arg include_role_fqcn: A boolean indicating whether to include the
+        _role_collection attribute.
+                                Defaults to True.
+
+        :returns: The name of the object.
+        """
         if include_role_fqcn:
             return '.'.join(x for x in (self._role_collection, self.role) if x)
         return self.role

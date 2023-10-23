@@ -64,6 +64,13 @@ class RoleRequirement(RoleDefinition):
 
     @staticmethod
     def role_yaml_parse(role):
+        """
+        Parse a role to extract the name, source, SCM (Source Code Management) type,
+        and version.
+
+        :arg role: The role to be parsed.
+        :returns: A dictionary containing the parsed role.
+        """
 
         if isinstance(role, string_types):
             name = None
@@ -122,5 +129,18 @@ class RoleRequirement(RoleDefinition):
 
     @staticmethod
     def scm_archive_role(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
+        """
+        Archives a resource using the specified source control management system.
+
+        :arg src: The source of the resource to be archived.
+        :kwarg scm: The source control management system to be used. Defaults to 'git'.
+        :kwarg name: The name of the resource. Defaults to None.
+        :kwarg version: The version of the resource. Defaults to 'HEAD'.
+        :kwarg keep_scm_meta: Whether to keep the source control management metadata.
+        Defaults to False.
+
+        :returns: The result of archiving the resource using the specified source
+        control management system.
+        """
 
         return scm_archive_resource(src, scm=scm, name=name, version=version, keep_scm_meta=keep_scm_meta)

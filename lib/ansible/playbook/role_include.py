@@ -67,6 +67,14 @@ class IncludeRole(TaskInclude):
         return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
+        """
+        Retrieve a list of blocks and handlers for a given play in a role.
+
+        :arg play: The play object for the role. Defaults to None.
+        :arg variable_manager: The variable manager object. Defaults to None.
+        :arg loader: The loader object. Defaults to None.
+        :returns: A tuple containing the blocks and handlers.
+        """
 
         # only need play passed in when dynamic
         if play is None:
@@ -119,6 +127,18 @@ class IncludeRole(TaskInclude):
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+        """
+        Load data and return an instance of the IncludeRole class.
+
+        :arg data: The data to be loaded.
+        :kwarg block: The block to be included. Defaults to None.
+        :kwarg role: The role to be included. Defaults to None.
+        :kwarg task_include: The task to be included. Defaults to None.
+        :kwarg variable_manager: The variable manager to be used. Defaults to None.
+        :kwarg loader: The loader to be used. Defaults to None.
+
+        :returns: An instance of the IncludeRole class.
+        """
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
@@ -161,6 +181,20 @@ class IncludeRole(TaskInclude):
         return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
+        """
+        Create a copy of the current instance.
+
+        The method creates a new instance of the 'IncludeRole' class and copies the
+        attributes from the current instance to the new instance. The
+        'exclude_parent' and 'exclude_tasks' arguments can be used to exclude
+        certain attributes from being copied.
+
+        :arg exclude_parent: A boolean indicating whether to exclude the parent
+        attribute from being copied. Defaults to False.
+        :arg exclude_tasks: A boolean indicating whether to exclude the tasks attribute
+        from being copied. Defaults to False.
+        :returns: A new instance of the 'IncludeRole' class with the copied attributes.
+        """
 
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
@@ -172,6 +206,15 @@ class IncludeRole(TaskInclude):
         return new_me
 
     def get_include_params(self):
+        """
+        Get the parameters for including a role.
+
+        The method retrieves the parameters for including a role by calling the
+        'get_include_params' method of the base class. If a parent role is
+        specified, additional parameters are added to the retrieved parameters.
+
+        :returns: The parameters for including a role.
+        """
         v = super(IncludeRole, self).get_include_params()
         if self._parent_role:
             v |= self._parent_role.get_role_params()

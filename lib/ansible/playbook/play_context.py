@@ -115,6 +115,11 @@ class PlayContext(Base):
 
     @property
     def verbosity(self):
+        """
+        Set the verbosity level of the PlayContext object.
+
+        :arg value: The verbosity level to set.
+        """
         display.deprecated(
             "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
             version="2.18"
@@ -123,6 +128,11 @@ class PlayContext(Base):
 
     @verbosity.setter
     def verbosity(self, value):
+        """
+        Set the verbosity level of the PlayContext object.
+
+        :arg value: The verbosity level to set.
+        """
         display.deprecated(
             "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
             version="2.18"
@@ -130,6 +140,22 @@ class PlayContext(Base):
         self._internal_verbosity = value
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
+        """
+        Initializes the PlayContext object with optional parameters.
+
+        The method sets the passwords for the connection and become methods, and initializes
+        various attributes such as prompt and success_key. It also sets the
+        connection_lockfd attribute.
+        If CLIARGS is set, it calls set_attributes_from_cli to set options from the
+        command line arguments.
+        If a play object is provided, it calls set_attributes_from_play to set options
+        from the play object.
+
+        :arg play: An optional play object. Defaults to None.
+        :arg passwords: An optional dictionary of passwords. Defaults to None.
+        :arg connection_lockfd: An optional file descriptor to be used during locking
+        operations. Defaults to None.
+        """
         # Note: play is really not optional.  The only time it could be omitted is when we create
         # a PlayContext just so we can invoke its deserialize method to load it from a serialized
         # data source.
@@ -160,6 +186,14 @@ class PlayContext(Base):
             self.set_attributes_from_play(play)
 
     def set_attributes_from_plugin(self, plugin):
+        """
+        Sets attributes for the PlayContext object from the given plugin.
+
+        The method retrieves options for the plugin and sets the corresponding attributes
+        for the PlayContext object.
+
+        :arg plugin: The plugin object from which to retrieve the options.
+        """
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
@@ -171,14 +205,25 @@ class PlayContext(Base):
                     setattr(self, flag, plugin.get_option(flag))
 
     def set_attributes_from_play(self, play):
+        """
+        Set the 'force_handlers' attribute of the current object to the value of
+        'force_handlers' attribute of the 'play' object passed as a parameter.
+
+        :arg play: The play object from which to retrieve the 'force_handlers' attribute.
+        """
         self.force_handlers = play.force_handlers
 
     def set_attributes_from_cli(self):
-        '''
-        Configures this connection information instance with data from
-        options specified by the user on the command line. These have a
-        lower precedence than those set on the play or host.
-        '''
+        """
+        Configure this connection information instance with data from options specified
+        by the user on the command line. These have a lower precedence than those set on the play
+        or host.
+
+        The method retrieves the 'timeout', 'private_key_file', '_internal_verbosity',
+        and 'start_at_task' options from the 'context.CLIARGS' dictionary and sets
+        the corresponding attributes of the current object to the retrieved
+        values, if they exist.
+        """
         if context.CLIARGS.get('timeout', False):
             self.timeout = int(context.CLIARGS['timeout'])
 
@@ -329,13 +374,20 @@ class PlayContext(Base):
         return new_info
 
     def set_become_plugin(self, plugin):
+        """
+        Sets the _become_plugin class variable to the given plugin.
+
+        :arg plugin: The plugin to be set as _become_plugin.
+        """
         self._become_plugin = plugin
 
     def update_vars(self, variables):
-        '''
+        """
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         In case users need to access from the play, this is a legacy from runner.
-        '''
+
+        :arg variables: The variable dictionary to which the 'magic' variables will be added.
+        """
 
         for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
             try:

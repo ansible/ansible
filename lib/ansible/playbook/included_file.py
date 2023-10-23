@@ -61,6 +61,15 @@ class IncludedFile:
 
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
+        """
+        Process include results and return a list of included files.
+
+        :arg results: A list of include results.
+        :arg iterator: The iterator.
+        :arg loader: The loader.
+        :arg variable_manager: The variable manager.
+        :returns: A list of included files.
+        """
         included_files = []
         task_vars_cache = {}
 
