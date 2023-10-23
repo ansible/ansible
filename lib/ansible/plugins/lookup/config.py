@@ -21,9 +21,9 @@ DOCUMENTATION = """
         default: error
         type: string
         choices:
-            error: Return a message and raise fatal signal.
-            warn:  Return a message, but do nothing else.
-            skip:  Ignore.
+            error: Issue an error message and raise fatal signal
+            warn:  Issue a warning message and continue
+            skip:  Silently ignore
       plugin_type:
         description: The type of the plugin referenced by 'plugin_name' option.
         choices: ['become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars']
