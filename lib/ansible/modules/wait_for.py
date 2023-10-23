@@ -588,7 +588,7 @@ def main():
                     def _searchit(search):
                         if search.groupdict():
                             match_groupdict = search.groupdict()
-                         if search.groups():
+                        if search.groups():
                             match_groups = search.groups()
 
                     try:
