@@ -1,0 +1,18 @@
+DOCUMENTATION:
+  name: filter1
+  version_added: "1.9"
+  short_description: Does nothing
+  description:
+    - Really, does nothing
+  notes:
+    - This is a test filter
+  positional: _input
+  options:
+    _input:
+      description: the input
+      required: true
+
+EXAMPLES: ''
+RETURN:
+  _value:
+    description: The input

@@ -4,13 +4,14 @@
 
 from __future__ import annotations
 
+import io
 import socket
 import sys
+import http.client
+import urllib.error
+from http.cookiejar import Cookie
 
-from ansible.module_utils.six import StringIO
-from ansible.module_utils.six.moves.http_cookiejar import Cookie
-from ansible.module_utils.six.moves.http_client import HTTPMessage
-from ansible.module_utils.urls import fetch_url, urllib_error, ConnectionError, NoSSLError, httplib
+from ansible.module_utils.urls import fetch_url, ConnectionError
 
 import pytest
 from units.compat.mock import MagicMock
@@ -52,13 +53,6 @@ class FakeAnsibleModule:
         raise FailJson(*args, **kwargs)
 
 
-def test_fetch_url_no_urlparse(mocker, fake_ansible_module):
-    mocker.patch('ansible.module_utils.urls.HAS_URLPARSE', new=False)
-
-    with pytest.raises(FailJson):
-        fetch_url(fake_ansible_module, 'http://ansible.com/')
-
-
 def test_fetch_url(open_url_mock, fake_ansible_module):
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
@@ -98,13 +92,8 @@ def test_fetch_url_cookies(mocker, fake_ansible_module):
     def make_cookies(*args, **kwargs):
         cookies = kwargs['cookies']
         r = MagicMock()
-        try:
-            r.headers = HTTPMessage()
-            add_header = r.headers.add_header
-        except TypeError:
-            # PY2
-            r.headers = HTTPMessage(StringIO())
-            add_header = r.headers.addheader
+        r.headers = http.client.HTTPMessage()
+        add_header = r.headers.add_header
         r.info.return_value = r.headers
         for name, value in (('Foo', 'bar'), ('Baz', 'qux')):
             cookie = Cookie(
@@ -150,26 +139,6 @@ def test_fetch_url_cookies(mocker, fake_ansible_module):
     assert info['set-cookie'] == 'Foo=bar, Baz=qux'
 
 
-def test_fetch_url_nossl(open_url_mock, fake_ansible_module, mocker):
-    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='notredhat')
-
-    open_url_mock.side_effect = NoSSLError
-    with pytest.raises(FailJson) as excinfo:
-        fetch_url(fake_ansible_module, 'http://ansible.com/')
-
-    assert 'python-ssl' not in excinfo.value.kwargs['msg']
-
-    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='redhat')
-
-    open_url_mock.side_effect = NoSSLError
-    with pytest.raises(FailJson) as excinfo:
-        fetch_url(fake_ansible_module, 'http://ansible.com/')
-
-    assert 'python-ssl' in excinfo.value.kwargs['msg']
-    assert 'http://ansible.com/' == excinfo.value.kwargs['url']
-    assert excinfo.value.kwargs['status'] == -1
-
-
 def test_fetch_url_connectionerror(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = ConnectionError('TESTS')
     with pytest.raises(FailJson) as excinfo:
@@ -189,12 +158,12 @@ def test_fetch_url_connectionerror(open_url_mock, fake_ansible_module):
 
 
 def test_fetch_url_httperror(open_url_mock, fake_ansible_module):
-    open_url_mock.side_effect = urllib_error.HTTPError(
+    open_url_mock.side_effect = urllib.error.HTTPError(
         'http://ansible.com/',
         500,
         'Internal Server Error',
         {'Content-Type': 'application/json'},
-        StringIO('TESTS')
+        io.StringIO('TESTS')
     )
 
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
@@ -204,7 +173,7 @@ def test_fetch_url_httperror(open_url_mock, fake_ansible_module):
 
 
 def test_fetch_url_urlerror(open_url_mock, fake_ansible_module):
-    open_url_mock.side_effect = urllib_error.URLError('TESTS')
+    open_url_mock.side_effect = urllib.error.URLError('TESTS')
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
     assert info == {'msg': 'Request failed: <urlopen error TESTS>', 'status': -1, 'url': 'http://ansible.com/'}
 
@@ -224,6 +193,6 @@ def test_fetch_url_exception(open_url_mock, fake_ansible_module):
 
 
 def test_fetch_url_badstatusline(open_url_mock, fake_ansible_module):
-    open_url_mock.side_effect = httplib.BadStatusLine('TESTS')
+    open_url_mock.side_effect = http.client.BadStatusLine('TESTS')
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
     assert info == {'msg': 'Connection failure: connection was closed before a valid response was received: TESTS', 'status': -1, 'url': 'http://ansible.com/'}

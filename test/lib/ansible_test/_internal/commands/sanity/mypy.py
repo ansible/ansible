@@ -64,7 +64,6 @@ class MypyTest(SanityMultipleVersion):
     vendored_paths = (
         'lib/ansible/module_utils/six/__init__.py',
         'lib/ansible/module_utils/distro/_distro.py',
-        'lib/ansible/module_utils/compat/_selectors2.py',
     )
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:

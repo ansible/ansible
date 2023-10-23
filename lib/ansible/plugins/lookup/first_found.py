@@ -186,7 +186,7 @@ class LookupModule(LookupBase):
             # NOTE: this is used as 'global' but  can be set many times?!?!?
             skip = self.get_option('skip')
 
-            # magic extra spliting to create lists
+            # magic extra splitting to create lists
             filelist = _split_on(files, ',;')
             pathlist = _split_on(paths, ',:;')
 
@@ -238,6 +238,6 @@ class LookupModule(LookupBase):
 
         # if we get here, no file was found
         if skip:
-            # NOTE: global skip wont matter, only last 'skip' value in dict term
+            # NOTE: global skip won't matter, only last 'skip' value in dict term
             return []
         raise AnsibleLookupError("No file was found when using first_found.")

@@ -456,7 +456,9 @@ class SourcesList(object):
 
 class UbuntuSourcesList(SourcesList):
 
-    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
+    # prefer api.launchpad.net over launchpad.net/api
+    # see: https://github.com/ansible/ansible/pull/81978#issuecomment-1767062178
+    LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
 
     def __init__(self, module):
         self.module = module

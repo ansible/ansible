@@ -4,6 +4,8 @@ dill==0.3.7
 isort==5.12.0
 mccabe==0.7.0
 platformdirs==3.11.0
-pylint==3.0.0
+pylint==3.0.1
 PyYAML==6.0.1
+tomli==2.0.1
 tomlkit==0.12.1
+typing_extensions==4.8.0

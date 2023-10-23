@@ -65,18 +65,6 @@ install_pip() {
     fi
 }
 
-pip_install() {
-    pip_packages="$1"
-
-    while true; do
-        # shellcheck disable=SC2086
-        "${python_interpreter}" -m pip install --disable-pip-version-check ${pip_packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
-}
-
 bootstrap_remote_alpine()
 {
     py_pkg_prefix="py3"
@@ -277,17 +265,6 @@ bootstrap_remote_rhel()
     case "${platform_version}" in
         9.*) bootstrap_remote_rhel_9 ;;
     esac
-}
-
-bootstrap_remote_rhel_pinned_pip_packages()
-{
-    # pin packaging and pyparsing to match the downstream vendored versions
-    pip_packages="
-        packaging==20.4
-        pyparsing==2.4.7
-        "
-
-    pip_install "${pip_packages}"
 }
 
 bootstrap_remote_ubuntu()

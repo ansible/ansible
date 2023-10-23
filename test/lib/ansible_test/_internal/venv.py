@@ -159,7 +159,7 @@ def run_venv(
     pip: bool,
     path: str,
 ) -> bool:
-    """Create a virtual environment using the 'venv' module. Not available on Python 2.x."""
+    """Create a virtual environment using the 'venv' module."""
     cmd = [run_python, '-m', 'venv']
 
     if system_site_packages:

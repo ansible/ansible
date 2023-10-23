@@ -38,9 +38,6 @@ def enable_assertion_rewriting_hook():  # type: () -> None
     """
     import sys
 
-    if sys.version_info[0] == 2:
-        return  # Python 2.x is not supported
-
     hook_name = '_pytest.assertion.rewrite.AssertionRewritingHook'
     hooks = [hook for hook in sys.meta_path if hook.__class__.__module__ + '.' + hook.__class__.__qualname__ == hook_name]
 

@@ -480,7 +480,7 @@ class JinjaPluginIntercept(MutableMapping):
             self._seen_it.remove(key)
             raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(original_exc or e)), 0)
 
-        # if i do have func and it is a filter, it nees wrapping
+        # if i do have func and it is a filter, it needs wrapping
         if self._pluginloader.type == 'filter':
             # filter need wrapping
             if key in C.STRING_TYPE_FILTERS:
