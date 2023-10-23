@@ -119,8 +119,9 @@ BECOME_ALLOW_SAME_USER:
   name: Allow becoming the same user
   default: False
   description:
-    - This setting controls if become is skipped when the remote user and become user are the same. In other words root sudo to root.
-    - If executable, it will be run and the resulting stdout will be used as the password.
+    - When ``False``(default), Ansible will skip using become if the remote user is the same as the become user, as this is normally a redundant operation.
+      In other words root sudo to root.
+    - If ``True``, this forces Ansible to use the become plugin anyways as there are cases in which this is needed.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
   ini:
   - {key: become_allow_same_user, section: privilege_escalation}
