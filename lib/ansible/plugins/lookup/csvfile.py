@@ -82,7 +82,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 
 class CSVRecoder:
     """
-    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    Iterator that reads an encoded stream and encodes the input to UTF-8
     """
     def __init__(self, f, encoding='utf-8'):
         self.reader = codecs.getreader(encoding)(f)
