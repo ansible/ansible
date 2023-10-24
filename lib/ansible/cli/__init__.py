@@ -192,9 +192,9 @@ class CLI(ABC):
         ret = tuple(parts)
         return ret
 
-    # TODO: verify that nothing else is passing an argument to 
+    # TODO: verify that nothing else is passing an argument to
     # create_new_password, then remove it from this function. If anything is
-    # using it inside the ansible codebase, remove it as an argument. If 
+    # using it inside the ansible codebase, remove it as an argument. If
     # external code depends on create_new_password being part of the signature,
     # then add documentation stating that create_new_password cannot be removed
     # due to external user code relying on it.
