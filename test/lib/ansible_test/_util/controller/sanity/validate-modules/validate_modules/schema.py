@@ -487,10 +487,17 @@ def check_option_choices(v):
         type_checker, type_name = get_type_checker({'type': v.get('elements')})
     else:
         type_checker, type_name = get_type_checker(v)
+
     if type_checker is None:
         return v
 
-    for value in v_choices:
+    if isinstance(v_choices, dict):
+        # choices are still a list (the keys) but dict form serves to document each choice.
+        iterate = v_choices.keys()
+    else:
+        iterate = v_choices
+
+    for value in iterate:
         try:
             type_checker(value)
         except Exception as exc:
@@ -542,7 +549,7 @@ def list_dict_option_schema(for_collection, plugin_type):
     basic_option_schema = {
         Required('description'): doc_string_or_strings,
         'required': bool,
-        'choices': list,
+        'choices': Any(list, {object: doc_string_or_strings}),
         'aliases': Any(list_string_types),
         'version_added': version(for_collection),
         'version_added_collection': collection_name,
