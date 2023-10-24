@@ -378,10 +378,6 @@ namespace Ansible.Basic
                     logSource = "Application";
                 }
             }
-            if (sanitise)
-            {
-                message = (string)RemoveNoLogValues(message, noLogValues);
-            }
 
             if (String.IsNullOrWhiteSpace(TargetLogInfo))
             {
@@ -390,6 +386,11 @@ namespace Ansible.Basic
             else
             {
                 message = String.Format("{0} {1} - {2}", ModuleName, TargetLogInfo, message);
+            }
+
+            if (sanitise)
+            {
+                message = (string)RemoveNoLogValues(message, noLogValues);
             }
 
             using (EventLog eventLog = new EventLog("Application"))
