@@ -21,7 +21,7 @@ EXAMPLES: |
 
   # as a selector
   - action: module=doessomething
-    when: lacp_groups|selectattr('interfaces', 'contains', 'em1')|first).master
+    when: (lacp_groups|selectattr('interfaces', 'contains', 'em1')|first).master
     vars:
       lacp_groups:
         - master: lacp0
