@@ -46,17 +46,16 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def is_path_outside_archive(archive_parent_dir : str, path : str, strict: bool) -> bool:
+def is_rel_path_outside_archive(archive_parent_dir : str, path : str, path_must_exist : bool = False) -> bool:
     """
-    Check if the second path is within the first and exists, and if not returns True.
+    Check if the path (relative to the archive) resolves to a path in the archive, and optionally validate the path exists.
     """
     try:
         # Get the absolute paths
         archive_dir = os.path.abspath(archive_parent_dir)
-        if not path.startswith(os.sep):
-            path = os.path.abspath(os.path.join(archive_parent_dir, path))
+        path = os.path.abspath(os.path.join(archive_parent_dir, path))
 
-        return not (path.startswith(archive_dir) and (not strict or os.path.exists(path)))
+        return not (path.startswith(archive_dir) and (not path_must_exist or os.path.exists(path)))
     except OSError:
         return True
 
@@ -423,21 +422,21 @@ class GalaxyRole(object):
                                         ignore_external.add(member)
                                         continue
                                     elif attr == 'linkname' and member not in ignore_external and (member.islnk() or member.issym()):
-                                        # https://docs.python.org/3/library/tarfile.html#tarfile.TarInfo.linkname
+                                        # https://docs.python.org/3/library/tarfile.html#tarfile.TarInfo.linkname:
+                                        # For symbolic links (SYMTYPE), the linkname is relative to the directory that contains the link.
+                                        # For hard links (LNKTYPE), the linkname is relative to the root of the archive.
                                         if member.islnk():
-                                            # relative to archive dir
-                                            resolve_path = os.path.join(*n_parts)
+                                            relative_path = os.path.join(*n_parts)
                                         else:
-                                            # relative to softlink dir
+                                            # name is relative to n_archive_parent_dir
                                             relative_to = os.path.dirname(member.name)
-                                            resolve_path = os.path.join(relative_to, *n_parts)
+                                            relative_path = os.path.join(relative_to, *n_parts)
 
-                                        # Because we split on os.sep, any symlinks that were not relative now are.
-                                        # This is quite forgiving, so to avoid broken content, validate it exists.
-                                        strict = n_attr_value.startswith(os.sep) and not n_attr_value.startswith(n_archive_parent_dir)
+                                        # Because we split on os.sep, any links that were not relative now are.
+                                        # To avoid installing incomplete roles successfully, we validate the sanitized paths exist.
+                                        bad_original_link = n_attr_value.startswith(os.sep) and not n_attr_value.startswith(n_archive_parent_dir)
 
-                                        # validate the path resolves to a path in the role directory
-                                        if is_path_outside_archive(n_archive_parent_dir, resolve_path, strict):
+                                        if is_rel_path_outside_archive(n_archive_parent_dir, relative_path, path_must_exist=bad_original_link):
                                             raise AnsibleError(f"install reverted, symlink '{member.name}' could not be found in the role: {attr_value}")
 
                                     n_final_parts = []
@@ -453,13 +452,16 @@ class GalaxyRole(object):
                                         # to debug a broken installation.
                                         if not n_part:
                                             continue
-                                        if (_invalid := (n_part == '..' and attr == 'name')) and (invalid_parts := _invalid):
+                                        if n_part == '..' and attr == 'name':  # we validate linkname above, links must not resolve to a path outside the role
+                                            invalid_parts |= True
                                             display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
                                             continue
-                                        if (_invalid := n_part.startswith('~')) and (invalid_parts := _invalid):
+                                        if n_part.startswith('~'):
+                                            invalid_parts |= True
                                             display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
                                             continue
-                                        if (_invalid := '$' in n_part) and (invalid_parts := _invalid):
+                                        if '$' in n_part:
+                                            invalid_parts |= True
                                             display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
                                             continue
                                         n_final_parts.append(n_part)
