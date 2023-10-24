@@ -95,7 +95,7 @@ options:
     - If V(true) it will search for O(src) on the managed (remote) node.
     - O(remote_src) supports recursive copying as of version 2.8.
     - O(remote_src) only works with O(mode=preserve) as of version 2.6.
-    - Autodecryption of files does not work when O(remote_src=yes).
+    - Auto-decryption of files does not work when O(remote_src=yes).
     type: bool
     default: no
     version_added: '2.0'

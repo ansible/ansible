@@ -197,7 +197,7 @@ class LookupModule(LookupBase):
                         f = os.path.join(path, fn)
                         total_search.append(f)
             elif filelist:
-                # NOTE: this is now 'extend', previouslly it would clobber all options, but we deemed that a bug
+                # NOTE: this is now 'extend', previously it would clobber all options, but we deemed that a bug
                 total_search.extend(filelist)
             else:
                 total_search.append(term)

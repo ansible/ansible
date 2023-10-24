@@ -109,7 +109,7 @@ ansible_facts:
       description:
         - A list of results or a single result as a list of the fields the db provides
         - The list elements depend on the database queried, see getent man page for the structure
-        - Starting at 2.11 it now returns multiple duplicate entries, previouslly it only returned the last one
+        - Starting at 2.11 it now returns multiple duplicate entries, previously it only returned the last one
       returned: always
       type: list
 '''

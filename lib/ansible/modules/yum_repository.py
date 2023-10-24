@@ -66,7 +66,7 @@ options:
     type: str
   description:
     description:
-      - A human readable string describing the repository. This option corresponds to the "name" property in the repo file.
+      - A human-readable string describing the repository. This option corresponds to the "name" property in the repo file.
       - This parameter is only required if O(state) is set to V(present).
     type: str
   enabled:

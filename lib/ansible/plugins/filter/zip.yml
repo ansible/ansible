@@ -5,7 +5,7 @@ DOCUMENTATION:
   positional: _input, _additional_lists
   description: Iterate over several iterables in parallel, producing tuples with an item from each one.
   notes:
-    - This is mostly a passhtrough to Python's C(zip) function.
+    - This is mostly a passthrough to Python's C(zip) function.
   options:
     _input:
       description: Original list.

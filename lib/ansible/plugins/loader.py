@@ -1277,7 +1277,7 @@ class Jinja2Loader(PluginLoader):
                     fq_name = '.'.join((parent_prefix, func_name))
                     src_name = f"ansible_collections.{acr.collection}.plugins.{self.type}.{acr.subdirs}.{func_name}"
                     # TODO: load  anyways into CACHE so we only match each at end of loop
-                    #       the files themseves should already be cached by base class caching of modules(python)
+                    #       the files themselves should already be cached by base class caching of modules(python)
                     if key in (func_name, fq_name):
                         plugin = self._plugin_wrapper_type(func)
                         if plugin:
@@ -1426,7 +1426,7 @@ def _load_plugin_filter():
             display.warning(u'The plugin filter file, {0} does not exist.'
                             u' Skipping.'.format(filter_cfg))
 
-    # Specialcase the stat module as Ansible can run very few things if stat is rejected
+    # Special case: the stat module as Ansible can run very few things if stat is rejected
     if 'stat' in filters['ansible.modules']:
         raise AnsibleError('The stat module was specified in the module reject list file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'
