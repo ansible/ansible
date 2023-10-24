@@ -192,6 +192,12 @@ class CLI(ABC):
         ret = tuple(parts)
         return ret
 
+    # TODO: verify that nothing else is passing an argument to 
+    # create_new_password, then remove it from this function. If anything is
+    # using it inside the ansible codebase, remove it as an argument. If 
+    # external code depends on create_new_password being part of the signature,
+    # then add documentation stating that create_new_password cannot be removed
+    # due to external user code relying on it.
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
@@ -218,7 +224,6 @@ class CLI(ABC):
 
         return vault_ids
 
-    # TODO: remove the now unused args
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
@@ -252,7 +257,6 @@ class CLI(ABC):
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
                                         ask_vault_pass,
-                                        create_new_password,
                                         auto_prompt=auto_prompt)
 
         last_exception = found_vault_secret = None
