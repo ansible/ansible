@@ -1499,11 +1499,13 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
 HOST_KEY_CHECKING:
-  # note: constant not in use by ssh plugin anymore
+  # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
-  name: Check host keys
+  name: Toggle host/key check
   default: True
-  description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
+  description:
+    - Set this to "False" if you want to avoid host key checking by the underlying connection plugin Ansible uses to connect to the host.
+    - Please read the documentation of the specific connection plugin used for details.
   env: [{name: ANSIBLE_HOST_KEY_CHECKING}]
   ini:
   - {key: host_key_checking, section: defaults}
