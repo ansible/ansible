@@ -1,0 +1,12 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - fail:
+          when: inventory_hostname == 'testhost'
+      always:
+        - debug:
+
+    - debug:
+        msg: SHOULD NOT HAPPEN

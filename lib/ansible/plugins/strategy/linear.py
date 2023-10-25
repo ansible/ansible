@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
-from ansible.executor.play_iterator import IteratingStates, FailedStates
+from ansible.executor.play_iterator import IteratingStates
 from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
@@ -354,25 +354,16 @@ class StrategyModule(StrategyBase):
                 failed_hosts = []
                 unreachable_hosts = []
                 for res in results:
-                    # execute_meta() does not set 'failed' in the TaskResult
-                    # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action in C._ACTION_META) and iterator.is_failed(res._host):
+                    if res.is_failed():
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
 
-                # if any_errors_fatal and we had an error, mark all hosts as failed
-                if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
-                    dont_fail_states = frozenset([IteratingStates.RESCUE, IteratingStates.ALWAYS])
+                if any_errors_fatal and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
-                        (s, dummy) = iterator.get_next_task_for_host(host, peek=True)
-                        # the state may actually be in a child state, use the get_active_state()
-                        # method in the iterator to figure out the true active state
-                        s = iterator.get_active_state(s)
-                        if s.run_state not in dont_fail_states or \
-                           s.run_state == IteratingStates.RESCUE and s.fail_state & FailedStates.RESCUE != 0:
+                        if host.name not in failed_hosts:
                             self._tqm._failed_hosts[host.name] = True
-                            result |= self._tqm.RUN_FAILED_BREAK_PLAY
+                            iterator.mark_host_failed(host)
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
