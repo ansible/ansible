@@ -1,0 +1,3 @@
+---
+removed_features:
+  - Remove deprecated ``scp_if_ssh`` from ssh connection plugin (https://github.com/ansible/ansible/issues/81715).
