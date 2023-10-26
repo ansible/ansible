@@ -42,6 +42,7 @@ try:
     from cryptography.hazmat.primitives import hashes, padding
     from cryptography.hazmat.primitives.hmac import HMAC
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
     from cryptography.hazmat.primitives.ciphers import (
         Cipher as C_Cipher, algorithms, modes
     )
@@ -1154,13 +1155,26 @@ class VaultAES256:
 
     @staticmethod
     def _create_key_cryptography(b_password, b_salt, key_length, iv_length):
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=2 * key_length + iv_length,
-            salt=b_salt,
-            iterations=10000,
-            backend=CRYPTOGRAPHY_BACKEND)
-        b_derivedkey = kdf.derive(b_password)
+        scrypt_kdf_flag = C.config.get_config_value('VAULT_SCRYPT_KDF')
+
+        if not scrypt_kdf_flag:
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=2 * key_length + iv_length,
+                salt=b_salt,
+                iterations=10000,
+                backend=CRYPTOGRAPHY_BACKEND)
+            b_derivedkey = kdf.derive(b_password)
+            
+        else:
+            kdf = Scrypt(
+                salt=b_salt,
+                length=2 * key_length + iv_length,
+                n=2**14,
+                r=8,
+                p=1,
+            )
+            b_derivedkey = kdf.derive(b"my great password")
 
         return b_derivedkey
 

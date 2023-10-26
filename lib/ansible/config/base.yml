@@ -1173,6 +1173,14 @@ DEFAULT_VAULT_PASSWORD_FILE:
   - {key: vault_password_file, section: defaults}
   type: path
   yaml: {key: defaults.vault_password_file}
+VAULT_SCRYPT_KDF:
+  name: Scrypt key derivation function enable flag
+  default: ~
+  description: 'Allows users to specify Scrypt as the key derivation function. If it is not provided, PBKDF2HMAC is used.'
+  env: [{name: ANSIBLE_VAULT_SCRYPT_KDF}]
+  ini:
+  - {key: vault_scrypt_kdf, section: defaults}
+  version_added: '2.15'
 DEFAULT_VERBOSITY:
   name: Verbosity
   default: 0
