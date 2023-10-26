@@ -325,7 +325,7 @@ class InventoryCLI(CLI):
             return results
 
         hosts = self.inventory.get_hosts(top.name)
-        results = format_group(top, [h.name for h in hosts])
+        results = format_group(top, frozenset(h.name for h in hosts))
 
         # populate meta
         results['_meta'] = {'hostvars': {}}
@@ -381,7 +381,7 @@ class InventoryCLI(CLI):
 
             return results
 
-        available_hosts = [h.name for h in self.inventory.get_hosts(top.name)]
+        available_hosts = frozenset(h.name for h in self.inventory.get_hosts(top.name))
         return format_group(top, available_hosts)
 
     def toml_inventory(self, top):
@@ -425,7 +425,7 @@ class InventoryCLI(CLI):
 
             return results
 
-        available_hosts = [h.name for h in self.inventory.get_hosts(top.name)]
+        available_hosts = frozenset(h.name for h in self.inventory.get_hosts(top.name))
         results = format_group(top, available_hosts)
 
         return results
