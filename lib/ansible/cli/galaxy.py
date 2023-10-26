@@ -805,7 +805,7 @@ class GalaxyCLI(CLI):
             for role_req in file_requirements:
                 requirements['roles'] += parse_role_req(role_req)
 
-        else:
+        elif isinstance(file_requirements, dict):
             # Newer format with a collections and/or roles key
             extra_keys = set(file_requirements.keys()).difference(set(['roles', 'collections']))
             if extra_keys:
@@ -823,6 +823,9 @@ class GalaxyCLI(CLI):
                 )
                 for collection_req in file_requirements.get('collections') or []
             ]
+
+        else:
+            raise AnsibleError(f"Expecting requirements yaml to be a list or dictionary but got {type(file_requirements).__name__}")
 
         return requirements
 
