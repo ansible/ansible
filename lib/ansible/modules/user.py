@@ -305,6 +305,11 @@ EXAMPLES = r'''
     uid: 1040
     group: admin
 
+- name: Create a user 'johnd' with a home directory
+  ansible.builtin.user:
+    name: johnd
+    create_home: yes
+
 - name: Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
   ansible.builtin.user:
     name: james
