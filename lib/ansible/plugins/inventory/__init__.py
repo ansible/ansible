@@ -448,19 +448,13 @@ class Constructable(object):
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)
 
-                            # Add `ansible_keyed_group_name` to the variables that we can use to template
-                            templar_variables = combine_vars(variables, {'ansible_keyed_group_name': result_gname})
-                            self.templar.available_variables = templar_variables
-                            # Template the group_priority. There are not many variables available at this point,
-                            # But what we have should be able to be used here.
-                            group_priority = self.templar.template(keyed.get('priority', None))
-                            if group_priority is not None:
-                                result_group = self.inventory.groups.get(result_gname)
-                                try:
-                                    result_group.set_priority(int(group_priority))
-                                except ValueError as e:
-                                    raise AnsibleParserError("Invalid group priority given: %s" % to_native(e))
-
+                            if (priority := keyed.get('priority')) is not None:
+                                with self.templar.set_temporary_context(available_variables=variables | {'ansible_keyed_group_name': result_gname}):
+                                    if (priority := self.templar.template(priority)) is not None:
+                                        try:
+                                            self.inventory.groups.get(result_gname).set_priority(priority)
+                                        except ValueError as ve:
+                                            raise AnsibleParserError(f"Invalid group priority given: {ve}")
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
