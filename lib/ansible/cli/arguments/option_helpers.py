@@ -549,3 +549,8 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
     tag_value._name = name  # simplify debugging by attaching the argument name to the function
 
     return tag_value
+
+
+def add_live_options(parser):
+    parser.add_argument('--live', default=False, dest='live', action='store_true',
+                        help="Requests and displays 'live updates' from executing actions and connections that support it.")

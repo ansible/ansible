@@ -27,7 +27,7 @@ from ansible.executor.interpreter_discovery import discover_interpreter, Interpr
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
-from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.json_utils import _consume_json
 from ansible.module_utils.common.json import Direction, get_module_encoder, get_module_decoder
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.release import __version__
@@ -309,6 +309,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for _dummy in (1, 2):
             try:
+<<<<<<< HEAD
                 module_bits = modify_module(
                     module_name=module_name,
                     module_path=module_path,
@@ -322,6 +323,17 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     become_plugin=self._connection.become,
                 )
 
+=======
+                (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
+                                                                            task_vars=use_vars,
+                                                                            module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION',
+                                                                                                                         variables=task_vars),
+                                                                            async_timeout=self._task.async_val,
+                                                                            environment=final_environment,
+                                                                            remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
+                                                                            live_updates=bool(self._task.live),
+                                                                            **become_kwargs)
+>>>>>>> aeb7f9d47f4 (Added ability to modules to emit 'update messsages')
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
@@ -949,6 +961,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
+
         else:
             module_args['_ansible_check_mode'] = False
 
@@ -996,6 +1009,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
+
+        # enable live updates
+        module_args['_ansible_live_updates'] = self._task.live
 
         # tells the module to ignore options that are not in its argspec.
         module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
@@ -1159,7 +1175,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, live=bool(self._task.live))
 
         # parse the main result
         data = self._parse_returned_data(res, module_bits.serialization_profile)
@@ -1208,8 +1224,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
     def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
-
+            filtered_output, warnings = _consume_json(res.get('stdout', ''), objects_only=True)
             for w in warnings:
                 display.warning(w)
 
@@ -1266,7 +1281,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         return data
 
     # FIXME: move to connection base
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None, live=False):
         """
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
