@@ -88,5 +88,5 @@ EXAMPLES = '''
   ansible.builtin.package:
     name: httpd
     state: present
-    use: dnf    
+    use: dnf
 '''
