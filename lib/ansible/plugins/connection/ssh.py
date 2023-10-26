@@ -906,7 +906,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
+    def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True, live: bool = False) -> tuple[int, bytes, bytes]:
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -929,15 +929,20 @@ class Connection(ConnectionBase):
 
         conn_password = self.get_option('password') or self._play_context.password
 
+        if live:
+            bufsize = 0
+        else:
+            bufsize = -1
+
         if not in_data:
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
                 master, slave = pty.openpty()
                 if PY3 and conn_password:
                     # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                    p = subprocess.Popen(cmd, bufsize=bufsize, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
                 else:
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(cmd, bufsize=bufsize, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
@@ -1076,10 +1081,14 @@ class Connection(ConnectionBase):
                         b_tmp_stderr += b_chunk
                         display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
 
+                    # check if this was an update message, return remainder if it is
+                    is_update, rest = self._handle_updates(b_tmp_stdout)
+                    if is_update:
+                        b_tmp_stdout = rest or b''
+
                 # We examine the output line-by-line until we have negotiated any
                 # privilege escalation prompt and subsequent success/error message.
                 # Afterwards, we can accumulate output without looking at it.
-
                 if state < states.index('ready_to_send'):
                     if b_tmp_stdout:
                         b_output, b_unprocessed = self._examine_output('stdout', states[state], b_tmp_stdout, sudoable)
@@ -1202,10 +1211,10 @@ class Connection(ConnectionBase):
         return (p.returncode, b_stdout, b_stderr)
 
     @_ssh_retry
-    def _run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
+    def _run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True, live: bool = False) -> tuple[int, bytes, bytes]:
         """Wrapper around _bare_run that retries the connection
         """
-        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
+        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc, live=live)
 
     @_ssh_retry
     def _file_transport_command(self, in_path: str, out_path: str, sftp_action: str) -> tuple[int, bytes, bytes]:
@@ -1291,7 +1300,7 @@ class Connection(ConnectionBase):
     #
     # Main public methods
     #
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True, live: bool = False) -> tuple[int, bytes, bytes]:
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -1332,7 +1341,7 @@ class Connection(ConnectionBase):
             args = (self.host, cmd)
 
         cmd = self._build_command(ssh_executable, 'ssh', *args)
-        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
+        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable, live=live)
 
         # When running on Windows, stderr may contain CLIXML encoded output
         if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):

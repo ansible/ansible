@@ -722,6 +722,7 @@ class Base(FieldAttributeBase):
     any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
     throttle = FieldAttribute(isa='int', default=0)
     timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT)
+    live = FieldAttribute(isa='bool')
 
     # explicitly invoke a debugger on tasks
     debugger = FieldAttribute(isa='string')

@@ -371,6 +371,7 @@ class AnsibleModule(object):
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         '''
 
+        self._updates = 0
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
@@ -390,6 +391,7 @@ class AnsibleModule(object):
         self._shell = None
         self._syslog_facility = 'LOG_USER'
         self._verbosity = 0
+        self._provide_updates = False
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
@@ -1295,6 +1297,10 @@ class AnsibleModule(object):
             else:
                 self._log_to_syslog(journal_msg)
 
+            # TODO: does 'return log data' need diff setting?
+            if self._debug and syslog_msg:
+                self.update_json({'log': syslog_msg})
+
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
@@ -1402,15 +1408,10 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        if 'invocation' not in kwargs:
-            kwargs['invocation'] = {'module_args': self.params}
+        if '_ansible_update' not in kwargs:
 
-        if 'warnings' in kwargs:
-            if isinstance(kwargs['warnings'], list):
-                for w in kwargs['warnings']:
-                    self.warn(w)
-            else:
-                self.warn(kwargs['warnings'])
+            if 'invocation' not in kwargs:
+                kwargs['invocation'] = {'module_args': self.params}
 
         warnings = get_warning_messages()
         if warnings:
@@ -1447,6 +1448,7 @@ class AnsibleModule(object):
         kwargs.update(preserved)
 
         print('\n%s' % self.jsonify(kwargs))
+        sys.stdout.flush()
 
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
@@ -1469,6 +1471,14 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)
+
+    def update_json(self, data):
+
+        if self._provide_updates:
+            self._updates += 1
+            data['_ansible_update'] = self._updates
+            self._return_formatted(data)
+            self.log('update #%s' % self._updates)
 
     def fail_on_missing_params(self, required_params=None):
         if not required_params:
@@ -1717,6 +1727,14 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
                            exception=traceback.format_exc())
 
+    def _read_from_pipes(self, rpipes, rfds, file_descriptor):
+        data = b('')
+        if file_descriptor in rfds:
+            data = os.read(file_descriptor.fileno(), 9000)
+            if data == b(''):
+                rpipes.remove(file_descriptor)
+        return data
+
     def _clean_args(self, args):
 
         if not self._clean:
@@ -1925,6 +1943,10 @@ class AnsibleModule(object):
         try:
             if self._debug:
                 self.log('Executing: ' + self._clean_args(args))
+
+            if self._provide_updates:
+                kwargs['bufsize'] = 0
+
             cmd = subprocess.Popen(args, **kwargs)
             if before_communicate_callback:
                 before_communicate_callback(cmd)

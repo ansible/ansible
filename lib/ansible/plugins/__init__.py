@@ -77,6 +77,23 @@ class AnsiblePlugin(ABC):
             raise KeyError(to_native(e))
         return option_value, origin
 
+    @staticmethod
+    def warn(msg):
+        # FIXME: move from display to use callback queue
+        display.warning(msg)
+
+    @staticmethod
+    def deprecated(msg, version=None, removed=False):
+        display.deprecated(msg, version, removed)
+
+    @staticmethod
+    def debug(msg):
+        display.debug(msg)
+
+    @staticmethod
+    def info(msg, host=None, level=1):
+        display.verbose(msg, host=host, caplevel=level)
+
     def get_option(self, option, hostvars=None):
 
         if option not in self._options:
