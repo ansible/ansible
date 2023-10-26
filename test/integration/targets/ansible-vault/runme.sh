@@ -606,3 +606,23 @@ out=$(diff salted_test1 salted_test2)
 # shoudl be diff
 out=$(diff salted_test1 salted_test3 || true)
 [ "${out}" != "" ]
+
+### SCRYPT KDF TESTING ###
+# prep files for encryption
+for scrypted in test1 test2 test3
+do
+    echo 'this is salty' > "salted_${scrypted}"
+done
+
+# encrypt files
+ANSIBLE_VAULT_SCRYPT_KDF=true ansible-vault encrypt scrypted_test1 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_SCRYPT_KDF=true ansible-vault encrypt scrypted_test2 --vault-password-file example1_password "$@"
+ansible-vault encrypt scrypted_test3 --vault-password-file example1_password "$@"
+
+# should be the same
+out=$(diff scrypted_test1 scrypted_test2)
+[ "${out}" == "" ]
+
+# shoudl be diff
+out=$(diff scrypted_test1 scrypted_test3 || true)
+[ "${out}" != "" ]
