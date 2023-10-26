@@ -631,6 +631,9 @@ class User(object):
                         # sha512
                         if fields[1] == '6' and len(fields[-1]) != 86:
                             maybe_invalid = True
+                        # yescrypt
+                        if fields[1] == 'y' and len(fields[-1]) != 43:
+                            maybe_invalid = True
                     else:
                         maybe_invalid = True
             if maybe_invalid:
