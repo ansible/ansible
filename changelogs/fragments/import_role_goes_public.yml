@@ -1,0 +1,2 @@
+bugfixes:
+  - "``import_role`` reverts to previous behavior of exporting vars at compile time."
