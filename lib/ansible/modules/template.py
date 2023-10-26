@@ -85,7 +85,7 @@ EXAMPLES = r'''
     dest: /etc/named.conf
     group: named
     setype: named_conf_t
-    mode: 0640
+    mode: '0640'
 
 - name: Create a DOS-style text file from a template
   ansible.builtin.template:
