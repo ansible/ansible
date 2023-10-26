@@ -1,0 +1,2 @@
+minor_changes:
+  - Constructed inventory (and those that inherit from it) can now set group priority on keyed_groups.
