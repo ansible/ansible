@@ -174,15 +174,49 @@ class FreeBSDHardware(Hardware):
         sysdir = '/dev'
         device_facts['devices'] = {}
         # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
-        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+|amrd\d+|da\d+|idad\d+|ipsd\d+|md\d+|mfid\d+|mlxd\d+|twed\d+|vtbd\d+)')
+        drives = re.compile(
+            r"""(?x)(
+              (?:
+                ada?   # ATA/SATA disk device
+                |da    # SCSI disk device
+                |a?cd  # SCSI CDROM drive
+                |amrd  # AMI MegaRAID drive
+                |idad  # Compaq RAID array
+                |ipsd  # IBM ServeRAID RAID array
+                |md    # md(4) disk device
+                |mfid  # LSI MegaRAID SAS array
+                |mlxd  # Mylex RAID disk
+                |twed  # 3ware ATA RAID array
+                |vtbd  # VirtIO Block Device
+              )\d+
+            )
+            """
+        )
+
         slices = re.compile(
-            (r'(ada?\d+[ps]\d+\w*|a?cd\d+[ps]\d+\w*|amrd\d+[ps]\d+\w*|da\d+[ps]\d+\w*|idad\d+[ps]\d+\w*|ipsd\d+[ps]\d+\w*'
-             '|md\d+[ps]\d+\w*|mfid\d+[ps]\d+\w*|mlxd\d+[ps]\d+\w*|twed\d+[ps]\d+\w*|vtbd\d+[ps]\d+\w*)'))
+            r"""(?x)(
+              (?:
+                ada?   # ATA/SATA disk device
+                |a?cd  # SCSI CDROM drive
+                |amrd  # AMI MegaRAID drive
+                |da    # SCSI disk device
+                |idad  # Compaq RAID array
+                |ipsd  # IBM ServeRAID RAID array
+                |md    # md(4) disk device
+                |mfid  # LSI MegaRAID SAS array
+                |mlxd  # Mylex RAID disk
+                |twed  # 3ware ATA RAID array
+                |vtbd  # VirtIO Block Device
+              )\d+[ps]\d+\w*
+            )
+            """
+        )
+
         if os.path.isdir(sysdir):
             dirlist = sorted(os.listdir(sysdir))
             for device in dirlist:
                 d = drives.match(device)
-                if d:
+                if d and d.group(1) not in device_facts['devices']:
                     device_facts['devices'][d.group(1)] = []
                 s = slices.match(device)
                 if s:
