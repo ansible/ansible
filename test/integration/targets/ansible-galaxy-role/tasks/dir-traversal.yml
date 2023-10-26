@@ -23,6 +23,9 @@
   command:
     cmd: ansible-galaxy role install --roles-path '{{ remote_tmp_dir }}/dir-traversal/roles' dangerous.tar
     chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
   ignore_errors: true
   register: galaxy_install_dangerous
 
@@ -43,7 +46,7 @@
       - not dangerous_overwrite_stat.stat.exists
       - galaxy_install_dangerous is failed
       - >-
-        "symlink 'symlink' could not be found in the role" in galaxy_install_dangerous.stderr
+        "symlink 'symlink' could not be found in the role" in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))
 
 - name: remove tarfile for next test
   file:
@@ -60,6 +63,9 @@
   command:
     cmd: 'ansible-galaxy role install --roles-path {{ remote_tmp_dir }}/dir-traversal/roles dangerous.tar'
     chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
   ignore_errors: true
   register: galaxy_install_dangerous
 
@@ -80,7 +86,7 @@
       - not dangerous_overwrite_stat.stat.exists
       - galaxy_install_dangerous is failed
       - >-
-        "symlink 'symlink' could not be found in the role" in galaxy_install_dangerous.stderr
+        "symlink 'symlink' could not be found in the role" in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))
 
 - name: remove tarfile for next test
   file:
@@ -90,12 +96,15 @@
 - name: build dangerous dir traversal role that includes .. in the relative symlink path
   script:
     chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
-    cmd: create-role-archive.py dangerous_rel.tar content.txt role_subdir/../../context.txt
+    cmd: create-role-archive.py dangerous_rel.tar content.txt ../context.txt
 
 - name: install dangerous role with relative symlink
   command:
     cmd: 'ansible-galaxy role install --roles-path {{ remote_tmp_dir }}/dir-traversal/roles dangerous_rel.tar'
     chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
   ignore_errors: true
   register: galaxy_install_dangerous
 
@@ -109,7 +118,7 @@
       - not symlink_outside_role.stat.exists
       - galaxy_install_dangerous is failed
       - >-
-        "symlink 'symlink' could not be found in the role" in galaxy_install_dangerous.stderr
+        "symlink 'symlink' could not be found in the role" in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))
 
 - name: remove test directories
   file:

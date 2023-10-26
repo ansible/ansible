@@ -437,7 +437,7 @@ class GalaxyRole(object):
                                         bad_original_link = n_attr_value.startswith(os.sep) and not n_attr_value.startswith(n_archive_parent_dir)
 
                                         if is_rel_path_outside_archive(n_archive_parent_dir, relative_path, path_must_exist=bad_original_link):
-                                            raise AnsibleError(f"install reverted, symlink '{member.name}' could not be found in the role: {attr_value}")
+                                            raise AnsibleError(f"symlink '{member.name}' could not be found in the role: {attr_value}")
 
                                     n_final_parts = []
                                     invalid_parts = False
@@ -467,7 +467,7 @@ class GalaxyRole(object):
                                         n_final_parts.append(n_part)
 
                                     if invalid_parts or not n_final_parts:
-                                        raise AnsibleError(f"install reverted, role content {member.name} is not able to be extracted")
+                                        raise AnsibleError(f"role content {member.name} is not able to be extracted")
                                     setattr(member, attr, os.path.join(*n_final_parts))
 
                                 if member in ignore_external:
