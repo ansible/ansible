@@ -173,8 +173,8 @@ class FreeBSDHardware(Hardware):
 
         sysdir = '/dev'
         device_facts['devices'] = {}
-        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+)')  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
-        slices = re.compile(r'(ada?\d+s\d+\w*|da\d+s\d+\w*)')
+        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+|amrd\d+|da\d+|idad\d+|ipsd\d+|md\d+|mfid\d+|mlxd\d+|twed\d+|vtbd\d+)')  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
+        slices = re.compile(r'(ada?\d+[ps]\d+\w*|a?cd\d+[ps]\d+\w*|amrd\d+[ps]\d+\w*|da\d+[ps]\d+\w*|idad\d+[ps]\d+\w*|ipsd\d+[ps]\d+\w*|md\d+[ps]\d+\w*|mfid\d+[ps]\d+\w*|mlxd\d+[ps]\d+\w*|twed\d+[ps]\d+\w*|vtbd\d+[ps]\d+\w*)')
         if os.path.isdir(sysdir):
             dirlist = sorted(os.listdir(sysdir))
             for device in dirlist:
