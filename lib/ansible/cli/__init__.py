@@ -192,16 +192,14 @@ class CLI(ABC):
         ret = tuple(parts)
         return ret
 
-    # TODO: verify that nothing else is passing an argument to
-    # create_new_password, then remove it from this function. If anything is
-    # using it inside the ansible codebase, remove it as an argument. If
-    # external code depends on create_new_password being part of the signature,
-    # then add documentation stating that create_new_password cannot be removed
-    # due to external user code relying on it.
+    # TODO: remove `create_new_password` as a parameter once the deprecation
+    # time has passed.
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
+        if create_new_password is not None:
+            display.deprecated("create_new_password is not used in build_vault_ids anymore and is only being kept to maintain compatibility, expect it to be removed in a future release.", version="2.19")
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
