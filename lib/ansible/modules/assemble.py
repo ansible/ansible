@@ -110,6 +110,12 @@ EXAMPLES = r'''
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
+- name: Assemble and create a backup
+  ansible.builtin.assemble:
+    src: /etc/myapp/fragments
+    dest: /etc/myapp/myapp.conf
+    backup: true
+
 - name: Insert the provided delimiter between fragments
   ansible.builtin.assemble:
     src: /etc/someapp/fragments
