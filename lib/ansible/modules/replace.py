@@ -117,6 +117,13 @@ EXAMPLES = r'''
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
     replace: '\1new.host.name\2'
 
+- name: Replace after the expression till the end of the file with a backup of the original file
+  ansible.builtin.replace:
+    path: ~/time.log
+    regexp: '^(.+)$'
+    replace: '# \1'
+    backup: yes
+
 - name: Replace after the expression till the end of the file (requires Ansible >= 2.4)
   ansible.builtin.replace:
     path: /etc/apache2/sites-available/default.conf
