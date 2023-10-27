@@ -496,6 +496,12 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
         context.set_ciphers(':'.join(map(to_native, ciphers)))
 
     if client_cert:
+        # TLS 1.3 needs this to be set to True to allow post handshake cert
+        # authentication. This functionality was added in Python 3.8 and was
+        # backported to 3.6.7, and 3.7.1 so needs a check for now.
+        if hasattr(context, "post_handshake_auth"):
+            context.post_handshake_auth = True
+
         context.load_cert_chain(client_cert, keyfile=client_key)
 
     return context

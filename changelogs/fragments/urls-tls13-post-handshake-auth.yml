@@ -1,0 +1,2 @@
+minor_changes:
+- urls - Add support for TLS 1.3 post handshake certificate authentication - https://github.com/ansible/ansible/issues/81782
