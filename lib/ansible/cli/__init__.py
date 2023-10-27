@@ -199,7 +199,8 @@ class CLI(ABC):
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
         if create_new_password is not None:
-            display.deprecated("create_new_password is not used in build_vault_ids anymore and is only being kept to maintain compatibility, expect it to be removed in a future release.", version="2.19")
+            display.deprecated("create_new_password is not used in build_vault_ids anymore and is only being kept to maintain compatibility,"
+                               " expect it to be removed in a future release.", version="2.19")
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
