@@ -17,7 +17,6 @@ if sys.version_info < (3, 10):
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
-
 def check_blocking_io():
     """Check stdin/stdout/stderr to make sure they are using blocking IO."""
     handles = []
@@ -114,6 +113,12 @@ try:
 except ImportError:
     HAS_ARGCOMPLETE = False
 
+def _handle_deprecated_kwarg(func):
+    def wrapper(*args, **kwargs):
+        if len(args) >= 4 or 'create_new_password' in kwargs:
+            display.deprecated("create_new_password is unused and will be removed in a future release", version='2.19')
+        return func(*args, **kwargs)
+    return wrapper
 
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
@@ -193,14 +198,12 @@ class CLI(ABC):
         return ret
 
     # TODO: remove `create_new_password` as a parameter once the deprecation
-    # time has passed.
+    # time has passed, as well as `_handle_deprecated_kwarg`.
+    @_handle_deprecated_kwarg
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
-        if create_new_password is not None:
-            display.deprecated("create_new_password is not used in build_vault_ids anymore and is only being kept to maintain compatibility,"
-                               " expect it to be removed in a future release.", version="2.19")
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
