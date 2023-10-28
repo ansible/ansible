@@ -114,11 +114,14 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 def _handle_deprecated_kwarg(func):
+    "Handle the deprecation of create_new_password in build_vault_ids."
+    
     def wrapper(*args, **kwargs):
         if len(args) >= 4 or 'create_new_password' in kwargs:
             display.deprecated("create_new_password is unused and will be removed in a future release", version='2.19')
         return func(*args, **kwargs)
     return wrapper
+
 
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
