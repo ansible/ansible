@@ -408,7 +408,6 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_check_mode = True
-        self._supports_async = True
 
         # If running with local connection, fail so we don't reboot ourselves
         if self._connection.transport == 'local':
