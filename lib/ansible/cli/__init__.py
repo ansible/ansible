@@ -17,6 +17,7 @@ if sys.version_info < (3, 10):
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
+
 def check_blocking_io():
     """Check stdin/stdout/stderr to make sure they are using blocking IO."""
     handles = []
@@ -113,9 +114,9 @@ try:
 except ImportError:
     HAS_ARGCOMPLETE = False
 
+
 def _handle_deprecated_kwarg(func):
     "Handle the deprecation of create_new_password in build_vault_ids."
-    
     def wrapper(*args, **kwargs):
         if len(args) >= 4 or 'create_new_password' in kwargs:
             display.deprecated("create_new_password is unused and will be removed in a future release", version='2.19')
