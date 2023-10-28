@@ -13,6 +13,17 @@
 - Feature Pull Request
 - Test Pull Request
 
+  
+# How Has This Been Tested?
+
+<!-- Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration -->
+
+**Test Configuration**:
+* Firmware version:
+* Hardware:
+* Toolchain:
+* SDK:
+
 ##### ADDITIONAL INFORMATION
 
 <!--- Include additional information to help people understand the change here -->
@@ -23,3 +34,4 @@
 ```paste below
 
 ```
+Thank you for contributing to the Ansible Repository!
