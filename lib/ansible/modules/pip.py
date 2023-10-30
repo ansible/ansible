@@ -120,6 +120,8 @@ attributes:
     platform:
         platforms: posix
 notes:
+   - Python installations marked externally-managed (as defined by PEP668) cannot be updated by pip versions >= 23.0.1 without the use of
+     a virtual environment or setting the environment variable ``PIP_BREAK_SYSTEM_PACKAGES=1``.
    - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
