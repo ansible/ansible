@@ -5,6 +5,33 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-10-30
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Windows 2012 and 2012-R2 instances are now requested from Azure instead of AWS.
+
+Bugfixes
+--------
+
+- Fix ``run_once`` being incorrectly interpreted on handlers (https://github.com/ansible/ansible/issues/81666)
+- Plugin loader does not dedupe nor cache filter/test plugins by file basename, but full path name.
+- Properly template tags in parent blocks (https://github.com/ansible/ansible/issues/81053)
+- Restoring the ability of filters/tests can have same file base name but different tests/filters defined inside.
+- ``import_role`` reverts to previous behavior of exporting vars at compile time.
+- ansible-galaxy - Provide a better error message when using a requirements file with an invalid format - https://github.com/ansible/ansible/issues/81901
+- ansible-inventory - index available_hosts for major performance boost when dumping large inventories
+- ansible-test - Fix parsing of cgroup entries which contain a ``:`` in the path (https://github.com/ansible/ansible/issues/81977).
+
 v2.15.5
 =======
 
