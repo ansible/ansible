@@ -6,7 +6,8 @@
   block:
     - name: Locate the Python externally-managed marker file
       command: |
-        {{ ansible_python_interpreter }} -c 'import sysconfig; print(f"""{sysconfig.get_path("stdlib", sysconfig.get_default_scheme())}/EXTERNALLY-MANAGED""")'
+        {{ ansible_python_interpreter }} -c 'import sys, sysconfig; print(f"""{sysconfig.get_path("stdlib", sysconfig.get_default_scheme()
+        if sys.version_info >= (3, 10) else sysconfig._get_default_scheme())}/EXTERNALLY-MANAGED""")'
       register: externally_managed_marker
 
     - name: Detect if Python is externally-managed
