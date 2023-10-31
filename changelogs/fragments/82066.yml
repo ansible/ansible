@@ -1,3 +1,3 @@
 ---
 deprecated_features:
-  - passing create_new_password to build_vault_ids - it was doing nothing anyways, and is only being deprecated instead of being outright removed due to possibly being used by external code (https://github.com/ansible/ansible/pull/82066)
+  - passing the unused argument ``create_new_password`` to ``CLI.build_vault_ids`` in an abundance of caution for 3rd parties daring to use the unsupported Python API (https://github.com/ansible/ansible/pull/82066).
