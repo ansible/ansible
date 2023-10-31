@@ -60,7 +60,7 @@ def __getattr__(config_constant):
         try:
             value = config.get_config_value(config_constant, variables=globals())
         except Exception as e:
-            raise AttributeError(e)
+            raise AttributeError(e) from e
 
         globals()[config_constant] = value
 
