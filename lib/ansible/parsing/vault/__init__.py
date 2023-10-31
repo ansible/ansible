@@ -1174,7 +1174,7 @@ class VaultAES256:
                 r=8,
                 p=1,
             )
-            b_derivedkey = kdf.derive(b"my great password")
+            b_derivedkey = kdf.derive(b_password)
 
         return b_derivedkey
 
