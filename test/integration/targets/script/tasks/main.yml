@@ -198,7 +198,7 @@
   assert:
     that:
       - _check_mode_test2 is skipped
-      - '_check_mode_test2.msg == "{{ remote_tmp_dir_test | expanduser }}/afile2.txt exists, matching creates option"'
+      - '_check_mode_test2.msg == remote_tmp_dir_test | expanduser ~ "/afile2.txt exists, matching creates option"'
 
 - name: Remove afile2.txt
   file:
@@ -220,7 +220,7 @@
   assert:
     that:
       - _check_mode_test3 is skipped
-      - '_check_mode_test3.msg == "{{ remote_tmp_dir_test | expanduser }}/afile2.txt does not exist, matching removes option"'
+      - '_check_mode_test3.msg == remote_tmp_dir_test | expanduser ~ "/afile2.txt does not exist, matching removes option"'
 
 # executable
 

@@ -2,7 +2,7 @@
 - name: Assert that a embedded vault of a string with no newline works
   assert:
     that:
-      - '"{{ vault_encrypted_one_line_var }}" == "Setec Astronomy"'
+      - 'vault_encrypted_one_line_var == "Setec Astronomy"'
 
 - name: Assert that a multi line embedded vault works, including new line
   assert:

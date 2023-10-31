@@ -24,7 +24,7 @@ import yaml
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText, NativeJinjaText
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText, NativeJinjaText, _is_unsafe
 from ansible.template import AnsibleUndefined
 from ansible.vars.hostvars import HostVars, HostVarsVars
 from ansible.vars.manager import VarsWithSources
@@ -47,10 +47,14 @@ def represent_vault_encrypted_unicode(self, data):
 
 
 def represent_unicode(self, data):
+    if _is_unsafe(data):
+        data = data._strip_unsafe()
     return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
 
 
 def represent_binary(self, data):
+    if _is_unsafe(data):
+        data = data._strip_unsafe()
     return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
 
 

@@ -267,7 +267,7 @@
 - name: assert we skipped the ogg file
   assert:
     that:
-      - '"{{ remote_tmp_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
+      - 'remote_tmp_dir_test ~ "/e/f/g/h/8.ogg" not in find_test3_list'
 
 - name: patterns with regex
   find:
@@ -317,7 +317,7 @@
   assert:
     that:
       - result.matched == 1
-      - '"{{ remote_tmp_dir_test }}/astest/old.txt" in astest_list'
+      - 'remote_tmp_dir_test ~ "/astest/old.txt" in astest_list'
 
 - name: find files newer than 1 week
   find:
@@ -332,7 +332,7 @@
   assert:
     that:
       - result.matched == 1
-      - '"{{ remote_tmp_dir_test }}/astest/new.txt" in astest_list'
+      - 'remote_tmp_dir_test ~ "/astest/new.txt" in astest_list'
 
 - name: add some content to the new file
   shell: "echo hello world > {{ remote_tmp_dir_test }}/astest/new.txt"
@@ -352,7 +352,7 @@
   assert:
     that:
       - result.matched == 1
-      - '"{{ remote_tmp_dir_test }}/astest/new.txt" in astest_list'
+      - 'remote_tmp_dir_test ~ "/astest/new.txt" in astest_list'
       - '"checksum" in result.files[0]'
 
 - name: find ANY item with LESS than 5 bytes, also get checksums
@@ -371,6 +371,6 @@
   assert:
     that:
       - result.matched == 2
-      - '"{{ remote_tmp_dir_test }}/astest/old.txt" in astest_list'
-      - '"{{ remote_tmp_dir_test }}/astest/.hidden.txt" in astest_list'
+      - 'remote_tmp_dir_test ~ "/astest/old.txt" in astest_list'
+      - 'remote_tmp_dir_test ~ "/astest/.hidden.txt" in astest_list'
       - '"checksum" in result.files[0]'
