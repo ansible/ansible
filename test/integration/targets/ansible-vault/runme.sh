@@ -353,7 +353,7 @@ ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" 
 
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --stdin-name "the_var_from_stdin" < "${TEST_FILE}" | grep 'the_var_from_stdin'
 
-ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_from_stdin" < "${TEST_FILE}" | grep -vz 'the_var_from_stdin'
+ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_from_stdin" < "${TEST_FILE}" | grep -v 'the_var_from_stdin'
 
 # from stdin and positional args
 ansible-vault encrypt_string not_secret "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "the_var_not_from_stdin" --stdin-name "the_var_from_stdin" < "${TEST_FILE}" | tee out.txt
