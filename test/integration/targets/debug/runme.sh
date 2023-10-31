@@ -18,3 +18,5 @@ done
 
 # ensure debug does not set top level vars when looking at ansible_facts
 ansible-playbook nosetfacts.yml "$@"
+
+ansible-playbook unsafe.yml "$@"

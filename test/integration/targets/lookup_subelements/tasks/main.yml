@@ -133,7 +133,7 @@
 
 - assert:
     that:
-      - "'{{ item.0.name }}' != 'carol'"
+      - "item.0.name != 'carol'"
   with_subelements:
     - "{{ users }}"
     - mysql.privs
@@ -220,5 +220,5 @@
 
 - assert:
     that:
-      - "'{{ user_alice }}' == 'localhost'"
-      - "'{{ user_bob }}' == 'db1'"
+      - "user_alice == 'localhost'"
+      - "user_bob == 'db1'"

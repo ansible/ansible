@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from numbers import Number
 from traceback import format_exc
 
-from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.exceptions import TemplateSyntaxError, UndefinedError, SecurityError
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
 from jinja2.runtime import Context, StrictUndefined
@@ -55,7 +55,7 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.native_jinja import NativeJinjaText
-from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
+from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var, AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText
 
 display = Display()
 
@@ -365,9 +365,20 @@ class AnsibleContext(Context):
     flag is checked post-templating, and (when set) will result in the
     final templated result being wrapped in AnsibleUnsafe.
     '''
+    _disallowed_callables = frozenset({
+        AnsibleUnsafeText._strip_unsafe.__qualname__,
+        AnsibleUnsafeBytes._strip_unsafe.__qualname__,
+        NativeJinjaUnsafeText._strip_unsafe.__qualname__,
+    })
+
     def __init__(self, *args, **kwargs):
         super(AnsibleContext, self).__init__(*args, **kwargs)
         self.unsafe = False
+
+    def call(self, obj, *args, **kwargs):
+        if getattr(obj, '__qualname__', None) in self._disallowed_callables or obj in self._disallowed_callables:
+            raise SecurityError(f"{obj!r} is not safely callable")
+        return super().call(obj, *args, **kwargs)
 
     def _is_unsafe(self, val):
         '''

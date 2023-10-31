@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: False
+  tasks:
+    - assert:
+        that:
+          - '"{{ foo }}" == "bar"'
+          - foo == "bar"
+      vars:
+        foo: bar
