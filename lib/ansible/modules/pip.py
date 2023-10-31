@@ -242,6 +242,26 @@ EXAMPLES = '''
     name: bottle
     umask: "0022"
   become: True
+
+- name: Run a module inside a virtual environment
+  block:
+    - name: Ensure the virtual environment exists
+      pip:
+        name: psutil
+        virtualenv: "{{ venv_dir }}"
+        # On Debian-based systems the correct python*-venv package must be installed to use the `venv` module.
+        virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+    - name: Run a module inside the virtual environment
+      wait_for:
+        port: 22
+      vars:
+        # Alternatively, use a block to affect multiple tasks, or use set_fact to affect the remainder of the playbook.
+        ansible_python_interpreter: "{{ venv_python }}"
+
+  vars:
+    venv_dir: /tmp/pick-a-better-venv-path
+    venv_python: "{{ venv_dir }}/bin/python"
 '''
 
 RETURN = '''
