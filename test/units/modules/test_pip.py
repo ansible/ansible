@@ -1,11 +1,14 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""Test suite for Pip Ansible module."""
+
 from __future__ import annotations
 
-import json
+from io import BytesIO
 
 import pytest
 
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 from ansible.modules import pip
 
 
@@ -13,7 +16,7 @@ pytestmark = pytest.mark.usefixtures('patch_ansible_module')
 
 
 @pytest.mark.parametrize('patch_ansible_module', [{'name': 'six'}], indirect=['patch_ansible_module'])
-def test_failure_when_pip_absent(mocker, capfd):
+def test_failure_when_pip_absent(mocker, capfdbinary):
     mocker.patch('ansible.modules.pip._have_pip_module').return_value = False
 
     get_bin_path = mocker.patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
@@ -22,8 +25,8 @@ def test_failure_when_pip_absent(mocker, capfd):
     with pytest.raises(SystemExit):
         pip.main()
 
-    out, err = capfd.readouterr()
-    results = json.loads(out)
+    b_out, _b_err = capfdbinary.readouterr()
+    results = next(read_json_documents(BytesIO(b_out)))
     assert results['failed']
     assert 'pip needs to be installed' in results['msg']
 
