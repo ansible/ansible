@@ -355,7 +355,7 @@ Function Invoke-WithWebRequest {
     .PARAMETER Module
     The Ansible.Basic module to set the return values for. This will set the following return values;
         elapsed - The total time, in seconds, that it took to send the web request and process the response
-        msg - The human readable description of the response status code
+        msg - The human-readable description of the response status code
         status_code - An int that is the response status code
 
     .PARAMETER Request

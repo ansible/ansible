@@ -136,7 +136,7 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
 
 
 def vault_encrypted(value):
-    """Evaulate whether a variable is a single vault encrypted value
+    """Evaluate whether a variable is a single vault encrypted value
 
     .. versionadded:: 2.10
     """
