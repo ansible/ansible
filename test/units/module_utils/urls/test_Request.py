@@ -14,7 +14,7 @@ from ansible.module_utils.urls import (Request, open_url, cookiejar,
 from ansible.module_utils.urls import HTTPRedirectHandler
 
 import pytest
-from units.compat.mock import call
+from unittest.mock import call
 
 
 import ssl

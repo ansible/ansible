@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Sequence, Set, Mapping
 from io import StringIO
 
-from units.compat import unittest
+import unittest
 
 from ansible import errors
 from ansible.module_utils.six import text_type, binary_type

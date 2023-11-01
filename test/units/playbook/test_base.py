@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import string_types

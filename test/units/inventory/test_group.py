@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host

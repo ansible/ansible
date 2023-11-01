@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import iteritems
