@@ -116,16 +116,6 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 
-def _handle_deprecated_kwarg(func):
-    "Handle the deprecation of create_new_password in build_vault_ids."
-    @functools.wraps
-    def wrapper(*args, **kwargs):
-        if len(args) >= 4 or 'create_new_password' in kwargs:
-            display.deprecated("create_new_password is unused and will be removed in a future release", version='2.19')
-        return func(*args, **kwargs)
-    return wrapper
-
-
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
@@ -203,13 +193,9 @@ class CLI(ABC):
         ret = tuple(parts)
         return ret
 
-    # TODO: remove `create_new_password` as a parameter once the deprecation
-    # time has passed, as well as `_handle_deprecated_kwarg`.
-    @_handle_deprecated_kwarg
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
-                        ask_vault_pass=None, create_new_password=None,
-                        auto_prompt=True):
+                        ask_vault_pass=None, auto_prompt=True):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
