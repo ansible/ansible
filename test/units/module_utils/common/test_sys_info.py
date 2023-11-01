@@ -10,7 +10,7 @@ import pytest
 
 from unittest.mock import patch
 
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 # Functions being tested
 from ansible.module_utils.common.sys_info import get_distribution

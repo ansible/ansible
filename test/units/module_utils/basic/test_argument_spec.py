@@ -16,8 +16,7 @@ from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
 from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
-from ansible.module_utils.six import integer_types, string_types
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
@@ -216,7 +215,7 @@ def test_validator_basic_types(argspec, expected, stdin):
 
     if 'type' in argspec['arg']:
         if argspec['arg']['type'] == 'int':
-            type_ = integer_types
+            type_ = int
         else:
             type_ = getattr(builtins, argspec['arg']['type'])
     else:
@@ -233,7 +232,7 @@ def test_validator_function(mocker, stdin):
     argspec = {'arg': {'type': MOCK_VALIDATOR_SUCCESS}}
     am = basic.AnsibleModule(argspec)
 
-    assert isinstance(am.params['arg'], integer_types)
+    assert isinstance(am.params['arg'], int)
     assert am.params['arg'] == 27
 
 
@@ -243,9 +242,9 @@ def test_validate_basic_auth_arg(mocker, stdin):
         argument_spec=basic_auth_argument_spec()
     )
     am = basic.AnsibleModule(**kwargs)
-    assert isinstance(am.params['api_username'], string_types)
-    assert isinstance(am.params['api_password'], string_types)
-    assert isinstance(am.params['api_url'], string_types)
+    assert isinstance(am.params['api_username'], str)
+    assert isinstance(am.params['api_password'], str)
+    assert isinstance(am.params['api_url'], str)
     assert isinstance(am.params['validate_certs'], bool)
 
 
@@ -255,8 +254,8 @@ def test_validate_rate_limit_argument_spec(mocker, stdin):
         argument_spec=rate_limit_argument_spec()
     )
     am = basic.AnsibleModule(**kwargs)
-    assert isinstance(am.params['rate'], integer_types)
-    assert isinstance(am.params['rate_limit'], integer_types)
+    assert isinstance(am.params['rate'], int)
+    assert isinstance(am.params['rate_limit'], int)
 
 
 @pytest.mark.parametrize('stdin', RETRY_VALID_ARGS, indirect=['stdin'])
@@ -265,7 +264,7 @@ def test_validate_retry_argument_spec(mocker, stdin):
         argument_spec=retry_argument_spec()
     )
     am = basic.AnsibleModule(**kwargs)
-    assert isinstance(am.params['retries'], integer_types)
+    assert isinstance(am.params['retries'], int)
     assert isinstance(am.params['retry_pause'], float)
 
 
@@ -275,7 +274,7 @@ def test_validator_string_type(mocker, stdin):
     argspec = {'arg': {'type': str}}
     am = basic.AnsibleModule(argspec)
 
-    assert isinstance(am.params['arg'], string_types)
+    assert isinstance(am.params['arg'], str)
     assert am.params['arg'] == '123'
 
 
@@ -416,8 +415,8 @@ class TestComplexArgSpecs:
         """Test choices with list"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['bar_str'], list)
-        assert isinstance(am.params['bar_str'][0], string_types)
-        assert isinstance(am.params['bar_str'][1], string_types)
+        assert isinstance(am.params['bar_str'][0], str)
+        assert isinstance(am.params['bar_str'][1], str)
         assert am.params['bar_str'][0] == '867'
         assert am.params['bar_str'][1] == '5309'
 

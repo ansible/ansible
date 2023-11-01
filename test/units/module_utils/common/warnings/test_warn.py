@@ -9,7 +9,6 @@ import pytest
 from ansible.module_utils.common import warnings
 
 from ansible.module_utils.common.warnings import warn, get_warning_messages
-from ansible.module_utils.six import PY3
 
 
 @pytest.fixture
@@ -51,7 +50,7 @@ def test_get_warning_messages(warning_messages):
         {'k1': 'v1'},
         (1, 2),
         6.62607004,
-        b'bytestr' if PY3 else None,
+        b'bytestr',
         None,
     )
 )
