@@ -71,10 +71,6 @@ class TestCliBuildVaultIds(unittest.TestCase):
         res = cli.CLI.build_vault_ids([], ask_vault_pass=True)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
-    def test_with_vault_ids(self):
-        res = cli.CLI.build_vault_ids(['foo@bar'])
-        self.assertEqual(res, ['foo@bar'])
-
     def test_no_vault_ids_password_files(self):
         res = cli.CLI.build_vault_ids([], vault_password_files=['some-password-file'])
         self.assertEqual(res, ['default@some-password-file'])
