@@ -11,7 +11,8 @@
     - vars/test_var_precedence.yml
   pre_tasks:
     - name: param vars should also override set_fact
-      set_fact: param_var: "BAD!"
+      set_fact:
+        param_var: "BAD!"
   roles:
     - { role: test_var_precedence, param_var: "param_var" }
   tasks:
