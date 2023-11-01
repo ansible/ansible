@@ -14,7 +14,7 @@ from http.cookiejar import Cookie
 from ansible.module_utils.urls import fetch_url, ConnectionError
 
 import pytest
-from units.compat.mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class AnsibleModuleExit(Exception):

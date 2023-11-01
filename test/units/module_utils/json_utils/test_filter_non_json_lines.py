@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.module_utils.json_utils import _filter_non_json_lines
 
 

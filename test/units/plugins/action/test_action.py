@@ -23,7 +23,7 @@ import re
 from importlib import import_module
 
 from ansible import constants as C
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock, mock_open
 
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from units.compat.mock import patch
+from unittest.mock import patch
 from ansible.module_utils import basic
 from ansible.modules import iptables
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args

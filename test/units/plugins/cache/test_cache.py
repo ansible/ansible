@@ -23,7 +23,7 @@ import tempfile
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.memory import CacheModule as MemoryCache

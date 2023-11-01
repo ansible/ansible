@@ -18,8 +18,8 @@
 
 from __future__ import annotations
 
-from units.compat.mock import Mock
-from units.compat import unittest
+from unittest.mock import Mock
+import unittest
 from ansible.module_utils.facts.network import linux
 
 # ip -4 route show table local

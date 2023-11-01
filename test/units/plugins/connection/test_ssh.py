@@ -24,7 +24,7 @@ import pytest
 
 
 from ansible.errors import AnsibleAuthenticationFailure
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote

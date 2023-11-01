@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
 from ansible.modules.yum import YumModule
 

@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
 from ansible.errors import AnsibleError
 

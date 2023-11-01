@@ -10,7 +10,7 @@ import errno
 import json
 import pytest
 
-from units.compat.mock import mock_open, patch
+from unittest.mock import mock_open, patch
 
 from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes

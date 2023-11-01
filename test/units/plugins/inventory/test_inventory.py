@@ -23,7 +23,7 @@ import textwrap
 from unittest import mock
 
 from ansible import constants as C
-from units.compat import unittest
+import unittest
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_text
 from units.mock.path import mock_unfrackpath_noop

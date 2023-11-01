@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError

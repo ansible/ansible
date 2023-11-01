@@ -26,7 +26,7 @@ import tempfile
 from binascii import hexlify
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible import errors

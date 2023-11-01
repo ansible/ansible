@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.playbook.taggable import Taggable
 from units.mock.loader import DictDataLoader
 

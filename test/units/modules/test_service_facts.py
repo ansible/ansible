@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
-from units.compat.mock import patch
+import unittest
+from unittest.mock import patch
 
 from ansible.module_utils import basic
 from ansible.modules.service_facts import AIXScanService

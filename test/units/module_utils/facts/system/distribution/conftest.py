@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from units.compat.mock import Mock
+from unittest.mock import Mock
 
 
 @pytest.fixture

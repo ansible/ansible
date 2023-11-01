@@ -22,7 +22,7 @@ from collections import defaultdict
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
 from ansible.errors import AnsibleError
 from ansible.utils.vars import combine_vars, merge_hash
 from ansible.vars.manager import VarsWithSources

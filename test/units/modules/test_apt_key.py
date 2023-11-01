@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import os
 
-from units.compat.mock import patch, Mock
-from units.compat import unittest
+from unittest.mock import patch, Mock
+import unittest
 
 from ansible.modules import apt_key
 

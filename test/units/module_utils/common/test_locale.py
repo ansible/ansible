@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from units.compat.mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
 

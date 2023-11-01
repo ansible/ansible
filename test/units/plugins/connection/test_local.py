@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from io import StringIO
 
-from units.compat import unittest
+import unittest
 from ansible.plugins.connection import local
 from ansible.playbook.play_context import PlayContext
 

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.facts.network import iscsi
-from units.compat.mock import Mock
+from unittest.mock import Mock
 
 
 # AIX # lsattr -E -l iscsi0

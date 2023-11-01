@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-from units.compat.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible.module_utils import basic

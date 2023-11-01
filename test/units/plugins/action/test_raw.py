@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock, Mock
 from ansible.plugins.action.raw import ActionModule
 from ansible.playbook.task import Task

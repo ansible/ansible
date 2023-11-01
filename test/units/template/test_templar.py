@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from jinja2.runtime import Context
 
-from units.compat import unittest
+import unittest
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
