@@ -21,7 +21,7 @@ from collections.abc import Container
 
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible.errors import AnsibleParserError

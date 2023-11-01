@@ -8,7 +8,7 @@ import json
 import os
 import tempfile
 
-from units.compat.mock import patch
+from unittest.mock import patch
 from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible.module_utils import basic

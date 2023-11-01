@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from io import StringIO
 
-from units.compat import unittest
+import unittest
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader

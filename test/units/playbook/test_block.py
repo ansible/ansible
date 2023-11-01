@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 

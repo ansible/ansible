@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock, patch
 
 from ansible import constants as C
