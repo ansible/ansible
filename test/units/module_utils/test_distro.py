@@ -15,7 +15,6 @@
 from __future__ import annotations
 
 from ansible.module_utils import distro
-from ansible.module_utils.six import string_types
 
 
 # Generic test case with minimal assertions about specific returned values.
@@ -29,7 +28,7 @@ class TestDistro():
 
     def test_id(self):
         id = distro.id()
-        assert isinstance(id, string_types), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))
+        assert isinstance(id, str), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))
 
     def test_opensuse_leap_id(self):
         name = distro.name()

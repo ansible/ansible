@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.module_utils.six.moves.collections_abc import Sequence
+from collections.abc import Sequence
 from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
 

@@ -25,7 +25,6 @@ import unittest
 
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.module_utils.six import string_types
 
 
 class TestHost(unittest.TestCase):
@@ -50,7 +49,7 @@ class TestHost(unittest.TestCase):
 
     def test_repr(self):
         host_repr = repr(self.hostA)
-        self.assertIsInstance(host_repr, string_types)
+        self.assertIsInstance(host_repr, str)
 
     def test_add_group(self):
         group = Group('some_group')
