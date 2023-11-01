@@ -11,7 +11,6 @@ from itertools import product
 import pytest
 
 import ansible.module_utils.basic
-from ansible.module_utils.six import PY3
 
 
 class TestAnsibleModuleLogSmokeTest:
@@ -54,23 +53,13 @@ class TestAnsibleModuleLogSmokeTest:
 class TestAnsibleModuleLogSyslog:
     """Test the AnsibleModule Log Method"""
 
-    PY2_OUTPUT_DATA = [
-        (u'Text string', b'Text string'),
-        (u'Toshio くらとみ non-ascii test', u'Toshio くらとみ non-ascii test'.encode('utf-8')),
-        (b'Byte string', b'Byte string'),
-        (u'Toshio くらとみ non-ascii test'.encode('utf-8'), u'Toshio くらとみ non-ascii test'.encode('utf-8')),
-        (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8')),
-    ]
-
-    PY3_OUTPUT_DATA = [
+    OUTPUT_DATA = [
         (u'Text string', u'Text string'),
         (u'Toshio くらとみ non-ascii test', u'Toshio くらとみ non-ascii test'),
         (b'Byte string', u'Byte string'),
         (u'Toshio くらとみ non-ascii test'.encode('utf-8'), u'Toshio くらとみ non-ascii test'),
         (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace')),
     ]
-
-    OUTPUT_DATA = PY3_OUTPUT_DATA if PY3 else PY2_OUTPUT_DATA
 
     @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
     def test_no_log(self, am, mocker, no_log):

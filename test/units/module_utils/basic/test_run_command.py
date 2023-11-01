@@ -12,7 +12,6 @@ from io import BytesIO
 import pytest
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import PY2
 
 
 class OpenBytesIO(BytesIO):
@@ -267,10 +266,5 @@ def test_run_command_fds(mocker, rc_am):
     except SystemExit:
         pass
 
-    if PY2:
-        assert subprocess_mock.Popen.call_args[1]['close_fds'] is False
-        assert 'pass_fds' not in subprocess_mock.Popen.call_args[1]
-
-    else:
-        assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
-        assert subprocess_mock.Popen.call_args[1]['close_fds'] is True
+    assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
+    assert subprocess_mock.Popen.call_args[1]['close_fds'] is True

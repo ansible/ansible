@@ -8,7 +8,6 @@ import re
 import sys
 from importlib import import_module
 
-from ansible.module_utils.six import PY3, string_types
 from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (
@@ -37,7 +36,7 @@ def teardown(*args, **kwargs):
     r'FileFinder\.find_loader\(\) is deprecated and slated for removal in Python 3\.12; use find_spec\(\) instead'
     ':DeprecationWarning',
 )
-@pytest.mark.skipif(not PY3 or sys.version_info >= (3, 12), reason='Testing Python 2 codepath (find_module) on Python 3, <= 3.11')
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason='Testing Python 2 codepath (find_module) on Python 3, <= 3.11')
 def test_find_module_py3_lt_312():
     dir_to_a_file = os.path.dirname(ping_module.__file__)
     path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
@@ -298,10 +297,7 @@ def test_path_hook_setup():
         except Exception as phe:
             pathhook_exc = phe
 
-        if PY3:
-            assert str(pathhook_exc) == 'need exactly one FileFinder import hook (found 0)'
-        else:
-            assert found_hook is None
+        assert str(pathhook_exc) == 'need exactly one FileFinder import hook (found 0)'
 
     assert repr(_AnsiblePathHookFinder(object(), '/bogus/path')) == "_AnsiblePathHookFinder(path='/bogus/path')"
 
@@ -819,7 +815,7 @@ def test_collectionref_components_valid(name, subdirs, resource, ref_type, pytho
     ]
 )
 def test_legacy_plugin_dir_to_plugin_type(dirname, expected_result):
-    if isinstance(expected_result, string_types):
+    if isinstance(expected_result, str):
         assert AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(dirname) == expected_result
     else:
         with pytest.raises(expected_result):

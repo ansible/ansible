@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from units.mock.procenv import ModuleTestCase
 
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 realimport = builtins.__import__
 

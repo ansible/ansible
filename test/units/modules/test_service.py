@@ -11,7 +11,6 @@ import platform
 import pytest
 from ansible.modules import service
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import PY2
 from units.modules.utils import set_module_args
 
 
@@ -28,7 +27,7 @@ def mocker_sunos_service(mocker):
     # Read a mocked /etc/release file
     mocked_etc_release_data = mocker.mock_open(
         read_data=" Oracle Solaris 12.0")
-    builtin_open = "__builtin__.open" if PY2 else "builtins.open"
+    builtin_open = "builtins.open"
     mocker.patch(builtin_open, mocked_etc_release_data)
 
     service_status = mocker.patch.object(
