@@ -34,7 +34,7 @@ class Handler(Task):
         super(Handler, self).__init__(block=block, role=role, task_include=task_include)
 
     def __repr__(self):
-        ''' returns a human readable representation of the handler '''
+        ''' returns a human-readable representation of the handler '''
         return "HANDLER: %s" % self.get_name()
 
     @staticmethod

@@ -305,6 +305,11 @@ EXAMPLES = r'''
     uid: 1040
     group: admin
 
+- name: Create a user 'johnd' with a home directory
+  ansible.builtin.user:
+    name: johnd
+    create_home: yes
+
 - name: Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
   ansible.builtin.user:
     name: james
@@ -630,6 +635,9 @@ class User(object):
                             maybe_invalid = True
                         # sha512
                         if fields[1] == '6' and len(fields[-1]) != 86:
+                            maybe_invalid = True
+                        # yescrypt
+                        if fields[1] == 'y' and len(fields[-1]) != 43:
                             maybe_invalid = True
                     else:
                         maybe_invalid = True
