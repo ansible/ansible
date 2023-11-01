@@ -1,0 +1,2 @@
+bugfixes:
+  - role params now have higher precedence again, matching documentation.
