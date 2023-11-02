@@ -115,6 +115,7 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 
+# Note that using the methods in this class directly in Python is unsupported
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
