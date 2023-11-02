@@ -8,7 +8,6 @@ from __future__ import annotations
 import locale
 import os
 import sys
-import functools
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
