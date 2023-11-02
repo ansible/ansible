@@ -141,7 +141,7 @@ from ansible.module_utils.compat.version import LooseVersion
 class Subversion(object):
 
     # Example text matched by the regexp:
-    #  Révision : 1889134
+    #  Révision : 1889134
     #  版本: 1889134
     #  Revision: 1889134
     REVISION_RE = r'^\w+\s?:\s+\d+$'

@@ -186,11 +186,11 @@
 
     - name: Delete unprivileged user home and tempdir
       file:
-        path: "{{ item }}"
+        path: "{{ item }}"
         state: absent
       loop:
         - '{{ tempdir.path }}'
-        - '{{ user.home }}'
+        - '{{ user.home }}'
 
 - name: verify that link was created
   assert:
@@ -199,7 +199,7 @@
       - "missing_dst_no_follow_enable_force_use_mode2 is changed"
       - "missing_dst_no_follow_enable_force_use_mode3 is not changed"
       - "soft3_result['stat'].islnk"
-      - "soft3_result['stat'].lnk_target == '{{ user.home }}/nonexistent'"
+      - "soft3_result['stat'].lnk_target == '{{ user.home }}/nonexistent'"
 
 #
 # Test creating a link to a directory https://github.com/ansible/ansible/issues/1369
