@@ -406,7 +406,7 @@ def test_import_from_collection(monkeypatch):
     original_trace_function = sys.gettrace()
     trace_log = []
 
-    if original_trace_function:
+    if original_trace_function:  # pragma: nocover
         # enable tracing while preserving the existing trace function (coverage)
         def my_trace_function(frame, event, arg):
             trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
@@ -419,7 +419,7 @@ def test_import_from_collection(monkeypatch):
             sys.settrace(my_trace_function)
 
             return my_trace_function
-    else:
+    else:  # pragma: nocover
         # no existing trace function, so our trace function is much simpler
         def my_trace_function(frame, event, arg):
             trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
