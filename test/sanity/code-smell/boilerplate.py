@@ -17,7 +17,7 @@ def main():
         invalid_future = []
 
         for text in lines:
-            if text == b'from __future__ import annotations':
+            if text in (b'from __future__ import annotations', b'from __future__ import annotations  # pragma: nocover'):
                 missing = False
                 break
 
