@@ -2,7 +2,7 @@
 # checks that dest is created
 - name: Ensure that dest top directory doesn't exist
   file:
-    path: '{{ remote_dir }}/{{ item.dest.split("/")[0] }}'
+    path: '{{ remote_dir }}/{{ item.dest.split("/")[0] }}'
     state: absent
 
 - name: create subdir
@@ -20,8 +20,8 @@
 
 - name: Copy file, dest is a nonexistent target directory
   copy:
-    src: '{{ item.src }}'
-    dest: '{{ remote_dir }}/{{ item.dest }}'
+    src: '{{ item.src }}'
+    dest: '{{ remote_dir }}/{{ item.dest }}'
     remote_src: true
   register: copy_result
 

@@ -999,13 +999,13 @@
 
   - name: Create a directory outside of the tree
     file:
-      path: '{{ local_temp_dir }}/source2'
+      path: '{{ local_temp_dir }}/source2'
       state: directory
 
   - name: Create a symlink to a directory outside of the tree
     file:
       path: '{{ local_temp_dir }}/source1/link'
-      src: '{{ local_temp_dir }}/source2'
+      src: '{{ local_temp_dir }}/source2'
       state: link
 
   - name: Create a circular link back to the tree
@@ -1075,7 +1075,7 @@
   - name: Create a file inside of the directory
     copy:
       content: "testing"
-      dest: '{{ local_temp_dir }}/source_recursive/file'
+      dest: '{{ local_temp_dir }}/source_recursive/file'
 
   - name: Create a directory to place the test output in
     file:
@@ -1456,7 +1456,7 @@
   block:
   - name: Create a test dir to copy
     file:
-      path: '{{ local_temp_dir }}/top_dir'
+      path: '{{ local_temp_dir }}/top_dir'
       state: directory
 
   - name: Create a test dir to symlink to
@@ -1466,7 +1466,7 @@
 
   - name: Create a file in the test dir
     copy:
-      dest: '{{ local_temp_dir }}/linked_dir/file1'
+      dest: '{{ local_temp_dir }}/linked_dir/file1'
       content: 'hello world'
 
   - name: Create a link to the test dir
@@ -1489,7 +1489,7 @@
 
 - name: Copy the directory's link
   copy:
-    src: '{{ local_temp_dir }}/top_dir'
+    src: '{{ local_temp_dir }}/top_dir'
     dest: '{{ remote_dir }}/new_dir'
     local_follow: True
 
@@ -2056,7 +2056,7 @@
       dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src'
   - name: Create a 2nd level subdirectory
     file:
-      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/'
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/'
       state: directory
   - name: execute - Copy the directory on remote
     copy:
