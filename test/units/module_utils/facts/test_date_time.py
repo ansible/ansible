@@ -9,7 +9,6 @@ import datetime
 import string
 import time
 
-from ansible.module_utils.compat.datetime import UTC
 from ansible.module_utils.facts.system import date_time
 
 EPOCH_TS = 1594449296.123456
@@ -27,7 +26,7 @@ def fake_now(monkeypatch):
     class FakeNow:
         @classmethod
         def fromtimestamp(cls, timestamp, tz=None):
-            if tz == UTC:
+            if tz == datetime.timezone.utc:
                 return UTC_DT.replace(tzinfo=tz)
             return DT.replace(tzinfo=tz)
 
