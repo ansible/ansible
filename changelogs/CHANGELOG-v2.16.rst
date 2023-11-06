@@ -5,74 +5,13 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
-v2.16.0rc1
-==========
+v2.16.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2023-10-16
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - Make Python 3.12 the default version used in the ``base`` and ``default`` containers.
-
-Deprecated Features
--------------------
-
-- Old style vars plugins which use the entrypoints `get_host_vars` or `get_group_vars` are deprecated. The plugin should be updated to inherit from `BaseVarsPlugin` and define a `get_vars` method as the entrypoint.
-
-Bugfixes
---------
-
-- Cache host_group_vars after instantiating it once and limit the amount of repetitive work it needs to do every time it runs.
-- Call PluginLoader.all() once for vars plugins, and load vars plugins that run automatically or are enabled specifically by name subsequently.
-- Fix ``run_once`` being incorrectly interpreted on handlers (https://github.com/ansible/ansible/issues/81666)
-- Properly template tags in parent blocks (https://github.com/ansible/ansible/issues/81053)
-- ansible-galaxy - Provide a better error message when using a requirements file with an invalid format - https://github.com/ansible/ansible/issues/81901
-- ansible-inventory - index available_hosts for major performance boost when dumping large inventories
-- ansible-test - Add a ``pylint`` plugin to work around a known issue on Python 3.12.
-- ansible-test - Include missing ``pylint`` requirements for Python 3.10.
-- ansible-test - Update ``pylint`` to version 3.0.1.
-
-v2.16.0b2
-=========
-
-Release Summary
----------------
-
-| Release Date: 2023-10-03
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - When invoking ``sleep`` in containers during container setup, the ``env`` command is used to avoid invoking the shell builtin, if present.
-
-Security Fixes
---------------
-
-- ansible-galaxy - Prevent roles from using symlinks to overwrite files outside of the installation directory (CVE-2023-5115)
-
-Bugfixes
---------
-
-- ``import_role`` reverts to previous behavior of exporting vars at compile time.
-- ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
-- uri/urls - Add compat function to handle the ability to parse the filename from a Content-Disposition header (https://github.com/ansible/ansible/issues/81806)
-- winrm - Better handle send input failures when communicating with hosts under load
-
-v2.16.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2023-09-26
+| Release Date: 2023-11-06
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
 
 
@@ -118,6 +57,7 @@ Minor Changes
 - ansible-test - Add support for testing with Python 3.12.
 - ansible-test - Allow float values for the ``--timeout`` option to the ``env`` command. This simplifies testing.
 - ansible-test - Enable ``thread`` code coverage in addition to the existing ``multiprocessing`` coverage.
+- ansible-test - Make Python 3.12 the default version used in the ``base`` and ``default`` containers.
 - ansible-test - RHEL 8.8 provisioning can now be used with the ``--python 3.11`` option.
 - ansible-test - RHEL 9.2 provisioning can now be used with the ``--python 3.11`` option.
 - ansible-test - Refactored ``env`` command logic and timeout handling.
@@ -146,6 +86,7 @@ Minor Changes
 - ansible-test - Updated the distro test containers to version 6.3.0 to include coverage 7.3.2 for Python 3.8+. The alpine3 container is now based on 3.18 instead of 3.17 and includes Python 3.11 instead of Python 3.10.
 - ansible-test - Use ``datetime.datetime.now`` with ``tz`` specified instead of ``datetime.datetime.utcnow``.
 - ansible-test - Use a context manager to perform cleanup at exit instead of using the built-in ``atexit`` module.
+- ansible-test - When invoking ``sleep`` in containers during container setup, the ``env`` command is used to avoid invoking the shell builtin, if present.
 - ansible-test - remove Alpine 3.17 from remotes
 - ansible-test — Python 3.8–3.12 will use ``coverage`` v7.3.2.
 - ansible-test — ``coverage`` v6.5.0 is to be used only under Python 3.7.
@@ -183,6 +124,7 @@ Deprecated Features
 
 - Deprecated ini config option ``collections_paths``, use the singular form ``collections_path`` instead
 - Deprecated the env var ``ANSIBLE_COLLECTIONS_PATHS``, use the singular form ``ANSIBLE_COLLECTIONS_PATH`` instead
+- Old style vars plugins which use the entrypoints `get_host_vars` or `get_group_vars` are deprecated. The plugin should be updated to inherit from `BaseVarsPlugin` and define a `get_vars` method as the entrypoint.
 - Support for Windows Server 2012 and 2012 R2 has been removed as the support end of life from Microsoft is October 10th 2023. These versions of Windows will no longer be tested in this Ansible release and it cannot be guaranteed that they will continue to work going forward.
 - ``STRING_CONVERSION_ACTION`` config option is deprecated as it is no longer used in the Ansible Core code base.
 - the 'smart' option for setting a connection plugin is being removed as it's main purpose (choosing between ssh and paramiko) is now irrelevant.
@@ -205,15 +147,23 @@ Removed Features (previously deprecated)
 - module_utils/basic.py - Removed Python 3.5 as a supported remote version. Python 2.7 or Python 3.6+ is now required.
 - stat - removed unused `get_md5` parameter.
 
+Security Fixes
+--------------
+
+- ansible-galaxy - Prevent roles from using symlinks to overwrite files outside of the installation directory (CVE-2023-5115)
+
 Bugfixes
 --------
 
 - Allow for searching handler subdir for included task via include_role (https://github.com/ansible/ansible/issues/81722)
 - AnsibleModule.run_command - Only use selectors when needed, and rely on Python stdlib subprocess for the simple task of collecting stdout/stderr when prompt matching is not required.
+- Cache host_group_vars after instantiating it once and limit the amount of repetitive work it needs to do every time it runs.
+- Call PluginLoader.all() once for vars plugins, and load vars plugins that run automatically or are enabled specifically by name subsequently.
 - Display - Defensively configure writing to stdout and stderr with a custom encoding error handler that will replace invalid characters while providing a deprecation warning that non-utf8 text will result in an error in a future version.
 - Exclude internal options from man pages and docs.
 - Fix ``ansible-config init`` man page option indentation.
 - Fix ``ast`` deprecation warnings for ``Str`` and ``value.s`` when using Python 3.12.
+- Fix ``run_once`` being incorrectly interpreted on handlers (https://github.com/ansible/ansible/issues/81666)
 - Fix exceptions caused by various inputs when performing arg splitting or parsing key/value pairs. Resolves issue https://github.com/ansible/ansible/issues/46379 and issue https://github.com/ansible/ansible/issues/61497
 - Fix incorrect parsing of multi-line Jinja2 blocks when performing arg splitting or parsing key/value pairs.
 - Fix post-validating looped task fields so the strategy uses the correct values after task execution.
@@ -227,6 +177,7 @@ Bugfixes
 - Prevent running same handler multiple times when included via ``include_role`` (https://github.com/ansible/ansible/issues/73643)
 - Prompting - add a short sleep between polling for user input to reduce CPU consumption (https://github.com/ansible/ansible/issues/81516).
 - Properly disable ``jinja2_native`` in the template module when jinja2 override is used in the template (https://github.com/ansible/ansible/issues/80605)
+- Properly template tags in parent blocks (https://github.com/ansible/ansible/issues/81053)
 - Remove unreachable parser error for removed ``static`` parameter of ``include_role``
 - Replace uses of ``configparser.ConfigParser.readfp()`` which was removed in Python 3.12 with ``configparser.ConfigParser.read_file()`` (https://github.com/ansible/ansible/issues/81656)
 - Set filters ``intersect``, ``difference``, ``symmetric_difference`` and ``union`` now always return a ``list``, never a ``set``. Previously, a ``set`` would be returned if the inputs were a hashable type such as ``str``, instead of a collection, such as a ``list`` or ``tuple``.
@@ -245,6 +196,7 @@ Bugfixes
 - ``ansible-galaxy`` now considers all collection paths when identifying which collection requirements are already installed. Use the ``COLLECTIONS_PATHS`` and ``COLLECTIONS_SCAN_SYS_PATHS`` config options to modify these. Previously only the install path was considered when resolving the candidates. The install path will remain the only one potentially modified. (https://github.com/ansible/ansible/issues/79767, https://github.com/ansible/ansible/issues/81163)
 - ``ansible.module_utils.service`` - ensure binary data transmission in ``daemonize()``
 - ``ansible.module_utils.service`` - fix inter-process communication in ``daemonize()``
+- ``import_role`` reverts to previous behavior of exporting vars at compile time.
 - ``pkg_mgr`` - fix the default dnf version detection
 - ansiballz - Prevent issue where the time on the control host could change part way through building the ansiballz file, potentially causing a pre-1980 date to be used during ansiballz unpacking leading to a zip file error (https://github.com/ansible/ansible/issues/80089)
 - ansible terminal color settings were incorrectly limited to 16 options via 'choices', removing so all 256 can be accessed.
@@ -252,25 +204,32 @@ Bugfixes
 - ansible-galaxy - Enabled the ``data`` tarfile filter during role installation for Python versions that support it. A probing mechanism is used to avoid Python versions with a broken implementation.
 - ansible-galaxy - Fix issue installing collections containing directories with more than 100 characters on python versions before 3.10.6
 - ansible-galaxy - Fix variable type error when installing subdir collections (https://github.com/ansible/ansible/issues/80943)
+- ansible-galaxy - Provide a better error message when using a requirements file with an invalid format - https://github.com/ansible/ansible/issues/81901
 - ansible-galaxy - fix installing collections from directories that have a trailing path separator (https://github.com/ansible/ansible/issues/77803).
 - ansible-galaxy - fix installing signed collections (https://github.com/ansible/ansible/issues/80648).
 - ansible-galaxy - reduce API calls to servers by fetching signatures only for final candidates.
 - ansible-galaxy - started allowing the use of pre-releases for collections that do not have any stable versions published. (https://github.com/ansible/ansible/pull/81606)
 - ansible-galaxy - started allowing the use of pre-releases for dependencies on any level of the dependency tree that specifically demand exact pre-release versions of collections and not version ranges. (https://github.com/ansible/ansible/pull/81606)
 - ansible-galaxy collection verify - fix verifying signed collections when the keyring is not configured.
+- ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
+- ansible-inventory - index available_hosts for major performance boost when dumping large inventories
+- ansible-test - Add a ``pylint`` plugin to work around a known issue on Python 3.12.
 - ansible-test - Add support for ``argcomplete`` version 3.
 - ansible-test - All containers created by ansible-test now include the current test session ID in their name. This avoids conflicts between concurrent ansible-test invocations using the same container host.
 - ansible-test - Always use ansible-test managed entry points for ansible-core CLI tools when not running from source. This fixes issues where CLI entry points created during install are not compatible with ansible-test.
 - ansible-test - Fix a traceback that occurs when attempting to test Ansible source using a different ansible-test. A clear error message is now given when this scenario occurs.
 - ansible-test - Fix handling of timeouts exceeding one day.
+- ansible-test - Fix parsing of cgroup entries which contain a ``:`` in the path (https://github.com/ansible/ansible/issues/81977).
 - ansible-test - Fix several possible tracebacks when using the ``-e`` option with sanity tests.
 - ansible-test - Fix various cases where the test timeout could expire without terminating the tests.
+- ansible-test - Include missing ``pylint`` requirements for Python 3.10.
 - ansible-test - Pre-build a PyYAML wheel before installing requirements to avoid a potential Cython build failure.
 - ansible-test - Remove redundant warning about missing programs before attempting to execute them.
 - ansible-test - The ``import`` sanity test now checks the collection loader for remote-only Python support when testing ansible-core.
 - ansible-test - Unit tests now report warnings generated during test runs. Previously only warnings generated during test collection were reported.
 - ansible-test - Update ``pylint`` to 2.17.2 to resolve several possible false positives.
 - ansible-test - Update ``pylint`` to 2.17.3 to resolve several possible false positives.
+- ansible-test - Update ``pylint`` to version 3.0.1.
 - ansible-test - Use ``raise ... from ...`` when raising exceptions from within an exception handler.
 - ansible-test - When bootstrapping remote FreeBSD instances, use the OS packaged ``setuptools`` instead of installing the latest version from PyPI.
 - ansible-test local change detection - use ``git merge-base <branch> HEAD`` instead of ``git merge-base --fork-point <branch>`` (https://github.com/ansible/ansible/pull/79734).
@@ -334,12 +293,14 @@ Bugfixes
 - templating escape and single var optimization now use correct delimiters when custom ones are provided either via task or template header.
 - unarchive - fix unarchiving sources that are copied to the remote node using a relative temporory directory path (https://github.com/ansible/ansible/issues/80710).
 - uri - fix search for JSON type to include complex strings containing '+'
+- uri/urls - Add compat function to handle the ability to parse the filename from a Content-Disposition header (https://github.com/ansible/ansible/issues/81806)
 - urls.py - fixed cert_file and key_file parameters when running on Python 3.12 - https://github.com/ansible/ansible/issues/80490
 - user - set expiration value correctly when unable to retrieve the current value from the system (https://github.com/ansible/ansible/issues/71916)
 - validate-modules sanity test - replace semantic markup parsing and validating code with the code from `antsibull-docs-parser 0.2.0 <https://github.com/ansible-community/antsibull-docs-parser/releases/tag/0.2.0>`__ (https://github.com/ansible/ansible/pull/80406).
 - vars_prompt - internally convert the ``unsafe`` value to ``bool``
 - vault and unvault filters now properly take ``vault_id`` parameter.
 - win_fetch - Add support for using file with wildcards in file name. (https://github.com/ansible/ansible/issues/73128)
+- winrm - Better handle send input failures when communicating with hosts under load
 
 Known Issues
 ------------
