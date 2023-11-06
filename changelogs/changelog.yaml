@@ -1180,6 +1180,17 @@ releases:
     - role-deduplication-condition.yml
     - winrm-send-input.yml
     release_date: '2023-10-03'
+  2.15.6:
+    changes:
+      release_summary: '| Release Date: 2023-11-06
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.6_summary.yaml
+    release_date: '2023-11-06'
   2.15.6rc1:
     changes:
       bugfixes:
