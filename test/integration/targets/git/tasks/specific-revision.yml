@@ -71,7 +71,7 @@
 # contains the SHA1
 - name: SPECIFIC-REVISION | update to revision by specifying the refspec
   git: &git_ref_spec
-    repo: "{{ repo_dir }}/shallow_branches"
+    repo: "{{ repo_dir }}/shallow_branches/.git"
     dest: '{{ checkout_dir }}'
     version: "{{ test_branch_ref_head_id }}"
     refspec: refs/heads/test_branch
