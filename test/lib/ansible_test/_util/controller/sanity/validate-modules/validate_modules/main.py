@@ -94,7 +94,10 @@ REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
+TYPE_REGEX = re.compile(
+    r'[=!]=\s+type(?:\s*\(\s*([^)]*[^ )])\s*\))'
+    r'|\btype(?:\s*\(\s*([^)]*[^ )])\s*\))\s+[=!]='
+)
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 

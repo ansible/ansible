@@ -1,0 +1,3 @@
+---
+bugfixes:
+- ansible-test - update regex for type checking in validate_modules (https://github.com/ansible/ansible/issues/72391).
