@@ -1,5 +1,20 @@
 ancestor: 2.15.0
 releases:
+  2.16.0:
+    changes:
+      bugfixes:
+      - ansible-test - Fix parsing of cgroup entries which contain a ``:`` in the
+        path (https://github.com/ansible/ansible/issues/81977).
+      release_summary: '| Release Date: 2023-11-06
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.0_summary.yaml
+    - ansible-test-cgroup-split.yml
+    release_date: '2023-11-06'
   2.16.0b1:
     changes:
       breaking_changes:
