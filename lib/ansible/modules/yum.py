@@ -6,8 +6,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -241,7 +240,7 @@ options:
         registered to RHN or an RHN Satellite, repoquery allows for querying
         all channels assigned to the system. It is also required to use the
         'list' parameter.
-      - "NOTE: This will run and be logged as a separate yum transation which
+      - "NOTE: This will run and be logged as a separate yum transaction which
         takes place before any other installation or removal."
       - "NOTE: This will use the system's default enabled repositories without
         regard for disablerepo/enablerepo given to the module."

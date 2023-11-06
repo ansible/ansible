@@ -4,8 +4,7 @@
 # CAUTION: This implementation of the collection loader is used by ansible-test.
 #          Because of this, it must be compatible with all Python versions supported on the controller or remote.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import itertools
 import os

@@ -15,20 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
-from ansible.module_utils.six import text_type
 
 from collections import namedtuple
 from units.mock.loader import DictDataLoader
@@ -121,8 +118,8 @@ class TestTaskExecutor(unittest.TestCase):
         data = res['results'][0]
         self.assertIsInstance(data['unsafe_bytes'], AnsibleUnsafeText)
         self.assertIsInstance(data['unsafe_text'], AnsibleUnsafeText)
-        self.assertIsInstance(data['bytes'], text_type)
-        self.assertIsInstance(data['text'], text_type)
+        self.assertIsInstance(data['bytes'], str)
+        self.assertIsInstance(data['text'], str)
         self.assertIsInstance(data['int'], int)
 
     def test_task_executor_get_loop_items(self):

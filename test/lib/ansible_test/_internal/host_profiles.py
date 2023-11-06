@@ -806,6 +806,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
           - Avoid hanging indefinitely or for an unreasonably long time.
 
         NOTE: The container must have a POSIX-compliant default shell "sh" with a non-builtin "sleep" command.
+              The "sleep" command is invoked through "env" to avoid using a shell builtin "sleep" (if present).
         """
         command = ''
 
@@ -813,7 +814,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             command += f'{init_config.command} && '
 
         if sleep or init_config.command_privileged:
-            command += 'sleep 60 ; '
+            command += 'env sleep 60 ; '
 
         if not command:
             return None

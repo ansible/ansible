@@ -16,20 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from io import StringIO
+from selectors import SelectorKey, EVENT_READ
 import pytest
 
 
 from ansible.errors import AnsibleAuthenticationFailure
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.module_utils.compat.selectors import SelectorKey, EVENT_READ
-from ansible.module_utils.six.moves import shlex_quote
+import shlex
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
@@ -248,7 +246,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
         conn.set_option('scp_if_ssh', 'smart')
-        expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -268,13 +266,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with SCPP_IF_SSH disabled
         conn.set_option('scp_if_ssh', False)
-        expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'put',
-                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -306,7 +304,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
         conn.set_option('scp_if_ssh', 'smart')
-        expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.set_options({})
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
@@ -328,13 +326,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with SCP_IF_SSH disabled
         conn.set_option('scp_if_ssh', False)
-        expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'get',
-                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -391,7 +389,7 @@ def mock_run_env(request, mocker):
     request.cls.mock_popen = mock_popen
 
     request.cls.mock_selector = MockSelector()
-    mocker.patch('ansible.module_utils.compat.selectors.DefaultSelector', lambda: request.cls.mock_selector)
+    mocker.patch('selectors.DefaultSelector', lambda: request.cls.mock_selector)
 
     request.cls.mock_openpty = mocker.patch('pty.openpty')
 

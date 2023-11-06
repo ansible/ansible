@@ -15,14 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+from ansible.utils.sentinel import Sentinel
+
+
+def _flatten_tags(tags: list) -> list:
+    rv = set()
+    for tag in tags:
+        if isinstance(tag, list):
+            rv.update(tag)
+        else:
+            rv.add(tag)
+    return list(rv)
 
 
 class Taggable:
@@ -34,11 +43,7 @@ class Taggable:
         if isinstance(ds, list):
             return ds
         elif isinstance(ds, string_types):
-            value = ds.split(',')
-            if isinstance(value, list):
-                return [x.strip() for x in value]
-            else:
-                return [ds]
+            return [x.strip() for x in ds.split(',')]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
@@ -47,16 +52,12 @@ class Taggable:
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
-            tags = templar.template(self.tags)
-
-            _temp_tags = set()
-            for tag in tags:
-                if isinstance(tag, list):
-                    _temp_tags.update(tag)
-                else:
-                    _temp_tags.add(tag)
-            tags = _temp_tags
-            self.tags = list(tags)
+            obj = self
+            while obj is not None:
+                if (_tags := getattr(obj, "_tags", Sentinel)) is not Sentinel:
+                    obj._tags = _flatten_tags(templar.template(_tags))
+                obj = obj._parent
+            tags = set(self.tags)
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged

@@ -2,8 +2,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (annotations, absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     author: Ansible Core Team
@@ -148,8 +147,8 @@ DOCUMENTATION = """
               seconds higher than the WS-Man operation timeout, thus make the connection more
               robust on networks with long latency and/or many hops between server and client
               network wise.
-            - Setting the difference bewteen the operation and the read timeout to 10 seconds
-              alligns it to the defaults used in the winrm-module and the PSRP-module which also
+            - Setting the difference between the operation and the read timeout to 10 seconds
+              aligns it to the defaults used in the winrm-module and the PSRP-module which also
               uses 10 seconds (30 seconds for read timeout and 20 seconds for operation timeout)
             - Corresponds to the C(operation_timeout_sec) and
               C(read_timeout_sec) args in pywinrm so avoid setting these vars
@@ -170,6 +169,7 @@ import json
 import tempfile
 import shlex
 import subprocess
+import time
 import typing as t
 
 from inspect import getfullargspec
@@ -199,6 +199,7 @@ from ansible.utils.display import Display
 try:
     import winrm
     from winrm import Response
+    from winrm.exceptions import WinRMError, WinRMOperationTimeoutError
     from winrm.protocol import Protocol
     import requests.exceptions
     HAS_WINRM = True
@@ -494,6 +495,43 @@ class Connection(ConnectionBase):
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
+    def _winrm_write_stdin(self, command_id: str, stdin_iterator: t.Iterable[tuple[bytes, bool]]) -> None:
+        for (data, is_last) in stdin_iterator:
+            for attempt in range(1, 4):
+                try:
+                    self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+
+                except WinRMOperationTimeoutError:
+                    # A WSMan OperationTimeout can be received for a Send
+                    # operation when the server is under severe load. On manual
+                    # testing the input is still processed and it's safe to
+                    # continue. As the calling method still tries to wait for
+                    # the proc to end if this failed it shouldn't hurt to just
+                    # treat this as a warning.
+                    display.warning(
+                        "WSMan OperationTimeout during send input, attempting to continue. "
+                        "If this continues to occur, try increasing the connection_timeout "
+                        "value for this host."
+                    )
+                    if not is_last:
+                        time.sleep(5)
+
+                except WinRMError as e:
+                    # Error 170 == ERROR_BUSY. This could be the result of a
+                    # timed out Send from above still being processed on the
+                    # server. Add a 5 second delay and try up to 3 times before
+                    # fully giving up.
+                    # pywinrm does not expose the internal WSMan fault details
+                    # through an actual object but embeds it as a repr.
+                    if attempt == 3 or "'wsmanfault_code': '170'" not in str(e):
+                        raise
+
+                    display.warning(f"WSMan send failed on attempt {attempt} as the command is busy, trying to send data again")
+                    time.sleep(5)
+                    continue
+
+                break
+
     def _winrm_send_input(self, protocol: winrm.Protocol, shell_id: str, command_id: str, stdin: bytes, eof: bool = False) -> None:
         rq = {'env:Envelope': protocol._get_soap_header(
             resource_uri='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd',
@@ -529,8 +567,7 @@ class Connection(ConnectionBase):
 
             try:
                 if stdin_iterator:
-                    for (data, is_last) in stdin_iterator:
-                        self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+                    self._winrm_write_stdin(command_id, stdin_iterator)
 
             except Exception as ex:
                 display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
@@ -687,7 +724,7 @@ class Connection(ConnectionBase):
         cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
 
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
-        # TODO: improve error handling
+
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 

@@ -4,8 +4,7 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -67,7 +66,7 @@ options:
     type: str
   description:
     description:
-      - A human readable string describing the repository. This option corresponds to the "name" property in the repo file.
+      - A human-readable string describing the repository. This option corresponds to the "name" property in the repo file.
       - This parameter is only required if O(state) is set to V(present).
     type: str
   enabled:

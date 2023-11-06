@@ -15,12 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import jinja2
-from units.compat import unittest
+import unittest
 
 from ansible.template import AnsibleUndefined, _escape_backslashes, _count_newlines_from_end
 

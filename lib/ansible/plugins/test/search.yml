@@ -14,7 +14,7 @@ DOCUMENTATION:
       type: string
       required: True
     ignorecase:
-      description: Use case insenstive matching.
+      description: Use case insensitive matching.
       type: boolean
       default: False
     multiline:

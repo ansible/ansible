@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated JINJA2_NATIVE_WARNING environment variable (https://github.com/ansible/ansible/issues/81714)

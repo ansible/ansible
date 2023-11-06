@@ -2,15 +2,13 @@
 # (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible.module_utils.common import warnings
 
 from ansible.module_utils.common.warnings import deprecate, get_deprecation_messages
-from ansible.module_utils.six import PY3
 
 
 @pytest.fixture
@@ -92,7 +90,7 @@ def test_get_deprecation_messages(deprecation_messages, reset):
         {'k1': 'v1'},
         (1, 2),
         6.62607004,
-        b'bytestr' if PY3 else None,
+        b'bytestr',
         None,
     )
 )

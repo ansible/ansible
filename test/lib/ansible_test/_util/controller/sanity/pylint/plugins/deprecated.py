@@ -14,12 +14,24 @@ from tokenize import COMMENT, TokenInfo
 
 import astroid
 
-from pylint.interfaces import IAstroidChecker, ITokenChecker
+# support pylint 2.x and 3.x -- remove when supporting only 3.x
+try:
+    from pylint.interfaces import IAstroidChecker, ITokenChecker
+except ImportError:
+    class IAstroidChecker:
+        """Backwards compatibility for 2.x / 3.x support."""
+
+    class ITokenChecker:
+        """Backwards compatibility for 2.x / 3.x support."""
+
+try:
+    from pylint.checkers.utils import check_messages
+except ImportError:
+    from pylint.checkers.utils import only_required_for_messages as check_messages
+
 from pylint.checkers import BaseChecker, BaseTokenChecker
-from pylint.checkers.utils import check_messages
 
 from ansible.module_utils.compat.version import LooseVersion
-from ansible.module_utils.six import string_types
 from ansible.release import __version__ as ansible_version_raw
 from ansible.utils.version import SemanticVersion
 
@@ -124,7 +136,7 @@ def _get_func_name(node):
 def parse_isodate(value):
     """Parse an ISO 8601 date string."""
     msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         raise ValueError(msg)
     # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
     # we have to do things manually.
@@ -214,14 +226,14 @@ class AnsibleDeprecatedChecker(BaseChecker):
     @property
     def collection_name(self) -> t.Optional[str]:
         """Return the collection name, or None if ansible-core is being tested."""
-        return self.config.collection_name
+        return self.linter.config.collection_name
 
     @property
     def collection_version(self) -> t.Optional[SemanticVersion]:
         """Return the collection version, or None if ansible-core is being tested."""
-        if self.config.collection_version is None:
+        if self.linter.config.collection_version is None:
             return None
-        sem_ver = SemanticVersion(self.config.collection_version)
+        sem_ver = SemanticVersion(self.linter.config.collection_version)
         # Ignore pre-release for version comparison to catch issues before the final release is cut.
         sem_ver.prerelease = ()
         return sem_ver

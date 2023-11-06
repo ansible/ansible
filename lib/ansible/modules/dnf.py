@@ -6,8 +6,7 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -723,6 +722,11 @@ class DnfModule(YumDnf):
             if repo_pattern:
                 for repo in repos.get_matching(repo_pattern):
                     repo.enable()
+
+        for repo in base.repos.iter_enabled():
+            if self.disable_gpg_check:
+                repo.gpgcheck = False
+                repo.repo_gpgcheck = False
 
     def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify):
         """Return a fully configured dnf Base object."""

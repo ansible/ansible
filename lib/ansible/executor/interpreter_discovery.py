@@ -1,8 +1,7 @@
 # Copyright: (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import bisect
 import json
@@ -10,6 +9,7 @@ import pkgutil
 import re
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
@@ -150,6 +150,8 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         return platform_interpreter
     except NotImplementedError as ex:
         display.vvv(msg=u'Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
+    except AnsibleError:
+        raise
     except Exception as ex:
         if not is_silent:
             display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))

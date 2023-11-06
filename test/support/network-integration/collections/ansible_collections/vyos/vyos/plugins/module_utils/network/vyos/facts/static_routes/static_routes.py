@@ -10,9 +10,8 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 from re import findall, search, M
 from copy import deepcopy
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common import (

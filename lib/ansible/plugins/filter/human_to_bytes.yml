@@ -3,11 +3,11 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: Get bytes from string
   description:
-    - Convert a human readable byte or bit string into a number bytes.
+    - Convert a human-readable byte or bit string into a number bytes.
   positional: _input, default_unit, isbits
   options:
     _input:
-      description: Human readable description of a number of bytes.
+      description: human-readable description of a number of bytes.
       type: int
       required: true
     default_unit:

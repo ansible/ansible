@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -835,7 +834,7 @@ class GalaxyCLI(CLI):
             for role_req in file_requirements:
                 requirements['roles'] += parse_role_req(role_req)
 
-        else:
+        elif isinstance(file_requirements, dict):
             # Newer format with a collections and/or roles key
             extra_keys = set(file_requirements.keys()).difference(set(['roles', 'collections']))
             if extra_keys:
@@ -853,6 +852,9 @@ class GalaxyCLI(CLI):
                 )
                 for collection_req in file_requirements.get('collections') or []
             ]
+
+        else:
+            raise AnsibleError(f"Expecting requirements yaml to be a list or dictionary but got {type(file_requirements).__name__}")
 
         return requirements
 
@@ -1265,6 +1267,9 @@ class GalaxyCLI(CLI):
 
                 if remote_data:
                     role_info.update(remote_data)
+                else:
+                    data = u"- the role %s was not found" % role
+                    break
 
             elif context.CLIARGS['offline'] and not gr._exists:
                 data = u"- the role %s was not found" % role

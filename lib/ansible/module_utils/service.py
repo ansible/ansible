@@ -26,8 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import os
@@ -111,8 +110,8 @@ def fail_if_missing(module, found, service, msg=''):
     This function will return an error or exit gracefully depending on check mode status
     and if the service is missing or not.
 
-    :arg module: is an  AnsibleModule object, used for it's utility methods
-    :arg found: boolean indicating if services was found or not
+    :arg module: is an AnsibleModule object, used for it's utility methods
+    :arg found: boolean indicating if services were found or not
     :arg service: name of service
     :kw msg: extra info to append to error/success msg when missing
     '''
@@ -166,7 +165,7 @@ def daemonize(module, cmd):
     '''
     Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
 
-    :arg module: is an  AnsibleModule object, used for it's utility methods
+    :arg module: is an AnsibleModule object, used for it's utility methods
     :arg cmd: is a list or string representing the command and options to run
 
     This is complex because daemonization is hard for people.
@@ -215,9 +214,10 @@ def daemonize(module, cmd):
                 for out in list(fds):
                     if out in rfd:
                         data = os.read(out.fileno(), chunk)
-                        if not data:
+                        if data:
+                            output[out] += to_bytes(data, errors=errors)
+                        else:
                             fds.remove(out)
-                        output[out] += data
             else:
                 break
 
@@ -248,7 +248,7 @@ def daemonize(module, cmd):
                 data = os.read(pipe[0], chunk)
                 if not data:
                     break
-                return_data += data
+                return_data += to_bytes(data, errors=errors)
 
         # Note: no need to specify encoding on py3 as this module sends the
         # pickle to itself (thus same python interpreter so we aren't mixing
@@ -273,4 +273,31 @@ def check_ps(module, pattern):
         for line in out.split('\n'):
             if pattern in line:
                 return True
+    return False
+
+
+def is_systemd_managed(module):
+    """
+    Find out if the machine supports systemd or not
+    :arg module: is an AnsibleModule object, used for it's utility methods
+
+    Returns True if the system supports systemd, False if not.
+    """
+    # tools must be installed
+    if module.get_bin_path('systemctl'):
+        # This should show if systemd is the boot init system, if checking init failed to mark as systemd
+        # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
+        for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
+            if os.path.exists(canary):
+                return True
+
+        # If all else fails, check if init is the systemd command, using comm as cmdline could be symlink
+        try:
+            with open('/proc/1/comm', 'r') as init_proc:
+                init = init_proc.readline().strip()
+                return init == 'systemd'
+        except IOError:
+            # If comm doesn't exist, old kernel, no systemd
+            return False
+
     return False

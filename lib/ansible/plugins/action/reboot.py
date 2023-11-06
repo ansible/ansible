@@ -2,8 +2,7 @@
 # Copyright: (c) 2018, Sam Doran <sdoran@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import random
 import time
@@ -409,7 +408,6 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_check_mode = True
-        self._supports_async = True
 
         # If running with local connection, fail so we don't reboot ourselves
         if self._connection.transport == 'local':

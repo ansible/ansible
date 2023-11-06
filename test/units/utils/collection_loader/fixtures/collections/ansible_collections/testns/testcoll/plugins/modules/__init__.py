@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations  # pragma: nocover
 
 
-raise Exception('this should never run')
+raise Exception('this should never run')  # pragma: nocover

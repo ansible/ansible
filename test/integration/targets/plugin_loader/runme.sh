@@ -34,3 +34,6 @@ done
 
 # test config loading
 ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ansible.builtin.ssh' "$@"
+
+# test filter loading ignoring duplicate file basename
+ansible-playbook file_collision/play.yml "$@"

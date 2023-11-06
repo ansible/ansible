@@ -1,8 +1,7 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pty
@@ -225,7 +224,7 @@ class TaskExecutor:
         if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
 
-                # TODO: hardcoded so it fails for non first_found lookups, but thhis shoudl be generalized for those that don't do their own templating
+                # TODO: hardcoded so it fails for non first_found lookups, but this should be generalized for those that don't do their own templating
                 # lookup prop/attribute?
                 fail = bool(self._task.loop_with != 'first_found')
                 loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, fail_on_undefined=fail, convert_bare=False)

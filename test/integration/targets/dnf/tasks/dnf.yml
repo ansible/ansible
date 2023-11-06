@@ -109,6 +109,19 @@
     that:
         - "not dnf_result.changed"
 
+- name: install sos again with empty string enablerepo
+  dnf:
+    name: sos
+    state: present
+    enablerepo: ""
+  register: dnf_result
+
+- name: verify no change on third install with empty string enablerepo
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
 # Multiple packages
 - name: uninstall sos and dos2unix
   dnf: name=sos,dos2unix state=removed
@@ -423,10 +436,6 @@
     name: landsidescalping
     state: absent
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
-  register: shell_dnf_result
-
 - dnf:
     name: "@Custom Group"
     state: absent
@@ -446,9 +455,6 @@
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
-
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
 
 - dnf:
     name: "@Custom Group"
@@ -504,6 +510,7 @@
     that:
         - "dnf_result is failed"
         - "not dnf_result.changed"
+        - "'Failure downloading' in dnf_result.msg or 'Failed to download' in dnf_result.msg"
 
 - name: verify dnf module outputs
   assert:

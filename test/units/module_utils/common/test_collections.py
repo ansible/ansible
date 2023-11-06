@@ -3,12 +3,11 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 """Test low-level utility functions from ``module_utils.common.collections``."""
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
-from ansible.module_utils.six.moves.collections_abc import Sequence
+from collections.abc import Sequence
 from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
 

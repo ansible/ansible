@@ -49,9 +49,6 @@ customize_bashrc()
 install_pip() {
     if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
         case "${python_version}" in
-            "2.7")
-                pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-20.3.4.py"
-                ;;
             *)
                 pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-23.1.2.py"
                 ;;
@@ -66,18 +63,6 @@ install_pip() {
             sleep 10
         done
     fi
-}
-
-pip_install() {
-    pip_packages="$1"
-
-    while true; do
-        # shellcheck disable=SC2086
-        "${python_interpreter}" -m pip install --disable-pip-version-check ${pip_packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
 }
 
 bootstrap_remote_alpine()
@@ -233,79 +218,6 @@ bootstrap_remote_macos()
     echo 'PATH="/usr/local/bin:$PATH"' > /etc/zshenv
 }
 
-bootstrap_remote_rhel_7()
-{
-    packages="
-        gcc
-        python-devel
-        python-virtualenv
-        "
-
-    while true; do
-        # shellcheck disable=SC2086
-        yum install -q -y ${packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
-
-    install_pip
-
-    bootstrap_remote_rhel_pinned_pip_packages
-}
-
-bootstrap_remote_rhel_8()
-{
-    if [ "${python_version}" = "3.6" ]; then
-        py_pkg_prefix="python3"
-    else
-        py_pkg_prefix="python${python_version}"
-    fi
-
-    packages="
-        gcc
-        ${py_pkg_prefix}-devel
-        "
-
-    # pip isn't included in the Python devel package under Python 3.11
-    if [ "${python_version}" != "3.6" ]; then
-        packages="
-            ${packages}
-            ${py_pkg_prefix}-pip
-        "
-    fi
-
-    # Jinja2 is not installed with an OS package since the provided version is too old.
-    # Instead, ansible-test will install it using pip.
-    if [ "${controller}" ]; then
-        packages="
-            ${packages}
-            ${py_pkg_prefix}-cryptography
-            "
-    fi
-
-    # Python 3.11 isn't a module like the earlier versions
-    if [ "${python_version}" = "3.6" ]; then
-        while true; do
-            # shellcheck disable=SC2086
-            yum module install -q -y "python${python_package_version}" \
-            && break
-            echo "Failed to install packages. Sleeping before trying again..."
-            sleep 10
-        done
-    fi
-
-    while true; do
-        # shellcheck disable=SC2086
-        yum install -q -y ${packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
-
-    bootstrap_remote_rhel_pinned_pip_packages
-}
-
 bootstrap_remote_rhel_9()
 {
     if [ "${python_version}" = "3.9" ]; then
@@ -351,21 +263,8 @@ bootstrap_remote_rhel_9()
 bootstrap_remote_rhel()
 {
     case "${platform_version}" in
-        7.*) bootstrap_remote_rhel_7 ;;
-        8.*) bootstrap_remote_rhel_8 ;;
         9.*) bootstrap_remote_rhel_9 ;;
     esac
-}
-
-bootstrap_remote_rhel_pinned_pip_packages()
-{
-    # pin packaging and pyparsing to match the downstream vendored versions
-    pip_packages="
-        packaging==20.4
-        pyparsing==2.4.7
-        "
-
-    pip_install "${pip_packages}"
 }
 
 bootstrap_remote_ubuntu()

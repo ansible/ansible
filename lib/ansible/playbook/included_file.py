@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -146,9 +144,12 @@ class IncludedFile:
                                     cumulative_path = parent_include_dir
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
-                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                    candidates = [loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target),
-                                                  loader.path_dwim_relative(new_basedir, 'tasks', include_target)]
+                                    dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
+                                    new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
+                                    candidates = [
+                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target),
+                                        loader.path_dwim_relative(new_basedir, dirname, include_target)
+                                    ]
                                     for include_file in candidates:
                                         try:
                                             # may throw OSError

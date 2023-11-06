@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import cmd
 import functools
@@ -800,10 +798,6 @@ class StrategyBase:
 
             ret_results.append(task_result)
 
-            if isinstance(original_task, Handler):
-                for handler in (h for b in iterator._play.handlers for h in b.block if h._uuid == original_task._uuid):
-                    handler.remove_host(original_host)
-
             if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:
                 break
 
@@ -1090,9 +1084,6 @@ class StrategyBase:
         if not task.implicit:
             header = skip_reason if skipped else msg
             display.vv(f"META: {header}")
-
-        if isinstance(task, Handler):
-            task.remove_host(target_host)
 
         res = TaskResult(target_host, task, result)
         if skipped:

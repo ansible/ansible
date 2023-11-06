@@ -7,6 +7,7 @@
 # See:  W. Richard Stevens. 1992.  Advanced Programming in the
 #       UNIX Environment.  Chapter 19.
 # Author: Steen Lumholt -- with additions by Guido.
+from __future__ import annotations
 
 from select import select
 import os

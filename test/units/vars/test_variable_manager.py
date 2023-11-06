@@ -15,16 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import iteritems
 from ansible.playbook.play import Play
 
 
@@ -59,7 +56,7 @@ class TestVariableManager(unittest.TestCase):
         v._extra_vars = extra_vars
 
         myvars = v.get_vars(use_cache=False)
-        for (key, val) in iteritems(extra_vars):
+        for key, val in extra_vars.items():
             self.assertEqual(myvars.get(key), val)
 
     def test_variable_manager_options_vars(self):
@@ -73,7 +70,7 @@ class TestVariableManager(unittest.TestCase):
         v._extra_vars = options_vars
 
         myvars = v.get_vars(use_cache=False)
-        for (key, val) in iteritems(options_vars):
+        for key, val in options_vars.items():
             self.assertEqual(myvars.get(key), val)
 
     def test_variable_manager_play_vars(self):

@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
@@ -184,6 +182,9 @@ class VariableManager:
 
             See notes in the VarsWithSources docstring for caveats and limitations of the source tracking
             '''
+            if new_data == {}:
+                return data
+
             if C.DEFAULT_DEBUG:
                 # Populate var sources dict
                 for key in new_data:
@@ -196,14 +197,15 @@ class VariableManager:
             basedirs = [self._loader.get_basedir()]
 
         if play:
-            if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                # first we compile any vars specified in defaults/main.yml
-                # for all roles within the specified play
-                for role in play.get_roles():
-                    # role from roles or include_role+public or import_role and completed
-                    if not role.from_include or role.public or (role.static and role._completed.get(to_text(host), False)):
-                        all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
-
+            for role in play.get_roles():
+                # role is public and
+                #    either static or dynamic and completed
+                # role is not set
+                #    use config option as default
+                role_is_static_or_completed = role.static or role._completed.get(host.name, False)
+                if role.public and role_is_static_or_completed or \
+                   role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
+                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
         if task:
             # set basedirs
             if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
@@ -386,19 +388,25 @@ class VariableManager:
                 raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
                                          "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
-            # By default, we now merge in all exported vars from all roles in the play,
-            # unless the user has disabled this via a config option
-            if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                for role in play.get_roles():
-                    if not role.from_include or role.public or (role.static and role._completed.get(to_text(host), False)):
-                        all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+            # We now merge in all exported vars from all roles in the play,
+            # unless the user has disabled this
+            # role is public and
+            #    either static or dynamic and completed
+            # role is not set
+            #    use config option as default
+            for role in play.get_roles():
+                role_is_static_or_completed = role.static or role._completed.get(host.name, False)
+                if role.public and role_is_static_or_completed or \
+                   role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
+
+                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=True, only_exports=False),
+                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
                                               "role '%s' all vars" % task._role.name)
             all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
 
@@ -415,6 +423,8 @@ class VariableManager:
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
+            if task._role:
+                all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role params")
             all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
 
         # extra vars

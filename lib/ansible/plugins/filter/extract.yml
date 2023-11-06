@@ -17,7 +17,7 @@ DOCUMENTATION:
       type: raw
       required: true
     morekeys:
-      description: Indicies or keys to extract from the initial result (subkeys/subindices).
+      description: Indices or keys to extract from the initial result (subkeys/subindices).
       type: list
       elements: dictionary
       required: true

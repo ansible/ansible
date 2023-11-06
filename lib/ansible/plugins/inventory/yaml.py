@@ -1,8 +1,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: yaml
@@ -114,7 +113,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError('Plugin configuration YAML file, not YAML inventory')
 
         # We expect top level keys to correspond to groups, iterate over them
-        # to get host, vars and subgroups (which we iterate over recursivelly)
+        # to get host, vars and subgroups (which we iterate over recursively)
         if isinstance(data, MutableMapping):
             for group_name in data:
                 self._parse_group(group_name, data[group_name])

@@ -1,9 +1,9 @@
 DOCUMENTATION:
   name: human_redable
   version_added: "historical"
-  short_description: Make bytes/bits human readable
+  short_description: Make bytes/bits human-readable
   description:
-    - Convert byte or bit figures to more human readable formats.
+    - Convert byte or bit figures to more human-readable formats.
   positional: _input, isbits, unit
   options:
     _input:
@@ -31,5 +31,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Human readable byte or bit size.
+    description: human-readable byte or bit size.
     type: str

@@ -1,0 +1,10 @@
+- hosts: A,B,C
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify: handler
+  handlers:
+    - name: handler
+      run_once: true
+      debug:
+        msg: handler ran once
