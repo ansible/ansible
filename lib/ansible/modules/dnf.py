@@ -723,6 +723,11 @@ class DnfModule(YumDnf):
                 for repo in repos.get_matching(repo_pattern):
                     repo.enable()
 
+        for repo in base.repos.iter_enabled():
+            if self.disable_gpg_check:
+                repo.gpgcheck = False
+                repo.repo_gpgcheck = False
+
     def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
