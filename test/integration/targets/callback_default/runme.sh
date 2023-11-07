@@ -34,7 +34,7 @@ run_test() {
 	sed -i -e 's/^Using .*//g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0000-00-00 00:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
-	sed -i -e 's#: .*/source$#: .../source#g' "${OUTFILE}.${testname}.stdout"
+	sed -i -e 's#: .*/source.txt$#: .../source.txt#g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e '/secontext:/d' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/group: wheel/group: root/g' "${OUTFILE}.${testname}.stdout"
 
