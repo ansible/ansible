@@ -49,8 +49,6 @@ class TestOtherFilesystem(ModuleTestCase):
         def _mock_ismount(path):
             if path == b'/subdir/mount':
                 return True
-            if path == b'/':
-                return True
             return False
 
         with patch('os.path.ismount', side_effect=_mock_ismount):
