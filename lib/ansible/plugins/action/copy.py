@@ -294,6 +294,11 @@ class ActionModule(ActionBase):
             # Define a remote directory that we will copy the file to.
             tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
 
+            # ensure we keep suffix for validate
+            suffix = os.path.splitext(dest_file)[1]
+            if suffix:
+                tmp_src = '.'.join([tmp_src, suffix])
+
             remote_path = None
 
             if not raw:
