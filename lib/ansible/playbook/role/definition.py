@@ -43,7 +43,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     role = NonInheritableFieldAttribute(isa='string')
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None, extra_spec=None):
 
         super(RoleDefinition, self).__init__()
 
@@ -56,6 +56,8 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         self._role_basedir = role_basedir
         self._role_params = dict()
         self._collection_list = collection_list
+
+        self._internal_galaxy_spec = extra_spec
 
     # def __repr__(self):
     #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')

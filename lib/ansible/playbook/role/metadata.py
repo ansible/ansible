@@ -26,7 +26,7 @@ from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_roles
-from ansible.playbook.role.requirement import RoleRequirement
+from ansible.playbook.role.requirement import RoleRequirement, VALID_SPEC_KEYS
 
 __all__ = ['RoleMetadata']
 
@@ -101,10 +101,16 @@ class RoleMetadata(Base, CollectionSearch):
             if 'ansible.legacy' not in collection_search_list:
                 collection_search_list.append('ansible.legacy')
 
+        # The dependency format is used by ansible-galaxy and when running roles.
+        # Since role runtime (with argument spec) requires all role params be documented,
+        # add a supplemental spec so this isn't a failure by default for ansible-galaxy options.
+        # If the role actually documents these options, they'll be validated normally.
+        internal_galaxy_spec = {k: {} for k in VALID_SPEC_KEYS}
+
         try:
             return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path,
                                       variable_manager=self._variable_manager, loader=self._loader,
-                                      collection_search_list=collection_search_list)
+                                      collection_search_list=collection_search_list, extra_spec=internal_galaxy_spec)
         except AssertionError as e:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 

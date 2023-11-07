@@ -79,7 +79,10 @@ class GalaxyRole(object):
     META_REQUIREMENTS = (os.path.join('meta', 'requirements.yml'), os.path.join('meta', 'requirements.yaml'))
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
-    def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, api, name=None, src=None, version=None, scm=None, path=None):
+
+        if name is None:
+            AnsibleParserError("Must specify name or src for role")
 
         self._metadata = None
         self._metadata_dependencies = None
