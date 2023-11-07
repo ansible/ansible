@@ -146,7 +146,7 @@ class TestRemoveValues(unittest.TestCase):
 
         levels = 0
         inner_list = actual_data_list
-        while inner_list:
+        while True:
             if isinstance(inner_list, list):
                 self.assertEqual(len(inner_list), 1)
             else:
