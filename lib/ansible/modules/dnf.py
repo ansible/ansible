@@ -855,6 +855,7 @@ class DnfModule(YumDnf):
         """Mark the package for install."""
         is_newer_version_installed = self._is_newer_version_installed(pkg_spec)
         is_installed = self._is_installed(pkg_spec)
+        msg = ''
         try:
             if is_newer_version_installed:
                 if self.allow_downgrade:
@@ -888,18 +889,16 @@ class DnfModule(YumDnf):
                     pass
             else:  # Case 7, The package is not installed, simply install it
                 self.base.install(pkg_spec, strict=self.base.conf.strict)
-
-            return {'failed': False, 'msg': '', 'failure': '', 'rc': 0}
-
         except dnf.exceptions.MarkingError as e:
-            return {
-                'failed': True,
-                'msg': "No package {0} available.".format(pkg_spec),
-                'failure': " ".join((pkg_spec, to_native(e))),
-                'rc': 1,
-                "results": []
-            }
-
+            msg = "No package {0} available.".format(pkg_spec)
+            if self.base.conf.strict:
+                return {
+                    'failed': True,
+                    'msg': msg,
+                    'failure': " ".join((pkg_spec, to_native(e))),
+                    'rc': 1,
+                    "results": []
+                }
         except dnf.exceptions.DepsolveError as e:
             return {
                 'failed': True,
@@ -908,7 +907,6 @@ class DnfModule(YumDnf):
                 'rc': 1,
                 "results": []
             }
-
         except dnf.exceptions.Error as e:
             if to_text("already installed") in to_text(e):
                 return {'failed': False, 'msg': '', 'failure': ''}
@@ -920,6 +918,8 @@ class DnfModule(YumDnf):
                     'rc': 1,
                     "results": []
                 }
+
+        return {'failed': False, 'msg': msg, 'failure': '', 'rc': 0}
 
     def _whatprovides(self, filepath):
         self.base.read_all_repos()

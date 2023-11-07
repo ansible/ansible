@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - properly skip unavailable packages when ``skip_broken`` is enabled (https://github.com/ansible/ansible/issues/80590)
