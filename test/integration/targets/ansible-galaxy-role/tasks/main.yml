@@ -66,3 +66,4 @@
   command: ansible-galaxy role remove invalid-testrole
 
 - import_tasks: dir-traversal.yml
+- import_tasks: valid-role-symlinks.yml
