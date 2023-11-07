@@ -358,7 +358,7 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
             full_path = os.path.join(root, name)
             path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
             if any(name == b_path for b_path in b_ignore_dirs) or \
-                        any(fnmatch.fnmatch(full_path, b_pattern) for b_pattern in b_ignore_patterns):
+                    any(fnmatch.fnmatch(full_path, b_pattern) for b_pattern in b_ignore_patterns):
                 display.v("Ignoring verification for %s" % full_path)
                 continue
 
