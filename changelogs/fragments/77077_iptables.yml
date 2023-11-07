@@ -1,0 +1,3 @@
+---
+bugfixes:
+- iptables - set jump to DSCP when set_dscp_mark or set_dscp_mark_class is set (https://github.com/ansible/ansible/issues/77077).
