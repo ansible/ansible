@@ -46,20 +46,6 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def is_rel_path_outside_archive(archive_parent_dir : str, path : str, path_must_exist : bool = False) -> bool:
-    """
-    Check if the path (relative to the archive) resolves to a path in the archive, and optionally validate the path exists.
-    """
-    try:
-        # Get the absolute paths
-        archive_dir = os.path.abspath(archive_parent_dir)
-        path = os.path.abspath(os.path.join(archive_parent_dir, path))
-
-        return not (path.startswith(archive_dir) and (not path_must_exist or os.path.exists(path)))
-    except OSError:
-        return True
-
-
 @functools.cache
 def _check_working_data_filter() -> bool:
     """
@@ -421,23 +407,6 @@ class GalaxyRole(object):
                                         display.warning(f"Only extracting members in {n_archive_parent_dir}: ignoring {member.name}")
                                         ignore_external.add(member)
                                         continue
-                                    elif attr == 'linkname' and member not in ignore_external and (member.islnk() or member.issym()):
-                                        # https://docs.python.org/3/library/tarfile.html#tarfile.TarInfo.linkname:
-                                        # For symbolic links (SYMTYPE), the linkname is relative to the directory that contains the link.
-                                        # For hard links (LNKTYPE), the linkname is relative to the root of the archive.
-                                        if member.islnk():
-                                            relative_path = os.path.join(*n_parts)
-                                        else:
-                                            # name is relative to n_archive_parent_dir
-                                            relative_to = os.path.dirname(member.name)
-                                            relative_path = os.path.join(relative_to, *n_parts)
-
-                                        # Because we split on os.sep, any links that were not relative now are.
-                                        # To avoid installing incomplete roles successfully, we validate the sanitized paths exist.
-                                        bad_original_link = n_attr_value.startswith(os.sep) and not n_attr_value.startswith(n_archive_parent_dir)
-
-                                        if is_rel_path_outside_archive(n_archive_parent_dir, relative_path, path_must_exist=bad_original_link):
-                                            raise AnsibleError(f"symlink '{member.name}' could not be found in the role: {attr_value}")
 
                                     n_final_parts = []
                                     invalid_parts = False
@@ -452,7 +421,7 @@ class GalaxyRole(object):
                                         # to debug a broken installation.
                                         if not n_part:
                                             continue
-                                        if n_part == '..' and attr == 'name':  # we validate linkname above, links must not resolve to a path outside the role
+                                        if n_part == '..':  # TODO: only disallow .. for 'name' once symlinks are validated
                                             invalid_parts |= True
                                             display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
                                             continue
