@@ -297,7 +297,7 @@ class ActionModule(ActionBase):
             # ensure we keep suffix for validate
             suffix = os.path.splitext(dest_file)[1]
             if suffix:
-                tmp_src = '.'.join([tmp_src, suffix])
+                tmp_src += suffix
 
             remote_path = None
 
