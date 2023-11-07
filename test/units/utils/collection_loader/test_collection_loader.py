@@ -185,8 +185,7 @@ def test_root_loader():
     name = 'ansible_collections'
     # ensure this works even when ansible_collections doesn't exist on disk
     for paths in [], default_test_collection_paths:
-        if name in sys.modules:
-            del sys.modules[name]
+        sys.modules.pop(name, None)
         loader = _AnsibleCollectionRootPkgLoader(name, paths)
         assert repr(loader).startswith('_AnsibleCollectionRootPkgLoader(path=')
         module = loader.load_module(name)
@@ -213,8 +212,7 @@ def test_nspkg_loader_load_module():
         module_to_load = name.rpartition('.')[2]
         paths = extend_paths(default_test_collection_paths, parent_pkg)
         existing_child_paths = [p for p in extend_paths(paths, module_to_load) if os.path.exists(p)]
-        if name in sys.modules:
-            del sys.modules[name]
+        sys.modules.pop(name, None)
         loader = _AnsibleCollectionNSPkgLoader(name, path_list=paths)
         assert repr(loader).startswith('_AnsibleCollectionNSPkgLoader(path=')
         module = loader.load_module(name)
@@ -243,8 +241,7 @@ def test_collpkg_loader_load_module():
             paths = extend_paths(default_test_collection_paths, parent_pkg)
             existing_child_paths = [p for p in extend_paths(paths, module_to_load) if os.path.exists(p)]
             is_builtin = 'ansible.builtin' in name
-            if name in sys.modules:
-                del sys.modules[name]
+            sys.modules.pop(name, None)
             loader = _AnsibleCollectionPkgLoader(name, path_list=paths)
             assert repr(loader).startswith('_AnsibleCollectionPkgLoader(path=')
             module = loader.load_module(name)
@@ -266,13 +263,16 @@ def test_collpkg_loader_load_module():
 
             # FIXME: validate _collection_meta contents match what's on disk (or not)
 
-            # if the module has metadata, try loading it with busted metadata
-            if module._collection_meta:
-                _collection_finder = import_module('ansible.utils.collection_loader._collection_finder')
-                with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
-                    with pytest.raises(Exception) as ex:
-                        _AnsibleCollectionPkgLoader(name, path_list=paths).load_module(name)
-                    assert 'error parsing collection metadata' in str(ex.value)
+            # verify the module has metadata, then try loading it with busted metadata
+            assert module._collection_meta
+
+            _collection_finder = import_module('ansible.utils.collection_loader._collection_finder')
+
+            with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
+                with pytest.raises(Exception) as ex:
+                    _AnsibleCollectionPkgLoader(name, path_list=paths).load_module(name)
+
+                assert 'error parsing collection metadata' in str(ex.value)
 
 
 def test_coll_loader():

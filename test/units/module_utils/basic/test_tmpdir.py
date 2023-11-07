@@ -76,7 +76,6 @@ class TestAnsibleModuleTmpDir:
         monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
         monkeypatch.setattr(os.path, 'exists', lambda x: stat_exists)
         monkeypatch.setattr(os, 'makedirs', mock_makedirs)
-        monkeypatch.setattr(shutil, 'rmtree', lambda x: None)
         monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': args})))
 
         with patch('time.time', return_value=42):

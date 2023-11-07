@@ -26,10 +26,6 @@ class OpenBytesIO(BytesIO):
 
 @pytest.fixture
 def mock_os(mocker):
-    def mock_os_chdir(path):
-        if path == '/inaccessible':
-            raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
-
     def mock_os_abspath(path):
         if path.startswith('/'):
             return path
@@ -43,15 +39,9 @@ def mock_os(mocker):
     os.environ = {'PATH': '/bin'}
     os.getcwd.return_value = '/home/foo'
     os.path.isdir.return_value = True
-    os.chdir.side_effect = mock_os_chdir
     os.path.abspath.side_effect = mock_os_abspath
 
     yield os
-
-
-class DummyFileObj():
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
 
 
 class SpecialBytesIO(BytesIO):
