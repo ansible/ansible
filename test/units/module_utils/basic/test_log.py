@@ -10,8 +10,6 @@ from itertools import product
 
 import pytest
 
-import ansible.module_utils.basic
-
 
 class TestAnsibleModuleLogSmokeTest:
     DATA = [u'Text string', u'Toshio くらとみ non-ascii test']
