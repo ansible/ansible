@@ -333,11 +333,22 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
                 os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
             )
 
+    b_ignore_patterns = [
+        b'.git',
+        b'*.pyc',
+        b'*.retry',
+        b'tests/output',  # Ignore ansible-test result output directory.
+    ]
+    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
+
     # Find any paths not in the FILES.json
     for root, dirs, files in os.walk(b_collection_path):
         for name in files:
             full_path = os.path.join(root, name)
             path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+            if any(fnmatch.fnmatch(full_path, b_pattern) for b_pattern in b_ignore_patterns):
+                display.v("Ignoring verification for %s" % full_path)
+                continue
 
             if full_path not in collection_files:
                 modified_content.append(
@@ -346,6 +357,10 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
         for name in dirs:
             full_path = os.path.join(root, name)
             path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+            if any(name == b_path for b_path in b_ignore_dirs) or \
+                        any(fnmatch.fnmatch(full_path, b_pattern) for b_pattern in b_ignore_patterns):
+                display.v("Ignoring verification for %s" % full_path)
+                continue
 
             if full_path not in collection_dirs:
                 modified_content.append(
