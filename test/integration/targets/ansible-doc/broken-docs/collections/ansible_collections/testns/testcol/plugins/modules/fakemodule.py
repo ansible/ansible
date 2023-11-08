@@ -5,7 +5,7 @@ from __future__ import annotations
 DOCUMENTATION = """
     module: fakemodule
         broken:
-    short_desciption: fake module
+    short_description: fake module
     description:
         - this is a fake module
     version_added: 1.0.0
