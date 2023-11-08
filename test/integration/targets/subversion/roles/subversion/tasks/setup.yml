@@ -29,10 +29,6 @@
     path: '{{ subversion_server_dir }}'
     state: directory
 
-- name: setup selinux when enabled
-  include_tasks: setup_selinux.yml
-  when: ansible_selinux.status == "enabled"
-
 - name: template out configuration file
   template:
     src: subversion.conf.j2
