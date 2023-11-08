@@ -601,7 +601,7 @@ class CLI(ABC):
             try:
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError as e:
-                raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
+                raise AnsibleError("Problem occurred when trying to run the password script %s (%s)."
                                    " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
 
             stdout, stderr = p.communicate()
