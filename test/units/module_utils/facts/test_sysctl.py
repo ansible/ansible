@@ -16,13 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # for testing
-from units.compat import unittest
-from units.compat.mock import MagicMock
+import unittest
+from unittest.mock import MagicMock
 
 from ansible.module_utils.facts.sysctl import get_sysctl
 

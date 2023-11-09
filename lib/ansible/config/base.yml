@@ -119,8 +119,9 @@ BECOME_ALLOW_SAME_USER:
   name: Allow becoming the same user
   default: False
   description:
-    - This setting controls if become is skipped when the remote user and become user are the same. In other words root sudo to root.
-    - If executable, it will be run and the resulting stdout will be used as the password.
+    - When ``False``(default), Ansible will skip using become if the remote user is the same as the become user, as this is normally a redundant operation.
+      In other words root sudo to root.
+    - If ``True``, this forces Ansible to use the become plugin anyways as there are cases in which this is needed.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
   ini:
   - {key: become_allow_same_user, section: privilege_escalation}
@@ -937,6 +938,7 @@ DEFAULT_PRIVATE_ROLE_VARS:
     - Makes role variables inaccessible from other roles.
     - This was introduced as a way to reset role variables to default values if
       a role is used more than once in a playbook.
+    - Starting in version '2.17' M(ansible.builtin.include_roles) and M(ansible.builtin.import_roles) can override this via the C(public) parameter.
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
   - {key: private_role_vars, section: defaults}
@@ -1498,11 +1500,13 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
 HOST_KEY_CHECKING:
-  # note: constant not in use by ssh plugin anymore
+  # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
-  name: Check host keys
+  name: Toggle host/key check
   default: True
-  description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
+  description:
+    - Set this to "False" if you want to avoid host key checking by the underlying connection plugin Ansible uses to connect to the host.
+    - Please read the documentation of the specific connection plugin used for details.
   env: [{name: ANSIBLE_HOST_KEY_CHECKING}]
   ini:
   - {key: host_key_checking, section: defaults}
@@ -1562,10 +1566,8 @@ INTERPRETER_PYTHON_FALLBACK:
   - python3.9
   - python3.8
   - python3.7
-  - python3.6
   - /usr/bin/python3
   - /usr/libexec/platform-python
-  - python2.7
   - /usr/bin/python
   - python
   vars:
@@ -1709,19 +1711,6 @@ INVENTORY_UNPARSED_IS_FAILED:
   ini:
   - {key: unparsed_is_failed, section: inventory}
   type: bool
-JINJA2_NATIVE_WARNING:
-   name: Running older than required Jinja version for jinja2_native warning
-   default: True
-   description: Toggle to control showing warnings related to running a Jinja version
-                older than required for jinja2_native.
-   env:
-    - name: ANSIBLE_JINJA2_NATIVE_WARNING
-      deprecated:
-        why: This option is no longer used in the Ansible Core code base.
-        version: "2.17"
-   ini:
-   - {key: jinja2_native_warning, section: defaults}
-   type: boolean
 MAX_FILE_SIZE_FOR_DIFF:
   name: Diff maximum file size
   default: 104448

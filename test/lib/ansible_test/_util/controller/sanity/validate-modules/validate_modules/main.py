@@ -70,7 +70,6 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
-from ansible.module_utils.six import PY3, with_metaclass, string_types
 from ansible.plugins.loader import fragment_loader
 from ansible.plugins.list import IGNORE as REJECTLIST
 from ansible.utils.plugin_docs import add_collection_to_versions_and_dates, add_fragments, get_docstring
@@ -87,18 +86,14 @@ from .schema import (
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
 
-if PY3:
-    # Because there is no ast.TryExcept in Python 3 ast module
-    TRY_EXCEPT = ast.Try
-    # REPLACER_WINDOWS from ansible.executor.module_common is byte
-    # string but we need unicode for Python 3
-    REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
-else:
-    TRY_EXCEPT = ast.TryExcept
+# Because there is no ast.TryExcept in Python 3 ast module
+TRY_EXCEPT = ast.Try
+# REPLACER_WINDOWS from ansible.executor.module_common is byte
+# string but we need unicode for Python 3
+REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 
@@ -269,7 +264,7 @@ class Reporter:
         return 3 if sum(ret) else 0
 
 
-class Validator(with_metaclass(abc.ABCMeta, object)):
+class Validator(metaclass=abc.ABCMeta):
     """Validator instances are intended to be run on a single object.  if you
     are scanning multiple objects for problems, you'll want to have a separate
     Validator for each one."""
@@ -444,21 +439,6 @@ class ModuleValidator(Validator):
                 code='missing-python-interpreter',
                 msg='Interpreter line is not "#!/usr/bin/python"',
             )
-
-    def _check_type_instead_of_isinstance(self, powershell=False):
-        if powershell:
-            return
-        for line_no, line in enumerate(self.text.splitlines()):
-            typekeyword = TYPE_REGEX.match(line)
-            if typekeyword:
-                # TODO: add column
-                self.reporter.error(
-                    path=self.object_path,
-                    code='unidiomatic-typecheck',
-                    msg=('Type comparison using type() found. '
-                         'Use isinstance() instead'),
-                    line=line_no + 1
-                )
 
     def _check_for_sys_exit(self):
         # Optimize out the happy path
@@ -1193,7 +1173,7 @@ class ModuleValidator(Validator):
             for entry in object:
                 self._validate_semantic_markup(entry)
             return
-        if not isinstance(object, string_types):
+        if not isinstance(object, str):
             return
 
         if self.collection:
@@ -1374,7 +1354,7 @@ class ModuleValidator(Validator):
                 continue
             bad_term = False
             for term in check:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     msg = name
                     if context:
                         msg += " found in %s" % " -> ".join(context)
@@ -1442,7 +1422,7 @@ class ModuleValidator(Validator):
                 continue
             bad_term = False
             for term in requirements:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     msg = "required_if"
                     if context:
                         msg += " found in %s" % " -> ".join(context)
@@ -1525,13 +1505,13 @@ class ModuleValidator(Validator):
             # This is already reported by schema checking
             return
         for key, value in terms.items():
-            if isinstance(value, string_types):
+            if isinstance(value, str):
                 value = [value]
             if not isinstance(value, (list, tuple)):
                 # This is already reported by schema checking
                 continue
             for term in value:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     # This is already reported by schema checking
                     continue
             if len(set(value)) != len(value) or key in value:
@@ -2381,9 +2361,6 @@ class ModuleValidator(Validator):
         if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only:
             if self.plugin_type == 'module':
                 self._check_interpreter(powershell=self._powershell_module())
-            self._check_type_instead_of_isinstance(
-                powershell=self._powershell_module()
-            )
 
 
 class PythonPackageValidator(Validator):

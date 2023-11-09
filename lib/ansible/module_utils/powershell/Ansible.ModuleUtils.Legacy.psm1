@@ -372,8 +372,11 @@ Function Get-PendingRebootStatus {
     <#
     .SYNOPSIS
     Check if reboot is required, if so notify CA.
-    Function returns true if computer has a pending reboot
-#>
+    Function returns true if computer has a pending reboot.
+
+    People should not be using this function, it is kept
+    just for backwards compatibility.
+    #>
     $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
     $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing" -ErrorAction SilentlyContinue |

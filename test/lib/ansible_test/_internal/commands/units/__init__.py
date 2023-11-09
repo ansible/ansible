@@ -245,7 +245,7 @@ def command_units(args: UnitsConfig) -> None:
         #
         # NOTE: This only affects use of pytest-mock.
         #       Collection unit tests may directly import mock, which will be provided by ansible-test when it installs requirements using pip.
-        #       Although mock is available for ansible-core unit tests, they should import units.compat.mock instead.
+        #       Although mock is available for ansible-core unit tests, they should import unittest.mock instead.
         if str_to_version(python.version) < (3, 8):
             config_name = 'legacy.ini'
         else:

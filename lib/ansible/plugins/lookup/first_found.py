@@ -1,8 +1,7 @@
 # (c) 2013, seth vidal <skvidal@fedoraproject.org> red hat, inc
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: first_found
@@ -187,7 +186,7 @@ class LookupModule(LookupBase):
             # NOTE: this is used as 'global' but  can be set many times?!?!?
             skip = self.get_option('skip')
 
-            # magic extra spliting to create lists
+            # magic extra splitting to create lists
             filelist = _split_on(files, ',;')
             pathlist = _split_on(paths, ',:;')
 
@@ -198,7 +197,7 @@ class LookupModule(LookupBase):
                         f = os.path.join(path, fn)
                         total_search.append(f)
             elif filelist:
-                # NOTE: this is now 'extend', previouslly it would clobber all options, but we deemed that a bug
+                # NOTE: this is now 'extend', previously it would clobber all options, but we deemed that a bug
                 total_search.extend(filelist)
             else:
                 total_search.append(term)
@@ -239,6 +238,6 @@ class LookupModule(LookupBase):
 
         # if we get here, no file was found
         if skip:
-            # NOTE: global skip wont matter, only last 'skip' value in dict term
+            # NOTE: global skip won't matter, only last 'skip' value in dict term
             return []
         raise AnsibleLookupError("No file was found when using first_found.")

@@ -1,7 +1,6 @@
 """Unit tests to verify the functionality of the ansible-forked pytest plugin."""
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 import os
 import pytest

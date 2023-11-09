@@ -1,8 +1,7 @@
 # (c) 2015, Brian Coca <bcoca@ansible.com>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
 name: url
@@ -88,7 +87,7 @@ options:
         - section: url_lookup
           key: force_basic_auth
   follow_redirects:
-    description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
+    description: String of urllib2, all/yes, safe, none to determine how redirects are followed
     type: string
     version_added: "2.10"
     default: 'urllib2'
@@ -99,6 +98,13 @@ options:
     ini:
         - section: url_lookup
           key: follow_redirects
+    choices:
+        - urllib2
+        - all
+        - 'yes'
+        - safe
+        - none
+        - 'no'
   use_gssapi:
     description:
     - Use GSSAPI handler of requests

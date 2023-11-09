@@ -5,8 +5,7 @@
 
 # This is a virtual module that is entirely implemented as an action plugin and runs on the controller
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -86,7 +85,7 @@ EXAMPLES = r'''
     dest: /etc/named.conf
     group: named
     setype: named_conf_t
-    mode: 0640
+    mode: '0640'
 
 - name: Create a DOS-style text file from a template
   ansible.builtin.template:

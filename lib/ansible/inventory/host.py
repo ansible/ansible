@@ -15,13 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 
-from ansible.inventory.group import Group
+from ansible.inventory.group import Group, InventoryObjectType
 from ansible.parsing.utils.addresses import patterns
 from ansible.utils.vars import combine_vars, get_unique_id
 
@@ -31,6 +29,7 @@ __all__ = ['Host']
 
 class Host:
     ''' a single ansible host '''
+    base_type = InventoryObjectType.HOST
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
 

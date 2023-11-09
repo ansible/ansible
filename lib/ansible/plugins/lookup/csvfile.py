@@ -1,8 +1,7 @@
 # (c) 2013, Jan-Piet Mens <jpmens(at)gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = r"""
     name: csvfile
@@ -83,7 +82,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 
 class CSVRecoder:
     """
-    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    Iterator that reads an encoded stream and encodes the input to UTF-8
     """
     def __init__(self, f, encoding='utf-8'):
         self.reader = codecs.getreader(encoding)(f)

@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 try:
     import passlib
@@ -31,11 +29,10 @@ import pytest
 
 from units.mock.loader import DictDataLoader
 
-from units.compat import unittest
+import unittest
 from unittest.mock import mock_open, patch
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import builtins
+import builtins
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.loader import PluginLoader, lookup_loader
 from ansible.plugins.lookup import password
@@ -276,13 +273,13 @@ class TestRandomPassword(unittest.TestCase):
     def test_default(self):
         res = password.random_password()
         self.assertEqual(len(res), DEFAULT_LENGTH)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
         self._assert_valid_chars(res, DEFAULT_CANDIDATE_CHARS)
 
     def test_zero_length(self):
         res = password.random_password(length=0)
         self.assertEqual(len(res), 0)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
         self._assert_valid_chars(res, u',')
 
     def test_just_a_common(self):
@@ -437,7 +434,7 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
         # FIXME: assert something useful
         for result in results:
             assert len(result) == DEFAULT_LENGTH
-            assert isinstance(result, text_type)
+            assert isinstance(result, str)
 
     @patch.object(PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
@@ -520,7 +517,7 @@ class TestLookupModuleWithPasslib(BaseTestLookupModule):
 
             # verify the string and parsehash agree on the number of rounds
             self.assertEqual(int(str_parts[2]), crypt_parts['rounds'])
-            self.assertIsInstance(result, text_type)
+            self.assertIsInstance(result, str)
 
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_password_already_created_encrypt(self, mock_write_file):
@@ -556,7 +553,7 @@ class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
 
             self.assertEqual(len(results), 1)
             result = results[0]
-            self.assertIsInstance(result, text_type)
+            self.assertIsInstance(result, str)
 
             expected_password_length = 76
             self.assertEqual(len(result), expected_password_length)

@@ -1,8 +1,7 @@
 # (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import errno
@@ -11,13 +10,13 @@ import os
 import pkgutil
 import random
 import re
+from importlib import import_module
 
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import ps_module_utils_loader
 from ansible.utils.collection_loader import resource_from_fqcr
 

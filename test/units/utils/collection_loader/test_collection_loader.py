@@ -1,14 +1,13 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import inspect
 import os
 import pkgutil
 import pytest
 import re
 import sys
+from importlib import import_module
 
-from ansible.module_utils.six import PY3, string_types
-from ansible.module_utils.compat.importlib import import_module
 from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (
@@ -37,7 +36,7 @@ def teardown(*args, **kwargs):
     r'FileFinder\.find_loader\(\) is deprecated and slated for removal in Python 3\.12; use find_spec\(\) instead'
     ':DeprecationWarning',
 )
-@pytest.mark.skipif(not PY3 or sys.version_info >= (3, 12), reason='Testing Python 2 codepath (find_module) on Python 3, <= 3.11')
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason='Testing Python 2 codepath (find_module) on Python 3, <= 3.11')
 def test_find_module_py3_lt_312():
     dir_to_a_file = os.path.dirname(ping_module.__file__)
     path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
@@ -186,8 +185,7 @@ def test_root_loader():
     name = 'ansible_collections'
     # ensure this works even when ansible_collections doesn't exist on disk
     for paths in [], default_test_collection_paths:
-        if name in sys.modules:
-            del sys.modules[name]
+        sys.modules.pop(name, None)
         loader = _AnsibleCollectionRootPkgLoader(name, paths)
         assert repr(loader).startswith('_AnsibleCollectionRootPkgLoader(path=')
         module = loader.load_module(name)
@@ -214,8 +212,7 @@ def test_nspkg_loader_load_module():
         module_to_load = name.rpartition('.')[2]
         paths = extend_paths(default_test_collection_paths, parent_pkg)
         existing_child_paths = [p for p in extend_paths(paths, module_to_load) if os.path.exists(p)]
-        if name in sys.modules:
-            del sys.modules[name]
+        sys.modules.pop(name, None)
         loader = _AnsibleCollectionNSPkgLoader(name, path_list=paths)
         assert repr(loader).startswith('_AnsibleCollectionNSPkgLoader(path=')
         module = loader.load_module(name)
@@ -244,8 +241,7 @@ def test_collpkg_loader_load_module():
             paths = extend_paths(default_test_collection_paths, parent_pkg)
             existing_child_paths = [p for p in extend_paths(paths, module_to_load) if os.path.exists(p)]
             is_builtin = 'ansible.builtin' in name
-            if name in sys.modules:
-                del sys.modules[name]
+            sys.modules.pop(name, None)
             loader = _AnsibleCollectionPkgLoader(name, path_list=paths)
             assert repr(loader).startswith('_AnsibleCollectionPkgLoader(path=')
             module = loader.load_module(name)
@@ -267,13 +263,16 @@ def test_collpkg_loader_load_module():
 
             # FIXME: validate _collection_meta contents match what's on disk (or not)
 
-            # if the module has metadata, try loading it with busted metadata
-            if module._collection_meta:
-                _collection_finder = import_module('ansible.utils.collection_loader._collection_finder')
-                with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
-                    with pytest.raises(Exception) as ex:
-                        _AnsibleCollectionPkgLoader(name, path_list=paths).load_module(name)
-                    assert 'error parsing collection metadata' in str(ex.value)
+            # verify the module has metadata, then try loading it with busted metadata
+            assert module._collection_meta
+
+            _collection_finder = import_module('ansible.utils.collection_loader._collection_finder')
+
+            with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
+                with pytest.raises(Exception) as ex:
+                    _AnsibleCollectionPkgLoader(name, path_list=paths).load_module(name)
+
+                assert 'error parsing collection metadata' in str(ex.value)
 
 
 def test_coll_loader():
@@ -298,10 +297,7 @@ def test_path_hook_setup():
         except Exception as phe:
             pathhook_exc = phe
 
-        if PY3:
-            assert str(pathhook_exc) == 'need exactly one FileFinder import hook (found 0)'
-        else:
-            assert found_hook is None
+        assert str(pathhook_exc) == 'need exactly one FileFinder import hook (found 0)'
 
     assert repr(_AnsiblePathHookFinder(object(), '/bogus/path')) == "_AnsiblePathHookFinder(path='/bogus/path')"
 
@@ -410,7 +406,7 @@ def test_import_from_collection(monkeypatch):
     original_trace_function = sys.gettrace()
     trace_log = []
 
-    if original_trace_function:
+    if original_trace_function:  # pragma: nocover
         # enable tracing while preserving the existing trace function (coverage)
         def my_trace_function(frame, event, arg):
             trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
@@ -423,7 +419,7 @@ def test_import_from_collection(monkeypatch):
             sys.settrace(my_trace_function)
 
             return my_trace_function
-    else:
+    else:  # pragma: nocover
         # no existing trace function, so our trace function is much simpler
         def my_trace_function(frame, event, arg):
             trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
@@ -485,11 +481,8 @@ def test_import_from_collection(monkeypatch):
     import ansible_collections.testns.testcoll.plugins.action.my_action
 
     # verify that code loaded from a collection does not inherit __future__ statements from the collection loader
-    if sys.version_info[0] == 2:
-        # if the collection code inherits the division future feature from the collection loader this will fail
-        assert answer == 1
-    else:
-        assert answer == 1.5
+    # if the collection code inherits the annotations future feature from the collection loader this will fail
+    assert inspect.get_annotations(question)['return'] is float
 
     # verify that the filename and line number reported by the trace is correct
     # this makes sure that collection loading preserves file paths and line numbers
@@ -822,7 +815,7 @@ def test_collectionref_components_valid(name, subdirs, resource, ref_type, pytho
     ]
 )
 def test_legacy_plugin_dir_to_plugin_type(dirname, expected_result):
-    if isinstance(expected_result, string_types):
+    if isinstance(expected_result, str):
         assert AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(dirname) == expected_result
     else:
         with pytest.raises(expected_result):
@@ -846,12 +839,8 @@ def test_collectionref_components_invalid(name, subdirs, resource, ref_type, exp
     assert re.search(expected_error_expression, str(curerr.value))
 
 
-@pytest.mark.skipif(not PY3, reason='importlib.resources only supported for py3')
 def test_importlib_resources():
-    if sys.version_info < (3, 10):
-        from importlib_resources import files
-    else:
-        from importlib.resources import files
+    from importlib.resources import files
     from pathlib import Path
 
     f = get_default_finder()

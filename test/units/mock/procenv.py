@@ -16,17 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import sys
 import json
 
 from contextlib import contextmanager
 from io import BytesIO, StringIO
-from units.compat import unittest
-from ansible.module_utils.six import PY3
+import unittest
 from ansible.module_utils.common.text.converters import to_bytes
 
 
@@ -38,11 +35,8 @@ def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
     real_stdin = sys.stdin
     real_argv = sys.argv
 
-    if PY3:
-        fake_stream = StringIO(stdin_data)
-        fake_stream.buffer = BytesIO(to_bytes(stdin_data))
-    else:
-        fake_stream = BytesIO(to_bytes(stdin_data))
+    fake_stream = StringIO(stdin_data)
+    fake_stream.buffer = BytesIO(to_bytes(stdin_data))
 
     try:
         sys.stdin = fake_stream

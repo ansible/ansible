@@ -4,21 +4,14 @@
 # https://github.com/pytest-dev/pytest-forked
 # https://github.com/pytest-dev/py
 # TIP: Disable pytest-xdist when debugging internal errors in this plugin.
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pickle
 import tempfile
 import warnings
 
-from pytest import Item, hookimpl
-
-try:
-    from pytest import TestReport
-except ImportError:
-    from _pytest.runner import TestReport  # Backwards compatibility with pytest < 7. Remove once Python 2.7 is not supported.
+from pytest import Item, hookimpl, TestReport
 
 from _pytest.runner import runtestprotocol
 

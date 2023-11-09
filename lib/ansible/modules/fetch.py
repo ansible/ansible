@@ -5,8 +5,7 @@
 
 # This is a virtual module that is entirely implemented as an action plugin and runs on the controller
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''

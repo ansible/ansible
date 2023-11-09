@@ -3,8 +3,7 @@
 # A tool to check the order of precedence for ansible variables
 # https://github.com/ansible/ansible/blob/devel/test/integration/test_var_precedence.yml
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
