@@ -11,8 +11,11 @@
     ANSIBLE_SSH_AGENT: auto
   register: auto
 
-- command: ps -opid
+- command: ps {{ ps_flags }} -opid
   register: pids
+  # Some distros will exit with rc=1 if no processes were returned
+  vars:
+    ps_flags: '{{ "" if ansible_distribution == "Alpine" else "-x" }}'
 
 - assert:
     that:
