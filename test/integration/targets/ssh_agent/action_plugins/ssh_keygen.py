@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from ansible.plugins.action import ActionBase
 from ansible.utils.ssh_agent import PublicKeyMsg
 from ansible.module_utils.common.text.converters import to_bytes, to_text
