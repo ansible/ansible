@@ -266,7 +266,7 @@ DOCUMENTATION = '''
               option: '--private-key'
       private_key:
           description:
-            - private key contents in PEM format. Requires the SSH_AGENT configuration to be enabled
+            - private key contents in PEM format. Requires the SSH_AGENT configuration to be enabled.
           type: string
           ini:
             - section: defaults
@@ -278,7 +278,7 @@ DOCUMENTATION = '''
           version_added: '2.17'
       private_key_passphrase:
           description:
-            - private key passphrase, dependent on ``private_key``
+            - private key passphrase, dependent on ``private_key``.
           type: string
           ini:
             - section: defaults
