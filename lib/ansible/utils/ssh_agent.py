@@ -213,7 +213,7 @@ class RSAPrivateKeyMsg(PrivateKeyMsg):
     iqmp: mpint
     p: mpint
     q: mpint
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
@@ -225,7 +225,7 @@ class DSAPrivateKeyMsg(PrivateKeyMsg):
     g: mpint
     y: mpint
     x: mpint
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
@@ -235,7 +235,7 @@ class EcdsaPrivateKeyMsg(PrivateKeyMsg):
     ecdsa_curve_name: str
     Q: bytes
     d: mpint
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
@@ -244,7 +244,7 @@ class Ed25519PrivateKeyMsg(PrivateKeyMsg):
     type: KeyAlgo
     enc_a: bytes
     k_env_a: bytes
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
@@ -357,7 +357,7 @@ class RSAPublicKeyMsg(PublicKeyMsg):
     type: KeyAlgo
     e: mpint
     n: mpint
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
@@ -367,7 +367,7 @@ class DSAPublicKeyMsg(PublicKeyMsg):
     q: mpint
     g: mpint
     y: mpint
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
@@ -375,14 +375,14 @@ class EcdsaPublicKeyMsg(PublicKeyMsg):
     type: KeyAlgo
     ecdsa_curve_name: str
     Q: bytes
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class Ed25519PublicKeyMsg(PublicKeyMsg):
     type: KeyAlgo
     enc_a: bytes
-    comments: str = dataclasses.field(default='')
+    comments: str = dataclasses.field(default='', compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
@@ -614,8 +614,9 @@ class Client:
         return True
 
     def __contains__(self, public_key: CryptoPublicKey) -> bool:
+        msg = PublicKeyMsg.from_public_key(public_key)
         for key in self.list().keys:
-            if key.public_key() == public_key:
+            if key == msg:
                 return True
         return False
 
