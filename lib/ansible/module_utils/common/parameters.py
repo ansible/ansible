@@ -118,6 +118,8 @@ DEFAULT_TYPE_VALIDATORS = {
     'bits': check_type_bits,
 }
 
+ALLOWED_STRICT_TYPES = frozenset(['str', 'list', 'bool', 'int', 'float'])
+
 
 def _get_type_validator(wanted):
     """Returns the callable used to validate a wanted type and the type name.
@@ -547,7 +549,7 @@ def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_remov
     raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
-def _validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
+def _validate_elements(wanted_type, parameter, values, options_context=None, errors=None, allow_conversion=None):
 
     if errors is None:
         errors = AnsibleValidationErrorMultiple()
@@ -562,6 +564,9 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
             kwargs['param'] = parameter
         elif isinstance(parameter, dict):
             kwargs['param'] = list(parameter.keys())[0]
+
+    if wanted_element_type in ALLOWED_STRICT_TYPES and allow_conversion is not None:
+        kwargs['allow_conversion'] = allow_conversion
 
     for value in values:
         try:
@@ -613,6 +618,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         wanted_type = spec.get('type')
+        allow_conversion = spec.get('allow_conversion', None)
         type_checker, wanted_name = _get_type_validator(wanted_type)
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
@@ -623,6 +629,9 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             # Get the name of the parent key if this is a nested option
             if prefix:
                 kwargs['prefix'] = prefix
+ 
+        if wanted_type in ALLOWED_STRICT_TYPES:
+            kwargs['allow_conversion'] = allow_conversion
 
         try:
             parameters[param] = type_checker(value, **kwargs)
@@ -635,7 +644,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
                     errors.append(ArgumentTypeError(msg))
-                parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors)
+                parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors, allow_conversion)
 
         except (TypeError, ValueError) as e:
             msg = "argument '%s' is of type %s" % (param, type(value))
