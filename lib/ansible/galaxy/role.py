@@ -82,7 +82,7 @@ class GalaxyRole(object):
     def __init__(self, galaxy, api, name=None, src=None, version=None, scm=None, path=None):
 
         if name is None:
-            AnsibleParserError("Must specify name or src for role")
+            raise AnsibleParserError("Must specify name or src for role")
 
         self._metadata = None
         self._metadata_dependencies = None
