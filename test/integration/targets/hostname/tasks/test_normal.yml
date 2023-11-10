@@ -12,16 +12,34 @@
           - >
             'current hostname was changed outside NetworkManager' not in messages_before.content|b64decode
 
-- name: Run hostname module with a leading dash to ensure its not interpreted as a flag (regression test for issue-81741)
-  when: ansible_os_family not in ['AIX', 'Darwin', 'HP-UX', 'Solaris']  # these weren't covered by the fix for the issue
+# This is a regression test for issue-81741
+# A success or failure to change the hostname isn't a regression.
+# It only matters if the hostname was intepreted as a flag.
+# 
+# it can succeed (maybe changing the hostname to something weird) => pass (not interpreted as flag)
+#  - in this case, there will be no command_result.msg variable
+#
+# It can fail with an invalid option warning => fail (interpreted as flag)
+# It can fail (or partially fail) with a warning dashes are bad characters => pass (not interpreted as flag)
+#  - in both cases above, the warning will be in the command_result.msg variable
+#
+# a rescue block is used to catch the "fails" and examine the msg for errors indicating flag interpretation
+- name: Ensure hostname is not interpreted as a flag
+    # these weren't covered by the fix for the issue and haven't been tested either way
+  when: ansible_os_family not in ['AIX', 'Darwin', 'HP-UX', 'Solaris']
   become: 'yes'
-  hostname:
-    name: -flaglike-hostname
-  register: command_result
-  failed_when: >
-    command_result.changed == "false" or
-    'hostnamectl: invalid option' in command_result.msg or
-    'illegal option' in command_result.msg
+  block:
+    - name: Ensure hostname is not interpreted as a flag
+      hostname:
+        name: -flaglike-hostname
+      register: command_result
+  rescue:
+    - assert:
+        that:
+          - >
+            'illegal option' not in command_result.msg
+          - >
+            'hostnamectl: invalid option' not in command_result.msg
 
 - name: Run hostname module for real now
   become: 'yes'
