@@ -585,7 +585,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           ciphers=ciphers, use_netrc=use_netrc, **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, force=module.params['force'], **kwargs)
 
     if src:
         # Try to close the open file handle
