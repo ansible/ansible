@@ -633,6 +633,22 @@
     that:
       - "'content' in file_out.stdout"
 
+- name: Test downloading cached file
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+
+- name: Test downloading cached file to existing file results in "304 Not Modified"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    status_code: [304]
+
+- name: Test downloading cached file to existing file with "force"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    force: true
+
 - name: Clean up
   file:
     dest: "{{ remote_tmp_dir }}/output"
