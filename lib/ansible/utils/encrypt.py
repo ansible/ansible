@@ -115,7 +115,7 @@ class CryptHash(BaseHash):
     def _salt(self, salt, salt_size):
         salt_size = salt_size or self.algo_data.salt_size
         ret = salt or random_salt(salt_size)
-        if re.search(r'[^./0-9A-Za-z]', ret):
+        if re.search(r'[^./\w]', ret):
             raise AnsibleError("invalid characters in salt")
         if self.algo_data.salt_exact and len(ret) != self.algo_data.salt_size:
             raise AnsibleError("invalid salt size")
