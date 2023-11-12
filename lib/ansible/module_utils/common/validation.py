@@ -542,7 +542,7 @@ def check_type_raw(value):
 def check_type_bytes(value):
     """Convert a human-readable string value to bytes
 
-    Raises :class:`TypeError` if unable to covert the value
+    Raises :class:`TypeError` if unable to convert the value
     """
     try:
         return human_to_bytes(value)
@@ -555,7 +555,7 @@ def check_type_bits(value):
 
     Example: ``check_type_bits('1Mb')`` returns integer 1048576.
 
-    Raises :class:`TypeError` if unable to covert the value.
+    Raises :class:`TypeError` if unable to convert the value.
     """
     try:
         return human_to_bytes(value, isbits=True)
@@ -567,7 +567,7 @@ def check_type_jsonarg(value):
     """Return a jsonified string. Sometimes the controller turns a json string
     into a dict/list so transform it back into json here
 
-    Raises :class:`TypeError` if unable to covert the value
+    Raises :class:`TypeError` if unable to convert the value
 
     """
     if isinstance(value, (text_type, binary_type)):
