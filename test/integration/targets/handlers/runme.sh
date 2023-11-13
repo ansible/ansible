@@ -198,3 +198,7 @@ ansible-playbook test_include_tasks_in_include_role.yml "$@" 2>&1 | tee out.txt
 
 ansible-playbook test_run_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran once')" = "1" ]
+
+ansible-playbook nested_flush_handlers_failure_force.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'flush_handlers_rescued')" = "1" ]
+[ "$(grep out.txt -ce 'flush_handlers_always')" = "2" ]
