@@ -28,7 +28,10 @@
     block:
       - action: "{{ ansible_facts.pkg_mgr }}"
         args:
-           name: "python3-pip"
+           name:
+             - python3-pip
+             - python3
+           state: latest
 
       - pip:
           name: rpmfluff
