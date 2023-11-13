@@ -629,8 +629,8 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             # Get the name of the parent key if this is a nested option
             if prefix:
                 kwargs['prefix'] = prefix
- 
-        if wanted_type in ALLOWED_STRICT_TYPES:
+
+        if wanted_type in ALLOWED_STRICT_TYPES and allow_conversion is not None:
             kwargs['allow_conversion'] = allow_conversion
 
         try:
