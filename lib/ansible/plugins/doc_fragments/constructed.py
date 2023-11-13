@@ -61,7 +61,7 @@ options:
       priority:
         description:
             - Set group's priority for fine control of variable precedence.
-            - The ``ansible_keyed_group_name`` variable that reflects the current keyed_group name, is available for templating this value.
+            - The ``ansible_keyed_group_name`` variable that reflects the current keyed_group name is available for templating this value.
         type: int
         version_added: '2.17'
   use_extra_vars:
