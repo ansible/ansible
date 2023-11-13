@@ -1,0 +1,2 @@
+bugfixes:
+  - flush_handlers - properly handle a handler failure in a nested block when ``force_handlers`` is set (http://github.com/ansible/ansible/issues/81532)

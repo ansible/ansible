@@ -1,0 +1,19 @@
+- hosts: A,B
+  gather_facts: false
+  force_handlers: true
+  tasks:
+    - block:
+        - command: echo
+          notify: h
+
+        - meta: flush_handlers
+      rescue:
+        - debug:
+            msg: flush_handlers_rescued
+      always:
+        - debug:
+            msg: flush_handlers_always
+  handlers:
+    - name: h
+      fail:
+      when: inventory_hostname == "A"
