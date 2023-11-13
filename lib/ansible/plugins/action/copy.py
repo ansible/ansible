@@ -292,7 +292,12 @@ class ActionModule(ActionBase):
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, '.source')
+
+            # ensure we keep suffix for validate
+            suffix = os.path.splitext(dest_file)[1]
+            if suffix:
+                tmp_src += suffix
 
             remote_path = None
 
@@ -385,7 +390,7 @@ class ActionModule(ActionBase):
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP, prefix='.')
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
