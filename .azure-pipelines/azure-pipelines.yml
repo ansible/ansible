@@ -108,6 +108,8 @@ stages:
               test: alpine/3.18
             - name: Fedora 38
               test: fedora/38
+            - name: Fedora 39
+              test: fedora/39
             - name: RHEL 9.3
               test: rhel/9.3
             - name: Ubuntu 22.04
@@ -125,6 +127,8 @@ stages:
               test: alpine3
             - name: Fedora 38
               test: fedora38
+            - name: Fedora 39
+              test: fedora39
             - name: Ubuntu 20.04
               test: ubuntu2004
             - name: Ubuntu 22.04
@@ -140,6 +144,8 @@ stages:
               test: alpine3
             - name: Fedora 38
               test: fedora38
+            - name: Fedora 39
+              test: fedora39
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:
