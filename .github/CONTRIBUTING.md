@@ -12,7 +12,7 @@ The GitHub issue tracker is not the best place for questions for various reasons
 
 By contributing to this project you agree to the Developer Certificate of Origin (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. See the DCO section below for details.
 
-The Ansible project is licensed under the [GPL-3.0](COPYING) or later, although some portions of the code fall under other licenses - this is noted in the individual files.
+The Ansible project is licensed under the [GPL-3.0](COPYING) or later. Some portions of the code fall under other licenses as noted in individual files.
 
 The Ansible project accepts contributions through GitHub pull requests. Please review the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for more information on contributing to Ansible.
 
