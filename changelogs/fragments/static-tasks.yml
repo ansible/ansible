@@ -1,0 +1,5 @@
+minor_changes:
+- >-
+  Include the explicit import_tasks and import_role tasks in the play iterator for the strategy to see. By default
+  these tasks are skipped but a strategy can utilise them in a special way if needed. This will cause the import_* to
+  be displayed in UI as a normal task when it is run.
