@@ -26,7 +26,9 @@ Also please make sure you are testing on the latest released version of Ansible 
 
 Thanks!
 
-## DEVELOPER CERTIFICATE OF ORIGIN (DCO) VERSION 1.1
+## DEVELOPER CERTIFICATE OF ORIGIN (DCO)
+
+This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution.
 
 ```text
 Developer Certificate of Origin
