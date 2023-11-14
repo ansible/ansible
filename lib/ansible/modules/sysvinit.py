@@ -86,6 +86,12 @@ EXAMPLES = '''
       state: started
       enabled: yes
 
+- name: Restart the apache2 service with a sleep of 5 seconds
+  ansible.builtin.sysvinit:
+    name: apache2
+    state: restarted
+    sleep: 5
+
 - name: Make sure apache2 is started on runlevels 3 and 5
   ansible.builtin.sysvinit:
       name: apache2
