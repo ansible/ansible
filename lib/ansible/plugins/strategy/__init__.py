@@ -354,6 +354,8 @@ class StrategyBase:
         # import_* tasks should be ignored as they are already handled when
         # the play was loaded.
         if task.action in C._ACTION_IMPORT_TASKS + C._ACTION_IMPORT_ROLE:
+            if host.name in self._blocked_hosts:
+                del self._blocked_hosts[host.name]
             return
 
         # Add a write lock for tasks.
