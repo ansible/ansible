@@ -66,6 +66,12 @@ EXAMPLES = """
     state: file
     suffix: temp
   register: tempfile_1
+  
+- name: Create Prefix of file
+  ansible.builtin.tempfile:
+     state: file
+     suffix: txt
+     prefix: myfile_
 
 - name: Use the registered var and the file module to remove the temporary file
   ansible.builtin.file:
