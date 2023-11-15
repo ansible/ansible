@@ -85,3 +85,6 @@ pass_tests
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" multi_play_1.yml multi_play_2.yml | tee "${temp_log}"
 
 pass_tests_multi
+
+# fail if we try do delete /var/tmp
+ANSIBLE_CONFIG='' ansible-pull -d var/tmp -U "${repo_dir}" --purge "$@"
