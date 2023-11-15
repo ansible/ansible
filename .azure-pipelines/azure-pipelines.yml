@@ -106,8 +106,6 @@ stages:
           targets:
             - name: Alpine 3.18
               test: alpine/3.18
-            - name: Fedora 38
-              test: fedora/38
             - name: Fedora 39
               test: fedora/39
             - name: RHEL 9.3
@@ -125,8 +123,6 @@ stages:
           targets:
             - name: Alpine 3
               test: alpine3
-            - name: Fedora 38
-              test: fedora38
             - name: Fedora 39
               test: fedora39
             - name: Ubuntu 20.04
@@ -142,8 +138,6 @@ stages:
           targets:
             - name: Alpine 3
               test: alpine3
-            - name: Fedora 38
-              test: fedora38
             - name: Fedora 39
               test: fedora39
             - name: Ubuntu 22.04
