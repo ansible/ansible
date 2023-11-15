@@ -10,7 +10,7 @@ def main():
         notsecret=dict(no_log=False),
     ))
 
-    msg = "My secret is: (%s), but don't tell %s" %(module.params['secret'], module.params['notsecret'])
+    msg = "My secret is: (%s), but don't tell %s" % (module.params['secret'], module.params['notsecret'])
     module.exit_json(msg=msg, changed=bool(module.params['secret'] == module.params['notsecret']))
 
 
