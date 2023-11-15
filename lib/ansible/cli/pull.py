@@ -29,6 +29,7 @@ from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
 
+
 display = Display()
 
 
@@ -102,8 +103,8 @@ class PullCLI(CLI):
                                       'This is a useful way to disperse git requests')
         self.parser.add_argument('-f', '--force', dest='force', default=False, action='store_true',
                                  help='run the playbook even if the repository could not be updated')
-        self.parser.add_argument('-d', '--directory', dest='dest', default=None,
-                                 help='absolute path of repository checkout directory (relative paths are not supported)')
+        self.parser.add_argument('-d', '--directory', dest='dest', default=None, type=opt_help.unfrack_path(),
+                                 help='path to the directory to which Ansible will checkout the repository.')
         self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
         self.parser.add_argument('-C', '--checkout', dest='checkout',
@@ -134,7 +135,6 @@ class PullCLI(CLI):
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
             options.dest = os.path.join(C.ANSIBLE_HOME, 'pull', hostname)
-        options.dest = os.path.expandvars(os.path.expanduser(options.dest))
 
         if os.path.exists(options.dest) and not os.path.isdir(options.dest):
             raise AnsibleOptionsError("%s is not a valid or accessible directory." % options.dest)
@@ -314,6 +314,7 @@ class PullCLI(CLI):
         if context.CLIARGS['purge']:
             os.chdir('/')
             try:
+                display.debug("removing: %s" % context.CLIARGS['dest'])
                 shutil.rmtree(context.CLIARGS['dest'])
             except Exception as e:
                 display.error(u"Failed to remove %s: %s" % (context.CLIARGS['dest'], to_text(e)))
