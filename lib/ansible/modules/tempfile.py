@@ -67,7 +67,7 @@ EXAMPLES = """
     suffix: temp
   register: tempfile_1
   
-- name: Create Prefix of file
+- name: Create a temporary file with a specific prefix
   ansible.builtin.tempfile:
      state: file
      suffix: txt
