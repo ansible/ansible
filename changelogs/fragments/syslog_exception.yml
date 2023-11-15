@@ -1,0 +1,3 @@
+---
+bugfixes:
+- syslog - Handle ValueError exception raised when sending Null Characters to syslog with Python 3.12.
