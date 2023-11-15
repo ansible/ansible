@@ -606,6 +606,8 @@ def main():
                                     if search.groups():
                                         match_groups = search.groups()
                                     break
+                            except Exception as e:
+                                module.warn('wait_for failed to use mmap on "%s" with unexpected exception(%s): %s.).' % (path, to_native(e.__class__), to_native(e)))
                     except IOError:
                         pass
             elif port:
