@@ -86,7 +86,7 @@ EXAMPLES = '''
       state: started
       enabled: yes
 
-- name: Restart the apache2 service with a sleep of 5 seconds
+- name: Sleep for 5 seconds between stop and start command of badly behaving service
   ansible.builtin.sysvinit:
     name: apache2
     state: restarted
