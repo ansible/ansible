@@ -597,7 +597,7 @@ def main():
                                             match_groups = search.groups()
                                         break
                             except (ValueError, OSError) as e:
-                                module.debug('wait_for failed to use mmap, falling back to read: %s' % to_native(e))
+                                module.debug('wait_for failed to use mmap on "%s": %s. Falling back to file read().' % (path, to_native(e)))
                                 # cannot mmap this file, try normal read
                                 search = re.search(b_compiled_search_re, f.read())
                                 if search:
