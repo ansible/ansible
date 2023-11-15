@@ -230,7 +230,7 @@ class StrategyModule(StrategyBase):
                             display.debug("here goes the callback...")
                             if isinstance(task, Handler):
                                 self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
-                            else:
+                            elif action not in C._ACTION_IMPORT_TASKS + C._ACTION_IMPORT_ROLE:
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             task.name = saved_name
                             callback_sent = True

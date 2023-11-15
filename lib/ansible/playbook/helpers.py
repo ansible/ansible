@@ -241,7 +241,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         loader=loader,
                         variable_manager=variable_manager,
                     )
-                    task_list.append(ti_copy)
+
+                    if not use_handlers:
+                        task_list.append(ti_copy)
 
                     tags = ti_copy.tags[:]
 
@@ -286,7 +288,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     templar = Templar(loader=loader, variables=all_vars)
                     ir.post_validate(templar=templar)
                     ir._role_name = templar.template(ir._role_name)
-                    task_list.append(ir)
+
+                    if not use_handlers:
+                        task_list.append(ir)
 
                     # uses compiled list from object
                     blocks, dummy = ir.get_block_list(variable_manager=variable_manager, loader=loader)
