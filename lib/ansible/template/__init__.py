@@ -30,6 +30,7 @@ from contextlib import contextmanager
 from numbers import Number
 from traceback import format_exc
 
+from jinja2.bccache import FileSystemBytecodeCache
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
@@ -592,6 +593,8 @@ class Templar:
 
         self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
 
+        self._cache_pattern = '__ansible_j2_%s.cache'
+
     def _compile_single_var(self, env):
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (env.variable_start_string, env.variable_end_string))
 
@@ -920,10 +923,31 @@ class Templar:
             hint = "Mandatory variable has not been overridden"
         return AnsibleUndefined(hint)
 
+    @staticmethod
+    def _make_bucket_name(data, overrides, environment):
+        name = data
+        if overrides:
+            combined = overrides | {}
+            if environment.newline_sequence != '\n':
+                combined |= {'newline_sequence': environment.newline_sequence}
+            override_str = ';'.join(
+                f'{k}={v}' for k, v in sorted(combined.items())
+            )
+            name += f'[{override_str}]'
+        return name
+
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False,
                     convert_data=False):
         if self.jinja2_native and not isinstance(data, string_types):
             return data
+
+        mtime = None
+        if (data_source := getattr(data, '_data_source', None)):
+            mtime = os.stat(data_source).st_mtime
+        cache_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'j2cache')
+        if not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir, mode=0o700, exist_ok=True)
+        bcc = FileSystemBytecodeCache(cache_dir, self._cache_pattern)
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
@@ -943,14 +967,33 @@ class Templar:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
                 data = _escape_backslashes(data, myenv)
 
+            bucket = bcc.get_bucket(
+                myenv,
+                self._make_bucket_name(data, overrides, myenv),
+                None,
+                data
+            )
+            cache_file = os.path.join(bcc.directory, self._cache_pattern % bucket.key)
+            if bucket.code and mtime and mtime > os.stat(cache_file).st_mtime:
+                # Why would this ever be the case, I really hope users aren't modifying things
+                # in the middle of a run taht could cause this
+                os.unlink(cache_file)
+                bucket.code = None
+
             try:
-                t = myenv.from_string(data)
+                if bucket.code:
+                    bcc.load_bytecode(bucket)
+                else:
+                    bucket.code = myenv.compile(data)
+                    bcc.set_bucket(bucket)
+                t = myenv.template_class.from_code(myenv, bucket.code, myenv.globals, None)
             except TemplateSyntaxError as e:
                 raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)), orig_exc=e)
             except Exception as e:
                 if 'recursion' in to_native(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % to_native(data), orig_exc=e)
                 else:
+                    display.warning(f'Unexpected exception when templating {data!r}: {e}')
                     return data
 
             if disable_lookups:
