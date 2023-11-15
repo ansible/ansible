@@ -237,7 +237,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.compat.datetime import utcnow
 
 
@@ -596,10 +596,9 @@ def main():
                                         if search.groups():
                                             match_groups = search.groups()
                                         break
-                            except ValueError as e:
-                                module.warn(e)
+                            except (ValueError, OSError) as e:
+                                module.debug('wait_for failed to use mmap, falling back to read: %s' % to_native(e))
                                 # cannot mmap this file, try normal read
-                                module.warn('r', f.read())
                                 search = re.search(b_compiled_search_re, f.read())
                                 if search:
                                     if search.groupdict():
