@@ -2,10 +2,11 @@
 
 set -eux
 
-ALOG=${OUTPUT_DIR}/test.log
+ALOG=${OUTPUT_DIR}/ansilbe_log_test.log
 
 ansible-playbook logit.yml
-grep -q 'ping' "${ALOG}" && /bin/false || /bin/true
+[ ! -f "${ALOG}" ]
 
 ANSIBLE_LOG_PATH=${ALOG} ansible-playbook logit.yml
+[ -f "${ALOG}" ]
 grep -q 'ping' "${ALOG}"
