@@ -1,0 +1,2 @@
+bugfixes:
+  - moved assemble, raw, copy, fetch, reboot, script and wait_for_connection to query task instead of play_context ensuring they get the lastest and most correct data.
