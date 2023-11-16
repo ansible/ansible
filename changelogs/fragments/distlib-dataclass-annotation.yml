@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-galaxy - Resolve issue with the dataclass used for galaxy.yml manifest caused by using
+  future annotations
