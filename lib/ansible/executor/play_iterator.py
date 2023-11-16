@@ -40,7 +40,7 @@ class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
         self.handlers = []
-        self.handler_notifications = []
+        self.handler_notifications = {}
         self.cur_block = 0
         self.cur_regular_task = 0
         self.cur_rescue_task = 0
@@ -63,7 +63,8 @@ class HostState:
             f"always={self.cur_always_task}, handlers={self.cur_handlers_task}, run_state={self.run_state}, "
             f"failed={self.failed}, pre_flushing_run_state={self.pre_flushing_run_state}, "
             f"update_handlers={self.update_handlers}, pending_setup={self.pending_setup}, "
-            f"child state? ({self.child_state}), did start at task? {self.did_start_at_task}"
+            f"child state? {bool(self.child_state)}, did start at task? {self.did_start_at_task}, "
+            f"handler_notifications={self.handler_notifications.keys()}"
         )
 
     def get_current_block(self) -> Block:
@@ -116,6 +117,9 @@ class HostState:
         return False
 
     def insert_tasks(self, task_list: list[Block]) -> None:
+        if not task_list:
+            return
+
         if self.run_state == IteratingStates.HANDLERS:
             self.handlers[self.cur_handlers_task:self.cur_handlers_task] = [h for b in task_list for h in b.block]
         else:
@@ -144,7 +148,7 @@ class HostState:
     def copy(self) -> HostState:
         new_state = HostState(self._blocks)
         new_state.handlers = self.handlers[:]
-        new_state.handler_notifications = self.handler_notifications[:]
+        new_state.handler_notifications = self.handler_notifications.copy()
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
@@ -414,15 +418,11 @@ class PlayIterator:
     def get_failed_hosts(self) -> dict[str, bool]:
         return dict((host, True) for (host, state) in self._host_states.items() if state.get_current().is_failed())
 
-    def is_failed(self, host: Host) -> bool:
-        return self.get_state_for_host(host.name).get_current().is_failed()
-
     def clear_host_errors(self, host: Host) -> None:
         self.get_state_for_host(host.name).clear_failed()
 
     def add_tasks(self, host: Host, task_list: list[Block]) -> None:
-        if task_list:
-            self.get_state_for_host(host.name).insert_tasks(task_list)
+        self.get_state_for_host(host.name).insert_tasks(task_list)
 
     @property
     def host_states(self) -> dict[str, HostState]:
@@ -444,10 +444,10 @@ class PlayIterator:
         self._host_states[hostname].run_state = run_state
 
     def add_notification(self, hostname: str, notification: str) -> None:
-        # preserve order
-        host_state = self._host_states[hostname]
-        if notification not in host_state.handler_notifications:
-            host_state.handler_notifications.append(notification)
+        self._host_states[hostname].handler_notifications[notification] = ...
 
     def clear_notification(self, hostname: str, notification: str) -> None:
-        self._host_states[hostname].handler_notifications.remove(notification)
+        try:
+            self._host_states[hostname].handler_notifications.pop(notification)
+        except KeyError as e:
+            raise AssertionError(f"Failed to remove a handler notification: {e}")
