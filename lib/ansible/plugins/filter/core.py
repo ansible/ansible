@@ -21,7 +21,7 @@ from collections.abc import Mapping
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.filters import pass_environment
+from jinja2.filters import pass_environment, pass_context
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import string_types, integer_types, reraise, text_type
@@ -230,8 +230,8 @@ def from_yaml_all(data):
     return data
 
 
-@pass_environment
-def rand(environment, end, start=None, step=None, seed=None):
+@pass_context
+def rand(context, end, start=None, step=None, seed=None):
     if seed is None:
         r = SystemRandom()
     else:
