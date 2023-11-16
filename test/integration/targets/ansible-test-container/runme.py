@@ -950,6 +950,15 @@ class DnfBootstrapper(Bootstrapper):
             # See: https://github.com/containers/netavark/issues/491
             packages.append('netavark-1.0.2')
 
+        if os_release.id == 'fedora' and os_release.version_id == '39':
+            # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
+            # The previously tested version, 1.6.19, did not have this issue.
+            # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
+            run_command(
+                'dnf', 'install', '-y',
+                'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm'
+            )
+
         if os_release.id == 'rhel':
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
