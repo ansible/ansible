@@ -420,7 +420,7 @@ class Display(metaclass=Singleton):
             self._log(nocolor, color)
 
     @proxy_display
-    def _log(self, msg: str, color: str | None = None, caplevel: int | None = None ):
+    def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
 
         if caplevel is None or self.log_verbosity > caplevel:
             msg2 = msg.lstrip('\n')
