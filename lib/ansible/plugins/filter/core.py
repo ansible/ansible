@@ -250,7 +250,8 @@ def rand(context, end, start=None, step=None, seed=None):
         raise AnsibleFilterError('random can only be used on sequences and integers')
 
 
-def randomize_list(mylist, seed=None):
+@pass_context
+def randomize_list(context, mylist, seed=None):
     try:
         mylist = list(mylist)
         if seed:
@@ -274,7 +275,8 @@ def get_hash(data, hashtype='sha1'):
     return h.hexdigest()
 
 
-def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=None, rounds=None, ident=None):
+@pass_context
+def get_encrypted_password(context, password, hashtype='sha512', salt=None, salt_size=None, rounds=None, ident=None):
     passlib_mapping = {
         'md5': 'md5_crypt',
         'blowfish': 'bcrypt',
