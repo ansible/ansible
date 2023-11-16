@@ -1,0 +1,2 @@
+minor_changes:
+  - User can now set ansible.log to record higher verbosity than what is specified for display via new configuration item LOG_VERBOSITY.
