@@ -45,8 +45,7 @@
       - dangerous_overwrite_content.content|default('')|b64decode == ''
       - not dangerous_overwrite_stat.stat.exists
       - galaxy_install_dangerous is failed
-      - >-
-        "symlink 'symlink' could not be found in the role" in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))
+      - "'is not a subpath of the role' in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))"
 
 - name: remove tarfile for next test
   file:
@@ -88,8 +87,8 @@
       - dangerous_overwrite_content.content|default('')|b64decode == ''
       - not dangerous_overwrite_stat.stat.exists
       - galaxy_install_dangerous is failed
-      - >-
-        "symlink 'symlink' could not be found in the role" in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))
+      - "'is not a subpath of the role' in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))"
+
 - name: remove tarfile for next test
   file:
     path: '{{ remote_tmp_dir }}/dir-traversal/source/dangerous.tar'
@@ -119,8 +118,8 @@
     that:
       - not symlink_outside_role.stat.exists
       - galaxy_install_dangerous is failed
-      - >-
-        "symlink 'symlink' could not be found in the role" in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))
+      - "'is not a subpath of the role' in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))"
+
 - name: remove test directories
   file:
     path: '{{ remote_tmp_dir }}/dir-traversal/{{ item }}'
