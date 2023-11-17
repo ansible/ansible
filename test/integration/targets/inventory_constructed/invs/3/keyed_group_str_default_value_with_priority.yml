@@ -10,4 +10,4 @@ keyed_groups:
     default_value: "priority_3"
     prefix: a_keyed_group
     vars:
-      ansilbe_group_priority: '{{ 3 if "priority_3" in keyed_group_2 else 1 }}'
+      ansible_group_priority: '{{ 3 if "priority_3" in keyed_group_2 else 1 }}'
