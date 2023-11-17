@@ -91,7 +91,7 @@ EXAMPLES = r"""
           default_value: "running"
           priority: "{{ 10 if 'status' in ansible_keyed_group_name else 50 }}"
           vars:
-            ansible_group_priority: '{{ *'status' in tags)|ternary(10, 30)}}'
+            ansible_group_priority: '{{ "status" in tags)|ternary(10, 30)}}'
             allowed_ssh_groups: qa,ops
             group_origin: tags
 
