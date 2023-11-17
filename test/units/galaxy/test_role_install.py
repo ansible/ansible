@@ -125,7 +125,7 @@ def test_role_download_github_no_download_url_for_version(init_mock_temp_file, m
 )
 def test_role_import(state, rc, mocker, galaxy_server, monkeypatch):
     responses = [
-        {"available_versions":{"v1":"v1/"}},
+        {"available_versions": {"v1": "v1/"}},
         {"results": [{'id': 12345, 'github_user': 'user', 'github_repo': 'role', 'github_reference': None, 'summary_fields': {'role': {'name': 'role'}}}]},
         {"results": [{'state': 'WAITING', 'id': 12345, 'summary_fields': {'task_messages': []}}]},
         {"results": [{'state': state, 'id': 12345, 'summary_fields': {'task_messages': []}}]},
