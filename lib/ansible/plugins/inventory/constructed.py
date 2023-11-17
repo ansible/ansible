@@ -204,10 +204,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
                 # handle group vars
                 groups = self.get_option('group_vars')
-                for group in groups.keys():
-                    gobj = self.inventory.groups.get(group)
-                    for gvar in groups[group].keys():
-                        gobj.set_variable(gvar, groups[group][gvar]
+                for group_name in groups.keys():
+                    self._set_group_vars(group_name, groups[group_name])
 
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e)
