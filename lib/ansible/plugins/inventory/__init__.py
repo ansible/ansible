@@ -299,6 +299,12 @@ class _BaseInventoryPlugin(AnsiblePlugin):
 
         return (hostnames, port)
 
+    def _set_group_vars(group_name, gvars):
+
+        gobj = self.inventory.groups.get(group_name)
+        for gvar in gvars:
+            gobj.set_variable(gvar, gvars[gvar])
+
 
 class BaseInventoryPlugin(_BaseInventoryPlugin):
     """ Parses an Inventory Source """
@@ -474,10 +480,7 @@ class Constructable(_BaseInventoryPlugin):
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)
 
-                            # set group variables
-                            gobj = self.inventory.groups.get(result_gname)
-                            for gvar in group_vars:
-                                gobj.set_variable(gvar, group_vars[gvar])
+                            self._set_group_vars(result_gname, group_vars)
 
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
