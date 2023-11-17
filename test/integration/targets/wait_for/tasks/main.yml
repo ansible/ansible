@@ -119,7 +119,9 @@
     path: "/sys/class/net/lo/carrier"
     search_regex: "1"
     timeout: 30
-  when: ansible_os_family not in ['FreeBSD', 'Darwin']
+  when:
+    - ansible_facts['os_family'] not in ['FreeBSD', 'Darwin']
+    - not (ansible_facts['os_family'] in ['RedHat', 'CentOS'] and ansible_facts['distribution_major_version'] is version('7', '<='))
 
 - name: test wait for port timeout
   wait_for:
