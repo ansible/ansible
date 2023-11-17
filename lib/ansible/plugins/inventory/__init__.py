@@ -299,7 +299,7 @@ class _BaseInventoryPlugin(AnsiblePlugin):
 
         return (hostnames, port)
 
-    def _set_group_vars(group_name, gvars):
+    def _set_group_vars(self, group_name, gvars):
 
         gobj = self.inventory.groups.get(group_name)
         for gvar in gvars:
