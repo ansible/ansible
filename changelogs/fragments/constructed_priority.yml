@@ -1,3 +1,3 @@
 minor_changes:
-  - The constructed inventory plugin (and those that inherit from it) can now set group priority on keyed_groups.
-  - The constructed inventory plugin group priority is templatable and can use the `ansible_keyed_group_name` special variable to refer to it's own keyed_group entry resolution.
+  - The ``Constructed`` base class (and plugin) no has a ``vars`` key in the ``keyed_groups`` option, so users can add vars directly w/o need of a 2nd inventory or vars plugin or guessing group names.
+  - The ``constructed`` inventory plugin also now can have an option ``group_vars`` to allow for assiging vars to groups w/o the need of a 2nd inventory or vars plugin.
