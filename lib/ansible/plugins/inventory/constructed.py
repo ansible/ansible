@@ -31,6 +31,12 @@ DOCUMENTATION = '''
             default: false
             type: boolean
             version_added: '2.11'
+        group_vars:
+            description: dictionary of dictionaries, the top keys are group names, the dictionaries withtin are variables for that group.
+            required: false
+            type: dict
+            default: {}
+            version_added: '2.17'
     extends_documentation_fragment:
       - constructed
 '''
@@ -79,12 +85,26 @@ EXAMPLES = r'''
           parent_group: all_ec2_zones
 
         # Assuming that there exist `tags` that are assigned to various servers such as 'stuff', 'things', 'status', etc.
-        # The variable `ansible_keyed_group_name` is exposed to the priority. Its value is the resolved group name once
-        # it's been completely templated.
+        # also add vars directly to these groups
         - key: tags
           prefix: tag
           default_value: "running"
-          priority: "{{ 10 if 'status' in ansible_keyed_group_name else 50 }}"
+          vars:
+            ansible_group_priority: '{{ *'status' in tags)|ternary(10, 30)}}'
+            allowed_ssh_groups: qa,ops
+            group_origin: tags
+
+    group_vars:
+        # group names: mapped to variables for those groups
+        all:
+            ntpserver: 'ntp.{{ansible_facts['domain']}}'
+        webservers:
+            open_ports: 80,8080,443
+            allowed_ssh_groups: webdevs,qa,ops
+        dbservers:
+            open_ports: 1283
+            allowed_ssh_groups: dbas,qa,ops
+            ansible_group_priority: 111
 '''
 
 import os
@@ -181,6 +201,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
                 # constructed groups based variable values
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=False)
+
+                # handle group vars
+                groups = self.get_option('group_vars')
+                for group in groups.keys():
+                    gobj = self.inventory.groups.get(group)
+                    for gvar in groups[group].keys():
+                        gobj.set_variable(gvar, groups[group][gvar]
 
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e)

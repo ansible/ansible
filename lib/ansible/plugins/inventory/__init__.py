@@ -389,6 +389,11 @@ class Constructable(object):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
+                    group_vars = keyed.get('vars', {})
+                    if group_vars:
+                        # allow using group vars for templating
+                        variables = combine_vars(variables, group_vars)
+
                     if fetch_hostvars:
                         variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
@@ -448,18 +453,15 @@ class Constructable(object):
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)
 
-                            if (priority := keyed.get('priority')) is not None:
-                                with self.templar.set_temporary_context(available_variables=variables | {'ansible_keyed_group_name': result_gname}):
-                                    if (priority := self.templar.template(priority)) is not None:
-                                        try:
-                                            self.inventory.groups.get(result_gname).set_priority(priority)
-                                        except ValueError as ve:
-                                            raise AnsibleParserError(f"Invalid group priority given: {ve}")
+                            # set group variables
+                            gobj = self.inventory.groups.get(result_gname)
+                            for gvar in group_vars:
+                                gobj.set_variable(gvar, group_vars[gvar])
+
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, result_gname)
-
                     else:
                         # exclude case of empty list and dictionary, because these are valid constructions
                         # simply no groups need to be constructed, but are still falsy
