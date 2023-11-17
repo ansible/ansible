@@ -207,3 +207,16 @@
     that:
     - "non_zero_result.failed"
     - "non_zero_result.msg == 'non-zero return code'"
+
+- name: run ansible via command to validate the invocation
+  command: |
+    ansible localhost -m expect -a "{{ module_args }}" -vvv
+  vars:
+    module_args: |
+      command='{{ansible_python_interpreter}} {{test_command_file}} foo --quiet' responses='{\"foo\": \"bar\"}'
+  register: task_invocation
+
+- assert:
+    that:
+      - "'invocation' in task_invocation.stdout"
+      - "'bar' not in task_invocation.stdout"

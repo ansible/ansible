@@ -8,6 +8,8 @@ except NameError:
     input_function = input
 
 prompts = sys.argv[1:] or ['foo']
+if (quiet := prompts[-1] == '--quiet'):
+    del prompts[-1]
 
 # latin1 encoded bytes
 # to ensure pexpect doesn't have any encoding errors
@@ -21,4 +23,5 @@ print()
 
 for prompt in prompts:
     user_input = input_function(prompt)
-    print(user_input)
+    if not quiet:
+        print(user_input)
