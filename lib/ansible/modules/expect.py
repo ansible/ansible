@@ -51,7 +51,8 @@ options:
     default: 30
   echo:
     description:
-      - Whether or not to echo out your response strings.
+      - Whether or not pexepct will echo your response strings.
+      - When response strings are not echoed, the C(responses) are also omitted from the module invocation.
     default: false
     type: bool
 requirements:
@@ -179,6 +180,9 @@ def main():
         except TypeError as te:
             module.fail_json(msg=f"argument 'timeout' is of type {type(timeout)} and we were unable to convert to int: {te}")
     echo = module.params['echo']
+    if not echo:
+        # Mutate params to hide responses from the invocation displayed with -vvv
+        del module.params['responses']
 
     events = dict()
     for key, value in responses.items():
