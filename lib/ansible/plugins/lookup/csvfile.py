@@ -19,6 +19,7 @@ DOCUMENTATION = r"""
       keycol:
         description:  column to search in (0 indexed).
         default: "0"
+        version_added: "2.17"
       default:
         description: what to return if the value is not found in the file.
       delimiter:
