@@ -16,6 +16,9 @@ DOCUMENTATION = r"""
       col:
         description:  column to return (0 indexed).
         default: "1"
+      keycol:
+        description:  column to search in (0 indexed).
+        default: "0"
       default:
         description: what to return if the value is not found in the file.
       delimiter:
@@ -122,14 +125,14 @@ class CSVReader:
 
 class LookupModule(LookupBase):
 
-    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1):
+    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
 
         try:
             f = open(to_bytes(filename), 'rb')
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
-                if len(row) and row[0] == key:
+                if len(row) and row[int(keycol)] == key:
                     return row[int(col)]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))
@@ -172,7 +175,7 @@ class LookupModule(LookupBase):
                 paramvals['delimiter'] = "\t"
 
             lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'], paramvals['keycol'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:
