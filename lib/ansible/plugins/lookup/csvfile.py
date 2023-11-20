@@ -18,7 +18,8 @@ DOCUMENTATION = r"""
         default: "1"
       keycol:
         description:  column to search in (0 indexed).
-        default: "0"
+        default: 0
+        type: int
         version_added: "2.17"
       default:
         description: what to return if the value is not found in the file.
@@ -133,7 +134,7 @@ class LookupModule(LookupBase):
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
-                if len(row) and row[int(keycol)] == key:
+                if len(row) and row[keycol] == key:
                     return row[int(col)]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))
