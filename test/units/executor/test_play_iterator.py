@@ -291,6 +291,10 @@ class TestPlayIterator(unittest.TestCase):
             "test_play.yml": """
             - hosts: all
               gather_facts: false
+              pre_tasks:
+              - block: []
+              post_tasks:
+              - block: []
               tasks:
               - block:
                 - block:

@@ -1,0 +1,2 @@
+bugfixes:
+  - Only inject implicit ``flush_handlers`` tasks after pre_tasks, roles and tasks, and post_tasks if the preceding section contains tasks or roles (https://github.com/ansible/ansible/issues/82245).

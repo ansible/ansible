@@ -171,19 +171,30 @@ def test_play_with_roles(mocker):
     assert isinstance(p.get_roles()[0], Role)
 
 
-def test_play_compile():
+@pytest.mark.parametrize(
+    'pre_tasks, tasks, post_tasks, expected',
+    (
+        ([], [], [], 0),
+        ([dict(action='shell echo "hello world"')], [], [], 2),
+        ([dict(action='shell echo "hello world"')], [dict(action='shell echo "hello world"')], [], 4),
+        ([dict(action='shell echo "hello world"')], [dict(action='shell echo "hello world"')], [dict(action='shell echo "hello world"')], 6),
+        ([], [dict(action='shell echo "hello world"')], [dict(action='shell echo "hello world"')], 4),
+        ([], [], [dict(action='shell echo "hello world"')], 2),
+    )
+)
+def test_play_compile(pre_tasks, tasks, post_tasks, expected):
     p = Play.load(dict(
         name="test play",
         hosts=['foo'],
         gather_facts=False,
-        tasks=[dict(action='shell echo "hello world"')],
+        pre_tasks=pre_tasks,
+        tasks=tasks,
+        post_tasks=post_tasks
     ))
 
     blocks = p.compile()
-
-    # with a single block, there will still be three
-    # implicit meta flush_handler blocks inserted
-    assert len(blocks) == 4
+    # an implicit flush_handler block is inserted after pre_tasks, tasks, and post_tasks
+    assert len(blocks) == expected
 
 
 @pytest.mark.parametrize(

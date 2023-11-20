@@ -323,12 +323,15 @@ class Play(Base, Taggable, CollectionSearch):
             return block_list
 
         block_list.extend(self.pre_tasks)
-        block_list.append(flush_block)
+        if self.pre_tasks:
+            block_list.append(flush_block)
         block_list.extend(self._compile_roles())
         block_list.extend(self.tasks)
-        block_list.append(flush_block)
+        if self.roles or self.tasks:
+            block_list.append(flush_block)
         block_list.extend(self.post_tasks)
-        block_list.append(flush_block)
+        if self.post_tasks:
+            block_list.append(flush_block)
 
         return block_list
 

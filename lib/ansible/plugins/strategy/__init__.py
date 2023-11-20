@@ -337,7 +337,7 @@ class StrategyBase:
 
     def get_failed_hosts(self, play):
         self._set_hosts_cache(play, refresh=False)
-        return [host for host in self._hosts_cache if host in self._tqm._failed_hosts]
+        return [host for host in self._tqm._failed_hosts if host in self._hosts_cache]
 
     def add_tqm_variables(self, vars, play):
         '''
@@ -926,6 +926,8 @@ class StrategyBase:
         meta_action = task.args.get('_raw_params')
 
         def _evaluate_conditional(h):
+            if task.when == []:
+                return True
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)
