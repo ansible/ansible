@@ -73,12 +73,17 @@ author:
 '''
 
 EXAMPLES = r'''
-- ansible.builtin.assert: { that: "ansible_os_family != 'RedHat'" }
+- name: A single condition can be supplied as string instead of list
+  ansible.builtin.assert:
+    that: "ansible_os_family != 'RedHat'"
 
-- ansible.builtin.assert:
+- name: Use yaml multiline strings to ease escaping
+  ansible.builtin.assert:
     that:
       - "'foo' in some_command_result.stdout"
       - number_of_the_counting == 3
+      - >
+        "reject" not in some_command_result.stderr
 
 - name: After version 2.7 both 'msg' and 'fail_msg' can customize failing assertion message
   ansible.builtin.assert:
