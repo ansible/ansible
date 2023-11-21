@@ -554,7 +554,7 @@ class AnsibleEnvironment(NativeEnvironment):
         self.undefined = AnsibleUndefined
         self.finalize = _ansible_finalize
 
-    def _make_bucket_name(self, source):
+    def _make_bucket_name(self, source: str) -> str:
         overrides = hash(
             (
                 ('autoescape', self.autoescape),
