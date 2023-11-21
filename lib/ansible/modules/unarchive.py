@@ -282,6 +282,7 @@ MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
+SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
 
 
 def crc32(path, buffer_size):
@@ -878,6 +879,8 @@ class TgzArchive(object):
             if INVALID_OWNER_RE.search(line):
                 out += line + '\n'
             if INVALID_GROUP_RE.search(line):
+                out += line + '\n'
+            if SYMLINK_DIFF_RE.search(line):
                 out += line + '\n'
         if out:
             unarchived = False
