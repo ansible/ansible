@@ -583,6 +583,9 @@ class AnsibleEnvironment(NativeEnvironment):
         template_class: t.Type[Template] | None = None,
     ) -> Template:
 
+        if not C.JINJA2_BYTECODE_CACHE:
+            return super().from_string(source, globals=globals, template_class=template_class)
+
         cache_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'j2cache')
         if not os.path.isdir(cache_dir):
             os.makedirs(cache_dir, mode=0o700, exist_ok=True)
