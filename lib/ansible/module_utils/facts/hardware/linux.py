@@ -257,7 +257,7 @@ class LinuxHardware(Hardware):
         if collected_facts.get('ansible_architecture') == 's390x':
             # getting sockets would require 5.7+ with CONFIG_SCHED_TOPOLOGY
             cpu_facts['processor_count'] = 1
-            cpu_facts['processor_cores'] = zp // zmt
+            cpu_facts['processor_cores'] = round(zp / zmt)
             cpu_facts['processor_threads_per_core'] = zmt
             cpu_facts['processor_vcpus'] = zp
             cpu_facts['processor_nproc'] = zp
@@ -282,9 +282,9 @@ class LinuxHardware(Hardware):
 
                 core_values = list(cores.values())
                 if core_values:
-                    cpu_facts['processor_threads_per_core'] = core_values[0] // cpu_facts['processor_cores']
+                    cpu_facts['processor_threads_per_core'] = round(core_values[0] / cpu_facts['processor_cores'])
                 else:
-                    cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
+                    cpu_facts['processor_threads_per_core'] = round(1 / cpu_facts['processor_cores'])
 
                 cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
                                                 cpu_facts['processor_count'] * cpu_facts['processor_cores'])
