@@ -41,6 +41,7 @@
   assert:
     that:
       - lookup('csvfile', 'Smith', file='people.csv', delimiter=',', col=1) == "Jane"
+      - lookup('csvfile', 'Jane', file='people.csv', delimiter=',', col=0, keycol=1) == "Smith"
       - lookup('csvfile', 'German von Lastname file=people.csv delimiter=, col=1') == "Demo"
 
 - name: Check tab-separated file
