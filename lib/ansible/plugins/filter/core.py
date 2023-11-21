@@ -230,6 +230,9 @@ def from_yaml_all(data):
     return data
 
 
+# context prevents this filter from being treated as a constant
+# and evaluated at compile time, and instead defers evaluation
+# to execution time
 @pass_context
 def rand(context, end, start=None, step=None, seed=None):
     if seed is None:
@@ -249,7 +252,9 @@ def rand(context, end, start=None, step=None, seed=None):
     else:
         raise AnsibleFilterError('random can only be used on sequences and integers')
 
-
+# context prevents this filter from being treated as a constant
+# and evaluated at compile time, and instead defers evaluation
+# to execution time
 @pass_context
 def randomize_list(context, mylist, seed=None):
     try:
@@ -275,6 +280,9 @@ def get_hash(data, hashtype='sha1'):
     return h.hexdigest()
 
 
+# context prevents this filter from being treated as a constant
+# and evaluated at compile time, and instead defers evaluation
+# to execution time
 @pass_context
 def get_encrypted_password(context, password, hashtype='sha512', salt=None, salt_size=None, rounds=None, ident=None):
     passlib_mapping = {
