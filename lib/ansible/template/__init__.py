@@ -542,11 +542,6 @@ class AnsibleEnvironment(NativeEnvironment):
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
     concat = staticmethod(ansible_eval_concat)  # type: ignore[assignment]
-    _overrides = (
-        'autoescape', 'block_end_string', 'block_start_string', 'comment_end_string', 'comment_start_string',
-        'keep_trailing_newline', 'line_comment_prefix', 'line_statement_prefix', 'lstrip_blocks', 'newline_sequence',
-        'trim_blocks', 'variable_end_string', 'variable_start_string',
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -560,10 +555,26 @@ class AnsibleEnvironment(NativeEnvironment):
         self.finalize = _ansible_finalize
 
     def _make_bucket_name(self, source):
-        override = ';'.join(
-            f'{k}={getattr(self, k, None)!r}' for k in self._overrides
-        ) + f';native={isinstance(self, AnsibleNativeEnvironment)};'
-        return f'{source}[overrides={override}]'
+        overrides = hash(
+            (
+                ('autoescape', self.autoescape),
+                ('block_end_string', self.block_end_string),
+                ('block_start_string', self.block_start_string),
+                ('comment_end_string', self.comment_end_string),
+                ('comment_start_string', self.comment_start_string),
+                ('extensions', tuple(self.extensions)),
+                ('keep_trailing_newline', self.keep_trailing_newline),
+                ('line_comment_prefix', self.line_comment_prefix),
+                ('line_statement_prefix', self.line_statement_prefix),
+                ('lstrip_blocks', self.lstrip_blocks),
+                ('newline_sequence', self.newline_sequence),
+                ('trim_blocks', self.trim_blocks),
+                ('variable_end_string', self.variable_end_string),
+                ('variable_start_string', self.variable_start_string),
+                ('native', self.__class__ == AnsibleNativeEnvironment),
+            )
+        )
+        return f'{source}[overrides={overrides}]'
 
     def from_string(
         self,
