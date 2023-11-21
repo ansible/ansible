@@ -16,12 +16,9 @@ from ansible.utils.vars import combine_vars
 
 display = Display()
 
-cached_vars_plugin_order = None
 
-
-def _load_vars_plugins_order():
+def _prime_vars_loader():
     # find 3rd party legacy vars plugins once, and look them up by name subsequently
-    auto = []
     for auto_run_plugin in vars_loader.all(class_only=True):
         needs_enabled = False
         if hasattr(auto_run_plugin, 'REQUIRES_ENABLED'):
@@ -31,15 +28,12 @@ def _load_vars_plugins_order():
             display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
                                "Use 'REQUIRES_ENABLED' instead.", version=2.18)
         if needs_enabled:
-            continue
-        auto.append(auto_run_plugin._load_name)
+            del vars_loader._plugin_instance_cache[auto_run_plugin.ansible_name]
 
-    # find enabled plugins once so we can look them up by resolved fqcn subsequently
-    enabled = []
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if (plugin := vars_loader.get(plugin_name)) is None:
-            enabled.append(plugin_name)
-        else:
+        if not plugin_name:
+            continue
+        if (plugin := vars_loader.get(plugin_name)) is not None:
             collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
             # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
             if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
@@ -47,10 +41,6 @@ def _load_vars_plugins_order():
                     "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
                     "This should be removed from the plugin %s." % plugin.ansible_name
                 )
-            enabled.append(plugin.ansible_name)
-
-    global cached_vars_plugin_order
-    cached_vars_plugin_order = auto + enabled
 
 
 def get_plugin_vars(loader, plugin, path, entities):
@@ -109,10 +99,11 @@ def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    if cached_vars_plugin_order is None:
-        _load_vars_plugins_order()
+    # FIXME: _prime_vars_loader shouldn't run repeatedly if there are no plugins
+    if not vars_loader._plugin_instance_cache:
+        _prime_vars_loader()
 
-    for plugin_name in cached_vars_plugin_order:
+    for plugin_name in vars_loader._plugin_instance_cache:
         if (plugin := vars_loader.get(plugin_name)) is None:
             continue
 

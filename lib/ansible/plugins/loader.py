@@ -13,7 +13,7 @@ import pkgutil
 import sys
 import warnings
 
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from importlib import import_module
 from traceback import format_exc
 
@@ -238,7 +238,7 @@ class PluginLoader:
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
         try:
-            self._plugin_instance_cache = {} if self.type == 'vars' else None
+            self._plugin_instance_cache = OrderedDict() if self.type == 'vars' else None
         except ValueError:
             self._plugin_instance_cache = None
 
@@ -265,7 +265,7 @@ class PluginLoader:
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
-            self._plugin_instance_cache = {} if self.type == 'vars' else None
+            self._plugin_instance_cache = OrderedDict() if self.type == 'vars' else None
             self._searched_paths = set()
 
     def __setstate__(self, data):
@@ -871,7 +871,7 @@ class PluginLoader:
         if name in self.aliases:
             name = self.aliases[name]
 
-        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(name)):
+        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(name)) and cached_load_result[1].resolved:
             # Resolving the FQCN is slow, even if we've passed in the resolved FQCN.
             # Short-circuit here if we've previously resolved this name.
             # This will need to be restricted if non-vars plugins start using the cache, since
@@ -888,7 +888,7 @@ class PluginLoader:
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         resolved_type_name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
-        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(fq_name)):
+        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(fq_name)) and cached_load_result[1].resolved:
             # This is unused by vars plugins, but it's here in case the instance cache expands to other plugin types.
             # We get here if we've seen this plugin before, but it wasn't called with the resolved FQCN.
             return get_with_context_result(*cached_load_result)
@@ -934,8 +934,9 @@ class PluginLoader:
 
         self._update_object(obj, resolved_type_name, path, redirected_names, fq_name)
         if self._plugin_instance_cache is not None and getattr(obj, 'is_stateless', False):
-            # store under both the originally requested name and the resolved FQ name
-            self._plugin_instance_cache[name] = self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
+            self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
+        elif self._plugin_instance_cache is not None:
+            self._plugin_instance_cache[fq_name] = (None, PluginLoadContext())
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -1041,9 +1042,9 @@ class PluginLoader:
             else:
                 fqcn = f"ansible.builtin.{basename}"
 
-            if self._plugin_instance_cache is not None and fqcn in self._plugin_instance_cache:
+            if fqcn in (self._plugin_instance_cache or {}) and self._plugin_instance_cache[fqcn][1].resolved:
                 # Here just in case, but we don't call all() multiple times for vars plugins, so this should not be used.
-                yield self._plugin_instance_cache[basename][0]
+                yield self._plugin_instance_cache[fqcn][0]
                 continue
 
             if path not in self._module_cache:
@@ -1095,7 +1096,7 @@ class PluginLoader:
 
             self._update_object(obj, basename, path, resolved=fqcn)
 
-            if self._plugin_instance_cache is not None and fqcn not in self._plugin_instance_cache:
+            if self._plugin_instance_cache is not None:
                 # Use get_with_context to cache the plugin the first time we see it.
                 self.get_with_context(fqcn)[0]
 
