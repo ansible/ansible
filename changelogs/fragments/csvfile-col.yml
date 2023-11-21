@@ -1,0 +1,4 @@
+---
+
+minor_changes:
+  - csvfile - let the config system do the typecasting.

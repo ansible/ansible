@@ -15,7 +15,8 @@ DOCUMENTATION = r"""
     options:
       col:
         description:  column to return (0 indexed).
-        default: "1"
+        default: 1
+        type: int
       keycol:
         description:  column to search in (0 indexed).
         default: 0
@@ -135,7 +136,7 @@ class LookupModule(LookupBase):
 
             for row in creader:
                 if len(row) and row[keycol] == key:
-                    return row[int(col)]
+                    return row[col]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))
 
