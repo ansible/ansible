@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - avoid creating the ``GALAXY_TOKEN_PATH`` as a side effect of configured servers that don't use ``username``/``password`` or ``auth_url`` for authentication.
