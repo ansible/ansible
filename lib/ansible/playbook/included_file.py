@@ -147,8 +147,8 @@ class IncludedFile:
                                     dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
                                     new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
                                     candidates = [
-                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target),
-                                        loader.path_dwim_relative(new_basedir, dirname, include_target)
+                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target, is_role=True),
+                                        loader.path_dwim_relative(new_basedir, dirname, include_target, is_role=True)
                                     ]
                                     for include_file in candidates:
                                         try:
