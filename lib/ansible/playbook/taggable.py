@@ -56,7 +56,7 @@ class Taggable:
             while obj is not None:
                 if (_tags := getattr(obj, "_tags", Sentinel)) is not Sentinel:
                     obj._tags = _flatten_tags(templar.template(_tags))
-                obj = obj._parent
+                obj = getattr(obj, "_parent", None)
             tags = set(self.tags)
         else:
             # this makes isdisjoint work for untagged
