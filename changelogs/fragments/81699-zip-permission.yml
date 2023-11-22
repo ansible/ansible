@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - add support for 8 character permission strings for zip archives (https://github.com/ansible/ansible/pull/81705).
