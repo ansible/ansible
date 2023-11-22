@@ -210,3 +210,6 @@ ansible-playbook force_handlers_blocks_81533-2.yml -i inventory.handlers "$@" 2>
 ansible-playbook nested_flush_handlers_failure_force.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'flush_handlers_rescued')" = "1" ]
 [ "$(grep out.txt -ce 'flush_handlers_always')" = "2" ]
+
+ansible-playbook 82241.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'included_task_from_tasks_dir')" = "1" ]
