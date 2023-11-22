@@ -274,9 +274,10 @@
 
 - name: Try installing an invalid repo 
   apt_repository:
-    repo: deb http://dl.google.com/linux/chrome/deb/ stable main
+    repo: deb http://dl.google.com/linux/chrome/deb2/ stable main
     state: present
     filename: google-chrome
+  ignore_errors: true
 
 - name: Check the stat for the given symlink
   stat:
