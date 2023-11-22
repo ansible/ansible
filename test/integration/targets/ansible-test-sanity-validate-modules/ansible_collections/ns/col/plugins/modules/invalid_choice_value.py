@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: invalid_choice_value
 short_description: Test for equal length of chocies with correct options
 description: Test for equal length of chocies with correct options
@@ -17,20 +17,17 @@ options:
     choices:
       - ReadOnly
       - ReadWrite
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     module = AnsibleModule(
-      argument_spec=dict(
-        caching=dict(type='str', choices=['ReadOnly', 'ReadOnly'])
-      ),
-      supports_check_mode=False
+        argument_spec=dict(caching=dict(type="str", choices=["ReadOnly", "ReadOnly"])),
+        supports_check_mode=False,
     )
     module.exit_json()
-
