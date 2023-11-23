@@ -1097,8 +1097,16 @@ class PluginLoader:
             self._update_object(obj, basename, path, resolved=fqcn)
 
             if self._plugin_instance_cache is not None:
-                # Use get_with_context to cache the plugin the first time we see it.
-                self.get_with_context(fqcn)[0]
+                needs_enabled = False
+                if hasattr(obj, 'REQUIRES_ENABLED'):
+                    needs_enabled = obj.REQUIRES_ENABLED
+                elif hasattr(obj, 'REQUIRES_WHITELIST'):
+                    needs_enabled = obj.REQUIRES_WHITELIST
+                    display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                                       "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+                if not needs_enabled:
+                    # Use get_with_context to cache the plugin the first time we see it.
+                    self.get_with_context(fqcn)[0]
 
             yield obj
 
