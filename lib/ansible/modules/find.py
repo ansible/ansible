@@ -358,17 +358,24 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
 
     prog = re.compile(pattern)
 
-    try:
-        with open(fsname, encoding=encoding) as f:
-            if read_whole_file:
-                return bool(prog.search(f.read()))
+    py_major = os.sys.version_info.major
+    f = open(fsname)
+    if py_major >= 3:
+        f = open(fsname, encoding=encoding)
 
-            for line in f:
-                if prog.match(line):
-                    return True
+    try:
+        if read_whole_file:
+            return bool(prog.search(f.read()))
+
+        for line in f:
+            if prog.match(line):
+                return True
 
     except Exception:
         pass
+
+    f.close()
+
 
     return False
 
