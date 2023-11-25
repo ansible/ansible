@@ -376,7 +376,6 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
 
     f.close()
 
-
     return False
 
 
