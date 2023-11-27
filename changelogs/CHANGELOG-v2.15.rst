@@ -5,6 +5,36 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-11-27
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- assert - Nested templating may result in an inability for the conditional to be evaluated. See the porting guide for more information.
+
+Security Fixes
+--------------
+
+- templating - Address issues where internal templating can cause unsafe variables to lose their unsafe designation (CVE-2023-5764)
+
+Bugfixes
+--------
+
+- ansible-pull now will expand relative paths for the ``-d|--directory`` option is now expanded before use.
+- flush_handlers - properly handle a handler failure in a nested block when ``force_handlers`` is set (http://github.com/ansible/ansible/issues/81532)
+- module no_log will no longer affect top level booleans, for example ``no_log_module_parameter='a'`` will no longer hide ``changed=False`` as a 'no log value' (matches 'a').
+- modules/user.py - Add check for valid directory when creating new user homedir (allows /dev/null as skeleton) (https://github.com/ansible/ansible/issues/75063)
+- role params now have higher precedence than host facts again, matching documentation, this had unintentionally changed in 2.15.
+- wait_for should not handle 'non mmapable files' again.
+
 v2.15.6
 =======
 

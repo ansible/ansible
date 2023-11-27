@@ -1228,3 +1228,39 @@ releases:
     - inv_available_hosts_to_frozenset.yml
     - j2_load_fix.yml
     release_date: '2023-10-30'
+  2.15.7rc1:
+    changes:
+      breaking_changes:
+      - assert - Nested templating may result in an inability for the conditional
+        to be evaluated. See the porting guide for more information.
+      bugfixes:
+      - ansible-pull now will expand relative paths for the ``-d|--directory`` option
+        is now expanded before use.
+      - flush_handlers - properly handle a handler failure in a nested block when
+        ``force_handlers`` is set (http://github.com/ansible/ansible/issues/81532)
+      - module no_log will no longer affect top level booleans, for example ``no_log_module_parameter='a'``
+        will no longer hide ``changed=False`` as a 'no log value' (matches 'a').
+      - modules/user.py - Add check for valid directory when creating new user homedir
+        (allows /dev/null as skeleton) (https://github.com/ansible/ansible/issues/75063)
+      - role params now have higher precedence than host facts again, matching documentation,
+        this had unintentionally changed in 2.15.
+      - wait_for should not handle 'non mmapable files' again.
+      release_summary: '| Release Date: 2023-11-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+      security_fixes:
+      - templating - Address issues where internal templating can cause unsafe variables
+        to lose their unsafe designation (CVE-2023-5764)
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.7rc1_summary.yaml
+    - 75063-allow-dev-nul-as-skeleton-for-new-homedir.yml
+    - 81532-fix-nested-flush_handlers.yml
+    - cve-2023-5764.yml
+    - no_log_booly.yml
+    - pull_unfrack_dest.yml
+    - restore_role_param_precedence.yml
+    - wait_for_mmap.yml
+    release_date: '2023-11-27'
