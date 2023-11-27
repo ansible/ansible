@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible_facts.hardware - Define processor topology on s390x (https://github.com/ansible/ansible/issues/19755)
