@@ -938,6 +938,35 @@ releases:
     - jinja_plugin_cache_cleanup.yml
     - winrm-send-input.yml
     release_date: '2023-10-03'
+  2.14.12rc1:
+    changes:
+      breaking_changes:
+      - assert - Nested templating may result in an inability for the conditional
+        to be evaluated. See the porting guide for more information.
+      bugfixes:
+      - ansible-pull now will expand relative paths for the ``-d|--directory`` option
+        is now expanded before use.
+      - ansible-test - Fix parsing of cgroup entries which contain a ``:`` in the
+        path (https://github.com/ansible/ansible/issues/81977).
+      minor_changes:
+      - ansible-test - Windows 2012 and 2012-R2 instances are now requested from Azure
+        instead of AWS.
+      release_summary: '| Release Date: 2023-11-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+      security_fixes:
+      - templating - Address issues where internal templating can cause unsafe variables
+        to lose their unsafe designation (CVE-2023-5764)
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.12rc1_summary.yaml
+    - ansible-test-cgroup-split.yml
+    - ansible-test-windows-2012-and-2012-R2.yml
+    - cve-2023-5764.yml
+    - pull_unfrack_dest.yml
+    release_date: '2023-11-27'
   2.14.1rc1:
     changes:
       bugfixes:

@@ -5,6 +5,37 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2023-11-27
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Windows 2012 and 2012-R2 instances are now requested from Azure instead of AWS.
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- assert - Nested templating may result in an inability for the conditional to be evaluated. See the porting guide for more information.
+
+Security Fixes
+--------------
+
+- templating - Address issues where internal templating can cause unsafe variables to lose their unsafe designation (CVE-2023-5764)
+
+Bugfixes
+--------
+
+- ansible-pull now will expand relative paths for the ``-d|--directory`` option is now expanded before use.
+- ansible-test - Fix parsing of cgroup entries which contain a ``:`` in the path (https://github.com/ansible/ansible/issues/81977).
+
 v2.14.11
 ========
 
