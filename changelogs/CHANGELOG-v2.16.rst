@@ -5,6 +5,39 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2023-11-27
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- assert - Nested templating may result in an inability for the conditional to be evaluated. See the porting guide for more information.
+
+Security Fixes
+--------------
+
+- templating - Address issues where internal templating can cause unsafe variables to lose their unsafe designation (CVE-2023-5764)
+
+Bugfixes
+--------
+
+- Fix issue where an ``include_tasks`` handler in a role was not able to locate a file in ``tasks/`` when ``tasks_from`` was used as a role entry point and ``main.yml`` was not present (https://github.com/ansible/ansible/issues/82241)
+- Plugin loader does not dedupe nor cache filter/test plugins by file basename, but full path name.
+- Restoring the ability of filters/tests can have same file base name but different tests/filters defined inside.
+- ansible-pull now will expand relative paths for the ``-d|--directory`` option is now expanded before use.
+- ansible-pull will now correctly handle become and connection password file options for ansible-playbook.
+- flush_handlers - properly handle a handler failure in a nested block when ``force_handlers`` is set (http://github.com/ansible/ansible/issues/81532)
+- module no_log will no longer affect top level booleans, for example ``no_log_module_parameter='a'`` will no longer hide ``changed=False`` as a 'no log value' (matches 'a').
+- role params now have higher precedence than host facts again, matching documentation, this had unintentionally changed in 2.15.
+- wait_for should not handle 'non mmapable files' again.
+
 v2.16.0
 =======
 
