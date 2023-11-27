@@ -237,10 +237,7 @@ class PluginLoader:
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
-        try:
-            self._plugin_instance_cache = OrderedDict() if self.type == 'vars' else None
-        except ValueError:
-            self._plugin_instance_cache = None
+        self._plugin_instance_cache = OrderedDict() if self.subdir == 'vars_plugins' else None
 
         self._searched_paths = set()
 
@@ -265,7 +262,7 @@ class PluginLoader:
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
-            self._plugin_instance_cache = OrderedDict() if self.type == 'vars' else None
+            self._plugin_instance_cache = OrderedDict() if self.subdir == 'vars_plugins' else None
             self._searched_paths = set()
 
     def __setstate__(self, data):
