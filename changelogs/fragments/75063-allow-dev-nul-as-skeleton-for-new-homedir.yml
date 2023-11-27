@@ -1,0 +1,3 @@
+bugfixes:
+  - modules/user.py - Add check for valid directory when creating new user homedir (allows /dev/null as skeleton) (https://github.com/ansible/ansible/issues/75063)
+  
