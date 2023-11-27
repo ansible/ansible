@@ -24,7 +24,7 @@
       - "unarchive06_stat.stat.mode == '0600'"
       # Verify that file list is generated
       - "'files' in unarchive06"
-      - "{{unarchive06['files']| length}} == 1"
+      - "unarchive06['files']| length == 1"
       - "'foo-unarchive.txt' in unarchive06['files']"
 
 - name: remove our tar.gz unarchive destination
@@ -74,7 +74,7 @@
       - "unarchive07.changed == false"
       # Verify that file list is generated
       - "'files' in unarchive07"
-      - "{{unarchive07['files']| length}} == 1"
+      - "unarchive07['files']| length == 1"
       - "'foo-unarchive.txt' in unarchive07['files']"
 
 - name: remove our tar.gz unarchive destination
@@ -108,7 +108,7 @@
       - "unarchive08_stat.stat.mode == '0601'"
       # Verify that file list is generated
       - "'files' in unarchive08"
-      - "{{unarchive08['files']| length}} == 3"
+      - "unarchive08['files']| length == 3"
       - "'foo-unarchive.txt' in unarchive08['files']"
       - "'foo-unarchive-777.txt' in unarchive08['files']"
       - "'FOO-UNAR.TXT' in unarchive08['files']"
@@ -140,7 +140,7 @@
       - "unarchive08_stat.stat.mode == '0601'"
       # Verify that file list is generated
       - "'files' in unarchive08"
-      - "{{unarchive08['files']| length}} == 3"
+      - "unarchive08['files']| length == 3"
       - "'foo-unarchive.txt' in unarchive08['files']"
       - "'foo-unarchive-777.txt' in unarchive08['files']"
       - "'FOO-UNAR.TXT' in unarchive08['files']"

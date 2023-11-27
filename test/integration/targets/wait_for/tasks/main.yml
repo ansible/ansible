@@ -40,7 +40,7 @@
   assert:
     that:
       - waitfor is successful
-      - waitfor.path == "{{ remote_tmp_dir | expanduser }}/wait_for_file"
+      - waitfor.path == remote_tmp_dir | expanduser ~ "/wait_for_file"
       - waitfor.elapsed >= 2
       - waitfor.elapsed <= 15
 
@@ -58,7 +58,7 @@
   assert:
     that:
       - waitfor is successful
-      - waitfor.path == "{{ remote_tmp_dir | expanduser }}/wait_for_file"
+      - waitfor.path == remote_tmp_dir | expanduser ~ "/wait_for_file"
       - waitfor.elapsed >= 2
       - waitfor.elapsed <= 15
 
@@ -156,7 +156,7 @@
     that:
       - waitfor is successful
       - waitfor is not changed
-      - "waitfor.port == {{ http_port }}"
+      - "waitfor.port == http_port"
 
 - name: install psutil using pip (non-Linux only)
   pip:
@@ -184,7 +184,7 @@
     that:
       - waitfor is successful
       - waitfor is not changed
-      - "waitfor.port == {{ http_port }}"
+      - "waitfor.port == http_port"
 
 - name: test wait_for with delay
   wait_for:

@@ -15,5 +15,5 @@
     that:
       - sos_rm is successful
       - sos_rm is changed
-      - "'Removed: sos-{{ sos_version }}-{{ sos_release }}' in sos_rm.results[0]"
+      - "'Removed: sos-' ~ sos_version ~ '-' ~ sos_release in sos_rm.results[0]"
       - sos_rm.results|length == 1

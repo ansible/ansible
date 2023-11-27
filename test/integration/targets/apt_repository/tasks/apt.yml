@@ -50,7 +50,7 @@
     that:
       - 'result.changed'
       - 'result.state == "present"'
-      - 'result.repo == "{{test_ppa_name}}"'
+      - 'result.repo == test_ppa_name'
 
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -81,7 +81,7 @@
     that:
       - 'result.changed'
       - 'result.state == "present"'
-      - 'result.repo == "{{test_ppa_name}}"'
+      - 'result.repo == test_ppa_name'
 
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -112,7 +112,7 @@
     that:
       - 'result.changed'
       - 'result.state == "present"'
-      - 'result.repo == "{{test_ppa_name}}"'
+      - 'result.repo == test_ppa_name'
 
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -151,7 +151,7 @@
     that:
       - 'result.changed'
       - 'result.state == "present"'
-      - 'result.repo == "{{test_ppa_spec}}"'
+      - 'result.repo == test_ppa_spec'
       - result_cache is not changed
 
 - name: 'examine apt cache mtime'
@@ -191,7 +191,7 @@
     that:
       - 'result.changed'
       - 'result.state == "present"'
-      - 'result.repo == "{{test_ppa_spec}}"'
+      - 'result.repo == test_ppa_spec'
 
 - name: 'examine source file'
   stat: path='/etc/apt/sources.list.d/{{test_ppa_filename}}.list'

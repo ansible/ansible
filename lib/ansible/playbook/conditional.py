@@ -26,7 +26,7 @@ from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.attribute import FieldAttribute
@@ -138,9 +138,10 @@ class Conditional:
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
-            # update the lookups flag, as the string returned above may now be unsafe
-            # and we don't want future templating calls to do unsafe things
-            disable_lookups |= hasattr(conditional, '__UNSAFE__')
+            # If the result of the first-pass template render (to resolve inline templates) is marked unsafe,
+            # explicitly fail since the next templating operation would never evaluate
+            if hasattr(conditional, '__UNSAFE__'):
+                raise AnsibleTemplateError('Conditional is marked as unsafe, and cannot be evaluated.')
 
             # First, we do some low-level jinja2 parsing involving the AST format of the
             # statement to ensure we don't do anything unsafe (using the disable_lookup flag above)
