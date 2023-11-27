@@ -48,7 +48,7 @@ seealso:
 - module: ansible.builtin.import_role
 - module: ansible.builtin.import_tasks
 - module: ansible.builtin.include_role
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
 '''
 
