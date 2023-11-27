@@ -66,7 +66,7 @@
           - zip_success.changed
           # Verify that file list is generated
           - "'files' in zip_success"
-          - "{{zip_success['files']| length}} == 3"
+          - "zip_success['files']| length == 3"
           - "'foo-unarchive.txt' in zip_success['files']"
           - "'foo-unarchive-777.txt' in zip_success['files']"
           - "'FOO-UNAR.TXT' in zip_success['files']"

@@ -138,7 +138,6 @@ RETURN = """
     elements: path
 """
 import os
-import re
 
 from collections.abc import Mapping, Sequence
 
@@ -149,10 +148,22 @@ from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 
 
+def _splitter(value, chars):
+    chars = set(chars)
+    v = ''
+    for c in value:
+        if c in chars:
+            yield v
+            v = ''
+            continue
+        v += c
+    yield v
+
+
 def _split_on(terms, spliters=','):
     termlist = []
     if isinstance(terms, string_types):
-        termlist = re.split(r'[%s]' % ''.join(map(re.escape, spliters)), terms)
+        termlist = list(_splitter(terms, spliters))
     else:
         # added since options will already listify
         for t in terms:
