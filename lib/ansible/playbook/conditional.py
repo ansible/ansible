@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import typing as t
 
-from ansible.errors import AnsibleError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible.module_utils.common.text.converters import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
@@ -102,14 +102,14 @@ class Conditional:
                     return False
 
             # If the result of the first-pass template render (to resolve inline templates) is marked unsafe,
-            # explicitly disable lookups on the final pass to prevent evaluation of untrusted content in the
-            # constructed template.
-            disable_lookups = hasattr(conditional, '__UNSAFE__')
+            # explicitly fail since the next templating operation would never evaluate
+            if hasattr(conditional, '__UNSAFE__'):
+                raise AnsibleTemplateError('Conditional is marked as unsafe, and cannot be evaluated.')
 
             # NOTE The spaces around True and False are intentional to short-circuit literal_eval for
             #      jinja2_native=False and avoid its expensive calls.
             return templar.template(
                 "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional,
-                disable_lookups=disable_lookups).strip() == "True"
+            ).strip() == "True"
         except AnsibleUndefinedVariable as e:
             raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
