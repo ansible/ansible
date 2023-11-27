@@ -37,6 +37,7 @@ from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
+from ansible.utils.unsafe_proxy import _is_unsafe
 from ansible.utils.vars import merge_hash
 
 display = Display()
@@ -215,6 +216,8 @@ def from_yaml(data):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
         # read the data
+        if _is_unsafe(data):
+            data = data._strip_unsafe()
         return yaml_load(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
@@ -224,6 +227,8 @@ def from_yaml_all(data):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
         # read the data
+        if _is_unsafe(data):
+            data = data._strip_unsafe()
         return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
