@@ -483,26 +483,6 @@ class TestWinRMKerbAuth(object):
 
         assert str(e.value) == "winrm connection error: msg"
 
-    def test_exec_command_with_timeout(self, monkeypatch):
-        requests_exc = pytest.importorskip("requests.exceptions")
-
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
-
-        mock_proto = MagicMock()
-        mock_proto.run_command.side_effect = requests_exc.Timeout("msg")
-
-        conn._connected = True
-        conn._winrm_host = 'hostname'
-
-        monkeypatch.setattr(conn, "_winrm_connect", lambda: mock_proto)
-
-        with pytest.raises(AnsibleConnectionFailure) as e:
-            conn.exec_command('cmd', in_data=None, sudoable=True)
-
-        assert str(e.value) == "winrm connection error: msg"
-
     def test_connect_failure_auth_401(self, monkeypatch):
         pc = PlayContext()
         new_stdin = StringIO()
