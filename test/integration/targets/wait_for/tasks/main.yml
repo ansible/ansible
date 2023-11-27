@@ -91,7 +91,7 @@
   wait_for:
     path: "{{remote_tmp_dir}}/wait_for_keyword"
     search_regex: completed (?P<foo>\w+) ([0-9]+)
-    timeout: 5
+    timeout: 25
   register: waitfor
 
 - name: verify test wait for keyword in file with match groups
@@ -113,6 +113,15 @@
   wait_for:
     path: "{{remote_tmp_dir}}/utf16.txt"
     search_regex: completed
+
+- name: test non mmapable file
+  wait_for:
+    path: "/sys/class/net/lo/carrier"
+    search_regex: "1"
+    timeout: 30
+  when:
+    - ansible_facts['os_family'] not in ['FreeBSD', 'Darwin']
+    - not (ansible_facts['os_family'] in ['RedHat', 'CentOS'] and ansible_facts['distribution_major_version'] is version('7', '<='))
 
 - name: test wait for port timeout
   wait_for:
