@@ -1489,7 +1489,19 @@ class AnsibleModule(object):
         if deprecations:
             kwargs['deprecations'] = deprecations
 
+        # preserve bools/none from no_log
+        # TODO: once python version on target high enough, dict comprh
+        preserved = {}
+        for k, v in kwargs.items():
+            if v is None or isinstance(v, bool):
+                preserved[k] = v
+
+        # strip no_log collisions
         kwargs = remove_values(kwargs, self.no_log_values)
+
+        # return preserved
+        kwargs.update(preserved)
+
         print('\n%s' % self.jsonify(kwargs))
 
     def exit_json(self, **kwargs):
