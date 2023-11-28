@@ -273,7 +273,7 @@ import time
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, PY3
 
 
 class _Object:
@@ -358,23 +358,21 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
 
     prog = re.compile(pattern)
 
-    py_major = os.sys.version_info.major
-    f = open(fsname)
-    if py_major >= 3:
-        f = open(fsname, encoding=encoding)
+    file_args = dict(file=fsname)
+    if PY3:
+        file_args['encoding'] = encoding
 
     try:
-        if read_whole_file:
-            return bool(prog.search(f.read()))
+        with open(**file_args) as f:
+            if read_whole_file:
+                return bool(prog.search(f.read()))
 
-        for line in f:
-            if prog.match(line):
-                return True
+            for line in f:
+                if prog.match(line):
+                    return True
 
     except Exception:
         pass
-
-    f.close()
 
     return False
 
