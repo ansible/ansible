@@ -114,37 +114,37 @@ def test_encrypt_default_rounds():
 def test_password_hash_filter_no_passlib():
     with passlib_off():
         assert not encrypt.PASSLIB_AVAILABLE
-        assert get_encrypted_password(None, "123", "md5", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
+        assert get_encrypted_password("123", "md5", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
 
         with pytest.raises(AnsibleFilterError):
-            get_encrypted_password(None, "123", "crypt16", salt="12")
+            get_encrypted_password("123", "crypt16", salt="12")
 
 
 @pytest.mark.skipif(not encrypt.PASSLIB_AVAILABLE, reason='passlib must be installed to run this test')
 def test_password_hash_filter_passlib():
 
     with pytest.raises(AnsibleFilterError):
-        get_encrypted_password(None, "123", "sha257", salt="12345678")
+        get_encrypted_password("123", "sha257", salt="12345678")
 
     # Uses passlib default rounds value for sha256 matching crypt behaviour
-    assert get_encrypted_password(None, "123", "sha256", salt="12345678") == "$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv."
-    assert get_encrypted_password(None, "123", "sha256", salt="12345678", rounds=5000) == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+    assert get_encrypted_password("123", "sha256", salt="12345678") == "$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv."
+    assert get_encrypted_password("123", "sha256", salt="12345678", rounds=5000) == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
 
-    assert (get_encrypted_password(None, "123", "sha256", salt="12345678", rounds=10000) ==
+    assert (get_encrypted_password("123", "sha256", salt="12345678", rounds=10000) ==
             "$5$rounds=10000$12345678$JBinliYMFEcBeAXKZnLjenhgEhTmJBvZn3aR8l70Oy/")
 
-    assert (get_encrypted_password(None, "123", "sha512", salt="12345678", rounds=6000) ==
+    assert (get_encrypted_password("123", "sha512", salt="12345678", rounds=6000) ==
             "$6$rounds=6000$12345678$l/fC67BdJwZrJ7qneKGP1b6PcatfBr0dI7W6JLBrsv8P1wnv/0pu4WJsWq5p6WiXgZ2gt9Aoir3MeORJxg4.Z/")
 
-    assert (get_encrypted_password(None, "123", "sha512", salt="12345678", rounds=5000) ==
+    assert (get_encrypted_password("123", "sha512", salt="12345678", rounds=5000) ==
             "$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.")
 
-    assert get_encrypted_password(None, "123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
+    assert get_encrypted_password("123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
 
     # Try algorithm that uses a raw salt
-    assert get_encrypted_password(None, "123", "pbkdf2_sha256")
+    assert get_encrypted_password("123", "pbkdf2_sha256")
     # Try algorithm with ident
-    assert get_encrypted_password(None, "123", "pbkdf2_sha256", ident='invalid_ident')
+    assert get_encrypted_password("123", "pbkdf2_sha256", ident='invalid_ident')
 
 
 @pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')
