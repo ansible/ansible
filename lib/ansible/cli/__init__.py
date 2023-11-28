@@ -9,11 +9,15 @@ import locale
 import os
 import sys
 import argparse
-from ansible.inventory.host import Host
-from ansible.inventory.manager import InventoryManager
-from ansible.parsing.dataloader import DataLoader
-from ansible.vars.manager import VariableManager
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+
+import typing
+if typing.TYPE_CHECKING:
+    from typing import Any, Dict, Optional, Union, Callable
+    from ansible.inventory.host import Host
+    from ansible.inventory.manager import InventoryManager
+    from ansible.parsing.dataloader import DataLoader
+    from ansible.vars.manager import VariableManager
+
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
@@ -26,7 +30,7 @@ if sys.version_info < (3, 10):
 
 def check_blocking_io() -> None:
     """Check stdin/stdout/stderr to make sure they are using blocking IO."""
-    handles: List[str] = []
+    handles: list[str] = []
 
     for handle in (sys.stdin, sys.stdout, sys.stderr):
         # noinspection PyBroadException
@@ -74,7 +78,7 @@ from ansible.module_utils.compat.version import LooseVersion
 
 # Used for determining if the system is running a new enough Jinja2 version
 # and should only restrict on our documented minimum versions
-jinja2_version: str = version('jinja2')
+jinja2_version = version('jinja2')
 if jinja2_version < LooseVersion('3.0'):
     raise SystemExit(
         'ERROR: Ansible requires Jinja2 3.0 or newer on the controller. '
@@ -91,7 +95,7 @@ from pathlib import Path
 try:
     from ansible import constants as C
     from ansible.utils.display import Display
-    display: Display = Display()
+    display = Display()
 except Exception as e:
     print('ERROR: %s' % e, file=sys.stderr)
     sys.exit(5)
@@ -131,7 +135,7 @@ class CLI(ABC):
     LESS_OPTS = 'FRSX'
     SKIP_INVENTORY_DEFAULTS = False
 
-    def __init__(self, args: List[str], callback=None) -> None:
+    def __init__(self, args: list[str], callback=None) -> None:
         """
         Base init method for all command line programs
         """
@@ -139,7 +143,7 @@ class CLI(ABC):
         if not args:
             raise ValueError('A non-empty list for args is required')
 
-        self.args: List[str] = args
+        self.args: list[str] = args
         self.parser: argparse.ArgumentParser = None
         self.callback: Callable[[None], None] = callback
 
@@ -189,19 +193,19 @@ class CLI(ABC):
                                version=ver, date=date, collection_name=collection_name)
 
     @staticmethod
-    def split_vault_id(vault_id) -> Tuple[str | None, ...]:
+    def split_vault_id(vault_id: str) -> tuple[str | None, ...]:
         # return (before_@, after_@)
         # if no @, return whole string as after_
         if '@' not in vault_id:
             return (None, vault_id)
 
-        parts: List = vault_id.split('@', 1)
-        ret: Tuple[str | None, ...] = tuple(parts)
+        parts: list = vault_id.split('@', 1)
+        ret: tuple[str | None, ...] = tuple(parts)
         return ret
 
     @staticmethod
-    def build_vault_ids(vault_ids: List[Any], vault_password_files: Optional[List[Any]] = None,
-                        ask_vault_pass: Optional[bool] = None, auto_prompt: bool = True) -> List[Any]:
+    def build_vault_ids(vault_ids: list[Any], vault_password_files: Optional[list[Any]] = None,
+                        ask_vault_pass: Optional[bool] = None, auto_prompt: bool = True) -> list[Any]:
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -225,9 +229,9 @@ class CLI(ABC):
         return vault_ids
 
     @staticmethod
-    def setup_vault_secrets(loader: DataLoader, vault_ids: List[Any], vault_password_files: Optional[List[Any]] = None,
+    def setup_vault_secrets(loader: DataLoader, vault_ids: list[Any], vault_password_files: Optional[list[Any]] = None,
                             ask_vault_pass: Optional[bool] = None, create_new_password: bool = False,
-                            auto_prompt: bool = True) -> List[Any]:
+                            auto_prompt: bool = True) -> list[Any]:
         # list of tuples
         vault_secrets = []
 
@@ -335,7 +339,7 @@ class CLI(ABC):
         return secret
 
     @staticmethod
-    def ask_passwords() -> Tuple[None, None]:
+    def ask_passwords() -> tuple[None, None]:
         ''' prompt for connection and become passwords if needed '''
 
         op = context.CLIARGS
@@ -531,7 +535,7 @@ class CLI(ABC):
             pass
 
     @staticmethod
-    def _play_prereqs() -> Tuple[DataLoader, InventoryManager, VariableManager]:
+    def _play_prereqs() -> tuple[DataLoader, InventoryManager, VariableManager]:
         # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
         # into ``init_plugin_loader`` so that we can specifically remove
         # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
@@ -572,7 +576,7 @@ class CLI(ABC):
         return loader, inventory, variable_manager
 
     @staticmethod
-    def get_host_list(inventory: InventoryManager, subset: None, pattern: str = 'all') -> List[Host]:
+    def get_host_list(inventory: InventoryManager, subset: None, pattern: str = 'all') -> list[Host]:
 
         no_hosts = False
         if len(inventory.list_hosts()) == 0:
