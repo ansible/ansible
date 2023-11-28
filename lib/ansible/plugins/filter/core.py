@@ -252,6 +252,7 @@ def rand(context, end, start=None, step=None, seed=None):
     else:
         raise AnsibleFilterError('random can only be used on sequences and integers')
 
+
 # context prevents this filter from being treated as a constant
 # and evaluated at compile time, and instead defers evaluation
 # to execution time
