@@ -192,7 +192,7 @@ def compare_unordered_lists(a, b):
       - unordered lists
       - unhashable elements
     """
-    return len(a) == len(b) and all(x in b for x in a)
+    return len(a) == len(b) and all(x in b for x in a) and all(x in a for x in b)
 
 
 class NoArgsAnsibleModule(AnsibleModule):
