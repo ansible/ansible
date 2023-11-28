@@ -106,7 +106,8 @@ class AnsiblePlugin(ABC):
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
-            self.set_option('_extras', var_options['_extras'])
+            # these are largely unvalidated passthroughs, either plugin or underlying API will validate
+            self._options['_extras'], var_options['_extras'])
 
     def has_option(self, option):
         if not self._options:
