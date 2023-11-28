@@ -21,7 +21,7 @@ from collections.abc import Mapping
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.filters import pass_environment, pass_context
+from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import string_types, integer_types, reraise, text_type
@@ -230,11 +230,7 @@ def from_yaml_all(data):
     return data
 
 
-# context prevents this filter from being treated as a constant
-# and evaluated at compile time, and instead defers evaluation
-# to execution time
-@pass_context
-def rand(context, end, start=None, step=None, seed=None):
+def rand(end, start=None, step=None, seed=None):
     if seed is None:
         r = SystemRandom()
     else:
@@ -253,11 +249,7 @@ def rand(context, end, start=None, step=None, seed=None):
         raise AnsibleFilterError('random can only be used on sequences and integers')
 
 
-# context prevents this filter from being treated as a constant
-# and evaluated at compile time, and instead defers evaluation
-# to execution time
-@pass_context
-def randomize_list(context, mylist, seed=None):
+def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
         if seed:
@@ -281,11 +273,7 @@ def get_hash(data, hashtype='sha1'):
     return h.hexdigest()
 
 
-# context prevents this filter from being treated as a constant
-# and evaluated at compile time, and instead defers evaluation
-# to execution time
-@pass_context
-def get_encrypted_password(context, password, hashtype='sha512', salt=None, salt_size=None, rounds=None, ident=None):
+def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=None, rounds=None, ident=None):
     passlib_mapping = {
         'md5': 'md5_crypt',
         'blowfish': 'bcrypt',

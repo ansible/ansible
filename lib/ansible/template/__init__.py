@@ -29,13 +29,16 @@ from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMap
 from contextlib import contextmanager
 from numbers import Number
 from traceback import format_exc
+from types import CodeType
 
 from jinja2 import nodes
 from jinja2.bccache import FileSystemBytecodeCache
 from jinja2.environment import Template
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.compiler import generate
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
+from jinja2.parser import Parser
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
@@ -550,6 +553,7 @@ class AnsibleEnvironment(NativeEnvironment):
         self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
         self.trim_blocks = True
+        self.optimized = False
 
         self.undefined = AnsibleUndefined
         self.finalize = _ansible_finalize
@@ -576,6 +580,32 @@ class AnsibleEnvironment(NativeEnvironment):
         )
         return f'{source}[overrides={overrides}]'
 
+    def compile(  # type: ignore[override]
+        self,
+        source: str,
+        name: t.Optional[str] = None,
+        filename: t.Optional[str] = None,
+        raw: bool = False,
+        defer_init: bool = False,
+    ) -> CodeType:
+
+        if not C.JINJA2_BYTECODE_CACHE:
+            return super().compile(source, name=name, filename=filename, raw=raw, defer_init=defer_init)  # type: ignore[call-overload]
+
+        parsed = Parser(self, source, name, filename).parse()
+        eval_ctx = nodes.ScopedEvalContextModifier(lineno=-1)
+        eval_ctx.options = [nodes.Keyword('volatile', nodes.Const(True))]
+        eval_ctx.body = parsed.body
+        generated = generate(
+            nodes.Template([eval_ctx], lineno=-1),
+            self,
+            name,
+            filename,
+            defer_init=False,
+            optimized=self.optimized,
+        )
+        return compile(generated, filename or '<template>', 'exec')
+
     def from_string(
         self,
         source: str,  # type: ignore[override]
@@ -593,7 +623,7 @@ class AnsibleEnvironment(NativeEnvironment):
         bcc = FileSystemBytecodeCache(cache_dir, '__ansible_j2_%s.cache')
         bucket = bcc.get_bucket(self, self._make_bucket_name(source), None, source)
         if not bucket.code:
-            bucket.code = self.compile(source)
+            bucket.code = self.compile(source)  # type: ignore[assignment]
             bcc.set_bucket(bucket)
 
         cls = template_class or self.template_class
