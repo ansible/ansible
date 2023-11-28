@@ -1,0 +1,3 @@
+---
+bugfixes:
+- apt_repository - do not modify repo files if the file is a symlink (https://github.com/ansible/ansible/issues/49809).

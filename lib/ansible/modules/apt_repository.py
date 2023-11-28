@@ -230,6 +230,7 @@ class SourcesList(object):
     def __init__(self, module):
         self.module = module
         self.files = {}  # group sources by file
+        self.files_mapping = {}  # internal DS for tracking symlinks
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
         self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
@@ -240,6 +241,8 @@ class SourcesList(object):
 
         # read sources.list.d
         for file in glob.iglob('%s/*.list' % self._apt_cfg_dir('Dir::Etc::sourceparts')):
+            if os.path.islink(file):
+                self.files_mapping[file] = os.readlink(file)
             self.load(file)
 
     def __iter__(self):
@@ -372,7 +375,11 @@ class SourcesList(object):
                         f.write(line)
                     except IOError as ex:
                         self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(ex)))
-                self.module.atomic_move(tmp_path, filename)
+                if filename in self.files_mapping:
+                    # Write to symlink target instead of replacing symlink as a normal file
+                    self.module.atomic_move(tmp_path, self.files_mapping[filename])
+                else:
+                    self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
                 if filename in self.new_repos:
@@ -417,7 +424,7 @@ class SourcesList(object):
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
         # If we have more than one entry, we will enable them all - no advanced logic, remember.
-        self.module.log('ading source file: %s | %s | %s' % (source_new, comment_new, file))
+        self.module.log('adding source file: %s | %s | %s' % (source_new, comment_new, file))
         found = False
         for filename, n, enabled, source, comment in self:
             if source == source_new:
