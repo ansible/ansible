@@ -25,12 +25,6 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.utils.sentinel import Sentinel
 
-if t.TYPE_CHECKING:
-    from ansible.playbook.block import Block
-    from ansible.playbook.task import Task
-    from ansible.playbook.play import Play
-    from ansible.playbook.role import Role
-
 
 def _flatten_tags(tags: list[str | int]) -> list[str | int]:
     rv = set()
@@ -55,14 +49,14 @@ class Taggable:
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
-    def _get_all_taggable_objects(self) -> t.Generator[Block | Play | Role | Task, None, None]:
+    def _get_all_taggable_objects(self) -> t.Generator[Taggable, None, None]:
         obj = self
         while obj is not None:
             yield obj
             obj = obj._parent
 
         if (role := getattr(self, "_role", Sentinel)) is not Sentinel:
-            yield role
+            yield role  # type: ignore[misc]
 
         yield self.get_play()
 
