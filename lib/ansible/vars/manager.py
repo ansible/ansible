@@ -196,7 +196,7 @@ class VariableManager:
         if self.safe_basedir:  # avoid adhoc/console loading cwd
             basedirs = [self._loader.get_basedir()]
 
-        if play:
+        if play and host:
             for role in play.get_roles():
                 # role is public and
                 #    either static or dynamic and completed
@@ -394,12 +394,13 @@ class VariableManager:
             #    either static or dynamic and completed
             # role is not set
             #    use config option as default
-            for role in play.get_roles():
-                role_is_static_or_completed = role.static or role._completed.get(host.name, False)
-                if role.public and role_is_static_or_completed or \
-                   role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
+            if host:
+                for role in play.get_roles():
+                    role_is_static_or_completed = role.static or role._completed.get(host.name, False)
+                    if role.public and role_is_static_or_completed or \
+                       role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
 
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+                        all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
