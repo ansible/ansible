@@ -200,7 +200,7 @@ class VariableManager:
             for role in play.get_roles():
                 # role is public and
                 #    either static or dynamic and completed
-                # role is not set
+                # role.public is not set
                 #    use config option as default
                 role_is_static_or_completed = role.static or role._completed.get(host.name, False)
                 if role.public and role_is_static_or_completed or \
@@ -392,7 +392,7 @@ class VariableManager:
             # unless the user has disabled this
             # role is public and
             #    either static or dynamic and completed
-            # role is not set
+            # role.public is not set
             #    use config option as default
             if host:
                 for role in play.get_roles():
