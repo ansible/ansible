@@ -29,6 +29,9 @@ class TaggableTestObj(Taggable):
         self.tags = []
         self._parent = None
 
+    def get_play(self):
+        return None
+
 
 class TestTaggable(unittest.TestCase):
 
