@@ -67,6 +67,7 @@ def preprocess_vars(a):
 
 
 def _get_public_roles(play, host):
+    # FIXME it seems like we should just not add roles that are not public into play.roles in the first place?
     for role in play.get_roles():
         # role is public and
         #    either static, or dynamic and completed
