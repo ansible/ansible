@@ -427,6 +427,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         deps = []
         for role_include in self._metadata.dependencies:
             r = Role.load(role_include, play=self._play, parent_role=self)
+            r.static = self.static
             deps.append(r)
 
         return deps

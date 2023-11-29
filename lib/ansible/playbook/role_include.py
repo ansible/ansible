@@ -88,6 +88,7 @@ class IncludeRole(TaskInclude):
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
                                 from_include=True, validate=self.rolespec_validate, public=self.public)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
+        actual_role.static = self.statically_loaded
 
         if self.statically_loaded or self.public:
             myplay.roles.append(actual_role)
@@ -121,10 +122,6 @@ class IncludeRole(TaskInclude):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
-
-        # dyanmic role!
-        if ir.action in C._ACTION_INCLUDE_ROLE:
-            ir.static = False
 
         # Validate options
         my_arg_names = frozenset(ir.args.keys())
