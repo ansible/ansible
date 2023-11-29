@@ -17,14 +17,22 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.utils.sentinel import Sentinel
 
+if t.TYPE_CHECKING:
+    from ansible.playbook.block import Block
+    from ansible.playbook.task import Task
+    from ansible.playbook.play import Play
+    from ansible.playbook.role import Role
 
-def _flatten_tags(tags: list) -> list:
+
+def _flatten_tags(tags: list[str | int]) -> list[str | int]:
     rv = set()
     for tag in tags:
         if isinstance(tag, list):
@@ -47,16 +55,27 @@ class Taggable:
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
-    def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        ''' this checks if the current item should be executed depending on tag options '''
+    def _get_all_taggable_objects(self) -> t.Generator[Block | Play | Role | Task, None, None]:
+        obj = self
+        while obj is not None:
+            yield obj
+            obj = obj._parent
 
+        if (role := getattr(self, "_role", Sentinel)) is not Sentinel:
+            yield role
+
+        yield self.get_play()
+
+    def evaluate_tags(self, only_tags, skip_tags, all_vars):
+        """Check if the current item should be executed depending on the specified tags.
+
+        NOTE this method is assumed to be called only on Task objects.
+        """
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
-            obj = self
-            while obj is not None:
+            for obj in self._get_all_taggable_objects():
                 if (_tags := getattr(obj, "_tags", Sentinel)) is not Sentinel:
                     obj._tags = _flatten_tags(templar.template(_tags))
-                obj = obj._parent
             tags = set(self.tags)
         else:
             # this makes isdisjoint work for untagged

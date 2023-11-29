@@ -82,3 +82,21 @@ ansible-playbook test_template_parent_tags.yml --tags tag1 "$@" 2>&1 | tee out.t
 
 ansible-playbook test_template_parent_tags.yml --skip-tags tag1 "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'Tagged_task')" = "0" ]; rm out.txt
+
+ansible-playbook test_template_play_tags.yml "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
+
+ansible-playbook test_template_play_tags.yml --tags tag1 "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
+
+ansible-playbook test_template_play_tags.yml --skip-tags tag1 "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "0" ]; rm out.txt
+
+ansible-playbook test_template_role_tags.yml "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
+
+ansible-playbook test_template_role_tags.yml --tags tag1 "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
+
+ansible-playbook test_template_role_tags.yml --skip-tags tag1 "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "0" ]; rm out.txt
