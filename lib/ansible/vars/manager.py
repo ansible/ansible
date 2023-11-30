@@ -66,18 +66,6 @@ def preprocess_vars(a):
     return data
 
 
-def _get_public_roles(play, host):
-    # FIXME it seems like we should just not add roles that are not public into play.roles in the first place?
-    for role in play.get_roles():
-        # role is public and
-        #    either static, or dynamic and completed
-        # role.public is not set
-        #    use config option as default
-        role_is_static_or_completed = role.static or role._completed.get(host.name, False)
-        if (role.public or (role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS)) and role_is_static_or_completed:
-            yield role
-
-
 class VariableManager:
 
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
@@ -209,8 +197,9 @@ class VariableManager:
             basedirs = [self._loader.get_basedir()]
 
         if play and host:
-            for role in _get_public_roles(play, host):
-                all_vars = _combine_and_track(all_vars, role.get_default_vars(), f"role '{role.name}' defaults")
+            for role in play.get_roles():
+                if role.static or role._completed.get(host.name, False):
+                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), f"role '{role.name}' defaults")
 
         if task:
             # set basedirs
@@ -396,12 +385,13 @@ class VariableManager:
 
             # We now merge in all exported vars from public roles in the play
             if host:
-                for role in _get_public_roles(play, host):
-                    all_vars = _combine_and_track(
-                        all_vars,
-                        role.get_vars(include_params=False, only_exports=True),
-                        f"role '{role.name}' exported vars"
-                    )
+                for role in play.get_roles():
+                    if role.static or role._completed.get(host.name, False):
+                        all_vars = _combine_and_track(
+                            all_vars,
+                            role.get_vars(include_params=False, only_exports=True),
+                            f"role '{role.name}' exported vars"
+                        )
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
