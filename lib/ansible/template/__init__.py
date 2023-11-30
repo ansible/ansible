@@ -583,8 +583,8 @@ class AnsibleEnvironment(NativeEnvironment):
     def compile(  # type: ignore[override]
         self,
         source: str,
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
         raw: bool = False,
         defer_init: bool = False,
     ) -> CodeType:
