@@ -56,9 +56,9 @@ class PullCLI(CLI):
         1: 'File does not exist',
         2: 'File is not readable',
     }
-    ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook.'
-                                 'This can be a relative path within the checkout. By default, Ansible will'
-                                 "look for a playbook based on the host's fully-qualified domain name,"
+    ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook. '
+                                 'This can be a relative path within the checkout. By default, Ansible will '
+                                 "look for a playbook based on the host's fully-qualified domain name, "
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
     SKIP_INVENTORY_DEFAULTS = True
