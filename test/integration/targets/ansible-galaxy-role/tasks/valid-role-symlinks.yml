@@ -1,0 +1,78 @@
+- name: create test directories
+  file:
+    path: '{{ remote_tmp_dir }}/dir-traversal/{{ item }}'
+    state: directory
+  loop:
+    - source
+    - target
+    - roles
+
+- name: create subdir in the role content to test relative symlinks
+  file:
+    dest: '{{ remote_tmp_dir }}/dir-traversal/source/role_subdir'
+    state: directory
+
+- copy:
+    dest: '{{ remote_tmp_dir }}/dir-traversal/source/role_subdir/.keep'
+    content: ''
+
+- set_fact:
+    installed_roles: "{{ remote_tmp_dir | realpath }}/dir-traversal/roles"
+
+- name: build role with symlink to a directory in the role
+  script:
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+    cmd: create-role-archive.py safe-link-dir.tar ./ role_subdir/..
+    executable: '{{ ansible_playbook_python }}'
+
+- name: install role successfully
+  command:
+    cmd: 'ansible-galaxy role install --roles-path {{ remote_tmp_dir }}/dir-traversal/roles safe-link-dir.tar'
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  register: galaxy_install_ok
+
+- name: check for the directory symlink in the role
+  stat:
+    path: "{{ installed_roles }}/safe-link-dir.tar/symlink"
+  register: symlink_in_role
+
+- assert:
+    that:
+      - symlink_in_role.stat.exists
+      - symlink_in_role.stat.lnk_source == installed_roles + '/safe-link-dir.tar'
+
+- name: remove tarfile for next test
+  file:
+    path: '{{ remote_tmp_dir }}/dir-traversal/source/safe-link-dir.tar'
+    state: absent
+
+- name: build role with safe relative symlink
+  script:
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+    cmd: create-role-archive.py safe.tar ./ role_subdir/../context.txt
+    executable: '{{ ansible_playbook_python }}'
+
+- name: install role successfully
+  command:
+    cmd: 'ansible-galaxy role install --roles-path {{ remote_tmp_dir }}/dir-traversal/roles safe.tar'
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  register: galaxy_install_ok
+
+- name: check for symlink in role
+  stat:
+    path: "{{ installed_roles }}/safe.tar/symlink"
+  register: symlink_in_role
+
+- assert:
+    that:
+      - symlink_in_role.stat.exists
+      - symlink_in_role.stat.lnk_source == installed_roles + '/safe.tar/context.txt'
+
+- name: remove test directories
+  file:
+    path: '{{ remote_tmp_dir }}/dir-traversal/{{ item }}'
+    state: absent
+  loop:
+    - source
+    - target
+    - roles
