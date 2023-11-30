@@ -1965,6 +1965,7 @@ TARGET_LOG_INFO:
   - {key: target_log_info, section: defaults}
   vars:
   - name: ansible_target_log_info
+  version_added: "2.17"
 TASK_TIMEOUT:
   name: Task Timeout
   default: 0
