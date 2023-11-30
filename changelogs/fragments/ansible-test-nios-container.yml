@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - Bump the ``nios-test-container`` from version 2.0.0 to version 3.0.0.
