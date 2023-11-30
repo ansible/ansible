@@ -13,7 +13,7 @@ import pkgutil
 import sys
 import warnings
 
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import defaultdict, namedtuple
 from importlib import import_module
 from traceback import format_exc
 
@@ -237,7 +237,7 @@ class PluginLoader:
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
-        self._plugin_instance_cache = OrderedDict() if self.subdir == 'vars_plugins' else None
+        self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
 
         self._searched_paths = set()
 
@@ -262,7 +262,7 @@ class PluginLoader:
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
-            self._plugin_instance_cache = OrderedDict() if self.subdir == 'vars_plugins' else None
+            self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
             self._searched_paths = set()
 
     def __setstate__(self, data):
