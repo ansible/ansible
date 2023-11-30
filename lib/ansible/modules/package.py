@@ -29,6 +29,7 @@ options:
       - Package name, or package specifier with version.
       - Syntax varies with package manager. For example V(name-1.0) or V(name=1.0).
       - Package names also vary with package manager; this module will not "translate" them per distro. For example V(libyaml-dev), V(libyaml-devel).
+      - To operate on several packages this can accept a comma separated string of packages or a list of packages, depending on the underlying package manager.
     required: true
   state:
     description:
