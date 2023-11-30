@@ -1,0 +1,2 @@
+minor_changes:
+  - added configuration item ``TARGET_LOG_INFO`` that allows the user/author to add an information string to the log output on targets.
