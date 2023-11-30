@@ -82,6 +82,7 @@ _ADDITIONAL_CHECKS = (
 
 # if adding boolean attribute, also add to PASS_BOOL
 # some of this dupes defaults from controller config
+# keep in sync with copy in lib/ansible/module_utils/csharp/Ansible.Basic.cs
 PASS_VARS = {
     'check_mode': ('check_mode', False),
     'debug': ('_debug', False),
@@ -91,6 +92,7 @@ PASS_VARS = {
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),
+    'target_log_info': ('_target_log_info', None),
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
