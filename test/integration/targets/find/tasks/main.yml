@@ -421,5 +421,55 @@
       - '"{{ remote_tmp_dir_test }}/astest/.hidden.txt" in astest_list'
       - '"checksum" in result.files[0]'
 
+# Test permission error is correctly handled by find module
+- block:
+    - name: create an unprivileged user for next test
+      user:
+        name: unpriv
+        state: present
+      register: user_details
+
+    - name: Set up a directory to test module error handling
+      file:
+        path: "{{ remote_tmp_dir_test }}/unreadable/readme"
+        state: directory
+        owner: unpriv
+        group: "{{ user_details.group }}"
+
+    - name: Set directory permissions to unreadable
+      file:
+        path: "{{ remote_tmp_dir_test }}/unreadable/readme"
+        mode: "0000"
+        owner: unpriv
+        group: "{{ user_details.group }}"
+
+    - name: Get stat for directory created
+      stat:
+        path: "{{ remote_tmp_dir_test }}/unreadable/readme"
+
+    - name: Find a file in unreadable directory
+      find:
+        paths: "{{ remote_tmp_dir_test }}/unreadable/readme"
+        patterns: "sample"
+        recurse: true
+      register: permission_issue
+      become_user: unpriv
+      become: yes
+
+    - name: Check if the skipped_paths are populated correctly with permission error
+      assert:
+        that:
+          - "'{{ remote_tmp_dir_test }}/unreadable/readme' in permission_issue.skipped_paths"
+          - "'Permission denied' in permission_issue.skipped_paths['{{ remote_tmp_dir_test }}/unreadable/readme']"
+          - not permission_issue.changed
+          - permission_issue.matched == 0
+
+  always:
+    - name: remove unprivileged user
+      user:
+        name: unpriv
+        state: absent
+        remove: true
+
 - name: Run mode tests
   import_tasks: mode.yml
