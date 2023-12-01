@@ -74,8 +74,8 @@ class InventoryCLI(CLI):
         self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
         self.parser.add_argument('args', metavar='host|group', nargs='?',
-                                  help='The name of a host to match in the inventory, relevant when using --list '
-                                       'or the name of a group in the inventory, relevant when using --graph')
+                                 help='The name of a host to match in the inventory, relevant when using --list '
+                                      'or the name of a group in the inventory, relevant when using --graph')
 
         # Actions
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
