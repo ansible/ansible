@@ -4,7 +4,7 @@ DOCUMENTATION:
   short_description: combine two or more dictionaries
   description:
     - Create a dictionary (hash/associative array) as a result of merging existing dictionaries.
-    - Dictionaries to the right (new) have precende over dictionaries to the left (old).
+    - Dictionaries to the right (new) have precedence over dictionaries to the left (old).
   positional: _input, _dicts
   options:
     _input:
