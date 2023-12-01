@@ -197,15 +197,10 @@ class VariableManager:
             basedirs = [self._loader.get_basedir()]
 
         if play:
+            # get role defaults (lowest precedence)
             for role in play.get_roles():
-                # role is public and
-                #    either static or dynamic and completed
-                # role is not set
-                #    use config option as default
-                role_is_static_or_completed = role.static or role._completed.get(host.name, False)
-                if role.public and role_is_static_or_completed or \
-                   role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
-                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+                all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+
         if task:
             # set basedirs
             if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
@@ -388,18 +383,9 @@ class VariableManager:
                 raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
                                          "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
-            # We now merge in all exported vars from all roles in the play,
-            # unless the user has disabled this
-            # role is public and
-            #    either static or dynamic and completed
-            # role is not set
-            #    use config option as default
+            # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.get_roles():
-                role_is_static_or_completed = role.static or role._completed.get(host.name, False)
-                if role.public and role_is_static_or_completed or \
-                   role.public is None and not C.DEFAULT_PRIVATE_ROLE_VARS and role_is_static_or_completed:
-
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+                all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
@@ -467,10 +453,10 @@ class VariableManager:
         variables['ansible_config_file'] = C.CONFIG_FILE
 
         if play:
-            # This is a list of all role names of all dependencies for all roles for this play
-            dependency_role_names = list({d.get_name() for r in play.roles for d in r.get_all_dependencies()})
-            # This is a list of all role names of all roles for this play
-            play_role_names = [r.get_name() for r in play.roles]
+            # using role_cache as play.roles only has 'public' roles for vars exporting
+            myroles = [r[0] for r in play.role_cache.values()]  # cache is path keyed to list of roles of same name, diff params
+            dependency_role_names = list({d.get_name() for r in myroles for d in r.get_all_dependencies()})
+            play_role_names = [r.get_name() for r in myroles]
 
             # ansible_role_names includes all role names, dependent or directly referenced by the play
             variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
@@ -481,7 +467,7 @@ class VariableManager:
             # dependencies that are also explicitly named as roles are included in this list
             variables['ansible_dependent_role_names'] = dependency_role_names
 
-            # DEPRECATED: role_names should be deprecated in favor of ansible_role_names or ansible_play_role_names
+            # TODO: data tagging!!! DEPRECATED: role_names should be deprecated in favor of ansible_ prefixed ones
             variables['role_names'] = variables['ansible_play_role_names']
 
             variables['ansible_play_name'] = play.get_name()
