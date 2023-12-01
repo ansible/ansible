@@ -942,7 +942,7 @@ DEFAULT_PRIVATE_KEY_FILE:
   type: path
 DEFAULT_PRIVATE_ROLE_VARS:
   name: Private role variables
-  default: False
+  default: ~
   description:
     - Makes role variables inaccessible from other roles.
     - This was introduced as a way to reset role variables to default values if

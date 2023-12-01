@@ -90,15 +90,8 @@ class IncludeRole(TaskInclude):
         actual_role._metadata.allow_duplicates = self.allow_duplicates
         actual_role.static = self.statically_loaded
 
-        if self.public:
+        if self.public or (self.public is None and (C.DEFAULT_PRIVATE_ROLE_VARS is False or (C.DEFAULT_PRIVATE_ROLE_VARS is None and actual_role.static))):
             myplay.roles.append(actual_role)
-        elif self.public is None:
-            if actual_role.static:
-                if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                    myplay.roles.append(actual_role)
-            else:
-                # NOTE C.DEFAULT_PRIVATE_ROLE_VARS does not have any effect on include_role, is that correct?
-                ...
 
         # save this for later use
         self._role_path = actual_role._role_path
