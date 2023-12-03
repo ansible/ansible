@@ -1115,6 +1115,13 @@ def url_argument_spec():
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
         use_gssapi=dict(type='bool', default=False),
+    )
+
+def url_redirect_argument_spec():
+    '''
+    As an addition to `url_argument_spec` this spec contains a `follow_redirects` argument
+    '''
+    return dict(
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
     )
 
