@@ -60,8 +60,8 @@ class HostState:
     def __str__(self):
         return (
             f"HOST STATE: block={self.cur_block}, task={self.cur_regular_task}, rescue={self.cur_rescue_task}, "
-            f"always={self.cur_always_task}, handlers={self.cur_handlers_task}, run_state={self.run_state}, "
-            f"failed={self.failed}, pre_flushing_run_state={self.pre_flushing_run_state}, "
+            f"always={self.cur_always_task}, handlers={self.cur_handlers_task}, run_state={self.run_state.name}, "
+            f"failed={self.failed}, pre_flushing_run_state={getattr(self.pre_flushing_run_state, 'name', None)}, "
             f"update_handlers={self.update_handlers}, pending_setup={self.pending_setup}, "
             f"child state? {bool(self.child_state)}, did start at task? {self.did_start_at_task}, "
             f"handler_notifications={self.handler_notifications.keys()}"
@@ -82,15 +82,16 @@ class HostState:
             s = self.get_current()
 
             s.failed = True
+            current_block = s.get_current_block()
             if s.run_state == IteratingStates.TASKS:
-                if s.get_current_block().rescue:
+                if current_block.rescue:
                     s.run_state = IteratingStates.RESCUE
-                elif s.get_current_block().always:
+                elif current_block.always:
                     s.run_state = IteratingStates.ALWAYS
                 else:
                     s.run_state = IteratingStates.COMPLETE
             elif s.run_state == IteratingStates.RESCUE:
-                if s.get_current_block().always:
+                if current_block.always:
                     s.run_state = IteratingStates.ALWAYS
                 else:
                     s.run_state = IteratingStates.COMPLETE
@@ -146,7 +147,8 @@ class HostState:
         return s
 
     def copy(self) -> HostState:
-        new_state = HostState(self._blocks)
+        new_state = object.__new__(self.__class__)
+        new_state._blocks = self._blocks[:]
         new_state.handlers = self.handlers[:]
         new_state.handler_notifications = self.handler_notifications.copy()
         new_state.cur_block = self.cur_block
@@ -160,8 +162,7 @@ class HostState:
         new_state.update_handlers = self.update_handlers
         new_state.pending_setup = self.pending_setup
         new_state.did_start_at_task = self.did_start_at_task
-        if self.child_state is not None:
-            new_state.child_state = self.child_state.copy()
+        new_state.child_state = None if self.child_state is None else self.child_state.copy()
         return new_state
 
 
