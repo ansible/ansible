@@ -938,6 +938,17 @@ releases:
     - jinja_plugin_cache_cleanup.yml
     - winrm-send-input.yml
     release_date: '2023-10-03'
+  2.14.12:
+    changes:
+      release_summary: '| Release Date: 2023-12-04
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.12_summary.yaml
+    release_date: '2023-12-04'
   2.14.12rc1:
     changes:
       breaking_changes:
