@@ -1117,6 +1117,7 @@ def url_argument_spec():
         use_gssapi=dict(type='bool', default=False),
     )
 
+
 def url_redirect_argument_spec():
     '''
     As an addition to `url_argument_spec` this spec contains a `follow_redirects` argument
