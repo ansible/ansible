@@ -273,10 +273,7 @@ class ConfigCLI(CLI):
             if subkey == 'env':
                 stype = settings[setting].get('type', '')
                 if stype == 'boolean':
-                    if default:
-                        default = '1'
-                    else:
-                        default = '0'
+                    default = '1' if default else '0'
                 elif default:
                     if stype == 'list':
                         if not isinstance(default, string_types):
