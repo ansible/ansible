@@ -766,6 +766,17 @@ releases:
     - ansible-test-python-default.yml
     - inv_available_hosts_to_frozenset.yml
     release_date: '2023-10-16'
+  2.16.1:
+    changes:
+      release_summary: '| Release Date: 2023-12-04
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.1_summary.yaml
+    release_date: '2023-12-04'
   2.16.1rc1:
     changes:
       breaking_changes:
