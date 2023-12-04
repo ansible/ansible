@@ -199,7 +199,8 @@ class VariableManager:
         if play:
             # get role defaults (lowest precedence)
             for role in play.get_roles():
-                all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+                if role.public:
+                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
 
         if task:
             # set basedirs
@@ -216,8 +217,7 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
-                                              "role '%s' defaults" % task._role.name)
+                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), "role '%s' defaults" % task._role.name)
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -385,7 +385,8 @@ class VariableManager:
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.get_roles():
-                all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+                if role.public:
+                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
@@ -454,9 +455,8 @@ class VariableManager:
 
         if play:
             # using role_cache as play.roles only has 'public' roles for vars exporting
-            myroles = [r[0] for r in play.role_cache.values()]  # cache is path keyed to list of roles of same name, diff params
-            dependency_role_names = list({d.get_name() for r in myroles for d in r.get_all_dependencies()})
-            play_role_names = [r.get_name() for r in myroles]
+            dependency_role_names = list({d.get_name() for r in play.get_roles() for d in r.get_all_dependencies()})
+            play_role_names = [r.get_name() for r in play.get_roles()]
 
             # ansible_role_names includes all role names, dependent or directly referenced by the play
             variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))

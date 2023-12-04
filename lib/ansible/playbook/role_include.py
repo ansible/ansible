@@ -89,9 +89,8 @@ class IncludeRole(TaskInclude):
                                 from_include=True, validate=self.rolespec_validate, public=self.public, static=self.statically_loaded)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
-        # add public imported roles, public includes should be added when completed
-        if actual_role.public:
-            myplay.roles.append(actual_role)
+        # add role to play
+        myplay.roles.append(actual_role)
 
         # save this for later use
         self._role_path = actual_role._role_path
