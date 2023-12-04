@@ -105,6 +105,7 @@ class PlayContext(Base):
 
     # general flags
     only_tags = FieldAttribute(isa='set', default=set)
+    and_tags = FieldAttribute(isa='set', default=set)
     skip_tags = FieldAttribute(isa='set', default=set)
 
     start_at_task = FieldAttribute(isa='string')

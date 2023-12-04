@@ -417,6 +417,14 @@ class CLI(ABC):
                     tags.add(tag.strip())
             options.tags = list(tags)
 
+        # process and_tags
+        if hasattr(options, 'and_tags') and options.and_tags:
+            and_tags = set()
+            for tag_set in options.and_tags:
+                for tag in tag_set.split(u','):
+                    and_tags.add(tag.strip())
+            options.and_tags = list(and_tags)
+
         # process skip_tags
         if hasattr(options, 'skip_tags') and options.skip_tags:
             skip_tags = set()

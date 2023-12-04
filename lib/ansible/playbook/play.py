@@ -94,6 +94,7 @@ class Play(Base, Taggable, CollectionSearch):
         self.role_cache = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
+        self.and_tags = set(context.CLIARGS.get('and_tags', []))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
         self._action_groups = {}

@@ -720,6 +720,9 @@ def command_integration_role(
             if args.tags:
                 cmd += ['--tags', args.tags]
 
+            if args.tags:
+                cmd += ['--and-tags', args.and_tags]
+
             if args.skip_tags:
                 cmd += ['--skip-tags', args.skip_tags]
 

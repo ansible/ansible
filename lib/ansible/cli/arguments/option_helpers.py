@@ -383,6 +383,8 @@ def add_subset_options(parser):
     """Add options for commands which can run a subset of tasks"""
     parser.add_argument('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
                         help="only run plays and tasks tagged with these values")
+    parser.add_argument('--and-tags', dest='and_tags', default=[], action='append',
+                        help="only run plays and tasks tagged with all these values")
     parser.add_argument('--skip-tags', dest='skip_tags', default=C.TAGS_SKIP, action='append',
                         help="only run plays and tasks whose tags do not match these values")
 

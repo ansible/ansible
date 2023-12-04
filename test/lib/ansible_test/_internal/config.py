@@ -287,6 +287,7 @@ class IntegrationConfig(TestConfig):
         self.changed_all_mode: str = args.changed_all_mode
         self.list_targets: bool = args.list_targets
         self.tags = args.tags
+        self.and_tags = args.and_tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
         self.no_temp_workdir: bool = args.no_temp_workdir

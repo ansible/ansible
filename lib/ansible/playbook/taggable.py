@@ -47,7 +47,7 @@ class Taggable:
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
-    def evaluate_tags(self, only_tags, skip_tags, all_vars):
+    def evaluate_tags(self, only_tags, skip_tags, and_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
 
         if self.tags:
@@ -72,6 +72,13 @@ class Taggable:
             elif not tags.isdisjoint(only_tags):
                 should_run = True
             elif 'tagged' in only_tags and tags != self.untagged and 'never' not in tags:
+                should_run = True
+            else:
+                should_run = False
+
+        if should_run and and_tags:
+            # Check all tags exists
+            if all(tag in tags for tag in and_tags):
                 should_run = True
             else:
                 should_run = False

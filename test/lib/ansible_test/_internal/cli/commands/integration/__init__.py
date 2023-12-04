@@ -64,6 +64,12 @@ def add_integration_common(
     )
 
     parser.add_argument(
+        '--and-tags',
+        metavar='TAGS',
+        help='only run plays and tasks tagged with all these values',
+    )
+
+    parser.add_argument(
         '--skip-tags',
         metavar='TAGS',
         help='only run plays and tasks whose tags do not match these values',

@@ -287,6 +287,8 @@ class PullCLI(CLI):
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
             cmd += ' --skip-tags "%s"' % to_native(u','.join(context.CLIARGS['skip_tags']))
+        if context.CLIARGS['and_tags']:
+            cmd += ' --and-tags "%s"' % to_native(u','.join(context.CLIARGS['and_tags']))
         if context.CLIARGS['tags']:
             cmd += ' -t "%s"' % to_native(u','.join(context.CLIARGS['tags']))
         if context.CLIARGS['subset']:

@@ -223,6 +223,7 @@ def load_options_vars(version):
                  'forks': 'forks',
                  'inventory': 'inventory_sources',
                  'skip_tags': 'skip_tags',
+                 'and_tags': 'and_tags',
                  'subset': 'limit',
                  'tags': 'run_tags',
                  'verbosity': 'verbosity'}
