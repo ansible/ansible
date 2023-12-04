@@ -407,11 +407,7 @@ class TaskExecutor:
         """This method is responsible for effectively pre-validating Task.delegate_to and will
         happen before Task.post_validate is executed
         """
-        delegated_vars, delegated_host_name = self._variable_manager.get_delegated_vars_and_hostname(
-            templar,
-            self._task,
-            variables
-        )
+        delegated_vars, delegated_host_name = self._variable_manager.get_delegated_vars_and_hostname(templar, self._task, variables)
         # At the point this is executed it is safe to mutate self._task,
         # since `self._task` is either a copy referred to by `tmp_task` in `_run_loop`
         # or just a singular non-looped task

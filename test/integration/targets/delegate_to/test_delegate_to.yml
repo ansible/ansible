@@ -57,6 +57,25 @@
     - name: remove test file
       file: path={{ output_dir }}/tmp.txt state=absent
 
+    - name: Use omit to thwart delegation
+      ping:
+      delegate_to: "{{ jenkins_install_key_on|default(omit) }}"
+      register: d_omitted
+
+    - name: Use empty to thwart delegation should fail
+      ping:
+      delegate_to: "{{ jenkins_install_key_on }}"
+      when: jenkins_install_key_on != ""
+      vars:
+        jenkins_install_key_on: ''
+      ignore_errors: true
+      register: d_empty
+
+    - name: Ensure previous 2 tests actually did what was expected
+      assert:
+        that:
+          - d_omitted is success
+          - d_empty is failed
 
 - name: verify delegation with per host vars
   hosts: testhost6
