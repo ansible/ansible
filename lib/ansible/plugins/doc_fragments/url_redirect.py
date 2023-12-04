@@ -12,7 +12,7 @@ class ModuleDocFragment(object):
 options:
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
+      - Whether or not redirects should be followed. V(all) will follow all redirects.
         V(safe) will follow only "safe" redirects, where "safe" means that the client is only
         doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
         any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
