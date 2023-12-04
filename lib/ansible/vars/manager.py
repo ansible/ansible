@@ -198,7 +198,7 @@ class VariableManager:
 
         if play:
             # get role defaults (lowest precedence)
-            for role in play.get_roles():
+            for role in play.roles:
                 if role.public:
                     all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
 
@@ -384,7 +384,7 @@ class VariableManager:
                                          "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
-            for role in play.get_roles():
+            for role in play.roles:
                 if role.public:
                     all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
@@ -455,8 +455,8 @@ class VariableManager:
 
         if play:
             # using role_cache as play.roles only has 'public' roles for vars exporting
-            dependency_role_names = list({d.get_name() for r in play.get_roles() for d in r.get_all_dependencies()})
-            play_role_names = [r.get_name() for r in play.get_roles()]
+            dependency_role_names = list({d.get_name() for r in play.roles for d in r.get_all_dependencies()})
+            play_role_names = [r.get_name() for r in play.roles]
 
             # ansible_role_names includes all role names, dependent or directly referenced by the play
             variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
