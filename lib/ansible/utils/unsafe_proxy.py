@@ -71,6 +71,9 @@ class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
     def _strip_unsafe(self):
         return super().__bytes__()
 
+    def __reduce__(self, /):
+        return (self.__class__, (self._strip_unsafe(),))
+
     def __str__(self, /):  # pylint: disable=invalid-str-returned
         return self.decode()
 
@@ -191,6 +194,9 @@ class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
 class AnsibleUnsafeText(str, AnsibleUnsafe):
     def _strip_unsafe(self, /):
         return super().__str__()
+
+    def __reduce__(self, /):
+        return (self.__class__, (self._strip_unsafe(),))
 
     def __str__(self, /):  # pylint: disable=invalid-str-returned
         return self
