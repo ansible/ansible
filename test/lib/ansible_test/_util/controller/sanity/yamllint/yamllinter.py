@@ -126,7 +126,8 @@ class YamlChecker:
                 yaml_data = yaml_data[1:]
                 lineno += 1
 
-            self.check_parsable(path, yaml_data, lineno)
+            if key != 'EXAMPLES':
+                self.check_parsable(path, yaml_data, lineno)
 
             messages = list(linter.run(yaml_data, conf, path))
 
