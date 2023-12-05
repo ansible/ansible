@@ -478,7 +478,7 @@ def _handle_error(
                     details = 'Installed sshpass version does not support customized password prompts. ' \
                               'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
                     raise AnsibleError('{0} {1}'.format(msg, details))
-                
+
                 msg = '{0} {1}'.format(msg, details)
 
     if return_tuple[0] == 255:
