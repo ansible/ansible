@@ -27,6 +27,7 @@ from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 from ansible.playbook.play_context import PlayContext
+from ansible.playbook.task import Task
 
 from collections import namedtuple
 from units.mock.loader import DictDataLoader
