@@ -71,7 +71,7 @@ EXAMPLES = '''
    fi
 
 
-### python example
+### python example with ini config
 
     !/usr/bin/env python
     """
