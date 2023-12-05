@@ -33,7 +33,7 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
 
-   ### simple bash script
+### simple bash script
 
    #! /bin/bash
 
@@ -70,7 +70,9 @@ EXAMPLES = '''
      exit 1
    fi
 
-    ### python example
+
+### python example
+
     !/usr/bin/env python
     """
     # ansible_inventory.py
