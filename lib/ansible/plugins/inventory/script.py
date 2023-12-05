@@ -33,6 +33,8 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
 
+   ### simple bash script
+
    #! /bin/bash
 
    if [ "$1" == "--list" ]; then
@@ -67,6 +69,83 @@ EXAMPLES = '''
      echo "Invalid option: use --list or --host <hostname>"
      exit 1
    fi
+
+    ### python example
+    !/usr/bin/env python
+    """
+    # ansible_inventory.py
+    """
+    import argparse
+    import json
+    import os.path
+    import sys
+
+    from inventories.custom import MyInventoryAPI
+
+    def load_config() -> ConfigParser:
+        cp = ConfigParser()
+        config_file = os.path.expanduser("~/.config/ansible_inventory_script.cfg")
+        cp.read(config_file)
+        if not cp.has_option('DEFAULT', 'namespace'):
+            raise ValueError("Missing configuration option: DEFAULT -> namespace")
+        return cp
+
+
+    def get_api_data(namespace: str, pretty=False) -> str:
+        """
+        :param namespace: parameter for our custom api
+        :param pretty: Human redable JSON vs machine readable
+        :return: JSON string
+        """
+        found_data = list(MyInventoryAPI(namespace))
+        hostvars = {}
+        data = { '_meta': { 'hostvars': {}},
+
+        groups = found_data['groups'].keys()
+        for group in groups:
+            groups[group]['hosts'] = found_data[groups].get('host_list', [])
+            if group not in data:
+                data[group] = {}
+            data[group]['hosts'] = found_data[groups].get('host_list', [])
+            data[group]['vars'] = found_data[groups].get('info', [])
+            data[group]['children'] = found_data[group].get('subgroups', [])
+
+        for host_data in found_data['hosts']:
+            for name in host_data.items():
+                # turn info into vars
+                data['_meta'][name] = found_data[name].get('info', {})
+                # set ansible_host if possible
+                if 'address' in found_data[name]:
+                    data[name]['_meta']['ansible_host'] = found_data[name]['address']
+        }
+        data['_meta']['hostvars'] = hostvars
+
+        return json.dumps(data, indent=pretty)
+
+    if __name__ == '__main__':
+
+        arg_parser = argparse.ArgumentParser( description=__doc__, prog=__file__)
+        arg_parser.add_argument('--pretty', action='store_true', default=False, help="Pretty JSON")
+        mandatory_options = arg_parser.add_mutually_exclusive_group()
+        mandatory_options.add_argument('--list', action='store', nargs="*", help="Get inventory JSON from our API")
+        mandatory_options.add_argument('--host', action='store',
+                                       help="Get variables for specific host, not used but kept for compatability")
+
+        try:
+            config = load_config()
+            namespace = config.get('defaults', 'namespace')
+
+            args = arg_parser.parse_args()
+            if args.host:
+                print('{"_meta":{}}')
+                sys.stderr.write('This script already provides _meta via --list, so this option is really ignored')
+            elif len(args.list) >= 0:
+                print(get_api_data(namespace, args.pretty))
+            else:
+                raise ValueError("Valid options are -- list or --host <HOSTNAME>")
+
+        except ValueError:
+            raise
 
 '''
 
