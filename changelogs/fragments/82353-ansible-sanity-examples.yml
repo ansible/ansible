@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - sanity test allows ``EXAMPLES`` to be multi-document YAML (https://github.com/ansible/ansible/issues/82353).
