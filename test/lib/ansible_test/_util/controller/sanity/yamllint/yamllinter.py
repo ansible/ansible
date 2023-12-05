@@ -126,8 +126,7 @@ class YamlChecker:
                 yaml_data = yaml_data[1:]
                 lineno += 1
 
-            if key != 'EXAMPLES':
-                self.check_parsable(path, yaml_data, lineno)
+            self.check_parsable(path, yaml_data, lineno)
 
             messages = list(linter.run(yaml_data, conf, path))
 
@@ -165,7 +164,6 @@ class YamlChecker:
         """Return the module documentation for the given module contents."""
         module_doc_types = [
             'DOCUMENTATION',
-            'EXAMPLES',
             'RETURN',
         ]
 
