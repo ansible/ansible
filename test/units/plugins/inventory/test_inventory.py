@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import string
 import textwrap
@@ -25,8 +23,7 @@ import textwrap
 from unittest import mock
 
 from ansible import constants as C
-from units.compat import unittest
-from ansible.module_utils.six import string_types
+import unittest
 from ansible.module_utils.common.text.converters import to_text
 from units.mock.path import mock_unfrackpath_noop
 
@@ -160,8 +157,8 @@ class TestInventoryPlugins(unittest.TestCase):
 
         variables = inventory.get_host('host1').vars
         for i in range(len(values)):
-            if isinstance(values[i], string_types):
-                self.assertIsInstance(variables['var%s' % i], string_types)
+            if isinstance(values[i], str):
+                self.assertIsInstance(variables['var%s' % i], str)
             else:
                 self.assertIsInstance(variables['var%s' % i], type(values[i]))
 

@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 import sys
 

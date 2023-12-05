@@ -3,8 +3,7 @@
 # originally copied from AWX's scan_services module to bring this functionality
 # into Core
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -95,6 +94,7 @@ import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.service import is_systemd_managed
 
 
 class BaseService(object):
@@ -245,16 +245,7 @@ class SystemctlScanService(BaseService):
     BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
 
     def systemd_enabled(self):
-        # Check if init is the systemd command, using comm as cmdline could be symlink
-        try:
-            f = open('/proc/1/comm', 'r')
-        except IOError:
-            # If comm doesn't exist, old kernel, no systemd
-            return False
-        for line in f:
-            if 'systemd' in line:
-                return True
-        return False
+        return is_systemd_managed(self.module)
 
     def _list_from_units(self, systemctl_path, services):
 

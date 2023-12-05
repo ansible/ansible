@@ -16,8 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # CI-required python3 boilerplate
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -69,7 +68,7 @@ class ActionModule(ActionBase):
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             display.vvv("wait_for_connection: skipping for check_mode")
             return dict(skipped=True)
 

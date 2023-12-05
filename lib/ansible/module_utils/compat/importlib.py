@@ -1,18 +1,26 @@
 # Copyright (c) 2020 Matt Martz <matt@sivel.net>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import sys
+from ansible.module_utils.common.warnings import deprecate
 
-try:
-    from importlib import import_module  # pylint: disable=unused-import
-except ImportError:
-    # importlib.import_module returns the tail
-    # whereas __import__ returns the head
-    # compat to work like importlib.import_module
-    def import_module(name):  # type: ignore[misc]
-        __import__(name)
-        return sys.modules[name]
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings.
+
+    Specifically, for ``import_module()``.
+    """
+    if importable_name == 'import_module':
+        deprecate(
+            msg=f'The `ansible.module_utils.compat.importlib.'
+            f'{importable_name}` function is deprecated.',
+            version='2.19',
+        )
+        from importlib import import_module
+        return import_module
+
+    raise AttributeError(
+        f'cannot import name {importable_name !r} '
+        f'has no attribute ({__file__ !s})',
+    )

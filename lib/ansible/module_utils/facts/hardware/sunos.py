@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import time
@@ -108,7 +107,7 @@ class SunOSHardware(Hardware):
         # Counting cores on Solaris can be complicated.
         # https://blogs.oracle.com/mandalika/entry/solaris_show_me_the_cpu
         # Treat 'processor_count' as physical sockets and 'processor_cores' as
-        # virtual CPUs visisble to Solaris. Not a true count of cores for modern SPARC as
+        # virtual CPUs visible to Solaris. Not a true count of cores for modern SPARC as
         # these processors have: sockets -> cores -> threads/virtual CPU.
         if len(sockets) > 0:
             cpu_facts['processor_count'] = len(sockets)

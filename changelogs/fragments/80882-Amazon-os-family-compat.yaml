@@ -1,0 +1,2 @@
+bugfixes:
+- Interpreter discovery - Add ``Amzn`` to ``OS_FAMILY_MAP`` for correct family fallback for interpreter discovery (https://github.com/ansible/ansible/issues/80882).

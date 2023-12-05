@@ -3,8 +3,7 @@
 # Copyright:  Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -49,7 +48,7 @@ seealso:
 - module: ansible.builtin.import_role
 - module: ansible.builtin.import_tasks
 - module: ansible.builtin.include_role
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
 '''
 

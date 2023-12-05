@@ -1,0 +1,4 @@
+bugfixes:
+  - copy action now ensures that tempfiles use the same suffix as destination, to allow for ``validate`` to work with utilities that check extensions.
+  - copy action now also generates temprary files as hidden ('.' prefixed) to avoid accidental pickup by running services that glob by extension.
+  - template action will also inherit the behavior from copy (as it uses it internally).

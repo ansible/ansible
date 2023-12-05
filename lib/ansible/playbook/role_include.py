@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from os.path import basename
 
@@ -49,10 +47,10 @@ class IncludeRole(TaskInclude):
 
     # =================================================================================
     # ATTRIBUTES
+    public = NonInheritableFieldAttribute(isa='bool', default=None, private=False, always_post_validate=True)
 
     # private as this is a 'module options' vs a task property
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
-    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True, always_post_validate=True)
     rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
 
     def __init__(self, block=None, role=None, task_include=None):
@@ -135,10 +133,6 @@ class IncludeRole(TaskInclude):
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
-
-        # public is only valid argument for includes, imports are always 'public' (after they run)
-        if 'public' in ir.args and ir.action not in C._ACTION_INCLUDE_ROLE:
-            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)

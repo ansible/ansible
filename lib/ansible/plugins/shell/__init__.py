@@ -14,8 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import os.path
@@ -65,12 +64,12 @@ class ShellBase(AnsiblePlugin):
         # TODO: config system should already resolve this so we should be able to just iterate over dicts
         env = self.get_option('environment')
         if isinstance(env, string_types):
-            raise AnsibleError('The "envirionment" keyword takes a list of dictionaries or a dictionary, not a string')
+            raise AnsibleError('The "environment" keyword takes a list of dictionaries or a dictionary, not a string')
         if not isinstance(env, Sequence):
             env = [env]
         for env_dict in env:
             if not isinstance(env_dict, Mapping):
-                raise AnsibleError('The "envirionment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
+                raise AnsibleError('The "environment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
             self.env.update(env_dict)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of

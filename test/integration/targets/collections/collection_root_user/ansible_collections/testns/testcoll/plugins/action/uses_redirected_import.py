@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.formerly_core import thingtocall

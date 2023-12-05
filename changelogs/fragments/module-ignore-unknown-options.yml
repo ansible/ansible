@@ -1,0 +1,6 @@
+minor_changes:
+- >-
+  modules - Add the ability for an action plugin to call ``self._execute_module(*, ignore_unknown_opts=True)`` to execute a module with options that may not be
+  supported for the version being called. This tells the module basic wrapper to ignore validating the options provided match the arg spec.
+bugfixes:
+- fetch - Do not calculate the file size for Windows fetch targets to improve performance.

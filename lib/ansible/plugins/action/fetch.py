@@ -14,8 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import base64
@@ -42,7 +41,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         try:
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 raise AnsibleActionSkip('check mode not (yet) supported for this module')
 
             source = self._task.args.get('src', None)

@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -149,8 +147,8 @@ class IncludedFile:
                                     dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
                                     new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
                                     candidates = [
-                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target),
-                                        loader.path_dwim_relative(new_basedir, dirname, include_target)
+                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target, is_role=True),
+                                        loader.path_dwim_relative(new_basedir, dirname, include_target, is_role=True)
                                     ]
                                     for include_file in candidates:
                                         try:

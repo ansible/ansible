@@ -72,8 +72,11 @@ cat out.txt
 
 test "$(grep out.txt -ce 'deprecation1' -ce 'deprecation2' -ce 'deprecation3')" == 3
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.multi_redirect_filter to testns.testredirect.redirect_filter1'
+grep out.txt -e 'Filter "testns.testredirect.multi_redirect_filter"'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter1 to testns.testredirect.redirect_filter2'
+grep out.txt -e 'Filter "testns.testredirect.redirect_filter1"'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter2 to testns.testcoll.testfilter'
+grep out.txt -e 'Filter "testns.testredirect.redirect_filter2"'
 
 echo "--- validating collections support in playbooks/roles"
 # run test playbooks

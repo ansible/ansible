@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.

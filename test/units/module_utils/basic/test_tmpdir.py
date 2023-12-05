@@ -2,18 +2,15 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
-import shutil
 import tempfile
 
 import pytest
 
-from units.compat.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible.module_utils import basic
@@ -78,7 +75,6 @@ class TestAnsibleModuleTmpDir:
         monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
         monkeypatch.setattr(os.path, 'exists', lambda x: stat_exists)
         monkeypatch.setattr(os, 'makedirs', mock_makedirs)
-        monkeypatch.setattr(shutil, 'rmtree', lambda x: None)
         monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': args})))
 
         with patch('time.time', return_value=42):

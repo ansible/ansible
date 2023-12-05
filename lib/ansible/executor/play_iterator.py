@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import fnmatch
 
@@ -52,7 +50,7 @@ class FailedStates(IntFlag):
     TASKS = 2
     RESCUE = 4
     ALWAYS = 8
-    HANDLERS = 16
+    HANDLERS = 16  # NOTE not in use anymore
 
 
 class HostState:
@@ -431,22 +429,18 @@ class PlayIterator:
                     state.update_handlers = False
                     state.cur_handlers_task = 0
 
-                if state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
-                    state.update_handlers = True
-                    state.run_state = IteratingStates.COMPLETE
-                else:
-                    while True:
-                        try:
-                            task = state.handlers[state.cur_handlers_task]
-                        except IndexError:
-                            task = None
-                            state.run_state = state.pre_flushing_run_state
-                            state.update_handlers = True
+                while True:
+                    try:
+                        task = state.handlers[state.cur_handlers_task]
+                    except IndexError:
+                        task = None
+                        state.run_state = state.pre_flushing_run_state
+                        state.update_handlers = True
+                        break
+                    else:
+                        state.cur_handlers_task += 1
+                        if task.is_host_notified(host):
                             break
-                        else:
-                            state.cur_handlers_task += 1
-                            if task.is_host_notified(host):
-                                break
 
             elif state.run_state == IteratingStates.COMPLETE:
                 return (state, None)
@@ -487,20 +481,16 @@ class PlayIterator:
             else:
                 state.fail_state |= FailedStates.ALWAYS
                 state.run_state = IteratingStates.COMPLETE
-        elif state.run_state == IteratingStates.HANDLERS:
-            state.fail_state |= FailedStates.HANDLERS
-            state.update_handlers = True
-            if state._blocks[state.cur_block].rescue:
-                state.run_state = IteratingStates.RESCUE
-            elif state._blocks[state.cur_block].always:
-                state.run_state = IteratingStates.ALWAYS
-            else:
-                state.run_state = IteratingStates.COMPLETE
         return state
 
     def mark_host_failed(self, host):
         s = self.get_host_state(host)
         display.debug("marking host %s failed, current state: %s" % (host, s))
+        if s.run_state == IteratingStates.HANDLERS:
+            # we are failing `meta: flush_handlers`, so just reset the state to whatever
+            # it was before and let `_set_failed_state` figure out the next state
+            s.run_state = s.pre_flushing_run_state
+            s.update_handlers = True
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
         self.set_state_for_host(host.name, s)
@@ -515,8 +505,6 @@ class PlayIterator:
         elif state.run_state == IteratingStates.RESCUE and self._check_failed_state(state.rescue_child_state):
             return True
         elif state.run_state == IteratingStates.ALWAYS and self._check_failed_state(state.always_child_state):
-            return True
-        elif state.run_state == IteratingStates.HANDLERS and state.fail_state & FailedStates.HANDLERS == FailedStates.HANDLERS:
             return True
         elif state.fail_state != FailedStates.NONE:
             if state.run_state == IteratingStates.RESCUE and state.fail_state & FailedStates.RESCUE == 0:

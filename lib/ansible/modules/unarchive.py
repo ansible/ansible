@@ -7,8 +7,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -283,6 +282,7 @@ MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
+SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
 
 
 def crc32(path, buffer_size):
@@ -500,7 +500,8 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) != 7 and len(pcs[0]) != 10:
+            # 7 or 8 are FAT, 10 is normal unix perms
+            if len(pcs[0]) not in (7, 8, 10):
                 continue
             if len(pcs[6]) != 15:
                 continue
@@ -548,6 +549,12 @@ class ZipArchive(object):
                 if path[-1] == '/':
                     permstr = 'rwxrwxrwx'
                 elif permstr == 'rwx---':
+                    permstr = 'rwxrwxrwx'
+                else:
+                    permstr = 'rw-rw-rw-'
+                file_umask = umask
+            elif len(permstr) == 7:
+                if permstr == 'rwxa---':
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
@@ -879,6 +886,8 @@ class TgzArchive(object):
             if INVALID_OWNER_RE.search(line):
                 out += line + '\n'
             if INVALID_GROUP_RE.search(line):
+                out += line + '\n'
+            if SYMLINK_DIFF_RE.search(line):
                 out += line + '\n'
         if out:
             unarchived = False

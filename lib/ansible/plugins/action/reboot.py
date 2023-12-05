@@ -2,8 +2,7 @@
 # Copyright: (c) 2018, Sam Doran <sdoran@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import random
 import time
@@ -409,14 +408,13 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_check_mode = True
-        self._supports_async = True
 
         # If running with local connection, fail so we don't reboot ourselves
         if self._connection.transport == 'local':
             msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             return {'changed': True, 'elapsed': 0, 'rebooted': True}
 
         if task_vars is None:

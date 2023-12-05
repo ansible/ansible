@@ -1,9 +1,7 @@
 # (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import glob
@@ -45,7 +43,7 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
 def to_yaml(a, *args, **kw):
-    '''Make verbose, human readable yaml'''
+    '''Make verbose, human-readable yaml'''
     default_flow_style = kw.pop('default_flow_style', None)
     try:
         transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
@@ -55,7 +53,7 @@ def to_yaml(a, *args, **kw):
 
 
 def to_nice_yaml(a, indent=4, *args, **kw):
-    '''Make verbose, human readable yaml'''
+    '''Make verbose, human-readable yaml'''
     try:
         transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
     except Exception as e:
@@ -76,7 +74,7 @@ def to_json(a, *args, **kw):
 
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
-    '''Make verbose, human readable JSON'''
+    '''Make verbose, human-readable JSON'''
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 
@@ -121,7 +119,7 @@ def fileglob(pathname):
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False):
+def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False, count=0, mandatory_count=0):
     ''' Perform a `re.sub` returning a string '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
@@ -132,7 +130,11 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    return _re.sub(replacement, value)
+    (output, subs) = _re.subn(replacement, value, count=count)
+    if mandatory_count and mandatory_count != subs:
+        raise AnsibleFilterError("'%s' should match %d times, but matches %d times in '%s'"
+                                 % (pattern, mandatory_count, count, value))
+    return output
 
 
 def regex_findall(value, regex, multiline=False, ignorecase=False):

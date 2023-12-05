@@ -2,19 +2,15 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import errno
+import selectors
 from itertools import product
 from io import BytesIO
 
 import pytest
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import PY2
-from ansible.module_utils.compat import selectors
 
 
 class OpenBytesIO(BytesIO):
@@ -29,10 +25,6 @@ class OpenBytesIO(BytesIO):
 
 @pytest.fixture
 def mock_os(mocker):
-    def mock_os_chdir(path):
-        if path == '/inaccessible':
-            raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
-
     def mock_os_abspath(path):
         if path.startswith('/'):
             return path
@@ -46,15 +38,9 @@ def mock_os(mocker):
     os.environ = {'PATH': '/bin'}
     os.getcwd.return_value = '/home/foo'
     os.path.isdir.return_value = True
-    os.chdir.side_effect = mock_os_chdir
     os.path.abspath.side_effect = mock_os_abspath
 
     yield os
-
-
-class DummyFileObj():
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
 
 
 class SpecialBytesIO(BytesIO):
@@ -269,10 +255,5 @@ def test_run_command_fds(mocker, rc_am):
     except SystemExit:
         pass
 
-    if PY2:
-        assert subprocess_mock.Popen.call_args[1]['close_fds'] is False
-        assert 'pass_fds' not in subprocess_mock.Popen.call_args[1]
-
-    else:
-        assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
-        assert subprocess_mock.Popen.call_args[1]['close_fds'] is True
+    assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
+    assert subprocess_mock.Popen.call_args[1]['close_fds'] is True

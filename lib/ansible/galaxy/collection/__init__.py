@@ -3,12 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Installed collections management package."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import errno
 import fnmatch
 import functools
+import inspect
 import json
 import os
 import pathlib
@@ -26,7 +26,7 @@ import typing as t
 
 from collections import namedtuple
 from contextlib import contextmanager
-from dataclasses import dataclass, fields as dc_fields
+from dataclasses import dataclass
 from hashlib import sha256
 from io import BytesIO
 from importlib.metadata import distribution
@@ -152,9 +152,9 @@ class ManifestControl:
         # Allow a dict representing this dataclass to be splatted directly.
         # Requires attrs to have a default value, so anything with a default
         # of None is swapped for its, potentially mutable, default
-        for field in dc_fields(self):
-            if getattr(self, field.name) is None:
-                super().__setattr__(field.name, field.type())
+        for field_name, field_type in inspect.get_annotations(type(self), eval_str=True).items():
+            if getattr(self, field_name) is None:
+                super().__setattr__(field_name, field_type())
 
 
 class CollectionSignatureError(Exception):

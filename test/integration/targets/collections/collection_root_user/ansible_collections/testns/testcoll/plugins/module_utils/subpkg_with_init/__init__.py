@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # exercise relative imports in package init; they behave differently
 from .mod_in_subpkg_with_init import thingtocall as submod_thingtocall

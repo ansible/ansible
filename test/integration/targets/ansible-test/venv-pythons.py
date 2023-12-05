@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Return target Python options for use with ansible-test."""
+from __future__ import annotations
 
 import argparse
 import os

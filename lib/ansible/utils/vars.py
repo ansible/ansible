@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import keyword
 import random
@@ -109,6 +107,8 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     #  except performance)
     if x == {} or x == y:
         return y.copy()
+    if y == {}:
+        return x
 
     # in the following we will copy elements from y to x, but
     # we don't want to modify x, so we create a copy of it

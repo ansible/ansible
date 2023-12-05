@@ -409,7 +409,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     code = textwrap.dedent('''
     #!%s
 
-    from __future__ import absolute_import
+    from __future__ import annotations
 
     from os import execv
     from sys import argv

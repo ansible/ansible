@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Converts a YAML documents in a string representation into an equivalent structured Ansible variable.
     - Ansible internally auto-converts YAML strings into variable structures in most contexts, but by default does not handle 'multi document' YAML files or strings.
-    - If multiple YAML documents are not supplied, this is the equivalend of using C(from_yaml).
+    - If multiple YAML documents are not supplied, this is the equivalence of using C(from_yaml).
   notes:
     - This filter functions as a wrapper to the Python C(yaml.safe_load_all) function, part of the L(pyyaml Python library, https://pypi.org/project/PyYAML/).
     - Possible conflicts in variable names from the multiple documents are resolved directly by the pyyaml library.

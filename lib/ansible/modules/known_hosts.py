@@ -2,8 +2,7 @@
 # Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -274,12 +273,20 @@ def search_for_host_key(module, host, key, path, sshkeygen):
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l)
-            if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
-                new_key['host'] = found_key['host']
-            if new_key == found_key:  # found a match
-                return True, False, found_line  # found exactly the same key, don't replace
-            elif new_key['type'] == found_key['type']:  # found a different key for the same key type
-                return True, True, found_line
+
+            if 'options' in found_key and found_key['options'][:15] == '@cert-authority':
+                if new_key == found_key:  # found a match
+                    return True, False, found_line  # found exactly the same key, don't replace
+            elif 'options' in found_key and found_key['options'][:7] == '@revoke':
+                if new_key == found_key:  # found a match
+                    return True, False, found_line  # found exactly the same key, don't replace
+            else:
+                if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
+                    new_key['host'] = found_key['host']
+                if new_key == found_key:  # found a match
+                    return True, False, found_line  # found exactly the same key, don't replace
+                elif new_key['type'] == found_key['type']:  # found a different key for the same key type
+                    return True, True, found_line
 
     # No match found, return found and replace, but no line
     return True, True, None

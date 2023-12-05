@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -325,7 +324,7 @@ class InventoryCLI(CLI):
             return results
 
         hosts = self.inventory.get_hosts(top.name)
-        results = format_group(top, [h.name for h in hosts])
+        results = format_group(top, frozenset(h.name for h in hosts))
 
         # populate meta
         results['_meta'] = {'hostvars': {}}
@@ -381,7 +380,7 @@ class InventoryCLI(CLI):
 
             return results
 
-        available_hosts = [h.name for h in self.inventory.get_hosts(top.name)]
+        available_hosts = frozenset(h.name for h in self.inventory.get_hosts(top.name))
         return format_group(top, available_hosts)
 
     def toml_inventory(self, top):
@@ -425,7 +424,7 @@ class InventoryCLI(CLI):
 
             return results
 
-        available_hosts = [h.name for h in self.inventory.get_hosts(top.name)]
+        available_hosts = frozenset(h.name for h in self.inventory.get_hosts(top.name))
         results = format_group(top, available_hosts)
 
         return results

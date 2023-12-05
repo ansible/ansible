@@ -6,9 +6,8 @@ The facts class for vyos
 this file validates each subset of facts and selectively
 calls the appropriate facts gathering function
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.facts.facts import (
     FactsBase,
 )

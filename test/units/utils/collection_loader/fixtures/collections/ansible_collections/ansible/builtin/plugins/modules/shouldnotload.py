@@ -1,4 +1,3 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations  # pragma: nocover
 
-raise Exception('this module should never be loaded')
+raise Exception('this module should never be loaded')  # pragma: nocover

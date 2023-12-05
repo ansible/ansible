@@ -1,0 +1,19 @@
+- name: check vaulting
+  assert:
+    that:
+      - data1_plaintext|vault(data1_password, salt=data1_salt) == data1_vaulted_string_with_id
+      - data1_plaintext|vault(data1_password, salt=data1_salt)|type_debug != 'AnsibleVaultEncryptedUnicode'
+      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True)|type_debug == 'AnsibleVaultEncryptedUnicode'
+
+- name: check round-trip without salt
+  assert:
+    that:
+      - data2_plaintext|vault(data2_password, vault_id=data2_vault_id)|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+
+- name: check unvaulting
+  assert:
+    that:
+      - data1_vaulted_string_with_id|unvault(data1_password) == data1_plaintext
+      - data1_vaulted|unvault(data1_password) == data1_plaintext
+      - data2_vaulted_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+      - data2_vaulted_string_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext

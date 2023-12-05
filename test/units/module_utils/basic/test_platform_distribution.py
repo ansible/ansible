@@ -4,14 +4,13 @@
 # (c) 2017-2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
-from units.compat.mock import patch
+from unittest.mock import patch
 
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 # Functions being tested
 from ansible.module_utils.basic import get_platform

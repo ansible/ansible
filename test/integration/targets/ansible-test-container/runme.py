@@ -950,6 +950,15 @@ class DnfBootstrapper(Bootstrapper):
             # See: https://github.com/containers/netavark/issues/491
             packages.append('netavark-1.0.2')
 
+        if os_release.id == 'fedora' and os_release.version_id == '39':
+            # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
+            # The previously tested version, 1.6.19, did not have this issue.
+            # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
+            run_command(
+                'dnf', 'install', '-y',
+                'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm'
+            )
+
         if os_release.id == 'rhel':
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
@@ -1052,9 +1061,15 @@ class ApkBootstrapper(Bootstrapper):
         # The `openssl` package is used to generate hashed passwords.
         # crun added as podman won't install it as dep if runc is present
         # but we don't want runc as it fails
-        packages = ['docker', 'podman', 'openssl', 'crun']
+        # The edge `crun` package installed below requires ip6tables, and in
+        # edge, the `iptables` package includes `ip6tables`, but in 3.18 they
+        # are separate. Remove `ip6tables` once we update to 3.19.
+        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
+        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from edge
+        # Remove once we update to 3.19
+        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 

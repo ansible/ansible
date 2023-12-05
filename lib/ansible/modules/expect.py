@@ -3,8 +3,7 @@
 # (c) 2015, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -106,6 +105,17 @@ EXAMPLES = r'''
         - response1
         - response2
         - response3
+
+- name: Multiple questions with responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    responses:
+        "Please provide your name":
+            - "Anna"
+        "Database user":
+            - "{{ db_username }}"
+        "Database password":
+            - "{{ db_password }}"
 '''
 
 import datetime

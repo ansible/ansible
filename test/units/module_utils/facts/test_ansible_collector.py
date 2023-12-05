@@ -15,13 +15,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # for testing
-from units.compat import unittest
-from units.compat.mock import Mock, patch
+import unittest
+from unittest.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector

@@ -1,20 +1,14 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 
 from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp, UTC
-from ansible.module_utils.six import PY3
 
 
 def test_utc():
     assert UTC.tzname(None) == 'UTC'
     assert UTC.utcoffset(None) == datetime.timedelta(0)
-
-    if PY3:
-        assert UTC.dst(None) is None
-    else:
-        assert UTC.dst(None) == datetime.timedelta(0)
+    assert UTC.dst(None) is None
 
 
 def test_utcnow():

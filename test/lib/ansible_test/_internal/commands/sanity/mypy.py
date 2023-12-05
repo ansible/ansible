@@ -19,7 +19,6 @@ from . import (
 from ...constants import (
     CONTROLLER_PYTHON_VERSIONS,
     REMOTE_ONLY_PYTHON_VERSIONS,
-    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from ...test import (
@@ -37,7 +36,6 @@ from ...util import (
     ANSIBLE_TEST_CONTROLLER_ROOT,
     ApplicationError,
     is_subdir,
-    str_to_version,
 )
 
 from ...util_common import (
@@ -66,7 +64,6 @@ class MypyTest(SanityMultipleVersion):
     vendored_paths = (
         'lib/ansible/module_utils/six/__init__.py',
         'lib/ansible/module_utils/distro/_distro.py',
-        'lib/ansible/module_utils/compat/_selectors2.py',
     )
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
@@ -75,15 +72,6 @@ class MypyTest(SanityMultipleVersion):
                 target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
                 or target.path.startswith('packaging/')
                 or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
-
-    @property
-    def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
-        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
-        # mypy 0.981 dropped support for Python 2
-        # see: https://mypy-lang.blogspot.com/2022/09/mypy-0981-released.html
-        # cryptography dropped support for Python 3.5 in version 3.3
-        # see: https://cryptography.io/en/latest/changelog/#v3-3
-        return tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) >= (3, 6))
 
     @property
     def error_code(self) -> t.Optional[str]:

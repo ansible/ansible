@@ -4,8 +4,7 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -30,6 +29,7 @@ options:
       - Package name, or package specifier with version.
       - Syntax varies with package manager. For example V(name-1.0) or V(name=1.0).
       - Package names also vary with package manager; this module will not "translate" them per distro. For example V(libyaml-dev), V(libyaml-devel).
+      - To operate on several packages this can accept a comma separated string of packages or a list of packages, depending on the underlying package manager.
     required: true
   state:
     description:

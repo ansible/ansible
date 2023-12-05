@@ -4,8 +4,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -67,6 +66,12 @@ EXAMPLES = """
     state: file
     suffix: temp
   register: tempfile_1
+
+- name: Create a temporary file with a specific prefix
+  ansible.builtin.tempfile:
+     state: file
+     suffix: txt
+     prefix: myfile_
 
 - name: Use the registered var and the file module to remove the temporary file
   ansible.builtin.file:

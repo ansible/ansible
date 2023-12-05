@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import io
 import os
@@ -28,11 +26,10 @@ import tempfile
 from binascii import hexlify
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible import errors
-from ansible.module_utils import six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 
@@ -507,7 +504,7 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_password = b'hunter42'
         b_salt = os.urandom(32)
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_cryptography, six.binary_type)
+        self.assertIsInstance(b_key_cryptography, bytes)
 
     def test_create_key_known_cryptography(self):
         b_password = b'hunter42'
@@ -515,13 +512,13 @@ class TestVaultCipherAes256(unittest.TestCase):
         # A fixed salt
         b_salt = b'q' * 32  # q is the most random letter.
         b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_1, six.binary_type)
+        self.assertIsInstance(b_key_1, bytes)
 
         # verify we get the same answer
         # we could potentially run a few iterations of this and time it to see if it's roughly constant time
         #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
         b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_2, six.binary_type)
+        self.assertIsInstance(b_key_2, bytes)
         self.assertEqual(b_key_1, b_key_2)
 
     def test_is_equal_is_equal(self):
@@ -612,7 +609,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext)
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -621,7 +618,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id')
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.2;AES256;test_id\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -631,7 +628,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = to_bytes(u'Some text to encrypt in a café')
         b_vaulttext = self.v.encrypt(plaintext)
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)

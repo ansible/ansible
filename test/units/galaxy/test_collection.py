@@ -2,9 +2,7 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
@@ -25,7 +23,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.six.moves import builtins
+import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s

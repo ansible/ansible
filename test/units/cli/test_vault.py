@@ -16,14 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 

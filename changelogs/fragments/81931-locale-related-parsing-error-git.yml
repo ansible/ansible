@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix setting proper locale for git executable when running on non english systems, ensuring git output can always be parsed.

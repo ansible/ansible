@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -261,7 +260,7 @@ EXAMPLES = r'''
 
 - name: Download file from a file path
   ansible.builtin.get_url:
-    url: file:///tmp/afile.txt
+    url: file:///tmp/a_file.txt
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.

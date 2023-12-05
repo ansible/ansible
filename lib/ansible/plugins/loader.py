@@ -4,8 +4,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import os
@@ -15,6 +14,7 @@ import sys
 import warnings
 
 from collections import defaultdict, namedtuple
+from importlib import import_module
 from traceback import format_exc
 
 import ansible.module_utils.compat.typing as t
@@ -26,7 +26,6 @@ from ansible import __version__ as ansible_version
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
-from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -238,6 +237,10 @@ class PluginLoader:
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
+        try:
+            self._plugin_instance_cache = {} if self.type == 'vars' else None
+        except ValueError:
+            self._plugin_instance_cache = None
 
         self._searched_paths = set()
 
@@ -262,6 +265,7 @@ class PluginLoader:
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
+            self._plugin_instance_cache = {} if self.type == 'vars' else None
             self._searched_paths = set()
 
     def __setstate__(self, data):
@@ -866,23 +870,35 @@ class PluginLoader:
         collection_list = kwargs.pop('collection_list', None)
         if name in self.aliases:
             name = self.aliases[name]
+
+        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(name)):
+            # Resolving the FQCN is slow, even if we've passed in the resolved FQCN.
+            # Short-circuit here if we've previously resolved this name.
+            # This will need to be restricted if non-vars plugins start using the cache, since
+            # some non-fqcn plugin need to be resolved again with the collections list.
+            return get_with_context_result(*cached_load_result)
+
         plugin_load_context = self.find_plugin_with_context(name, collection_list=collection_list)
         if not plugin_load_context.resolved or not plugin_load_context.plugin_resolved_path:
             # FIXME: this is probably an error (eg removed plugin)
             return get_with_context_result(None, plugin_load_context)
 
         fq_name = plugin_load_context.resolved_fqcn
-        if '.' not in fq_name:
+        if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
-        name = plugin_load_context.plugin_resolved_name
+        resolved_type_name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
+        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(fq_name)):
+            # This is unused by vars plugins, but it's here in case the instance cache expands to other plugin types.
+            # We get here if we've seen this plugin before, but it wasn't called with the resolved FQCN.
+            return get_with_context_result(*cached_load_result)
         redirected_names = plugin_load_context.redirect_list or []
 
         if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source(name, path)
+            self._module_cache[path] = self._load_module_source(resolved_type_name, path)
             found_in_cache = False
 
-        self._load_config_defs(name, self._module_cache[path], path)
+        self._load_config_defs(resolved_type_name, self._module_cache[path], path)
 
         obj = getattr(self._module_cache[path], self.class_name)
 
@@ -899,24 +915,27 @@ class PluginLoader:
                 return get_with_context_result(None, plugin_load_context)
 
         # FIXME: update this to use the load context
-        self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+        self._display_plugin_load(self.class_name, resolved_type_name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
 
         if not class_only:
             try:
                 # A plugin may need to use its _load_name in __init__ (for example, to set
                 # or get options from config), so update the object before using the constructor
                 instance = object.__new__(obj)
-                self._update_object(instance, name, path, redirected_names, fq_name)
+                self._update_object(instance, resolved_type_name, path, redirected_names, fq_name)
                 obj.__init__(instance, *args, **kwargs)  # pylint: disable=unnecessary-dunder-call
                 obj = instance
             except TypeError as e:
                 if "abstract" in e.args[0]:
                     # Abstract Base Class or incomplete plugin, don't load
-                    display.v('Returning not found on "%s" as it has unimplemented abstract methods; %s' % (name, to_native(e)))
+                    display.v('Returning not found on "%s" as it has unimplemented abstract methods; %s' % (resolved_type_name, to_native(e)))
                     return get_with_context_result(None, plugin_load_context)
                 raise
 
-        self._update_object(obj, name, path, redirected_names, fq_name)
+        self._update_object(obj, resolved_type_name, path, redirected_names, fq_name)
+        if self._plugin_instance_cache is not None and getattr(obj, 'is_stateless', False):
+            # store under both the originally requested name and the resolved FQ name
+            self._plugin_instance_cache[name] = self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -986,26 +1005,45 @@ class PluginLoader:
 
         loaded_modules = set()
         for path in all_matches:
+
             name = os.path.splitext(path)[0]
             basename = os.path.basename(name)
+            is_j2 = isinstance(self, Jinja2Loader)
 
-            if basename in _PLUGIN_FILTERS[self.package]:
+            if is_j2:
+                ref_name = path
+            else:
+                ref_name = basename
+
+            if not is_j2 and basename in _PLUGIN_FILTERS[self.package]:
+                # j2 plugins get processed in own class, here they would just be container files
                 display.debug("'%s' skipped due to a defined plugin filter" % basename)
                 continue
 
             if basename == '__init__' or (basename == 'base' and self.package == 'ansible.plugins.cache'):
                 # cache has legacy 'base.py' file, which is wrapper for __init__.py
-                display.debug("'%s' skipped due to reserved name" % basename)
+                display.debug("'%s' skipped due to reserved name" % name)
                 continue
 
-            if dedupe and basename in loaded_modules:
-                display.debug("'%s' skipped as duplicate" % basename)
+            if dedupe and ref_name in loaded_modules:
+                # for j2 this is 'same file', other plugins it is basename
+                display.debug("'%s' skipped as duplicate" % ref_name)
                 continue
 
-            loaded_modules.add(basename)
+            loaded_modules.add(ref_name)
 
             if path_only:
                 yield path
+                continue
+
+            if path in legacy_excluding_builtin:
+                fqcn = basename
+            else:
+                fqcn = f"ansible.builtin.{basename}"
+
+            if self._plugin_instance_cache is not None and fqcn in self._plugin_instance_cache:
+                # Here just in case, but we don't call all() multiple times for vars plugins, so this should not be used.
+                yield self._plugin_instance_cache[basename][0]
                 continue
 
             if path not in self._module_cache:
@@ -1055,11 +1093,12 @@ class PluginLoader:
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
-            if path in legacy_excluding_builtin:
-                fqcn = basename
-            else:
-                fqcn = f"ansible.builtin.{basename}"
             self._update_object(obj, basename, path, resolved=fqcn)
+
+            if self._plugin_instance_cache is not None and fqcn not in self._plugin_instance_cache:
+                # Use get_with_context to cache the plugin the first time we see it.
+                self.get_with_context(fqcn)[0]
+
             yield obj
 
 
@@ -1173,24 +1212,22 @@ class Jinja2Loader(PluginLoader):
             # check deprecations
             deprecation_entry = routing_entry.get('deprecation')
             if deprecation_entry:
-                warning_text = deprecation_entry.get('warning_text')
+                warning_text = deprecation_entry.get('warning_text') or ''
                 removal_date = deprecation_entry.get('removal_date')
                 removal_version = deprecation_entry.get('removal_version')
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" is deprecated'.format(self.type, key)
+                warning_text = f'{self.type.title()} "{key}" has been deprecated.{" " if warning_text else ""}{warning_text}'
 
                 display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
 
             # check removal
             tombstone_entry = routing_entry.get('tombstone')
             if tombstone_entry:
-                warning_text = tombstone_entry.get('warning_text')
+                warning_text = tombstone_entry.get('warning_text') or ''
                 removal_date = tombstone_entry.get('removal_date')
                 removal_version = tombstone_entry.get('removal_version')
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" has been removed'.format(self.type, key)
+                warning_text = f'{self.type.title()} "{key}" has been removed.{" " if warning_text else ""}{warning_text}'
 
                 exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
                                                           collection_name=acr.collection, removed=True)
@@ -1240,7 +1277,7 @@ class Jinja2Loader(PluginLoader):
                     fq_name = '.'.join((parent_prefix, func_name))
                     src_name = f"ansible_collections.{acr.collection}.plugins.{self.type}.{acr.subdirs}.{func_name}"
                     # TODO: load  anyways into CACHE so we only match each at end of loop
-                    #       the files themseves should already be cached by base class caching of modules(python)
+                    #       the files themselves should already be cached by base class caching of modules(python)
                     if key in (func_name, fq_name):
                         plugin = self._plugin_wrapper_type(func)
                         if plugin:
@@ -1389,7 +1426,7 @@ def _load_plugin_filter():
             display.warning(u'The plugin filter file, {0} does not exist.'
                             u' Skipping.'.format(filter_cfg))
 
-    # Specialcase the stat module as Ansible can run very few things if stat is rejected
+    # Special case: the stat module as Ansible can run very few things if stat is rejected
     if 'stat' in filters['ansible.modules']:
         raise AnsibleError('The stat module was specified in the module reject list file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'

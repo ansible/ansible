@@ -1,10 +1,9 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 
-from units.compat.mock import Mock
-from units.compat import unittest
+from unittest.mock import Mock
+import unittest
 
 from ansible.modules.apt import (
     expand_pkgspec_from_fnmatches,

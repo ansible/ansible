@@ -65,7 +65,6 @@ class ContentConfig:
 
     modules: ModulesConfig
     python_versions: tuple[str, ...]
-    py2_support: bool
 
 
 class EnvironmentConfig(CommonConfig):

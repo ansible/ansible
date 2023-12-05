@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -180,7 +179,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.service import fail_if_missing
+from ansible.module_utils.service import fail_if_missing, is_systemd_managed
 from ansible.module_utils.six import PY2, b
 
 
@@ -485,24 +484,7 @@ class LinuxService(Service):
 
             # tools must be installed
             if location.get('systemctl', False):
-
-                # this should show if systemd is the boot init system
-                # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
-                for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
-                    if os.path.exists(canary):
-                        return True
-
-                # If all else fails, check if init is the systemd command, using comm as cmdline could be symlink
-                try:
-                    f = open('/proc/1/comm', 'r')
-                except IOError:
-                    # If comm doesn't exist, old kernel, no systemd
-                    return False
-
-                for line in f:
-                    if 'systemd' in line:
-                        return True
-
+                return is_systemd_managed(self.module)
             return False
 
         # Locate a tool to enable/disable a service

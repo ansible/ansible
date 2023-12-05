@@ -283,6 +283,11 @@ class Display(metaclass=Singleton):
         self.columns = None
         self.verbosity = verbosity
 
+        if C.LOG_VERBOSITY is None:
+            self.log_verbosity = verbosity
+        else:
+            self.log_verbosity = max(verbosity, C.LOG_VERBOSITY)
+
         # list of all deprecation messages to prevent duplicate display
         self._deprecations: dict[str, int] = {}
         self._warns: dict[str, int] = {}
@@ -412,7 +417,13 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            msg2 = nocolor.lstrip('\n')
+            self._log(nocolor, color)
+
+    @proxy_display
+    def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
+
+        if caplevel is None or self.log_verbosity > caplevel:
+            msg2 = msg.lstrip('\n')
 
             lvl = logging.INFO
             if color:
@@ -458,6 +469,11 @@ class Display(metaclass=Singleton):
                 self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
+        elif self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
+            # we send to log if log was configured with higher verbosity
+            if host is not None:
+                msg = "<%s> %s" % (host, msg)
+            self._log(msg, C.COLOR_VERBOSE, caplevel)
 
     def get_deprecation_message(
         self,

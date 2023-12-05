@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -94,7 +93,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.role_include import IncludeRole
     from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
-    from ansible.utils.plugin_docs import get_versioned_doclink
 
     if not isinstance(ds, list):
         raise AnsibleAssertionError('The ds (%s) should be a list but was a %s' % (ds, type(ds)))
@@ -258,7 +256,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     else:
                         task_list.extend(included_blocks)
                 else:
-                    t.is_static = False
                     task_list.append(t)
 
             elif action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES:

@@ -1,0 +1,2 @@
+minor_changes:
+  - "Add ``dump`` and ``passno`` mount information to facts component (https://github.com/ansible/ansible/issues/80478)"

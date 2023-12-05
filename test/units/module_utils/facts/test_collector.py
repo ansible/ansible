@@ -16,15 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from collections import defaultdict
 import pprint
 
 # for testing
-from units.compat import unittest
+import unittest
 
 from ansible.module_utils.facts import collector
 

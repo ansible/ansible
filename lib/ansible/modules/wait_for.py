@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -238,7 +237,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.compat.datetime import utcnow
 
 
@@ -585,17 +584,30 @@ def main():
                     if not b_compiled_search_re:
                         # nope, succeed!
                         break
+
                     try:
                         with open(b_path, 'rb') as f:
-                            with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
-                                search = b_compiled_search_re.search(mm)
+                            try:
+                                with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
+                                    search = b_compiled_search_re.search(mm)
+                                    if search:
+                                        if search.groupdict():
+                                            match_groupdict = search.groupdict()
+                                        if search.groups():
+                                            match_groups = search.groups()
+                                        break
+                            except (ValueError, OSError) as e:
+                                module.debug('wait_for failed to use mmap on "%s": %s. Falling back to file read().' % (path, to_native(e)))
+                                # cannot mmap this file, try normal read
+                                search = re.search(b_compiled_search_re, f.read())
                                 if search:
                                     if search.groupdict():
                                         match_groupdict = search.groupdict()
                                     if search.groups():
                                         match_groups = search.groups()
-
                                     break
+                            except Exception as e:
+                                module.warn('wait_for failed on "%s", unexpected exception(%s): %s.).' % (path, to_native(e.__class__), to_native(e)))
                     except IOError:
                         pass
             elif port:
