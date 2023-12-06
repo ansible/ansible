@@ -240,7 +240,9 @@ class Group:
     def remove_host(self, host):
         removed = False
         if host.name in self.host_names:
-            self.hosts.remove(host)
+            for hostob in self.hosts:
+                if hostob.name == host.name:
+                    self.hosts.remove(hostobj)
             self._hosts.remove(host.name)
             host.remove_group(self)
             self.clear_hosts_cache()
