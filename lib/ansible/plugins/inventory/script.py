@@ -35,7 +35,7 @@ EXAMPLES = r'''
 
 ### simple bash script
 
-   #! /bin/bash
+   #!/usr/bin/env bash
 
    if [ "$1" == "--list" ]; then
    cat<<EOF
@@ -43,7 +43,7 @@ EXAMPLES = r'''
      "bash_hosts": {
        "hosts": [
          "myhost.domain.com",
-         "myhost2,domain.com"
+         "myhost2.domain.com"
        ],
        "vars": {
          "host_test": "test-value"
@@ -73,7 +73,7 @@ EXAMPLES = r'''
 
 ### python example with ini config
 
-    !/usr/bin/env python
+    #!/usr/bin/env python
     """
     # ansible_inventory.py
     """
@@ -81,7 +81,7 @@ EXAMPLES = r'''
     import json
     import os.path
     import sys
-
+from configparser import ConfigParser
     from inventories.custom import MyInventoryAPI
 
     def load_config() -> ConfigParser:
@@ -101,7 +101,7 @@ EXAMPLES = r'''
         """
         found_data = list(MyInventoryAPI(namespace))
         hostvars = {}
-        data = { '_meta': { 'hostvars': {}},
+        data = { '_meta': { 'hostvars': {}},}
 
         groups = found_data['groups'].keys()
         for group in groups:
@@ -119,7 +119,6 @@ EXAMPLES = r'''
                 # set ansible_host if possible
                 if 'address' in found_data[name]:
                     data[name]['_meta']['ansible_host'] = found_data[name]['address']
-        }
         data['_meta']['hostvars'] = hostvars
 
         return json.dumps(data, indent=pretty)
@@ -135,7 +134,7 @@ EXAMPLES = r'''
 
         try:
             config = load_config()
-            namespace = config.get('defaults', 'namespace')
+            namespace = config.get('DEFAULT', 'namespace')
 
             args = arg_parser.parse_args()
             if args.host:
@@ -144,7 +143,7 @@ EXAMPLES = r'''
             elif len(args.list) >= 0:
                 print(get_api_data(namespace, args.pretty))
             else:
-                raise ValueError("Valid options are -- list or --host <HOSTNAME>")
+                raise ValueError("Valid options are --list or --host <HOSTNAME>")
 
         except ValueError:
             raise
