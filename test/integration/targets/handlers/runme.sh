@@ -69,6 +69,9 @@ done
 # Notify handler listen
 ansible-playbook test_handlers_listen.yml -i inventory.handlers -v "$@"
 
+# https://github.com/ansible/ansible/issues/82363
+ansible-playbook test_multiple_handlers_with_recursive_notification.yml -i inventory.handlers -v "$@"
+
 # Notify inexistent handlers results in error
 set +e
 result="$(ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers "$@" 2>&1)"

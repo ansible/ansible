@@ -656,7 +656,9 @@ class StrategyBase:
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
+                            found_handler = False
                             for handler in self.search_handlers_by_notification(notification, iterator):
+                                found_handler = True
                                 if host_state.run_state == IteratingStates.HANDLERS:
                                     # we're currently iterating handlers, so we need to expand this now
                                     if handler.notify_host(original_host):
@@ -666,8 +668,8 @@ class StrategyBase:
                                 else:
                                     iterator.add_notification(original_host.name, notification)
                                     display.vv(f"Notification for handler {notification} has been saved.")
-                                break
-                            else:
+                                    break
+                            if not found_handler:
                                 msg = (
                                     f"The requested handler '{notification}' was not found in either the main handlers"
                                     " list nor in the listening handlers list"
