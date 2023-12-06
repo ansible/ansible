@@ -1,0 +1,2 @@
+bugfixes:
+  - check if there are attributes to set before attempting to set them (https://github.com/ansible/ansible/issues/76727)
