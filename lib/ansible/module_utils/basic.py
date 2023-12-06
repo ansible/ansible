@@ -958,7 +958,7 @@ class AnsibleModule(object):
             attr_mod = attributes[0]
             attributes = attributes[1:]
 
-        if existing.get('attr_flags', '') != attributes or attr_mod == '-':
+        if attributes and (existing.get('attr_flags', '') != attributes or attr_mod == '-'):
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
                 attrcmd = [attrcmd, '%s%s' % (attr_mod, attributes), b_path]
