@@ -42,8 +42,21 @@
   block:
   - name: trustme -- provision a venv
     command: >-
-      {{ ansible_python_interpreter }} -Im venv
+      {{ ansible_python_interpreter }}
+      -{% if ansible_python.version.major != 2 %}I{% endif %}m
+      {% if ansible_python.version.major != 2 %}venv{%
+         else %}virtualenv{% endif %}
+
       {{ venv_path }}
+  - name: trustme -- upgrade pip in venv | RHEL 7.9 & 8.8+py36
+    when: >-  # these don't know how to notice `cryptography` wheels
+      ansible_distribution == 'RedHat'
+      and ansible_distribution_major_version | int < 9
+    pip:
+      name: pip
+      state: latest
+      virtualenv: >-
+        {{ venv_path }}
   - name: trustme -- install tool
     pip:
       name: trustme
@@ -54,16 +67,18 @@
       argv:
       - >-
         {{ venv_python }}
-      - -Im
+      - -{%- if ansible_python.version.major != 2 -%}I{%- endif -%}m
       - trustme
       - --dir={{ subversion_server_dir }}
 
 - name: symlink trustme certificates into apache config dir - Red Hat
   when: ansible_os_family in ['RedHat']
+  # when: ansible_distribution in ['Fedora', 'RedHat']
   file:
     src: /tmp/ansible-svn/server.{{ item.trustme_filetype }}
     dest: /etc/pki/tls/{{ item.apache_target_path }}
     state: link
+    force: yes  # Othewise Apache on CentOS 7 uses its own fake certificate
   loop:
   - apache_target_path: certs/localhost.crt
     trustme_filetype: pem
