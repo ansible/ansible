@@ -71,6 +71,9 @@ class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
     def _strip_unsafe(self):
         return super().__bytes__()
 
+    def __reduce__(self, /):
+        return (self.__class__, (self._strip_unsafe(),))
+
     def __str__(self, /):  # pylint: disable=invalid-str-returned
         return self.decode()
 
@@ -84,11 +87,9 @@ class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
         return AnsibleUnsafeText(super().__format__(format_spec))
 
     def __getitem__(self, key, /):
+        if isinstance(key, int):
+            return super().__getitem__(key)
         return self.__class__(super().__getitem__(key))
-
-    def __iter__(self, /):
-        cls = self.__class__
-        return (cls(c) for c in super().__iter__())
 
     def __reversed__(self, /):
         return self[::-1]
@@ -191,6 +192,9 @@ class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
 class AnsibleUnsafeText(str, AnsibleUnsafe):
     def _strip_unsafe(self, /):
         return super().__str__()
+
+    def __reduce__(self, /):
+        return (self.__class__, (self._strip_unsafe(),))
 
     def __str__(self, /):  # pylint: disable=invalid-str-returned
         return self
