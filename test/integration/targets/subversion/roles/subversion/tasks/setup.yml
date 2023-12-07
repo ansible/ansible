@@ -57,18 +57,48 @@
       state: latest
       virtualenv: >-
         {{ venv_path }}
-  - name: trustme -- install tool
+  - name: trustme -- upgrade pip in venv | CentOS 6
+    when: >-  # these don't know how to notice `cryptography` wheels
+      ansible_distribution == 'CentOS'
+      and ansible_distribution_major_version | int < 7
     pip:
-      name: trustme
+      name: pip==9.0.3
+      state: latest
       virtualenv: >-
         {{ venv_path }}
+  - name: trustme -- install tool
+    pip:
+      name:
+      - trustme
+
+      # Transitive deps supporting Python 2.6:
+      - argparse == 1.4.0; python_version == "2.6"
+      - cryptography == 2.1.1; python_version == "2.6"
+      - idna == 2.7; python_version == "2.6"
+      virtualenv: >-
+        {{ venv_path }}
+  - name: trustme -- make compatible with Python 2.6
+    when: >-
+      ansible_python.version.major == 2 and
+      ansible_python.version.minor == 6
+    command:
+      argv:
+      - sed
+      - -i
+      - >-
+        {% raw %}s#{#{0#g{% endraw %}
+      - >-
+        {{ venv_path }}/lib/python2.6/site-packages/trustme/{{ item }}.py
+    loop:
+    - __init__
+    - _cli
   - name: trustme -- generate CA and TLS certs
     command:
       argv:
       - >-
         {{ venv_python }}
       - -{%- if ansible_python.version.major != 2 -%}I{%- endif -%}m
-      - trustme
+      - trustme.__main__
       - --dir={{ subversion_server_dir }}
 
 - name: symlink trustme certificates into apache config dir - Red Hat
