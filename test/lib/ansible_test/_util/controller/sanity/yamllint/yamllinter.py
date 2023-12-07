@@ -164,6 +164,7 @@ class YamlChecker:
         """Return the module documentation for the given module contents."""
         module_doc_types = [
             'DOCUMENTATION',
+            'EXAMPLES',
             'RETURN',
         ]
 

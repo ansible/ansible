@@ -31,7 +31,7 @@ DOCUMENTATION = '''
         - To find the scripts that used to be part of the code release, go to U(https://github.com/ansible-community/contrib-scripts/).
 '''
 
-EXAMPLES = r'''
+EXAMPLES = r'''#fmt: code
 
 ### simple bash script
 
