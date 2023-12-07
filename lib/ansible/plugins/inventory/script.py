@@ -81,7 +81,7 @@ EXAMPLES = r'''
     import json
     import os.path
     import sys
-from configparser import ConfigParser
+    from configparser import ConfigParser
     from inventories.custom import MyInventoryAPI
 
     def load_config() -> ConfigParser:
