@@ -54,7 +54,7 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.native_jinja import NativeJinjaText
-from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
+from ansible.utils.unsafe_proxy import to_unsafe_text, to_text, wrap_var
 
 display = Display()
 
@@ -85,12 +85,12 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
         template_uid = os.stat(b_path).st_uid
 
     temp_vars = {
-        'template_host': to_text(os.uname()[1]),
-        'template_path': path,
-        'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
-        'template_uid': to_text(template_uid),
-        'template_run_date': datetime.datetime.now(),
-        'template_destpath': to_native(dest_path) if dest_path else None,
+        'template_host': to_unsafe_text(os.uname()[1]),
+        'template_path': to_unsafe_text(path),
+        'template_mtime': to_unsafe_text(datetime.datetime.fromtimestamp(os.path.getmtime(b_path))),
+        'template_uid': to_unsafe_text(template_uid),
+        'template_run_date': to_unsafe_text(datetime.datetime.now()),
+        'template_destpath': to_unsafe_text(dest_path) if dest_path else None,
     }
 
     if fullpath is None:
@@ -104,7 +104,7 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
         uid=temp_vars['template_uid'],
         file=temp_vars['template_path'].replace('%', '%%'),
     )
-    temp_vars['ansible_managed'] = to_unsafe_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
+    temp_vars['ansible_managed'] = to_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
 
     return temp_vars
 
