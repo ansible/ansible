@@ -50,8 +50,7 @@ class InventoryCLI(CLI):
 
     name = 'ansible-inventory'
 
-    ARGUMENTS = {'host': 'The name of a host to match in the inventory, relevant when using --list',
-                 'group': 'The name of a group in the inventory, relevant when using --graph', }
+    ARGUMENTS = {'group': 'The name of a group in the inventory, relevant when using --graph', }
 
     def __init__(self, args):
 
@@ -62,7 +61,7 @@ class InventoryCLI(CLI):
 
     def init_parser(self):
         super(InventoryCLI, self).init_parser(
-            usage='usage: %prog [options] [host|group]',
+            usage='usage: %prog [options] [group]',
             desc='Show Ansible inventory information, by default it uses the inventory script JSON format')
 
         opt_help.add_inventory_options(self.parser)
@@ -73,7 +72,7 @@ class InventoryCLI(CLI):
         # remove unused default options
         self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
-        self.parser.add_argument('args', metavar='host|group', nargs='?')
+        self.parser.add_argument('args', metavar='group', nargs='?', help='The name of a group in the inventory, relevant when using --graph')
 
         # Actions
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
