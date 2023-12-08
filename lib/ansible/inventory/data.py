@@ -238,6 +238,7 @@ class InventoryData(object):
             # match on host name/inventory_hostname is unique id
             if hostobj.name == host.name:
                 del self.hosts[hostobj]
+                break
 
         for group in self.groups:
             g = self.groups[group]

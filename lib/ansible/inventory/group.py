@@ -243,6 +243,7 @@ class Group:
             for hostobj in self.hosts:
                 if hostobj.name == host.name:
                     self.hosts.remove(hostobj)
+                    break
             self._hosts.remove(host.name)
             host.remove_group(self)
             self.clear_hosts_cache()
