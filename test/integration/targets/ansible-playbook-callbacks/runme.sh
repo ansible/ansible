@@ -14,8 +14,11 @@ for testcase in */; do
         if [[ -f env-vars ]]; then
             source env-vars
         fi
-        ansible-playbook test.yml 2>/dev/null | sort | uniq -c | tee callbacks_list.out
-    )
+        set +e
+        ansible-playbook test.yml 2>/dev/null
+        echo $? > exit_code.out
+    ) | sort | uniq -c | tee callbacks_list.out
+    diff -w exit_code.out exit_code.expected
     diff -w callbacks_list.out callbacks_list.expected
     popd
 done
