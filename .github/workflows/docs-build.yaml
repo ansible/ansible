@@ -1,0 +1,50 @@
+# Copyright (C) 2023 Maxwell G <maxwell@gtmx.me>
+# SPDX-License-Identifier: GPL-3.0-or-later
+# GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+name: Run docs-build checkers
+"on":
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checkers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ansible-core
+        uses: actions/checkout@v4
+        with:
+          path: ansible
+      - name: Determine ansible-core branch
+        id: core-branch
+        run: |
+          cd ansible
+          branch="$(cat docs/ansible-core-branch.txt)"
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+      - name: Checkout ansible-docs
+        uses: actions/checkout@v4
+        with:
+          repository: ansible/ansible-documentation
+          path: ansible-documentation
+          ref: "${{ steps.core-branch.outputs.branch }}"
+      - name: "Set up Python 3.11"
+        uses: actions/setup-python@v4
+        id: python
+        with:
+          python-version: "3.11"
+      - name: Install nox
+        run: |
+          pipx install --python "${{ steps.python.outputs.python-path }}" nox
+      - name: Clone core
+        run: |
+          core_path="$(readlink -f ansible)"
+          cd ansible-documentation
+          # Copy the files from the current checked out branch of ansible-core
+          python docs/bin/clone-core.py --no-branch --repo="file://${core_path}"
+      - name: Run docs-build checker
+        run: |
+          cd ansible-documentation
+          nox -e "checkers(docs-build)"
