@@ -34,6 +34,16 @@ DOCUMENTATION:
 
 EXAMPLES: |
 
+    # ab => {'a':1, 'b':3, 'c': 4}
+    ab: {{ {'a':1, 'b':2} | ansible.builtin.combine({'b':3, 'c':4}) }}
+
+    many: "{{ dict1 | ansible.builtin.combine(dict2, dict3, dict4) }}"
+
+    # defaults => {'a':{'b':3, 'c':4}, 'd': 5}
+    # customization => {'a':{'c':20}}
+    # final => {'a':{'b':3, 'c':20}, 'd': 5}
+    final: "{{ defaults | ansible.builtin.combine(customization, recursive=true) }}"
+
     ab:
       a: 1
       b: 2
@@ -42,9 +52,18 @@ EXAMPLES: |
       b: 3
       c: 4
 
+    # { 'a': 1, 'b': 3, 'c': 4 }
+    combine_ab_bc: "{{ ab | ansible.builtin.combine(bc) }}"
+
     cd:
       c: 5
       d: 6
+
+    # { 'a': 1, 'b': 3, 'c': 5, 'd': 6 }
+    combine_ab_bc_cd: "{{ ab | ansible.builtin.combine(bc, cd) }}"
+
+    # { 'a': 1, 'b': 3, 'c': 5, 'd': 6 }
+    list_combine_ab_bc_cd: "{{ [ab, bc, cd] | ansible.builtin.combine }}"
 
     defaults:
       a:
@@ -57,21 +76,6 @@ EXAMPLES: |
         c: 20
       d: 30
 
-    foo_with_list:
-      a: [1, 20]
-
-    bar_with_list:
-      a: [20]
-
-    # { 'a': 1, 'b': 3, 'c': 4 }
-    combine_ab_bc: "{{ ab | ansible.builtin.combine(bc) }}"
-
-    # { 'a': 1, 'b': 3, 'c': 5, 'd': 6 }
-    combine_ab_bc_cd: "{{ ab | ansible.builtin.combine(bc, cd) }}"
-
-    # { 'a': 1, 'b': 3, 'c': 5, 'd': 6 }
-    list_combine_ab_bc_cd: "{{ [ab, bc, cd] | ansible.builtin.combine }}"
-
     # { 'a': { 'c': 20 }, 'd': 30 }
     # :recursive=false: (which is the default) defaults' 'a' is replaced with customization's 'a'
     defaults_with_customization: "{{ defaults | ansible.builtin.combine(customization) }}"
@@ -79,6 +83,12 @@ EXAMPLES: |
     # { 'a': { 'b': 3, 'c': 20 }, 'd': 30 }
     # recursive=true: defaults' 'a' is updated with customization's 'a', i.e., 'b' is untouched and 'c' is updated from 4 to 20
     defaults_with_customization_recursive_true: "{{ defaults | ansible.builtin.combine(customization, recursive=true) }}"
+
+    foo_with_list:
+      a: [1, 20]
+
+    bar_with_list:
+      a: [20]
 
     # { 'a': [ 20 ] }
     list_merge_replace: "{{ foo_with_list | ansible.builtin.combine(bar_with_list, list_merge='replace') }}"
