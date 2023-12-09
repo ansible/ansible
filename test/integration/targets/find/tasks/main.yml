@@ -124,6 +124,7 @@
   with_items:
       - a.txt
       - log.txt
+      - hello_world.txt
 
 - name: Ensure '$' only matches the true end of the file with read_whole_file, not a line
   find:
@@ -194,6 +195,55 @@
 - assert:
       that:
           - no_match_line_boundaries.matched == 0
+
+- block:
+    - name: When python version great than 3 and read a gbk file by utf-8
+      find:
+        paths: "{{ remote_tmp_dir_test }}"
+        patterns: "*.gbk"
+        contains: "你好世界"
+      register: fail_to_read_wrong_encoding_file
+
+    - debug: var=fail_to_read_wrong_encoding_file
+
+    - assert:
+        that:
+            - fail_to_read_wrong_encoding_file.msg == 'Not all paths examined, check warnings for details'
+            - >-
+                fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
+                ("Failed to read the file %s/hello_world.gbk due to an encoding error. current encoding: utf-8" % (remote_tmp_dir_test))
+
+    - name: When python version great than 3 and read a gbk file by gbk
+      find:
+        paths: "{{ remote_tmp_dir_test }}"
+        encoding: "gbk"
+        patterns: "*.gbk"
+        contains: "你好世界"
+      register: success_to_read_right_encoding_file
+
+    - debug: var=success_to_read_right_encoding_file
+
+    - assert:
+        that:
+            - success_to_read_right_encoding_file.matched == 1
+
+    - name: When python version great than 3 and read a gbk file by gbk
+      find:
+        paths: "{{ remote_tmp_dir_test }}"
+        encoding: "idontexist"
+        patterns: "*.gbk"
+        contains: "你好世界"
+      register: fail_to_search_file_by_non_exists_encoding
+
+    - debug: var=fail_to_search_file_by_non_exists_encoding
+
+    - assert:
+        that:
+            - >-
+                fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
+                "unknown encoding: idontexist"
+
+  when: ansible_python_version is version('3' '>')
 
 - block:
     - set_fact:

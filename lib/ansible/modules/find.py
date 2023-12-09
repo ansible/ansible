@@ -371,6 +371,11 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
                 if prog.match(line):
                     return True
 
+    except LookupError as e:
+        raise e
+    except UnicodeDecodeError:
+        msg = 'Failed to read the file {} due to an encoding error. current encoding: {}'.format(fsname, encoding)
+        raise Exception(msg)
     except Exception:
         pass
 
