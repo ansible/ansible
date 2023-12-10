@@ -124,6 +124,7 @@
   with_items:
       - a.txt
       - log.txt
+      - hello_world.gbk
 
 - name: Ensure '$' only matches the true end of the file with read_whole_file, not a line
   find:
