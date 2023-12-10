@@ -211,7 +211,7 @@
           - >-
               fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
               ("Failed to read the file %s/hello_world.gbk due to an encoding error. current encoding: utf-8" % (remote_tmp_dir_test))
-  when: ansible_python_version is version('3' '>')
+  when: ansible_python_version is version('3.0', '>=')
 
 - name: When python version great than 3 and read a gbk file by gbk
   find:
@@ -226,8 +226,9 @@
 - assert:
       that:
           - success_to_read_right_encoding_file.matched == 1
+  when: ansible_python_version is version('3.0', '>=')
 
-- name: When python version great than 3 and read a gbk file by gbk
+- name: When python version great than 3 and read a gbk file by non-exists encoding
   find:
     paths: "{{ remote_tmp_dir_test }}"
     encoding: "idontexist"
@@ -239,11 +240,8 @@
 
 - assert:
       that:
-          - >-
-              fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
-              "unknown encoding: idontexist"
-  when: ansible_python_version is version('3' '>')
-
+          - fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"
+  when: ansible_python_version is version('3.0', '>=')
 
 - block:
     - set_fact:
@@ -271,8 +269,8 @@
 
     - assert:
         that:
-          - total_contents.matched == 18
-          - total_contents.examined == 18
+          - total_contents.matched == 19
+          - total_contents.examined == 19
 
     - name: Get files and directories with depth
       find:
@@ -284,10 +282,10 @@
 
     - assert:
         that:
-          - contents_with_depth.matched == 8
+          - contents_with_depth.matched == 9
           # dir contents are considered until the depth exceeds the requested depth
           # there are 8 files/directories in the requested depth and 4 that exceed it by 1
-          - contents_with_depth.examined == 12
+          - contents_with_depth.examined == 13
 
     - name: Find files with depth
       find:
@@ -298,10 +296,10 @@
 
     - assert:
         that:
-          - files_with_depth.matched == 4
+          - files_with_depth.matched == 5
           # dir contents are considered until the depth exceeds the requested depth
           # there are 8 files/directories in the requested depth and 4 that exceed it by 1
-          - files_with_depth.examined == 12
+          - files_with_depth.examined == 13
 
 - name: exclude with regex
   find:
