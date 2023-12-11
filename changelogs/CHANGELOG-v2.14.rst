@@ -5,6 +5,28 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
+v2.14.13
+========
+
+Release Summary
+---------------
+
+| Release Date: 2023-12-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add FreeBSD 13.2 remote.
+- ansible-test - Removed `freebsd/13.1` remote.
+
+Bugfixes
+--------
+
+- unsafe data - Address an incompatibility when iterating or getting a single index from ``AnsibleUnsafeBytes``
+- unsafe data - Address an incompatibility with ``AnsibleUnsafeText`` and ``AnsibleUnsafeBytes`` when pickling with ``protocol=0``
+
 v2.14.12
 ========
 
