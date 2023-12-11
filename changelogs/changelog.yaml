@@ -822,3 +822,20 @@ releases:
     - restore_role_param_precedence.yml
     - wait_for_mmap.yml
     release_date: '2023-11-27'
+  2.16.2:
+    changes:
+      bugfixes:
+      - unsafe data - Address an incompatibility when iterating or getting a single
+        index from ``AnsibleUnsafeBytes``
+      - unsafe data - Address an incompatibility with ``AnsibleUnsafeText`` and ``AnsibleUnsafeBytes``
+        when pickling with ``protocol=0``
+      release_summary: '| Release Date: 2023-12-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.2_summary.yaml
+    - unsafe-fixes-2.yml
+    release_date: '2023-12-11'
