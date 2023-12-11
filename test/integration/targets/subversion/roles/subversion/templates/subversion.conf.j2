@@ -19,6 +19,7 @@ LogFormat "%h %l %u %t \"%r\" %>s %O" common
 LogFormat "%{Referer}i -> %U" referer
 LogFormat "%{User-agent}i" agent
 
+Include mods-available/ssl.load
 IncludeOptional mods-enabled/*.load
 IncludeOptional mods-enabled/*.conf
 IncludeOptional conf-enabled/*.conf
@@ -32,6 +33,7 @@ IncludeOptional sites-enabled/*conf
 
 {% elif ansible_os_family == "FreeBSD" %}
 Include /usr/local/etc/apache24/httpd.conf
+LoadModule ssl_module        libexec/apache24/mod_ssl.so
 LoadModule dav_module        libexec/apache24/mod_dav.so
 LoadModule dav_svn_module    libexec/apache24/mod_dav_svn.so
 LoadModule authz_svn_module  libexec/apache24/mod_authz_svn.so
@@ -48,7 +50,14 @@ Include /etc/httpd/conf/httpd.conf
 {% endif %}
 
 PidFile {{ subversion_server_dir }}/apache.pid
-Listen 127.0.0.1:{{ apache_port }}
+Listen 127.0.0.1:{{ apache_port }} https
+{% if ansible_distribution not in ["Alpine", "CentOS", "Fedora", "openSUSE Leap", "Ubuntu"] %}
+Listen [::1]:{{ apache_port }} https
+{% endif %}
+SSLEngine on
+SSLCertificateFile	{{ subversion_server_dir }}/server.pem
+SSLCertificateKeyFile {{ subversion_server_dir }}/server.key
+SSLCertificateChainFile {{ subversion_server_dir }}/server.pem
 ErrorLog {{ subversion_server_dir }}/apache2-error.log
 
 <Location /svn>
