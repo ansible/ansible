@@ -1791,6 +1791,7 @@ class GalaxyCLI(CLI):
         github_user = to_text(context.CLIARGS['github_user'], errors='surrogate_or_strict')
         github_repo = to_text(context.CLIARGS['github_repo'], errors='surrogate_or_strict')
 
+        rc = 0
         if context.CLIARGS['check_status']:
             task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
         else:
@@ -1808,7 +1809,7 @@ class GalaxyCLI(CLI):
                     display.display('%s.%s' % (t['summary_fields']['role']['namespace'], t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
                 display.display(u'\nTo properly namespace this role, remove each of the above and re-import %s/%s from scratch' % (github_user, github_repo),
                                 color=C.COLOR_CHANGED)
-                return 0
+                return rc
             # found a single role as expected
             display.display("Successfully submitted import request %d" % task[0]['id'])
             if not context.CLIARGS['wait']:
@@ -1825,12 +1826,13 @@ class GalaxyCLI(CLI):
                     if msg['id'] not in msg_list:
                         display.display(msg['message_text'], color=colors[msg['message_type']])
                         msg_list.append(msg['id'])
-                if task[0]['state'] in ['SUCCESS', 'FAILED']:
+                if (state := task[0]['state']) in ['SUCCESS', 'FAILED']:
+                    rc = ['SUCCESS', 'FAILED'].index(state)
                     finished = True
                 else:
                     time.sleep(10)
 
-        return 0
+        return rc
 
     def execute_setup(self):
         """ Setup an integration from Github or Travis for Ansible Galaxy roles"""
