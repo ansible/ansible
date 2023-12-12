@@ -525,9 +525,10 @@ class Display(metaclass=Singleton):
         removed: bool = False,
         date: str | None = None,
         collection_name: str | None = None,
-    ) -> None | str:
+    ) -> str:
+
         if not removed and not C.DEPRECATION_WARNINGS:
-            return
+            return ''
 
         message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
@@ -540,6 +541,8 @@ class Display(metaclass=Singleton):
         if message_text not in self._deprecations:
             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
+
+        return ''
 
     @proxy_display
     def warning(self, msg: str, formatted: bool = False) -> None:
