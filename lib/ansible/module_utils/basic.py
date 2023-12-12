@@ -1296,8 +1296,6 @@ class AnsibleModule(object):
             # ensure we clean up secrets!
             journal_msg = remove_values(journal_msg, self.no_log_values)
 
-            syslog_msg = journal_msg
-
             if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
                 for arg in log_args:
@@ -1327,9 +1325,9 @@ class AnsibleModule(object):
                                      **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(syslog_msg)
+                    self._log_to_syslog(journal_msg)
             else:
-                self._log_to_syslog(syslog_msg)
+                self._log_to_syslog(journal_msg)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1892,8 +1890,6 @@ class AnsibleModule(object):
         else:
             # ensure args are a list
             if isinstance(args, (binary_type, text_type)):
-                # On python2.6 and below, shlex has problems with text type
-                # On python3, shlex needs a text type.
                 args = shlex.split(to_text(args, errors='surrogateescape'))
 
             # expand ``~`` in paths, and all environment vars
