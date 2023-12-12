@@ -99,13 +99,13 @@ class TestConfigManager:
         assert os.path.join(os.getcwd(), 'test.yml') == resolve_path('./test.yml')
 
     def test_value_and_origin_from_ini(self):
-        assert self.manager.get_config_value_and_origin('config_entry') == ('fromini', cfg_file)
+        assert self.manager.get_config_value_and_origin('config_entry') == ('fromini', 'ini: %s' % cfg_file)
 
     def test_value_from_ini(self):
         assert self.manager.get_config_value('config_entry') == 'fromini'
 
     def test_value_and_origin_from_alt_ini(self):
-        assert self.manager.get_config_value_and_origin('config_entry', cfile=cfg_file2) == ('fromini2', cfg_file2)
+        assert self.manager.get_config_value_and_origin('config_entry', cfile=cfg_file2) == ('fromini2', 'ini: %s' % cfg_file2)
 
     def test_value_from_alt_ini(self):
         assert self.manager.get_config_value('config_entry', cfile=cfg_file2) == 'fromini2'
