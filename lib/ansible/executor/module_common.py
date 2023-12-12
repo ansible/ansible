@@ -700,7 +700,10 @@ class ModuleUtilLocatorBase:
             else:
                 msg += '.'
 
-            display.deprecated(msg, removal_version, removed, removal_date, self._collection_name)
+            removed_msg = display.deprecated(msg, removal_version, removed, removal_date, self._collection_name)
+            if removed_msg:
+                raise AnsibleError(removed_msg)
+
         if 'redirect' in routing_entry:
             self.redirected = True
             source_pkg = '.'.join(name_parts)
