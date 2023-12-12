@@ -577,17 +577,17 @@ class Display(metaclass=Singleton):
         removed: bool = False,
         date: str | None = None,
         collection_name: str | None = None,
-    ) -> None:
+    ) -> None | str:
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
         message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
-        if removed:
-            raise AnsibleError(message_text)
-
         wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
         message_text = "\n".join(wrapped) + "\n"
+
+        if removed:
+            return message_text
 
         if message_text not in self._deprecations:
             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
