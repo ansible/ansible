@@ -64,12 +64,12 @@ ensure_test_data = [
 ]
 
 ensure_unquoting_test_data = [
-    ('"value"', '"value"', 'str', 'env'),
-    ('"value"', '"value"', 'str', 'yaml'),
-    ('"value"', 'value', 'str', 'ini'),
-    ('\'value\'', 'value', 'str', 'ini'),
-    ('\'\'value\'\'', '\'value\'', 'str', 'ini'),
-    ('""value""', '"value"', 'str', 'ini')
+    ('"value"', '"value"', 'str', 'env: wunderbar'),
+    ('"value"', '"value"', 'str', 'yaml: /etc/hosts'),
+    ('"value"', 'value', 'str', 'ini: /etc/hosts'),
+    ('\'value\'', 'value', 'str', 'ini: /etc/hosts'),
+    ('\'\'value\'\'', '\'value\'', 'str', 'ini: /etc/hosts'),
+    ('""value""', '"value"', 'str', 'ini: /etc/hosts')
 ]
 
 

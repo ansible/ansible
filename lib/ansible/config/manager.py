@@ -73,7 +73,7 @@ def ensure_type(value, value_type, origin=None):
     errmsg = ''
     basedir = None
     if origin is not None and origin.startswith('ini :'):
-        origin_file = origin.replace('ini : ','')
+        origin_file = origin.replace('ini : ', '')
         if os.path.isabs(origin_file) and os.path.exists(to_bytes(origin_file)):
             basedir = origin_file
 
