@@ -166,12 +166,18 @@ def _run_module(wrapped_cmd, jid):
         interpreter = _get_interpreter(cmd[0])
         if interpreter:
             cmd = interpreter + cmd
-        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+        script = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            text=True,
+            encoding="utf-8",
+            errors="surrogateescape",
+        )
 
         (outdata, stderr) = script.communicate()
-        outdata = outdata.decode('utf-8', 'surrogateescape')
-        stderr = stderr.decode('utf-8', 'surrogateescape')
 
         (filtered_outdata, json_warnings) = _filter_non_json_lines(outdata)
 

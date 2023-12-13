@@ -704,16 +704,17 @@ def main():
                             raise
 
                 # might be needed below
-                try:
-                    src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
-                except Exception as e:
-                    # assume unwanted ACLs by default
-                    src_has_acls = True
+                if hasattr(os, 'listxattr'):
+                    try:
+                        src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
+                    except Exception as e:
+                        # assume unwanted ACLs by default
+                        src_has_acls = True
 
                 # at this point we should always have tmp file
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
 
-                if platform.system() == 'Linux' and not remote_src:
+                if hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
                     # atomic_move used above to copy src into dest might, in some cases,
                     # use shutil.copy2 which in turn uses shutil.copystat.
                     # Since Python 3.3, shutil.copystat copies file extended attributes:

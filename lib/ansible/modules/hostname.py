@@ -542,7 +542,7 @@ class DarwinStrategy(BaseStrategy):
         name = to_text(name)
         replace_chars = u'\'"~`!@#$%^&*(){}[]/=?+\\|-_ '
         delete_chars = u".'"
-        table = str.maketrans(replace_chars, u'-' * len(replace_chars), delete_chars)
+        table = str.maketrans(replace_chars, '-' * len(replace_chars), delete_chars)
         name = name.translate(table)
 
         # Replace multiple dashes with a single dash
