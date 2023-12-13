@@ -55,6 +55,7 @@ from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
@@ -658,6 +659,7 @@ class StrategyBase:
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
+                            handler = Sentinel
                             for handler in self.search_handlers_by_notification(notification, iterator):
                                 if host_state.run_state == IteratingStates.HANDLERS:
                                     # we're currently iterating handlers, so we need to expand this now
@@ -668,8 +670,8 @@ class StrategyBase:
                                 else:
                                     iterator.add_notification(original_host.name, notification)
                                     display.vv(f"Notification for handler {notification} has been saved.")
-                                break
-                            else:
+                                    break
+                            if handler is Sentinel:
                                 msg = (
                                     f"The requested handler '{notification}' was not found in either the main handlers"
                                     " list nor in the listening handlers list"
