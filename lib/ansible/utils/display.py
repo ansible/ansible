@@ -47,7 +47,7 @@ from functools import wraps
 from struct import unpack, pack
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
+from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
