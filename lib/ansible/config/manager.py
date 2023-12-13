@@ -72,8 +72,10 @@ def ensure_type(value, value_type, origin=None):
 
     errmsg = ''
     basedir = None
-    if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
-        basedir = origin
+    if origin is not None and origin.startswith('ini :'):
+        origin_file = origin.replace('ini : ','')
+        if os.path.isabs(origin_file) and os.path.exists(to_bytes(origin_file)):
+            basedir = origin_file
 
     if value_type:
         value_type = value_type.lower()
@@ -143,7 +145,7 @@ def ensure_type(value, value_type, origin=None):
         elif value_type in ('str', 'string'):
             if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode, bool, int, float, complex)):
                 value = to_text(value, errors='surrogate_or_strict')
-                if origin.startswith('ini: '):
+                if basedir:
                     value = unquote(value)
             else:
                 errmsg = 'string'
@@ -151,7 +153,7 @@ def ensure_type(value, value_type, origin=None):
         # defaults to string type
         elif isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
             value = to_text(value, errors='surrogate_or_strict')
-            if origin == 'ini':
+            if basedir:
                 value = unquote(value)
 
         if errmsg:
