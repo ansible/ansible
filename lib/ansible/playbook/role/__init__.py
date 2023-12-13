@@ -121,7 +121,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._play = play
         self._parents = []
         self._dependencies = []
-        self._all_dependencies = []
+        self._all_dependencies = None
         self._task_blocks = []
         self._handler_blocks = []
         self._compiled_handler_blocks = None
@@ -537,8 +537,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns a list of all deps, built recursively from all child dependencies,
         in the proper order in which they should be executed or evaluated.
         '''
-        if not self._all_dependencies:
+        if self._all_dependencies is None:
 
+            self._all_dependencies = []
             for dep in self.get_direct_dependencies():
                 for child_dep in dep.get_all_dependencies():
                     self._all_dependencies.append(child_dep)
