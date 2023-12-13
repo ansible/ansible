@@ -153,6 +153,8 @@ from ansible.module_utils.common.parameters import (
 
 from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
 from ansible.module_utils.six import (
+    PY2,
+    PY3,
     b,
     binary_type,
     integer_types,
