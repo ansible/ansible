@@ -1,0 +1,2 @@
+bugfixes:
+  - Run all handlers with the same ``listen`` topic, even when notified from another handler (https://github.com/ansible/ansible/issues/82363).
