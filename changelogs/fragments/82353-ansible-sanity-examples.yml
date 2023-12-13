@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - ansible-test - sanity test allows ``EXAMPLES`` to be multi-document YAML (https://github.com/ansible/ansible/issues/82353).
+  - ansible-test - document block name now included in error message for YAML parsing errors (https://github.com/ansible/ansible/issues/82353).
