@@ -15,3 +15,10 @@
           - bad_input is failed
           - '"Invalid value " in bad_input.msg'
           - '"valid values are:" in bad_input.msg'
+
+    - name: test config option casting
+      set_fact:
+        direct: "{{ lookup('casting', 1, test_list=[1,2,3], test_int=1, test_bool=True, test_str='lola') }}"
+        from_strings: "{{ lookup('casting', 1, test_list='1,2,3', test_int='1', test_bool='true', test_str='lola') }}"
+        direct_individual: "{{ lookup('casting_individual', 1, test_list='1,2,3', test_int='1', test_bool='true', test_str='lola') }}"
+        from_strings_individual: "{{ lookup('casting_individual', 1, test_list='1,2,3', test_int='1', test_bool='true', test_str='lola') }}"
