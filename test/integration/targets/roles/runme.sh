@@ -44,6 +44,6 @@ ansible-playbook vars_scope.yml -i ../../inventory "$@"
 ansible-playbook role_dep_chain.yml -i ../../inventory "$@"
 
 # global role privacy setting test, set to private, set to not private, default
-ANSIBLE_PRIVATE_ROLE_VARS=1 ansible-playbook privacy.yml "$@"
-ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml "$@"
-ansible-playbook privacy.yml "$@"
+ANSIBLE_PRIVATE_ROLE_VARS=1 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
+ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
+ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
