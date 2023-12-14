@@ -115,7 +115,11 @@ def results_thread_main(strategy):
                 break
             elif isinstance(result, DisplaySend):
                 dmethod = getattr(display, result.method)
-                dmethod(*result.args, **result.kwargs)
+                try:
+                    dmethod(*result.args, **result.kwargs)
+                except Exception as e:
+                    # in case of generic exception on display
+                    raise AnsibleError("Failed on call display.%s(): %s" % (result.method, to_native(e)), orig_exc=e)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):
