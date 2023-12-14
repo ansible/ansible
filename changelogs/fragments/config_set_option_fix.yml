@@ -1,0 +1,2 @@
+bugfixes:
+  - set_option method for plugins to update config now properly passes through type casting and validation.
