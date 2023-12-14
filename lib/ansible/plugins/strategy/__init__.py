@@ -42,7 +42,7 @@ from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.sentinel import Sentinel
-from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
