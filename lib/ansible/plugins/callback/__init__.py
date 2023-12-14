@@ -167,7 +167,7 @@ class CallbackBase(AnsiblePlugin):
     _copy_result = deepcopy
 
     def set_option(self, k, v):
-        self._plugin_options[k] = v
+        self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
 
     def get_option(self, k):
         return self._plugin_options[k]
