@@ -42,3 +42,8 @@ ansible-playbook vars_scope.yml -i ../../inventory "$@"
 
 # ensure import_role called from include_role has the include_role in the dep chain
 ansible-playbook role_dep_chain.yml -i ../../inventory "$@"
+
+# global role privacy setting test, set to private, set to not private, default
+ANSIBLE_PRIVATE_ROLE_VARS=1 ansible-playbook privacy.yml "$@"
+ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml "$@"
+ansible-playbook privacy.yml "$@"

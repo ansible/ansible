@@ -1,0 +1,49 @@
+- hosts: localhost
+  name: test global privacy setting
+  gather_facts: false
+  vars:
+    is_private: "{{lookup('config', 'DEFAULT_PRIVATE_ROLE_VARS')}}"
+    is_default: "{{lookup('env', 'ANSIBLE_PRIVATE_ROLE_VARS') == ''}}"
+  roles:
+    - a
+  pre_tasks:
+    #- debug: msg={{ is_private ~ ', ' ~ is_default ~ ', ' ~ privacy|default('nope')}}
+
+    - name: 'test roles: privacy'
+      assert:
+        that:
+          - is_private and privacy is undefined or not is_private and privacy is defined
+          - not is_default or is_default and privacy is defined
+
+- hosts: localhost
+  name: test import_role privacy
+  gather_facts: false
+  vars:
+    is_private: "{{lookup('config', 'DEFAULT_PRIVATE_ROLE_VARS')}}"
+    is_default: "{{lookup('env', 'ANSIBLE_PRIVATE_ROLE_VARS') == ''}}"
+  tasks:
+    - import_role: name=a
+
+    #- debug: msg={{ is_private ~ ', ' ~ is_default ~ ', ' ~ privacy|default('nope')}}
+
+    - name: role is private, var should be undefined
+      assert:
+        that:
+          - is_private and privacy is undefined or not is_private and privacy is defined
+          - not is_default or is_default and privacy is defined
+
+- hosts: localhost
+  name: test global privacy setting on includes
+  gather_facts: false
+  vars:
+    is_private: "{{lookup('config', 'DEFAULT_PRIVATE_ROLE_VARS')}}"
+    is_default: "{{lookup('env', 'ANSIBLE_PRIVATE_ROLE_VARS') == ''}}"
+  tasks:
+    - include_role: name=a
+
+    - debug: msg={{ is_private ~ ', ' ~ is_default ~ ', ' ~ privacy|default('nope')}}
+
+    - name: test include_role privacy
+      assert:
+        that:
+          - not is_default and (is_private and privacy is undefined or not is_private and privacy is defined) or is_default and privacy is undefined
