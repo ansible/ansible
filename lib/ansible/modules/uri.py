@@ -14,6 +14,7 @@ description:
   - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
     HTTP authentication mechanisms.
   - For Windows targets, use the M(ansible.windows.win_uri) module instead.
+  - Be Aware: The used remote module (ansible.legacy.uri) does not support check mode (-C --check)
 version_added: "1.1"
 options:
   ciphers:
