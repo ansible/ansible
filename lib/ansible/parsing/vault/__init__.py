@@ -61,8 +61,8 @@ display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES256',))
-CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
+CIPHER_ALLOWLIST = frozenset((u'AES256',))
+CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
@@ -606,7 +606,7 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
+        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_ALLOWLIST:
             self.cipher_name = u"AES256"
 
         try:
@@ -671,7 +671,7 @@ class VaultLib:
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
-        if cipher_name in CIPHER_WHITELIST:
+        if cipher_name in CIPHER_ALLOWLIST:
             this_cipher = CIPHER_MAPPING[cipher_name]()
         else:
             raise AnsibleError("{0} cipher could not be found".format(cipher_name))
@@ -958,7 +958,7 @@ class VaultEditor:
         # (vault_id=default, while a different vault-id decrypted)
 
         # we want to get rid of files encrypted with the AES cipher
-        force_save = (cipher_name not in CIPHER_WRITE_WHITELIST)
+        force_save = (cipher_name not in CIPHER_WRITE_ALLOWLIST)
 
         # Keep the same vault-id (and version) as in the header
         self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext, force_save=force_save, vault_id=vault_id)
