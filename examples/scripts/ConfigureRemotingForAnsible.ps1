@@ -338,6 +338,8 @@ If (($credsspAuthSetting.Value) -eq $false) {
     Write-Verbose "Enabling CredSSP auth support."
     Enable-WSManCredSSP -role server -Force
     Write-ProgressLog "Enabled CredSSP auth support."
+    winrm set winrm/config/service/auth '@{CredSSP="true"}'
+    winrm set winrm/config/client/auth '@{CredSSP="true"}'
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
