@@ -278,7 +278,7 @@ class ActionModule(ActionBase):
         def update_results(_data):
             if self.keep_existing:
                 for key, value in _data.items():
-                    if not key in results:
+                    if key not in results:
                         results[key] = _data[key]
             else:
                 results.update(_data)
