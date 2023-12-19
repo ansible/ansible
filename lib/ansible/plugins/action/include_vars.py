@@ -274,6 +274,15 @@ class ActionModule(ActionBase):
         results = dict()
         failed = False
         err_msg = ''
+
+        def update_results(_data):
+            if self.keep_existing:
+                for key, value in _data.items():
+                    if not key in results:
+                        results[key] = _data[key]
+            else:
+                results.update(_data)
+
         for filename in var_files:
             stop_iter = False
             # Never include main.yml from a role, as that is the default included by the role
@@ -288,15 +297,16 @@ class ActionModule(ActionBase):
                     stop_iter = True
 
             if not stop_iter and not failed:
+
                 if self.ignore_unknown_extensions:
                     if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
                         failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                         if not failed:
-                            results.update(loaded_data)
+                            update_results(loaded_data)
                 else:
                     if path.exists(filepath) and not self._ignore_file(filename):
                         failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                         if not failed:
-                            results.update(loaded_data)
+                            update_results(loaded_data)
 
         return failed, err_msg, results

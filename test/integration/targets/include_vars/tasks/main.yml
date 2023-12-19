@@ -250,6 +250,20 @@
       - "keep_test_d == {'var1': 'foo', 'var2': 42}"
       - "keep_test_e == '...'"
 
+- name: Include directory to test keep_existing
+  ansible.builtin.include_vars:
+    dir: "{{ role_path }}/vars2/keep2/"
+    keep_existing: true
+
+- name: Verify that only the vars from existing.yml are defined
+  assert:
+    that:
+      - "keep2_test_a == 1"
+      - "keep2_test_b == false"
+      - "keep2_test_c == 3"
+      - "keep2_test_d == {'var1': 'foo', 'var2': 42}"
+      - "keep2_test_e == '...'"
+
 - name: Include a vars file with a hash variable to test keep_existing
   include_vars:
     file: vars2/hashes/hash1.yml
