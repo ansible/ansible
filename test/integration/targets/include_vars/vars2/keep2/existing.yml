@@ -1,0 +1,6 @@
+keep2_test_a: 1
+keep2_test_b: false
+keep2_test_c: 3
+keep2_test_d:
+  var1: 'foo'
+  var2: 42

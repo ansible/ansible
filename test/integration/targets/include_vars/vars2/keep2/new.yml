@@ -1,0 +1,5 @@
+keep2_test_b: true
+keep2_test_d:
+  var2: 43
+  var3: 'bar'
+keep2_test_e: '...'

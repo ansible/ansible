@@ -79,6 +79,12 @@ options:
     type: str
     choices: ["replace", "merge"]
     version_added: "2.12"
+  keep_existing:
+    description:
+      - If set to V(true), variables will not be changed when they already exist.
+    default: false
+    type: bool
+    version_added: "2.17"
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.

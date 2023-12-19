@@ -223,6 +223,52 @@
       - "config.key2.b == 22"
       - "config.key3 == 3"
 
+- name: Include first vars file to test keep_existing
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/vars2/keep/existing.yml"
+    keep_existing: true
+
+- name: Verify that the vars were included
+  assert:
+    that:
+      - "keep_test_a == 1"
+      - "keep_test_b == false"
+      - "keep_test_c == 3"
+      - "keep_test_d == {'var1': 'foo', 'var2': 42}"
+
+- name: Include second vars file to test keep_existing
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/vars2/keep/new.yml"
+    keep_existing: true
+
+- name: Verify that the existing vars are kept
+  assert:
+    that:
+      - "keep_test_a == 1"
+      - "keep_test_b == false"
+      - "keep_test_c == 3"
+      - "keep_test_d == {'var1': 'foo', 'var2': 42}"
+      - "keep_test_e == '...'"
+
+- name: Include a vars file with a hash variable to test keep_existing
+  include_vars:
+    file: vars2/hashes/hash1.yml
+
+- name: Include the second file to merge the hash variable with keep_existing
+  include_vars:
+    file: vars2/hashes/hash2.yml
+    keep_existing: true
+    hash_behaviour: merge
+
+- name: Verify that the first hash variable is kept
+  assert:
+    that:
+      - "{{ config | length }} == 3"
+      - "config.key0 == 0"
+      - "config.key1 == 0"
+      - "{{ config.key2 | length }} == 1"
+      - "config.key2.a == 21"
+
 - include_vars:
     file: no_auto_unsafe.yml
   register: baz

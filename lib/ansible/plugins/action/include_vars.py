@@ -21,7 +21,7 @@ class ActionModule(ActionBase):
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
-    VALID_ALL = ['name', 'hash_behaviour']
+    VALID_ALL = ['name', 'hash_behaviour', 'keep_existing']
     _requires_connection = False
 
     def _set_dir_defaults(self):
@@ -62,6 +62,7 @@ class ActionModule(ActionBase):
         self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+        self.keep_existing = self._task.args.get('keep_existing', False)
 
         # convert/validate extensions list
         if isinstance(self.valid_extensions, string_types):
@@ -136,14 +137,25 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
+        if self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
+            merge_hashes = self.hash_behaviour == 'merge'
+        else:
+            merge_hashes = False
+
         if failed:
             result['failed'] = failed
             result['message'] = err_msg
-        elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
-            merge_hashes = self.hash_behaviour == 'merge'
+        else:
+            new_results = dict()
             for key, value in results.items():
                 old_value = task_vars.get(key, None)
-                results[key] = combine_vars(old_value, value, merge=merge_hashes)
+                if self.keep_existing and old_value is not None:
+                    continue
+                elif merge_hashes:
+                    new_results[key] = combine_vars(old_value, value, merge=merge_hashes)
+                else:
+                    new_results[key] = value
+            results = new_results
 
         result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
