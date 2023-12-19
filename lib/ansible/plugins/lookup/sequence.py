@@ -213,9 +213,7 @@ class LookupModule(LookupBase):
             if self.count != 0:
                 self.end = self.start + self.count * self.stride - 1
             else:
-                self.start = 0
-                self.end = 0
-                self.stride = 0
+                self.start = self.end = self.stride = 0
             del self.count
         if self.stride > 0 and self.end < self.start:
             raise AnsibleError("to count backwards make stride negative")
