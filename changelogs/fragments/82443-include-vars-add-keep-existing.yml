@@ -1,0 +1,2 @@
+minor_changes:
+  - include_vars - add paramter ``keep_existing`` to prevent that existing variables get overwritten.
