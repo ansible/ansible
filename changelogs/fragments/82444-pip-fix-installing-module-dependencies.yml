@@ -1,0 +1,2 @@
+bugfixes:
+  - pip - fix installing conditionally-optional module dependencies ``packaging`` and ``setuptools``. Check mode requires that ``packaging`` or ``setuptools`` are installed if version ranges are included in the package name (https://github.com/ansible/ansible/issues/82444).

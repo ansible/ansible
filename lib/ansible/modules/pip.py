@@ -142,7 +142,7 @@ notes:
 requirements:
 - pip
 - virtualenv
-- setuptools or packaging
+- setuptools or packaging if check mode is used and any of the packages to install include a version range
 author:
 - Matt Wright (@mattupstate)
 '''
