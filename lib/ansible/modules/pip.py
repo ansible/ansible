@@ -787,30 +787,31 @@ def main():
                     break
 
             recovered_package_name = _recover_package_name(name)
-            if not HAS_SETUPTOOLS and not HAS_PACKAGING and (name != recovered_package_name or (len(name) > 1 and version)):
-                # Check mode relies on the parsed package names/versions
+
+            # check invalid combination of arguments
+            if version is not None:
+                if len(recovered_package_name) > 1:
+                    module.fail_json(
+                        msg="'version' argument is ambiguous when installing multiple package distributions. "
+                            "Please specify version restrictions next to each package in 'name' argument."
+                    )
+                elif len(recovered_package_name) == 1 and any(_op in recovered_package_name[0] for _op in set(op_dict.keys())):
+                    msg = "The 'version' argument conflicts with any version specifier provided along with a package name."
+                    if not HAS_SETUPTOOLS and not HAS_PACKAGING and any(_op in recovered_package_name[0] for _op in set(op_dict.keys()) - {'=='}):
+                        msg += " Please remove the version specifier, and keep the 'version' argument."
+                    else:
+                        msg += " Please keep the version specifier, but remove the 'version' argument."
+                    module.fail_json(msg=msg)
+
+            op_ranges = set(op_dict.keys()) - {'=='}
+            names_include_vrange = any(any(_op in _name for _op in op_ranges) for _name in recovered_package_name)
+            if not HAS_SETUPTOOLS and not HAS_PACKAGING and names_include_vrange and module.check_mode:
                 module.fail_json(msg=missing_required_lib("packaging"), exception=PACKAGING_IMP_ERR)
-            elif not HAS_SETUPTOOLS and not HAS_PACKAGING and (version or module.check_mode):
-                module.warn(
-                    "The Python dependency 'packaging' is missing, so the package name cannot be parsed from version specifications. "
-                    "Attempting to continue. "
-                    "If package names contain version information, this can cause inaccurate results in check mode and module failure."
-                )
 
             # optionally convert raw input package names to Package instances
             packages = [Package(pkg) for pkg in recovered_package_name]
             # check invalid combination of arguments
             if version is not None:
-                if len(packages) > 1:
-                    module.fail_json(
-                        msg="'version' argument is ambiguous when installing multiple package distributions. "
-                            "Please specify version restrictions next to each package in 'name' argument."
-                    )
-                if packages[0].has_version_specifier:
-                    module.fail_json(
-                        msg="The 'version' argument conflicts with any version specifier provided along with a package name. "
-                            "Please keep the version specifier, but remove the 'version' argument."
-                    )
                 # if the version specifier is provided by version, append that into the package
                 packages[0] = Package(to_native(packages[0]), version)
 
