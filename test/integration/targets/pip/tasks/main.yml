@@ -46,6 +46,9 @@
 
     - include_tasks: no_setuptools.yml
       when: ansible_python.version_info[:2] >= [3, 8]
+
+    - include_tasks: no_setuptools_or_packaging.yml
+      when: ansible_python.version_info[:2] >= [3, 8]
   always:
     - name: platform specific cleanup
       include_tasks: "{{ cleanup_filename }}"

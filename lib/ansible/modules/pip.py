@@ -645,6 +645,8 @@ class Package:
             version_string = version_string.lstrip()
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
+        if not HAS_SETUPTOOLS and not HAS_PACKAGING:
+            return
         try:
             self._requirement = parse_requirement(name_string)
             # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
@@ -719,10 +721,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_SETUPTOOLS and not HAS_PACKAGING:
-        module.fail_json(msg=missing_required_lib("packaging"),
-                         exception=PACKAGING_IMP_ERR)
-
     state = module.params['state']
     name = module.params['name']
     version = module.params['version']
@@ -788,8 +786,19 @@ def main():
                     has_vcs = True
                     break
 
-            # convert raw input package names to Package instances
-            packages = [Package(pkg) for pkg in _recover_package_name(name)]
+            recovered_package_name = _recover_package_name(name)
+            if not HAS_SETUPTOOLS and not HAS_PACKAGING and (name != recovered_package_name or (len(name) > 1 and version)):
+                # Check mode relies on the parsed package names/versions
+                module.fail_json(msg=missing_required_lib("packaging"), exception=PACKAGING_IMP_ERR)
+            elif not HAS_SETUPTOOLS and not HAS_PACKAGING and (version or module.check_mode):
+                module.warn(
+                    "The Python dependency 'packaging' is missing, so the package name cannot be parsed from version specifications. "
+                    "Attempting to continue. "
+                    "If package names contain version information, this can cause inaccurate results in check mode and module failure."
+                )
+
+            # optionally convert raw input package names to Package instances
+            packages = [Package(pkg) for pkg in recovered_package_name]
             # check invalid combination of arguments
             if version is not None:
                 if len(packages) > 1:
