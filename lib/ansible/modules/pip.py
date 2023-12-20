@@ -787,7 +787,7 @@ def main():
                     break
 
             recovered_package_name = _recover_package_name(name)
-
+            op_ranges = set(op_dict.keys()) - {'=='}
             # check invalid combination of arguments
             if version is not None:
                 if len(recovered_package_name) > 1:
@@ -795,20 +795,19 @@ def main():
                         msg="'version' argument is ambiguous when installing multiple package distributions. "
                             "Please specify version restrictions next to each package in 'name' argument."
                     )
-                elif len(recovered_package_name) == 1 and any(_op in recovered_package_name[0] for _op in set(op_dict.keys())):
+                elif len(recovered_package_name) == 1 and any(_op in recovered_package_name[0] for _op in op_dict.keys()):
                     msg = "The 'version' argument conflicts with any version specifier provided along with a package name."
-                    if not HAS_SETUPTOOLS and not HAS_PACKAGING and any(_op in recovered_package_name[0] for _op in set(op_dict.keys()) - {'=='}):
+                    if not HAS_SETUPTOOLS and not HAS_PACKAGING and any(_op in recovered_package_name[0] for _op in op_ranges):
                         msg += " Please remove the version specifier, and keep the 'version' argument."
                     else:
                         msg += " Please keep the version specifier, but remove the 'version' argument."
                     module.fail_json(msg=msg)
 
-            op_ranges = set(op_dict.keys()) - {'=='}
             names_include_vrange = any(any(_op in _name for _op in op_ranges) for _name in recovered_package_name)
             if not HAS_SETUPTOOLS and not HAS_PACKAGING and names_include_vrange and module.check_mode:
                 module.fail_json(msg=missing_required_lib("packaging"), exception=PACKAGING_IMP_ERR)
 
-            # optionally convert raw input package names to Package instances
+            # convert raw input package names to Package instances
             packages = [Package(pkg) for pkg in recovered_package_name]
             # check invalid combination of arguments
             if version is not None:
