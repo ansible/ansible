@@ -358,12 +358,8 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
 
     prog = re.compile(pattern)
 
-    file_args = dict(file=fsname)
-    if PY3:
-        file_args['encoding'] = encoding
-
     try:
-        with open(**file_args) as f:
+        with open(fsname, encoding=encoding) as f:
             if read_whole_file:
                 return bool(prog.search(f.read()))
 
@@ -373,9 +369,9 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
 
     except LookupError as e:
         raise e
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as e:
         msg = 'Failed to read the file {} due to an encoding error. current encoding: {}'.format(fsname, encoding)
-        raise Exception(msg)
+        raise Exception(msg) from e
     except Exception:
         pass
 

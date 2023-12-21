@@ -211,7 +211,6 @@
           - >-
               fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
               ("Failed to read the file %s/hello_world.gbk due to an encoding error. current encoding: utf-8" % (remote_tmp_dir_test))
-  when: ansible_python_version is version('3.0', '>=')
 
 - name: When python version great than 3 and read a gbk file by gbk
   find:
@@ -226,7 +225,6 @@
 - assert:
       that:
           - success_to_read_right_encoding_file.matched == 1
-  when: ansible_python_version is version('3.0', '>=')
 
 - name: When python version great than 3 and read a gbk file by non-exists encoding
   find:
@@ -241,7 +239,6 @@
 - assert:
       that:
           - fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"
-  when: ansible_python_version is version('3.0', '>=')
 
 - block:
     - set_fact:
