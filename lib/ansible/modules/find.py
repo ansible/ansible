@@ -273,7 +273,7 @@ import time
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types, PY3
+from ansible.module_utils.six import string_types
 
 
 class _Object:
