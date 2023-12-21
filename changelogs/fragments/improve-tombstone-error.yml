@@ -1,0 +1,2 @@
+bugfixes:
+  - Include the task location when a module or action plugin is deprecated (https://github.com/ansible/ansible/issues/82450).
