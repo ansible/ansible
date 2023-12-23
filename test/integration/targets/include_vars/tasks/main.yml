@@ -225,7 +225,7 @@
 
 - name: Include first vars file to test keep_existing
   ansible.builtin.include_vars:
-    file: "{{ role_path }}/vars2/keep/existing.yml"
+    file: "{{ role_path }}/vars3/keep/existing.yml"
     keep_existing: true
 
 - name: Verify that the vars were included
@@ -238,7 +238,7 @@
 
 - name: Include second vars file to test keep_existing
   ansible.builtin.include_vars:
-    file: "{{ role_path }}/vars2/keep/new.yml"
+    file: "{{ role_path }}/vars3/keep/new.yml"
     keep_existing: true
 
 - name: Verify that the existing vars are kept
@@ -252,7 +252,7 @@
 
 - name: Include directory to test keep_existing
   ansible.builtin.include_vars:
-    dir: "{{ role_path }}/vars2/keep2/"
+    dir: "{{ role_path }}/vars3/keep2/"
     keep_existing: true
 
 - name: Verify that only the vars from existing.yml are defined
