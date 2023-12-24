@@ -1,0 +1,2 @@
+minor_changes:
+  - new tests empty, empty will verify if a directory or file is empty
