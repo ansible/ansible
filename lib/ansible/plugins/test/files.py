@@ -17,7 +17,33 @@
 
 from __future__ import annotations
 
+import os
 from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
+
+from ansible import errors
+from ansible.module_utils.parsing.convert_bool import boolean
+
+
+def empty(path, _trim=False):
+    """Test if a directory or file is empty"""
+    trim = boolean(_trim)
+
+    if os.path.isdir(path):
+        with os.scandir(path) as it:
+            return not any(it)
+
+    elif os.path.isfile(path):
+        if not trim:
+            return os.path.getsize(path) == 0
+
+        with open(path, "r") as f:
+            return not any(line.strip() for line in f)
+    else:
+        raise errors.AnsibleFilterError(
+            "Path %s is neither a directory nor a file." % path
+        )
+
+    return False
 
 
 class TestModule(object):
@@ -42,4 +68,7 @@ class TestModule(object):
             'is_same_file': samefile,
             'mount': ismount,
             'is_mount': ismount,
+
+            "empty": empty,
+            "is_empty": empty,
         }

@@ -1,0 +1,25 @@
+DOCUMENTATION:
+  name: empty
+  author: Ansible Core
+  version_added: '2.17'
+  short_description: Test if a directory or file is empty
+  description:
+    - This test checks whether a specified directory or file is empty.
+  options:
+    _input:
+      description: A path
+      type: path
+    _trim:
+      description: Strip whitespace from the beginning and end of the string.
+      type: bool
+
+EXAMPLES: |
+  vars:
+    my_etc_not_an_empty_dir: "{{ '/etc/' is empty }}"
+    my_passwd_not_an_empty_dir: "{{ '/etc/passwd' is empty }}"
+    list_of_non_empty_dir: "{{ list_of_paths | reject('empty') }}"
+
+RETURN:
+  _value:
+    description: Returns C(True) if the path corresponds to an existing empty directory or file on the filesystem on the controller, c(False) if otherwise.
+    type: boolean

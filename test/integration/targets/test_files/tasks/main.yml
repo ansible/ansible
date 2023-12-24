@@ -58,3 +58,54 @@
       - "'/' is is_mount"  # old name
       - "'/' is mount"
       - "'/does_not_exist' is not mount"
+
+- set_fact: remote_tmp_dir_test={{remote_tmp_dir}}/test_test_empty
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    state: absent
+    path: "{{ remote_tmp_dir_test }}"
+
+- name: create our testing sub-directory
+  file:
+    state: directory
+    path: "{{ remote_tmp_dir_test }}"
+
+- name: Assert empty dir tests work
+  assert:
+    that:
+      - "{{ remote_tmp_dir_test }} is empty"
+      - "{{ remote_tmp_dir_test }} is empty(true)"
+      - "{{ remote_tmp_dir_test }} is is_empty"
+      - "{{ remote_tmp_dir_test }} is is_empty(true)"
+
+- name: Create an empty file
+  file:
+    state: file
+    path: "{{ remote_tmp_dir_test }}/empty_file"
+
+- name: Create an file with space
+  copy:
+    content: "     "
+    dest: "{{ remote_tmp_dir_test }}/space_file"
+
+- name: Create an file
+  copy:
+    content: "hello world!"
+    dest: "{{ remote_tmp_dir_test }}/file"
+
+- name: Assert empty file tests work
+  assert:
+    that:
+      - "{{ remote_temp_dir_test }}/empty_file is empty"
+      - "{{ remote_temp_dir_test }}/empty_file is empty(true)"
+      - "{{ remote_temp_dir_test }}/space_file is not is_empty"
+      - "{{ remote_temp_dir_test }}/space_file is is_empty(true)"
+      - "{{ remote_temp_dir_test }}/file is not is_empty"
+      - "{{ remote_temp_dir_test }}/file is not is_empty(true)"
+
+- name: Assert empty dir tests work
+  assert:
+    that:
+      - "{{ remote_tmp_dir_test }} is not empty"
+      - "{{ remote_tmp_dir_test }} is not empty(true)"
