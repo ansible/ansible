@@ -1200,7 +1200,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
-            update_cache=dict(type='bool', aliases=['update-cache']),
+            update_cache=dict(type='bool', default=False, aliases=['update-cache']),
             update_cache_retries=dict(type='int', default=5),
             update_cache_retry_max_delay=dict(type='int', default=12),
             cache_valid_time=dict(type='int', default=0),
