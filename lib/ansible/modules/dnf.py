@@ -923,14 +923,14 @@ class DnfModule(YumDnf):
 
     def _whatprovides(self, filepath):
         self.base.read_all_repos()
-        available = self.base.sack.query().available()
-        # Search in file
-        files_filter = available.filter(file=filepath)
-        # And Search in provides
-        pkg_spec = files_filter.union(available.filter(provides=filepath)).run()
-
-        if pkg_spec:
-            return pkg_spec[0].name
+        query_base = self.base.sack.query()
+        # We always should prioritize installed packages over available ones
+        for query_type in ['installed', 'available']:
+            query = getattr(query_base, query_type)
+            file_filter = query().filter(file=filepath)
+            provides_filter = query().filter(provides=filepath)
+            for pkg_spec in file_filter.union(provides_filter).run() or []:
+                return pkg_spec.name
 
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []

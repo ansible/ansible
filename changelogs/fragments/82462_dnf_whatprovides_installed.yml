@@ -1,0 +1,4 @@
+---
+bugfixes:
+- dnf - give priority to already installed packages when resolving a package
+        name by provided path (https://github.com/ansible/ansible/issues/82461)
