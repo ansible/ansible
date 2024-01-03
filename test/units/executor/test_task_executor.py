@@ -26,10 +26,11 @@ from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.playbook.play_context import PlayContext
+from ansible.playbook.task import Task
 
 from collections import namedtuple
 from units.mock.loader import DictDataLoader
-
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
 
@@ -501,3 +502,85 @@ class TestTaskExecutor(unittest.TestCase):
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)
+
+    def test_task_executor_legacy_network_plugin(self):
+        fake_loader = DictDataLoader({})
+
+        mock_host = MagicMock()
+        mock_task = MagicMock(Task)
+        mock_task.evaluate_conditional_with_result.return_value = (True, None)
+        mock_task.no_log = False
+        mock_task.check_mode = False
+        mock_task.diff = False
+        mock_task.become = False
+        mock_task.action = "foo"
+        mock_task._uuid = "1234"
+        mock_play_context = MagicMock(PlayContext)
+        mock_play_context.shell = 'sh'
+        mock_action = MagicMock()
+        mock_queue = MagicMock()
+
+        mock_vm = MagicMock()
+        mock_vm.get_delegated_vars_and_hostname.return_value = {}, None
+
+        mock_shared_loader = MagicMock()
+        mock_connection_loader = MagicMock()
+        mock_shared_loader.connection_loader = mock_connection_loader
+        # mock_shared_loader.lookup_loader = lookup_loader
+        new_stdin = None
+        job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
+
+        te = TaskExecutor(
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=mock_shared_loader,
+            final_q=mock_queue,
+            variable_manager=mock_vm,
+        )
+
+        from ansible.plugins.connection import NetworkConnectionBase
+
+        class LegacyPlugin(NetworkConnectionBase):
+
+            def __init__(self, play_context):
+                super(LegacyPlugin, self).__init__(play_context=mock_play_context)
+
+                # does not set _sub_plugin attribute to something else than '{}'
+                self._load_name = "LegacyPlugin"
+
+                self._shell = MagicMock()
+
+            def _connect(self):
+                pass
+
+            @property
+            def transport(self):
+                pass
+
+            def set_options(self, task_keys=None, var_options=None, direct=None):
+                pass
+
+            def get_option_and_origin(self, option, hostvars=None):
+                if option == 'persistent_log_messages':
+                    return ('fromini', False)
+                elif option == 'persistent_command_timeout':
+                    return ('fromini', 10)
+                elif option == 'environment':
+                    return ('fromini', [])
+                elif option == 'plugin_type':
+                    return ('fromini', 'connection')
+                return super().get_option_and_origin(option, hostvars)
+
+        mock_legacy_connection = LegacyPlugin(play_context=mock_play_context)
+        te._get_connection = MagicMock(return_value=mock_legacy_connection)
+
+        mock_action.run.return_value = dict(ansible_facts=dict())
+        try:
+            res = te._execute()
+            self.assertIsNotNone(res)
+        except NotImplementedError:    # ignore 'an AnsibleCollectionFinder has not been
+            pass                         # installed in this process
