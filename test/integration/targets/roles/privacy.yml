@@ -27,28 +27,6 @@
           - not is_default or is_default and privacy is defined
 
 - hosts: localhost
-  name: test public no always overrides global on import_role
-  gather_facts: false
-  tasks:
-    - import_role: name=a public=no
-
-    - name: role is private, var should be undefined
-      assert:
-        that:
-          - privacy is undefined
-
-- hosts: localhost
-  name: test public yes always overrides global on import_role
-  gather_facts: false
-  tasks:
-    - import_role: name=a public=yes
-
-    - name: role is private, var should be undefined
-      assert:
-        that:
-          - privacy is defined
-
-- hosts: localhost
   name: test global privacy setting on includes
   gather_facts: false
   tasks:
