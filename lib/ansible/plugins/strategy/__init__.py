@@ -630,11 +630,11 @@ class StrategyBase:
             elif task_result.is_unreachable():
                 ignore_unreachable = original_task.ignore_unreachable
                 if not ignore_unreachable:
-                    delegated_host = result.get('ansible_delegated_host', None)
+                    delegated_host = task_result.get('ansible_delegated_host', None)
                     if original_task.delegate_to is not None and delegated_host:
                         self._tqm._unreachable_hosts[delegated_host] = True
                         iterator._play._removed_hosts.append(delegated_host)
-                        if origianl_host.name not in self._tqm._unreachable_hosts:
+                        if original_host.name not in self._tqm._unreachable_hosts:
                             iterator.mark_host_failed(original_host)
                         self._tqm._stats.increment('failures', original_host.name)
                     else:
