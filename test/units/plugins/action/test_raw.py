@@ -36,18 +36,14 @@ class TestCopyResultExclude(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def _build_task(self, params=None):
+    def _build_task(self):
 
         task = MagicMock(Task)
         task.async_val = False
         task.diff = False
         task.check_mode = False
         task.environment = None
-
-        if params is None:
-            task.args = {'_raw_params': 'Args1'}
-        else:
-            task.args = params
+        task.args = {'_raw_params': 'Args1'}
 
         return task
     # The current behavior of the raw aciton in regards to executable is currently in question;
