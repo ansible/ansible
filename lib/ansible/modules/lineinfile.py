@@ -126,10 +126,6 @@ options:
     type: bool
     default: no
     version_added: "2.5"
-  others:
-    description:
-      - All arguments accepted by the M(ansible.builtin.file) module also work here.
-    type: str
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
