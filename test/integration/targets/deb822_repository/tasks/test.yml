@@ -53,6 +53,19 @@
     date_max_future: 10
   register: deb822_create_1_idem
 
+- name: Create deb822 repo (changed order of parameters) idempotency
+  deb822_repository:
+    uris: http://us.archive.ubuntu.com/ubuntu
+    name: ansible-test focal archive
+    date_max_future: 10
+    components:
+      - main
+      - restricted
+    suites:
+      - focal
+      - focal-updates
+  register: deb822_create_2_idem
+
 - name: Create deb822 repo - check_mode
   deb822_repository:
     name: ansible-test focal archive
@@ -97,6 +110,7 @@
       - deb822_create_1.repo|trim == focal_archive_expected
 
       - deb822_create_1_idem is not changed
+      - deb822_create_2_idem is not changed
 
       - deb822_create_1_mode is changed
       - deb822_create_1_stat_1.stat.mode == '0644'
