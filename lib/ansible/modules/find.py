@@ -153,7 +153,7 @@ options:
         description:
             - When doing a C(contains) search, determine the encoding of the files to be searched.
         type: str
-        default: utf-8
+        default: None
         version_added: "2.17"
 extends_documentation_fragment: action_common_attributes
 attributes:
@@ -370,7 +370,7 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
     except LookupError as e:
         raise e
     except UnicodeDecodeError as e:
-        msg = 'Failed to read the file {} due to an encoding error. current encoding: {}'.format(fsname, encoding)
+        msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
         raise Exception(msg) from e
     except Exception:
         pass
