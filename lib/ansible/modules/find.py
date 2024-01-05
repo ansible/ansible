@@ -469,7 +469,7 @@ def main():
             depth=dict(type='int'),
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
-            encoding=dict(type='str', default="utf-8")
+            encoding=dict(type='str', default=None)
         ),
         supports_check_mode=True,
     )
