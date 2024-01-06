@@ -917,6 +917,7 @@ class User(object):
             if self.move_home:
                 cmd.append('-m')
 
+        # flake8: noqa
         if self.shell is not None:
             expanded_shell = os.path.expanduser(self.shell)
             if info[6] != expanded_shell:
