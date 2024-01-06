@@ -495,7 +495,7 @@ def flatten(mylist, levels=None, skip_nulls=True):
     return ret
 
 
-def subelements(obj, subelements, skip_missing=False):
+def subelements(obj, subelements, skip_missing=False, wantkeys=False):
     '''Accepts a dict or list of dicts, and a dotted accessor and produces a product
     of the element and the results of the dotted accessor
 
@@ -505,7 +505,10 @@ def subelements(obj, subelements, skip_missing=False):
 
     '''
     if isinstance(obj, dict):
-        element_list = list(obj.values())
+        if wantkeys:
+                element_list = obj
+            else:
+                element_list = list(obj.values())
     elif isinstance(obj, list):
         element_list = obj[:]
     else:
@@ -521,10 +524,16 @@ def subelements(obj, subelements, skip_missing=False):
     results = []
 
     for element in element_list:
-        values = element
+        if wantkeys:
+            values = element_list[element]
+        else:
+            values = element
         for subelement in subelement_list:
             try:
-                values = values[subelement]
+                if wantkeys:
+                        values = list(values[subelement])
+                    else:
+                        values = values[subelement]
             except KeyError:
                 if skip_missing:
                     values = []

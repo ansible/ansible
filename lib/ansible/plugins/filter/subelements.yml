@@ -19,6 +19,11 @@ DOCUMENTATION:
       description: If V(True), ignore missing subelements, otherwise missing subelements generate an error.
       type: bool
       default: no
+    wantkeys:
+      description: If V(True), produces only keys, otherwise using dictionary subelement generate an error.
+      type: bool
+      default: no
+    
 
 EXAMPLES: |
   # data
