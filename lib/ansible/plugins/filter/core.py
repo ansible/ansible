@@ -506,9 +506,9 @@ def subelements(obj, subelements, skip_missing=False, wantkeys=False):
     '''
     if isinstance(obj, dict):
         if wantkeys:
-                element_list = obj
-            else:
-                element_list = list(obj.values())
+            element_list = obj
+        else:
+            element_list = list(obj.values())
     elif isinstance(obj, list):
         element_list = obj[:]
     else:
@@ -531,9 +531,9 @@ def subelements(obj, subelements, skip_missing=False, wantkeys=False):
         for subelement in subelement_list:
             try:
                 if wantkeys:
-                        values = list(values[subelement])
-                    else:
-                        values = values[subelement]
+                    values = list(values[subelement])
+                else:
+                    values = values[subelement]
             except KeyError:
                 if skip_missing:
                     values = []
