@@ -917,9 +917,11 @@ class User(object):
             if self.move_home:
                 cmd.append('-m')
 
-        if self.shell is not None and info[6] != self.shell:
-            cmd.append('-s')
-            cmd.append(self.shell)
+        if self.shell is not None:
+            expanded_shell = os.path.expanduser(self.shell)
+            if info[6] != expanded_shell:
+                cmd.append('-s')
+                cmd.append(expanded_shell)
 
         if self.expires is not None:
 
