@@ -918,7 +918,7 @@ class User(object):
                 cmd.append('-m')
 
         if self.shell is not None:
-            expanded_shell = os.path.abspath(os.path.expanduser(self.shell))
+            expanded_shell = str(os.path.abspath(os.path.expanduser(self.shell)))
             if info[6] != expanded_shell:
                 cmd.append('-s')
                 cmd.append(expanded_shell)
@@ -3117,7 +3117,7 @@ def main():
             groups=dict(type='list', elements='str'),
             comment=dict(type='str'),
             home=dict(type='path'),
-            shell=dict(type='path'),
+            shell=dict(type='str'),
             password=dict(type='str', no_log=True),
             login_class=dict(type='str'),
             password_expire_max=dict(type='int', no_log=False),
