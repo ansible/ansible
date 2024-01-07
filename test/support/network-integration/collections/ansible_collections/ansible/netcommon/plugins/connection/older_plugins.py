@@ -5,7 +5,7 @@
 # Copied from network_cli.py, modified to test what happens when an (older) plugin does
 # not set '_sub_plugin'
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function, annotations
 
 __metaclass__ = type
 
@@ -348,14 +348,14 @@ class AnsibleCmdRespRecv(Exception):
     pass
 
 
-class OldConnection(NetworkConnectionBase):
+class Connection(NetworkConnectionBase):
     """CLI (shell) SSH connections on Paramiko"""
 
     transport = "ansible.netcommon.network_cli"
     has_pipelining = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-        super(OldConnection, self).__init__(
+        super(Connection, self).__init__(
             play_context, new_stdin, *args, **kwargs
         )
         self._ssh_shell = None
@@ -519,15 +519,15 @@ class OldConnection(NetworkConnectionBase):
                 return self.send(command=cmd)
 
         else:
-            return super(OldConnection, self).exec_command(cmd, in_data, sudoable)
+            return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def get_options(self, hostvars=None):
-        options = super(OldConnection, self).get_options(hostvars=hostvars)
+        options = super(Connection, self).get_options(hostvars=hostvars)
         options.update(self.ssh_type_conn.get_options(hostvars=hostvars))
         return options
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        super(OldConnection, self).set_options(
+        super(Connection, self).set_options(
             task_keys=task_keys, var_options=var_options, direct=direct
         )
         self.ssh_type_conn.set_options(
@@ -762,7 +762,7 @@ class OldConnection(NetworkConnectionBase):
                 self.queue_message(
                     "debug", "ssh connection has been closed successfully"
                 )
-        super(OldConnection, self).close()
+        super(Connection, self).close()
 
     def _read_post_command_prompt_match(self):
         time.sleep(self.get_option("persistent_buffer_read_timeout"))
