@@ -918,7 +918,7 @@ class User(object):
                 cmd.append('-m')
 
         if self.shell is not None:
-            expanded_shell = os.path.expanduser(self.shell)
+            expanded_shell = str(os.path.expanduser(self.shell))
             if info[6] != expanded_shell:
                 cmd.append('-s')
                 cmd.append(expanded_shell)
