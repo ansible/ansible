@@ -153,7 +153,6 @@ options:
         description:
             - When doing a C(contains) search, determine the encoding of the files to be searched.
         type: str
-        default: None
         version_added: "2.17"
 extends_documentation_fragment: action_common_attributes
 attributes:
@@ -270,6 +269,7 @@ import pwd
 import re
 import stat
 import time
+import locale
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
@@ -370,6 +370,8 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
     except LookupError as e:
         raise e
     except UnicodeDecodeError as e:
+        if encoding is None:
+            encoding = locale.getpreferredencoding()
         msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
         raise Exception(msg) from e
     except Exception:
@@ -469,7 +471,7 @@ def main():
             depth=dict(type='int'),
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
-            encoding=dict(type='str', default=None)
+            encoding=dict(type='str')
         ),
         supports_check_mode=True,
     )

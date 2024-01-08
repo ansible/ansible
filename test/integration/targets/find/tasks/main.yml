@@ -196,11 +196,12 @@
       that:
           - no_match_line_boundaries.matched == 0
 
-- name: When python version great than 3 and read a gbk file by utf-8
+- name: read a gbk file by utf-8
   find:
     paths: "{{ remote_tmp_dir_test }}"
     patterns: "*.gbk"
     contains: "你好世界"
+    encoding: "utf-8"
   register: fail_to_read_wrong_encoding_file
 
 - debug: var=fail_to_read_wrong_encoding_file
@@ -212,7 +213,7 @@
               fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
               ("Failed to read the file %s/hello_world.gbk due to an encoding error. current encoding: utf-8" % (remote_tmp_dir_test))
 
-- name: When python version great than 3 and read a gbk file by gbk
+- name: read a gbk file by gbk
   find:
     paths: "{{ remote_tmp_dir_test }}"
     encoding: "gbk"
@@ -226,7 +227,7 @@
       that:
           - success_to_read_right_encoding_file.matched == 1
 
-- name: When python version great than 3 and read a gbk file by non-exists encoding
+- name: read a gbk file by non-exists encoding
   find:
     paths: "{{ remote_tmp_dir_test }}"
     encoding: "idontexist"
