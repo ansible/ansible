@@ -543,15 +543,9 @@
         - 'parent_dir_cd.stdout.endswith(remote_tmp_dir ~ "/www")'
         - 'parent_dir_chdir.stdout.endswith(remote_tmp_dir ~ "/www_root")'
 
-- name: Set print error command for Python 2
-  set_fact:
-    print_error_command: print >> sys.stderr, msg
-  when: ansible_facts.python_version is version('3', '<')
-
 - name: Set print error command for Python 3
   set_fact:
     print_error_command: print(msg, file=sys.stderr)
-  when: ansible_facts.python_version is version('3', '>=')
 
 - name: run command with strip
   command: '{{ ansible_python_interpreter }} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
