@@ -151,3 +151,20 @@ fi
 ./vars_plugin_tests.sh
 
 ./test_task_resolved_plugin.sh
+
+cat << EOF > "test_collections_exist.yml"
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - testns.testcoll
+    - testns.content_adj
+    - testns.coll_in_sys
+    - idont.exist
+    - testns.missing
+EOF
+
+ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_sys ansible-playbook test_collections_exist.yml 2>&1 "$@" | tee out.txt
+grep out.txt -e "\[WARNING\]: Unable to import collection idont\.exist"
+grep out.txt -e "\[WARNING\]: Unable to import collection testns\.missing"
+test "$(grep out.txt -ce 'Unable to import collection')" == 2

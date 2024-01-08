@@ -9,6 +9,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.template import is_template
 from ansible.utils.display import Display
 
+from importlib.util import find_spec
 from jinja2.nativetypes import NativeEnvironment
 
 display = Display()
@@ -58,5 +59,16 @@ class CollectionSearch:
             if is_template(collection_name, env):
                 display.warning('"collections" is not templatable, but we found: %s, '
                                 'it will not be templated and will be used "as is".' % (collection_name))
+
+            if collection_name in ('ansible.builtin', 'ansible.legacy',):
+                continue
+
+            try:
+                spec = find_spec('ansible_collections.' + collection_name)
+                if spec is None:
+                    # only the namespace exists
+                    raise ImportError
+            except (ImportError, ValueError):
+                display.warning(f"Unable to import collection {collection_name}")
 
         return ds
