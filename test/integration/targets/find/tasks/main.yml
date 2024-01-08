@@ -422,35 +422,47 @@
       - '"checksum" in result.files[0]'
 
 # Test permission error is correctly handled by find module
-- block:
+- vars:
+    test_dir: /tmp
+  block:
     - name: create an unprivileged user for next test
       user:
         name: unpriv
         state: present
       register: user_details
 
-    - name: Set up a directory to test module error handling
+    - name: Set up content
       file:
-        path: "{{ remote_tmp_dir_test }}/unreadable/readme"
-        state: directory
-        owner: unpriv
-        group: "{{ user_details.group }}"
+        path: "{{ test_dir }}/{{ item.name }}"
+        state: "{{ item.state }}"
+        mode: "{{ item.mode }}"
+        owner: "{{ item.owner | default(omit) }}"
+        group: "{{ item.group | default(omit) }}"
+      loop:
+        - name: readable
+          state: directory
+          owner: unpriv
+          mode: "1711"
+        - name: readable/1-unreadable
+          state: directory
+          mode: "0700"
+        - name: readable/2-readable
+          state: touch
+          owner: unpriv
+          mode: "0777"
 
-    - name: Set directory permissions to unreadable
-      file:
-        path: "{{ remote_tmp_dir_test }}/unreadable/readme"
-        mode: "0000"
-        owner: unpriv
-        group: "{{ user_details.group }}"
-
-    - name: Get stat for directory created
-      stat:
-        path: "{{ remote_tmp_dir_test }}/unreadable/readme"
-
-    - name: Find a file in unreadable directory
+    - name: Find a file in readable directory
       find:
-        paths: "{{ remote_tmp_dir_test }}/unreadable/readme"
-        patterns: "sample"
+        paths: "{{ test_dir }}/readable/"
+        patterns: "*"
+        recurse: true
+      register: permission_issue
+      become_user: unpriv
+
+    - name: Find a file in readable directory
+      find:
+        paths: "{{ test_dir }}/readable/"
+        patterns: "*"
         recurse: true
       register: permission_issue
       become_user: unpriv
@@ -459,10 +471,12 @@
     - name: Check if the skipped_paths are populated correctly with permission error
       assert:
         that:
-          - "'{{ remote_tmp_dir_test }}/unreadable/readme' in permission_issue.skipped_paths"
-          - "'Permission denied' in permission_issue.skipped_paths['{{ remote_tmp_dir_test }}/unreadable/readme']"
+          - permission_issue is success
           - not permission_issue.changed
-          - permission_issue.matched == 0
+          - permission_issue.skipped_paths|length == 1
+          - "'{{ test_dir }}/readable/1-unreadable' in permission_issue.skipped_paths"
+          - "'Permission denied' in permission_issue.skipped_paths['{{ test_dir }}/readable/1-unreadable']"
+          - permission_issue.matched == 1
 
   always:
     - name: remove unprivileged user
