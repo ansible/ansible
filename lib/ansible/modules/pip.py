@@ -637,16 +637,20 @@ class Package:
     _CANONICALIZE_RE = re.compile(r'[-_.]+')
 
     def __init__(self, name_string, version_string=None):
-        self._plain_package = False
         self.package_name = name_string
         self._requirement = None
+        self._version = None
 
         if version_string:
             version_string = version_string.lstrip()
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
+
         if not HAS_SETUPTOOLS and not HAS_PACKAGING:
+            if name_string.count('==') == 1:
+                self.package_name, self._version = name_string.split('==')
             return
+
         try:
             self._requirement = parse_requirement(name_string)
             # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
@@ -657,19 +661,21 @@ class Package:
                 self.package_name = "setuptools"
             else:
                 self.package_name = project_name
-            self._plain_package = True
         except ValueError as e:
             pass
 
     @property
     def has_version_specifier(self):
-        if self._plain_package:
-            return bool(getattr(self._requirement, 'specifier', None) or getattr(self._requirement, 'specs', None))
-        return False
+        if self._requirement is None:
+            return self._version is not None
+        return bool(getattr(self._requirement, 'specifier', None) or getattr(self._requirement, 'specs', None))
 
     def is_satisfied_by(self, version_to_test):
-        if not self._plain_package:
+        if self._requirement is None:
+            if self._version:
+                return op_dict['=='](version_to_test, LooseVersion(self._version))
             return False
+
         try:
             return self._requirement.specifier.contains(version_to_test, prereleases=True)
         except AttributeError:
@@ -686,7 +692,7 @@ class Package:
         return Package._CANONICALIZE_RE.sub("-", name).lower()
 
     def __str__(self):
-        if self._plain_package:
+        if self._requirement is not None:
             return to_native(self._requirement)
         return self.package_name
 
@@ -796,12 +802,12 @@ def main():
                             "Please specify version restrictions next to each package in 'name' argument."
                     )
                 elif len(recovered_package_name) == 1 and any(_op in recovered_package_name[0] for _op in op_dict.keys()):
-                    msg = "The 'version' argument conflicts with any version specifier provided along with a package name."
-                    if not HAS_SETUPTOOLS and not HAS_PACKAGING and any(_op in recovered_package_name[0] for _op in op_ranges):
-                        msg += " Please remove the version specifier, and keep the 'version' argument."
-                    else:
-                        msg += " Please keep the version specifier, but remove the 'version' argument."
-                    module.fail_json(msg=msg)
+                    module.fail_json(
+                        msg="The 'version' argument conflicts with any version specifier provided along with a package name. " \
+                            "Please remove the version specifier, and keep the 'version' argument."
+                    )
+                if not HAS_SETUPTOOLS and not HAS_PACKAGING and any(_op in version for _op in op_ranges):
+                    module.fail_json(msg=missing_required_lib("packaging"), exception=PACKAGING_IMP_ERR)
 
             names_include_vrange = any(any(_op in _name for _op in op_ranges) for _name in recovered_package_name)
             if not HAS_SETUPTOOLS and not HAS_PACKAGING and names_include_vrange and module.check_mode:
