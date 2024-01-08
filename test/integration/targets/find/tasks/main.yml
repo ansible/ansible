@@ -424,12 +424,11 @@
 # Test permission error is correctly handled by find module
 - vars:
     test_dir: /tmp
+    test_user_name: unpriv
   block:
-    - name: create an unprivileged user for next test
-      user:
-        name: unpriv
-        state: present
-      register: user_details
+    - name: make sure the test user is available
+      include_role:
+        name: setup_test_user
 
     - name: Set up content
       file:
@@ -441,14 +440,14 @@
       loop:
         - name: readable
           state: directory
-          owner: unpriv
+          owner: "{{ test_user_name }}"
           mode: "1711"
         - name: readable/1-unreadable
           state: directory
           mode: "0700"
         - name: readable/2-readable
           state: touch
-          owner: unpriv
+          owner: "{{ test_user_name }}"
           mode: "0777"
 
     - name: Find a file in readable directory
@@ -457,7 +456,7 @@
         patterns: "*"
         recurse: true
       register: permission_issue
-      become_user: unpriv
+      become_user: "{{ test_user_name }}"
 
     - name: Find a file in readable directory
       find:
@@ -465,7 +464,7 @@
         patterns: "*"
         recurse: true
       register: permission_issue
-      become_user: unpriv
+      become_user: "{{ test_user_name }}"
       become: yes
 
     - name: Check if the skipped_paths are populated correctly with permission error
@@ -477,13 +476,6 @@
           - "'{{ test_dir }}/readable/1-unreadable' in permission_issue.skipped_paths"
           - "'Permission denied' in permission_issue.skipped_paths['{{ test_dir }}/readable/1-unreadable']"
           - permission_issue.matched == 1
-
-  always:
-    - name: remove unprivileged user
-      user:
-        name: unpriv
-        state: absent
-        remove: true
 
 - name: Run mode tests
   import_tasks: mode.yml
