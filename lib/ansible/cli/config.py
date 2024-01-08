@@ -186,7 +186,8 @@ class ConfigCLI(CLI):
         # requested.
         if context.CLIARGS['type'] in ['all', 'galaxy_server']:
             galaxy_server_list = self.config.get_config_value('GALAXY_SERVER_LIST')
-            initialize_galaxy_server_config(self.config, galaxy_server_list)
+            if galaxy_server_list:
+                initialize_galaxy_server_config(self.config, galaxy_server_list)
 
         # run the requested action
         context.CLIARGS['func']()
@@ -290,10 +291,16 @@ class ConfigCLI(CLI):
         if context.CLIARGS['type'] == 'all':
             # now each plugin type
             for ptype in C.CONFIGURABLE_PLUGINS:
-                config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
+                loader = getattr(plugin_loader, f'{ptype}_loader')
+                config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype, loader=loader)
         elif context.CLIARGS['type'] not in ('base', 'galaxy_server'):
             # only for requested types
-            config_entries['PLUGINS'][context.CLIARGS['type']] = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
+            loader = getattr(plugin_loader, f'{context.CLIARGS["type"]}_loader')
+            config_entries['PLUGINS'][context.CLIARGS['type']] = self._list_plugin_settings(
+                context.CLIARGS['type'],
+                context.CLIARGS['args'],
+                loader=loader,
+            )
 
         return config_entries
 
