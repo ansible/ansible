@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - ansible-doc will now output additional ``version_added`` information from role argument specification information at the entrypoint
+    level, like antsibull-docs has been doing since role support was added (https://github.com/ansible/ansible/pull/80625).
