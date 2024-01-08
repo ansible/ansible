@@ -698,7 +698,6 @@
 - name: Test unix socket
   import_tasks: install-socat-and-test-unix-socket.yml
 
-
 - name: ensure skip action
   uri:
     url: http://example.com
