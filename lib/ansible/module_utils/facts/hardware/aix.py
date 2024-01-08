@@ -129,7 +129,7 @@ class AIXHardware(Hardware):
         rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         dmi_facts['firmware_version'] = data[1].strip('IBM,')
-        lsconf_path = self.module.get_bin_path("lsconf")
+        lsconf_path = self.module.get_bin_path("lsconf", warning="dmi facts skipped")
         if lsconf_path:
             rc, out, err = self.module.run_command(lsconf_path)
             if rc == 0 and out:
@@ -160,8 +160,9 @@ class AIXHardware(Hardware):
         """
 
         vgs_facts = {}
-        lsvg_path = self.module.get_bin_path("lsvg")
-        xargs_path = self.module.get_bin_path("xargs")
+        warn = "vgs facts skipped"
+        lsvg_path = self.module.get_bin_path("lsvg", warning=warn)
+        xargs_path = self.module.get_bin_path("xargs", warning=warn)
         cmd = "%s -o | %s %s -p" % (lsvg_path, xargs_path, lsvg_path)
         if lsvg_path and xargs_path:
             rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
@@ -194,35 +195,36 @@ class AIXHardware(Hardware):
 
         # AIX does not have mtab but mount command is only source of info (or to use
         # api calls to get same info)
-        mount_path = self.module.get_bin_path('mount')
-        rc, mount_out, err = self.module.run_command(mount_path)
-        if mount_out:
-            for line in mount_out.split('\n'):
-                fields = line.split()
-                if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
-                    if re.match('^/', fields[0]):
-                        # normal mount
-                        mount = fields[1]
-                        mount_info = {'mount': mount,
-                                      'device': fields[0],
-                                      'fstype': fields[2],
-                                      'options': fields[6],
-                                      'time': '%s %s %s' % (fields[3], fields[4], fields[5])}
-                        mount_info.update(get_mount_size(mount))
-                    else:
-                        # nfs or cifs based mount
-                        # in case of nfs if no mount options are provided on command line
-                        # add into fields empty string...
-                        if len(fields) < 8:
-                            fields.append("")
+        mount_path = self.module.get_bin_path('mount', warning="skipping mount facts")
+        if mount_path:
+            rc, mount_out, err = self.module.run_command(mount_path)
+            if mount_out:
+                for line in mount_out.split('\n'):
+                    fields = line.split()
+                    if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
+                        if re.match('^/', fields[0]):
+                            # normal mount
+                            mount = fields[1]
+                            mount_info = {'mount': mount,
+                                          'device': fields[0],
+                                          'fstype': fields[2],
+                                          'options': fields[6],
+                                          'time': '%s %s %s' % (fields[3], fields[4], fields[5])}
+                            mount_info.update(get_mount_size(mount))
+                        else:
+                            # nfs or cifs based mount
+                            # in case of nfs if no mount options are provided on command line
+                            # add into fields empty string...
+                            if len(fields) < 8:
+                                fields.append("")
 
-                        mount_info = {'mount': fields[2],
-                                      'device': '%s:%s' % (fields[0], fields[1]),
-                                      'fstype': fields[3],
-                                      'options': fields[7],
-                                      'time': '%s %s %s' % (fields[4], fields[5], fields[6])}
+                            mount_info = {'mount': fields[2],
+                                          'device': '%s:%s' % (fields[0], fields[1]),
+                                          'fstype': fields[3],
+                                          'options': fields[7],
+                                          'time': '%s %s %s' % (fields[4], fields[5], fields[6])}
 
-                    mounts.append(mount_info)
+                        mounts.append(mount_info)
 
         mount_facts['mounts'] = mounts
 
@@ -232,30 +234,32 @@ class AIXHardware(Hardware):
         device_facts = {}
         device_facts['devices'] = {}
 
-        lsdev_cmd = self.module.get_bin_path('lsdev', True)
-        lsattr_cmd = self.module.get_bin_path('lsattr', True)
-        rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
+        warn = 'device facts are skipped'
+        lsdev_cmd = self.module.get_bin_path('lsdev', warning=warn)
+        lsattr_cmd = self.module.get_bin_path('lsattr', warning=warn)
+        if lsdev_cmd and lsattr_cmd:
+            rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
 
-        for line in out_lsdev.splitlines():
-            field = line.split()
+            for line in out_lsdev.splitlines():
+                field = line.split()
 
-            device_attrs = {}
-            device_name = field[0]
-            device_state = field[1]
-            device_type = field[2:]
-            lsattr_cmd_args = [lsattr_cmd, '-E', '-l', device_name]
-            rc, out_lsattr, err = self.module.run_command(lsattr_cmd_args)
-            for attr in out_lsattr.splitlines():
-                attr_fields = attr.split()
-                attr_name = attr_fields[0]
-                attr_parameter = attr_fields[1]
-                device_attrs[attr_name] = attr_parameter
+                device_attrs = {}
+                device_name = field[0]
+                device_state = field[1]
+                device_type = field[2:]
+                lsattr_cmd_args = [lsattr_cmd, '-E', '-l', device_name]
+                rc, out_lsattr, err = self.module.run_command(lsattr_cmd_args)
+                for attr in out_lsattr.splitlines():
+                    attr_fields = attr.split()
+                    attr_name = attr_fields[0]
+                    attr_parameter = attr_fields[1]
+                    device_attrs[attr_name] = attr_parameter
 
-            device_facts['devices'][device_name] = {
-                'state': device_state,
-                'type': ' '.join(device_type),
-                'attributes': device_attrs
-            }
+                device_facts['devices'][device_name] = {
+                    'state': device_state,
+                    'type': ' '.join(device_type),
+                    'attributes': device_attrs
+                }
 
         return device_facts
 

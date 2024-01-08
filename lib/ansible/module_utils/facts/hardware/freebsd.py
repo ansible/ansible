@@ -22,8 +22,8 @@ import struct
 import time
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
+from ansible.module_utils.facts.sysctl import get_sysctl
 from ansible.module_utils.facts.timeout import TimeoutError, timeout
-
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
 
 
@@ -46,6 +46,7 @@ class FreeBSDHardware(Hardware):
     def populate(self, collected_facts=None):
         hardware_facts = {}
 
+        self.sysctl = get_sysctl(self.module, ['hw'])
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
         uptime_facts = self.get_uptime_facts()
@@ -70,10 +71,7 @@ class FreeBSDHardware(Hardware):
     def get_cpu_facts(self):
         cpu_facts = {}
         cpu_facts['processor'] = []
-        sysctl = self.module.get_bin_path('sysctl')
-        if sysctl:
-            rc, out, err = self.module.run_command("%s -n hw.ncpu" % sysctl, check_rc=False)
-            cpu_facts['processor_count'] = out.strip()
+        cpu_facts['processor_count'] = self.sysctl.get('hw.ncpu') or ''
 
         dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
@@ -94,21 +92,20 @@ class FreeBSDHardware(Hardware):
     def get_memory_facts(self):
         memory_facts = {}
 
-        sysctl = self.module.get_bin_path('sysctl')
-        if sysctl:
-            rc, out, err = self.module.run_command("%s vm.stats" % sysctl, check_rc=False)
-            for line in out.splitlines():
-                data = line.split()
-                if 'vm.stats.vm.v_page_size' in line:
-                    pagesize = int(data[1])
-                if 'vm.stats.vm.v_page_count' in line:
-                    pagecount = int(data[1])
-                if 'vm.stats.vm.v_free_count' in line:
-                    freecount = int(data[1])
-            memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
-            memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
+        pagesize = pagecount = freecount = None
+        if 'vm.stats.vm.v_page_size' in self.sysctl:
+            pagesize = int(self.sysctl['vm.stats.vm.v_page_size'])
+        if 'vm.stats.vm.v_page_count' in self.sysctl:
+            pagecount = int(self.sysctl['vm.stats.vm.v_page_count'])
+        if 'vm.stats.vm.v_free_count' in self.sysctl:
+            freecount = int(self.sysctl['vm.stats.vm.v_free_count'])
+        if pagesize is not None:
+            if pagecount is not None:
+                memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
+            if freecount is not None:
+                memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
 
-        swapinfo = self.module.get_bin_path('swapinfo')
+        swapinfo = self.module.get_bin_path('swapinfo', warning="swap facts skipped")
         if swapinfo:
             # Get swapinfo.  swapinfo output looks like:
             # Device          1M-blocks     Used    Avail Capacity
@@ -128,7 +125,10 @@ class FreeBSDHardware(Hardware):
     def get_uptime_facts(self):
         # On FreeBSD, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
-        sysctl_cmd = self.module.get_bin_path('sysctl')
+        sysctl_cmd = self.module.get_bin_path('sysctl', warning="skpping uptime fact")
+        if not sysctl_cmd:
+            return {}
+
         cmd = [sysctl_cmd, '-b', 'kern.boottime']
 
         # We need to get raw bytes, not UTF-8.
@@ -195,7 +195,10 @@ class FreeBSDHardware(Hardware):
         dmi_facts = {}
 
         # Fall back to using dmidecode, if available
-        dmi_bin = self.module.get_bin_path('dmidecode')
+        dmi_bin = self.module.get_bin_path('dmidecode', warning="skipping dmi facts")
+        if not dmi_bin:
+            return dmi_facts
+
         DMI_DICT = {
             'bios_date': 'bios-release-date',
             'bios_vendor': 'bios-vendor',
