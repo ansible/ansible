@@ -1550,7 +1550,10 @@ INTERPRETER_PYTHON:
     with older Ansible releases that always defaulted to ``/usr/bin/python``, will use that interpreter if present.
 _INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
-  default: {}
+  default:
+    # Entry only for testing
+    ansible test:
+      '99': /usr/bin/python99
   version_added: "2.8"
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
