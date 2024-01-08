@@ -1,0 +1,2 @@
+bugfixes:
+  - distribution.py - Recognize ALP-Dolomite as part of the SUSE OS family in Ansible, fixing its previous misidentification (https://github.com/ansible/ansible/pull/82496).
