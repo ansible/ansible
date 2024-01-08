@@ -423,13 +423,8 @@
 
 # Test permission error is correctly handled by find module
 - vars:
-    test_dir: /tmp
-    test_user_name: unpriv
+    test_dir: /tmp/permission_test
   block:
-    - name: make sure the test user is available
-      include_role:
-        name: setup_test_user
-
     - name: Set up content
       file:
         path: "{{ test_dir }}/{{ item.name }}"
@@ -476,6 +471,11 @@
           - "'{{ test_dir }}/readable/1-unreadable' in permission_issue.skipped_paths"
           - "'Permission denied' in permission_issue.skipped_paths['{{ test_dir }}/readable/1-unreadable']"
           - permission_issue.matched == 1
+  always:
+    - name: cleanup test directory
+      file:
+        dest: "{{ test_dir }}"
+        state: absent
 
 - name: Run mode tests
   import_tasks: mode.yml
