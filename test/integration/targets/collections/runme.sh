@@ -148,3 +148,12 @@ fi
 ./vars_plugin_tests.sh
 
 ./test_task_resolved_plugin.sh
+
+# Test tombstoned module/action plugins include the location of the fatal task
+cat <<EOF > test_dead_ping_error.yml
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - dead_ping:
+EOF
+ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e 'line 4, column 5'
