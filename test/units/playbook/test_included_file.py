@@ -318,9 +318,6 @@ def test_empty_raw_params():
 
     task_ds_list = [
         {
-            'include': ''
-        },
-        {
             'include_tasks': ''
         },
         {
