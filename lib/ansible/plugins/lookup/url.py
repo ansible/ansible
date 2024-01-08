@@ -178,7 +178,7 @@ options:
         - section: url_lookup
           key: ciphers
 extends_documentation_fragment:
-  - url_redirect
+  - url.url_redirect
 """
 
 EXAMPLES = """

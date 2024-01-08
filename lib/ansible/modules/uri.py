@@ -222,7 +222,7 @@ options:
 extends_documentation_fragment:
   - action_common_attributes
   - files
-  - url_redirect
+  - url.url_redirect
 attributes:
     check_mode:
         support: none
