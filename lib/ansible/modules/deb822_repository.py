@@ -500,7 +500,7 @@ def main():
 
     deb822 = Deb822()
     signed_by_filename = None
-    for key, value in params.items():
+    for key, value in sorted(params.items()):
         if value is None:
             continue
 

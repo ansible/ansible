@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - deb822_repository - handle idempotency if the order of parameters is changed (https://github.com/ansible/ansible/issues/82454).
