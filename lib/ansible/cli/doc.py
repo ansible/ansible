@@ -1059,6 +1059,14 @@ class DocCLI(CLI, RoleMixin):
         return 'version %s' % (version_added, )
 
     @staticmethod
+    def warp_fill(text, limit, initial_indent='', subsequent_indent='', **kwargs):
+        result = []
+        for paragraph in text.split('\n\n'):
+            result.append(textwrap.fill(paragraph, limit, initial_indent=initial_indent, subsequent_indent=subsequent_indent, **kwargs))
+            initial_indent = subsequent_indent
+        return '\n'.join(result)
+
+    @staticmethod
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
@@ -1083,11 +1091,11 @@ class DocCLI(CLI, RoleMixin):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
-                    text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
                 if not isinstance(opt['description'], string_types):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
-                text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                text.append(DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
 
             suboptions = []
@@ -1179,9 +1187,9 @@ class DocCLI(CLI, RoleMixin):
                 else:
                     desc = doc['description']
 
-                text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc),
-                                                   limit, initial_indent=opt_indent,
-                                                   subsequent_indent=opt_indent))
+                text.append("%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(desc),
+                                                      limit, initial_indent=opt_indent,
+                                                      subsequent_indent=opt_indent))
             if doc.get('options'):
                 text.append("OPTIONS (= is mandatory):\n")
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
@@ -1197,7 +1205,7 @@ class DocCLI(CLI, RoleMixin):
                 if k not in doc:
                     continue
                 if isinstance(doc[k], string_types):
-                    text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]),
+                    text.append('%s: %s' % (k.upper(), DocCLI.warp_fill(DocCLI.tty_ify(doc[k]),
                                             limit - (len(k) + 2), subsequent_indent=opt_indent)))
                 elif isinstance(doc[k], (list, tuple)):
                     text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
@@ -1230,8 +1238,8 @@ class DocCLI(CLI, RoleMixin):
         else:
             desc = doc.pop('description')
 
-        text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
-                                           subsequent_indent=opt_indent))
+        text.append("%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
+                                              subsequent_indent=opt_indent))
 
         if 'version_added' in doc:
             version_added = doc.pop('version_added')
@@ -1269,8 +1277,8 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('notes', False):
             text.append("NOTES:")
             for note in doc['notes']:
-                text.append(textwrap.fill(DocCLI.tty_ify(note), limit - 6,
-                                          initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                text.append(DocCLI.warp_fill(DocCLI.tty_ify(note), limit - 6,
+                                             initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
             text.append('')
             text.append('')
             del doc['notes']
@@ -1279,45 +1287,45 @@ class DocCLI(CLI, RoleMixin):
             text.append("SEE ALSO:")
             for item in doc['seealso']:
                 if 'module' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     description = item.get('description')
                     if description is None and item['module'].startswith('ansible.builtin.'):
                         description = 'The official documentation on the %s module.' % item['module']
                     if description is not None:
-                        text.append(textwrap.fill(DocCLI.tty_ify(description),
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(description),
                                     limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                     if item['module'].startswith('ansible.builtin.'):
                         relative_url = 'collections/%s_module.html' % item['module'].replace('.', '/', 2)
-                        text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
                                     limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'plugin' in item and 'plugin_type' in item:
                     plugin_suffix = ' plugin' if item['plugin_type'] not in ('module', 'role') else ''
-                    text.append(textwrap.fill(DocCLI.tty_ify('%s%s %s' % (item['plugin_type'].title(), plugin_suffix, item['plugin'])),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify('%s%s %s' % (item['plugin_type'].title(), plugin_suffix, item['plugin'])),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     description = item.get('description')
                     if description is None and item['plugin'].startswith('ansible.builtin.'):
                         description = 'The official documentation on the %s %s%s.' % (item['plugin'], item['plugin_type'], plugin_suffix)
                     if description is not None:
-                        text.append(textwrap.fill(DocCLI.tty_ify(description),
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(description),
                                     limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                     if item['plugin'].startswith('ansible.builtin.'):
                         relative_url = 'collections/%s_%s.html' % (item['plugin'].replace('.', '/', 2), item['plugin_type'])
-                        text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
                                     limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['name']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['link']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['link']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                 elif 'ref' in item and 'description' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')
@@ -1326,14 +1334,14 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('requirements', False):
             req = ", ".join(doc.pop('requirements'))
-            text.append("REQUIREMENTS:%s\n" % textwrap.fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("REQUIREMENTS:%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         # Generic handler
         for k in sorted(doc):
             if k in DocCLI.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                text.append('%s: %s' % (k.upper(), DocCLI.warp_fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
@@ -1395,14 +1403,14 @@ def _do_yaml_snippet(doc):
         if module:
             if required:
                 desc = "(required) %s" % desc
-            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+            text.append("      %-20s   # %s" % (o, DocCLI.warp_fill(desc, limit, subsequent_indent=subdent)))
         else:
             if required:
                 default = '(required)'
             else:
                 default = opt.get('default', 'None')
 
-            text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
+            text.append("%s %-9s # %s" % (o, default, DocCLI.warp_fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
 
     return text
 
