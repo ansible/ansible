@@ -451,4 +451,4 @@ class PlayIterator:
         try:
             self._host_states[hostname].handler_notifications.pop(notification)
         except KeyError as e:
-            raise AssertionError(f"Failed to remove a handler notification: {e}")
+            raise AnsibleAssertionError(f"Failed to remove a handler notification: {e}")

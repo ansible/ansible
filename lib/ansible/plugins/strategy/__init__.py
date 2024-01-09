@@ -597,8 +597,9 @@ class StrategyBase:
                 role_ran = True
                 ignore_errors = original_task.ignore_errors
                 if not ignore_errors:
-                    # save the current state before failing it for later inspection
-                    state_when_failed = iterator.get_host_state(original_host)
+                    # find out whether there is a rescue block wrapping this task before failing it for later inspection
+                    is_any_block_rescuing = iterator.get_host_state(original_host).is_any_block_rescuing()
+
                     display.debug("marking %s as failed" % original_host.name)
                     if original_task.run_once:
                         # if we're using run_once, we have to fail every host here
@@ -609,14 +610,13 @@ class StrategyBase:
                         iterator.mark_host_failed(original_host)
 
                     state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
-
                     if state.is_failed():
                         self._tqm._failed_hosts[original_host.name] = True
 
                     # if we're iterating on the rescue portion of a block then
                     # we save the failed task in a special var for use
                     # within the rescue/always
-                    if state_when_failed.is_any_block_rescuing():
+                    if is_any_block_rescuing:
                         self._tqm._stats.increment('rescued', original_host.name)
                         iterator._play._removed_hosts.remove(original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
