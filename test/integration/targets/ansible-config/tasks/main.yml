@@ -10,12 +10,5 @@
     - name: run config full dump
       shell: ansible-config init -t all > {{ini_tempfile.path}}
 
-    - name: run ini tester
+    - name: run ini tester, for correctness and dupes
       shell: "{{ansible_playbook_python}} '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
-      ignore_errors: true
-      register: test_ini
-
-    - name: check results
-      assert:
-        that:
-            - test_ini is success
