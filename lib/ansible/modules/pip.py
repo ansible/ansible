@@ -803,8 +803,8 @@ def main():
                     )
                 elif len(recovered_package_name) == 1 and any(_op in recovered_package_name[0] for _op in op_dict.keys()):
                     module.fail_json(
-                        msg="The 'version' argument conflicts with any version specifier provided along with a package name. " \
-                            "Please remove the version specifier, and keep the 'version' argument."
+                        msg="The 'version' argument conflicts with any version specifier provided along with a package name. "
+                            "Please keep the version specifier, but remove the 'version' argument."
                     )
                 if not HAS_SETUPTOOLS and not HAS_PACKAGING and any(_op in version for _op in op_ranges):
                     module.fail_json(msg=missing_required_lib("packaging"), exception=PACKAGING_IMP_ERR)
