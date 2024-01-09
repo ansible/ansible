@@ -517,7 +517,7 @@ class Distribution(object):
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
                                 'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
-                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
+                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap', 'ALP-Dolomite'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
                      'Mandrake': ['Mandrake', 'Mandriva'],
                      'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
