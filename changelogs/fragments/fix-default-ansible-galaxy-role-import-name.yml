@@ -1,0 +1,8 @@
+bugfixes:
+  - >-
+    ``ansible-galaxy role import`` - fix using the ``role_name`` in a standalone role's
+    ``galaxy_info`` metadata by removing the CLI magic remove the ``ansible-role-`` prefix.
+    This matches the behavior of Galaxy which also no longer implicitly removes the
+    ``ansible-role-`` prefix.
+    Use the ``--role-name`` option or add a ``role_name`` to the ``galaxy_info`` dictionary
+    in the role's ``meta/main.yml`` to use an alternate role name.
