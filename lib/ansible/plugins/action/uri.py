@@ -20,6 +20,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_async = True
+        self._supports_check_mode = False
 
         if task_vars is None:
             task_vars = dict()

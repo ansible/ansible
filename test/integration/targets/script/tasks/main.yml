@@ -162,7 +162,7 @@
   assert:
     that:
       - script_result3 is failed
-      - script_result3.msg == "async is not supported for this task."
+      - script_result3.msg == "This action (script) does not support async."
 
 
 # check mode

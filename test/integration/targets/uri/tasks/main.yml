@@ -697,3 +697,14 @@
 
 - name: Test unix socket
   import_tasks: install-socat-and-test-unix-socket.yml
+
+- name: ensure skip action
+  uri:
+    url: http://example.com
+  check_mode: True
+  register: uri_check
+
+- name: check that we skipped at action
+  assert:
+    that:
+      - uri_check.msg == "This action (uri) does not support check mode."

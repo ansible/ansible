@@ -1,0 +1,2 @@
+bugfixes:
+  - uri action plugin now skipped during check mode (not supported) instead of even trying to execute the module, which already skipped, this does not really change the result, but returns much faster.
