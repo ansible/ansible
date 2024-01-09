@@ -592,25 +592,31 @@ class AnsibleEnvironment(NativeEnvironment):
         if not C.JINJA2_BYTECODE_CACHE:
             return super().compile(source, name=name, filename=filename, raw=raw, defer_init=defer_init)  # type: ignore[call-overload]
 
-        # Environment._parse
-        parsed = Parser(self, source, name, filename).parse()
+        try:
+            # Environment._parse
+            parsed = Parser(self, source, name, filename).parse()
 
-        # This wrapper ensures that all templates are not considered literal/constant
-        eval_ctx = nodes.ScopedEvalContextModifier(lineno=-1)
-        eval_ctx.options = [nodes.Keyword('volatile', nodes.Const(True))]
-        eval_ctx.body = parsed.body
+            # This wrapper ensures that all templates are not considered literal/constant
+            eval_ctx = nodes.ScopedEvalContextModifier(lineno=-1)
+            eval_ctx.options = [nodes.Keyword('volatile', nodes.Const(True))]
+            eval_ctx.body = parsed.body
 
-        # Environment._generate
-        generated = generate(
-            nodes.Template([eval_ctx], lineno=-1),
-            self,
-            name,
-            filename,
-            defer_init=False,
-            optimized=self.optimized,
-        )
+            # Environment._generate
+            generated = generate(
+                nodes.Template([eval_ctx], lineno=-1),
+                self,
+                name,
+                filename,
+                defer_init=False,
+                optimized=self.optimized,
+            )
 
-        return compile(generated, filename or '<template>', 'exec')
+            if raw:
+                return generated
+
+            return compile(generated, filename or '<template>', 'exec')
+        except TemplateSyntaxError:
+            self.handle_exception(source=source)
 
     def from_string(
         self,
