@@ -1,0 +1,14 @@
+- name: test ansible-config for valid output and no dupes
+  block:
+    - name: Create temporary file
+      tempfile:
+        path: '{{output_dir}}'
+        state: file
+        suffix: temp.ini
+      register: ini_tempfile
+
+    - name: run config full dump
+      shell: ansible-config init -t all > {{ini_tempfile.path}}
+
+    - name: run ini tester, for correctness and dupes
+      shell: "{{ansible_playbook_python}} '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
