@@ -21,6 +21,10 @@
             "filename": "./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py",
             "has_action": false,
             "module": "randommodule",
+            "notes": [
+                "This is a note.",
+                "This is a multi-paragraph note.\n\nThis is its second paragraph.\nThis is just another line in the second paragraph.\nEventually this will break into a new line,\ndepending with which line width this is rendered."
+            ],
             "options": {
                 "sub": {
                     "description": "Suboptions. Contains O(sub.subtest), which can be set to V(123). You can use E(TEST_ENV) to set this.",
