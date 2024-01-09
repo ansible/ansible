@@ -269,7 +269,6 @@ import pwd
 import re
 import stat
 import time
-import locale
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
@@ -371,7 +370,7 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
         raise e
     except UnicodeDecodeError as e:
         if encoding is None:
-            encoding = locale.getpreferredencoding()
+            encoding = 'None (default determined by the Python built-in function "open")'
         msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
         raise Exception(msg) from e
     except Exception:
