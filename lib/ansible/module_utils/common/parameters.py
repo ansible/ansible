@@ -424,8 +424,6 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
 
         if native_str_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-        for omit_me in no_log_strings:
-            native_str_value = native_str_value.replace(omit_me, '*' * 8)
 
         if value_is_text and isinstance(native_str_value, binary_type):
             value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
