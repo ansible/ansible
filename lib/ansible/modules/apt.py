@@ -213,6 +213,9 @@ notes:
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
    - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
    - When an exact version is specified, an implicit priority of 1001 is used.
+   - If the interpreter can't import ``python-apt``/``python3-apt`` the module will check for it in system-owned interpreters as well.
+     If the dependency can't be found, the module will attempt to install it.
+     If the dependency is found or installed, the module will be respawned under the correct interpreter.
 '''
 
 EXAMPLES = '''
