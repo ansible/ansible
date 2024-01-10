@@ -80,8 +80,8 @@ def _plugin_should_run(plugin, stage):
 
 def get_vars_from_path(loader, path, entities, stage):
     data = {}
-    # FIXME: _prime_vars_loader shouldn't run repeatedly if there are no plugins
-    if not vars_loader._plugin_instance_cache:
+    if not vars_loader._paths:
+        # cache has been reset, reload all()
         _prime_vars_loader()
 
     for plugin_name in vars_loader._plugin_instance_cache:
