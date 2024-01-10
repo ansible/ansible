@@ -127,6 +127,16 @@ def main() -> None:
         sys.exit(1)
 
 
+def get_container_completion_entries() -> dict[str, dict[str, str]]:
+    """Parse and return the ansible-test container completion entries."""
+    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
+
+    # TODO: consider including testing for the collection default image
+    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+
+    return entries
+
+
 def get_test_scenarios() -> list[TestScenario]:
     """Generate and return a list of test scenarios."""
 
@@ -136,10 +146,7 @@ def get_test_scenarios() -> list[TestScenario]:
     if not available_engines:
         raise ApplicationError(f'No supported container engines found: {", ".join(supported_engines)}')
 
-    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
-
-    # TODO: consider including testing for the collection default image
-    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+    entries = get_container_completion_entries()
 
     unprivileged_user = User.get(UNPRIVILEGED_USER_NAME)
 
@@ -226,16 +233,19 @@ def run_test(scenario: TestScenario) -> TestResult:
     if scenario.probe_cgroups:
         target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
 
+    entries = get_container_completion_entries()
+    alpine_container = [name for name in entries if name.startswith('alpine')][0]
+
     commands = [
         # The cgroup probe is only performed for the first test of the target.
         # There's no need to repeat the probe again for the same target.
         # The controller will be tested separately as a target.
         # This ensures that both the probe and no-probe code paths are functional.
         [*integration, *integration_options, *target_only_options],
-        # For the split test we'll use alpine3 as the controller. There are two reasons for this:
+        # For the split test we'll use Alpine Linux as the controller. There are two reasons for this:
         # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
         # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
-        [*integration, '--controller', 'docker:alpine3', *integration_options],
+        [*integration, '--controller', f'docker:{alpine_container}', *integration_options],
     ]
 
     common_env: dict[str, str] = {}
