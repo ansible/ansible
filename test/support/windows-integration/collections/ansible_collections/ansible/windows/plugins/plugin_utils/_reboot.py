@@ -164,13 +164,18 @@ def reboot_host(
     original_connection_timeout: t.Optional[float] = None
     try:
         original_connection_timeout = connection.get_option("connection_timeout")
-        display.vvvv(
-            f"{task_action}: saving original connection_timeout of {original_connection_timeout}"
-        )
     except KeyError:
-        display.vvvv(
-            f"{task_action}: connection_timeout connection option has not been set"
-        )
+        try:
+            # timeout for ssh got renamed to connection_timeout, but older versions ...
+            original_connection_timeout = connection.get_option("timeout")
+        except KeyError:
+            display.vvvv(
+                f"{task_action}: connection_timeout connection option has not been set"
+            )
+
+    display.vvvv(
+        f"{task_action}: saving original connection_timeout of {original_connection_timeout}"
+    )
 
     # Initiate reboot
     # This command may be wrapped in other shells or command making it hard to detect what shutdown.exe actually
@@ -608,13 +613,21 @@ def _set_connection_timeout(
     try:
         current_connection_timeout = connection.get_option("connection_timeout")
     except KeyError:
-        # Not all connection plugins implement this, just ignore the setting if it doesn't work
-        return
+        try:
+            # some plugins use 'timeout'
+            current_connection_timeout = connection.get_option("timeout")
+        except KeyError:
+            # Not all connection plugins implement this, just ignore the setting if it doesn't work
+            return
 
     if timeout == current_connection_timeout:
         return
 
     display.vvvv(f"{task_action}: setting connect_timeout {timeout}")
-    connection.set_option("connection_timeout", timeout)
+    try:
+        connection.set_option("connection_timeout", timeout)
+    except AnsibleError:
+        # JIC connection_timeout does not exist
+        connection.set_option("timeout", timeout)
 
     _reset_connection(task_action, connection, host_context, ignore_errors=True)
