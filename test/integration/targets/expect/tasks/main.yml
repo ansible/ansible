@@ -148,6 +148,15 @@
     - "echo_result.stdout_lines[-2] == 'foobar'"
     - "echo_result.stdout_lines[-1] == 'bar'"
 
+- name: test timeout is valid as null
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    echo: true
+    timeout: null  # wait indefinitely
+  timeout: 2  # but shouldn't be waiting long
+
 - name: test response list
   expect:
     command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
