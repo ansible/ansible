@@ -324,7 +324,7 @@ EXAMPLES = '''
     purge: true
 
 - name: Run the equivalent of "apt-get clean" as a separate step
-  apt:
+  ansible.builtin.apt:
     clean: yes
 '''
 
