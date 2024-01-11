@@ -179,7 +179,7 @@ class ModuleArgsParser:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
-                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
+                    raise AnsibleError("Parameters beginning with '_ansible' are not allowed for the action '%s': '%s'" % (action, arg))
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
