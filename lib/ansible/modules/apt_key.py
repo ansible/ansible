@@ -255,7 +255,7 @@ def parse_output_for_keys(output, short_format=False):
     found = []
     lines = to_native(output).split('\n')
     for line in lines:
-        if (line.startswith("pub") or line.startswith("sub")) and "expired" not in line:
+        if line.startswith(("pub", "sub")):
             try:
                 # apt key format
                 tokens = line.split()

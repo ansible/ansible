@@ -23,3 +23,25 @@
           - 'apt_key_test0.changed is defined'
           - 'apt_key_test0.changed'
           - 'not apt_key_test1.changed'
+
+- name: Import Expired Key
+  apt_key:
+    data: "{{ lookup('ansible.builtin.file', 'expired_key.gpg') }}"
+    state: present
+  register: invalid_key_import
+
+- name: Check if key is imported
+  assert:
+    that:
+      - invalid_key_import.changed
+
+- name: Delete Expired Key
+  apt_key:
+    data: "{{ lookup('ansible.builtin.file', 'expired_key.gpg') }}"
+    state: absent
+  register: invalid_key_delete
+
+- name: Check if key is deleted
+  assert:
+    that:
+      - invalid_key_delete.changed
