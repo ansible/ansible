@@ -42,7 +42,7 @@ options:
         responses. List functionality is new in 2.1.
     required: true
   timeout:
-    type: int
+    type: raw
     description:
       - Amount of time in seconds to wait for the expected strings. Use
         V(null) to disable timeout.
@@ -132,6 +132,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.common.validation import check_type_int
 
 
 def response_closure(module, question, responses):
@@ -157,7 +158,7 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             responses=dict(type='dict', required=True),
-            timeout=dict(type='int', default=30),
+            timeout=dict(type='raw', default=30),
             echo=dict(type='bool', default=False),
         )
     )
@@ -172,6 +173,11 @@ def main():
     removes = module.params['removes']
     responses = module.params['responses']
     timeout = module.params['timeout']
+    if timeout is not None:
+        try:
+            timeout = check_type_int(timeout)
+        except TypeError as te:
+            module.fail_json(msg=to_native(te))
     echo = module.params['echo']
 
     events = dict()
