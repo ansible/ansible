@@ -23,6 +23,7 @@ import functools
 import os
 import pwd
 import re
+import tempfile
 import time
 
 from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
@@ -31,8 +32,9 @@ from numbers import Number
 from traceback import format_exc
 from types import CodeType
 
+from jinja2 import __version__ as jinja2_version
 from jinja2 import nodes
-from jinja2.bccache import FileSystemBytecodeCache
+from jinja2 import bccache
 from jinja2.environment import Template
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.compiler import generate
@@ -54,6 +56,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat import typing as t
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
@@ -75,6 +78,9 @@ JINJA2_OVERRIDE = '#jinja2:'
 
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
 JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
+
+# jinja2 3.1.2 fixed a race condition in FileSystemBytecodeCache
+_IS_JINJA2_312 = LooseVersion(jinja2_version) >= LooseVersion('3.1.2')
 
 RANGE_TYPE = type(range(0))
 
@@ -537,6 +543,69 @@ def _ansible_finalize(thing):
     return thing if _fail_on_undefined(thing) is not None else ''
 
 
+class FileSystemBytecodeCache(bccache.FileSystemBytecodeCache):
+    # jinja2 3.1.2 added fixes for race conditions that we rely on
+    # only define overrides as neccessary
+    if not _IS_JINJA2_312:
+        def load_bytecode(self, bucket: bccache.Bucket) -> None:
+            # BSD 3 Clause License https://opensource.org/license/bsd-3-clause/
+            # https://github.com/pallets/jinja/blob/b08cd4bc64bb980df86ed2876978ae5735572280/src/jinja2/bccache.py#L262-L275
+            filename = self._get_cache_filename(bucket)
+
+            # Don't test for existence before opening the file, since the
+            # file could disappear after the test before the open.
+            try:
+                f = open(filename, "rb")
+            except (FileNotFoundError, IsADirectoryError, PermissionError):
+                # PermissionError can occur on Windows when an operation is
+                # in progress, such as calling clear().
+                return
+
+            with f:
+                bucket.load_bytecode(f)
+
+        def dump_bytecode(self, bucket: bccache.Bucket) -> None:
+            # BSD 3 Clause License https://opensource.org/license/bsd-3-clause/
+            # https://github.com/pallets/jinja/blob/b08cd4bc64bb980df86ed2876978ae5735572280/src/jinja2/bccache.py#L277-L313
+
+            # Write to a temporary file, then rename to the real name after
+            # writing. This avoids another process reading the file before
+            # it is fully written.
+            name = self._get_cache_filename(bucket)
+            f = tempfile.NamedTemporaryFile(
+                mode="wb",
+                dir=os.path.dirname(name),
+                prefix=os.path.basename(name),
+                suffix=".tmp",
+                delete=False,
+            )
+
+            def remove_silent() -> None:
+                try:
+                    os.remove(f.name)
+                except OSError:
+                    # Another process may have called clear(). On Windows,
+                    # another program may be holding the file open.
+                    pass
+
+            try:
+                with f:
+                    bucket.write_bytecode(f)
+            except BaseException:
+                remove_silent()
+                raise
+
+            try:
+                os.replace(f.name, name)
+            except OSError:
+                # Another process may have called clear(). On Windows,
+                # another program may be holding the file open.
+                remove_silent()
+            except BaseException:
+                remove_silent()
+                raise
+
+
 class AnsibleEnvironment(NativeEnvironment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -587,7 +656,7 @@ class AnsibleEnvironment(NativeEnvironment):
         filename: str | None = None,
         raw: bool = False,
         defer_init: bool = False,
-    ) -> CodeType:
+    ) -> str | CodeType:
 
         if not C.JINJA2_BYTECODE_CACHE:
             return super().compile(source, name=name, filename=filename, raw=raw, defer_init=defer_init)  # type: ignore[call-overload]
