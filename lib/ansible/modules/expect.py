@@ -177,7 +177,7 @@ def main():
         try:
             timeout = check_type_int(timeout)
         except TypeError as te:
-            module.fail_json(msg=to_native(te))
+            module.fail_json(msg=f"argument 'timeout' is of type {type(timeout)} and we were unable to convert to int: {te}")
     echo = module.params['echo']
 
     events = dict()
