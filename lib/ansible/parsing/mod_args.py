@@ -179,7 +179,7 @@ class ModuleArgsParser:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
-                    raise AnsibleError("Parameters beginning with '_ansible' are not allowed for the action '%s': '%s'. '_ansible_' is reserved for internal engine use." % (action, arg))
+                    raise AnsibleError("Parameters beginning with '_ansible_' are not allowed for the action '%s': '%s'. '_ansible_' is reserved for internal engine use." % (action, arg))
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
