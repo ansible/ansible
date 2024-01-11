@@ -17,10 +17,8 @@
 
 from __future__ import annotations
 
-import datetime
-
 from yaml.constructor import SafeConstructor, ConstructorError
-from yaml.nodes import MappingNode, Node
+from yaml.nodes import MappingNode
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes, to_native
@@ -120,7 +118,7 @@ class AnsibleConstructor(SafeConstructor):
         data.extend(self.construct_sequence(node))
         data.ansible_pos = self._node_position_info(node)
 
-    def construct_yaml_timestamp(self, node: Node) -> datetime.datetime:
+    def construct_yaml_timestamp(self, node):
         ds, line, column = self._node_position_info(node)
         msg = (
             f"Found YAML value '{node.value}' that has been converted to a datetime object from "
