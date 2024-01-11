@@ -669,7 +669,7 @@ def main():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
