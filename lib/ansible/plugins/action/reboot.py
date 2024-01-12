@@ -383,7 +383,8 @@ class ActionModule(ActionBase):
             else:
                 if original_connection_timeout != connect_timeout:
                     try:
-                        display.debug("{action}: setting connect_timeout/timeout back to original value of {value}".format(action=self._task.action, value=original_connection_timeout))
+                        display.debug("{action}: setting connect_timeout/timeout back to original value of {value}".format(action=self._task.action,
+                                                                                                                           value=original_connection_timeout))
                         try:
                             self._connection.set_option("connection_timeout", original_connection_timeout)
                         except AnsibleError:
@@ -394,8 +395,8 @@ class ActionModule(ActionBase):
                         # reset the connection to clear the custom connection timeout
                         self._connection.reset()
                     except (AnsibleError, AttributeError) as e:
-                        display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action, error=to_text(e)))
-
+                        display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action,
+                                                                                                                     error=to_text(e)))
 
             # finally run test command to ensure everything is working
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
