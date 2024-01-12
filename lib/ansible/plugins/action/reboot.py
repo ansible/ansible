@@ -393,7 +393,7 @@ class ActionModule(ActionBase):
                                 raise
                         # reset the connection to clear the custom connection timeout
                         self._connection.reset()
-                     except AnsibleError, AttributeError) as e:
+                     except (AnsibleError, AttributeError) as e:
                         display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action, error=to_text(e)))
 
 
