@@ -64,12 +64,12 @@ ensure_test_data = [
 ]
 
 ensure_unquoting_test_data = [
-    ('"value"', '"value"', 'str', 'env: ENVVAR'),
-    ('"value"', '"value"', 'str', 'yaml: %s' % os.path.join(curdir, 'test.yml')),
-    ('"value"', 'value', 'str', 'ini: %s' % cfg_file),
-    ('\'value\'', 'value', 'str', 'ini: %s' % cfg_file),
-    ('\'\'value\'\'', '\'value\'', 'str', 'ini: %s' % cfg_file),
-    ('""value""', '"value"', 'str', 'ini: %s' % cfg_file)
+    ('"value"', '"value"', 'str', 'env: ENVVAR', None),
+    ('"value"', '"value"', 'str', os.path.join(curdir, 'test.yml'), 'yaml'),
+    ('"value"', 'value', 'str', cfg_file, 'ini'),
+    ('\'value\'', 'value', 'str', cfg_file, 'ini'),
+    ('\'\'value\'\'', '\'value\'', 'str', cfg_file, 'ini'),
+    ('""value""', '"value"', 'str', cfg_file, 'ini')
 ]
 
 
@@ -86,9 +86,9 @@ class TestConfigManager:
     def test_ensure_type(self, value, expected_type, python_type):
         assert isinstance(ensure_type(value, expected_type), python_type)
 
-    @pytest.mark.parametrize("value, expected_value, value_type, origin", ensure_unquoting_test_data)
-    def test_ensure_type_unquoting(self, value, expected_value, value_type, origin):
-        actual_value = ensure_type(value, value_type, origin)
+    @pytest.mark.parametrize("value, expected_value, value_type, origin, origin_ftype", ensure_unquoting_test_data)
+    def test_ensure_type_unquoting(self, value, expected_value, value_type, origin, origin_ftype):
+        actual_value = ensure_type(value, value_type, origin, origin_ftype)
         assert actual_value == expected_value
 
     def test_resolve_path(self):
@@ -99,13 +99,13 @@ class TestConfigManager:
         assert os.path.join(os.getcwd(), 'test.yml') == resolve_path('./test.yml')
 
     def test_value_and_origin_from_ini(self):
-        assert self.manager.get_config_value_and_origin('config_entry') == ('fromini', 'ini: %s' % cfg_file)
+        assert self.manager.get_config_value_and_origin('config_entry') == ('fromini', cfg_file)
 
     def test_value_from_ini(self):
         assert self.manager.get_config_value('config_entry') == 'fromini'
 
     def test_value_and_origin_from_alt_ini(self):
-        assert self.manager.get_config_value_and_origin('config_entry', cfile=cfg_file2) == ('fromini2', 'ini: %s' % cfg_file2)
+        assert self.manager.get_config_value_and_origin('config_entry', cfile=cfg_file2) == ('fromini2', cfg_file2)
 
     def test_value_from_alt_ini(self):
         assert self.manager.get_config_value('config_entry', cfile=cfg_file2) == 'fromini2'
