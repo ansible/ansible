@@ -243,8 +243,8 @@ class ActionModule(ActionBase):
             except AnsibleError:
                 try:
                     self._connection.set_option("timeout", connect_timeout)
-            except AttributeError:
-                display.warning("Connection plugin does not allow the connection timeout to be overridden")
+                except (AnsibleError, AttributeError):
+                    display.warning("Connection plugin does not allow the connection timeout to be overridden")
 
             self._connection.reset()
 
