@@ -51,32 +51,32 @@ attributes:
 EXAMPLES = r'''
 - name: verify vars needed for this task file are present when included
   ansible.builtin.validate_argument_spec:
-        argument_spec: '{{required_data}}'
+        argument_spec: '{{ required_data }}'
   vars:
     required_data:
-        # unlike spec file, just put the options in directly
-        stuff:
-            description: stuff
-            type: str
-            choices: ['who', 'knows', 'what']
-            default: what
-        but:
-            description: i guess we need one
-            type: str
-            required: true
+      # unlike spec file, just put the options in directly
+      stuff:
+        description: stuff
+        type: str
+        choices: ['who', 'knows', 'what']
+        default: what
+      but:
+        description: i guess we need one
+        type: str
+        required: true
 
 
 - name: verify vars needed for this task file are present when included, with spec from a spec file
   ansible.builtin.validate_argument_spec:
-        argument_spec: "{{(lookup('ansible.builtin.file', 'myargspec.yml') | from_yaml )['specname']['options']}}"
+    argument_spec: "{{ (lookup('ansible.builtin.file', 'myargspec.yml') | from_yaml )['specname']['options'] }}"
 
 
 - name: verify vars needed for next include and not from inside it, also with params i'll only define there
   block:
     - ansible.builtin.validate_argument_spec:
-        argument_spec: "{{lookup('ansible.builtin.file', 'nakedoptions.yml'}}"
+        argument_spec: "{{ lookup('ansible.builtin.file', 'nakedoptions.yml') }}"
         provided_arguments:
-            but: "that i can define on the include itself, like in it's `vars:` keyword"
+          but: "that i can define on the include itself, like in it's `vars:` keyword"
 
     - name: the include itself
       vars:
