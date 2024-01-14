@@ -1204,7 +1204,7 @@ class TestIptables(ModuleTestCase):
                 'flags_set': ['']
             },
             'jump': 'TCPMSS',
-            'clamp_mss_to_pmtu': 'true',
+            'clamp_mss_to_pmtu': True,
         })
 
         commands_results = [
