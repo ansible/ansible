@@ -1200,7 +1200,7 @@ class TestIptables(ModuleTestCase):
             'protocol': 'tcp',
             'match': 'tcp',
             'tcp_flags': {
-                'flags': ["SYN,RST", "SYN"],
+                'flags': ["SYN,RST SYN"],
                 'flags_set': ['']
             },
             'jump': 'TCPMSS',
@@ -1222,10 +1222,10 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t', 'mangle',
             '-C', 'POSTROUTING',
-            '-o', 'eth1',
             '-p', 'tcp',
             '-m', 'tcp',
-            '--tcp-flags', 'SYN,RST', 'SYN',
+            '--tcp-flags', 'SYN,RST SYN'
             '-j', 'TCPMSS',
             '--clamp-mss-to-pmtu',
+            '-o', 'eth1',
         ])

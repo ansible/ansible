@@ -549,8 +549,7 @@ EXAMPLES = r'''
     match: tcp
     tcp_flags:
       flags:
-        - "SYN,RST"
-        - "SYN"
+        - "SYN,RST SYN"
       flags_set: []
     jump: TCPMSS
     clamp_mss_to_pmtu: yes
