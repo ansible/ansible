@@ -385,8 +385,8 @@ options:
     version_added: "2.13"
   clamp_mss_to_pmtu:
     description:
-      - This paramater controls the running of the iptables -j tcpmss --clamp-mss-to-pmtu
-      - If V(true) and jump is set to tcpmss, then iptables will clamp MSS value to path MTU.
+      - This paramater controls the running of the iptables -j TCPMSS --clamp-mss-to-pmtu
+      - If V(true) and jump is set to TCPMSS, then iptables will clamp MSS value to path MTU.
     type: bool
     default: false
     version_added: "2.13"
@@ -623,10 +623,9 @@ def append_wait(rule, param, flag):
         rule.extend([flag, param])
 
 
-def append_clamp_mss_to_pmtu(rule, param, jump):
+def append_clamp_mss_to_pmtu(rule, param, flag):
     if param:
-        if jump == 'tcpmss':
-            rule.extend(['--clamp-mss-to-pmtu'])
+        rule.extend([flag])
 
 
 def construct_rule(params):
@@ -640,8 +639,8 @@ def construct_rule(params):
     append_param(rule, params['jump'], '-j', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
         append_param(rule, params['gateway'], '--gateway', False)
-    if params.get('clamp_mss_to_pmtu') and params['jump'].lower() == 'tcpmss':
-        append_clamp_mss_to_pmtu(rule, params['clamp_mss_to_pmtu'], '--clamp-mss-to-pmtu', False)
+    if params.get('clamp_mss_to_pmtu') and params['jump'].lower() == 'TCPMSS':
+        append_clamp_mss_to_pmtu(rule, params['clamp_mss_to_pmtu'], '--clamp-mss-to-pmtu')
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
