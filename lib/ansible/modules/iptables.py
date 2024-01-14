@@ -622,10 +622,12 @@ def append_wait(rule, param, flag):
     if param:
         rule.extend([flag, param])
 
+
 def append_clamp_mss_to_pmtu(rule, param, jump):
     if param:
         if jump == 'tcpmss':
             rule.extend(['--clamp-mss-to-pmtu'])
+
 
 def construct_rule(params):
     rule = []

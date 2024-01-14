@@ -1199,7 +1199,7 @@ class TestIptables(ModuleTestCase):
             'out_interface': 'eth1',
             'protocol': 'tcp',
             'match': 'tcp',
-            'tcp_flags':  {
+            'tcp_flags': {
                 'flags': ["SYN,RST", "SYN"],
                 'flags_set': ['']
             },
