@@ -860,6 +860,7 @@ def main():
         rule=' '.join(construct_rule(module.params)),
         state=module.params['state'],
         chain_management=module.params['chain_management'],
+        clamp_mss_to_pmtu=module.params['clamp_mss_to_pmtu'],
     )
 
     ip_version = module.params['ip_version']
