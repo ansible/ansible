@@ -1190,3 +1190,42 @@ class TestIptables(ModuleTestCase):
             with self.assertRaises(AnsibleExitJson) as result:
                 iptables.main()
                 self.assertFalse(result.exception.args[0]['changed'])
+
+    def test_clamp_mss_to_pmtu(self):
+        """Test clamp_mss_to_pmtu module usage"""
+        set_module_args({
+            'table': 'mangle',
+            'chain': 'POSTROUTING',
+            'out_interface': 'eth1',
+            'protocol': 'tcp',
+            'match': 'tcp',
+            'tcp_flags':  {
+                'flags': ["SYN,RST", "SYN"],
+                'flags_set': ['']
+            },
+            'jump': 'TCPMSS',
+            'clamp_mss_to_pmtu': 'true',
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'mangle',
+            '-C', 'POSTROUTING',
+            '-o', 'eth1',
+            '-p', 'tcp',
+            '-m', 'tcp',
+            '--tcp-flags', 'SYN,RST', 'SYN',
+            '-j', 'TCPMSS',
+            '--clamp-mss-to-pmtu',
+        ])

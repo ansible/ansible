@@ -383,6 +383,13 @@ options:
     type: bool
     default: false
     version_added: "2.13"
+  clamp_mss_to_pmtu:
+    description:
+      - This paramater controls the running of the iptables -j tcpmss --clamp-mss-to-pmtu
+      - If V(true) and jump is set to tcpmss, then iptables will clamp MSS value to path MTU.
+    type: bool
+    default: false
+    version_added: "2.13"
 '''
 
 EXAMPLES = r'''
@@ -532,6 +539,21 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
+
+- name: Clamp MSS on eth0 to path MTU
+  ansible.builtin.iptables:
+    table: mangle
+    chain: POSTROUTING
+    out_interface: eth1
+    protocol: tcp
+    match: tcp
+    tcp_flags:
+      flags:
+        - "SYN,RST"
+        - "SYN"
+      flags_set: []
+    jump: TCPMSS
+    clamp_mss_to_pmtu: yes
 '''
 
 import re
@@ -600,6 +622,10 @@ def append_wait(rule, param, flag):
     if param:
         rule.extend([flag, param])
 
+def append_clamp_mss_to_pmtu(rule, param, jump):
+    if param:
+        if jump == 'tcpmss':
+            rule.extend(['--clamp-mss-to-pmtu'])
 
 def construct_rule(params):
     rule = []
@@ -612,6 +638,8 @@ def construct_rule(params):
     append_param(rule, params['jump'], '-j', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
         append_param(rule, params['gateway'], '--gateway', False)
+    if params.get('jump') and params['jump'].lower() == 'tcpmss':
+        append_param(rule, params['clamp_mss_to_pmtu'], '--clamp-mss-to-pmtu', False)
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
@@ -809,6 +837,7 @@ def main():
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
             chain_management=dict(type='bool', default=False),
+            clamp_mss_to_pmtu=dict(type='bool', default=False),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
