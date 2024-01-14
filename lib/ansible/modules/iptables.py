@@ -641,7 +641,7 @@ def construct_rule(params):
     if params.get('jump') and params['jump'].lower() == 'tee':
         append_param(rule, params['gateway'], '--gateway', False)
     if params.get('clamp_mss_to_pmtu') and params['jump'].lower() == 'tcpmss':
-        append_param(rule, params['clamp_mss_to_pmtu'], '--clamp-mss-to-pmtu', False)
+        append_clamp_mss_to_pmtu(rule, params['clamp_mss_to_pmtu'], '--clamp-mss-to-pmtu', False)
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
