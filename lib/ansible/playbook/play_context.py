@@ -316,10 +316,6 @@ class PlayContext(Base):
             display.warning('The "%s" connection plugin has an improperly configured remote target value, '
                             'forcing "inventory_hostname" templated value instead of the string' % new_info.connection)
 
-        # set no_log to default if it was not previously set
-        if new_info.no_log is None:
-            new_info.no_log = C.DEFAULT_NO_LOG
-
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
