@@ -107,17 +107,17 @@ EXAMPLES = r'''
   ansible.builtin.fetch:
     src: /tmp/somefile
     dest: /tmp/prefix-{{ inventory_hostname }}
-    flat: yes
+    flat: true
 
 - name: Specifying a destination path
   ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: /tmp/special/
-    flat: yes
+    flat: true
 
 - name: Storing in a path relative to the playbook
   ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
-    flat: yes
+    flat: true
 '''
