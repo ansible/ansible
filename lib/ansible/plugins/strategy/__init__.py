@@ -180,7 +180,7 @@ def debug_closure(func):
             try:
                 prev_host_state = prev_host_states[host.name]
             except KeyError:
-                prev_host_state = iterator.get_host_state(host)
+                prev_host_state = iterator.get_state_for_host(host.name)
 
             while result.needs_debugger(globally_enabled=self.debugger_active):
                 next_action = NextAction()
@@ -598,7 +598,7 @@ class StrategyBase:
                 ignore_errors = original_task.ignore_errors
                 if not ignore_errors:
                     # find out whether there is a rescue block wrapping this task before failing it for later inspection
-                    is_any_block_rescuing = iterator.get_host_state(original_host).is_any_block_rescuing()
+                    rescued = iterator.is_host_rescued(original_host.name)
 
                     display.debug("marking %s as failed" % original_host.name)
                     if original_task.run_once:
@@ -616,7 +616,7 @@ class StrategyBase:
                     # if we're iterating on the rescue portion of a block then
                     # we save the failed task in a special var for use
                     # within the rescue/always
-                    if is_any_block_rescuing:
+                    if rescued:
                         self._tqm._stats.increment('rescued', original_host.name)
                         iterator._play._removed_hosts.remove(original_host.name)
                         self._variable_manager.set_nonpersistent_facts(

@@ -136,7 +136,7 @@ class HostState:
                 case IteratingStates.ALWAYS:
                     target_block.always[state.cur_always_task:state.cur_always_task] = task_list
                 case _:
-                    raise AssertionError(f"Unexpected run_state {state.run_state} detected while inserting tasks")
+                    raise AssertionError(f"Unexpected run_state '{state.run_state.name}' detected while inserting tasks")
 
             state._blocks[state.cur_block] = target_block
 
@@ -255,27 +255,31 @@ class PlayIterator:
         self.cur_task = 0
 
     def get_host_state(self, host: Host) -> HostState:
+        display.deprecated(
+            "PlayIterator.get_host_state is deprecated, use PlayIterator.get_state_for_host instead and "
+            "create a copy (using the copy() method) of the state it returns when needed.",
+            version="2.18"
+        )
         # Since we're using the PlayIterator to carry forward failed hosts,
         # in the event that a previous host was not in the current inventory
         # we create a stub state for it now
         if host.name not in self._host_states:
-            # FIXME why is this needed?
             self.set_state_for_host(host.name, HostState(blocks=[]))
 
         return self._host_states[host.name].copy()
 
     def get_next_task_for_host(self, host: Host, peek: bool = False) -> tuple[HostState, Task | Handler | None]:
         display.debug("getting the next task for host %s" % host.name)
-        s = self.get_host_state(host)
+        s = self.get_state_for_host(host.name)
 
         if s.run_state == IteratingStates.COMPLETE:
             display.debug("host %s is done iterating, returning" % host.name)
             return s, None
 
-        s, task = self._get_next_task_from_state(s, host=host)
+        if peek:
+            s = s.copy()
 
-        if not peek:
-            self.set_state_for_host(host.name, s)
+        s, task = self._get_next_task_from_state(s, host=host)
 
         display.debug("done getting next task for host %s" % host.name)
         display.debug(" ^ task is: %s" % task)
@@ -419,8 +423,23 @@ class PlayIterator:
     def get_failed_hosts(self) -> dict[str, bool]:
         return dict((host, True) for (host, state) in self._host_states.items() if state.get_current().is_failed())
 
+    def is_failed(self, host: Host) -> bool:
+        display.deprecated("", "2.18")
+        return self.get_state_for_host(host.name).get_current().is_failed()
+
     def clear_host_errors(self, host: Host) -> None:
         self.get_state_for_host(host.name).clear_failed()
+
+    def get_active_state(self, state: HostState) -> HostState:
+        display.deprecated("", "2.18")
+        return state.get_current()
+
+    def is_any_block_rescuing(self, state: HostState) -> bool:
+        display.deprecated("", "2.18")
+        return state.is_any_block_rescuing()
+
+    def is_host_rescued(self, hostname: str) -> bool:
+        return self.get_state_for_host(hostname).is_any_block_rescuing()
 
     def add_tasks(self, host: Host, task_list: list[Block]) -> None:
         self.get_state_for_host(host.name).insert_tasks(task_list)
@@ -430,6 +449,9 @@ class PlayIterator:
         return self._host_states
 
     def get_state_for_host(self, hostname: str) -> HostState:
+        # Since we're using the PlayIterator to carry forward failed hosts,
+        # in the event that a previous host was not in the current inventory
+        # we create a stub state for it now.
         if hostname not in self._host_states:
             self.set_state_for_host(hostname, HostState(blocks=[]))
         return self._host_states[hostname]
