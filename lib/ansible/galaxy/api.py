@@ -134,7 +134,7 @@ def g_connect(versions):
                                       self.name, self.api_server))
 
             # Warn only when we know we are talking to a collections API
-            if 'v1' not in versions and {'v3'}.difference(available_versions) == {'v3'}:
+            if common_versions == {'v2'}:
                 display.deprecated(
                     'The v2 Ansible Galaxy API is deprecated and no longer supported. '
                     'Ensure that you have configured the ansible-galaxy CLI to utilize an '
