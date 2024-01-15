@@ -133,6 +133,15 @@ def g_connect(versions):
                                    % (method.__name__, ", ".join(versions), ", ".join(available_versions),
                                       self.name, self.api_server))
 
+            # Warn only when we know we are talking to a collections API
+            if 'v1' not in versions and {'v3'}.difference(available_versions) == {'v3'}:
+                display.deprecated(
+                    'The v2 Ansible Galaxy API is deprecated and no longer supported. '
+                    'Ensure that you have configured the ansible-galaxy CLI to utilize an '
+                    'updated and supported version of Ansible Galaxy.',
+                    version='2.17'
+                )
+
             return method(self, *args, **kwargs)
         return wrapped
     return decorator
