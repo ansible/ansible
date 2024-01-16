@@ -240,9 +240,13 @@ class ActionModule(ActionBase):
             try:
                 display.debug("{action}: setting connect_timeout to {value}".format(action=self._task.action, value=connect_timeout))
                 self._connection.set_option("connection_timeout", connect_timeout)
-                self._connection.reset()
-            except AttributeError:
-                display.warning("Connection plugin does not allow the connection timeout to be overridden")
+            except AnsibleError:
+                try:
+                    self._connection.set_option("timeout", connect_timeout)
+                except (AnsibleError, AttributeError):
+                    display.warning("Connection plugin does not allow the connection timeout to be overridden")
+
+            self._connection.reset()
 
         # try and get boot time
         try:
@@ -372,17 +376,25 @@ class ActionModule(ActionBase):
             try:
                 connect_timeout = self._connection.get_option('connection_timeout')
             except KeyError:
-                pass
+                try:
+                    connect_timeout = self._connection.get_option('timeout')
+                except KeyError:
+                    pass
             else:
                 if original_connection_timeout != connect_timeout:
                     try:
-                        display.debug("{action}: setting connect_timeout back to original value of {value}".format(
-                            action=self._task.action,
-                            value=original_connection_timeout))
-                        self._connection.set_option("connection_timeout", original_connection_timeout)
+                        display.debug("{action}: setting connect_timeout/timeout back to original value of {value}".format(action=self._task.action,
+                                                                                                                           value=original_connection_timeout))
+                        try:
+                            self._connection.set_option("connection_timeout", original_connection_timeout)
+                        except AnsibleError:
+                            try:
+                                self._connection.set_option("timeout", original_connection_timeout)
+                            except AnsibleError:
+                                raise
+                        # reset the connection to clear the custom connection timeout
                         self._connection.reset()
                     except (AnsibleError, AttributeError) as e:
-                        # reset the connection to clear the custom connection timeout
                         display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action,
                                                                                                                      error=to_text(e)))
 
@@ -440,11 +452,16 @@ class ActionModule(ActionBase):
 
         # Get the original connection_timeout option var so it can be reset after
         original_connection_timeout = None
+
+        display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
         try:
             original_connection_timeout = self._connection.get_option('connection_timeout')
-            display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
         except KeyError:
-            display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
+            try:
+                original_connection_timeout = self._connection.get_option('timeout')
+            except KeyError:
+                display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
+
         # Initiate reboot
         reboot_result = self.perform_reboot(task_vars, distribution)
 
