@@ -90,19 +90,21 @@ EXAMPLES = r'''
   ansible.builtin.expect:
     command: passwd username
     responses:
-      # match prompts containing `password` in upper or lowercase, and provide the password
       (?i)password: "MySekretPa$$word"
   # you don't want to show passwords in your logs
   no_log: true
 
-- name: Generic question with multiple different responses
+- name: Match multiple regular expressions and demonstrate individual and repeated responses
   ansible.builtin.expect:
     command: /path/to/custom/command
     responses:
       Question:
+        # give a unique response for each of the 3 hypothetical prompts matched
         - response1
         - response2
         - response3
+      # give the same response for every matching prompt
+      "^Match another prompt$": "response"
 
 - name: Multiple questions with responses
   ansible.builtin.expect:
