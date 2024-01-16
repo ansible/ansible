@@ -80,7 +80,7 @@ def _plugin_should_run(plugin, stage):
 
 def get_vars_from_path(loader, path, entities, stage):
     data = {}
-    if not vars_loader._paths:
+    if vars_loader._paths is None:
         # cache has been reset, reload all()
         _prime_vars_loader()
 
