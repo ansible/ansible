@@ -1,0 +1,2 @@
+bugfixes:
+- reboot action now handles connections with 'timeout' vs only 'connection_timeout' settings.
