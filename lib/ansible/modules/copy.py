@@ -301,7 +301,6 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.six import PY3
 
 
 # The AnsibleModule object
@@ -705,7 +704,7 @@ def main():
                             raise
 
                 # might be needed below
-                if PY3 and hasattr(os, 'listxattr'):
+                if hasattr(os, 'listxattr'):
                     try:
                         src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
                     except Exception as e:
@@ -715,7 +714,7 @@ def main():
                 # at this point we should always have tmp file
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
 
-                if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
+                if hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
                     # atomic_move used above to copy src into dest might, in some cases,
                     # use shutil.copy2 which in turn uses shutil.copystat.
                     # Since Python 3.3, shutil.copystat copies file extended attributes:
