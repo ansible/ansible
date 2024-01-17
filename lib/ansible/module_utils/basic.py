@@ -2121,7 +2121,7 @@ def __getattr__(importable_name):
     else:
         raise AttributeError(
             f'cannot import name {importable_name !r} '
-            f'has no attribute ({__file__ !s})',
+            f"from '{__name__}' ({__file__ !s})"
         )
 
     deprecate(
