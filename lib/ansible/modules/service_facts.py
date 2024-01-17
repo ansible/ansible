@@ -437,9 +437,9 @@ class FreeBSDScanService(BaseService):
                 service_info['pid'] = p.match(stdout[0])[0]
             elif rc == 1:
                 if 'is not running' in stdout.lines()[0]:
-                    service_info['status'] == 'stopped'
+                    service_info['status'] = 'stopped'
                 elif 'unknown directive' in stderr.lines()[0]:
-                    service_info['status'] == 'does not support status query'
+                    service_info['status'] = 'does not support status query'
         elif stderr:
             self.module.warn("Failed to get info for %s: %s" % (service, stderr))
         elif stdout:
