@@ -419,6 +419,7 @@ class OpenBSDScanService(BaseService):
 
         return services
 
+
 class FreeBSDScanService(BaseService):
 
     _pid_regex = r'.+ is running as pid (\d+)\.'
@@ -435,9 +436,9 @@ class FreeBSDScanService(BaseService):
                 p = re.compile(r'^\s?%s is running as pid (\d+).' % service)
                 service_info['pid'] = p.match(stdout[0])[0]
             elif rc == 1:
-                if 'is not running' in stdout[0]:
+                if 'is not running' in stdout.lines()[0]:
                     service_info['status'] == 'stopped'
-                elif 'unknown directive' in stderr[0]:
+                elif 'unknown directive' in stderr.lines()[0]:
                     service_info['status'] == 'does not support status query'
         elif stderr:
             self.module.warn("Failed to get info for %s: %s" % (service, stderr))
