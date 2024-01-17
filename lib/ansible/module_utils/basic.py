@@ -2084,19 +2084,19 @@ def __getattr__(importable_name):
         import datetime
         importable = datetime
         removal_version = '2.21'
-    elif importable_name ==  'signal':
+    elif importable_name == 'signal':
         import signal
         importable = signal
         removal_version = '2.21'
-    elif importable_name ==  'types':
+    elif importable_name == 'types':
         import types
         importable = types
         removal_version = '2.21'
-    elif importable_name ==  'chain':
+    elif importable_name == 'chain':
         from itertools import chain
         importable = chain
         removal_version = '2.21'
-    elif importable_name ==  'repeat':
+    elif importable_name == 'repeat':
         from itertools import repeat
         importable = repeat
         removal_version = '2.21'
@@ -2114,7 +2114,7 @@ def __getattr__(importable_name):
         import builtins
         importable = getattr(builtins, importable_name)
         removal_version = '2.21'
-    elif importable_name ==  'shlex_quote':
+    elif importable_name == 'shlex_quote':
         import importlib
         importable = getattr(
             importlib.import_module('ansible.module_utils.six.moves'),
