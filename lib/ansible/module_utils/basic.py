@@ -42,6 +42,8 @@ import tempfile
 import time
 import traceback
 
+from functools import reduce
+
 try:
     import syslog
     HAS_SYSLOG = True
@@ -2110,16 +2112,11 @@ def __getattr__(importable_name):
             importable_name
         )
         removal_version = '2.21'
-    elif importable_name in {'map', 'reduce'}:
-        import builtins
-        importable = getattr(builtins, importable_name)
+    elif importable_name == 'map':
+        importable = map
         removal_version = '2.21'
     elif importable_name == 'shlex_quote':
-        import importlib
-        importable = getattr(
-            importlib.import_module('ansible.module_utils.six.moves'),
-            'shlex_quote'
-        )
+        importable = shlex.quote
         removal_version = '2.21'
     else:
         raise AttributeError(
