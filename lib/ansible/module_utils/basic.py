@@ -2125,7 +2125,7 @@ def __getattr__(importable_name):
         )
 
     deprecate(
-        msg=f'`ansible.module_utils.basic.{importable_name}` is deprecated.',
+        msg=f"'{__name__}.{importable_name}' is deprecated.",
         version=removal_version,
     )
     return importable
