@@ -70,6 +70,8 @@
       - -{%- if ansible_python.version.major != 2 -%}I{%- endif -%}m
       - trustme
       - --dir={{ subversion_server_dir }}
+      - --identities={{ subversion_repo_ip }}
+      - --common-name={{ subversion_repo_ip }}
 
 - name: symlink trustme certificates into apache config dir - Red Hat
   when: ansible_os_family in ['RedHat']
