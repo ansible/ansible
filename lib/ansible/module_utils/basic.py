@@ -2125,7 +2125,7 @@ def __getattr__(importable_name):
         )
 
     deprecate(
-        msg=f"'{__name__}.{importable_name}' is deprecated.",
+        msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
         version=removal_version,
     )
     return importable
