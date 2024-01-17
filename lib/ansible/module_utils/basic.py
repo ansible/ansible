@@ -91,7 +91,8 @@ def _get_available_hash_algorithms():
     """Return a dictionary of available hash function names and their associated function."""
     algorithms = {}
     for algorithm_name in hashlib.algorithms_available:
-        if algorithm_func := getattr(hashlib, algorithm_name, None):
+        algorithm_func = getattr(hashlib, algorithm_name, None)
+        if algorithm_func:
             try:
                 # Make sure the algorithm is actually available for use.
                 # Not all algorithms listed as available are actually usable.
@@ -2071,61 +2072,60 @@ def get_module_path():
 
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
-    match importable_name:
-        case 'get_exception':
-            from ansible.module_utils.pycompat24 import get_exception
-            importable = get_exception
-            removal_version = '2.19'
-        case 'literal_eval' | '_literal_eval':
-            from ast import literal_eval
-            importable = literal_eval
-            removal_version = '2.19'
-        case 'datetime':
-            import datetime
-            importable = datetime
-            removal_version = '2.21'
-        case 'signal':
-            import signal
-            importable = signal
-            removal_version = '2.21'
-        case 'types':
-            import types
-            importable = types
-            removal_version = '2.21'
-        case 'chain':
-            from itertools import chain
-            importable = chain
-            removal_version = '2.21'
-        case 'repeat':
-            from itertools import repeat
-            importable = repeat
-            removal_version = '2.21'
-        case (
-            'PY2' | 'PY3' | 'b' | 'binary_type' | 'integer_types' |
-            'iteritems' | 'string_types' | 'test_type'
-        ):
-            import importlib
-            importable = getattr(
-                importlib.import_module('ansible.module_utils.six'),
-                importable_name
-            )
-            removal_version = '2.21'
-        case 'map' | 'reduce':
-            import builtins
-            importable = getattr(builtins, importable_name)
-            removal_version = '2.21'
-        case 'shlex_quote':
-            import importlib
-            importable = getattr(
-                importlib.import_module('ansible.module_utils.six.moves'),
-                'shlex_quote'
-            )
-            removal_version = '2.21'
-        case _:
-            raise AttributeError(
-                f'cannot import name {importable_name !r} '
-                f'has no attribute ({__file__ !s})',
-            )
+    if importable_name == 'get_exception':
+        from ansible.module_utils.pycompat24 import get_exception
+        importable = get_exception
+        removal_version = '2.19'
+    elif importable_name in {'literal_eval', '_literal_eval'}:
+        from ast import literal_eval
+        importable = literal_eval
+        removal_version = '2.19'
+    elif importable_name == 'datetime':
+        import datetime
+        importable = datetime
+        removal_version = '2.21'
+    elif importable_name ==  'signal':
+        import signal
+        importable = signal
+        removal_version = '2.21'
+    elif importable_name ==  'types':
+        import types
+        importable = types
+        removal_version = '2.21'
+    elif importable_name ==  'chain':
+        from itertools import chain
+        importable = chain
+        removal_version = '2.21'
+    elif importable_name ==  'repeat':
+        from itertools import repeat
+        importable = repeat
+        removal_version = '2.21'
+    elif importable_name in {
+        'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
+        'iteritems', 'string_types', 'test_type'
+    }:
+        import importlib
+        importable = getattr(
+            importlib.import_module('ansible.module_utils.six'),
+            importable_name
+        )
+        removal_version = '2.21'
+    elif importable_name in {'map', 'reduce'}:
+        import builtins
+        importable = getattr(builtins, importable_name)
+        removal_version = '2.21'
+    elif importable_name ==  'shlex_quote':
+        import importlib
+        importable = getattr(
+            importlib.import_module('ansible.module_utils.six.moves'),
+            'shlex_quote'
+        )
+        removal_version = '2.21'
+    else:
+        raise AttributeError(
+            f'cannot import name {importable_name !r} '
+            f'has no attribute ({__file__ !s})',
+        )
 
     deprecate(
         msg=f'`ansible.module_utils.basic.{importable_name}` is deprecated.',
