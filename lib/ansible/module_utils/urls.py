@@ -786,6 +786,8 @@ class Request:
                 else:
                     username = credentials
                     password = ''
+                username = unquote(username)
+                password = unquote(password)
 
                 # reconstruct url without credentials
                 url = urlunparse(parsed._replace(netloc=netloc))

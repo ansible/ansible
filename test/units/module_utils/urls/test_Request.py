@@ -195,8 +195,13 @@ def test_Request_open_username(urlopen_mock, install_opener_mock):
     assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user', None)}
 
 
-def test_Request_open_username_in_url(urlopen_mock, install_opener_mock):
-    r = Request().open('GET', 'http://user2@ansible.com/')
+@pytest.mark.parametrize('url, expected', (
+    ('user2@ansible.com', ('user2', '')),
+    ('user2%40@ansible.com', ('user2@', '')),
+    ('user2%40:%40@ansible.com', ('user2@', '@')),
+))
+def test_Request_open_username_in_url(url, expected, urlopen_mock, install_opener_mock):
+    r = Request().open('GET', f'http://{url}/')
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -210,7 +215,7 @@ def test_Request_open_username_in_url(urlopen_mock, install_opener_mock):
     for handler in handlers:
         if isinstance(handler, expected_handlers):
             found_handlers.append(handler)
-    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user2', '')}
+    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): expected}
 
 
 def test_Request_open_username_force_basic(urlopen_mock, install_opener_mock):
