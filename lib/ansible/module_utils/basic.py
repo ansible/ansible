@@ -25,7 +25,6 @@ if sys.version_info < _PY_MIN:
 import __main__
 import atexit
 import errno
-import datetime
 import grp
 import fcntl
 import locale
@@ -37,15 +36,13 @@ import select
 import selectors
 import shlex
 import shutil
-import signal
 import stat
 import subprocess
 import tempfile
 import time
 import traceback
-import types
 
-from itertools import chain, repeat
+from functools import reduce
 
 try:
     import syslog
@@ -94,21 +91,9 @@ import hashlib
 
 def _get_available_hash_algorithms():
     """Return a dictionary of available hash function names and their associated function."""
-    try:
-        # Algorithms available in Python 2.7.9+ and Python 3.2+
-        # https://docs.python.org/2.7/library/hashlib.html#hashlib.algorithms_available
-        # https://docs.python.org/3.2/library/hashlib.html#hashlib.algorithms_available
-        algorithm_names = hashlib.algorithms_available
-    except AttributeError:
-        # Algorithms in Python 2.7.x (used only for Python 2.7.0 through 2.7.8)
-        # https://docs.python.org/2.7/library/hashlib.html#hashlib.hashlib.algorithms
-        algorithm_names = set(hashlib.algorithms)
-
     algorithms = {}
-
-    for algorithm_name in algorithm_names:
+    for algorithm_name in hashlib.algorithms_available:
         algorithm_func = getattr(hashlib, algorithm_name, None)
-
         if algorithm_func:
             try:
                 # Make sure the algorithm is actually available for use.
@@ -157,17 +142,6 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
-from ansible.module_utils.six import (
-    PY2,
-    PY3,
-    b,
-    binary_type,
-    integer_types,
-    iteritems,
-    string_types,
-    text_type,
-)
-from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
     safe_eval,
@@ -188,22 +162,6 @@ SEQUENCETYPE = frozenset, KeysView, Sequence
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 imap = map
-
-try:
-    # Python 2
-    unicode  # type: ignore[used-before-def]  # pylint: disable=used-before-assignment
-except NameError:
-    # Python 3
-    unicode = text_type
-
-try:
-    # Python 2
-    basestring  # type: ignore[used-before-def,has-type]  # pylint: disable=used-before-assignment
-except NameError:
-    # Python 3
-    basestring = string_types
-
-# End of deprecated names
 
 # Internal global holding passed in params.  This is consulted in case
 # multiple AnsibleModules are created.  Otherwise each AnsibleModule would
@@ -361,15 +319,10 @@ def _load_params():
                 buffer = fd.read()
                 fd.close()
             else:
-                buffer = sys.argv[1]
-                if PY3:
-                    buffer = buffer.encode('utf-8', errors='surrogateescape')
+                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
         else:
-            if PY2:
-                buffer = sys.stdin.read()
-            else:
-                buffer = sys.stdin.buffer.read()
+            buffer = sys.stdin.buffer.read()
         _ANSIBLE_ARGS = buffer
 
     try:
@@ -378,9 +331,6 @@ def _load_params():
         # This helper is used too early for fail_json to work.
         print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
-
-    if PY2:
-        params = json_dict_unicode_to_bytes(params)
 
     try:
         return params['ANSIBLE_MODULE_ARGS']
@@ -1290,16 +1240,16 @@ class AnsibleModule(object):
                 log_args = dict()
 
             module = 'ansible-%s' % self._name
-            if isinstance(module, binary_type):
+            if isinstance(module, bytes):
                 module = module.decode('utf-8', 'replace')
 
             # 6655 - allow for accented characters
-            if not isinstance(msg, (binary_type, text_type)):
+            if not isinstance(msg, (bytes, str)):
                 raise TypeError("msg should be a string (got %s)" % type(msg))
 
             # We want journal to always take text type
             # syslog takes bytes on py2, text type on py3
-            if isinstance(msg, binary_type):
+            if isinstance(msg, bytes):
                 journal_msg = msg.decode('utf-8', 'replace')
             else:
                 # TODO: surrogateescape is a danger here on Py3
@@ -1310,11 +1260,6 @@ class AnsibleModule(object):
 
             # ensure we clean up secrets!
             journal_msg = remove_values(journal_msg, self.no_log_values)
-
-            if PY3:
-                syslog_msg = journal_msg
-            else:
-                syslog_msg = journal_msg.encode('utf-8', 'replace')
 
             if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
@@ -1345,9 +1290,9 @@ class AnsibleModule(object):
                                      **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(syslog_msg)
+                    self._log_to_syslog(journal_msg)
             else:
-                self._log_to_syslog(syslog_msg)
+                self._log_to_syslog(journal_msg)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1368,9 +1313,9 @@ class AnsibleModule(object):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             else:
                 param_val = self.params[param]
-                if not isinstance(param_val, (text_type, binary_type)):
+                if not isinstance(param_val, (str, bytes)):
                     param_val = str(param_val)
-                elif isinstance(param_val, text_type):
+                elif isinstance(param_val, str):
                     param_val = param_val.encode('utf-8')
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
@@ -1516,12 +1461,7 @@ class AnsibleModule(object):
         # Add traceback if debug or high verbosity and it is missing
         # NOTE: Badly named as exception, it really always has been a traceback
         if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            if PY2:
-                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
-                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
-                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
-            else:
-                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -1790,13 +1730,9 @@ class AnsibleModule(object):
             # create a printable version of the command for use in reporting later,
             # which strips out things like passwords from the args list
             to_clean_args = args
-            if PY2:
-                if isinstance(args, text_type):
-                    to_clean_args = to_bytes(args)
-            else:
-                if isinstance(args, binary_type):
-                    to_clean_args = to_text(args)
-            if isinstance(args, (text_type, binary_type)):
+            if isinstance(args, bytes):
+                to_clean_args = to_text(args)
+            if isinstance(args, (str, bytes)):
                 to_clean_args = shlex.split(to_clean_args)
 
             clean_args = []
@@ -1815,14 +1751,9 @@ class AnsibleModule(object):
                         is_passwd = True
                 arg = heuristic_log_sanitize(arg, self.no_log_values)
                 clean_args.append(arg)
-            self._clean = ' '.join(shlex_quote(arg) for arg in clean_args)
+            self._clean = ' '.join(shlex.quote(arg) for arg in clean_args)
 
         return self._clean
-
-    def _restore_signal_handlers(self):
-        # Reset SIGPIPE to SIG_DFL, otherwise in Python2.7 it gets ignored in subprocesses.
-        if PY2 and sys.platform != 'win32':
-            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
@@ -1900,7 +1831,7 @@ class AnsibleModule(object):
         # used by clean args later on
         self._clean = None
 
-        if not isinstance(args, (list, binary_type, text_type)):
+        if not isinstance(args, (list, bytes, str)):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
@@ -1909,7 +1840,7 @@ class AnsibleModule(object):
 
             # stringify args for unsafe/direct shell usage
             if isinstance(args, list):
-                args = b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in args])
+                args = b" ".join([to_bytes(shlex.quote(x), errors='surrogate_or_strict') for x in args])
             else:
                 args = to_bytes(args, errors='surrogate_or_strict')
 
@@ -1923,14 +1854,8 @@ class AnsibleModule(object):
                 shell = True
         else:
             # ensure args are a list
-            if isinstance(args, (binary_type, text_type)):
-                # On python2.6 and below, shlex has problems with text type
-                # On python3, shlex needs a text type.
-                if PY2:
-                    args = to_bytes(args, errors='surrogate_or_strict')
-                elif PY3:
-                    args = to_text(args, errors='surrogateescape')
-                args = shlex.split(args)
+            if isinstance(args, (bytes, str)):
+                args = shlex.split(to_text(args, errors='surrogateescape'))
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
@@ -1940,11 +1865,8 @@ class AnsibleModule(object):
 
         prompt_re = None
         if prompt_regex:
-            if isinstance(prompt_regex, text_type):
-                if PY3:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
-                elif PY2:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogate_or_strict')
+            if isinstance(prompt_regex, str):
+                prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
             try:
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
@@ -1983,7 +1905,6 @@ class AnsibleModule(object):
             st_in = subprocess.PIPE
 
         def preexec():
-            self._restore_signal_handlers()
             if umask:
                 os.umask(umask)
 
@@ -1997,10 +1918,8 @@ class AnsibleModule(object):
             preexec_fn=preexec,
             env=env,
         )
-        if PY3 and pass_fds:
+        if pass_fds:
             kwargs["pass_fds"] = pass_fds
-        elif PY2 and pass_fds:
-            kwargs['close_fds'] = False
 
         # make sure we're in the right working directory
         if cwd:
@@ -2032,7 +1951,7 @@ class AnsibleModule(object):
             if data:
                 if not binary_data:
                     data += '\n'
-                if isinstance(data, text_type):
+                if isinstance(data, str):
                     data = to_bytes(data)
 
             selector.register(cmd.stdout, selectors.EVENT_READ)
@@ -2154,30 +2073,49 @@ def get_module_path():
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings.
-
-    Specifically, for ``literal_eval()``, ``_literal_eval()``
-    and ``get_exception()``.
-    """
+    """Inject import-time deprecation warnings."""
     if importable_name == 'get_exception':
-        deprecate(
-            msg=f'The `ansible.module_utils.basic.'
-            f'{importable_name}` function is deprecated.',
-            version='2.19',
-        )
         from ansible.module_utils.pycompat24 import get_exception
-        return get_exception
-
-    if importable_name in {'literal_eval', '_literal_eval'}:
-        deprecate(
-            msg=f'The `ansible.module_utils.basic.'
-            f'{importable_name}` function is deprecated.',
-            version='2.19',
-        )
+        importable = get_exception
+    elif importable_name in {'literal_eval', '_literal_eval'}:
         from ast import literal_eval
-        return literal_eval
+        importable = literal_eval
+    elif importable_name == 'datetime':
+        import datetime
+        importable = datetime
+    elif importable_name == 'signal':
+        import signal
+        importable = signal
+    elif importable_name == 'types':
+        import types
+        importable = types
+    elif importable_name == 'chain':
+        from itertools import chain
+        importable = chain
+    elif importable_name == 'repeat':
+        from itertools import repeat
+        importable = repeat
+    elif importable_name in {
+        'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
+        'iteritems', 'string_types', 'test_type'
+    }:
+        import importlib
+        importable = getattr(
+            importlib.import_module('ansible.module_utils.six'),
+            importable_name
+        )
+    elif importable_name == 'map':
+        importable = map
+    elif importable_name == 'shlex_quote':
+        importable = shlex.quote
+    else:
+        raise AttributeError(
+            f'cannot import name {importable_name !r} '
+            f"from '{__name__}' ({__file__ !s})"
+        )
 
-    raise AttributeError(
-        f'cannot import name {importable_name !r} '
-        f'has no attribute ({__file__ !s})',
+    deprecate(
+        msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
+        version="2.21",
     )
+    return importable
