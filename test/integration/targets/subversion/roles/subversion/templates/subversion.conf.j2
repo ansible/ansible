@@ -51,10 +51,7 @@ Include /etc/httpd/conf/httpd.conf
 {% endif %}
 
 PidFile {{ subversion_server_dir }}/apache.pid
-Listen 127.0.0.1:{{ apache_port }} https
-{% if ansible_distribution not in ["Alpine", "Fedora", "Ubuntu"] %}
-Listen [::1]:{{ apache_port }} https
-{% endif %}
+Listen {{ subversion_repo_ip }}:{{ apache_port }} https
 SSLEngine on
 SSLCertificateFile	{{ subversion_server_dir }}/server.pem
 SSLCertificateKeyFile {{ subversion_server_dir }}/server.key
