@@ -2077,31 +2077,24 @@ def __getattr__(importable_name):
     if importable_name == 'get_exception':
         from ansible.module_utils.pycompat24 import get_exception
         importable = get_exception
-        removal_version = '2.19'
     elif importable_name in {'literal_eval', '_literal_eval'}:
         from ast import literal_eval
         importable = literal_eval
-        removal_version = '2.19'
     elif importable_name == 'datetime':
         import datetime
         importable = datetime
-        removal_version = '2.21'
     elif importable_name == 'signal':
         import signal
         importable = signal
-        removal_version = '2.21'
     elif importable_name == 'types':
         import types
         importable = types
-        removal_version = '2.21'
     elif importable_name == 'chain':
         from itertools import chain
         importable = chain
-        removal_version = '2.21'
     elif importable_name == 'repeat':
         from itertools import repeat
         importable = repeat
-        removal_version = '2.21'
     elif importable_name in {
         'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
         'iteritems', 'string_types', 'test_type'
@@ -2111,13 +2104,10 @@ def __getattr__(importable_name):
             importlib.import_module('ansible.module_utils.six'),
             importable_name
         )
-        removal_version = '2.21'
     elif importable_name == 'map':
         importable = map
-        removal_version = '2.21'
     elif importable_name == 'shlex_quote':
         importable = shlex.quote
-        removal_version = '2.21'
     else:
         raise AttributeError(
             f'cannot import name {importable_name !r} '
@@ -2126,6 +2116,6 @@ def __getattr__(importable_name):
 
     deprecate(
         msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
-        version=removal_version,
+        version="2.21",
     )
     return importable
