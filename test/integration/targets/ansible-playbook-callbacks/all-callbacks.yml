@@ -96,14 +96,14 @@
       ignore_errors: true
 
     - name: async poll ok
-      command: sleep 2
-      async: 3
-      poll: 1
+      command: sleep 3
+      async: 5
+      poll: 2
 
     - name: async poll failed
-      shell: sleep 2; false
-      async: 3
-      poll: 1
+      shell: sleep 3; false
+      async: 5
+      poll: 2
       ignore_errors: true
 
     - include_tasks: include_me.yml
@@ -111,7 +111,7 @@
     - name: diff
       copy:
         content: diff
-        dest: '{{ remote_tmp_dir.path }}/diff.txt'
+        dest: '{{ remote_tmp_dir }}/diff.txt'
       diff: true
 
 - hosts: i_dont_exist
