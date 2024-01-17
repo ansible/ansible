@@ -105,6 +105,8 @@ ansible_facts:
 import os
 import platform
 import re
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.service import is_systemd_managed
@@ -234,22 +236,23 @@ class ServiceScanService(BaseService):
     def gather_services(self):
         services = {}
 
-        # find cli tools if available
-        self.service_path = self.module.get_bin_path("service")
-        self.chkconfig_path = self.module.get_bin_path("chkconfig")
-        self.initctl_path = self.module.get_bin_path("initctl")
-        self.rc_status_path = self.module.get_bin_path("rc-status")
-        self.rc_update_path = self.module.get_bin_path("rc-update")
+        if not sys.platform.startswith('freebsd'):
+            # find cli tools if available
+            self.service_path = self.module.get_bin_path("service")
+            self.chkconfig_path = self.module.get_bin_path("chkconfig")
+            self.initctl_path = self.module.get_bin_path("initctl")
+            self.rc_status_path = self.module.get_bin_path("rc-status")
+            self.rc_update_path = self.module.get_bin_path("rc-update")
 
-        # TODO: review conditionals ... they should not be this 'exclusive'
-        if self.service_path and self.chkconfig_path is None and self.rc_status_path is None:
-            self._list_sysvinit(services)
-        if self.initctl_path and self.chkconfig_path is None:
-            self._list_upstart(services)
-        elif self.chkconfig_path:
-            self._list_rh(services)
-        elif self.rc_status_path is not None and self.rc_update_path is not None:
-            self._list_openrc(services)
+            # TODO: review conditionals ... they should not be this 'exclusive'
+            if self.service_path and self.chkconfig_path is None and self.rc_status_path is None:
+                self._list_sysvinit(services)
+            if self.initctl_path and self.chkconfig_path is None:
+                self._list_upstart(services)
+            elif self.chkconfig_path:
+                self._list_rh(services)
+            elif self.rc_status_path is not None and self.rc_update_path is not None:
+                self._list_openrc(services)
         return services
 
 
@@ -416,12 +419,68 @@ class OpenBSDScanService(BaseService):
 
         return services
 
+class FreeBSDScanService(BaseService):
+
+    _pid_regex = r'.+ is running as pid (\d+)\.'
+
+    def get_info(self, service):
+
+        service_info = {'status': 'unknown'}
+        rc, stdout, stderr = self.module.run_command("%s %s describe" % (self.service, service))
+        if rc == 0:
+            service_info['description'] = stdout
+            rc, stdout, stderr = self.module.run_command("%s %s status" % (self.service, service))
+            if rc == 0:
+                service_info['status'] = 'running'
+                p = re.compile(r'^\s?%s is running as pid (\d+).' % service)
+                service_info['pid'] = p.match(stdout[0])[0]
+            elif rc == 1:
+                if 'is not running' in stdout[0]:
+                    service_info['status'] == 'stopped'
+                elif 'unknown directive' in stderr[0]:
+                    service_info['status'] == 'does not support status query'
+        elif stderr:
+            self.module.warn("Failed to get info for %s: %s" % (service, stderr))
+        elif stdout:
+            self.module.warn("Failed to get info for %s: %s" % (service, stdout))
+        else:
+            self.module.warn("Failed to get info for %s, no system message: rc=%s" % (service, rc))
+
+        return service_info
+
+    def get_enabled(self):
+
+        services = []
+        rc, stdout, stderr = self.module.run_command("%s -e" % (self.service))
+        if rc == 0:
+            for line in stdout.lines():
+                if line.startswith('/'):
+                    services.append(os.path.basename(line))
+        elif stderr:
+            self.module.warn("Failed to get services: %s" % stderr)
+        elif stdout:
+            self.module.warn("Failed to get services: %s" % stdout)
+        else:
+            self.module.warn("Failed to get services, no system message: rc=%s" % rc)
+
+        return services
+
+    def gather_services(self):
+
+        services = {}
+        if sys.platform.startswith('freebsd'):
+            self.service = self.module.get_bin_path("service")
+            if self.service:
+                for svc in self.get_enabled():
+                    services[svc] = self.get_info(svc)
+        return services
+
 
 def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
     locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
-    service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService)
+    service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService, FreeBSDScanService)
     all_services = {}
     for svc_module in service_modules:
         svcmod = svc_module(module)
