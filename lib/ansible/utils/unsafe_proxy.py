@@ -54,6 +54,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import sys
+import types
 import warnings
 from sys import intern as _sys_intern
 from collections.abc import Mapping, Set
@@ -385,7 +386,7 @@ def _intern(string):
     return _sys_intern(string)
 
 
-if sys.intern is _intern:
-    warnings.warn("skipped sys.intern patch; appears to have already been patched", RuntimeWarning)
-else:
+if isinstance(sys.intern, types.BuiltinFunctionType):
     sys.intern = _intern
+else:
+    warnings.warn("skipped sys.intern patch; appears to have already been patched", RuntimeWarning)
