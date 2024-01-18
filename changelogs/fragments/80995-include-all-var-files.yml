@@ -1,0 +1,2 @@
+bugfixes:
+- include_vars - fix calculating ``depth`` relative to the root and ensure all files are included (https://github.com/ansible/ansible/issues/80987).
