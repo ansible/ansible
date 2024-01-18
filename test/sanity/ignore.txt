@@ -197,4 +197,3 @@ README.md pymarkdown:line-length
 test/integration/targets/ansible-vault/invalid_format/README.md pymarkdown:no-bare-urls
 test/support/README.md pymarkdown:no-bare-urls
 test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
-lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # 2.17 deprecation
