@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated crypt support from ansible.utils.encrypt (https://github.com/ansible/ansible/issues/81717)
