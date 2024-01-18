@@ -52,6 +52,10 @@
 
 from __future__ import annotations
 
+import sys
+import types
+import warnings
+from sys import intern as _sys_intern
 from collections.abc import Mapping, Set
 
 from ansible.module_utils.common.text.converters import to_bytes, to_text
@@ -368,3 +372,20 @@ def to_unsafe_text(*args, **kwargs):
 
 def _is_unsafe(obj):
     return getattr(obj, '__UNSAFE__', False) is True
+
+
+def _intern(string):
+    """This is a monkey patch for ``sys.intern`` that will strip
+    the unsafe wrapper prior to interning the string.
+
+    This will not exist in future versions.
+    """
+    if isinstance(string, AnsibleUnsafeText):
+        string = string._strip_unsafe()
+    return _sys_intern(string)
+
+
+if isinstance(sys.intern, types.BuiltinFunctionType):
+    sys.intern = _intern
+else:
+    warnings.warn("skipped sys.intern patch; appears to have already been patched", RuntimeWarning)
