@@ -552,6 +552,12 @@ def main():
                     "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
                     " and will be removed in the next release.")
 
+            # ansible.utils.unsafe_proxy attempts patching sys.intern generating a warning if it was already patched
+            warnings.filterwarnings(
+                "ignore",
+                "skipped sys.intern patch; appears to have already been patched"
+            )
+
             try:
                 yield
             finally:
