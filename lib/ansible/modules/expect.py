@@ -51,7 +51,6 @@ options:
         If the value is a string and the prompt is encountered multiple times, the answer will be repeated.
         Provide the value as a list to give different answers for successive matches.
         For responses, a newline will be appended to the response string.
-    required: true
   timeout:
     type: raw
     description:
