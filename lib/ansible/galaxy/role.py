@@ -42,6 +42,7 @@ from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
+from ansible.utils.path import is_subpath, unfrackpath
 
 display = Display()
 
@@ -393,43 +394,41 @@ class GalaxyRole(object):
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
-                            if member.isreg() or member.issym():
-                                for attr in ('name', 'linkname'):
-                                    attr_value = getattr(member, attr, None)
-                                    if not attr_value:
-                                        continue
-                                    n_attr_value = to_native(attr_value)
-                                    n_archive_parent_dir = to_native(archive_parent_dir)
-                                    n_parts = n_attr_value.replace(n_archive_parent_dir, "", 1).split(os.sep)
-                                    n_final_parts = []
-                                    for n_part in n_parts:
-                                        # TODO if the condition triggers it produces a broken installation.
-                                        # It will create the parent directory as an empty file and will
-                                        # explode if the directory contains valid files.
-                                        # Leaving this as is since the whole module needs a rewrite.
-                                        #
-                                        # Check if we have any files with illegal names,
-                                        # and display a warning if so. This could help users
-                                        # to debug a broken installation.
-                                        if not n_part:
-                                            continue
-                                        if n_part == '..':
-                                            display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
-                                            continue
-                                        if n_part.startswith('~'):
-                                            display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
-                                            continue
-                                        if '$' in n_part:
-                                            display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
-                                            continue
-                                        n_final_parts.append(n_part)
-                                    setattr(member, attr, os.path.join(*n_final_parts))
+                            if not (member.isreg() or member.issym()):
+                                continue
 
-                                if _check_working_data_filter():
-                                    # deprecated: description='extract fallback without filter' python_version='3.11'
-                                    role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                            for attr in ('name', 'linkname'):
+                                if not (attr_value := getattr(member, attr, None)):
+                                    continue
+
+                                if attr_value.startswith(os.sep) and not is_subpath(attr_value, archive_parent_dir):
+                                    err = f"Invalid {attr} for tarfile member: path {attr_value} is not a subpath of the role {archive_parent_dir}"
+                                    raise AnsibleError(err)
+
+                                if attr == 'linkname':
+                                    # Symlinks are relative to the link
+                                    relative_to_archive_dir = os.path.dirname(getattr(member, 'name', ''))
+                                    archive_dir_path = os.path.join(archive_parent_dir, relative_to_archive_dir, attr_value)
                                 else:
-                                    role_tar_file.extract(member, to_native(self.path))
+                                    # Normalize paths that start with the archive dir
+                                    attr_value = attr_value.replace(archive_parent_dir, "", 1)
+                                    attr_value = os.path.join(*attr_value.split(os.sep))  # remove leading os.sep
+                                    archive_dir_path = os.path.join(archive_parent_dir, attr_value)
+
+                                resolved_archive = unfrackpath(archive_parent_dir)
+                                resolved_path = unfrackpath(archive_dir_path)
+                                if not is_subpath(resolved_path, resolved_archive):
+                                    err = f"Invalid {attr} for tarfile member: path {resolved_path} is not a subpath of the role {resolved_archive}"
+                                    raise AnsibleError(err)
+
+                                relative_path = os.path.join(*resolved_path.replace(resolved_archive, "", 1).split(os.sep)) or '.'
+                                setattr(member, attr, relative_path)
+
+                            if _check_working_data_filter():
+                                # deprecated: description='extract fallback without filter' python_version='3.11'
+                                role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                            else:
+                                role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
