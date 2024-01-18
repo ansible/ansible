@@ -560,6 +560,12 @@ def main():
                     "ignore",
                     "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
 
+            # ansible.utils.unsafe_proxy attempts patching sys.intern generating a warning if it was already patched
+            warnings.filterwarnings(
+                "ignore",
+                "skipped sys.intern patch; appears to have already been patched"
+            )
+
             try:
                 yield
             finally:
