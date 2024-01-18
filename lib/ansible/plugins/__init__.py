@@ -91,8 +91,8 @@ class AnsiblePlugin(ABC):
         return options
 
     def get_ff_option(self, *options, hostvars=None, pc=None):
-        ''' convinience function for when plugins have not followed strict conventions (user/remote_user)
-            and/or relied on playcontext, which is not strictly up2date, specially in loops. '''
+        ''' convenience function for when plugins have not followed strict conventions (user/remote_user)
+            and/or relied on play context, which is not strictly up to date, especially in loops. '''
         for option in options:
             if self.has_option(option):
                 return self.get_option(option, hostvars)
