@@ -1,0 +1,13 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - debug:
+      no_log: true
+
+    - debug:
+      no_log: false
+
+    - debug:
+
+    - debug:
+      loop: '{{ range(3) }}'

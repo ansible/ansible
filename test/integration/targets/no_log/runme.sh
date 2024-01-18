@@ -19,3 +19,8 @@ set -eux
 
 # test invalid data passed to a suboption
 [ "$(ansible-playbook no_log_suboptions_invalid.yml -i ../../inventory -vvvvv "$@" | grep -Ec '(SUPREME|IDIOM|MOCKUP|EDUCATED|FOOTREST|CRAFTY|FELINE|CRYSTAL|EXPECTANT|AGROUND|GOLIATH|FREEFALL)')" = "0" ]
+
+# test variations on ANSIBLE_NO_LOG
+[ "$(ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "1" ]
+[ "$(ANSIBLE_NO_LOG=0 ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "1" ]
+[ "$(ANSIBLE_NO_LOG=1 ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "6" ]
